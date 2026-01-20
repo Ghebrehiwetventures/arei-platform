@@ -1,0 +1,10 @@
+market: cv
+rules: {}
+# Golden rules overrides for this market
+# Example:
+# rules:
+#   min_price: 0
+#   max_price: 1000000
+#   required_fields:
+#     - title
+#     - price

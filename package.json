@@ -1,0 +1,20 @@
+{
+  "name": "morabesa",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "scripts": {
+    "ingest:cv": "DETAIL_ENRICH=1 DETAIL_ENRICH_LIMIT=10 npx ts-node --transpile-only core/ingestCv.ts",
+    "report:cv": "npx ts-node --transpile-only core/reportCv.ts"
+  },
+  "dependencies": {
+    "cheerio": "^1.0.0",
+    "js-yaml": "^4.1.0"
+  },
+  "devDependencies": {
+    "@types/js-yaml": "^4.0.9",
+    "@types/node": "^20.0.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.0.0"
+  }
+}

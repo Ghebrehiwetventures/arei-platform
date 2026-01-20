@@ -1,0 +1,91 @@
+market: cv
+sources:
+  - id: cv_source_1
+    name: "Imobiliaria Praia"
+    url: https://example-cv.com/praia
+    type: stub
+    selectors:
+      listing: ".property-card"
+      title: ".title"
+      price: ".price"
+      image: "img.main"
+
+  - id: cv_source_2
+    name: "Mindelo Properties"
+    url: https://example-cv.com/mindelo
+    type: stub
+    selectors:
+      listing: ".listing"
+      title: "h2"
+      price: ".value"
+      image: ".photo img"
+
+  - id: cv_simplycapeverde
+    name: "Simply Cape Verde"
+    url: https://simplycapeverde.com/
+    type: html
+    selectors:
+      listing: ".es-listing"
+      title: "h3"
+      price: ".es-price"
+      image: "img"
+
+  - id: cv_capeverdepropertyuk
+    name: "Cape Verde Property UK"
+    url: https://www.capeverdeproperty.co.uk/
+    type: html
+    selectors:
+      listing: ".property-card"
+      title: "h2, h3, .title"
+      price: ".price"
+      image: "img"
+
+  - id: cv_ccoreinvestments
+    name: "CCore Investments"
+    url: https://www.ccoreinvestments.com/
+    type: html
+    selectors:
+      listing: ".property-card"
+      title: "h2, h3, .title"
+      price: ".price"
+      image: "img"
+
+  - id: cv_terracaboverde
+    name: "Terra Cabo Verde"
+    url: https://terracaboverde.com/properties/
+    type: html
+    selectors:
+      listing: ".e-loop-item"
+      title: "h2, h3"
+      price: ".price"
+      image: "img"
+
+  - id: cv_rightmove
+    name: "Rightmove Overseas"
+    url: https://www.rightmove.co.uk/overseas-property/in-Cape-Verde.html
+    type: html
+    selectors:
+      listing: ".propertyCard"
+      title: ".propertyCard-title"
+      price: ".propertyCard-price"
+      image: "img"
+
+  - id: cv_homescasaverde
+    name: "Homes Casa Verde"
+    url: https://www.homescasaverde.com/properties-for-sale/
+    type: html
+    selectors:
+      listing: ".property-item"
+      title: ".property-title"
+      price: ".item-price"
+      image: "img"
+
+  - id: cv_globallistings
+    name: "Global Listings"
+    url: https://www.globallistings.com/residential-for-sale/cape-verde
+    type: html
+    selectors:
+      listing: ".listing"
+      title: "h2, h3, .title"
+      price: ".price"
+      image: "img"
