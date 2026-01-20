@@ -1,0 +1,50 @@
+name: CV Autopilot
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  cv-autopilot:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Restore reports cache
+        uses: actions/cache@v4
+        with:
+          path: reports
+          key: cv-reports-${{ runner.os }}-${{ github.ref_name }}-${{ github.run_id }}
+          restore-keys: |
+            cv-reports-${{ runner.os }}-${{ github.ref_name }}-
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Random jitter
+        run: sleep $((RANDOM % 300))
+
+      - name: Preflight CV
+        run: npx ts-node --transpile-only core/preflightCv.ts
+
+      - name: Fail fast if no IN sources
+        run: |
+          node -e "const fs=require('fs');const path=require('path');const dir=path.resolve('reports');const pattern=/^cv_preflight_(\\d{8})_(\\d{6})(?:_(\\d{2}))?\\.json$/;if(!fs.existsSync(dir)){console.error('reports/ not found');process.exit(1);}const files=fs.readdirSync(dir);const matches=[];for(const file of files){const m=file.match(pattern);if(m){const ts=m[1]+m[2]+(m[3]||'');matches.push({file,ts});}}if(matches.length===0){console.error('No preflight report found');process.exit(1);}matches.sort((a,b)=>b.ts.localeCompare(a.ts));const report=JSON.parse(fs.readFileSync(path.join(dir,matches[0].file),'utf8'));const inCount=report?.summary?.inCount??0;console.log(`Preflight IN count: ${inCount}`);if(inCount===0){console.error('Preflight IN count is 0. Failing fast.');process.exit(1);}"
+
+      - name: Ingest CV
+        run: DETAIL_ENRICH=1 DETAIL_ENRICH_LIMIT=10 npx ts-node --transpile-only core/ingestCv.ts
+
+      - name: Report CV
+        run: npx ts-node --transpile-only core/reportCv.ts
+
+      - name: Action summary
+        run: |
+          node -e "const fs=require('fs');const path=require('path');const summary=process.env.GITHUB_STEP_SUMMARY;const dir=path.resolve('reports');const pattern=/^cv_preflight_(\\d{8})_(\\d{6})(?:_(\\d{2}))?\\.json$/;const files=fs.existsSync(dir)?fs.readdirSync(dir):[];const matches=[];for(const file of files){const m=file.match(pattern);if(m){const ts=m[1]+m[2]+(m[3]||'');matches.push({file,ts});}}if(matches.length===0){fs.appendFileSync(summary,'No preflight report found.\\n');process.exit(0);}matches.sort((a,b)=>b.ts.localeCompare(a.ts));const report=JSON.parse(fs.readFileSync(path.join(dir,matches[0].file),'utf8'));const inCount=report?.summary?.inCount??0;const observeCount=report?.summary?.observeCount??0;const dropCount=report?.summary?.dropCount??0;const promotions=(report?.results||[]).filter(r=>r.promotedToIn===true).map(r=>r.sourceName);let out='## CV Preflight Summary\\n\\n';out+='| IN | OBSERVE | DROP |\\n| --- | --- | --- |\\n';out+=`| ${inCount} | ${observeCount} | ${dropCount} |\\n\\n`;out+='## OBSERVE → IN Promotions\\n\\n';if(promotions.length===0){out+='(none)\\n';}else{out+=promotions.map(p=>`- ${p}`).join('\\n')+'\\n';}fs.appendFileSync(summary,out);"
