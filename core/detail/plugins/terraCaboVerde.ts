@@ -144,6 +144,15 @@ export const terraCaboVerdePlugin: DetailPlugin = {
   sourceId: "cv_terracaboverde",
 
   extract(html: string, baseUrl: string): DetailExtractResult {
+    // Guard: reject list pages
+    if (baseUrl.includes("?e-page-")) {
+      return { success: false, imageUrls: [] };
+    }
+    const url = new URL(baseUrl);
+    if (url.pathname === "/properties/" || url.pathname === "/properties") {
+      return { success: false, imageUrls: [] };
+    }
+
     const $ = cheerio.load(html);
     const imageUrls: string[] = [];
     const specPairs: { label: string; value: string }[] = [];
