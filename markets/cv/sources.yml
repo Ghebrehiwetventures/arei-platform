@@ -1,5 +1,16 @@
 market: cv
+
+# ============================================
+# GENERIC CONFIG-DRIVEN SOURCE DEFINITIONS
+# ============================================
+# Adding a new source = add config here, NO code changes needed
+# All pagination, selectors, and behavior defined in config
+# ============================================
+
 sources:
+  # ============================================
+  # STUB SOURCES (for testing)
+  # ============================================
   - id: cv_source_1
     name: "Imobiliaria Praia"
     url: https://example-cv.com/praia
@@ -20,74 +31,513 @@ sources:
       price: ".value"
       image: ".photo img"
 
-  - id: cv_simplycapeverde
-    name: "Simply Cape Verde"
-    url: https://simplycapeverde.com/
-    type: html
-    lifecycleOverride: IN
-    selectors:
-      listing: ".es-listing"
-      title: "h3"
-      price: ".es-price"
-      image: "img"
-
-  - id: cv_capeverdepropertyuk
-    name: "Cape Verde Property UK"
-    url: https://www.capeverdeproperty.co.uk/
-    type: html
-    selectors:
-      listing: ".property-card"
-      title: "h2, h3, .title"
-      price: ".price"
-      image: "img"
-
-  - id: cv_ccoreinvestments
-    name: "CCore Investments"
-    url: https://www.ccoreinvestments.com/
-    type: html
-    selectors:
-      listing: ".property-card"
-      title: "h2, h3, .title"
-      price: ".price"
-      image: "img"
-
+  # ============================================
+  # TERRA CABO VERDE - Full Config Example
+  # ============================================
   - id: cv_terracaboverde
     name: "Terra Cabo Verde"
     url: https://terracaboverde.com/properties/
     type: html
     lifecycleOverride: IN
+
+    # CMS type for selector fallbacks (auto-detected if not specified)
+    cms_type: elementor
+
+    # Fetch method: http or headless (Puppeteer for JS-rendered)
+    fetch_method: headless
+
+    # Pagination config - uses auto-detection
+    # The site uses client-side Elementor pagination where URL doesn't reliably update
+    # Auto-detection will identify this as click_next and find the next selector
+    pagination:
+      type: auto                      # Auto-detect pagination type from HTML
+      # OR explicit if auto fails:
+      # type: click_next
+      # next_selector: ".elementor-pagination a.next"
+
+    # Rate limiting
+    delay_ms: 2500
+    jitter_ms: 1000
+    max_items: 200
+    max_pages: 20
+    stop_condition: empty_listings
+
+    # Selectors - DOM analysis Jan 2026
+    # Structure: .e-loop-item > a#card-prop > [h2:location, h3:title, h2:price, ...]
     selectors:
-      listing: ".e-loop-item"
-      title: "h2, h3"
+      listing: ".e-loop-item, [class*='e-loop-item']"
+      link: "a#card-prop, a[href*='/properties/']"
+      title: "h3.elementor-heading-title"
+      price: "h2.elementor-heading-title"   # Code extracts text containing €
+      location: "h2.elementor-heading-title:first-of-type"
+      image: "img, [style*='background-image']"
+
+    # URL validation
+    reject_url_patterns:
+      - "\\?e-page-"        # Reject pagination query params
+      - "/properties/$"     # Reject bare category URL
+      - "/page/"            # Reject WP-style pagination
+
+    min_path_segments: 2    # Must have /properties/slug (2 segments)
+
+    # Price format (European: 130.000 = 130,000)
+    price_format:
+      currency_symbol: "€"
+      thousands_separator: "."
+      decimal_separator: ","
+      multiplier: 1
+
+    # Location patterns (uses locations.yml if not specified)
+    # location_patterns: []  # Auto-loaded from markets/cv/locations.yml
+
+    # ID prefix for generated IDs
+    id_prefix: "tcv"
+
+    # Detail enrichment config (config-driven, no plugin needed!)
+    detail:
+      enabled: true
+      policy: always        # always, on_violation, never
+      delay_ms: 2500
+      selectors:
+        description: "h2:contains('Description') + .elementor-widget-text-editor, .elementor-widget-text-editor p"
+        images: "#prop-gallery .swiper-slide img, .elementor-image-carousel img, .swiper-slide a[href*='.jpg']"
+        # bedrooms/bathrooms extracted via spec_patterns below
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Quartos?)"
+          - "(?:Bedrooms?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Banheiros?)"
+          - "(?:Bathrooms?|Banheiros?)\\s*[:\\-]?\\s*(\\d+)"
+        parking:
+          - "(\\d+)\\s*(?:Parking|Garage|Vagas?)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm)"
+      amenity_keywords:
+        pool: ["pool", "piscina", "swimming"]
+        sea_view: ["sea view", "vista mar", "ocean view"]
+        balcony: ["balcony", "varanda"]
+        garden: ["garden", "jardim"]
+        air_conditioning: ["air conditioning", "ar condicionado", "a/c"]
+        terrace: ["terrace", "terraço"]
+        security: ["security", "segurança", "24h"]
+
+  # ============================================
+  # SIMPLY CAPE VERDE
+  # ============================================
+  - id: cv_simplycapeverde
+    name: "Simply Cape Verde"
+    url: https://simplycapeverde.com/
+    type: html
+    lifecycleOverride: IN
+    fetch_method: http
+
+    pagination:
+      type: none            # Single page listing
+
+    delay_ms: 3000
+    jitter_ms: 500
+    max_items: 100
+
+    selectors:
+      listing: ".es-listing"
+      link: "a[href]"
+      title: "h3"
+      price: ".es-price"
+      image: "img"
+
+    price_format:
+      currency_symbol: "€"
+      thousands_separator: ","
+
+    detail:
+      enabled: true
+      policy: on_violation
+      delay_ms: 10000       # Extra delay to avoid CAPTCHA
+
+  # ============================================
+  # CAPE VERDE PROPERTY UK - Cloudflare protected, cannot scrape
+  # ============================================
+  - id: cv_capeverdepropertyuk
+    name: "Cape Verde Property UK"
+    url: https://www.capeverdeproperty.co.uk/
+    type: html
+    lifecycleOverride: DROP  # Cloudflare JS challenge blocks all requests
+    fetch_method: http
+    selectors:
+      listing: ".property-card"
+      title: "h2, h3, .title"
       price: ".price"
       image: "img"
 
+  # ============================================
+  # CCORE INVESTMENTS
+  # CasafariCRM-based, requires headless + property list URL
+  # ============================================
+  - id: cv_ccoreinvestments
+    name: "CCore Investments"
+    url: https://www.ccoreinvestments.com/lista-propriedades
+    type: html
+    lifecycleOverride: OBSERVE  # Needs further investigation - JS-heavy CRM
+    fetch_method: headless
+
+    pagination:
+      type: none
+
+    selectors:
+      listing: ".property-card, .list__item, article"
+      link: "a[href*='propriedad']"
+      title: "h2, h3, .title"
+      price: ".price"
+      image: "img"
+
+    detail:
+      enabled: false
+
+  # ============================================
+  # HOMES CASA VERDE
+  # WordPress/Houzez theme, may need AJAX inspection
+  # ============================================
+  - id: cv_homescasaverde
+    name: "Homes Casa Verde"
+    url: https://www.homescasaverde.com/properties-for-sale/
+    type: html
+    lifecycleOverride: IN
+    fetch_method: headless  # Houzez often loads via AJAX
+
+    pagination:
+      type: none  # Start simple
+
+    delay_ms: 3000
+    max_items: 100
+
+    selectors:
+      listing: ".item-wrap"
+      link: "a[href*='/property/']"
+      title: ".item-title a"
+      price: ".item-price"
+      image: "img.wp-post-image"
+
+    price_format:
+      currency_symbol: "€"
+      thousands_separator: ","
+
+    # Location patterns - matches in container text AND img alt attributes
+    location_patterns:
+      - "Sal"
+      - "Santa Maria"
+      - "Boa Vista"
+      - "Santiago"
+      - "Praia"
+      - "Mindelo"
+      - "Vila Verde"
+
+    id_prefix: "hcv"
+
+    detail:
+      enabled: true
+      policy: always
+      delay_ms: 3000
+      selectors:
+        description: ".property-description, .wpsight-listing-description, [class*='description'] p"
+        images: ".property-detail-gallery img, .property-gallery img, .slick-slide img, .swiper-slide img, img.wp-post-image"
+        bedrooms: ".listing-details-detail:contains('Bed') .listing-details-value"
+        bathrooms: ".listing-details-detail:contains('Bath') .listing-details-value"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+      amenity_keywords:
+        pool: ["pool", "piscina", "swimming"]
+        sea_view: ["sea view", "vista mar", "ocean view"]
+        balcony: ["balcony", "varanda"]
+        garden: ["garden", "jardim"]
+        air_conditioning: ["air conditioning", "ar condicionado", "a/c"]
+        parking: ["parking", "garage", "estacionamento"]
+        furnished: ["furnished", "mobilado"]
+
+  # ============================================
+  # CAPE VERDE PROPERTY 24
+  # ============================================
+  - id: cv_capeverdeproperty24
+    name: "Cape Verde Property 24"
+    url: https://capeverdeproperty24.com/en/all-properties/for-sale
+    type: html
+    lifecycleOverride: IN
+    fetch_method: http
+
+    pagination:
+      type: offset
+      param: "limitstart"
+      start: 1
+      increment: 10
+      first_no_param: true
+
+    delay_ms: 2000
+    max_items: 100
+    max_pages: 5
+
+    selectors:
+      listing: ".grid.cs-style-3 li.span6"
+      link: ".property-desc h4 a[href]"
+      title: ".property-desc h4 a"
+      price: ".cat-price"
+      image: "figure.pimage img"
+
+    price_format:
+      currency_symbol: "€"
+      thousands_separator: " "
+      decimal_separator: ","
+
+    id_prefix: "cvp24"
+
+    detail:
+      enabled: true
+      policy: always
+      delay_ms: 3000
+      selectors:
+        description: ".property-description p, .tab-pane p, [class*='description']"
+        images: ".property-slider img, .property-gallery img, .carousel img, img[src*='uploads']"
+        price: "span.price-ribbon-price"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+      amenity_keywords:
+        pool: ["pool", "piscina"]
+        sea_view: ["sea view", "vista mar", "ocean view"]
+        balcony: ["balcony", "varanda"]
+        garden: ["garden", "jardim"]
+        air_conditioning: ["air conditioning", "a/c"]
+        parking: ["parking", "garage"]
+
+  # ============================================
+  # CABO HOUSE PROPERTY - MyHome WordPress Theme
+  # Santa Maria, Sal focused agency
+  # ============================================
+  - id: cv_cabohouseproperty
+    name: "Cabo House Property"
+    url: https://www.cabohouseproperty.com/featured/?offer-type=sale
+    type: html
+    lifecycleOverride: IN
+    fetch_method: headless  # JS-heavy MyHome theme
+
+    pagination:
+      type: none  # Infinite scroll or load more
+
+    delay_ms: 3000
+    jitter_ms: 1000
+    max_items: 50
+
+    selectors:
+      listing: ".mh-estate-horizontal__primary, .mh-estate-vertical__primary, [class*='mh-estate']"
+      link: "a[href*='/properties/']"
+      title: "h4 a, .mh-estate__details__title a"
+      price: ".mh-estate__details__price, .listing_unit_price_wrapper"
+      location: ".mh-estate__details__address"
+      image: "img.img-responsive, img[class*='wp-image']"
+
+    price_format:
+      currency_symbol: "€"
+      thousands_separator: "."
+
+    id_prefix: "chp"
+
+    detail:
+      enabled: true
+      policy: always
+      delay_ms: 3000
+      selectors:
+        description: ".mh-estate__description p, .property-description p, [class*='description'] p"
+        images: ".mh-estate__gallery img, .swiper-slide img, .property-gallery img, img.wp-post-image"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+      amenity_keywords:
+        pool: ["pool", "piscina"]
+        sea_view: ["sea view", "vista mar", "ocean view"]
+        balcony: ["balcony", "varanda"]
+        garden: ["garden", "jardim"]
+        parking: ["parking", "garage"]
+
+  # ============================================
+  # ESTATE CV - Cape Verde Real Estate
+  # Multi-island coverage (Santiago, Sal, Boa Vista, etc.)
+  # Uses AJAX-loaded content, requires headless
+  # ============================================
+  - id: cv_estatecv
+    name: "Estate CV"
+    url: https://estatecv.com/en/properties/
+    type: html
+    lifecycleOverride: IN
+    fetch_method: headless  # AJAX-loaded content
+
+    pagination:
+      type: path_segment
+      pattern: "/page/{page}/"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 3000
+    jitter_ms: 500
+    max_items: 100
+    max_pages: 5
+
+    selectors:
+      listing: "article.property"
+      link: "a.property__link"
+      title: ".property__content h3"
+      price: ".property__content p span:first-child"  # "Price: X €"
+      location: ".property__content p:last-child"  # City name
+      image: ".property__header img"
+
+    price_format:
+      currency_symbol: "€"
+      thousands_separator: " "  # Uses non-breaking space
+
+    id_prefix: "ecv"
+
+    detail:
+      enabled: true
+      policy: always
+      delay_ms: 3000
+      selectors:
+        description: ".property__description p, .entry-content p, [class*='description'] p"
+        images: ".property__gallery img, .swiper-slide img, .gallery img, img[src*='uploads']"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+      amenity_keywords:
+        pool: ["pool", "piscina"]
+        sea_view: ["sea view", "vista mar", "ocean view"]
+        balcony: ["balcony", "varanda"]
+        garden: ["garden", "jardim"]
+        parking: ["parking", "garage"]
+
+  # ============================================
+  # OCEAN PROPERTY 24 - WP Residence Theme
+  # Sal Island focused
+  # ============================================
+  - id: cv_oceanproperty24
+    name: "Ocean Property 24"
+    url: https://www.oceanproperty24.com/listings/apartment/
+    type: html
+    lifecycleOverride: IN
+    fetch_method: http  # WP Residence works with HTTP
+
+    pagination:
+      type: query_param
+      param: "page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 3000
+    jitter_ms: 1000
+    max_items: 50
+    max_pages: 5
+
+    selectors:
+      listing: ".listing_wrapper"
+      link: "a[href*='/properties/']"
+      title: "h4 a"
+      price: ".listing_unit_price_wrapper"
+      location: ".property_location_image a"
+      image: "img.img-responsive, img.lazyload"
+
+    price_format:
+      currency_symbol: "€"
+      thousands_separator: "."
+
+    id_prefix: "op24"
+
+    detail:
+      enabled: true
+      policy: always
+      delay_ms: 3000
+      selectors:
+        description: ".wpestate_property_description p, .property-description p, [class*='description'] p"
+        images: ".property-slider img, .carousel-inner img, .property_slider img, img[src*='uploads']"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+      amenity_keywords:
+        pool: ["pool", "piscina"]
+        sea_view: ["sea view", "vista mar", "ocean view"]
+        balcony: ["balcony", "varanda"]
+        parking: ["parking", "garage"]
+        furnished: ["furnished", "mobilado"]
+
+  # ============================================
+  # DROPPED SOURCES
+  # ============================================
   - id: cv_rightmove
     name: "Rightmove Overseas"
     url: https://www.rightmove.co.uk/overseas-property/in-Cape-Verde.html
     type: html
+    lifecycleOverride: DROP
     selectors:
       listing: ".propertyCard"
       title: ".propertyCard-title"
       price: ".propertyCard-price"
       image: "img"
 
-  - id: cv_homescasaverde
-    name: "Homes Casa Verde"
-    url: https://www.homescasaverde.com/properties-for-sale/
-    type: html
-    selectors:
-      listing: ".property-item"
-      title: ".property-title"
-      price: ".item-price"
-      image: "img"
-
   - id: cv_globallistings
     name: "Global Listings"
     url: https://www.globallistings.com/residential-for-sale/cape-verde
     type: html
+    lifecycleOverride: DROP
     selectors:
       listing: ".listing"
       title: "h2, h3, .title"
       price: ".price"
+      image: "img"
+
+  - id: cv_properstar
+    name: "Properstar"
+    url: https://www.properstar.com/cape-verde/buy
+    type: html
+    lifecycleOverride: DROP
+    selectors:
+      listing: "article, .listing-card"
+      title: "h2, h3, .listing-title"
+      price: ".price, .listing-price"
+      image: "img"
+
+  - id: cv_greenacres
+    name: "Green Acres"
+    url: https://cv.green-acres.com/en
+    type: html
+    lifecycleOverride: DROP
+    selectors:
+      listing: "article, .listing, .ad-item"
+      title: "h2, h3, .title"
+      price: ".price, .ad-price"
       image: "img"

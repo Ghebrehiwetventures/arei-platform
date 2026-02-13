@@ -20,9 +20,14 @@ interface IngestReportListing {
   sourceId: string;
   sourceName: string;
   title?: string;
+  description?: string;
   price?: number;
   location?: string;
-  imageCount: number;
+  images?: string[];
+  imageCount?: number;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  area_sqm?: number | null;
   violations?: string[];
 }
 
@@ -50,7 +55,7 @@ async function loadIngestReport(): Promise<IngestReport | null> {
   reportLoadAttempted = true;
 
   try {
-    const response = await fetch("/artifacts/cv_ingest_report.json");
+    const response = await fetch("/cv_ingest_report.json");
     if (response.ok) {
       cachedReport = await response.json();
       console.log("[diagnostics] Loaded ingest report from artifacts");
@@ -79,9 +84,13 @@ function convertReportToMarket(report: IngestReport): Market {
     id: l.id,
     title: l.title,
     price: l.price,
-    description: l.violations ? `[HIDDEN: ${l.violations.join(", ")}]` : undefined,
-    imageUrl: l.imageCount > 0 ? "https://via.placeholder.com/150" : undefined,
+    description: l.description || (l.violations ? `[HIDDEN: ${l.violations.join(", ")}]` : undefined),
+    images: l.images || [],
     sourceName: l.sourceName,
+    location: l.location,
+    bedrooms: l.bedrooms,
+    bathrooms: l.bathrooms,
+    area_sqm: l.area_sqm,
   }));
 
   const statuses = sources.map((s) => s.state.status);
@@ -148,7 +157,7 @@ const mockListings: Listing[] = [
     title: "MOCK Apartment in Praia",
     price: 45000,
     description: "2 bedroom apartment near the beach",
-    imageUrl: undefined,
+    images: [],
   },
   {
     id: "lst_2",
@@ -156,7 +165,7 @@ const mockListings: Listing[] = [
     title: undefined,
     price: 120000,
     description: "Large house with garden",
-    imageUrl: "https://via.placeholder.com/150",
+    images: ["https://via.placeholder.com/400x300", "https://via.placeholder.com/400x300/eee"],
   },
   {
     id: "lst_3",
@@ -164,7 +173,7 @@ const mockListings: Listing[] = [
     title: "MOCK Villa Mindelo",
     price: undefined,
     description: undefined,
-    imageUrl: "https://via.placeholder.com/150",
+    images: ["https://via.placeholder.com/400x300"],
   },
   {
     id: "lst_4",
@@ -172,7 +181,7 @@ const mockListings: Listing[] = [
     title: "MOCK Studio Downtown",
     price: 28000,
     description: "Compact studio in city center",
-    imageUrl: "https://via.placeholder.com/150",
+    images: ["https://via.placeholder.com/400x300", "https://via.placeholder.com/400x300/ddd", "https://via.placeholder.com/400x300/ccc"],
   },
 ];
 

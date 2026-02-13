@@ -15,6 +15,9 @@ export interface ParsedListing {
   detailUrl?: string;
   externalUrl?: string;
   createdAt: Date;
+  area_sqm?: number | null;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
 }
 
 function generateListingId(title: string, price: number | undefined, url: string): string {
@@ -102,6 +105,247 @@ function cleanDescription(raw: string | undefined): string | undefined {
   if (cleaned.length > 300) cleaned = cleaned.slice(0, 300) + "...";
 
   return cleaned || undefined;
+}
+
+const SQFT_TO_SQM = 0.092903;
+
+function parseArea(text: string): number | null {
+  if (!text) return null;
+
+  // Clean and normalize
+  const cleaned = text.toLowerCase().replace(/,/g, "").trim();
+
+  // Match number followed by unit - support "1380 sq ft", "150 sqm", "150m²", "150 m²"
+  const match = cleaned.match(/([\d.]+)\s*(m²|m2|sqm|sqft|sq\s*ft)/i);
+  if (!match) return null;
+
+  const value = parseFloat(match[1]);
+  if (isNaN(value) || value <= 0) return null;
+
+  const unit = match[2].toLowerCase().replace(/\s+/g, "");
+
+  // Convert sqft to sqm (handles "sqft" and "sq ft" which becomes "sqft" after whitespace removal)
+  if (unit === "sqft" || unit === "sqft") {
+    return Math.round(value * SQFT_TO_SQM * 100) / 100;
+  }
+
+  // m², m2, sqm - return as-is (these are already in square meters)
+  return value;
+}
+
+function parseNumericSpec(text: string): number | null {
+  if (!text) return null;
+  const match = text.match(/(\d+)/);
+  if (!match) return null;
+  const value = parseInt(match[1], 10);
+  if (isNaN(value) || value < 0) return null;
+  return value;
+}
+
+function extractSpecsFromMetaElements($: CheerioAPI, $container: Cheerio<AnyNode>): {
+  area_sqm: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+} {
+  let area_sqm: number | null = null;
+  let bedrooms: number | null = null;
+  let bathrooms: number | null = null;
+
+  // Simply Cape Verde uses .es-listing__meta-* classes for specs
+  // Primary selectors based on actual DOM inspection:
+  // - <li class="es-listing__meta-bedrooms"> containing "2 beds"
+  // - <li class="es-listing__meta-bathrooms"> containing "2 baths"
+  // - <li class="es-listing__meta-area"> containing "1380 sq ft"
+
+  // Try bedrooms - look for .es-listing__meta-bedrooms first
+  const $bedroomsMeta = $container.find(".es-listing__meta-bedrooms").first();
+  if ($bedroomsMeta.length) {
+    const text = $bedroomsMeta.text().trim();
+    // Text format: "2 beds" - extract the number
+    const match = text.match(/(\d+)\s*beds?/i);
+    if (match) {
+      bedrooms = parseInt(match[1], 10);
+    } else {
+      bedrooms = parseNumericSpec(text);
+    }
+  }
+
+  // Try bathrooms - look for .es-listing__meta-bathrooms first
+  const $bathroomsMeta = $container.find(".es-listing__meta-bathrooms").first();
+  if ($bathroomsMeta.length) {
+    const text = $bathroomsMeta.text().trim();
+    // Text format: "2 baths" - extract the number
+    const match = text.match(/(\d+)\s*baths?/i);
+    if (match) {
+      bathrooms = parseInt(match[1], 10);
+    } else {
+      bathrooms = parseNumericSpec(text);
+    }
+  }
+
+  // Try area - look for .es-listing__meta-area first
+  const $areaMeta = $container.find(".es-listing__meta-area").first();
+  if ($areaMeta.length) {
+    const text = $areaMeta.text().trim();
+    // Text format: "1380 sq ft" or "150 sqm"
+    area_sqm = parseArea(text);
+  }
+
+  // Fallback: try alternative class patterns if primary selectors didn't work
+  if (bedrooms === null) {
+    const $altBedrooms = $container.find("[class*='meta-bedrooms'], [class*='bedrooms']").first();
+    if ($altBedrooms.length) {
+      const text = $altBedrooms.text().trim();
+      const match = text.match(/(\d+)\s*beds?/i);
+      if (match) {
+        bedrooms = parseInt(match[1], 10);
+      } else {
+        bedrooms = parseNumericSpec(text);
+      }
+    }
+  }
+
+  if (bathrooms === null) {
+    const $altBathrooms = $container.find("[class*='meta-bathrooms'], [class*='bathrooms']").first();
+    if ($altBathrooms.length) {
+      const text = $altBathrooms.text().trim();
+      const match = text.match(/(\d+)\s*baths?/i);
+      if (match) {
+        bathrooms = parseInt(match[1], 10);
+      } else {
+        bathrooms = parseNumericSpec(text);
+      }
+    }
+  }
+
+  if (area_sqm === null) {
+    const $altArea = $container.find("[class*='meta-area'], [class*='area']").first();
+    if ($altArea.length) {
+      const text = $altArea.text().trim();
+      area_sqm = parseArea(text);
+    }
+  }
+
+  // Look for specs in dl/dt/dd structure (common pattern)
+  if (bedrooms === null || bathrooms === null || area_sqm === null) {
+    $container.find("dl").each((_, dl) => {
+      $(dl).find("dt").each((_, dt) => {
+        const $dt = $(dt);
+        const label = $dt.text().toLowerCase().trim();
+        const $dd = $dt.next("dd");
+        const value = $dd.text().trim();
+
+        if (area_sqm === null && (label.includes("living area") || label.includes("internal area") || label.includes("living space"))) {
+          area_sqm = parseArea(value);
+        }
+        if (area_sqm === null && (label.includes("plot size") || label.includes("land area") || label.includes("total area") || label.includes("size"))) {
+          area_sqm = parseArea(value);
+        }
+        if (bedrooms === null && (label.includes("bedroom") || label === "beds" || label === "bed")) {
+          bedrooms = parseNumericSpec(value);
+        }
+        if (bathrooms === null && (label.includes("bathroom") || label === "baths" || label === "bath")) {
+          bathrooms = parseNumericSpec(value);
+        }
+      });
+    });
+  }
+
+  // Look for specs in table rows
+  if (bedrooms === null || bathrooms === null || area_sqm === null) {
+    $container.find("table tr, .specs tr, .features tr").each((_, row) => {
+      const $row = $(row);
+      const cells = $row.find("td, th");
+      if (cells.length >= 2) {
+        const label = $(cells[0]).text().toLowerCase().trim();
+        const value = $(cells[1]).text().trim();
+
+        if (area_sqm === null && (label.includes("living area") || label.includes("internal area"))) {
+          area_sqm = parseArea(value);
+        }
+        if (area_sqm === null && (label.includes("plot size") || label.includes("land area") || label.includes("size"))) {
+          area_sqm = parseArea(value);
+        }
+        if (bedrooms === null && (label.includes("bedroom") || label === "beds")) {
+          bedrooms = parseNumericSpec(value);
+        }
+        if (bathrooms === null && (label.includes("bathroom") || label === "baths")) {
+          bathrooms = parseNumericSpec(value);
+        }
+      }
+    });
+  }
+
+  // Look for specs in list items with label: value pattern or "X beds/baths" pattern
+  if (bedrooms === null || bathrooms === null || area_sqm === null) {
+    $container.find("li, .spec-item, [class*='spec']").each((_, el) => {
+      const text = $(el).text();
+      const lowerText = text.toLowerCase();
+
+      // Pattern: "2 beds", "Bedrooms: 3", "3 Bedrooms"
+      if (bedrooms === null) {
+        const bedroomMatch = lowerText.match(/(\d+)\s*beds?\b|(?:bedroom|beds?)[\s:]*(\d+)/i);
+        if (bedroomMatch) {
+          bedrooms = parseInt(bedroomMatch[1] || bedroomMatch[2], 10);
+        }
+      }
+
+      // Pattern: "2 baths", "Bathrooms: 2", "2 Bathrooms"
+      if (bathrooms === null) {
+        const bathroomMatch = lowerText.match(/(\d+)\s*baths?\b|(?:bathroom|baths?)[\s:]*(\d+)/i);
+        if (bathroomMatch) {
+          bathrooms = parseInt(bathroomMatch[1] || bathroomMatch[2], 10);
+        }
+      }
+
+      // Pattern: "1380 sq ft", "150 sqm", "150 m²"
+      if (area_sqm === null) {
+        const areaMatch = text.match(/([\d,]+(?:\.\d+)?)\s*(m²|m2|sqm|sqft|sq\s*ft)/i);
+        if (areaMatch) {
+          area_sqm = parseArea(areaMatch[0]);
+        }
+      }
+    });
+  }
+
+  return { area_sqm, bedrooms, bathrooms };
+}
+
+function extractSpecsFromText(text: string): {
+  area_sqm: number | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+} {
+  let area_sqm: number | null = null;
+  let bedrooms: number | null = null;
+  let bathrooms: number | null = null;
+
+  if (!text) return { area_sqm, bedrooms, bathrooms };
+
+  const lowerText = text.toLowerCase();
+
+  // Area from description - look for patterns like "150 sqm", "150m²", "1500 sq ft", "1380 sq ft"
+  const areaMatch = lowerText.match(/([\d,]+(?:\.\d+)?)\s*(m²|m2|sqm|sqft|sq\s*ft)/i);
+  if (areaMatch) {
+    area_sqm = parseArea(areaMatch[0]);
+  }
+
+  // Bedrooms - patterns like "3 bedrooms", "3 bed", "3br", "2 beds"
+  // Also match title patterns like "2 Bed Apartment"
+  const bedMatch = lowerText.match(/(\d+)\s*(?:bedroom|beds?\b|br\b)/i);
+  if (bedMatch) {
+    bedrooms = parseInt(bedMatch[1], 10);
+    if (isNaN(bedrooms) || bedrooms < 0) bedrooms = null;
+  }
+
+  // Bathrooms - patterns like "2 bathrooms", "2 bath", "2ba", "2 baths"
+  const bathMatch = lowerText.match(/(\d+)\s*(?:bathroom|baths?\b|ba\b)/i);
+  if (bathMatch) {
+    bathrooms = parseInt(bathMatch[1], 10);
+    if (isNaN(bathrooms) || bathrooms < 0) bathrooms = null;
+  }
+
+  return { area_sqm, bedrooms, bathrooms };
 }
 
 function cleanImageUrls(urls: string[]): string[] {
@@ -314,6 +558,15 @@ export function parseSimplyCapeVerde(
         if (description.length > 300) description = description.slice(0, 300) + "...";
       }
 
+      // Extract specs from meta elements first, fallback to text
+      let specs = extractSpecsFromMetaElements($, $container);
+      const textSpecs = extractSpecsFromText(containerText + " " + (title || ""));
+
+      // Use table specs if available, otherwise fallback to text
+      const area_sqm = specs.area_sqm ?? textSpecs.area_sqm;
+      const bedrooms = specs.bedrooms ?? textSpecs.bedrooms;
+      const bathrooms = specs.bathrooms ?? textSpecs.bathrooms;
+
       if (title || price) {
         listings.push({
           id: `scv_${generateListingId(title || "", price, detailUrl)}`,
@@ -327,6 +580,9 @@ export function parseSimplyCapeVerde(
           detailUrl,
           externalUrl: detailUrl || undefined,
           createdAt: now,
+          area_sqm,
+          bedrooms,
+          bathrooms,
         });
       }
     });
@@ -378,6 +634,16 @@ export function parseSimplyCapeVerde(
       // Extract description
       let description = $card.find(".description, .excerpt, p").first().text().trim();
 
+      // Extract specs from meta elements first, fallback to text
+      const cardText = $card.text();
+      let specs = extractSpecsFromMetaElements($, $card);
+      const textSpecs = extractSpecsFromText(cardText + " " + (title || ""));
+
+      // Use table specs if available, otherwise fallback to text
+      const area_sqm = specs.area_sqm ?? textSpecs.area_sqm;
+      const bedrooms = specs.bedrooms ?? textSpecs.bedrooms;
+      const bathrooms = specs.bathrooms ?? textSpecs.bathrooms;
+
       if (title || price) {
         listings.push({
           id: `scv_${generateListingId(title || "", price, detailUrl)}`,
@@ -390,6 +656,9 @@ export function parseSimplyCapeVerde(
           location: location || undefined,
           detailUrl,
           createdAt: now,
+          area_sqm,
+          bedrooms,
+          bathrooms,
         });
       }
     });

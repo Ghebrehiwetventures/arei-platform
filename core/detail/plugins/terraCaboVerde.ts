@@ -345,22 +345,32 @@ export const terraCaboVerdePlugin: DetailPlugin = {
     }
 
     // ========================================
-    // Extract images from swiper carousel
+    // Extract images from #prop-gallery (property-specific)
     // ========================================
-    $(".swiper-slide img").each((_, el) => {
+    $("#prop-gallery .swiper-slide img").each((_, el) => {
       const src = $(el).attr("src");
       if (src && src.startsWith("http") && !imageUrls.includes(src)) {
         imageUrls.push(src);
       }
     });
 
-    // Also extract from lightbox hrefs
-    $(".swiper-slide a[href*='.jpg'], .swiper-slide a[href*='.png']").each((_, el) => {
+    // Also extract from lightbox hrefs within #prop-gallery
+    $("#prop-gallery .swiper-slide a[href*='.jpg'], #prop-gallery .swiper-slide a[href*='.png'], #prop-gallery .swiper-slide a[href*='.jpeg']").each((_, el) => {
       const href = $(el).attr("href");
       if (href && href.startsWith("http") && !imageUrls.includes(href)) {
         imageUrls.push(href);
       }
     });
+
+    // Fallback: if no images in #prop-gallery, try elementor-image-carousel
+    if (imageUrls.length === 0) {
+      $(".elementor-image-carousel .swiper-slide img").each((_, el) => {
+        const src = $(el).attr("src");
+        if (src && src.startsWith("http") && !imageUrls.includes(src)) {
+          imageUrls.push(src);
+        }
+      });
+    }
 
     // Extract title from h1 or page title
     let title: string | undefined;

@@ -2,6 +2,7 @@ import * as cheerio from "cheerio";
 import type { CheerioAPI, Cheerio } from "cheerio";
 import type { AnyNode } from "domhandler";
 import * as crypto from "crypto";
+import { fetchHtml } from "./fetchHtml";
 
 export interface ParsedListing {
   id: string;
@@ -125,16 +126,16 @@ function extractImagesFromStyleBlocks($: CheerioAPI, $el: Cheerio<AnyNode>, base
   return imageUrls;
 }
 
-export function parseTerraCaboVerde(
+function parseListingsFromHtml(
   html: string,
   sourceId: string,
   sourceName: string,
-  baseUrl: string
+  baseUrl: string,
+  processedUrls: Set<string>,
+  now: Date
 ): ParsedListing[] {
   const $ = cheerio.load(html);
   const listings: ParsedListing[] = [];
-  const now = new Date();
-  const processedUrls = new Set<string>();
 
   // Find property links
   const propertyLinks = $('a[href*="/properties/"]');
@@ -270,6 +271,19 @@ export function parseTerraCaboVerde(
     });
   });
 
+  return listings;
+}
+
+export function parseTerraCaboVerde(
+  html: string,
+  sourceId: string,
+  sourceName: string,
+  baseUrl: string
+): ParsedListing[] {
+  const now = new Date();
+  const processedUrls = new Set<string>();
+  const listings = parseListingsFromHtml(html, sourceId, sourceName, baseUrl, processedUrls, now);
+
   // DEBUG_TERRA: assert no pagination URLs leaked through
   if (process.env.DEBUG_TERRA === "1") {
     const paginationUrls = listings.filter((l) => l.detailUrl?.includes("?e-page-"));
@@ -280,4 +294,106 @@ export function parseTerraCaboVerde(
   }
 
   return listings;
+}
+
+const MAX_LISTINGS = 100;
+const BASE_URL = "https://terracaboverde.com/properties/";
+const PAGE_DELAY_MS = 2500; // Delay between page fetches to prevent rate limiting
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+export async function parseTerraCaboVerdePaginated(
+  sourceId: string,
+  sourceName: string
+): Promise<ParsedListing[]> {
+  const now = new Date();
+  const processedUrls = new Set<string>();
+  const allListings: ParsedListing[] = [];
+
+  let page = 1;
+  let hasMore = true;
+
+  while (hasMore && allListings.length < MAX_LISTINGS) {
+    // Add delay between pages (skip for first page)
+    if (page > 1) {
+      const jitter = Math.floor(Math.random() * 500); // 0-500ms jitter
+      const delayMs = PAGE_DELAY_MS + jitter;
+      if (process.env.DEBUG_TERRA === "1") {
+        console.log(`[DEBUG_TERRA] Waiting ${delayMs}ms before fetching page ${page}...`);
+      }
+      await sleep(delayMs);
+    }
+
+    const url = page === 1
+      ? BASE_URL
+      : `${BASE_URL}?e-page=${page}`;
+
+    if (process.env.DEBUG_TERRA === "1") {
+      console.log(`[DEBUG_TERRA] Fetching page ${page}: ${url}`);
+    }
+
+    const result = await fetchHtml(url);
+
+    if (!result.success || !result.html) {
+      if (process.env.DEBUG_TERRA === "1") {
+        console.log(`[DEBUG_TERRA] Failed to fetch page ${page}: ${result.error}`);
+      }
+      hasMore = false;
+      break;
+    }
+
+    if (result.statusCode !== 200) {
+      if (process.env.DEBUG_TERRA === "1") {
+        console.log(`[DEBUG_TERRA] Page ${page} returned status ${result.statusCode}`);
+      }
+      hasMore = false;
+      break;
+    }
+
+    const pageListings = parseListingsFromHtml(
+      result.html,
+      sourceId,
+      sourceName,
+      BASE_URL,
+      processedUrls,
+      now
+    );
+
+    if (process.env.DEBUG_TERRA === "1") {
+      console.log(`[DEBUG_TERRA] Page ${page}: found ${pageListings.length} listings (total so far: ${allListings.length + pageListings.length})`);
+    }
+
+    if (pageListings.length === 0) {
+      if (process.env.DEBUG_TERRA === "1") {
+        console.log(`[DEBUG_TERRA] No listings found on page ${page}, stopping pagination`);
+      }
+      hasMore = false;
+    } else {
+      allListings.push(...pageListings);
+      page++;
+      
+      if (allListings.length >= MAX_LISTINGS) {
+        if (process.env.DEBUG_TERRA === "1") {
+          console.log(`[DEBUG_TERRA] Reached MAX_LISTINGS (${MAX_LISTINGS}), stopping pagination`);
+        }
+      }
+    }
+  }
+
+  // DEBUG_TERRA: assert no pagination URLs leaked through
+  if (process.env.DEBUG_TERRA === "1") {
+    const paginationUrls = allListings.filter((l) => l.detailUrl?.includes("?e-page-"));
+    console.log(`[DEBUG_TERRA] ===== Pagination Complete =====`);
+    console.log(`[DEBUG_TERRA] Total pages fetched: ${page - 1}`);
+    console.log(`[DEBUG_TERRA] Total listings extracted: ${allListings.length}`);
+    console.log(`[DEBUG_TERRA] Unique URLs processed: ${processedUrls.size}`);
+    console.log(`[DEBUG_TERRA] detailUrls with ?e-page-: ${paginationUrls.length}`);
+    if (paginationUrls.length > 0) {
+      console.log(`[DEBUG_TERRA] WARNING: pagination URLs found:`, paginationUrls.map((l) => l.detailUrl));
+    }
+  }
+
+  return allListings.slice(0, MAX_LISTINGS);
 }

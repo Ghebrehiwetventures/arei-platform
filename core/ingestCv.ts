@@ -1,3 +1,7 @@
+import { fetchHeadless } from "./fetchHeadless";
+import { initSourceStats, normalizeOrDrop } from './dropReport'
+
+
 import * as fs from "fs";
 import * as path from "path";
 import { SourceStatus, SourceState, createInitialState } from "./status";
@@ -12,15 +16,21 @@ import {
   SourceStatusMap,
 } from "./batchEvaluateMarket";
 import { fetchHtml } from "./fetchHtml";
-import { parseSimplyCapeVerde, ParsedListing } from "./parseSimplyCapeVerde";
-import { parseGenericHtml } from "./parseGenericHtml";
-import { parseTerraCaboVerde } from "./parseTerraCaboVerde";
 import { runDetailEnrichment } from "./detail/enrich";
 import { getStrategyFactory } from "./detail/strategyFactory";
 import { terraCaboVerdePlugin } from "./detail/plugins/terraCaboVerde";
 import { simplyCapeVerdePlugin } from "./detail/plugins/simplyCapeVerde";
+import { createGenericDetailPlugin } from "./detail/plugins/genericDetail";
 import { DetailEnrichmentInput } from "./detail/types";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
+
+// Generic config-driven fetcher — replaces all per-source parsers
+import {
+  genericPaginatedFetcher,
+  GenericParsedListing,
+  GenericFetchResult,
+} from "./genericFetcher";
+import { sourceConfigToFetchConfig } from "./configLoader";
 
 // ============================================
 // LISTING TYPES
@@ -41,6 +51,7 @@ interface IngestListing {
   // Structured property data
   bedrooms?: number | null;
   bathrooms?: number | null;
+  area_sqm?: number | null;
   parkingSpaces?: number | null;
   terraceArea?: number | null;
   amenities?: string[];
@@ -81,6 +92,7 @@ function generateStubListings(sources: SourceConfig[]): IngestListing[] {
         "https://images.cv/apt1-4.jpg",
       ],
       location: "Praia",
+      detailUrl: "https://imobiliariapraia.cv/listings/lst_001",
       createdAt: new Date(now.getTime() - 86400000),
     });
 
@@ -97,6 +109,7 @@ function generateStubListings(sources: SourceConfig[]): IngestListing[] {
         "https://images.cv/villa1-3.jpg",
       ],
       location: "Santa Maria",
+      detailUrl: "https://imobiliariapraia.cv/listings/lst_002",
       createdAt: new Date(now.getTime() - 172800000),
     });
   }
@@ -116,6 +129,7 @@ function generateStubListings(sources: SourceConfig[]): IngestListing[] {
         "https://images.cv/studio1-3.jpg",
       ],
       location: "Mindelo",
+      detailUrl: "https://mindeloproperties.cv/listings/lst_003",
       createdAt: now,
     });
 
@@ -129,6 +143,7 @@ function generateStubListings(sources: SourceConfig[]): IngestListing[] {
       description: "Spacious house with large garden area. 4 bedrooms, 2 bathrooms. Needs some renovation but great potential.",
       imageUrls: ["https://images.cv/house1-1.jpg"],
       location: "Mindelo",
+      detailUrl: "https://mindeloproperties.cv/listings/lst_004",
       createdAt: now,
     });
 
@@ -146,6 +161,7 @@ function generateStubListings(sources: SourceConfig[]): IngestListing[] {
         "https://images.cv/comm1-3.jpg",
       ],
       location: "Mindelo",
+      detailUrl: "https://mindeloproperties.cv/listings/lst_005",
       createdAt: now,
     });
 
@@ -163,6 +179,7 @@ function generateStubListings(sources: SourceConfig[]): IngestListing[] {
         "https://images.cv/prop1-3.jpg",
       ],
       location: "Mindelo",
+      detailUrl: "https://mindeloproperties.cv/listings/lst_006",
       createdAt: now,
     });
   }
@@ -171,9 +188,150 @@ function generateStubListings(sources: SourceConfig[]): IngestListing[] {
 }
 
 // ============================================
-// REAL SOURCE FETCHER
+// REAL SOURCE FETCHER (config-driven via genericPaginatedFetcher)
 // ============================================
 
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+/**
+ * Config-driven detail enrichment for any source with detail.enabled: true
+ * Replaces the old hardcoded enrichTerraDescriptions().
+ * Uses fetchHeadless or fetchHtml based on source config, and the registered
+ * detail plugin (source-specific or generic) to extract data.
+ */
+async function enrichDetailPages(
+  listings: IngestListing[],
+  sources: SourceConfig[]
+): Promise<void> {
+  const factory = getStrategyFactory();
+
+  for (const source of sources) {
+    if (!source.detail?.enabled) continue;
+    if (!factory.hasPlugin(source.id)) continue;
+
+    const sourceListings = listings.filter(
+      (l) => l.sourceId === source.id && l.detailUrl
+    );
+    if (sourceListings.length === 0) continue;
+
+    const delayMs = source.detail.delay_ms || 2500;
+    const policy = source.detail.policy || "always";
+    const useHeadless = source.fetch_method === "headless";
+
+    console.log(`[${source.id} Detail] Enriching ${sourceListings.length} listings (policy: ${policy}, method: ${useHeadless ? "headless" : "http"})...`);
+
+    let enrichedCount = 0;
+    let failedCount = 0;
+
+    for (const listing of sourceListings) {
+      if (!listing.detailUrl) continue;
+
+      // Policy check: "on_violation" only enriches if listing has golden rule issues
+      if (policy === "on_violation") {
+        const hasEnoughImages = (listing.imageUrls?.length || 0) >= 3;
+        const hasDescription = (listing.description?.length || 0) >= 50;
+        if (hasEnoughImages && hasDescription) {
+          listing.detail_skipped_reason = "passes_golden_rules";
+          continue;
+        }
+      }
+
+      // Rate limit
+      await sleep(delayMs + Math.floor(Math.random() * 1000));
+
+      try {
+        const fetchResult = useHeadless
+          ? await fetchHeadless(listing.detailUrl)
+          : await fetchHtml(listing.detailUrl);
+
+        if (!fetchResult.success || !fetchResult.html) {
+          failedCount++;
+          listing.detail_error = fetchResult.error || "fetch failed";
+          console.log(`[${source.id} Detail] ✗ ${listing.id} fetch failed`);
+          continue;
+        }
+
+        const plugin = factory.getPlugin(source.id);
+        if (!plugin) continue;
+
+        const extractResult = plugin.extract(fetchResult.html, listing.detailUrl);
+
+        if (!extractResult.success) {
+          failedCount++;
+          listing.detail_error = "extraction failed";
+          console.log(`[${source.id} Detail] ✗ ${listing.id} extraction failed`);
+          continue;
+        }
+
+        let wasEnriched = false;
+
+        // Update description if better
+        if (extractResult.description && extractResult.description.length >= 50) {
+          if (!listing.description || extractResult.description.length > listing.description.length) {
+            listing.description = extractResult.description;
+            wasEnriched = true;
+          }
+        }
+
+        // Merge images
+        if (extractResult.imageUrls && extractResult.imageUrls.length > 0) {
+          const currentImages = listing.imageUrls || [];
+          for (const img of extractResult.imageUrls) {
+            if (!currentImages.includes(img)) {
+              currentImages.push(img);
+              wasEnriched = true;
+            }
+          }
+          listing.imageUrls = currentImages;
+        }
+
+        // Update price if listing has no price but detail page does
+        if (extractResult.price && extractResult.price > 0 && !listing.price) {
+          listing.price = extractResult.price;
+          wasEnriched = true;
+          console.log(`[${source.id} Detail]   price recovered: ${extractResult.price}`);
+        }
+
+        // Update structured data
+        if (extractResult.bedrooms !== undefined) listing.bedrooms = extractResult.bedrooms;
+        if (extractResult.bathrooms !== undefined) listing.bathrooms = extractResult.bathrooms;
+        if (extractResult.parkingSpaces !== undefined) listing.parkingSpaces = extractResult.parkingSpaces;
+        if (extractResult.terraceArea !== undefined) listing.terraceArea = extractResult.terraceArea;
+        if (extractResult.amenities && extractResult.amenities.length > 0) {
+          listing.amenities = extractResult.amenities;
+        }
+        // Update title if we got a better one
+        if (extractResult.title && extractResult.title.length > (listing.title?.length || 0)) {
+          listing.title = extractResult.title;
+        }
+
+        listing.detail_enriched = wasEnriched;
+        if (wasEnriched) {
+          enrichedCount++;
+          console.log(`[${source.id} Detail] ✓ ${listing.id} enriched (desc: ${listing.description?.length || 0} chars, imgs: ${listing.imageUrls?.length || 0})`);
+        } else {
+          console.log(`[${source.id} Detail] ~ ${listing.id} no new data`);
+        }
+      } catch (err) {
+        failedCount++;
+        listing.detail_error = err instanceof Error ? err.message : String(err);
+        console.log(`[${source.id} Detail] ✗ ${listing.id} error: ${listing.detail_error}`);
+      }
+    }
+
+    console.log(`[${source.id} Detail] Complete: ${enrichedCount} enriched, ${failedCount} failed`);
+  }
+}
+
+/**
+ * Fetch and parse listings from a real HTML source using the generic
+ * config-driven paginated fetcher. No per-source if/else needed.
+ *
+ * This replaces the old hardcoded fetchRealSource() that only worked
+ * for Terra and Simply via dedicated parsers.
+ */
 async function fetchRealSource(
   source: SourceConfig,
   sourceState: SourceState
@@ -181,68 +339,52 @@ async function fetchRealSource(
   const state = { ...sourceState };
   state.scrapeAttempts = 1;
 
-  console.log(`[${source.id}] Fetching ${source.url}...`);
+  console.log(`[${source.id}] Fetching via genericPaginatedFetcher (method: ${source.fetch_method || "http"}, pagination: ${source.pagination?.type || "none"})...`);
 
-  const fetchResult = await fetchHtml(source.url);
+  try {
+    // Convert YAML config to SourceFetchConfig
+    const fetchConfig = sourceConfigToFetchConfig(source);
 
-  if (!fetchResult.success || !fetchResult.html) {
+    // Use the generic paginated fetcher — handles HTTP/headless, pagination, selectors
+    const result: GenericFetchResult = await genericPaginatedFetcher(fetchConfig);
+
+    if (result.listings.length === 0) {
+      state.status = SourceStatus.PARTIAL_OK;
+      state.lastError = `No listings found (pages: ${result.debug.pagesSuccessful}, stop: ${result.debug.stopReason})`;
+      console.log(`[${source.id}] No listings found. Debug: ${JSON.stringify(result.debug)}`);
+    } else {
+      state.status = SourceStatus.OK;
+      console.log(`[${source.id}] Parsed ${result.listings.length} listings across ${result.debug.pagesSuccessful} pages (stop: ${result.debug.stopReason})`);
+    }
+
+    if (result.debug.errors.length > 0) {
+      console.log(`[${source.id}] Warnings: ${result.debug.errors.join("; ")}`);
+    }
+
+    // Map GenericParsedListing to IngestListing
+    const listings: IngestListing[] = result.listings.map((p) => ({
+      id: p.id,
+      sourceId: p.sourceId,
+      sourceName: p.sourceName,
+      title: p.title,
+      price: p.price,
+      description: p.description,
+      imageUrls: p.imageUrls,
+      location: p.location,
+      detailUrl: p.detailUrl,
+      createdAt: p.createdAt,
+      bedrooms: p.bedrooms,
+      bathrooms: p.bathrooms,
+      area_sqm: p.area_sqm,
+    }));
+
+    return { listings, state };
+  } catch (err) {
     state.status = SourceStatus.BROKEN_SOURCE;
-    state.lastError = fetchResult.error || "Failed to fetch HTML";
-    console.log(`[${source.id}] Fetch failed: ${state.lastError}`);
+    state.lastError = err instanceof Error ? err.message.slice(0, 200) : String(err).slice(0, 200);
+    console.log(`[${source.id}] genericPaginatedFetcher error: ${state.lastError}`);
     return { listings: [], state };
   }
-
-  console.log(`[${source.id}] Fetched ${fetchResult.html.length} bytes, parsing...`);
-
-  let parsedListings: ParsedListing[] = [];
-
-  if (source.id === "cv_simplycapeverde") {
-    parsedListings = parseSimplyCapeVerde(
-      fetchResult.html,
-      source.id,
-      source.name,
-      source.url
-    );
-  } else if (source.id === "cv_terracaboverde") {
-    parsedListings = parseTerraCaboVerde(
-      fetchResult.html,
-      source.id,
-      source.name,
-      source.url
-    );
-  } else {
-    // Use generic parser for other HTML sources
-    parsedListings = parseGenericHtml(
-      fetchResult.html,
-      source.id,
-      source.name,
-      source.url
-    );
-  }
-
-  if (parsedListings.length === 0) {
-    state.status = SourceStatus.PARTIAL_OK;
-    state.lastError = "No listings found on page";
-    console.log(`[${source.id}] No listings found`);
-  } else {
-    state.status = SourceStatus.OK;
-    console.log(`[${source.id}] Parsed ${parsedListings.length} listings`);
-  }
-
-  const listings: IngestListing[] = parsedListings.map((p) => ({
-    id: p.id,
-    sourceId: p.sourceId,
-    sourceName: p.sourceName,
-    title: p.title,
-    price: p.price,
-    description: p.description,
-    imageUrls: p.imageUrls,
-    location: p.location,
-    detailUrl: p.detailUrl,
-    createdAt: p.createdAt,
-  }));
-
-  return { listings, state };
 }
 
 // ============================================
@@ -262,13 +404,17 @@ interface ListingReport {
   id: string;
   sourceId: string;
   sourceName: string;
+  sourceUrl?: string;
   title?: string;
+  description?: string;
   price?: number;
+  priceText?: string;
   location?: string;
-  imageCount: number;
+  images: string[];
   // Structured property data
   bedrooms?: number | null;
   bathrooms?: number | null;
+  area_sqm?: number | null;
   parkingSpaces?: number | null;
   terraceArea?: number | null;
   amenities?: string[];
@@ -427,6 +573,57 @@ export async function runCvIngest(): Promise<IngestReport> {
   allListings.push(...stubListings);
 
   console.log(`\nTotal listings collected: ${allListings.length}\n`);
+  const dropReport = {
+    market: marketId,
+    generated_at: new Date().toISOString(),
+    sources: [] as any[],
+  };
+  
+
+  // ============================================
+  // REGISTER DETAIL PLUGINS (source-specific + generic)
+  // ============================================
+  const factory = getStrategyFactory();
+  // Register source-specific plugins (Terra + Simply have custom extraction logic)
+  factory.register(terraCaboVerdePlugin);
+  factory.register(simplyCapeVerdePlugin);
+
+  // Register generic detail plugins for all other sources with detail.enabled
+  for (const source of sources) {
+    if (!source.detail?.enabled) continue;
+    if (factory.hasPlugin(source.id)) continue; // Skip if already registered (Terra/Simply)
+    factory.register(createGenericDetailPlugin(source.id, source.detail));
+    console.log(`[Detail] Registered generic detail plugin for ${source.id}`);
+  }
+
+  // Config-driven detail enrichment for ALL sources with detail.enabled
+  await enrichDetailPages(allListings, sources);
+  // ============================================
+// DROP REPORT – MEASURE NORMALIZED ELIGIBILITY
+// ============================================
+
+const listingsBySource = new Map<string, IngestListing[]>();
+
+for (const l of allListings) {
+  if (!listingsBySource.has(l.sourceId)) {
+    listingsBySource.set(l.sourceId, []);
+  }
+  listingsBySource.get(l.sourceId)!.push(l);
+}
+
+for (const [sourceId, listings] of listingsBySource.entries()) {
+  const stats = initSourceStats(sourceId);
+
+  for (const raw of listings) {
+    // IMPORTANT:
+    // We DO NOT mutate or save the result.
+    // We only measure eligibility.
+    normalizeOrDrop(raw, stats);
+  }
+
+  dropReport.sources.push(stats);
+}
+
 
   // Convert to MarketListingInput format
   const marketListings: MarketListingInput[] = allListings.map((l) => ({
@@ -573,13 +770,17 @@ export async function runCvIngest(): Promise<IngestReport> {
       id: listing.id,
       sourceId: listing.sourceId,
       sourceName: listing.sourceName,
+      sourceUrl: listing.detailUrl || listing.externalUrl || "",
       title: listing.title,
+      description: listing.description,
       price: listing.price,
+      priceText: listing.price ? `${listing.price} EUR` : undefined,
       location: listing.location,
-      imageCount: listing.imageUrls?.length || 0,
+      images: listing.imageUrls || [],
       // Structured property data
       bedrooms: listing.bedrooms,
       bathrooms: listing.bathrooms,
+      area_sqm: listing.area_sqm,
       parkingSpaces: listing.parkingSpaces,
       terraceArea: listing.terraceArea,
       amenities: listing.amenities,
@@ -624,6 +825,8 @@ export async function runCvIngest(): Promise<IngestReport> {
     fs.mkdirSync(artifactsDir, { recursive: true });
   }
 
+
+
   const outputPath = path.join(artifactsDir, "cv_ingest_report.json");
   fs.writeFileSync(outputPath, JSON.stringify(report, null, 2));
 
@@ -631,11 +834,14 @@ export async function runCvIngest(): Promise<IngestReport> {
   console.log(`Report written to: ${outputPath}`);
   console.log(`Summary: ${report.summary.visibleCount} visible, ${report.summary.hiddenCount} hidden, ${report.summary.duplicatesRemoved} duplicates\n`);
 
-  // Write visible listings to Supabase
-  console.log(`\n[Supabase] Writing ${visibleListings.length} visible listings...`);
-  const supabaseListings: SupabaseListing[] = visibleListings.map((listing) => {
+  // Write all listings to Supabase (both visible and hidden)
+  const allReportListings = [...visibleListings, ...hiddenListings];
+  console.log(`\n[Supabase] Writing ${allReportListings.length} listings...`);
+  const supabaseListings: SupabaseListing[] = allReportListings.map((listing) => {
     const fullListing = allListings.find((l) => l.id === listing.id);
-    
+    const classification = finalEvalResult.classifications.find((c) => c.listingId === listing.id);
+    const violations = classification?.violations || [];
+
     // Parse location into island and city
     let island: string | undefined;
     let city: string | undefined;
@@ -658,23 +864,49 @@ export async function runCvIngest(): Promise<IngestReport> {
     return {
       id: listing.id,
       source_id: listing.sourceId,
-      source_url: fullListing?.detailUrl || fullListing?.externalUrl || "",
+      source_url: fullListing?.detailUrl || fullListing?.externalUrl || null,
       title: listing.title,
       description: fullListing?.description,
       price: listing.price,
       currency: "EUR",
+      country: "Cape Verde",
       island,
       city,
       bedrooms: listing.bedrooms ?? null,
       bathrooms: listing.bathrooms ?? null,
-      property_size_sqm: null,
+      property_size_sqm: listing.area_sqm ?? null,
       land_area_sqm: null,
       image_urls: fullListing?.imageUrls || [],
       status: "observe",
+      violations: violations,
+      approved: violations.length === 0,
+      property_type: undefined,
+      amenities: fullListing?.amenities || [],
+      price_period: "sale",
     };
   });
 
   await upsertListings(supabaseListings);
+
+  // Verification: Compare 3 listing IDs between upsert payload and report
+  console.log(`\n[Verification] Comparing description lengths between Supabase payload and report...`);
+  const verifyCount = Math.min(3, supabaseListings.length);
+  for (let i = 0; i < verifyCount; i++) {
+    const supabaseItem = supabaseListings[i];
+    const reportItem = visibleListings.find((r) => r.id === supabaseItem.id);
+    const supabaseDescLen = supabaseItem.description?.length ?? 0;
+    const reportDescLen = reportItem?.description?.length ?? 0;
+    const match = supabaseDescLen === reportDescLen ? "✓ MATCH" : "✗ MISMATCH";
+    console.log(`  [${supabaseItem.id}] Supabase: ${supabaseDescLen} chars | Report: ${reportDescLen} chars | ${match}`);
+  }
+
+
+
+console.log("ABOUT TO WRITE DROP REPORT");
+const dropPath = path.join(artifactsDir, "cv_drop_report.json");
+fs.writeFileSync(dropPath, JSON.stringify(dropReport, null, 2));
+console.log(`Drop report written to: ${dropPath}`);
+
 
   return report;
 }

@@ -186,6 +186,84 @@ function displayPreflightReport(): void {
     }
   }
 
+  // Global Image Quality
+  if (report.globalImageQuality) {
+    const giq = report.globalImageQuality;
+    console.log("\n--- Global Image Quality (IQS v1) ---");
+    console.log(`  Average Score: ${giq.avgScore}/100`);
+    console.log(`  Tier Distribution:`);
+    console.log(`    A: ${giq.tierDistribution.A} listings`);
+    console.log(`    B: ${giq.tierDistribution.B} listings`);
+    console.log(`    C: ${giq.tierDistribution.C} listings`);
+    console.log(`    D: ${giq.tierDistribution.D} listings`);
+    console.log(`  A/B Tier: ${giq.percentAB}%`);
+    if (giq.topReasons.length > 0) {
+      console.log(`  Top Quality Issues:`);
+      for (const { reason, count } of giq.topReasons) {
+        console.log(`    - ${reason}: ${count} listings`);
+      }
+    }
+  }
+
+  // Per-Source Image Quality
+  const sourcesWithIQ = report.results.filter((r) => r.metrics.imageQuality !== undefined);
+  if (sourcesWithIQ.length > 0) {
+    console.log("\n--- Per-Source Image Quality ---");
+    for (const result of sourcesWithIQ) {
+      const iq = result.metrics.imageQuality!;
+      console.log(`  ${result.sourceName}:`);
+      console.log(`    Avg Score: ${iq.avgScore}/100`);
+      console.log(`    Tier: A=${iq.tierDistribution.A}, B=${iq.tierDistribution.B}, C=${iq.tierDistribution.C}, D=${iq.tierDistribution.D}`);
+      console.log(`    A/B: ${iq.percentAB}%`);
+      if (iq.topReasons.length > 0) {
+        const reasonsStr = iq.topReasons.map((r) => `${r.reason}(${r.count})`).join(", ");
+        console.log(`    Issues: ${reasonsStr}`);
+      }
+    }
+  }
+
+  // Source-Level IQS Breakdown (Ranked)
+  if (report.sourceImageQualityBreakdown && report.sourceImageQualityBreakdown.length > 0) {
+    const breakdown = report.sourceImageQualityBreakdown;
+    
+    console.log("\n=== Source-Level Image Quality Breakdown ===\n");
+    
+    // Top 3 worst sources (lowest avg IQS)
+    console.log("--- Top 3 Worst Sources (by avg IQS) ---");
+    const worst = breakdown.slice(0, 3);
+    for (const source of worst) {
+      console.log(`  ${source.sourceName}:`);
+      console.log(`    Listings: ${source.listingCount}`);
+      console.log(`    Avg IQS: ${source.avgScore}/100`);
+      console.log(`    Tier D: ${source.percentD}% (${source.tierDistribution.D}/${source.listingCount})`);
+      if (source.topReasons.length > 0) {
+        const reasonsStr = source.topReasons.map((r) => `${r.reason}(${r.count})`).join(", ");
+        console.log(`    Top Issues: ${reasonsStr}`);
+      }
+    }
+    
+    // Top 3 best sources (highest avg IQS)
+    console.log("\n--- Top 3 Best Sources (by avg IQS) ---");
+    const best = breakdown.slice(-3).reverse();
+    for (const source of best) {
+      console.log(`  ${source.sourceName}:`);
+      console.log(`    Listings: ${source.listingCount}`);
+      console.log(`    Avg IQS: ${source.avgScore}/100`);
+      console.log(`    Tier D: ${source.percentD}% (${source.tierDistribution.D}/${source.listingCount})`);
+      if (source.topReasons.length > 0) {
+        const reasonsStr = source.topReasons.map((r) => `${r.reason}(${r.count})`).join(", ");
+        console.log(`    Top Issues: ${reasonsStr}`);
+      }
+    }
+    
+    // Full ranked list
+    console.log("\n--- All Sources (Ranked by IQS) ---");
+    for (let i = 0; i < breakdown.length; i++) {
+      const source = breakdown[i];
+      console.log(`  ${i + 1}. ${source.sourceName}: ${source.avgScore}/100 (${source.listingCount} listings, ${source.percentD}% Tier D)`);
+    }
+  }
+
   console.log("");
 }
 

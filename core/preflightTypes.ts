@@ -19,11 +19,24 @@ export enum ObserveReason {
   LOW_IMAGE_RATIO = "LOW_IMAGE_RATIO",
 }
 
+export interface ImageQualityMetrics {
+  avgScore: number;
+  tierDistribution: {
+    A: number;
+    B: number;
+    C: number;
+    D: number;
+  };
+  percentAB: number;
+  topReasons: Array<{ reason: string; count: number }>;
+}
+
 export interface PreflightMetrics {
   listingsCount: number;
   hasPriceRatio: number;
   hasImageRatio: number;
   hasDescriptionRatio: number;
+  imageQuality?: ImageQualityMetrics;
 }
 
 export interface PreflightResult {
@@ -37,6 +50,21 @@ export interface PreflightResult {
   promotedToIn?: boolean;
 }
 
+export interface SourceImageQualityBreakdown {
+  sourceId: string;
+  sourceName: string;
+  listingCount: number;
+  avgScore: number;
+  tierDistribution: {
+    A: number;
+    B: number;
+    C: number;
+    D: number;
+  };
+  percentD: number;
+  topReasons: Array<{ reason: string; count: number }>;
+}
+
 export interface PreflightReport {
   marketId: string;
   generatedAt: string;
@@ -47,6 +75,8 @@ export interface PreflightReport {
     observeCount: number;
     dropCount: number;
   };
+  globalImageQuality?: ImageQualityMetrics;
+  sourceImageQualityBreakdown?: SourceImageQualityBreakdown[];
 }
 
 // Thresholds for preflight classification

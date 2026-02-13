@@ -24,9 +24,15 @@ export interface Listing {
   id: string;
   title?: string;
   price?: number;
-  imageUrl?: string;
+  currency?: string;
+  images: string[];
   description?: string;
   sourceName: string;
+  location?: string;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  area_sqm?: number | null;
+  property_type?: string;
 }
 
 export interface Market {
