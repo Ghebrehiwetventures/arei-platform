@@ -1,0 +1,22 @@
+{
+  "market": "zm",
+  "generated_at": "2026-02-10T18:11:00.318Z",
+  "sources": [
+    {
+      "source_id": "zm_property24",
+      "fetched_total": 50,
+      "kept_normalized": 47,
+      "dropped": {
+        "missing_price": 3,
+        "missing_location": 0,
+        "missing_property_type": 0,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    }
+  ]
+}

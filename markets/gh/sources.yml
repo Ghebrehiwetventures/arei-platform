@@ -1,0 +1,154 @@
+# Ghana Sources - Generic Config
+# ============================================
+# Same schema as CV and KE. NO code changes needed.
+# ============================================
+
+market: gh
+
+sources:
+  # ============================================
+  # MEQASA - Ghana's #1 property portal
+  # JS-heavy site, needs headless for pagination
+  # ============================================
+  - id: gh_meqasa
+    name: "Meqasa Ghana"
+    url: https://meqasa.com/houses-for-sale-in-ghana
+    type: html
+    lifecycleOverride: IN
+
+    cms_type: custom
+
+    fetch_method: headless  # JS-rendered pagination
+
+    pagination:
+      type: query_param
+      param: "page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 3000
+    jitter_ms: 1000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    # DOM: .mqs-featured-prop-inner-wrap > .mqs-prop-dt-wrapper h2 a (title+link)
+    # Note: .mqs-prop-inner-wrap (without "featured") is agent profiles, NOT listings
+    # Price in p.h3 inside dt-wrapper, images on cloudfront CDN
+    selectors:
+      listing: ".mqs-featured-prop-inner-wrap"
+      link: ".mqs-prop-dt-wrapper h2 a"
+      title: ".mqs-prop-dt-wrapper h2 a"
+      price: ".mqs-prop-dt-wrapper p.h3"
+      location: ".mqs-prop-dt-wrapper h2 a"  # Location embedded in title text
+      image: "img[src*='cloudfront.net/tn'], img[src*='cloudfront.net/uploads']"
+
+    price_format:
+      currency_symbol: "GH₵"
+      thousands_separator: ","
+
+    id_prefix: "mqs"
+
+    detail:
+      enabled: true
+      policy: on_violation
+      delay_ms: 3000
+      selectors:
+        description: ".description, .description p"
+        images: "img[src*='cloudfront.net/temp'], img[src*='cloudfront.net/uploads']"
+        bedrooms: ".prop-features li.bed span"
+        bathrooms: ".prop-features li.shower span"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|BR)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+          - "(\\d+)\\s*bedroom"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*(?:ft|m))"
+      amenity_keywords:
+        pool: ["pool", "swimming"]
+        garden: ["garden", "yard", "lawn"]
+        parking: ["parking", "garage", "carport"]
+        security: ["security", "gated", "cctv", "guard", "wall"]
+
+  # ============================================
+  # GHANA PROPERTY CENTRE - Same platform as KPC
+  # Server-rendered, schema.org markup, http works
+  # ============================================
+  - id: gh_propertycentre
+    name: "Ghana Property Centre"
+    url: https://ghanapropertycentre.com/for-sale
+    type: html
+    lifecycleOverride: IN
+
+    cms_type: custom
+
+    fetch_method: http
+
+    pagination:
+      type: query_param
+      param: "page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 3000
+    jitter_ms: 1000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    # DOM: identical to kenyapropertycentre.com (same platform)
+    # .row.property-list > h3[itemprop='name'] + a[itemprop='url'] + img[itemprop='image']
+    selectors:
+      listing: ".row.property-list"
+      link: "a[itemprop='url']"
+      title: "h3[itemprop='name']"
+      price: ".pull-sm-left"
+      location: "address.voffset-bottom-10"
+      image: "img[itemprop='image']"
+
+    price_format:
+      currency_symbol: "GH₵"
+      thousands_separator: ","
+
+    id_prefix: "gpc"
+
+    detail:
+      enabled: true
+      policy: on_violation
+      delay_ms: 3000
+      selectors:
+        description: ".body-text, .property-description, [itemprop='description'], .listing-content, .details p"
+        images: "img[itemprop='image'], .gallery img, .property-gallery img, .slider img, .photos img, [class*='gallery'] img"
+        bedrooms: "[itemprop='numberOfBedrooms'], .bedrooms, [class*='bed']"
+        bathrooms: "[itemprop='numberOfBathroomsTotal'], .bathrooms, [class*='bath']"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|BR)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*(?:ft|m))"
+      amenity_keywords:
+        pool: ["pool", "swimming"]
+        garden: ["garden", "yard", "lawn"]
+        parking: ["parking", "garage", "carport"]
+        security: ["security", "gated", "cctv", "guard"]
+
+  # ============================================
+  # STUB SOURCE (for testing)
+  # ============================================
+  - id: gh_stub
+    name: "Ghana Test Stub"
+    url: https://example-gh.com/properties
+    type: stub
+    selectors:
+      listing: ".property-card"
+      title: ".title"
+      price: ".price"
+      image: "img"

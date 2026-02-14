@@ -1,0 +1,74 @@
+# Ghana Location Mapping
+# ============================================
+# Config-driven location parsing for Ghana.
+# Uses regions/cities.
+# ============================================
+
+market: gh
+country: Ghana
+currency: GHS
+
+islands: []  # Ghana is mainland
+
+regions:
+  - name: Greater Accra
+    aliases:
+      - "Greater Accra"
+      - "Accra"
+    cities:
+      - name: Accra
+        aliases:
+          - "Accra"
+          - "Accra Central"
+        default: true
+      - name: East Legon
+        aliases:
+          - "East Legon"
+      - name: Airport Residential
+        aliases:
+          - "Airport Residential"
+          - "Airport"
+      - name: Cantonments
+        aliases:
+          - "Cantonments"
+      - name: Labone
+        aliases:
+          - "Labone"
+      - name: Osu
+        aliases:
+          - "Osu"
+      - name: Tema
+        aliases:
+          - "Tema"
+
+  - name: Ashanti
+    aliases:
+      - "Ashanti"
+      - "Ashanti Region"
+    cities:
+      - name: Kumasi
+        aliases:
+          - "Kumasi"
+        default: true
+
+  - name: Western
+    aliases:
+      - "Western"
+      - "Western Region"
+    cities:
+      - name: Takoradi
+        aliases:
+          - "Takoradi"
+          - "Sekondi-Takoradi"
+        default: true
+
+location_patterns:
+  - "Accra"
+  - "Kumasi"
+  - "Tema"
+  - "East Legon"
+  - "Cantonments"
+  - "Labone"
+  - "Osu"
+  - "Takoradi"
+  - "Airport"

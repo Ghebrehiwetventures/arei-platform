@@ -1,0 +1,62 @@
+# Botswana Sources
+market: bw
+
+sources:
+  - id: bw_property24
+    name: "Property24 Botswana"
+    url: https://www.property24.co.bw/houses-for-sale
+    type: html
+    lifecycleOverride: IN
+    cms_type: custom
+    fetch_method: headless
+
+    pagination:
+      type: query_param
+      param: "Page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 5000
+    jitter_ms: 2000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    # Same P24 platform as Kenya
+    selectors:
+      listing: ".js_listingTile"
+      link: "a[href*='for-sale']"
+      title: ".p24_propertyTitle"
+      price: ".p24_price"
+      location: ".p24_location"
+      image: "img[src*='images.prop24']"
+
+    price_format:
+      currency_symbol: "BWP"
+      thousands_separator: " "
+
+    id_prefix: "p24bw"
+
+    detail:
+      enabled: false
+      policy: on_violation
+      delay_ms: 5000
+      selectors:
+        description: "#readMoreDescription, .p24_listingDescription, .js_readMore"
+        images: ".js_galleryImage img, .js_lazyImageLoading, img[src*='images.prop24'], .gallery img"
+        bedrooms: "img[alt*='Bed'] + span, img[src*='bed'] ~ *"
+        bathrooms: "img[alt*='Bath'] + span, img[src*='bath'] ~ *"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|BR)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*(?:ft|m))"
+      amenity_keywords:
+        pool: ["pool", "swimming"]
+        garden: ["garden", "yard", "lawn"]
+        parking: ["parking", "garage", "carport"]
+        security: ["security", "gated", "cctv", "guard"]

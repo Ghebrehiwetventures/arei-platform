@@ -1,0 +1,117 @@
+# Nigeria Location Mapping
+# ============================================
+# Config-driven location parsing for Nigeria.
+# Uses states/cities.
+# ============================================
+
+market: ng
+country: Nigeria
+currency: NGN
+
+islands: []  # Nigeria is mainland
+
+regions:
+  - name: Lagos
+    aliases:
+      - "Lagos"
+      - "Lagos State"
+    cities:
+      - name: Lagos
+        aliases:
+          - "Lagos"
+          - "Lagos Island"
+        default: true
+      - name: Lekki
+        aliases:
+          - "Lekki"
+          - "Lekki Phase"
+      - name: Ikeja
+        aliases:
+          - "Ikeja"
+          - "Ikeja GRA"
+      - name: Victoria Island
+        aliases:
+          - "Victoria Island"
+          - "VI"
+      - name: Ikoyi
+        aliases:
+          - "Ikoyi"
+      - name: Ajah
+        aliases:
+          - "Ajah"
+      - name: Yaba
+        aliases:
+          - "Yaba"
+      - name: Surulere
+        aliases:
+          - "Surulere"
+
+  - name: Abuja
+    aliases:
+      - "Abuja"
+      - "FCT"
+      - "Federal Capital Territory"
+    cities:
+      - name: Abuja
+        aliases:
+          - "Abuja"
+          - "Abuja Municipal"
+        default: true
+      - name: Maitama
+        aliases:
+          - "Maitama"
+      - name: Wuse
+        aliases:
+          - "Wuse"
+          - "Wuse 2"
+      - name: Gwarinpa
+        aliases:
+          - "Gwarinpa"
+      - name: Asokoro
+        aliases:
+          - "Asokoro"
+
+  - name: Oyo
+    aliases:
+      - "Oyo"
+      - "Oyo State"
+    cities:
+      - name: Ibadan
+        aliases:
+          - "Ibadan"
+        default: true
+
+  - name: Rivers
+    aliases:
+      - "Rivers"
+      - "Rivers State"
+    cities:
+      - name: Port Harcourt
+        aliases:
+          - "Port Harcourt"
+          - "PH"
+        default: true
+
+  - name: Ogun
+    aliases:
+      - "Ogun"
+      - "Ogun State"
+    cities:
+      - name: Abeokuta
+        aliases:
+          - "Abeokuta"
+        default: true
+
+location_patterns:
+  - "Lagos"
+  - "Lekki"
+  - "Ikeja"
+  - "Victoria Island"
+  - "Ikoyi"
+  - "Ajah"
+  - "Abuja"
+  - "Maitama"
+  - "Wuse"
+  - "Gwarinpa"
+  - "Ibadan"
+  - "Port Harcourt"

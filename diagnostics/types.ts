@@ -27,12 +27,22 @@ export interface Listing {
   currency?: string;
   images: string[];
   description?: string;
+  sourceId: string;
   sourceName: string;
+  sourceUrl?: string | null;
   location?: string;
+  island?: string | null;
+  city?: string | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
   area_sqm?: number | null;
+  land_area_sqm?: number | null;
   property_type?: string;
+  status?: string;
+  approved?: boolean;
+  violations?: string[];
+  amenities?: string[];
+  price_period?: string;
 }
 
 export interface Market {
@@ -41,4 +51,32 @@ export interface Market {
   status: SourceStatus;
   sources: Source[];
   listings: Listing[];
+}
+
+// Dashboard: per-source stats from RPC (raw)
+export interface SourceQualityRowRaw {
+  source_id: string;
+  listing_count: number;
+  approved_count: number;
+  with_image_count: number;
+  with_price_count: number;
+}
+
+// Dashboard: with computed ratios and grade
+export interface SourceQualityRow extends SourceQualityRowRaw {
+  approved_pct: number;
+  with_image_pct: number;
+  with_price_pct: number;
+  score: number;
+  grade: "A" | "B" | "C" | "D";
+  sourceName: string;
+  marketId: string;
+}
+
+export interface DashboardStats {
+  totalListings: number;
+  approvedCount: number;
+  sourceCount: number;
+  marketCount: number;
+  sourceRows: SourceQualityRow[];
 }

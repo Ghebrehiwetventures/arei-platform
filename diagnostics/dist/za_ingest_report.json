@@ -1,0 +1,410 @@
+{
+  "marketId": "za",
+  "marketName": "ZA",
+  "generatedAt": "2026-02-06T21:51:47.730Z",
+  "summary": {
+    "totalListings": 21,
+    "visibleCount": 0,
+    "hiddenCount": 21,
+    "duplicatesRemoved": 0,
+    "sourceCount": 2
+  },
+  "sources": [
+    {
+      "id": "za_privateproperty",
+      "name": "Private Property",
+      "status": "OK",
+      "scrapeAttempts": 1,
+      "repairAttempts": 0
+    },
+    {
+      "id": "za_stub",
+      "name": "South Africa Test Stub",
+      "status": "OK",
+      "scrapeAttempts": 1,
+      "repairAttempts": 0
+    }
+  ],
+  "visibleListings": [],
+  "hiddenListings": [
+    {
+      "id": "ppza_6f12175c5e21",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/limpopo/limpopo-bushveld/polokwane-pietersburg/bendor/14-kalahari-rose/178-bendor/T5380373",
+      "title": "3 Bedroom Townhouse in Bendor",
+      "price": 1350000,
+      "priceText": "1350000 EUR",
+      "location": "14 Kalahari Rose, 178 Bendor",
+      "images": [
+        "https://images.pp.co.za/listing/11656648/CIhucUILkBFkpPotKQPU13/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656648/xnFE8mjClKA2vzkzfnoyZ0/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656648/dnyufI4HcDKL74h0rsQ1v5/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_c40d086de486",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/east-rand/kempton-park/terenure/258-oasis/98-pyp-lane/T5380355",
+      "title": "3 Bedroom Townhouse in Terenure",
+      "price": 1100000,
+      "priceText": "1100000 EUR",
+      "location": "258 Oasis, 98 Pyp Lane",
+      "images": [
+        "https://images.pp.co.za/listing/11656625/E6GOPg5qbIV51TvIZt23V7/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656625/Uemhx0y3mtPuFRl7H1Xrh1/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656625/9kgLH0G0kVCukTIQob4Dc5/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_c548e4e38c3f",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/eastern-cape/wild-coast/east-london/cambridge/11-monteray/33-murray-avenue/T5380263",
+      "title": "2 Bedroom Townhouse in Cambridge",
+      "price": 1100000,
+      "priceText": "1100000 EUR",
+      "location": "11 Monteray, 33 Murray Avenue",
+      "images": [
+        "https://images.pp.co.za/listing/11656493/YOcMDQId3Zis3gSasO4Tt6/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656493/XuWFkkssNUufvIvdhC9vh4/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656493/3CrPAYSUZqwe8IeLh9g7B3/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_633b16d48ae4",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/johannesburg-metro/randburg/fontainebleau/58-6th-avenue/T5380254",
+      "title": "4 Bedroom House in Fontainebleau",
+      "price": 4150000,
+      "priceText": "4150000 EUR",
+      "location": "58 6th Avenue",
+      "images": [
+        "https://images.pp.co.za/listing/11656479/1qR0uJWFW4OPiXQ8Lww8f4/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656479/2kELloialYgUnTAxjb2nT7/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656479/qQ2TrfFIMfzOvbsMfrOub2/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_ff64891ea467",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/pretoria/northern-pretoria/montana-gardens/montana-tuine/T5380231",
+      "title": "1 Bedroom Apartment in Montana Tuine",
+      "price": 695000,
+      "priceText": "695000 EUR",
+      "location": "Gauteng, Pretoria",
+      "images": [
+        "https://images.pp.co.za/listing/11656449/98fWQotfthjnyuf3YiD9H4/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656449/GP94TvwIVSv50XGIbKLvl5/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656449/2C4RD25tO3ODwsvACYJ187/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_ae4f7beda944",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/western-cape/cape-town/goodwood/edgemead/T5380183",
+      "title": "2 Bedroom House in Edgemead",
+      "price": 2850000,
+      "priceText": "2850000 EUR",
+      "location": "Western Cape, Cape Town",
+      "images": [
+        "https://images.pp.co.za/listing/11656377/nauitTWCp8yoGHsskgYIx1/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656377/O7rMm9IPM2HjMHhDiHiDx0/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656377/7K3ItVjRp3uyjAmNXpSU72/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_0ecc025e1122",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/east-rand/edenvale/modderfontein/T5380184",
+      "title": "4 Bedroom House in Modderfontein",
+      "price": 6995000,
+      "priceText": "6995000 EUR",
+      "location": "Gauteng, East Rand",
+      "images": [
+        "https://images.pp.co.za/listing/11656378/O5DcbsllZIz9GNCNuTUiP1/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656378/Pv2ZsNl3xpx1rMNHJt8tB5/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656378/s3eQWUmcjGjxTmYCjDYTO6/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_48d53c9b1184",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/east-rand/edenvale/greenstone-hill/120007-ss-malakite/10-stone-close/T5380141",
+      "title": "1 Bedroom Apartment in Greenstone Hill",
+      "price": 799900,
+      "priceText": "799900 EUR",
+      "location": "120007 Ss Malakite, 10 Stone Close",
+      "images": [
+        "https://images.pp.co.za/listing/11656321/k0YRF29BQkyAC63kMMwRl4/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656321/KPRXxbDR6Fxsq3UgBVQPB3/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656321/GC2svdmhCHZkqQaDUDYcr4/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_f0beff922274",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/east-rand/edenvale/greenstone-hill/777445522-ss-strelitzia/4-stone-close/T5380136",
+      "title": "2 Bedroom Apartment in Greenstone Hill",
+      "price": 900000,
+      "priceText": "900000 EUR",
+      "location": "777445522 Ss Strelitzia, 4 Stone Close",
+      "images": [
+        "https://images.pp.co.za/listing/11656314/HG18NXHdM97X5N2FzTACJ2/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656314/sjESsyDJb6ULqnp6mBNdL0/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656314/n1rTHAic4xefeLziBYeMR7/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_94b848c4a4b1",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/east-rand/edenvale/greenstone-hill/120039-ss-malakite/10-stone-close/T5380130",
+      "title": "1 Bedroom Apartment in Greenstone Hill",
+      "price": 899900,
+      "priceText": "899900 EUR",
+      "location": "120039 Ss Malakite, 10 Stone Close",
+      "images": [
+        "https://images.pp.co.za/listing/11656307/wZHM4OpinRifomfJ7hRQm1/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656307/d8LqdsRB0labCvEBnE2Tn6/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656307/HLlzVUeepeAZlL7Eh1aWw6/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_71d8a9ee4b44",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/pretoria/pretoria-east/olympus/olympus-ah/1-highlands-village/1-pers-juweeltjie/T5206270",
+      "title": "3 Bedroom House in Olympus AH",
+      "price": 2995000,
+      "priceText": "2995000 EUR",
+      "location": "1 Highlands Village, 1 Pers Juweeltjie",
+      "images": [
+        "https://images.pp.co.za/listing/11358035/ANY4GwnNJPFqsHgm7tJLf0/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11358035/w2sA0rRgw4hbIbyUvHD035/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11358035/P01u37kbEkHsXmehzVR7Q1/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_364adcdaa216",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/johannesburg-metro/johannesburg-south/bassonia/T5380100",
+      "title": "6 Bedroom House in Bassonia",
+      "price": 3950000,
+      "priceText": "3950000 EUR",
+      "location": "Gauteng, Johannesburg Metro",
+      "images": [
+        "https://images.pp.co.za/listing/11656258/TrapFlz8O4yzQWoas2Y3r5/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656258/xsvK5DgzvN2a4zb4F033A1/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656258/L0poktcR9JISPtGk3AElW6/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_f3668137b2f0",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/kwazulu-natal/durban/chatsworth/chatsworth-central/90-greendale-road/T5380073",
+      "title": "5 Bedroom House in Chatsworth Central",
+      "price": 1250000,
+      "priceText": "1250000 EUR",
+      "location": "90 Greendale Road",
+      "images": [
+        "https://images.pp.co.za/listing/11656219/zLKn1SbqRdNmfeARyCsuq3/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656219/G104UqI6c5s29fbzAaLya1/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656219/kegTjpqhKD74XeJKGqJq44/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_4b9619221b6e",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/johannesburg-metro/sandton/craigavon/63-cedar-acres-estate/39-inchanga-street/T5380032",
+      "title": "2 Bedroom Apartment in Craigavon",
+      "price": 1200000,
+      "priceText": "1200000 EUR",
+      "location": "63 Cedar Acres Estate, 39 Inchanga Street",
+      "images": [
+        "https://images.pp.co.za/listing/11656161/pZd9qqTDzjXxn0kZl7QcJ5/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656161/GQ3Hoz41m9XIK1YtVLf4D1/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656161/dUFTsRPwM7ZvE8XUg4pVY0/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_83a2ac0527d1",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/western-cape/cape-town/tableview-and-blouberg/parklands-north/T5380027",
+      "title": "4 Bedroom House in Parklands North",
+      "price": 3700000,
+      "priceText": "3700000 EUR",
+      "location": "Western Cape, Cape Town",
+      "images": [
+        "https://images.pp.co.za/listing/11656153/RNFz0XftG6LCtuMGgBdao0/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656153/QjU2NbQzK13uvDmo3Sl2X4/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656153/FOJXYn6mpEvu94EhoufK40/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_5242860e1442",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/pretoria/moot/waverley/T5380008",
+      "title": "5 Bedroom House in Waverley",
+      "price": 3950000,
+      "priceText": "3950000 EUR",
+      "location": "Gauteng, Pretoria",
+      "images": [
+        "https://images.pp.co.za/listing/11656122/5rpJY2RaQGCVFunwEs7dL7/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656122/rSW4Nrlmz41ENUJW8I4Lp4/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656122/5yfsoB8UOQH0LD8DXbnuJ3/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_bb217c4d6973",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/centurion/centurion-east/die-hoewes/32-the-pines/1s-shelanti-avenue/T5326342",
+      "title": "2 Bedroom Apartment in Die Hoewes",
+      "price": 955000,
+      "priceText": "955000 EUR",
+      "location": "32 The Pines, 1s Shelanti Avenue",
+      "images": [
+        "https://images.pp.co.za/listing/11562028/PaNdgpTJ7j6KI3Y8RnDEW6/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11562028/wHZq6EDzydOVLcn0Kb87U7/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11562028/Ef3z7NQO6uogFZBx8GZsB3/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_6660596bf94e",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/centurion/centurion-east/die-hoewes/84-the-pines/261-shelanti-street/T5322759",
+      "title": "3 Bedroom Apartment in Die Hoewes",
+      "price": 1200000,
+      "priceText": "1200000 EUR",
+      "location": "84 The Pines, 261 Shelanti Street",
+      "images": [
+        "https://images.pp.co.za/listing/11555989/xK7FfkfB3nsYu5Xtn215X3/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11555989/Yv9qToduiRXtwgRZvtv8L4/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11555989/3vqUU4tHSd4y15MrOyRxv0/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_e17287e37b12",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/pretoria/pretoria-east-south/moreleta-park/T5298602",
+      "title": "4 Bedroom House in Moreleta Park",
+      "price": 3900000,
+      "priceText": "3900000 EUR",
+      "location": "Gauteng, Pretoria",
+      "images": [
+        "https://images.pp.co.za/listing/11515271/usnOaQ9qzfEVq4DGqhBLT7/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11515271/fOhdUwnfKrgZW5PBci7kQ6/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11515271/cWrmbXpnXgeByab0z5bW12/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "ppza_a108c4d3d49d",
+      "sourceId": "za_privateproperty",
+      "sourceName": "Private Property",
+      "sourceUrl": "https://www.privateproperty.co.za/for-sale/gauteng/east-rand/edenvale/greenstone-hill/12034-ss-malakite/10-stone-close/T5380003",
+      "title": "3 Bedroom Apartment in Greenstone Hill",
+      "price": 1399900,
+      "priceText": "1399900 EUR",
+      "location": "12034 Ss Malakite, 10 Stone Close",
+      "images": [
+        "https://images.pp.co.za/listing/11656104/BAmpAKuIjMKmE9nDYdqP04/1024/682/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656104/qDKxZEfbd2Pq4722qlc5Z1/600/450/contain/jpegorpng",
+        "https://images.pp.co.za/listing/11656104/QkEwk7y2v0D7BG5A9FLEZ0/600/450/contain/jpegorpng"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "za_stub_stub_001",
+      "sourceId": "za_stub",
+      "sourceName": "South Africa Test Stub",
+      "sourceUrl": "https://example-za.com/properties/test",
+      "title": "Test Property in ZA",
+      "description": "This is a test listing for the generic pipeline.",
+      "price": 100000,
+      "priceText": "100000 EUR",
+      "location": "Santa Maria, Sal",
+      "images": [
+        "https://example.com/img1.jpg",
+        "https://example.com/img2.jpg",
+        "https://example.com/img3.jpg"
+      ],
+      "violations": [
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    }
+  ]
+}

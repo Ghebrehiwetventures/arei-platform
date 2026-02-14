@@ -1,0 +1,52 @@
+# Uganda Location Mapping
+# ============================================
+
+market: ug
+country: Uganda
+currency: UGX
+
+islands: []
+
+regions:
+  - name: Central
+    aliases:
+      - "Central"
+      - "Central Region"
+    cities:
+      - name: Kampala
+        aliases:
+          - "Kampala"
+        default: true
+      - name: Entebbe
+        aliases:
+          - "Entebbe"
+      - name: Wakiso
+        aliases:
+          - "Wakiso"
+
+  - name: Eastern
+    aliases:
+      - "Eastern"
+      - "Eastern Region"
+    cities:
+      - name: Jinja
+        aliases:
+          - "Jinja"
+        default: true
+
+  - name: Western
+    aliases:
+      - "Western"
+      - "Western Region"
+    cities:
+      - name: Mbarara
+        aliases:
+          - "Mbarara"
+        default: true
+
+location_patterns:
+  - "Kampala"
+  - "Entebbe"
+  - "Wakiso"
+  - "Jinja"
+  - "Mbarara"

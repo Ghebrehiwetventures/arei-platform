@@ -1,0 +1,157 @@
+# Cape Verde Location Mapping
+# ============================================
+# All location parsing is config-driven.
+# NO hardcoded island/city logic in code.
+# ============================================
+
+market: cv
+country: Cape Verde
+currency: EUR
+
+# Island definitions with cities and aliases
+islands:
+  - name: Sal
+    aliases:
+      - "Sal"
+      - "Ilha do Sal"
+    cities:
+      - name: Santa Maria
+        aliases:
+          - "Santa Maria"
+          - "Sta Maria"
+          - "Sta. Maria"
+        default: true  # Default city for this island
+      - name: Espargos
+        aliases:
+          - "Espargos"
+      - name: Pedra de Lume
+        aliases:
+          - "Pedra de Lume"
+          - "Pedra Lume"
+
+  - name: Boa Vista
+    aliases:
+      - "Boa Vista"
+      - "Boavista"
+      - "Ilha da Boa Vista"
+    cities:
+      - name: Sal Rei
+        aliases:
+          - "Sal Rei"
+          - "Sal-Rei"
+        default: true
+      - name: Rabil
+        aliases:
+          - "Rabil"
+
+  - name: Santiago
+    aliases:
+      - "Santiago"
+      - "Ilha de Santiago"
+    cities:
+      - name: Praia
+        aliases:
+          - "Praia"
+          - "Cidade da Praia"
+        default: true
+      - name: Assomada
+        aliases:
+          - "Assomada"
+      - name: Tarrafal
+        aliases:
+          - "Tarrafal"
+
+  - name: São Vicente
+    aliases:
+      - "São Vicente"
+      - "Sao Vicente"
+      - "S. Vicente"
+    cities:
+      - name: Mindelo
+        aliases:
+          - "Mindelo"
+        default: true
+
+  - name: Fogo
+    aliases:
+      - "Fogo"
+      - "Ilha do Fogo"
+    cities:
+      - name: São Filipe
+        aliases:
+          - "São Filipe"
+          - "Sao Filipe"
+          - "S. Filipe"
+        default: true
+      - name: Mosteiros
+        aliases:
+          - "Mosteiros"
+
+  - name: Santo Antão
+    aliases:
+      - "Santo Antão"
+      - "Santo Antao"
+      - "Sto Antão"
+    cities:
+      - name: Porto Novo
+        aliases:
+          - "Porto Novo"
+        default: true
+      - name: Ribeira Grande
+        aliases:
+          - "Ribeira Grande"
+      - name: Paul
+        aliases:
+          - "Paul"
+          - "Paúl"
+
+  - name: Maio
+    aliases:
+      - "Maio"
+      - "Ilha do Maio"
+    cities:
+      - name: Vila do Maio
+        aliases:
+          - "Vila do Maio"
+          - "Cidade do Maio"
+        default: true
+
+  - name: Brava
+    aliases:
+      - "Brava"
+      - "Ilha Brava"
+    cities:
+      - name: Nova Sintra
+        aliases:
+          - "Nova Sintra"
+        default: true
+
+  - name: São Nicolau
+    aliases:
+      - "São Nicolau"
+      - "Sao Nicolau"
+      - "S. Nicolau"
+    cities:
+      - name: Ribeira Brava
+        aliases:
+          - "Ribeira Brava"
+        default: true
+      - name: Tarrafal de São Nicolau
+        aliases:
+          - "Tarrafal de São Nicolau"
+          - "Tarrafal S. Nicolau"
+
+# Regex patterns for location extraction (fallback)
+location_patterns:
+  - "Boa Vista"
+  - "Sal\\b"
+  - "Santa Maria"
+  - "Praia"
+  - "Mindelo"
+  - "Santiago"
+  - "São Vicente"
+  - "Fogo"
+  - "Santo Antão"
+  - "Maio"
+  - "Brava"
+  - "São Nicolau"

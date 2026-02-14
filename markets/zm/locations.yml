@@ -1,0 +1,30 @@
+# Zambia Location Mapping
+market: zm
+country: Zambia
+currency: ZMW
+
+islands: []
+
+regions:
+  - name: Lusaka
+    aliases: ["Lusaka", "Lusaka Province"]
+    cities:
+      - name: Lusaka
+        aliases: ["Lusaka"]
+        default: true
+      - name: Roma
+        aliases: ["Roma"]
+  - name: Copperbelt
+    aliases: ["Copperbelt", "Copperbelt Province"]
+    cities:
+      - name: Kitwe
+        aliases: ["Kitwe"]
+        default: true
+      - name: Ndola
+        aliases: ["Ndola"]
+
+location_patterns:
+  - "Lusaka"
+  - "Kitwe"
+  - "Ndola"
+  - "Roma"

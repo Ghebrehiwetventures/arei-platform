@@ -1,0 +1,24 @@
+# Botswana Location Mapping
+market: bw
+country: Botswana
+currency: BWP
+
+islands: []
+
+regions:
+  - name: South-East
+    aliases: ["South-East", "South East"]
+    cities:
+      - name: Gaborone
+        aliases: ["Gaborone"]
+        default: true
+  - name: North-East
+    aliases: ["North-East", "North East"]
+    cities:
+      - name: Francistown
+        aliases: ["Francistown"]
+        default: true
+
+location_patterns:
+  - "Gaborone"
+  - "Francistown"

@@ -1,0 +1,217 @@
+# Kenya Sources - Generic Config
+# ============================================
+# Same schema as Cape Verde. NO code changes needed.
+# ============================================
+
+market: ke
+
+sources:
+  # ============================================
+  # BUYRENTKENYA - Major Kenyan property portal
+  # Tailwind-based modern React/Livewire site - needs headless
+  # ============================================
+  - id: ke_buyrentkenya
+    name: "BuyRentKenya"
+    url: https://www.buyrentkenya.com/houses-for-sale
+    type: html
+    lifecycleOverride: IN
+
+    cms_type: custom
+
+    fetch_method: headless  # React/Livewire site needs JS rendering
+
+    pagination:
+      type: query_param
+      param: "page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 3000
+    jitter_ms: 1000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    # DOM structure: .listing-card > a[id^="listing-link-"] + h2 (title) + data-bi attrs
+    selectors:
+      listing: ".listing-card"
+      link: "a[id^='listing-link-']"
+      title: "h2"
+      price: "[data-bi-listing-price]"  # Price in data attribute
+      image: "img[src*='roamcdn'], img[loading='lazy']"
+      location: "[data-bi-listing-category]"  # Category as location proxy
+
+    price_format:
+      currency_symbol: "KES"
+      thousands_separator: ","
+
+    id_prefix: "brk"
+
+    detail:
+      enabled: true
+      policy: on_violation
+      delay_ms: 3000
+      selectors:
+        description: ".description, .listing-details-body, .property-description, [class*='description'] p, .details-content"
+        images: ".gallery img, .slider img, .swiper-slide img, img[src*='roamcdn'], .property-images img, .photos img, [class*='gallery'] img, img[src*='property']"
+        bedrooms: "[data-bi-listing-bedrooms], .bedrooms, .bed, [class*='bed']"
+        bathrooms: "[data-bi-listing-bathrooms], .bathrooms, .bath, [class*='bath']"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|BR)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*(?:ft|m))"
+      amenity_keywords:
+        pool: ["pool", "swimming"]
+        garden: ["garden", "yard", "lawn"]
+        parking: ["parking", "garage", "carport"]
+        security: ["security", "gated", "cctv", "guard"]
+
+  # ============================================
+  # PROPERTY24 KENYA - South African portal chain
+  # Classic server-rendered HTML
+  # ============================================
+  - id: ke_property24
+    name: "Property24 Kenya"
+    url: https://www.property24.co.ke/houses-for-sale
+    type: html
+    lifecycleOverride: IN
+
+    cms_type: custom
+
+    fetch_method: headless  # Switched from http to avoid rate limiting
+
+    pagination:
+      type: query_param
+      param: "Page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 5000
+    jitter_ms: 2000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    # DOM structure: .js_listingTile > a[href] + .p24_price + .p24_propertyTitle + .p24_location
+    # Note: Property24 uses <image> tag which cheerio converts to <img>
+    selectors:
+      listing: ".js_listingTile"
+      link: "a[href*='for-sale']"
+      title: ".p24_propertyTitle"
+      price: ".p24_price"
+      location: ".p24_location"
+      image: "img[src*='images.prop24']"
+
+    price_format:
+      currency_symbol: "KSh"
+      thousands_separator: " "
+
+    id_prefix: "p24ke"
+
+    detail:
+      enabled: true
+      policy: on_violation
+      delay_ms: 5000
+      selectors:
+        description: "#readMoreDescription, .p24_listingDescription, .js_readMore"
+        images: ".js_galleryImage img, .js_lazyImageLoading, img[src*='images.prop24'], .gallery img"
+        bedrooms: "img[alt*='Bed'] + span, img[src*='bed'] ~ *"
+        bathrooms: "img[alt*='Bath'] + span, img[src*='bath'] ~ *"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|BR)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*(?:ft|m))"
+      amenity_keywords:
+        pool: ["pool", "swimming"]
+        garden: ["garden", "yard", "lawn"]
+        parking: ["parking", "garage", "carport"]
+        security: ["security", "gated", "cctv", "guard"]
+
+  # ============================================
+  # KENYA PROPERTY CENTRE - Large Kenyan portal
+  # Server-rendered, schema.org markup
+  # ============================================
+  - id: ke_propertycentre
+    name: "Kenya Property Centre"
+    url: https://kenyapropertycentre.com/for-sale
+    type: html
+    lifecycleOverride: IN
+
+    cms_type: custom
+
+    fetch_method: http
+
+    pagination:
+      type: query_param
+      param: "page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 3000
+    jitter_ms: 1000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    # DOM: .row.property-list > .wp-block-title a + img + .pull-sm-left (contains full price)
+    # Note: .price alone only has "KSh " or the number separately, not both
+    selectors:
+      listing: ".row.property-list"
+      link: "a[itemprop='url']"
+      title: "h3[itemprop='name']"
+      price: ".pull-sm-left"
+      location: ".wp-block-address"
+      image: "img[itemprop='image']"
+
+    price_format:
+      currency_symbol: "KSh"
+      thousands_separator: ","
+
+    id_prefix: "kpc"
+
+    detail:
+      enabled: true
+      policy: on_violation
+      delay_ms: 3000
+      selectors:
+        description: ".body-text, .property-description, [itemprop='description'], .listing-content, .details p"
+        images: "img[itemprop='image'], .gallery img, .property-gallery img, .slider img, .photos img, [class*='gallery'] img, img[src*='property']"
+        bedrooms: "[itemprop='numberOfBedrooms'], .bedrooms, [class*='bed']"
+        bathrooms: "[itemprop='numberOfBathroomsTotal'], .bathrooms, [class*='bath']"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|BR)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*(?:ft|m))"
+      amenity_keywords:
+        pool: ["pool", "swimming"]
+        garden: ["garden", "yard", "lawn"]
+        parking: ["parking", "garage", "carport"]
+        security: ["security", "gated", "cctv", "guard"]
+
+  # ============================================
+  # STUB SOURCE (for testing)
+  # ============================================
+  - id: ke_stub
+    name: "Kenya Test Stub"
+    url: https://example-ke.com/properties
+    type: stub
+    selectors:
+      listing: ".property-card"
+      title: ".title"
+      price: ".price"
+      image: "img"

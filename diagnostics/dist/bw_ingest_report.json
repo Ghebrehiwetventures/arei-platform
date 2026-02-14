@@ -1,0 +1,888 @@
+{
+  "marketId": "bw",
+  "marketName": "BW",
+  "generatedAt": "2026-02-10T20:16:25.834Z",
+  "summary": {
+    "totalListings": 50,
+    "visibleCount": 2,
+    "hiddenCount": 48,
+    "duplicatesRemoved": 0,
+    "sourceCount": 1
+  },
+  "sources": [
+    {
+      "id": "bw_property24",
+      "name": "Property24 Botswana",
+      "status": "OK",
+      "scrapeAttempts": 1,
+      "repairAttempts": 0
+    }
+  ],
+  "visibleListings": [
+    {
+      "id": "p24bw_0c3628d336d5",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-block-10-116833184",
+      "title": "3 Bedroom House For Sale In Block 10 116833184",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions | Agent Zone",
+      "price": 1500000,
+      "priceText": "1500000 BWP",
+      "location": "Block 10",
+      "images": [
+        "https://images.prop24.com/372305979/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/371941959/Fit450x225",
+        "https://static.sa-property.co.za/Resource/138964",
+        "https://static.sa-property.co.za/Content/Images/close_grey.png?z=75fbde",
+        "https://static.sa-property.co.za/Shared/Icons/Phone.svg?z=769749",
+        "https://www.property24.co.bw/content/images/south%20africa/imagenotfound/nopersonphoto.jpg",
+        "https://static.sa-property.co.za/Content/Images/SocialPrint.png?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-plus.svg?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-minus.svg?z=75fbde"
+      ],
+      "bedrooms": 3,
+      "bathrooms": 3,
+      "area_sqm": 375
+    },
+    {
+      "id": "p24bw_5d14e4ce09bc",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-broadhurst-101758139",
+      "title": "4 Bedroom House For Sale In Broadhurst 101758139",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions | Agent Zone",
+      "price": 2500000,
+      "priceText": "2500000 BWP",
+      "location": "Broadhurst",
+      "images": [
+        "https://images.prop24.com/373372320/Crop600x400",
+        "https://static.sa-property.co.za/Resource/138963",
+        "https://static.sa-property.co.za/Content/Images/close_grey.png?z=75fbde",
+        "https://static.sa-property.co.za/Property24/Content/Images/navbar_caret_up.png?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/ListingNotFound.png?z=75fbde",
+        "https://static.sa-property.co.za/Resource/138964"
+      ],
+      "bathrooms": 0,
+      "area_sqm": 50
+    }
+  ],
+  "hiddenListings": [
+    {
+      "id": "p24bw_b860e0cbf67e",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-lobatse-central-109392033",
+      "title": "4 Bedroom House For Sale In Lobatse Central 109392033",
+      "price": 2600000,
+      "priceText": "2600000 BWP",
+      "location": "Lobatse Central",
+      "images": [
+        "https://images.prop24.com/251051113/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_2fde053bf70c",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-lobatse-central-116862739",
+      "title": "4 Bedroom House For Sale In Lobatse Central 116862739",
+      "price": 1800000,
+      "priceText": "1800000 BWP",
+      "location": "Lobatse Central",
+      "images": [
+        "https://images.prop24.com/372833263/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_f3424e82e727",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-phakalane-116874244",
+      "title": "3 Bedroom House For Sale In Phakalane 116874244",
+      "price": 1800000,
+      "priceText": "1800000 BWP",
+      "location": "Phakalane",
+      "images": [
+        "https://images.prop24.com/373038110/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_cb468e957793",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-kgale-116895700",
+      "title": "4 Bedroom House For Sale In Kgale 116895700",
+      "price": 7000000,
+      "priceText": "7000000 BWP",
+      "location": "Kgale",
+      "images": [
+        "https://images.prop24.com/373422403/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_10c5d37156b8",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-block-7-116813190",
+      "title": "3 Bedroom House For Sale In Block 7 116813190",
+      "price": 1200000,
+      "priceText": "1200000 BWP",
+      "location": "Block 7",
+      "images": [
+        "https://images.prop24.com/371960183/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_b69c91d2fc3a",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-broadhurst-116893124",
+      "title": "4 Bedroom House For Sale In Broadhurst 116893124",
+      "price": 2500000,
+      "priceText": "2500000 BWP",
+      "location": "Broadhurst",
+      "images": [
+        "https://images.prop24.com/373372320/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_34f719d641f9",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-block-10-116891754",
+      "title": "4 Bedroom House For Sale In Block 10 116891754",
+      "price": 4800000,
+      "priceText": "4800000 BWP",
+      "location": "Block 10",
+      "images": [
+        "https://images.prop24.com/373351622/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_fc78970e0d1c",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-tlokweng-central-116809784",
+      "title": "4 Bedroom House For Sale In Tlokweng Central 116809784",
+      "price": 2000000,
+      "priceText": "2000000 BWP",
+      "location": "Tlokweng Central",
+      "images": [
+        "https://images.prop24.com/371898498/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_355665558f73",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-block-10-116882496",
+      "title": "4 Bedroom House For Sale In Block 10 116882496",
+      "price": 3650000,
+      "priceText": "3650000 BWP",
+      "location": "Block 10",
+      "images": [
+        "https://images.prop24.com/373178038/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_28e0885d1367",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-phakalane-golf-estate-116875036",
+      "title": "4 Bedroom House For Sale In Phakalane Golf Estate 116875036",
+      "price": 6200000,
+      "priceText": "6200000 BWP",
+      "location": "Phakalane Golf Estate",
+      "images": [
+        "https://images.prop24.com/373053065/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_4e186c98c777",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-phakalane-116905698",
+      "title": "3 Bedroom House For Sale In Phakalane 116905698",
+      "price": 3000000,
+      "priceText": "3000000 BWP",
+      "location": "Phakalane",
+      "images": [
+        "https://images.prop24.com/373592052/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_257069fe7db6",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/house-for-sale-in-gaborone-116870685",
+      "title": "House For Sale In Gaborone 116870685",
+      "price": 1100000,
+      "priceText": "1100000 BWP",
+      "location": "Gaborone",
+      "images": [
+        "https://images.prop24.com/372970842/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_db37d5b60d76",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-gaborone-north-116874261",
+      "title": "3 Bedroom House For Sale In Gaborone North 116874261",
+      "price": 2600000,
+      "priceText": "2600000 BWP",
+      "location": "Gaborone North",
+      "images": [
+        "https://images.prop24.com/373038465/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_25f294e4c7e0",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-phakalane-golf-estate-116853011",
+      "title": "3 Bedroom House For Sale In Phakalane Golf Estate 116853011",
+      "price": 5800000,
+      "priceText": "5800000 BWP",
+      "location": "Phakalane Golf Estate",
+      "images": [
+        "https://images.prop24.com/372659778/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_685203d5e1e7",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-phakalane-golf-estate-116832949",
+      "title": "4 Bedroom House For Sale In Phakalane Golf Estate 116832949",
+      "price": 6200000,
+      "priceText": "6200000 BWP",
+      "location": "Phakalane Golf Estate",
+      "images": [
+        "https://images.prop24.com/372301707/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_52042de07d05",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-phakalane-golf-estate-116797606",
+      "title": "4 Bedroom House For Sale In Phakalane Golf Estate 116797606",
+      "price": 7999000,
+      "priceText": "7999000 BWP",
+      "location": "Phakalane Golf Estate",
+      "images": [
+        "https://images.prop24.com/373225566/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_4bb272a4ac80",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/2-bedroom-house-for-sale-in-notwane-116817977",
+      "title": "2 Bedroom House For Sale In Notwane 116817977",
+      "price": 5500000,
+      "priceText": "5500000 BWP",
+      "location": "Notwane",
+      "images": [
+        "https://images.prop24.com/372293279/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_4ddcea88548f",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-phakalane-116815712",
+      "title": "3 Bedroom House For Sale In Phakalane 116815712",
+      "price": 3060000,
+      "priceText": "3060000 BWP",
+      "location": "Phakalane",
+      "images": [
+        "https://images.prop24.com/371998099/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_3c506b1bbbb8",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/6-bedroom-house-for-sale-in-gaborone-116867135",
+      "title": "6 Bedroom House For Sale In Gaborone 116867135",
+      "price": 7150000,
+      "priceText": "7150000 BWP",
+      "location": "Gaborone",
+      "images": [
+        "https://images.prop24.com/372914110/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_1a7ccd700f90",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-gaborone-116849859",
+      "title": "3 Bedroom House For Sale In Gaborone 116849859",
+      "price": 1500000,
+      "priceText": "1500000 BWP",
+      "location": "Gaborone",
+      "images": [
+        "https://images.prop24.com/372600405/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_51c28e2b2772",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-extension-9-113879621",
+      "title": "4 Bedroom House For Sale In Extension 9 113879621",
+      "price": 8500000,
+      "priceText": "8500000 BWP",
+      "location": "Extension 9",
+      "images": [
+        "https://images.prop24.com/324687495/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_7f1c9468f4aa",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-block-10-101761230",
+      "title": "4 Bedroom House For Sale In Block 10 101761230",
+      "price": 2100000,
+      "priceText": "2100000 BWP",
+      "location": "Block 10",
+      "images": [
+        "https://images.prop24.com/372878716/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_b3d47ff937e8",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-gaborone-116840204",
+      "title": "3 Bedroom House For Sale In Gaborone 116840204",
+      "price": 3200000,
+      "priceText": "3200000 BWP",
+      "location": "Gaborone",
+      "images": [
+        "https://images.prop24.com/372433353/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_8bc9b8f1b610",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/6-bedroom-house-for-sale-in-gaborone-north-116873403",
+      "title": "6 Bedroom House For Sale In Gaborone North 116873403",
+      "price": 7500000,
+      "priceText": "7500000 BWP",
+      "location": "Gaborone North",
+      "images": [
+        "https://images.prop24.com/365500573/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_6e760ea29c72",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-tsholofelo-east-116841484",
+      "title": "4 Bedroom House For Sale In Tsholofelo East 116841484",
+      "price": 2000000,
+      "priceText": "2000000 BWP",
+      "location": "Tsholofelo East",
+      "images": [
+        "https://images.prop24.com/372459167/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_abc2404d1617",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-maun-central-116866733",
+      "title": "3 Bedroom House For Sale In Maun Central 116866733",
+      "price": 2450000,
+      "priceText": "2450000 BWP",
+      "location": "Maun Central",
+      "images": [
+        "https://images.prop24.com/372905283/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_3fafad4cd03d",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-maun-central-116840168",
+      "title": "3 Bedroom House For Sale In Maun Central 116840168",
+      "price": 7500000,
+      "priceText": "7500000 BWP",
+      "location": "Maun Central",
+      "images": [
+        "https://images.prop24.com/372432635/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_177cfedbcfff",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-block-10-116884178",
+      "title": "4 Bedroom House For Sale In Block 10 116884178",
+      "price": 6200000,
+      "priceText": "6200000 BWP",
+      "location": "Block 10",
+      "images": [
+        "https://images.prop24.com/373085459/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_8163bfd33282",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-gaborone-north-116855584",
+      "title": "3 Bedroom House For Sale In Gaborone North 116855584",
+      "price": 1300000,
+      "priceText": "1300000 BWP",
+      "location": "Gaborone North",
+      "images": [
+        "https://images.prop24.com/372711851/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_701fdde7b01f",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-gaborone-central-116890246",
+      "title": "3 Bedroom House For Sale In Gaborone Central 116890246",
+      "price": 2500000,
+      "priceText": "2500000 BWP",
+      "location": "Gaborone Central",
+      "images": [
+        "https://images.prop24.com/373323583/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_69d2cd5e5b28",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-block-10-116792709",
+      "title": "4 Bedroom House For Sale In Block 10 116792709",
+      "price": 3800000,
+      "priceText": "3800000 BWP",
+      "location": "Block 10",
+      "images": [
+        "https://images.prop24.com/371606796/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_affa1111d8b5",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-francistown-central-116857935",
+      "title": "3 Bedroom House For Sale In Francistown Central 116857935",
+      "price": 1270000,
+      "priceText": "1270000 BWP",
+      "location": "Francistown Central",
+      "images": [
+        "https://images.prop24.com/372753858/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_4934d31a1f07",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/12-bedroom-house-for-sale-in-maun-central-114028347",
+      "title": "12 Bedroom House",
+      "price": 3500000,
+      "priceText": "3500000 BWP",
+      "location": "Maun Central",
+      "images": [
+        "https://images.prop24.com/327149570/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_11d5e309dd0a",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-phakalane-116779600",
+      "title": "4 Bedroom House For Sale In Phakalane 116779600",
+      "price": 1600000,
+      "priceText": "1600000 BWP",
+      "location": "Phakalane",
+      "images": [
+        "https://images.prop24.com/371389176/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_04cdeac91d9a",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/5-bedroom-house-for-sale-in-block-8-116773206",
+      "title": "5 Bedroom House For Sale In Block 8 116773206",
+      "price": 2800000,
+      "priceText": "2800000 BWP",
+      "location": "Block 8",
+      "images": [
+        "https://images.prop24.com/371278016/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_30a9e4892aea",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-block-10-116826354",
+      "title": "4 Bedroom House For Sale In Block 10 116826354",
+      "price": 2100000,
+      "priceText": "2100000 BWP",
+      "location": "Block 10",
+      "images": [
+        "https://images.prop24.com/372878716/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_eb4d554ec777",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-phakalane-116879099",
+      "title": "3 Bedroom House For Sale In Phakalane 116879099",
+      "price": 2040000,
+      "priceText": "2040000 BWP",
+      "location": "Phakalane",
+      "images": [
+        "https://images.prop24.com/373121768/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_4d14d676b6fa",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/5-bedroom-house-for-sale-in-oodi-central-116699214",
+      "title": "5 Bedroom House For Sale In Oodi Central 116699214",
+      "price": 2450000,
+      "priceText": "2450000 BWP",
+      "location": "Oodi Central",
+      "images": [
+        "https://images.prop24.com/370016813/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_04f6b23a638c",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-gaborone-north-116827812",
+      "title": "4 Bedroom House For Sale In Gaborone North 116827812",
+      "price": 1700000,
+      "priceText": "1700000 BWP",
+      "location": "Gaborone North",
+      "images": [
+        "https://images.prop24.com/372214487/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_fa7a0fb33daf",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-village-116830457",
+      "title": "3 Bedroom House For Sale In Village 116830457",
+      "price": 3200000,
+      "priceText": "3200000 BWP",
+      "location": "Village",
+      "images": [
+        "https://images.prop24.com/372262630/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_b19a061d31a4",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-phakalane-116753478",
+      "title": "3 Bedroom House For Sale In Phakalane 116753478",
+      "price": 1850000,
+      "priceText": "1850000 BWP",
+      "location": "Phakalane",
+      "images": [
+        "https://images.prop24.com/370983611/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_8bdb0c5ec45f",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-broadhurst-116747985",
+      "title": "3 Bedroom House For Sale In Broadhurst 116747985",
+      "price": 1400000,
+      "priceText": "1400000 BWP",
+      "location": "Broadhurst",
+      "images": [
+        "https://images.prop24.com/370895080/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_41da277485e1",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-molapo-estate-116812221",
+      "title": "3 Bedroom House For Sale In Molapo Estate 116812221",
+      "price": 1700000,
+      "priceText": "1700000 BWP",
+      "location": "Molapo Estate",
+      "images": [
+        "https://images.prop24.com/371943752/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_d3fee57915ae",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/6-bedroom-house-for-sale-in-mokolodi-1-114520893",
+      "title": "6 Bedroom House For Sale In Mokolodi 1 114520893",
+      "price": 6000000,
+      "priceText": "6000000 BWP",
+      "location": "Mokolodi 1",
+      "images": [
+        "https://images.prop24.com/335110233/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_02a90b3dd35b",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-phakalane-116746566",
+      "title": "3 Bedroom House For Sale In Phakalane 116746566",
+      "price": 2500000,
+      "priceText": "2500000 BWP",
+      "location": "Phakalane",
+      "images": [
+        "https://images.prop24.com/370875708/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_ecc84d56126d",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/4-bedroom-house-for-sale-in-phakalane-golf-estate-116832521",
+      "title": "4 Bedroom House For Sale In Phakalane Golf Estate 116832521",
+      "price": 6200000,
+      "priceText": "6200000 BWP",
+      "location": "Phakalane Golf Estate",
+      "images": [
+        "https://images.prop24.com/372294327/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_2c4b406c4c47",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-block-6-116790473",
+      "title": "3 Bedroom House For Sale In Block 6 116790473",
+      "price": 1599000,
+      "priceText": "1599000 BWP",
+      "location": "Block 6",
+      "images": [
+        "https://images.prop24.com/371567551/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24bw_3366ee3801bc",
+      "sourceId": "bw_property24",
+      "sourceName": "Property24 Botswana",
+      "sourceUrl": "https://www.property24.co.bw/3-bedroom-house-for-sale-in-mokolodi-1-116704165",
+      "title": "3 Bedroom House For Sale In Mokolodi 1 116704165",
+      "price": 2700000,
+      "priceText": "2700000 BWP",
+      "location": "Mokolodi 1",
+      "images": [
+        "https://images.prop24.com/370092407/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    }
+  ]
+}

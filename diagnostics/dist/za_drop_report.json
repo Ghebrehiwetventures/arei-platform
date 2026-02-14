@@ -1,0 +1,38 @@
+{
+  "market": "za",
+  "generated_at": "2026-02-06T21:51:47.727Z",
+  "sources": [
+    {
+      "source_id": "za_privateproperty",
+      "fetched_total": 20,
+      "kept_normalized": 20,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 0,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "za_stub",
+      "fetched_total": 1,
+      "kept_normalized": 1,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 0,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    }
+  ]
+}

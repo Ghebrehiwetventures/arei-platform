@@ -1,0 +1,139 @@
+# Nigeria Sources - Generic Config
+# ============================================
+# Same schema as other markets. NO code changes needed.
+# ============================================
+
+market: ng
+
+sources:
+  # ============================================
+  # NIGERIA PROPERTY CENTRE - Largest Nigerian portal (93k+ listings)
+  # Same platform as Kenya/Ghana Property Centre
+  # Server-rendered, schema.org markup, http works
+  # ============================================
+  - id: ng_propertycentre
+    name: "Nigeria Property Centre"
+    url: https://nigeriapropertycentre.com/for-sale
+    type: html
+    lifecycleOverride: IN
+
+    cms_type: custom
+
+    fetch_method: headless  # NPC blocks plain HTTP (403), needs headless
+
+    pagination:
+      type: query_param
+      param: "page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 3000
+    jitter_ms: 1000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    # DOM: identical to kenyapropertycentre.com / ghanapropertycentre.com
+    selectors:
+      listing: ".row.property-list"
+      link: "a[itemprop='url']"
+      title: "h3[itemprop='name']"
+      price: ".pull-sm-left"
+      location: "address.voffset-bottom-10"
+      image: "img[itemprop='image']"
+
+    price_format:
+      currency_symbol: "₦"
+      thousands_separator: ","
+
+    id_prefix: "npc"
+
+    detail:
+      enabled: true
+      policy: on_violation
+      delay_ms: 3000
+      selectors:
+        description: ".body-text, .property-description, [itemprop='description'], .listing-content, .details p"
+        images: "img[itemprop='image'], .gallery img, .property-gallery img, .slider img, .photos img, [class*='gallery'] img"
+        bedrooms: "[itemprop='numberOfBedrooms'], .bedrooms, [class*='bed']"
+        bathrooms: "[itemprop='numberOfBathroomsTotal'], .bathrooms, [class*='bath']"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|BR)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*(?:ft|m))"
+      amenity_keywords:
+        pool: ["pool", "swimming"]
+        garden: ["garden", "yard", "lawn"]
+        parking: ["parking", "garage", "carport"]
+        security: ["security", "gated", "cctv", "guard"]
+
+  # ============================================
+  # PROPERTYPRO.NG - Major Nigerian portal (42k+ listings)
+  # Cloudflare-protected, needs headless
+  # ============================================
+  - id: ng_propertypro
+    name: "PropertyPro Nigeria"
+    url: https://propertypro.ng/property-for-sale
+    type: html
+    lifecycleOverride: IN
+
+    cms_type: custom
+
+    fetch_method: headless  # Cloudflare-protected
+
+    pagination:
+      type: query_param
+      param: "page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 5000
+    jitter_ms: 2000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    # DOM: .property-listing > .property-listing-content
+    # Title in .pl-title h3 a, price in .pl-price h3, location in .pl-title p
+    selectors:
+      listing: ".property-listing"
+      link: ".pl-title h3 a"
+      title: ".pl-title h3 a"
+      price: ".pl-price h3"
+      location: ".pl-title p"
+      image: "img"
+
+    price_format:
+      currency_symbol: "₦"
+      thousands_separator: ","
+
+    id_prefix: "ppn"
+
+    detail:
+      enabled: true
+      policy: on_violation
+      delay_ms: 5000
+      selectors:
+        description: ".property-description, .description, [class*='desc'] p, .property-detail p"
+        images: ".property-detail img, .gallery img, img[src*='propertypro']"
+        bedrooms: "[class*='bed']"
+        bathrooms: "[class*='bath']"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|BR)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*(?:ft|m))"
+      amenity_keywords:
+        pool: ["pool", "swimming"]
+        garden: ["garden", "yard", "lawn"]
+        parking: ["parking", "garage", "carport"]
+        security: ["security", "gated", "cctv", "guard"]

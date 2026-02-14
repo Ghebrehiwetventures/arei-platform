@@ -1,0 +1,65 @@
+# South Africa Sources - Generic Config
+# ============================================
+# Same schema as other markets. NO code changes needed.
+# ============================================
+
+market: za
+
+sources:
+  # ============================================
+  # PRIVATEPROPERTY - Major SA property portal
+  # Modern React site, server-rendered listings
+  # ============================================
+  - id: za_privateproperty
+    name: "Private Property"
+    url: https://www.privateproperty.co.za/for-sale/south-africa/1
+    type: html
+    lifecycleOverride: IN
+
+    cms_type: custom
+
+    fetch_method: http  # Server-rendered, no JS needed
+
+    pagination:
+      type: path_segment
+      pattern: "/south-africa/{page}"
+      start: 1
+
+    delay_ms: 3000
+    jitter_ms: 1000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    # DOM: a.featured-listing contains all listing data
+    # The entire card is an <a> tag with href to detail page
+    selectors:
+      listing: "a.featured-listing"
+      link: ""  # The listing element itself is the link
+      title: ".featured-listing__title"
+      price: ".featured-listing__price"
+      location: ".featured-listing__address"
+      image: "img[src*='images.pp.co.za'], img[src*='listing']"
+
+    price_format:
+      currency_symbol: "R"
+      thousands_separator: " "
+
+    id_prefix: "ppza"
+
+    detail:
+      enabled: false
+      policy: on_violation
+
+  # ============================================
+  # STUB SOURCE (for testing)
+  # ============================================
+  - id: za_stub
+    name: "South Africa Test Stub"
+    url: https://example-za.com/properties
+    type: stub
+    selectors:
+      listing: ".property-card"
+      title: ".title"
+      price: ".price"
+      image: "img"

@@ -4,6 +4,7 @@
   "private": true,
   "type": "commonjs",
   "scripts": {
+    "dev": "npm run dev --prefix diagnostics",
     "ingest:cv": "DETAIL_ENRICH=1 DETAIL_ENRICH_LIMIT=10 npx ts-node --transpile-only core/ingestCv.ts",
     "report:cv": "npx ts-node --transpile-only core/reportCv.ts"
   },
@@ -12,6 +13,7 @@
     "cheerio": "^1.0.0",
     "dotenv": "^17.2.3",
     "js-yaml": "^4.1.0",
+    "pg": "^8.18.0",
     "puppeteer": "^24.36.1",
     "puppeteer-extra": "^3.3.6",
     "puppeteer-extra-plugin-stealth": "^2.11.2"
@@ -19,6 +21,7 @@
   "devDependencies": {
     "@types/js-yaml": "^4.0.9",
     "@types/node": "^20.0.0",
+    "@types/pg": "^8.16.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.9.3"
   }

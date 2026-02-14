@@ -1,0 +1,24 @@
+{
+  "marketId": "ug",
+  "marketName": "UG",
+  "generatedAt": "2026-02-10T19:59:31.170Z",
+  "summary": {
+    "totalListings": 0,
+    "visibleCount": 0,
+    "hiddenCount": 0,
+    "duplicatesRemoved": 0,
+    "sourceCount": 1
+  },
+  "sources": [
+    {
+      "id": "ug_propertycentre",
+      "name": "Uganda Property Centre",
+      "status": "PARTIAL_OK",
+      "scrapeAttempts": 1,
+      "repairAttempts": 0,
+      "lastError": "No listings found (empty_listings)"
+    }
+  ],
+  "visibleListings": [],
+  "hiddenListings": []
+}

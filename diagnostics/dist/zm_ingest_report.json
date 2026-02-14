@@ -1,0 +1,957 @@
+{
+  "marketId": "zm",
+  "marketName": "ZM",
+  "generatedAt": "2026-02-10T18:29:46.776Z",
+  "summary": {
+    "totalListings": 50,
+    "visibleCount": 17,
+    "hiddenCount": 33,
+    "duplicatesRemoved": 0,
+    "sourceCount": 1
+  },
+  "sources": [
+    {
+      "id": "zm_property24",
+      "name": "Property24 Zambia",
+      "status": "OK",
+      "scrapeAttempts": 1,
+      "repairAttempts": 0
+    }
+  ],
+  "visibleListings": [
+    {
+      "id": "p24zm_9ad023c39b4f",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-roma-115199991",
+      "title": "4 Bedroom House For Sale In Roma 115199991",
+      "description": "system, ensuring that the interior is well-lit. The property offers high standards of security, both within an estate and through six cameras surrounding the home. This can provide peace of mind for homeowners concerned about safety. There is a wonderful balcony and stairs that lead to the top of the building, likely providing a pleasant outdoor space and access to the upper level. A separate gym building is an attractive feature for fitness enthusiasts, providing a dedicated space for exercise. The small orchard on the outside can be a delightful addition, allowing you to grow your fruits or enjoy the greenery and fresh air. With space for 4-7 cars, there's plenty of parking available for residents and guests.",
+      "price": 13545000,
+      "priceText": "13545000 ZMW",
+      "location": "Roma",
+      "images": [
+        "https://images.prop24.com/372856525/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/260046683/Fit450x225",
+        "https://images.prop24.com/345753733/Crop204x306"
+      ],
+      "bedrooms": 4,
+      "bathrooms": 4,
+      "area_sqm": 225
+    },
+    {
+      "id": "p24zm_4dc6c6cc751b",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/5-bedroom-house-for-sale-in-lusaka-central-116864493",
+      "title": "5 Bedroom House For Sale In Lusaka Central 116864493",
+      "description": "light, and every window offers views of pristine woodland. With high ceilings, large secure windows, and expansive patio doors that fully open on to the verandah overlooking the swimming pool and gardens.  This property offers the unique opportunity to be either a full-time dwelling or a rentable home. With a 10% return on investment, this property can be rented and managed by the estate management on your behalf.It is fully electric fenced.Situated 1.5km (on well maintained road) off the Leopards Hill Road it is a five minute stroll to the Lusaka Polo Club, 5kms past the police security boom this private road it is just 8kms (11 minutes)  from the American International School, The Village and 7kms from the MFEZ.K11,500,000",
+      "price": 115000000,
+      "priceText": "115000000 ZMW",
+      "location": "Lusaka Central",
+      "images": [
+        "https://images.prop24.com/372864880/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/363631602/Fit450x225",
+        "https://static.sa-property.co.za/Resource/138975",
+        "https://static.sa-property.co.za/Content/Images/close_grey.png?z=75fbde",
+        "https://www.property24.co.zm/content/images/south%20africa/imagenotfound/nopersonphoto.jpg",
+        "https://static.sa-property.co.za/Shared/Icons/Phone.svg?z=769749",
+        "https://static.sa-property.co.za/Content/Images/SocialPrint.png?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-plus.svg?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-minus.svg?z=75fbde"
+      ],
+      "bedrooms": 5,
+      "bathrooms": 5,
+      "area_sqm": 65
+    },
+    {
+      "id": "p24zm_856dee2c8e1e",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-ibex-hill-116848521",
+      "title": "3 Bedroom House For Sale In Ibex Hill 116848521",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions| Agent Zone",
+      "price": 3800000,
+      "priceText": "3800000 ZMW",
+      "location": "Ibex Hill",
+      "images": [
+        "https://images.prop24.com/372577817/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/366733179/Fit450x225",
+        "https://static.sa-property.co.za/Resource/138975",
+        "https://static.sa-property.co.za/Content/Images/close_grey.png?z=75fbde",
+        "https://www.property24.co.zm/content/images/south%20africa/imagenotfound/nopersonphoto.jpg",
+        "https://static.sa-property.co.za/Shared/Icons/Phone.svg?z=769749",
+        "https://static.sa-property.co.za/Content/Images/SocialPrint.png?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-plus.svg?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-minus.svg?z=75fbde"
+      ],
+      "bedrooms": 3,
+      "bathrooms": 3,
+      "area_sqm": 572
+    },
+    {
+      "id": "p24zm_a9cbb10fa7e4",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-ibex-hill-116908372",
+      "title": "4 Bedroom House For Sale In Ibex Hill 116908372",
+      "description": "self-contained staff quarter, a guard room, and a double open garage. The property is serviced by mains electricity with a 10kVA solar backup system, a borehole with pump, and a septic system—ensuring reliable utilities and low running costs.This well-maintained home offers privacy, security, and ample outdoor space, making it perfect for families or investors seeking a high-value property in one of Lusaka’s most desirable residential areas.Call today for a viewing!",
+      "price": 6612709,
+      "priceText": "6612709 ZMW",
+      "location": "Ibex Hill",
+      "images": [
+        "https://images.prop24.com/373640927/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://static.sa-property.co.za/Resource/138975",
+        "https://static.sa-property.co.za/Content/Images/close_grey.png?z=75fbde",
+        "https://static.sa-property.co.za/Shared/Icons/Phone.svg?z=769749",
+        "https://www.property24.co.zm/content/images/south%20africa/imagenotfound/nopersonphoto.jpg",
+        "https://static.sa-property.co.za/Content/Images/SocialPrint.png?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-plus.svg?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-minus.svg?z=75fbde"
+      ],
+      "bedrooms": 4,
+      "bathrooms": 4,
+      "area_sqm": 691
+    },
+    {
+      "id": "p24zm_6dcb2ac1493b",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-roma-116902211",
+      "title": "4 Bedroom House For Sale In Roma 116902211",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions| Agent Zone",
+      "price": 10000000,
+      "priceText": "10000000 ZMW",
+      "location": "Roma",
+      "images": [
+        "https://images.prop24.com/373532185/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/228018999/Fit450x225",
+        "https://images.prop24.com/228048140/Crop204x306"
+      ],
+      "bedrooms": 4,
+      "bathrooms": 4
+    },
+    {
+      "id": "p24zm_26d183aa3f09",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-new-kasama-116791112",
+      "title": "3 Bedroom House For Sale In New Kasama 116791112",
+      "description": "NegotiableThis property offers a unique blend of comfort, security, and natural beauty in a desirable location. Schedule a viewing today! ?? #NewKasama #LusakaProperty #ForSale\"",
+      "price": 5500000,
+      "priceText": "5500000 ZMW",
+      "location": "New Kasama",
+      "images": [
+        "https://images.prop24.com/371578671/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/366733179/Fit450x225",
+        "https://static.sa-property.co.za/Resource/138975",
+        "https://static.sa-property.co.za/Content/Images/close_grey.png?z=75fbde",
+        "https://www.property24.co.zm/content/images/south%20africa/imagenotfound/nopersonphoto.jpg",
+        "https://static.sa-property.co.za/Shared/Icons/Phone.svg?z=769749",
+        "https://static.sa-property.co.za/Content/Images/SocialPrint.png?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-plus.svg?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-minus.svg?z=75fbde"
+      ],
+      "bedrooms": 3,
+      "bathrooms": 3,
+      "area_sqm": 28
+    },
+    {
+      "id": "p24zm_2a53d3540c01",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-ibex-hill-116900458",
+      "title": "4 Bedroom House For Sale In Ibex Hill 116900458",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions| Agent Zone",
+      "price": 4000000,
+      "priceText": "4000000 ZMW",
+      "location": "Ibex Hill",
+      "images": [
+        "https://images.prop24.com/373501408/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/277168763/Crop204x306",
+        "https://static.sa-property.co.za/Resource/138975",
+        "https://static.sa-property.co.za/Content/Images/close_grey.png?z=75fbde",
+        "https://static.sa-property.co.za/Shared/Icons/Phone.svg?z=769749",
+        "https://static.sa-property.co.za/Content/Images/SocialPrint.png?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-plus.svg?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-minus.svg?z=75fbde"
+      ],
+      "bedrooms": 4,
+      "bathrooms": 4
+    },
+    {
+      "id": "p24zm_d6437085d40b",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-chelstone-116906000",
+      "title": "3 Bedroom House For Sale In Chelstone 116906000",
+      "description": "purchasers and tenants should make their own enquiries to verify the information contained herein",
+      "price": 1200000,
+      "priceText": "1200000 ZMW",
+      "location": "Chelstone",
+      "images": [
+        "https://images.prop24.com/373598410/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/196515764/Fit450x225",
+        "https://images.prop24.com/361217312/Crop204x306"
+      ],
+      "bedrooms": 3,
+      "bathrooms": 3
+    },
+    {
+      "id": "p24zm_eddc2995c1ad",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-civic-centre-116903078",
+      "title": "3 Bedroom House For Sale In Civic Centre 116903078",
+      "description": "yield good returns.Priced at ($450,000) equivalent to ZMW 9,000,000.Call and schedule a viewing today and envision the possibilities that await in this property!",
+      "price": 9000000,
+      "priceText": "9000000 ZMW",
+      "location": "Civic Centre",
+      "images": [
+        "https://images.prop24.com/373549696/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/38595915/Fit450x225",
+        "https://images.prop24.com/343158659/Crop204x306"
+      ],
+      "bedrooms": 3,
+      "bathrooms": 3,
+      "area_sqm": 898
+    },
+    {
+      "id": "p24zm_596c794ffa64",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-kabulonga-116876754",
+      "title": "4 Bedroom House For Sale In Kabulonga 116876754",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions| Agent Zone",
+      "price": 8000000,
+      "priceText": "8000000 ZMW",
+      "location": "Kabulonga",
+      "images": [
+        "https://images.prop24.com/373079256/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/280317948/Fit450x225",
+        "https://static.sa-property.co.za/Resource/138975",
+        "https://static.sa-property.co.za/Content/Images/close_grey.png?z=75fbde",
+        "https://static.sa-property.co.za/Shared/Icons/Phone.svg?z=769749",
+        "https://www.property24.co.zm/content/images/south%20africa/imagenotfound/nopersonphoto.jpg",
+        "https://static.sa-property.co.za/Content/Images/SocialPrint.png?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-plus.svg?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/search-minus.svg?z=75fbde"
+      ],
+      "bedrooms": 4,
+      "bathrooms": 4,
+      "area_sqm": 800
+    },
+    {
+      "id": "p24zm_903efd6bde20",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-roma-116902187",
+      "title": "4 Bedroom House For Sale In Roma 116902187",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions| Agent Zone",
+      "price": 70000,
+      "priceText": "70000 ZMW",
+      "location": "Roma",
+      "images": [
+        "https://images.prop24.com/373529443/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/331247294/Fit450x225",
+        "https://images.prop24.com/331298333/Crop204x306"
+      ],
+      "bedrooms": 4,
+      "bathrooms": 4
+    },
+    {
+      "id": "p24zm_bb80440045bd",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-chelstone-116906132",
+      "title": "3 Bedroom House For Sale In Chelstone 116906132",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions| Agent Zone",
+      "price": 1200000,
+      "priceText": "1200000 ZMW",
+      "location": "Chelstone",
+      "images": [
+        "https://images.prop24.com/373600369/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/319601835/Fit450x225",
+        "https://images.prop24.com/361214433/Crop204x306"
+      ],
+      "bedrooms": 3,
+      "bathrooms": 3
+    },
+    {
+      "id": "p24zm_b76533f25d29",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-ibex-hill-116901358",
+      "title": "4 Bedroom House For Sale In Ibex Hill 116901358",
+      "description": "information shared is accurate and up to date, Dawn Realty Limited makes no warranty, representation or undertaking whether expressed or implied, nor do we assume any legal liability, whether direct or indirect, or  responsibility for the accuracy, completeness, or usefulness of any information. Prospective purchasers and tenants should make their own enquiries to verify the information contained herein",
+      "price": 3700000,
+      "priceText": "3700000 ZMW",
+      "location": "Ibex Hill",
+      "images": [
+        "https://images.prop24.com/373516934/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/196515764/Fit450x225",
+        "https://images.prop24.com/361217312/Crop204x306"
+      ],
+      "bedrooms": 4,
+      "bathrooms": 4
+    },
+    {
+      "id": "p24zm_d5f2ec1faf55",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/2-bedroom-house-for-sale-in-lusaka-central-116844993",
+      "title": "2 Bedroom House For Sale In Lusaka Central 116844993",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions| Agent Zone",
+      "price": 1450000,
+      "priceText": "1450000 ZMW",
+      "location": "Lusaka Central",
+      "images": [
+        "https://images.prop24.com/372511278/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/256998741/Fit450x225",
+        "https://images.prop24.com/229580719/Crop204x306"
+      ],
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "area_sqm": 333
+    },
+    {
+      "id": "p24zm_6cff5472f061",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-avondale-116863534",
+      "title": "3 Bedroom House For Sale In Avondale 116863534",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions| Agent Zone",
+      "price": 7525000,
+      "priceText": "7525000 ZMW",
+      "location": "Avondale",
+      "images": [
+        "https://images.prop24.com/372848822/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/260046683/Fit450x225",
+        "https://images.prop24.com/345753733/Crop204x306"
+      ],
+      "bedrooms": 3,
+      "bathrooms": 3,
+      "area_sqm": 300
+    },
+    {
+      "id": "p24zm_3cdde343e38e",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/2-bedroom-house-for-sale-in-ngwerere-116863937",
+      "title": "2 Bedroom House For Sale In Ngwerere 116863937",
+      "description": "Special?- Future Potential: Build your dream estate, add multiple units, or create lush gardens—the choice is yours.- Peaceful Lifestyle: Escape the hustle of the city while staying connected to essential services.- Strategic Investment: Properties in this area hold exceptional long-term value, while seeing 3 - 5% increase in capital gains annually, making it a smart addition to any portfolio.This is your chance to secure a rare gem in Lusaka’s real estate market.Act now and take the first step toward owning this versatile property. Contact us today to arrange a private viewing and explore the endless possibilities that await.Ready to make a move?Call me or send an inquiry today. Opportunities like this are rare—don’t let it slip away.",
+      "price": 2795000,
+      "priceText": "2795000 ZMW",
+      "location": "Ngwerere",
+      "images": [
+        "https://images.prop24.com/372855617/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/260046683/Fit450x225",
+        "https://images.prop24.com/345753733/Crop204x306"
+      ],
+      "bedrooms": 2,
+      "bathrooms": 2,
+      "area_sqm": 0
+    },
+    {
+      "id": "p24zm_53258d6ab67f",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-civic-centre-101749857",
+      "title": "3 Bedroom House For Sale In Civic Centre 101749857",
+      "description": "For Sale | To Rent | About Us | Contact Us | Terms & Conditions| Agent Zone",
+      "price": 9000000,
+      "priceText": "9000000 ZMW",
+      "location": "Civic Centre",
+      "images": [
+        "https://images.prop24.com/373549696/Crop600x400",
+        "https://static.sa-property.co.za/Resource/138974",
+        "https://static.sa-property.co.za/Content/Images/close_grey.png?z=75fbde",
+        "https://static.sa-property.co.za/Property24/Content/Images/navbar_caret_up.png?z=75fbde",
+        "https://static.sa-property.co.za/Content/Images/ListingNotFound.png?z=75fbde",
+        "https://static.sa-property.co.za/Resource/138975"
+      ],
+      "bathrooms": 0,
+      "area_sqm": 50
+    }
+  ],
+  "hiddenListings": [
+    {
+      "id": "p24zm_ba8ca3b473c0",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-chudleigh-116892163",
+      "title": "4 Bedroom House For Sale In Chudleigh 116892163",
+      "price": 3900000,
+      "priceText": "3900000 ZMW",
+      "location": "Chudleigh",
+      "images": [
+        "https://images.prop24.com/373354227/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_f686209bf169",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-lusaka-central-116828354",
+      "title": "3 Bedroom House For Sale In Lusaka Central 116828354",
+      "description": "abundance of space to enjoy the indigenous bush and beautiful birdlife, gardening, or extend the number of homes to suit your lifestyle. Key Features: - More than 800 m2 under cover- 3 spacious en-suite bedrooms - Modern kitchen, dining, and living areas- Pool and large deck overlooking lush vegetation - Separate 3 bedroom cottage - Large warehouse - The whole property is off grid (solar power)- Secure plot with electric fence - Ample parking - Conveniently located near to Kenneth Kaunda International Airport and the University of Lusaka Whether you’re seeking a peaceful family retreat or a smart investment, this property offers comfort, security, and growth potential in one of Lusaka’s fastest-developing upmarket neighbourhoods. Contact me today to arrange your private viewing and take the first step toward your new lifestyle.",
+      "location": "Lusaka Central",
+      "images": [
+        "https://images.prop24.com/372223669/Crop600x400",
+        "https://static.sa-property.co.za/Content/Images/blank.gif?z=75fbde",
+        "https://images.prop24.com/371893101/Fit450x225",
+        "https://images.prop24.com/372255030/Crop204x306"
+      ],
+      "bedrooms": 3,
+      "bathrooms": 3,
+      "area_sqm": 800,
+      "violations": [
+        "INVALID_PRICE"
+      ]
+    },
+    {
+      "id": "p24zm_936073f78cef",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/house-for-sale-in-kalundu-116863550",
+      "title": "House For Sale In Kalundu 116863550",
+      "price": 11825000,
+      "priceText": "11825000 ZMW",
+      "location": "Kalundu",
+      "images": [
+        "https://images.prop24.com/372849076/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_4b310570a507",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/house-for-sale-in-woodlands-116890463",
+      "title": "House For Sale In Woodlands 116890463",
+      "price": 2900000,
+      "priceText": "2900000 ZMW",
+      "location": "Woodlands",
+      "images": [
+        "https://images.prop24.com/361054304/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_8fcf8c3da4eb",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/5-bedroom-house-for-sale-in-leopards-hill-116868476",
+      "title": "5 Bedroom House For Sale In Leopards Hill 116868476",
+      "price": 11500000,
+      "priceText": "11500000 ZMW",
+      "location": "Leopards Hill",
+      "images": [
+        "https://images.prop24.com/370507068/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_422bd1fa29bf",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/house-for-sale-in-kalundu-116887607",
+      "title": "House For Sale In Kalundu 116887607",
+      "price": 14000000,
+      "priceText": "14000000 ZMW",
+      "location": "Kalundu",
+      "images": [
+        "https://images.prop24.com/373271974/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_c4a67c076117",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-olympia-park-116884728",
+      "title": "3 Bedroom House For Sale In Olympia Park 116884728",
+      "price": 3500000,
+      "priceText": "3500000 ZMW",
+      "location": "Olympia Park",
+      "images": [
+        "https://images.prop24.com/373221668/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_af4657c961af",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/5-bedroom-house-for-sale-in-chamba-valley-116863527",
+      "title": "5 Bedroom House For Sale In Chamba Valley 116863527",
+      "price": 6000000,
+      "priceText": "6000000 ZMW",
+      "location": "Chamba Valley",
+      "images": [
+        "https://images.prop24.com/372848673/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_56b59ee7e9de",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-chudleigh-116888513",
+      "title": "4 Bedroom House For Sale In Chudleigh 116888513",
+      "price": 8029910,
+      "priceText": "8029910 ZMW",
+      "location": "Chudleigh",
+      "images": [
+        "https://images.prop24.com/373289920/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_09e42247fb0d",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/5-bedroom-house-for-sale-in-ibex-hill-116863215",
+      "title": "5 Bedroom House For Sale In Ibex Hill 116863215",
+      "price": 7525000,
+      "priceText": "7525000 ZMW",
+      "location": "Ibex Hill",
+      "images": [
+        "https://images.prop24.com/372842543/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_03f49df4c4a4",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-chainama-hills-116896567",
+      "title": "3 Bedroom House For Sale In Chainama Hills 116896567",
+      "price": 950000,
+      "priceText": "950000 ZMW",
+      "location": "Chainama Hills",
+      "images": [
+        "https://images.prop24.com/373437663/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_b4f03d9cddcc",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-munali-116863967",
+      "title": "4 Bedroom House For Sale In Munali 116863967",
+      "price": 10750000,
+      "priceText": "10750000 ZMW",
+      "location": "Munali",
+      "images": [
+        "https://images.prop24.com/372856166/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_ca01a623aeaa",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-roma-116893410",
+      "title": "4 Bedroom House For Sale In Roma 116893410",
+      "price": 8813310,
+      "priceText": "8813310 ZMW",
+      "location": "Roma",
+      "images": [
+        "https://images.prop24.com/373377089/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_8aa36837283b",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-roma-101739685",
+      "title": "4 Bedroom House For Sale In Roma 101739685",
+      "price": 10000000,
+      "priceText": "10000000 ZMW",
+      "location": "Roma",
+      "images": [
+        "https://images.prop24.com/373529408/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_91f31b9b6ba5",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-kalundu-116867390",
+      "title": "4 Bedroom House For Sale In Kalundu 116867390",
+      "price": 6875000,
+      "priceText": "6875000 ZMW",
+      "location": "Kalundu",
+      "images": [
+        "https://images.prop24.com/372267956/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_913f254c67d5",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-ibex-hill-116909609",
+      "title": "4 Bedroom House For Sale In Ibex Hill 116909609",
+      "price": 2200000,
+      "priceText": "2200000 ZMW",
+      "location": "Ibex Hill",
+      "images": [
+        "https://images.prop24.com/373665246/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_763a713261e9",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-roma-116895852",
+      "title": "3 Bedroom House For Sale In Roma 116895852",
+      "price": 13500000,
+      "priceText": "13500000 ZMW",
+      "location": "Roma",
+      "images": [
+        "https://images.prop24.com/373425651/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_a0edf072844a",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-roma-116869791",
+      "title": "3 Bedroom House For Sale In Roma 116869791",
+      "price": 13600000,
+      "priceText": "13600000 ZMW",
+      "location": "Roma",
+      "images": [
+        "https://images.prop24.com/372957278/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_4566291f2ea9",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/2-bedroom-house-for-sale-in-makeni-116901707",
+      "title": "2 Bedroom House For Sale In Makeni 116901707",
+      "price": 1200000,
+      "priceText": "1200000 ZMW",
+      "location": "Makeni",
+      "images": [
+        "https://images.prop24.com/373523181/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_ce020949fd8c",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/house-for-sale-in-state-lodge-116853546",
+      "title": "House For Sale In State Lodge 116853546",
+      "location": "State Lodge",
+      "images": [
+        "https://images.prop24.com/372675905/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "INVALID_PRICE",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_6245b12f8096",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/9-bedroom-house-for-sale-in-kanini-116864618",
+      "title": "9 Bedroom House For Sale In Kanini 116864618",
+      "price": 4000000,
+      "priceText": "4000000 ZMW",
+      "location": "Kanini",
+      "images": [
+        "https://images.prop24.com/372867829/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_5e844b1eda24",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-roma-116902060",
+      "title": "4 Bedroom House For Sale In Roma 116902060",
+      "price": 10000000,
+      "priceText": "10000000 ZMW",
+      "location": "Roma",
+      "images": [
+        "https://images.prop24.com/373529408/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_efeffd119197",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-ibex-hill-116875425",
+      "title": "3 Bedroom House For Sale In Ibex Hill 116875425",
+      "price": 3000,
+      "priceText": "3000 ZMW",
+      "location": "Ibex Hill",
+      "images": [
+        "https://images.prop24.com/373059896/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_831b53dbec14",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-foxdale-116842284",
+      "title": "4 Bedroom House For Sale In Foxdale 116842284",
+      "location": "Foxdale",
+      "images": [
+        "https://images.prop24.com/372472289/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "INVALID_PRICE",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_1de540e41c3f",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/house-for-sale-in-chelstone-116828426",
+      "title": "House For Sale In Chelstone 116828426",
+      "price": 3600000,
+      "priceText": "3600000 ZMW",
+      "location": "Chelstone",
+      "images": [
+        "https://images.prop24.com/372225028/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_88718a8d4bda",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-rhodespark-116892263",
+      "title": "3 Bedroom House For Sale In Rhodespark 116892263",
+      "price": 14500000,
+      "priceText": "14500000 ZMW",
+      "location": "Rhodespark",
+      "images": [
+        "https://images.prop24.com/371063611/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_4014c4713415",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/house-for-sale-in-ibex-hill-116870624",
+      "title": "House For Sale In Ibex Hill 116870624",
+      "price": 3000000,
+      "priceText": "3000000 ZMW",
+      "location": "Ibex Hill",
+      "images": [
+        "https://images.prop24.com/372969782/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_06b8a8ad52c3",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-waterfalls-116853537",
+      "title": "3 Bedroom House For Sale In Waterfalls 116853537",
+      "price": 1500000,
+      "priceText": "1500000 ZMW",
+      "location": "Waterfalls",
+      "images": [
+        "https://images.prop24.com/372675116/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_6624e5b03c4a",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-chalala-116843847",
+      "title": "3 Bedroom House For Sale In Chalala 116843847",
+      "price": 2700,
+      "priceText": "2700 ZMW",
+      "location": "Chalala",
+      "images": [
+        "https://images.prop24.com/372493706/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_774c4c36043d",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/4-bedroom-house-for-sale-in-roma-116876720",
+      "title": "4 Bedroom House For Sale In Roma 116876720",
+      "price": 13303792,
+      "priceText": "13303792 ZMW",
+      "location": "Roma",
+      "images": [
+        "https://images.prop24.com/373078672/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_5ed1fa5b99e4",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-woodlands-ext-101748907",
+      "title": "3 Bedroom House For Sale In Woodlands Ext 101748907",
+      "price": 4500000,
+      "priceText": "4500000 ZMW",
+      "location": "Woodlands Ext",
+      "images": [
+        "https://images.prop24.com/372479489/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_6b2bfd3181a1",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-olympia-park-116892720",
+      "title": "3 Bedroom House For Sale In Olympia Park 116892720",
+      "price": 10000000,
+      "priceText": "10000000 ZMW",
+      "location": "Olympia Park",
+      "images": [
+        "https://images.prop24.com/373364235/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    },
+    {
+      "id": "p24zm_9bc146ec4ace",
+      "sourceId": "zm_property24",
+      "sourceName": "Property24 Zambia",
+      "sourceUrl": "https://www.property24.co.zm/3-bedroom-house-for-sale-in-woodlands-ext-116842746",
+      "title": "3 Bedroom House For Sale In Woodlands Ext 116842746",
+      "price": 4500000,
+      "priceText": "4500000 ZMW",
+      "location": "Woodlands Ext",
+      "images": [
+        "https://images.prop24.com/372479489/Crop600x400"
+      ],
+      "violations": [
+        "INSUFFICIENT_IMAGES",
+        "DESCRIPTION_TOO_SHORT"
+      ]
+    }
+  ]
+}

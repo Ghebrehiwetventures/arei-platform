@@ -1,0 +1,71 @@
+# Uganda Sources - Generic Config
+# ============================================
+# Same PropertyCentre platform as KE, GH, NG
+# ============================================
+
+market: ug
+
+sources:
+  # ============================================
+  # UGANDA PROPERTY CENTRE
+  # Same platform as KE/GH/NG Property Centre
+  # ============================================
+  - id: ug_propertycentre
+    name: "Uganda Property Centre"
+    url: https://ugandapropertycentre.com/for-sale
+    type: html
+    lifecycleOverride: IN
+
+    cms_type: custom
+
+    fetch_method: headless
+
+    pagination:
+      type: query_param
+      param: "page"
+      start: 1
+      first_no_param: true
+
+    delay_ms: 3000
+    jitter_ms: 1000
+    max_items: 50
+    max_pages: 3
+    stop_condition: empty_listings
+
+    selectors:
+      listing: ".row.property-list"
+      link: "a[itemprop='url']"
+      title: "h3[itemprop='name']"
+      price: ".pull-sm-left"
+      location: "address.voffset-bottom-10"
+      image: "img[itemprop='image']"
+
+    price_format:
+      currency_symbol: "USh"
+      thousands_separator: ","
+
+    id_prefix: "upc"
+
+    detail:
+      enabled: true
+      policy: on_violation
+      delay_ms: 3000
+      selectors:
+        description: ".body-text, .property-description, [itemprop='description'], .listing-content, .details p"
+        images: "img[itemprop='image'], .gallery img, .property-gallery img, .slider img, .photos img, [class*='gallery'] img"
+        bedrooms: "[itemprop='numberOfBedrooms'], .bedrooms, [class*='bed']"
+        bathrooms: "[itemprop='numberOfBathroomsTotal'], .bathrooms, [class*='bath']"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|BR)"
+          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*(?:ft|m))"
+      amenity_keywords:
+        pool: ["pool", "swimming"]
+        garden: ["garden", "yard", "lawn"]
+        parking: ["parking", "garage", "carport"]
+        security: ["security", "gated", "cctv", "guard"]

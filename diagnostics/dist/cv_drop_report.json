@@ -1,0 +1,150 @@
+{
+  "market": "cv",
+  "generated_at": "2026-02-09T17:46:37.190Z",
+  "sources": [
+    {
+      "source_id": "cv_terracaboverde",
+      "fetched_total": 9,
+      "kept_normalized": 0,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 9,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "cv_simplycapeverde",
+      "fetched_total": 4,
+      "kept_normalized": 0,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 4,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "cv_homescasaverde",
+      "fetched_total": 15,
+      "kept_normalized": 0,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 15,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "cv_capeverdeproperty24",
+      "fetched_total": 37,
+      "kept_normalized": 0,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 37,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "cv_cabohouseproperty",
+      "fetched_total": 12,
+      "kept_normalized": 0,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 12,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "cv_estatecv",
+      "fetched_total": 45,
+      "kept_normalized": 0,
+      "dropped": {
+        "missing_price": 5,
+        "missing_location": 0,
+        "missing_property_type": 40,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "cv_oceanproperty24",
+      "fetched_total": 11,
+      "kept_normalized": 0,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 11,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "cv_source_1",
+      "fetched_total": 2,
+      "kept_normalized": 0,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 2,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "cv_source_2",
+      "fetched_total": 4,
+      "kept_normalized": 0,
+      "dropped": {
+        "missing_price": 1,
+        "missing_location": 0,
+        "missing_property_type": 3,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    }
+  ]
+}

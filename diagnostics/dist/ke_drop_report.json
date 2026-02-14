@@ -1,0 +1,54 @@
+{
+  "market": "ke",
+  "generated_at": "2026-02-10T20:07:03.319Z",
+  "sources": [
+    {
+      "source_id": "ke_buyrentkenya",
+      "fetched_total": 50,
+      "kept_normalized": 50,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 0,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "ke_propertycentre",
+      "fetched_total": 50,
+      "kept_normalized": 50,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 0,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    },
+    {
+      "source_id": "ke_stub",
+      "fetched_total": 1,
+      "kept_normalized": 1,
+      "dropped": {
+        "missing_price": 0,
+        "missing_location": 0,
+        "missing_property_type": 0,
+        "missing_images": 0,
+        "invalid_area": 0,
+        "invalid_bedrooms": 0,
+        "schema_violation": 0,
+        "unstructured_market_data": 0,
+        "other": 0
+      }
+    }
+  ]
+}

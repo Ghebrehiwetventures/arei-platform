@@ -1,0 +1,127 @@
+# Kenya Location Mapping
+# ============================================
+# Config-driven location parsing for Kenya.
+# Uses regions instead of islands.
+# ============================================
+
+market: ke
+country: Kenya
+currency: KES
+
+# Kenya uses regions/counties instead of islands
+islands: []  # Empty - Kenya is mainland
+
+regions:
+  - name: Nairobi
+    aliases:
+      - "Nairobi"
+      - "NBO"
+      - "Nairobi County"
+    cities:
+      - name: Nairobi CBD
+        aliases:
+          - "CBD"
+          - "Central Business District"
+          - "Nairobi Central"
+        default: true
+      - name: Westlands
+        aliases:
+          - "Westlands"
+          - "Westland"
+      - name: Karen
+        aliases:
+          - "Karen"
+      - name: Kilimani
+        aliases:
+          - "Kilimani"
+      - name: Lavington
+        aliases:
+          - "Lavington"
+      - name: Kileleshwa
+        aliases:
+          - "Kileleshwa"
+      - name: Runda
+        aliases:
+          - "Runda"
+      - name: Muthaiga
+        aliases:
+          - "Muthaiga"
+
+  - name: Mombasa
+    aliases:
+      - "Mombasa"
+      - "MSA"
+      - "Mombasa County"
+    cities:
+      - name: Mombasa
+        aliases:
+          - "Mombasa Town"
+          - "Mombasa City"
+        default: true
+      - name: Nyali
+        aliases:
+          - "Nyali"
+      - name: Diani
+        aliases:
+          - "Diani"
+          - "Diani Beach"
+      - name: Bamburi
+        aliases:
+          - "Bamburi"
+      - name: Shanzu
+        aliases:
+          - "Shanzu"
+
+  - name: Kisumu
+    aliases:
+      - "Kisumu"
+      - "Kisumu County"
+    cities:
+      - name: Kisumu
+        aliases:
+          - "Kisumu Town"
+          - "Kisumu City"
+        default: true
+
+  - name: Nakuru
+    aliases:
+      - "Nakuru"
+      - "Nakuru County"
+    cities:
+      - name: Nakuru
+        aliases:
+          - "Nakuru Town"
+        default: true
+
+  - name: Eldoret
+    aliases:
+      - "Eldoret"
+      - "Uasin Gishu"
+    cities:
+      - name: Eldoret
+        aliases:
+          - "Eldoret Town"
+        default: true
+
+  - name: Thika
+    aliases:
+      - "Thika"
+      - "Kiambu"
+    cities:
+      - name: Thika
+        aliases:
+          - "Thika Town"
+        default: true
+
+# Regex patterns for location extraction (fallback)
+location_patterns:
+  - "Nairobi"
+  - "Mombasa"
+  - "Kisumu"
+  - "Nakuru"
+  - "Eldoret"
+  - "Westlands"
+  - "Karen"
+  - "Kilimani"
+  - "Nyali"
+  - "Diani"
