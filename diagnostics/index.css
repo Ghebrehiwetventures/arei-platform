@@ -1,0 +1,66 @@
+@import "tailwindcss";
+
+/* ── Custom theme (Africa Property Index) — Dark mode ─────────────── */
+@theme {
+  --font-sans: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+
+  --color-background: #0a0a0a;
+  --color-foreground: #fafafa;
+  --color-primary: #fafafa;
+  --color-primary-foreground: #0a0a0a;
+  --color-muted: #171717;
+  --color-muted-foreground: #a3a3a3;
+  --color-border: #262626;
+
+  --color-green: #22c55e;
+  --color-amber: #f59e0b;
+  --color-red: #ef4444;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────── */
+* {
+  border-radius: 0 !important;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  font-family: var(--font-mono);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+::selection {
+  background: var(--color-foreground);
+  color: var(--color-background);
+}
+
+/* ── Utilities ────────────────────────────────────────────────────── */
+@utility brutalist-shadow {
+  box-shadow: 4px 4px 0px var(--color-foreground);
+}
+
+@utility brutalist-shadow-sm {
+  box-shadow: 2px 2px 0px var(--color-foreground);
+}
+
+@utility label-style {
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--color-muted-foreground);
+  font-family: var(--font-mono);
+}
+
+/* ── Admin layout ──────────────────────────────────────────────────── */
+table {
+  border-collapse: collapse;
+}
+button {
+  cursor: pointer;
+}

@@ -68,6 +68,25 @@ async function loadIngestReport(): Promise<IngestReport | null> {
   return null;
 }
 
+/** Latest sync log from ingest report (when served from artifacts). */
+export interface LatestSyncLog {
+  at: string;
+  marketName: string;
+  totalListings: number;
+  visibleCount: number;
+}
+
+export async function getLatestSyncLog(): Promise<LatestSyncLog | null> {
+  const report = await loadIngestReport();
+  if (!report?.generatedAt) return null;
+  return {
+    at: report.generatedAt,
+    marketName: report.marketName ?? report.marketId ?? "—",
+    totalListings: report.summary?.totalListings ?? 0,
+    visibleCount: report.summary?.visibleCount ?? 0,
+  };
+}
+
 function convertReportToMarket(report: IngestReport): Market {
   const sources: Source[] = report.sources.map((s) => ({
     id: s.id,
@@ -428,10 +447,20 @@ function sourceIdToName(sourceId: string): string {
     .join(" ");
 }
 
+/**
+ * Grade from composite score (approved 50%, image 30%, price 20%) with stricter thresholds
+ * and a cap by weakest dimension so one bad metric can't be hidden.
+ */
 function computeGrade(approvedPct: number, imagePct: number, pricePct: number): { score: number; grade: "A" | "B" | "C" | "D" } {
   const score = Math.round(approvedPct * 0.5 + imagePct * 0.3 + pricePct * 0.2);
-  const grade: "A" | "B" | "C" | "D" =
-    score >= 80 ? "A" : score >= 60 ? "B" : score >= 40 ? "C" : "D";
+  const minPct = Math.min(approvedPct, imagePct, pricePct);
+  // Stricter bands so we get a real spread (A/B were too easy before)
+  let grade: "A" | "B" | "C" | "D" =
+    score >= 90 ? "A" : score >= 72 ? "B" : score >= 54 ? "C" : "D";
+  // Cap by weakest dimension: one weak metric pulls the grade down
+  if (minPct < 40) grade = "D";
+  else if (minPct < 60 && (grade === "A" || grade === "B")) grade = "C";
+  else if (minPct < 75 && grade === "A") grade = "B";
   return { score, grade };
 }
 
@@ -507,12 +536,20 @@ export interface ListingsFilters {
   priceMin?: number;
   priceMax?: number;
   island?: string;
+  city?: string;
   sourceId?: string;
   bedrooms?: number;
   bathrooms?: number;
   areaMin?: number;
   areaMax?: number;
+  /** Search in title (ilike) */
+  titleSearch?: string;
+  /** Filter by approved (visible) status */
+  approved?: boolean;
 }
+
+/** Column key for sorting (must match DB column or mapped) */
+export type ListingsSortKey = "id" | "title" | "price" | "island" | "city" | "bedrooms" | "bathrooms" | "property_size_sqm" | "source_id";
 
 export interface ListingsResult {
   data: Listing[];
@@ -526,25 +563,31 @@ export async function getListings(
   marketId: string,
   page: number,
   pageSize: number,
-  filters: ListingsFilters = {}
+  filters: ListingsFilters = {},
+  sortBy: ListingsSortKey = "id",
+  sortDir: "asc" | "desc" = "asc"
 ): Promise<ListingsResult> {
   try {
     let query = supabase
       .from("listings")
       .select(LISTING_COLS, { count: "exact" })
-      .ilike("source_id", marketId + "_%")
-      .order("id", { ascending: true })
-      .range((page - 1) * pageSize, page * pageSize - 1);
-
+      .order(sortBy, { ascending: sortDir === "asc" });
+    if (marketId && marketId !== "all") {
+      query = query.ilike("source_id", marketId + "_%");
+    }
     if (filters.priceMin != null) query = query.gte("price", filters.priceMin);
     if (filters.priceMax != null) query = query.lte("price", filters.priceMax);
     if (filters.island) query = query.eq("island", filters.island);
+    if (filters.city) query = query.eq("city", filters.city);
     if (filters.sourceId) query = query.eq("source_id", filters.sourceId);
+    if (filters.titleSearch?.trim()) query = query.ilike("title", "%" + filters.titleSearch.trim() + "%");
     if (filters.bedrooms != null) query = query.gte("bedrooms", filters.bedrooms);
     if (filters.bathrooms != null) query = query.gte("bathrooms", filters.bathrooms);
     if (filters.areaMin != null) query = query.gte("property_size_sqm", filters.areaMin);
     if (filters.areaMax != null) query = query.lte("property_size_sqm", filters.areaMax);
+    if (filters.approved !== undefined) query = query.eq("approved", filters.approved);
 
+    query = query.range((page - 1) * pageSize, page * pageSize - 1);
     const { data, error, count } = await query;
     if (error) {
       console.error("[Admin] getListings error:", error);

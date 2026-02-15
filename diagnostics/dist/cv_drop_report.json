@@ -1,6 +1,6 @@
 {
   "market": "cv",
-  "generated_at": "2026-02-09T17:46:37.190Z",
+  "generated_at": "2026-02-14T18:25:44.487Z",
   "sources": [
     {
       "source_id": "cv_terracaboverde",
@@ -52,12 +52,12 @@
     },
     {
       "source_id": "cv_capeverdeproperty24",
-      "fetched_total": 37,
+      "fetched_total": 38,
       "kept_normalized": 0,
       "dropped": {
         "missing_price": 0,
         "missing_location": 0,
-        "missing_property_type": 37,
+        "missing_property_type": 38,
         "missing_images": 0,
         "invalid_area": 0,
         "invalid_bedrooms": 0,
