@@ -1,6 +1,6 @@
 import * as cheerio from "cheerio";
 import { DetailPlugin, DetailExtractResult } from "../types";
-import { DetailConfig } from "../../configLoader";
+import { DetailConfig, PriceFormatConfig } from "../../configLoader";
 
 /**
  * Generic Config-Driven Detail Plugin
@@ -191,11 +191,55 @@ function hasNegationBefore(text: string, keywordIndex: number, windowWords: numb
 }
 
 /**
+ * Parse price using explicit source config (thousands/decimal separators).
+ * More reliable than heuristic parsing when config is available.
+ */
+function parseConfiguredPrice(priceText: string, config: PriceFormatConfig): number | undefined {
+  if (!priceText) return undefined;
+  const lower = priceText.toLowerCase();
+  if (lower.includes("call") || lower.includes("poa") || lower.includes("negotiat") ||
+      lower.includes("request") || lower.includes("contact") || lower.includes("price on")) {
+    return undefined;
+  }
+
+  const currencySymbol = config.currency_symbol || "€";
+  let cleaned = priceText.replace(new RegExp(currencySymbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "").trim();
+
+  const thousandsSep = config.thousands_separator || ".";
+  const decimalSep = config.decimal_separator || ",";
+
+  // Remove thousands separator
+  if (thousandsSep === ".") {
+    if (/^\d{1,3}\.\d{3}(\.\d{3})*/.test(cleaned)) {
+      cleaned = cleaned.replace(/\./g, "");
+    }
+  } else if (thousandsSep === ",") {
+    cleaned = cleaned.replace(/,/g, "");
+  } else if (thousandsSep === " ") {
+    cleaned = cleaned.replace(/[\s\u00A0]/g, "");
+  }
+
+  // Remove decimal portion
+  if (decimalSep === ",") {
+    cleaned = cleaned.replace(/,\d{1,2}$/, "");
+  } else if (decimalSep === ".") {
+    cleaned = cleaned.replace(/\.\d{1,2}$/, "");
+  }
+
+  cleaned = cleaned.replace(/[^\d]/g, "");
+  const num = parseInt(cleaned, 10);
+  if (isNaN(num) || num <= 0) return undefined;
+  return num * (config.multiplier || 1);
+}
+
+/**
  * Create a generic detail plugin for a source using YAML config.
+ * Optionally accepts price_format from source config for precise price parsing.
  */
 export function createGenericDetailPlugin(
   sourceId: string,
-  detailConfig: DetailConfig
+  detailConfig: DetailConfig,
+  priceFormat?: PriceFormatConfig
 ): DetailPlugin {
   return {
     sourceId,
@@ -230,6 +274,22 @@ export function createGenericDetailPlugin(
           });
           if (texts.length > 0) {
             description = cleanDescription(texts.join(" "));
+          }
+        }
+      }
+
+      // ========================================
+      // A2) Extract location using config selector
+      // ========================================
+      let location: string | undefined;
+
+      if (detailConfig.selectors?.location) {
+        const locSelector = detailConfig.selectors.location;
+        const $loc = $(locSelector);
+        if ($loc.length) {
+          const rawLoc = $loc.first().text().trim();
+          if (rawLoc.length > 2) {
+            location = rawLoc;
           }
         }
       }
@@ -446,12 +506,20 @@ export function createGenericDetailPlugin(
         const priceEl = $(detailConfig.selectors.price).first();
         if (priceEl.length) {
           const priceText = priceEl.text().trim();
-          price = parseGenericPrice(priceText);
+          // Use source price_format if available for precise parsing, otherwise heuristic
+          price = priceFormat
+            ? parseConfiguredPrice(priceText, priceFormat)
+            : parseGenericPrice(priceText);
         }
       }
 
       // F.2) Regex fallback on body text (strict: must be near € symbol, reasonable range)
-      if (!price) {
+      // SKIP regex fallback if a price selector was configured and found in DOM —
+      // this means the page has a dedicated price element that returned "Call for price" / POA,
+      // and the regex would incorrectly pick up prices from carousels or related listings.
+      const selectorFoundButNoParse = detailConfig.selectors?.price && !price &&
+        $(detailConfig.selectors.price).length > 0;
+      if (!price && !selectorFoundButNoParse) {
         // More restrictive patterns: currency symbol immediately adjacent to digits
         const pricePatterns = [
           /€\s*\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?\b/,  // "€ 38 000,00" or "€130.000"
@@ -474,6 +542,7 @@ export function createGenericDetailPlugin(
         title,
         price,
         description,
+        location,
         imageUrls: imageUrls.slice(0, 20),
         bedrooms,
         bathrooms,

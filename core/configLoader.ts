@@ -8,7 +8,7 @@ import { SourceStatus } from "./status";
 // ============================================
 
 export type FetchMethod = "http" | "headless";
-export type PaginationType = "query_param" | "next_link" | "offset" | "cursor" | "path_segment" | "click_next" | "infinite_scroll" | "auto" | "none";
+export type PaginationType = "query_param" | "next_link" | "offset" | "cursor" | "path_segment" | "click_next" | "infinite_scroll" | "ajax_post" | "auto" | "none";
 export type StopCondition = "empty_listings" | "no_next_link" | "max_items" | "max_pages" | "total_from_page";
 export type DetailPolicy = "always" | "on_violation" | "never";
 
@@ -21,6 +21,14 @@ export interface PaginationConfig {
   next_selector?: string;
   total_selector?: string;
   pattern?: string;
+  /** AJAX POST pagination fields */
+  endpoint?: string;
+  body_params?: Record<string, string>;
+  page_param?: string;
+  response_format?: "json_html";
+  html_field?: string;
+  has_more_field?: string;
+  no_result_value?: string;
 }
 
 export interface PriceFormatConfig {
@@ -39,6 +47,7 @@ export interface DetailConfig {
     bedrooms?: string;
     bathrooms?: string;
     price?: string;
+    location?: string;
   };
   delay_ms?: number;
   /** Spec extraction patterns (config-driven, from sources.yml) */

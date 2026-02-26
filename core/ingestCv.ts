@@ -23,6 +23,7 @@ import { simplyCapeVerdePlugin } from "./detail/plugins/simplyCapeVerde";
 import { createGenericDetailPlugin } from "./detail/plugins/genericDetail";
 import { DetailEnrichmentInput } from "./detail/types";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
+import { parseLocation } from "./locationMapper";
 
 // Generic config-driven fetcher — replaces all per-source parsers
 import {
@@ -228,12 +229,16 @@ async function enrichDetailPages(
     for (const listing of sourceListings) {
       if (!listing.detailUrl) continue;
 
-      // Policy check: "on_violation" only enriches if listing has golden rule issues
+      // Policy check: "on_violation" only enriches if listing is missing critical fields
       if (policy === "on_violation") {
         const hasEnoughImages = (listing.imageUrls?.length || 0) >= 3;
         const hasDescription = (listing.description?.length || 0) >= 50;
-        if (hasEnoughImages && hasDescription) {
-          listing.detail_skipped_reason = "passes_golden_rules";
+        const hasPrice = listing.price != null && listing.price > 0;
+        const hasSpecs = (listing.bedrooms != null && listing.bedrooms > 0) ||
+          (listing.area_sqm != null && listing.area_sqm > 0);
+        const hasLocation = !!(listing.location?.trim());
+        if (hasEnoughImages && hasDescription && hasPrice && hasSpecs && hasLocation) {
+          listing.detail_skipped_reason = "all_critical_fields_ok";
           continue;
         }
       }
@@ -294,7 +299,8 @@ async function enrichDetailPages(
         }
 
         // Update price if listing has no price but detail page does
-        if (extractResult.price && extractResult.price > 0 && !listing.price) {
+        // Min threshold €500 to reject placeholder prices like "1 €"
+        if (extractResult.price && extractResult.price >= 500 && !listing.price) {
           listing.price = extractResult.price;
           wasEnriched = true;
           console.log(`[${source.id} Detail]   price recovered: ${extractResult.price}`);
@@ -311,6 +317,12 @@ async function enrichDetailPages(
         // Update title if we got a better one
         if (extractResult.title && extractResult.title.length > (listing.title?.length || 0)) {
           listing.title = extractResult.title;
+        }
+        // Update location from detail page if listing has none
+        if (extractResult.location && !listing.location) {
+          listing.location = extractResult.location;
+          wasEnriched = true;
+          console.log(`[${source.id} Detail]   location recovered: ${extractResult.location}`);
         }
 
         listing.detail_enriched = wasEnriched;
@@ -595,10 +607,11 @@ export async function runCvIngest(): Promise<IngestReport> {
   factory.register(simplyCapeVerdePlugin);
 
   // Register generic detail plugins for all other sources with detail.enabled
+  // Pass price_format from source config for accurate price parsing
   for (const source of sources) {
     if (!source.detail?.enabled) continue;
     if (factory.hasPlugin(source.id)) continue; // Skip if already registered (Terra/Simply)
-    factory.register(createGenericDetailPlugin(source.id, source.detail));
+    factory.register(createGenericDetailPlugin(source.id, source.detail, source.price_format));
     console.log(`[Detail] Registered generic detail plugin for ${source.id}`);
   }
 
@@ -678,6 +691,8 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
           currentDescription: listing?.description,
           currentImageUrls: listing?.imageUrls || [],
           currentLocation: listing?.location,
+          currentBedrooms: listing?.bedrooms,
+          currentArea: listing?.area_sqm,
           violations: c.violations,
         };
       })
@@ -711,7 +726,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
           listing.imageUrls = result.imageUrls;
           if (result.description) listing.description = result.description;
           if (result.title) listing.title = result.title;
-          if (result.price !== undefined) listing.price = result.price;
+          if (result.price !== undefined && result.price >= 500) listing.price = result.price;
           // Map structured property data from enrichment
           if (result.bedrooms !== undefined) listing.bedrooms = result.bedrooms;
           if (result.bathrooms !== undefined) listing.bathrooms = result.bathrooms;
@@ -850,22 +865,27 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
     const classification = finalEvalResult.classifications.find((c) => c.listingId === listing.id);
     const violations = classification?.violations || [];
 
-    // Parse location into island and city
+    // Parse location into island and city using config-driven locationMapper.
+    // Try multiple text sources: location field → title → description (first 500 chars)
     let island: string | undefined;
     let city: string | undefined;
-    if (listing.location) {
-      const locationLower = listing.location.toLowerCase();
-      if (locationLower.includes("sal") || locationLower.includes("santa maria")) {
-        island = "Sal";
-        city = locationLower.includes("santa maria") ? "Santa Maria" : undefined;
-      } else if (locationLower.includes("santiago") || locationLower.includes("praia")) {
-        island = "Santiago";
-        city = locationLower.includes("praia") ? "Praia" : undefined;
-      } else if (locationLower.includes("boa vista")) {
-        island = "Boa Vista";
-      } else if (locationLower.includes("são vicente") || locationLower.includes("mindelo")) {
-        island = "São Vicente";
-        city = locationLower.includes("mindelo") ? "Mindelo" : undefined;
+    const locResult = parseLocation(listing.location, "cv");
+    if (locResult.island) {
+      island = locResult.island;
+      city = locResult.city;
+    }
+    if (!island && listing.title) {
+      const titleResult = parseLocation(listing.title, "cv");
+      if (titleResult.island) {
+        island = titleResult.island;
+        city = titleResult.city;
+      }
+    }
+    if (!island && fullListing?.description) {
+      const descResult = parseLocation(fullListing.description.substring(0, 500), "cv");
+      if (descResult.island) {
+        island = descResult.island;
+        city = descResult.city;
       }
     }
 
@@ -887,7 +907,9 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       image_urls: fullListing?.imageUrls || [],
       status: "observe",
       violations: violations,
-      approved: violations.length === 0,
+      // INVALID_PRICE is non-blocking: "price on request" listings are valid
+      // Other violations (MISSING_TITLE, INSUFFICIENT_IMAGES, etc.) still block
+      approved: violations.filter(v => v !== "INVALID_PRICE").length === 0,
       property_type: undefined,
       amenities: fullListing?.amenities || [],
       price_period: "sale",
