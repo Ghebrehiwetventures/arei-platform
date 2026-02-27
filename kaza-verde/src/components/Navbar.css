@@ -1,0 +1,86 @@
+.nav {
+  padding: 28px 0;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logo {
+  font-weight: 800;
+  font-size: 1.05rem;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  line-height: 1.2;
+  cursor: pointer;
+}
+.logo span { color: var(--ac); }
+
+.nc {
+  display: flex;
+  gap: 28px;
+}
+.nc a {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--tx3);
+  transition: color 0.2s;
+  padding: 4px 0;
+}
+.nc a:hover,
+.nc a.on,
+.nc a.active { color: var(--tx); }
+
+.nr {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.nl {
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--tx2);
+  transition: color 0.2s;
+}
+.nl:hover { color: var(--tx); }
+
+.nav-saved {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.nav-saved svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
+
+.saved-badge {
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: var(--ac);
+  color: var(--bg);
+  font-size: 0.65rem;
+  font-weight: 800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  transition: all 0.25s;
+}
+.saved-badge.hide {
+  opacity: 0;
+  transform: scale(0);
+}
+
+@media (max-width: 768px) {
+  .nc { display: none; }
+}

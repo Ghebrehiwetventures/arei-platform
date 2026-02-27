@@ -725,7 +725,8 @@ export async function runCvIngestGeneric(): Promise<IngestReport> {
       image_urls: fullListing?.imageUrls || [],
       status: "observe",
       violations: violations,
-      approved: violations.length === 0,
+      // INVALID_PRICE is non-blocking: "price on request" listings are valid
+      approved: violations.filter(v => v !== "INVALID_PRICE").length === 0,
     };
   });
 

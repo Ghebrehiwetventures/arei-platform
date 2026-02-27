@@ -1,0 +1,40 @@
+.rent-coming-soon {
+  text-align: center;
+  padding: 120px 0;
+}
+.rent-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  background: var(--bg2);
+  border: 1px solid var(--bd);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin: 0 auto 24px;
+}
+.rent-icon svg {
+  width: 28px;
+  height: 28px;
+  stroke: var(--oc);
+  fill: none;
+  stroke-width: 1.5;
+}
+.rent-coming-soon h1 {
+  font-family: var(--fd);
+  font-size: 2.4rem;
+  font-weight: 400;
+  margin-bottom: 12px;
+}
+.rent-coming-soon h1 em {
+  color: var(--ac);
+  font-style: italic;
+  font-weight: 500;
+}
+.rent-coming-soon p {
+  color: var(--tx2);
+  font-size: 0.95rem;
+  max-width: 420px;
+  margin: 0 auto 28px;
+  line-height: 1.7;
+}

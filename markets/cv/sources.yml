@@ -44,16 +44,15 @@ sources:
     cms_type: elementor
 
     # Fetch method: http or headless (Puppeteer for JS-rendered)
-    fetch_method: headless
+    fetch_method: http
 
-    # Pagination config - uses auto-detection
-    # The site uses client-side Elementor pagination where URL doesn't reliably update
-    # Auto-detection will identify this as click_next and find the next selector
+    # Pagination - explicit query_param (auto-detect failed with Elementor widget ID)
+    # The site uses ?e-page-{widgetId}=N format (6 pages total as of Feb 2026)
     pagination:
-      type: auto                      # Auto-detect pagination type from HTML
-      # OR explicit if auto fails:
-      # type: click_next
-      # next_selector: ".elementor-pagination a.next"
+      type: query_param
+      param: "e-page-d1d3a65"
+      start: 1
+      first_no_param: true
 
     # Rate limiting
     delay_ms: 2500
@@ -104,15 +103,19 @@ sources:
         # bedrooms/bathrooms extracted via spec_patterns below
       spec_patterns:
         bedrooms:
-          - "(\\d+)\\s*(?:Bedrooms?|Quartos?)"
-          - "(?:Bedrooms?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
+          - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\bT(\\d+)\\b"                                    # CV standard: T2 = 2 bedrooms
+          - "(?:T|Tipologia)\\s*(\\d+)"                        # "Tipologia 2"
+          - "(\\d+)\\s*(?:dorm|assoalhada)"                    # Portuguese variants
         bathrooms:
-          - "(\\d+)\\s*(?:Bathrooms?|Banheiros?)"
-          - "(?:Bathrooms?|Banheiros?)\\s*[:\\-]?\\s*(\\d+)"
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
+          - "(?:Bathrooms?|Baths?|Banheiros?)\\s*[:\\-]?\\s*(\\d+)"
         parking:
-          - "(\\d+)\\s*(?:Parking|Garage|Vagas?)"
+          - "(\\d+)\\s*(?:Parking|Garage|Vagas?|Estacionamento)"
         area:
-          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm)"
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
       amenity_keywords:
         pool: ["pool", "piscina", "swimming"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -123,37 +126,83 @@ sources:
         security: ["security", "segurança", "24h"]
 
   # ============================================
-  # SIMPLY CAPE VERDE
+  # SIMPLY CAPE VERDE (Houzez AJAX load-more)
   # ============================================
   - id: cv_simplycapeverde
     name: "Simply Cape Verde"
     url: https://simplycapeverde.com/
     type: html
     lifecycleOverride: IN
-    fetch_method: http
+    fetch_method: http   # AJAX POST uses plain fetch, no headless needed for listings
 
+    # Houzez AJAX load-more pagination
+    # POST /wp-admin/admin-ajax.php → JSON { html, has_more_posts }
     pagination:
-      type: none            # Single page listing
+      type: ajax_post
+      endpoint: /wp-admin/admin-ajax.php
+      start: 1
+      page_param: paged
+      body_params:
+        action: houzez_loadmore_properties
+        pagination_type: loadmore
+        posts_limit: "12"
+        card: v7
+        post_status: all
+      response_format: json_html
+      html_field: html
+      has_more_field: has_more_posts
+      no_result_value: no_result
 
-    delay_ms: 3000
+    delay_ms: 2000
     jitter_ms: 500
     max_items: 100
+    max_pages: 10
 
+    # Selectors for Houzez v9 card HTML (returned by AJAX)
     selectors:
-      listing: ".es-listing"
-      link: "a[href]"
-      title: "h3"
-      price: ".es-price"
-      image: "img"
+      listing: ".item-listing-wrap"
+      link: "a[href*='/property/']"
+      title: "h2.item-title a"
+      price: ".item-price .price"
+      location: ".item-address span"
+      image: "img.wp-post-image"
 
     price_format:
       currency_symbol: "€"
       thousands_separator: ","
+      decimal_separator: "."
+
+    id_prefix: "scv"
 
     detail:
       enabled: true
-      policy: on_violation
-      delay_ms: 10000       # Extra delay to avoid CAPTCHA
+      policy: always
+      delay_ms: 5000
+      selectors:
+        description: ".property-description p, .wpsight-listing-description p, [class*='description'] p"
+        images: ".property-gallery img, .slick-slide img, .swiper-slide img, img.wp-post-image"
+        price: ".item-price .price, .es-price"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
+          - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\bT(\\d+)\\b"
+          - "(?:T|Tipologia)\\s*(\\d+)"
+          - "(\\d+)\\s*(?:dorm|assoalhada)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
+      amenity_keywords:
+        pool: ["pool", "piscina", "swimming"]
+        sea_view: ["sea view", "vista mar", "ocean view"]
+        balcony: ["balcony", "varanda"]
+        garden: ["garden", "jardim"]
+        air_conditioning: ["air conditioning", "ar condicionado", "a/c"]
+        parking: ["parking", "garage", "estacionamento"]
+        furnished: ["furnished", "mobilado"]
 
   # ============================================
   # CAPE VERDE PROPERTY UK - Cloudflare protected, cannot scrape
@@ -203,13 +252,17 @@ sources:
     url: https://www.homescasaverde.com/properties-for-sale/
     type: html
     lifecycleOverride: IN
-    fetch_method: headless  # Houzez often loads via AJAX
+    fetch_method: headless  # Houzez theme
 
     pagination:
-      type: none  # Start simple
+      type: path_segment
+      pattern: "/page/{page}/"
+      start: 1
+      first_no_param: true
 
     delay_ms: 3000
     max_items: 100
+    max_pages: 10
 
     selectors:
       listing: ".item-wrap"
@@ -245,13 +298,17 @@ sources:
         bathrooms: ".listing-details-detail:contains('Bath') .listing-details-value"
       spec_patterns:
         bedrooms:
-          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
-          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
+          - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\bT(\\d+)\\b"
+          - "(?:T|Tipologia)\\s*(\\d+)"
+          - "(\\d+)\\s*(?:dorm|assoalhada)"
         bathrooms:
-          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
-          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
       amenity_keywords:
         pool: ["pool", "piscina", "swimming"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -304,15 +361,20 @@ sources:
         description: ".property-description p, .tab-pane p, [class*='description']"
         images: ".property-slider img, .property-gallery img, .carousel img, img[src*='uploads']"
         price: "span.price-ribbon-price"
+        location: ".property-header-info-address"
       spec_patterns:
         bedrooms:
-          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
-          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
+          - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\bT(\\d+)\\b"
+          - "(?:T|Tipologia)\\s*(\\d+)"
+          - "(\\d+)\\s*(?:dorm|assoalhada)"
         bathrooms:
-          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
-          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
       amenity_keywords:
         pool: ["pool", "piscina"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -362,13 +424,17 @@ sources:
         images: ".mh-estate__gallery img, .swiper-slide img, .property-gallery img, img.wp-post-image"
       spec_patterns:
         bedrooms:
-          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
-          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
+          - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\bT(\\d+)\\b"
+          - "(?:T|Tipologia)\\s*(\\d+)"
+          - "(\\d+)\\s*(?:dorm|assoalhada)"
         bathrooms:
-          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
-          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
       amenity_keywords:
         pool: ["pool", "piscina"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -396,8 +462,8 @@ sources:
 
     delay_ms: 3000
     jitter_ms: 500
-    max_items: 100
-    max_pages: 5
+    max_items: 200
+    max_pages: 20
 
     selectors:
       listing: "article.property"
@@ -420,15 +486,21 @@ sources:
       selectors:
         description: ".property__description p, .entry-content p, [class*='description'] p"
         images: ".property__gallery img, .swiper-slide img, .gallery img, img[src*='uploads']"
+        # Price in detail pages: "Price: 479 491 €" format in spans
+        price: ".property__content p span:first-child"
       spec_patterns:
         bedrooms:
-          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
-          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
+          - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\bT(\\d+)\\b"
+          - "(?:T|Tipologia)\\s*(\\d+)"
+          - "(\\d+)\\s*(?:dorm|assoalhada)"
         bathrooms:
-          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
-          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
       amenity_keywords:
         pool: ["pool", "piscina"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -481,13 +553,17 @@ sources:
         images: ".property-slider img, .carousel-inner img, .property_slider img, img[src*='uploads']"
       spec_patterns:
         bedrooms:
-          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?)"
-          - "(?:Bedrooms?|Beds?)\\s*[:\\-]?\\s*(\\d+)"
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
+          - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\bT(\\d+)\\b"
+          - "(?:T|Tipologia)\\s*(\\d+)"
+          - "(\\d+)\\s*(?:dorm|assoalhada)"
         bathrooms:
-          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?)"
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
-          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m²|sqm|sq\\.?\\s*m)"
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
       amenity_keywords:
         pool: ["pool", "piscina"]
         sea_view: ["sea view", "vista mar", "ocean view"]

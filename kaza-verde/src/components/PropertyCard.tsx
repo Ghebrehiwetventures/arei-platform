@@ -1,84 +1,61 @@
-import { Link } from "react-router-dom";
-import { useTranslation } from "react-i18next";
-import { Bed, Bath, Maximize, MapPin, Camera } from "lucide-react";
-import type { Listing } from "../types";
-import { formatPrice, sourceLabel, plural } from "../utils/format";
-import { PropertyImage } from "./PropertyImage";
-import { CardBadge } from "./QualityBadge";
+import { useNavigate } from "react-router-dom";
+import type { DemoListing } from "../lib/demo-data";
+import { formatPrice, formatLocation, formatBedrooms, formatBathrooms, isNewListing } from "../lib/format";
+import "./PropertyCard.css";
 
 interface Props {
-  listing: Listing;
+  listing: DemoListing;
+  index?: number;
 }
 
-export function PropertyCard({ listing }: Props) {
-  const { t } = useTranslation();
-  const price = formatPrice(listing.price, listing.currency);
-  const photoCount = listing.image_urls?.length ?? 0;
+export default function PropertyCard({ listing, index = 0 }: Props) {
+  const navigate = useNavigate();
+  const isNew = isNewListing(listing.first_seen_at);
+
+  const specs: string[] = [];
+  const bed = formatBedrooms(listing.bedrooms);
+  if (bed) specs.push(bed);
+  const bath = formatBathrooms(listing.bathrooms);
+  if (bath) specs.push(bath);
+  if (listing.property_type === "Land" && listing.land_area_sqm) {
+    specs.push(`${listing.land_area_sqm} m²`);
+  }
+
+  const heroStyle: React.CSSProperties = listing.image_urls.length > 0
+    ? { backgroundImage: `url(${listing.image_urls[0]})`, backgroundSize: "cover", backgroundPosition: "center" }
+    : { background: listing._bg };
 
   return (
-    <Link
-      to={`/properties/${listing.id}`}
-      className="group block bg-white rounded-2xl overflow-hidden shadow-[0_1px_3px_rgba(0,0,0,0.06),0_6px_16px_rgba(0,0,0,0.04)] hover:shadow-[0_2px_8px_rgba(0,0,0,0.08),0_12px_32px_rgba(0,0,0,0.08)] transition-all duration-300 hover:-translate-y-1"
+    <article
+      className="pc anim-ci"
+      style={{ animationDelay: `${0.3 + index * 0.07}s` }}
+      onClick={() => navigate(`/listing/${listing.id}`)}
     >
-      <div className="aspect-[16/11] overflow-hidden relative">
-        <CardBadge listing={listing} />
-        <PropertyImage
-          src={listing.image_urls?.[0]}
-          alt={listing.title ?? ""}
-          className="w-full h-full object-cover group-hover:scale-[1.04] transition-transform duration-500 ease-out"
-        />
-        <div className="absolute inset-0 bg-gradient-to-t from-black/30 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-        {photoCount > 1 && (
-          <span className="absolute bottom-2.5 right-2.5 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-[11px] font-medium px-2 py-1 rounded-lg">
-            <Camera className="w-3 h-3" />
-            {photoCount}
-          </span>
-        )}
+      <div className="pci">
+        <div className="ph" style={heroStyle} />
+        {isNew && <span className="tg tg-n">NEW</span>}
+        <div className="pr">{formatPrice(listing.price, listing.currency)}</div>
       </div>
-
-      <div className="p-4 sm:p-5">
-        <p className="text-[22px] font-bold text-gray-900 leading-tight">
-          {price ?? t("properties.priceOnRequest")}
-        </p>
-
-        <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[13px] text-gray-500">
-          {listing.bedrooms != null && (
-            <span className="flex items-center gap-1">
-              <Bed className="w-3.5 h-3.5 text-gray-400" />
-              {listing.bedrooms} {plural(listing.bedrooms, t("properties.bed"), t("properties.beds"))}
-            </span>
+      <div className="pcb">
+        <div className="pcl">
+          {listing.property_type && (
+            <div className="pc-type">{listing.property_type}</div>
           )}
-          {listing.bathrooms != null && (
-            <span className="flex items-center gap-1">
-              <Bath className="w-3.5 h-3.5 text-gray-400" />
-              {listing.bathrooms} {plural(listing.bathrooms, t("properties.bath"), t("properties.baths"))}
-            </span>
-          )}
-          {listing.property_size_sqm != null && (
-            <span className="flex items-center gap-1">
-              <Maximize className="w-3.5 h-3.5 text-gray-400" />
-              {Math.round(listing.property_size_sqm)} m²
-            </span>
+          <div className="pct">{listing.title}</div>
+          <div className="pca">{formatLocation(listing.city, listing.island)}</div>
+          {specs.length > 0 && (
+            <div className="pcs">
+              {specs.map((s, i) => <span key={i}>{s}</span>)}
+            </div>
           )}
         </div>
-
-        <h3 className="mt-2.5 font-medium text-gray-700 text-sm leading-snug line-clamp-2 min-h-[2.5em]">
-          {listing.title || "Untitled"}
-        </h3>
-
-        {(listing.island || listing.city) && (
-          <p className="mt-2 flex items-center gap-1 text-xs text-gray-400">
-            <MapPin className="w-3 h-3 shrink-0" />
-            {[listing.city, listing.island].filter(Boolean).join(", ")}
-          </p>
-        )}
-
-        <div className="mt-3 pt-3 border-t border-gray-50">
-          <span className="text-[11px] font-medium text-gray-400 uppercase tracking-wider">
-            {sourceLabel(listing.source_id)}
-          </span>
+        <div className="ca">
+          <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+            <line x1="5" y1="12" x2="19" y2="12" />
+            <polyline points="12 5 19 12 12 19" />
+          </svg>
         </div>
       </div>
-    </Link>
+    </article>
   );
 }

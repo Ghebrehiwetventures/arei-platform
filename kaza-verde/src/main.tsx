@@ -1,19 +1,13 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
+import { BrowserRouter } from "react-router-dom";
 import App from "./App";
-import { ErrorBoundary } from "./ErrorBoundary";
-import "./lib/i18n";
-import "./index.css";
+import "./styles/globals.css";
 
-const rootEl = document.getElementById("root");
-if (!rootEl) {
-  document.body.innerHTML = "<p>Root element #root not found.</p>";
-} else {
-  ReactDOM.createRoot(rootEl).render(
-    <React.StrictMode>
-      <ErrorBoundary>
-        <App />
-      </ErrorBoundary>
-    </React.StrictMode>
-  );
-}
+ReactDOM.createRoot(document.getElementById("root")!).render(
+  <React.StrictMode>
+    <BrowserRouter>
+      <App />
+    </BrowserRouter>
+  </React.StrictMode>,
+);

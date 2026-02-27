@@ -1,63 +1,42 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { Header } from "./components/Header";
-import { Footer } from "./components/Footer";
-import { HomePage } from "./pages/HomePage";
-import { PropertiesPage } from "./pages/PropertiesPage";
-import { PropertyDetailPage } from "./pages/PropertyDetailPage";
-import { AboutPage } from "./pages/AboutPage";
-import { DevelopersPage } from "./pages/DevelopersPage";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { useEffect } from "react";
+import Navbar from "./components/Navbar";
+import Footer from "./components/Footer";
+import Home from "./pages/Home";
+import Listings from "./pages/Listings";
+import Detail from "./pages/Detail";
+import Market from "./pages/Market";
+import Saved from "./pages/Saved";
+import About from "./pages/About";
+import Rent from "./pages/Rent";
+import BlogList from "./pages/BlogList";
+import BlogPost from "./pages/BlogPost";
 
-const queryClient = new QueryClient({
-  defaultOptions: { queries: { retry: 1, refetchOnWindowFocus: false } },
-});
-
-const hasSupabase = !!(import.meta.env.VITE_SUPABASE_URL && import.meta.env.VITE_SUPABASE_ANON_KEY);
-
-function SetupRequired() {
-  return (
-    <div className="min-h-screen flex items-center justify-center bg-ocean-50 p-6">
-      <div className="max-w-md rounded-xl bg-white shadow-lg border border-ocean-200 p-8">
-        <h1 className="text-xl font-bold text-ocean-900 mb-2">Kaza Verde – setup</h1>
-        <p className="text-ocean-700 mb-4">
-          Lägg till Supabase-nycklar så att appen kan hämta annonser. Skapa filen{" "}
-          <code className="bg-ocean-100 px-1 rounded">kaza-verde/.env</code> med:
-        </p>
-        <pre className="bg-ocean-950 text-ocean-100 p-4 rounded-lg text-sm overflow-x-auto">
-{`VITE_SUPABASE_URL=https://ditt-projekt.supabase.co
-VITE_SUPABASE_ANON_KEY=din-anon-key`}
-        </pre>
-        <p className="text-ocean-600 text-sm mt-4">
-          Du kan kopiera från <code className="bg-ocean-100 px-1 rounded">diagnostics/.env.local</code> (byt till VITE_-prefix) eller från Supabase-projektets API-inställningar. Starta om dev-servern efter att du sparat .env.
-        </p>
-      </div>
-    </div>
-  );
+function ScrollToTop() {
+  const { pathname } = useLocation();
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }, [pathname]);
+  return null;
 }
 
 export default function App() {
-  if (!hasSupabase) return <SetupRequired />;
   return (
-    <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <div className="flex flex-col min-h-screen">
-          <Header />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/properties" element={<PropertiesPage />} />
-              <Route path="/properties/:id" element={<PropertyDetailPage />} />
-              <Route path="/about" element={<AboutPage />} />
-              <Route path="/developers" element={<DevelopersPage />} />
-              {/* Legacy routes */}
-              <Route path="/cv" element={<Navigate to="/properties" replace />} />
-              <Route path="/cv/:id" element={<Navigate to="/properties/:id" replace />} />
-              <Route path="*" element={<Navigate to="/" replace />} />
-            </Routes>
-          </main>
-          <Footer />
-        </div>
-      </BrowserRouter>
-    </QueryClientProvider>
+    <div className="ctn">
+      <ScrollToTop />
+      <Navbar />
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/listings" element={<Listings />} />
+        <Route path="/listing/:id" element={<Detail />} />
+        <Route path="/market" element={<Market />} />
+        <Route path="/saved" element={<Saved />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/rent" element={<Rent />} />
+        <Route path="/blog" element={<BlogList />} />
+        <Route path="/blog/:slug" element={<BlogPost />} />
+      </Routes>
+      <Footer />
+    </div>
   );
 }

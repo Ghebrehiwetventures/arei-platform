@@ -12,6 +12,8 @@ export interface DetailEnrichmentInput {
   currentDescription?: string;
   currentImageUrls: string[];
   currentLocation?: string;
+  currentBedrooms?: number | null;
+  currentArea?: number | null;
   violations: RuleViolation[];
 }
 

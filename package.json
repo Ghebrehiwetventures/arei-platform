@@ -7,7 +7,7 @@
     "dev": "npm run dev --prefix diagnostics",
     "dev:kaza": "npm run dev --prefix kaza-verde",
     "pipeline:cv": "npx ts-node --transpile-only core/preflightCv.ts && npm run ingest:cv && npm run report:cv",
-    "ingest:cv": "DETAIL_ENRICH=1 DETAIL_ENRICH_LIMIT=10 npx ts-node --transpile-only core/ingestCv.ts",
+    "ingest:cv": "DETAIL_ENRICH=1 DETAIL_ENRICH_LIMIT=50 npx ts-node --transpile-only core/ingestCv.ts",
     "report:cv": "npx ts-node --transpile-only core/reportCv.ts"
   },
   "dependencies": {

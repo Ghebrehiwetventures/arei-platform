@@ -24,12 +24,28 @@ function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function needsEnrichment(violations: RuleViolation[]): boolean {
-  return violations.some(
+/**
+ * Check if a listing needs secondary enrichment.
+ * Triggers on golden rule violations (images, description, price)
+ * AND on missing critical fields (bedrooms, area) that aren't tracked
+ * as violations but still need enrichment to fill.
+ */
+function needsEnrichment(input: DetailEnrichmentInput): boolean {
+  const hasViolation = input.violations.some(
     (v) =>
       v === RuleViolation.INSUFFICIENT_IMAGES ||
-      v === RuleViolation.DESCRIPTION_TOO_SHORT
+      v === RuleViolation.DESCRIPTION_TOO_SHORT ||
+      v === RuleViolation.INVALID_PRICE
   );
+  if (hasViolation) return true;
+
+  // Also trigger enrichment if critical data fields are missing
+  const missingPrice = !input.currentPrice || input.currentPrice <= 0;
+  const missingSpecs = (input.currentBedrooms == null || input.currentBedrooms <= 0) &&
+    (input.currentArea == null || input.currentArea <= 0);
+  const missingLocation = !input.currentLocation?.trim();
+
+  return missingPrice || missingSpecs || missingLocation;
 }
 
 /**
@@ -70,7 +86,7 @@ export async function runDetailEnrichment(
     const debugTerraOverride = process.env.DEBUG_TERRA === "1" && input.sourceId === "cv_terracaboverde";
     // Simply Cape Verde always requires detail enrichment for Golden quality
     const forceDetailForSimply = input.sourceId === "cv_simplycapeverde";
-    if (!debugTerraOverride && !forceDetailForSimply && !needsEnrichment(input.violations)) return false;
+    if (!debugTerraOverride && !forceDetailForSimply && !needsEnrichment(input)) return false;
     if (!factory.hasPlugin(input.sourceId)) return false;
     return true;
   });
@@ -84,8 +100,24 @@ export async function runDetailEnrichment(
     };
   }
 
-  const toProcess = enrichable.slice(0, maxPages);
-  console.log(`[Enrichment] Processing ${toProcess.length} (limit: ${maxPages})`);
+  // Per-source cap: enrichments per source to prevent one source eating the budget
+  // BURN-DOWN: temporarily raised from 10 → 50 to clear backlog. Revert after KPIs green.
+  const PER_SOURCE_CAP = parseInt(process.env.PER_SOURCE_CAP || "10", 10);
+  const sourceCount = new Map<string, number>();
+  const capped = enrichable.filter((input) => {
+    const count = sourceCount.get(input.sourceId) || 0;
+    if (count >= PER_SOURCE_CAP) return false;
+    sourceCount.set(input.sourceId, count + 1);
+    return true;
+  });
+
+  // Log per-source allocation
+  for (const [sourceId, count] of sourceCount.entries()) {
+    console.log(`[Enrichment]   ${sourceId}: ${count} queued`);
+  }
+
+  const toProcess = capped.slice(0, maxPages);
+  console.log(`[Enrichment] Processing ${toProcess.length} (limit: ${maxPages}, per-source cap: ${PER_SOURCE_CAP})`);
 
   const queue = new DetailQueue(3000, 5000);
   queue.enqueueAll(toProcess);

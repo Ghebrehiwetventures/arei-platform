@@ -587,7 +587,8 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       image_urls: fullListing?.imageUrls || [],
       status: "observe",
       violations: violations,
-      approved: violations.length === 0,
+      // INVALID_PRICE is non-blocking: "price on request" listings are valid
+      approved: violations.filter(v => v !== "INVALID_PRICE").length === 0,
       property_type: fullListing?.property_type || undefined,
       amenities: fullListing?.amenities || [],
       price_period: "sale",

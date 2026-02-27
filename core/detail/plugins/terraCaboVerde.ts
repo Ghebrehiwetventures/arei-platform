@@ -40,6 +40,66 @@ function isCssLikeValue(value: string): boolean {
 }
 
 /**
+ * Parse a Terra price from text. Handles European format:
+ *   "€ 120.000"   → 120000 (dot = thousands separator)
+ *   "€ 38 000,00" → 38000  (space thousands, comma decimal)
+ *   "130.000 €"   → 130000
+ *   "52000"        → 52000
+ * Skips "Call for price", "POA", "negotiated", etc.
+ */
+function parseTerraPrice(priceText: string): number | undefined {
+  if (!priceText) return undefined;
+  const lower = priceText.toLowerCase();
+  if (lower.includes("call") || lower.includes("poa") || lower.includes("negotiat") ||
+      lower.includes("request") || lower.includes("contact") || lower.includes("price on")) {
+    return undefined;
+  }
+
+  // Remove currency symbols and leading non-numeric text (e.g. "Price: ")
+  let cleaned = priceText.replace(/[€$£]/g, "").trim();
+  cleaned = cleaned.replace(/^[^0-9]+/, "");
+
+  // Space-separated thousands: "38 000,00" or "38 000"
+  if (/\d\s\d{3}/.test(cleaned)) {
+    cleaned = cleaned.replace(/[\s\u00A0]/g, "");
+  }
+
+  // Handle remaining separators
+  if (cleaned.includes(".") && cleaned.includes(",")) {
+    const lastComma = cleaned.lastIndexOf(",");
+    const lastDot = cleaned.lastIndexOf(".");
+    if (lastComma > lastDot) {
+      // "130.000,00" → European: dot=thousands, comma=decimal
+      cleaned = cleaned.replace(/\./g, "").replace(",", ".");
+    } else {
+      // "1,234.56" → US: comma=thousands
+      cleaned = cleaned.replace(/,/g, "");
+    }
+  } else if (cleaned.includes(".")) {
+    // Only dot: "130.000" → thousands separator (European)
+    const afterDot = cleaned.split(".").pop() || "";
+    if (afterDot.length === 3 && /^\d{1,3}\.\d{3}(\.\d{3})*$/.test(cleaned)) {
+      cleaned = cleaned.replace(/\./g, "");
+    }
+    // else "38000.50" → dot is decimal, leave as-is
+  } else if (cleaned.includes(",")) {
+    const afterComma = cleaned.split(",").pop() || "";
+    if (afterComma.length <= 2) {
+      // "38000,00" → comma is decimal
+      cleaned = cleaned.replace(",", ".");
+    } else {
+      // "38,000" → comma is thousands
+      cleaned = cleaned.replace(/,/g, "");
+    }
+  }
+
+  cleaned = cleaned.replace(/[^\d.]/g, "");
+  const num = parseFloat(cleaned);
+  if (isNaN(num) || num <= 0) return undefined;
+  return Math.round(num);
+}
+
+/**
  * Parse a clean integer from a value string using word-boundary match.
  * Returns null if no clean 1-2 digit integer found or value is "-".
  */
@@ -306,6 +366,57 @@ export const terraCaboVerdePlugin: DetailPlugin = {
     }
 
     // ========================================
+    // B2) Extract price
+    // ========================================
+    let price: number | undefined;
+
+    // B2.1) Check spec_pairs for price-like label
+    for (const { label, value } of specPairs) {
+      const lowerLabel = label.toLowerCase();
+      if (lowerLabel === "price" || lowerLabel === "preço" || lowerLabel === "precio" || lowerLabel === "preis") {
+        price = parseTerraPrice(value);
+        if (price) break;
+      }
+    }
+
+    // B2.2) Look for h2 elements containing "€" (common on Terra detail pages)
+    if (!price) {
+      $("h2").each((_, el) => {
+        if (price) return; // already found
+        const text = $(el).text().trim();
+        if (text.includes("€") && text.length < 30) {
+          const parsed = parseTerraPrice(text);
+          if (parsed && parsed >= 1000 && parsed <= 50000000) {
+            price = parsed;
+          }
+        }
+      });
+    }
+
+    // B2.3) Regex fallback on body text for € prices
+    if (!price) {
+      const bodyText = $("body").text();
+      const pricePatterns = [
+        /€\s*\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?\b/,   // "€ 120.000" or "€ 38 000,00"
+        /\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?\s*€/,      // "120.000 €"
+      ];
+      for (const pattern of pricePatterns) {
+        const match = bodyText.match(pattern);
+        if (match) {
+          const parsed = parseTerraPrice(match[0]);
+          if (parsed && parsed >= 1000 && parsed <= 50000000) {
+            price = parsed;
+            break;
+          }
+        }
+      }
+    }
+
+    if (process.env.DEBUG_TERRA === "1") {
+      console.log(`[DEBUG_TERRA] Price extracted: ${price ?? "none"}`);
+    }
+
+    // ========================================
     // C) Build amenities list
     // ========================================
 
@@ -386,6 +497,7 @@ export const terraCaboVerdePlugin: DetailPlugin = {
       console.log(JSON.stringify({
         source_url: baseUrl,
         spec_pairs_count: specPairs.length,
+        price,
         bedrooms,
         bathrooms,
         parkingSpaces,
@@ -397,6 +509,7 @@ export const terraCaboVerdePlugin: DetailPlugin = {
     return {
       success: true,
       title,
+      price,
       description,
       imageUrls,
       bedrooms,
