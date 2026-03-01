@@ -163,6 +163,9 @@ export default function Detail() {
     el.scrollBy({ left: dir * 280, behavior: "smooth" });
   };
 
+  /* Touch swipe ref — must be before early returns */
+  const touchStartX = useRef(0);
+
   if (loading) {
     return (
       <>
@@ -206,6 +209,15 @@ export default function Detail() {
   const goPrev = () => setGalleryIndex((i) => (i <= 0 ? images.length - 1 : i - 1));
   const goNext = () => setGalleryIndex((i) => (i >= images.length - 1 ? 0 : i + 1));
 
+  /* Touch swipe handlers for gallery + lightbox */
+  const onTouchStart = (e: React.TouchEvent) => { touchStartX.current = e.touches[0].clientX; };
+  const onTouchEnd = (e: React.TouchEvent) => {
+    if (!hasMultipleImages) return;
+    const delta = e.changedTouches[0].clientX - touchStartX.current;
+    if (delta > 50) goPrev();
+    else if (delta < -50) goNext();
+  };
+
   return (
     <>
       <a className="db" onClick={() => navigate("/listings")}>
@@ -216,7 +228,7 @@ export default function Detail() {
         Back to listings
       </a>
 
-      <div className="dhi anim-fu delay-1" onClick={() => images.length > 0 && setLightboxOpen(true)}>
+      <div className="dhi anim-fu delay-1" onClick={() => images.length > 0 && setLightboxOpen(true)} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
         <div className="ph" style={mainImageStyle} />
         {listing.is_new && <span className="dhi-badge dhi-new">NEW</span>}
         {listing.property_type && <span className="dhi-badge dhi-type">{listing.property_type.toUpperCase()}</span>}
@@ -339,7 +351,11 @@ export default function Detail() {
                 VIEW ON SOURCE
               </a>
             )}
-            <button className="boc">CONTACT AGENT</button>
+            {listing.source_url && (
+              <a className="boc" href={listing.source_url} target="_blank" rel="noopener noreferrer">
+                CONTACT AGENT
+              </a>
+            )}
           </div>
         </aside>
       </div>
@@ -384,7 +400,7 @@ export default function Detail() {
       )}
 
       {lightboxOpen && images.length > 0 && createPortal(
-        <div className="lb-overlay" onClick={() => setLightboxOpen(false)}>
+        <div className="lb-overlay" onClick={() => setLightboxOpen(false)} onTouchStart={onTouchStart} onTouchEnd={onTouchEnd}>
           <button className="lb-close" onClick={() => setLightboxOpen(false)} aria-label="Close">
             <svg viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2} fill="none"><line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" /></svg>
           </button>

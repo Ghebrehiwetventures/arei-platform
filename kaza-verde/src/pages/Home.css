@@ -136,10 +136,12 @@
   font-weight: 700;
   color: var(--tx);
 }
-.mp-qoq {
-  font-size: 0.72rem;
-  font-weight: 700;
-  color: var(--ac);
+.mp-coverage {
+  font-size: 0.68rem;
+  font-weight: 600;
+  color: var(--tx3);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 .mp-note {
   font-size: 0.68rem;

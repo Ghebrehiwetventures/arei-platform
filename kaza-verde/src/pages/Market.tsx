@@ -174,24 +174,26 @@ export default function Market() {
       <div className="mi-section anim-fu delay-25">
         <h3>Median Price by Island</h3>
         <div className="sub">Asking price median for each island with verified price data</div>
-        <table className="mi-table">
-          <thead>
-            <tr>
-              <th>Island</th>
-              <th>Median Price</th>
-              <th>Listings</th>
-            </tr>
-          </thead>
-          <tbody>
-            {data.islands.map((island) => (
-              <tr key={island.name}>
-                <td className="island-name">{island.name}</td>
-                <td>{island.median !== null ? formatMedian(island.median) : "Insufficient data"}</td>
-                <td>{island.count}</td>
+        <div className="mi-table-wrap">
+          <table className="mi-table">
+            <thead>
+              <tr>
+                <th>Island</th>
+                <th>Median Price</th>
+                <th>Listings</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {data.islands.map((island) => (
+                <tr key={island.name}>
+                  <td className="island-name">{island.name}</td>
+                  <td>{island.median !== null ? formatMedian(island.median) : "Insufficient data"}</td>
+                  <td>{island.count}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
         <div className="chart-disc">
           Based on listings with verified price. Minimum sample: 5 listings per island.
         </div>

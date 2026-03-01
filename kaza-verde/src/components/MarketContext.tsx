@@ -13,6 +13,7 @@ interface StatCard {
   value: string;
   label: string;
   note?: string;
+  percentile?: number; // 0-100, for visual bar
 }
 
 export default function MarketContext({ island, price }: Props) {
@@ -83,6 +84,7 @@ export default function MarketContext({ island, price }: Props) {
       value: `${p}${suffix}`,
       label: "Price Percentile",
       note: p >= 50 ? "Above island median" : "Below island median",
+      percentile: p,
     });
   }
 
@@ -99,6 +101,17 @@ export default function MarketContext({ island, price }: Props) {
           <div className="sb" key={card.label}>
             <div className="v">{card.value}</div>
             <div className="l">{card.label}</div>
+            {card.percentile != null && (
+              <div className="mctx-pbar">
+                <div className="mctx-pbar-track">
+                  <div className="mctx-pbar-dot" style={{ left: `${card.percentile}%` }} />
+                </div>
+                <div className="mctx-pbar-labels">
+                  <span>Low</span>
+                  <span>High</span>
+                </div>
+              </div>
+            )}
             {card.note && <div className="mctx-note">{card.note}</div>}
           </div>
         ))}

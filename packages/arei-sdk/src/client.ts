@@ -452,4 +452,22 @@ export class AREIClient {
       lastUpdated,
     };
   }
+
+  // =========================================================================
+  // subscribeNewsletter — insert email into newsletter_subscribers
+  // =========================================================================
+  async subscribeNewsletter(email: string): Promise<{ ok: boolean; error?: string }> {
+    const { error } = await this.sb
+      .from("newsletter_subscribers")
+      .insert({ email: email.trim().toLowerCase() });
+
+    if (error) {
+      if (error.code === "23505") {
+        // Unique constraint — already subscribed
+        return { ok: true };
+      }
+      return { ok: false, error: error.message };
+    }
+    return { ok: true };
+  }
 }

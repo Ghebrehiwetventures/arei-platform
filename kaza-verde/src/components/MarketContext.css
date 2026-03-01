@@ -33,6 +33,37 @@
   line-height: 1.3;
 }
 
+/* Percentile position bar */
+.mctx-pbar {
+  margin-top: 8px;
+  padding: 0 2px;
+}
+.mctx-pbar-track {
+  position: relative;
+  width: 100%;
+  height: 4px;
+  background: var(--bd);
+  border-radius: 2px;
+}
+.mctx-pbar-dot {
+  position: absolute;
+  top: 50%;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--ac);
+  transform: translate(-50%, -50%);
+}
+.mctx-pbar-labels {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.6rem;
+  color: var(--tx3);
+  margin-top: 3px;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
 /* Disclaimer / link row */
 .mctx-disc {
   font-size: 0.72rem;

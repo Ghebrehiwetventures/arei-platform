@@ -127,7 +127,6 @@
   display: flex;
   opacity: 1;
   visibility: visible;
-  width: 100vw;
   height: 100vh;
   height: 100dvh;
 }

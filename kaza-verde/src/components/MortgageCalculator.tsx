@@ -34,6 +34,14 @@ function fmtDecimal(n: number): string {
   });
 }
 
+/** Parse numeric string, allowing decimals */
+function parseNum(raw: string, allowDecimal = false): number {
+  const cleaned = allowDecimal
+    ? raw.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1")
+    : raw.replace(/[^0-9]/g, "");
+  return cleaned === "" ? 0 : Number(cleaned);
+}
+
 interface DonutSegment {
   label: string;
   value: number;
@@ -117,58 +125,78 @@ export default function MortgageCalculator({ price }: Props) {
             <div className="mc-field mc-field-full">
               <label>Property price</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={input.totalAmount || ""}
-                onChange={(e) => set("totalAmount", Number(e.target.value))}
+                onChange={(e) => set("totalAmount", parseNum(e.target.value))}
                 placeholder="Property price"
-                min={0}
               />
             </div>
 
-            <div className="mc-field">
+            <div className="mc-field mc-field-slider">
               <label>Deposit (%)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
+                value={input.downPaymentPct}
+                onChange={(e) => set("downPaymentPct", Math.min(50, parseNum(e.target.value)))}
+              />
+              <input
+                type="range"
+                className="mc-range"
+                min={0}
+                max={50}
+                step={1}
                 value={input.downPaymentPct}
                 onChange={(e) => set("downPaymentPct", Number(e.target.value))}
-                min={0}
-                max={100}
-                step={1}
               />
             </div>
 
-            <div className="mc-field">
+            <div className="mc-field mc-field-slider">
               <label>Interest rate (%)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="decimal"
+                value={input.interestRate}
+                onChange={(e) => set("interestRate", Math.min(15, parseNum(e.target.value, true)))}
+              />
+              <input
+                type="range"
+                className="mc-range"
+                min={0}
+                max={15}
+                step={0.1}
                 value={input.interestRate}
                 onChange={(e) => set("interestRate", Number(e.target.value))}
-                min={0}
-                max={30}
-                step={0.1}
               />
             </div>
 
-            <div className="mc-field">
+            <div className="mc-field mc-field-slider">
               <label>Loan term (years)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={input.loanTermYears}
-                onChange={(e) => set("loanTermYears", Number(e.target.value))}
-                min={1}
+                onChange={(e) => set("loanTermYears", Math.min(40, Math.max(1, parseNum(e.target.value))))}
+              />
+              <input
+                type="range"
+                className="mc-range"
+                min={5}
                 max={40}
                 step={1}
+                value={input.loanTermYears}
+                onChange={(e) => set("loanTermYears", Number(e.target.value))}
               />
             </div>
 
             <div className="mc-field">
               <label>Condo fee (€/mo)</label>
               <input
-                type="number"
+                type="text"
+                inputMode="numeric"
                 value={input.hoaMonthly}
-                onChange={(e) => set("hoaMonthly", Number(e.target.value))}
-                min={0}
-                step={10}
+                onChange={(e) => set("hoaMonthly", parseNum(e.target.value))}
               />
             </div>
           </div>
@@ -190,23 +218,20 @@ export default function MortgageCalculator({ price }: Props) {
               <div className="mc-field">
                 <label>Annual property tax (%)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="decimal"
                   value={input.propertyTaxPct}
-                  onChange={(e) => set("propertyTaxPct", Number(e.target.value))}
-                  min={0}
-                  max={10}
-                  step={0.1}
+                  onChange={(e) => set("propertyTaxPct", parseNum(e.target.value, true))}
                 />
               </div>
 
               <div className="mc-field">
                 <label>Insurance (€/yr)</label>
                 <input
-                  type="number"
+                  type="text"
+                  inputMode="numeric"
                   value={input.insuranceAnnual}
-                  onChange={(e) => set("insuranceAnnual", Number(e.target.value))}
-                  min={0}
-                  step={50}
+                  onChange={(e) => set("insuranceAnnual", parseNum(e.target.value))}
                 />
               </div>
             </div>

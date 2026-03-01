@@ -73,3 +73,25 @@
   color: var(--tx3);
   margin-top: 12px;
 }
+
+/* Success state */
+.nl-success {
+  font-size: 0.92rem;
+  font-weight: 600;
+  color: var(--ac);
+  padding: 16px 0;
+}
+
+/* Error state */
+.nl-error {
+  font-size: 0.78rem;
+  color: hsl(0 50% 55%);
+  margin-top: 8px;
+}
+
+@media (max-width: 768px) {
+  .nl-cta { padding: 28px 20px; }
+  .nl-cta h2 { font-size: 1.5rem; }
+  .nl-form { flex-direction: column; }
+  .nl-submit { width: 100%; }
+}

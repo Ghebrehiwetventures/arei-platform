@@ -27,6 +27,8 @@
   gap: 8px;
   transition: color 0.2s;
   cursor: pointer;
+  white-space: nowrap;
+  flex-shrink: 0;
 }
 .sa:hover { color: var(--ac); }
 .sa svg {

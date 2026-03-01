@@ -269,6 +269,8 @@
   transition: all 0.2s;
   display: block;
   font-family: var(--fb);
+  text-decoration: none;
+  box-sizing: border-box;
 }
 .boc:hover { border-color: var(--tx); }
 
@@ -483,6 +485,7 @@
     font-family: var(--fb);
     white-space: nowrap;
   }
+  .ds { display: none; }
   .dsim { margin-top: 48px; padding-top: 32px; }
   .lb-img { max-width: calc(100% - 24px); max-height: calc(100% - 80px); }
   .lb-prev { left: 8px; width: 40px; height: 40px; }

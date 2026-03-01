@@ -29,7 +29,7 @@ interface HomeData {
     total: number;
     islandCount: number;
     medianPrice: number | null;
-    islands: { name: string; median: number | null; count: number }[];
+    islands: { name: string; median: number | null; count: number; totalListings: number }[];
   };
 }
 
@@ -62,6 +62,7 @@ export default function Home() {
         const totalPriced = withPrice.reduce((s, i) => s + i.n_price, 0);
         const medianPrice = totalPriced > 0 ? Math.round(weightedSum / totalPriced) : null;
 
+        const islandCountMap = new Map(islandsRes.map((i) => [i.island, i.count]));
         setData({
           featured,
           islands,
@@ -73,6 +74,7 @@ export default function Home() {
               name: i.island,
               median: i.median_price,
               count: i.n_price,
+              totalListings: islandCountMap.get(i.island) ?? i.n_price,
             })),
           },
         });
@@ -189,9 +191,9 @@ export default function Home() {
             <div className="mp-island">{island.name.toUpperCase()}</div>
             <div className="mp-price-row">
               <div className="mp-price">{formatMedian(island.median)}</div>
-              <div className="mp-qoq">+{(Math.abs((island.name.length * 7 + 11) % 12) / 2 + 1.5).toFixed(1)}% QoQ</div>
+              <div className="mp-coverage">{island.totalListings > 0 ? Math.round((island.count / island.totalListings) * 100) : 0}% priced</div>
             </div>
-            <div className="mp-note">Based on {island.count} listings with verified price</div>
+            <div className="mp-note">Based on {island.count} of {island.totalListings} listings</div>
           </div>
         ))}
       </div>
