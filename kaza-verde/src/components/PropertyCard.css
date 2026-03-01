@@ -138,14 +138,16 @@
   height: 160px;
   border-radius: 10px;
 }
-.pc-list .pcb { padding: 0; flex: 1; }
+.pc-list .pcb { padding: 0; flex: 1; flex-direction: column; justify-content: center; }
+.pc-list .pcl { display: flex; flex-direction: column; }
 .pc-lprice {
   font-size: 1.15rem;
   font-weight: 700;
   color: var(--ac);
   white-space: nowrap;
   font-family: var(--fd);
-  margin-top: 8px;
+  margin-top: auto;
+  padding-top: 8px;
 }
 
 @media (max-width: 768px) {

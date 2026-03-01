@@ -191,9 +191,9 @@ export default function Home() {
             <div className="mp-island">{island.name.toUpperCase()}</div>
             <div className="mp-price-row">
               <div className="mp-price">{formatMedian(island.median)}</div>
-              <div className="mp-coverage">{island.totalListings > 0 ? Math.round((island.count / island.totalListings) * 100) : 0}% priced</div>
+              <div className="mp-coverage">{island.totalListings} listings</div>
             </div>
-            <div className="mp-note">Based on {island.count} of {island.totalListings} listings</div>
+            <div className="mp-note">Based on {island.count} listings with verified price</div>
           </div>
         ))}
       </div>

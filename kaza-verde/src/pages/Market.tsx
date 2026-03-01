@@ -131,7 +131,6 @@ export default function Market() {
   }
 
   const maxCount = Math.max(...data.islands.map((i) => i.totalListings));
-  const newIn90 = Math.round(data.total * 0.22);
 
   return (
     <>
@@ -154,7 +153,7 @@ export default function Market() {
         <div className="kpi">
           <div className="kl">Total Tracked Inventory</div>
           <div className="kv">{data.total}</div>
-          <div className="kn kn-delta">+{newIn90} in last 90 days</div>
+          <div className="kn">Across all tracked sources</div>
         </div>
         <div className="kpi">
           <div className="kl">Islands Covered</div>
@@ -163,11 +162,19 @@ export default function Market() {
         </div>
       </div>
 
-      {/* Inventory Trend */}
-      <div className="mi-section anim-fu delay-2">
+      {/* Inventory Trend — coming soon */}
+      <div className="mi-section anim-fu delay-2 mi-coming">
         <h3>Inventory Trend</h3>
         <div className="sub">Total tracked listings over the last 4 months</div>
-        <InventoryChart points={data.trend} />
+        <div className="mi-blur-wrap">
+          <div className="mi-blur-content">
+            <InventoryChart points={data.trend} />
+          </div>
+          <div className="mi-blur-overlay">
+            <span>COMING SOON</span>
+            <p>Historical data collection in progress</p>
+          </div>
+        </div>
       </div>
 
       {/* Median by island table */}
