@@ -51,10 +51,9 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
               {specs.map((s, i) => <span key={i}>{s}</span>)}
             </div>
           )}
+          {isList && <div className="pc-lprice">{formatPrice(listing.price, listing.currency)}</div>}
         </div>
-        {isList ? (
-          <div className="pc-lprice">{formatPrice(listing.price, listing.currency)}</div>
-        ) : (
+        {!isList && (
           <div className="ca">
             <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />

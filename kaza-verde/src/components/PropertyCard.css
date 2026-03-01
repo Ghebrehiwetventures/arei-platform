@@ -138,15 +138,14 @@
   height: 160px;
   border-radius: 10px;
 }
-.pc-list .pcb { padding: 0; flex: 1; align-items: center; }
-.pc-list .ca { flex-shrink: 0; }
+.pc-list .pcb { padding: 0; flex: 1; }
 .pc-lprice {
-  font-size: 1.2rem;
+  font-size: 1.15rem;
   font-weight: 700;
   color: var(--ac);
   white-space: nowrap;
-  flex-shrink: 0;
   font-family: var(--fd);
+  margin-top: 8px;
 }
 
 @media (max-width: 768px) {
