@@ -115,7 +115,7 @@ sources:
           - "(\\d+)\\s*(?:Parking|Garage|Vagas?|Estacionamento)"
         area:
           - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
-          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq|$)"
       amenity_keywords:
         pool: ["pool", "piscina", "swimming"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -194,7 +194,7 @@ sources:
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
           - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
-          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq|$)"
       amenity_keywords:
         pool: ["pool", "piscina", "swimming"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -308,7 +308,7 @@ sources:
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
           - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
-          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq|$)"
       amenity_keywords:
         pool: ["pool", "piscina", "swimming"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -374,7 +374,7 @@ sources:
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
           - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
-          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq|$)"
       amenity_keywords:
         pool: ["pool", "piscina"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -434,7 +434,7 @@ sources:
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
           - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
-          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq|$)"
       amenity_keywords:
         pool: ["pool", "piscina"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -500,7 +500,7 @@ sources:
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
           - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
-          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq|$)"
       amenity_keywords:
         pool: ["pool", "piscina"]
         sea_view: ["sea view", "vista mar", "ocean view"]
@@ -563,7 +563,7 @@ sources:
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
           - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
-          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq|$)"
       amenity_keywords:
         pool: ["pool", "piscina"]
         sea_view: ["sea view", "vista mar", "ocean view"]

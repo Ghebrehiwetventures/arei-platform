@@ -205,6 +205,47 @@
   line-height: 1.8;
   margin-bottom: 20px;
 }
+.dd-html {
+  font-size: 0.92rem;
+  color: var(--tx2);
+  line-height: 1.8;
+  margin-bottom: 20px;
+}
+.dd-html h2,
+.dd-html h3,
+.dd-html h4 {
+  font-family: var(--fd);
+  font-weight: 700;
+  color: var(--tx);
+  margin: 24px 0 8px;
+}
+.dd-html h2 { font-size: 1.3rem; }
+.dd-html h3 { font-size: 1.15rem; }
+.dd-html h4 { font-size: 1rem; }
+.dd-html p {
+  margin: 0 0 12px;
+}
+.dd-html ul,
+.dd-html ol {
+  margin: 0 0 12px;
+  padding-left: 20px;
+}
+.dd-html li {
+  margin-bottom: 4px;
+}
+.dd-html strong {
+  color: var(--tx);
+  font-weight: 600;
+}
+.dd-html a {
+  color: var(--ac);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.dd-html a:hover {
+  opacity: 0.8;
+}
+
 .dd .dd-source {
   font-size: 0.82rem;
   color: var(--tx3);

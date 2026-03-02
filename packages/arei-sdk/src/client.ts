@@ -53,7 +53,7 @@ const CARD_COLUMNS = [
 // ---------------------------------------------------------------------------
 // Detail columns — full row
 // ---------------------------------------------------------------------------
-const DETAIL_COLUMNS = [
+const DETAIL_COLUMNS_BASE = [
   "id",
   "title",
   "island",
@@ -71,7 +71,13 @@ const DETAIL_COLUMNS = [
   "source_url",
   "first_seen_at",
   "last_seen_at",
-].join(",");
+];
+
+// Optional columns that may not exist yet (added by later migrations)
+const DETAIL_COLUMNS_OPTIONAL = ["description_html"];
+
+const DETAIL_COLUMNS = [...DETAIL_COLUMNS_BASE, ...DETAIL_COLUMNS_OPTIONAL].join(",");
+const DETAIL_COLUMNS_FALLBACK = DETAIL_COLUMNS_BASE.join(",");
 
 // ---------------------------------------------------------------------------
 // Client class
@@ -143,11 +149,20 @@ export class AREIClient {
   // getListing — single listing for detail page
   // =========================================================================
   async getListing(id: string): Promise<ListingDetail | null> {
-    const { data, error } = await this.sb
+    let { data, error } = await this.sb
       .from(VIEW)
       .select(DETAIL_COLUMNS)
       .eq("id", id)
       .single();
+
+    // Retry without optional columns if the DB doesn't have them yet (42703 = column not found)
+    if (error && error.code === "42703") {
+      ({ data, error } = await this.sb
+        .from(VIEW)
+        .select(DETAIL_COLUMNS_FALLBACK)
+        .eq("id", id)
+        .single());
+    }
 
     if (error) {
       if (error.code === "PGRST116") return null; // not found

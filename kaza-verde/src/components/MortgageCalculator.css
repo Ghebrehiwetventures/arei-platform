@@ -31,7 +31,7 @@
   gap: 16px;
 }
 
-/* ── Inputs grid ── */
+/* ── Inputs: single 2-col grid with all fields ── */
 .mc-inputs {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -104,35 +104,12 @@
   grid-column: 1 / -1;
 }
 
-/* ── Advanced toggle ── */
+/* Extra costs toggle — hidden on desktop */
 .mc-adv-toggle {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  color: var(--tx3);
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 0;
-  font-family: var(--fb);
-  transition: color 0.2s;
-}
-.mc-adv-toggle:hover { color: var(--ac); }
-.mc-adv-toggle svg {
-  transition: transform 0.2s;
-}
-.mc-adv-open svg {
-  transform: rotate(180deg);
+  display: none;
 }
 
-.mc-inputs-adv {
-  animation: mc-fadein 0.15s ease;
-}
-@keyframes mc-fadein { from { opacity: 0; transform: translateY(-4px); } }
-
-/* ── Inline summary (mobile-first, hidden on desktop) ── */
+/* Inline summary — hidden on desktop */
 .mc-inline-summary {
   display: none;
 }
@@ -145,7 +122,7 @@
   gap: 16px;
 }
 
-/* Hero total — most prominent */
+/* Hero total — dominant monthly number */
 .mc-hero-total {
   text-align: center;
   width: 100%;
@@ -169,8 +146,16 @@
   color: var(--ac);
   line-height: 1;
 }
+.mc-hero-sub {
+  display: block;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: var(--tx3);
+  margin-top: 2px;
+  letter-spacing: 0.04em;
+}
 
-/* Donut */
+/* Donut — pure visual ring */
 .mc-donut {
   width: 140px;
   height: 140px;
@@ -178,20 +163,6 @@
 .mc-donut circle {
   transform: rotate(-90deg);
   transform-origin: 50% 50%;
-}
-.mc-donut-label {
-  font-family: var(--fb);
-  font-size: 10px;
-  font-weight: 600;
-  fill: var(--tx3);
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-}
-.mc-donut-total {
-  font-family: var(--fd);
-  font-size: 16px;
-  font-weight: 700;
-  fill: var(--tx);
 }
 
 /* Legend */
@@ -266,6 +237,40 @@
   .mc-field input[type="text"] { padding: 9px 10px; font-size: 0.85rem; }
   .mc-field label { font-size: 0.68rem; margin-bottom: 3px; }
 
+  /* Hide extra cost fields on mobile by default */
+  .mc-field-extra {
+    display: none;
+  }
+  /* Show when toggled */
+  .mc-show-extra .mc-field-extra {
+    display: block;
+    animation: mc-fadein 0.15s ease;
+  }
+  @keyframes mc-fadein { from { opacity: 0; transform: translateY(-4px); } }
+
+  /* Show toggle on mobile */
+  .mc-adv-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.78rem;
+    font-weight: 600;
+    color: var(--tx3);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 4px 0;
+    font-family: var(--fb);
+    transition: color 0.2s;
+  }
+  .mc-adv-toggle:hover { color: var(--ac); }
+  .mc-adv-toggle svg {
+    transition: transform 0.2s;
+  }
+  .mc-adv-open svg {
+    transform: rotate(180deg);
+  }
+
   /* Show inline summary on mobile */
   .mc-inline-summary {
     display: flex;
@@ -305,6 +310,6 @@
     font-variant-numeric: tabular-nums;
   }
 
-  /* Hide donut + right panel + hero total on mobile */
+  /* Hide donut + right panel on mobile */
   .mc-result { display: none; }
 }

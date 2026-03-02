@@ -48,6 +48,7 @@ export function toListingDetail(row: ListingRow): ListingDetail {
     land_area_sqm: row.land_area_sqm,
     property_size_sqm: row.property_size_sqm,
     description: row.description,
+    description_html: row.description_html,
     image_urls: row.image_urls ?? [],
     source_id: row.source_id,
     source_url: row.source_url,

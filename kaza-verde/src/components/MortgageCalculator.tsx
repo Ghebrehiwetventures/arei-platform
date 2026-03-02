@@ -14,6 +14,8 @@ const DEFAULTS: MortgageInput = {
   propertyTaxPct: 0.3,
   insuranceAnnual: 600,
   hoaMonthly: 0,
+  maintenanceMonthly: 50,
+  utilitiesMonthly: 0,
 };
 
 function fmt(n: number): string {
@@ -83,12 +85,6 @@ function DonutChart({ segments }: { segments: DonutSegment[] }) {
             />
           );
         })}
-      <text x={cx} y={cy - 6} textAnchor="middle" className="mc-donut-label">
-        Monthly
-      </text>
-      <text x={cx} y={cy + 14} textAnchor="middle" className="mc-donut-total">
-        {fmt(total)}
-      </text>
     </svg>
   );
 }
@@ -98,7 +94,7 @@ export default function MortgageCalculator({ price }: Props) {
     ...DEFAULTS,
     totalAmount: price ?? DEFAULTS.totalAmount,
   }));
-  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [showExtra, setShowExtra] = useState(false);
 
   const set = <K extends keyof MortgageInput>(key: K, val: MortgageInput[K]) =>
     setInput((prev) => ({ ...prev, [key]: val }));
@@ -106,10 +102,12 @@ export default function MortgageCalculator({ price }: Props) {
   const result = useMemo(() => calcMortgage(input), [input]);
 
   const segments: DonutSegment[] = [
-    { label: "Loan payment", value: result.monthlyMortgage, color: "hsl(65 70% 55%)" },
-    { label: "Property tax", value: result.monthlyTax, color: "hsl(25 50% 50%)" },
-    { label: "Insurance", value: result.monthlyInsurance, color: "hsl(200 50% 50%)" },
-    { label: "Condo fee", value: result.monthlyHoa, color: "hsl(280 40% 55%)" },
+    { label: "Loan payment",  value: result.monthlyMortgage,    color: "hsl(65 70% 55%)" },
+    { label: "Property tax",  value: result.monthlyTax,         color: "hsl(25 50% 50%)" },
+    { label: "Insurance",     value: result.monthlyInsurance,    color: "hsl(200 50% 50%)" },
+    { label: "Condo fee",     value: result.monthlyHoa,         color: "hsl(280 40% 55%)" },
+    { label: "Maintenance",   value: result.monthlyMaintenance,  color: "hsl(150 45% 45%)" },
+    { label: "Utilities",     value: result.monthlyUtilities,    color: "hsl(340 45% 55%)" },
   ];
 
   return (
@@ -119,9 +117,9 @@ export default function MortgageCalculator({ price }: Props) {
       </h2>
 
       <div className="mc-grid">
-        {/* ── Left: inputs + inline summary ── */}
+        {/* ── Left: all inputs in one grid ── */}
         <div className="mc-left">
-          <div className="mc-inputs">
+          <div className={`mc-inputs${showExtra ? " mc-show-extra" : ""}`}>
             <div className="mc-field mc-field-full">
               <label>Property price</label>
               <input
@@ -199,45 +197,62 @@ export default function MortgageCalculator({ price }: Props) {
                 onChange={(e) => set("hoaMonthly", parseNum(e.target.value))}
               />
             </div>
+
+            {/* Extra costs — always visible on desktop, toggled on mobile */}
+            <div className="mc-field mc-field-extra">
+              <label>Annual property tax (%)</label>
+              <input
+                type="text"
+                inputMode="decimal"
+                value={input.propertyTaxPct}
+                onChange={(e) => set("propertyTaxPct", parseNum(e.target.value, true))}
+              />
+            </div>
+
+            <div className="mc-field mc-field-extra">
+              <label>Insurance (€/yr)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={input.insuranceAnnual}
+                onChange={(e) => set("insuranceAnnual", parseNum(e.target.value))}
+              />
+            </div>
+
+            <div className="mc-field mc-field-extra">
+              <label>Maintenance reserve (€/mo)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={input.maintenanceMonthly}
+                onChange={(e) => set("maintenanceMonthly", parseNum(e.target.value))}
+              />
+            </div>
+
+            <div className="mc-field mc-field-extra">
+              <label>Utilities (€/mo)</label>
+              <input
+                type="text"
+                inputMode="numeric"
+                value={input.utilitiesMonthly}
+                onChange={(e) => set("utilitiesMonthly", parseNum(e.target.value))}
+              />
+            </div>
           </div>
 
-          {/* Advanced toggle */}
+          {/* Toggle — mobile only */}
           <button
             type="button"
-            className={`mc-adv-toggle${showAdvanced ? " mc-adv-open" : ""}`}
-            onClick={() => setShowAdvanced((v) => !v)}
+            className={`mc-adv-toggle${showExtra ? " mc-adv-open" : ""}`}
+            onClick={() => setShowExtra((v) => !v)}
           >
             <svg viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" fill="none" width={14} height={14}>
               <polyline points="6 9 12 15 18 9" />
             </svg>
-            {showAdvanced ? "Hide" : "Show"} advanced
+            Extra costs
           </button>
 
-          {showAdvanced && (
-            <div className="mc-inputs mc-inputs-adv">
-              <div className="mc-field">
-                <label>Annual property tax (%)</label>
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={input.propertyTaxPct}
-                  onChange={(e) => set("propertyTaxPct", parseNum(e.target.value, true))}
-                />
-              </div>
-
-              <div className="mc-field">
-                <label>Insurance (€/yr)</label>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  value={input.insuranceAnnual}
-                  onChange={(e) => set("insuranceAnnual", parseNum(e.target.value))}
-                />
-              </div>
-            </div>
-          )}
-
-          {/* Inline summary — visible early on mobile */}
+          {/* Inline summary — mobile only */}
           <div className="mc-inline-summary">
             <div className="mc-inline-total">
               <span>Estimated monthly cost</span>
@@ -258,11 +273,12 @@ export default function MortgageCalculator({ price }: Props) {
           </div>
         </div>
 
-        {/* ── Right: total (hero) → donut + legend → deposit/loan ── */}
+        {/* ── Right: hero total → donut → legend → deposit/loan ── */}
         <div className="mc-result">
           <div className="mc-hero-total">
             <span className="mc-hero-label">Estimated monthly</span>
             <span className="mc-hero-value">{fmtDecimal(result.totalMonthly)}</span>
+            <span className="mc-hero-sub">/month</span>
           </div>
 
           <DonutChart segments={segments} />

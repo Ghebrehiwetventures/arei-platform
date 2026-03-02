@@ -20,6 +20,7 @@ export interface DemoListing {
   land_area_sqm: number | null;
   property_size_sqm: number | null;
   description: string | null;
+  description_html: string | null;
   first_seen_at: string | null;
   source_id: string;
   source_url: string;
@@ -44,6 +45,7 @@ export const DEMO_LISTINGS: DemoListing[] = [
     land_area_sqm: null,
     property_size_sqm: null,
     description: null,
+    description_html: null,
     first_seen_at: new Date(Date.now() - 2 * 86400000).toISOString(),
     source_id: "morabeza-imoveis",
     source_url: "https://example.com/1",
@@ -64,6 +66,7 @@ export const DEMO_LISTINGS: DemoListing[] = [
     land_area_sqm: null,
     property_size_sqm: null,
     description: null,
+    description_html: null,
     first_seen_at: "2025-12-01T00:00:00Z",
     source_id: "sal-properties",
     source_url: "https://example.com/2",
@@ -84,6 +87,7 @@ export const DEMO_LISTINGS: DemoListing[] = [
     land_area_sqm: null,
     property_size_sqm: null,
     description: null,
+    description_html: null,
     first_seen_at: new Date(Date.now() - 3 * 86400000).toISOString(),
     source_id: "santiago-realty",
     source_url: "https://example.com/3",
@@ -104,6 +108,7 @@ export const DEMO_LISTINGS: DemoListing[] = [
     land_area_sqm: null,
     property_size_sqm: null,
     description: null,
+    description_html: null,
     first_seen_at: "2025-11-15T00:00:00Z",
     source_id: "imoveis-cv",
     source_url: "https://example.com/4",
@@ -124,6 +129,7 @@ export const DEMO_LISTINGS: DemoListing[] = [
     land_area_sqm: 800,
     property_size_sqm: null,
     description: null,
+    description_html: null,
     first_seen_at: "2026-01-10T00:00:00Z",
     source_id: "fogo-terras",
     source_url: "https://example.com/5",
@@ -144,6 +150,7 @@ export const DEMO_LISTINGS: DemoListing[] = [
     land_area_sqm: null,
     property_size_sqm: null,
     description: null,
+    description_html: null,
     first_seen_at: new Date(Date.now() - 5 * 86400000).toISOString(),
     source_id: "sal-properties",
     source_url: "https://example.com/6",

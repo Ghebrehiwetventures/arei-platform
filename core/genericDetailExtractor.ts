@@ -100,7 +100,7 @@ const DEFAULT_SPEC_PATTERNS = {
   ],
   area: [
     /(\d+(?:[.,]\d+)?)\s*(?:m²|sqm|square\s*met(?:er|re)s?)/i,
-    /(?:area|size|superfície)\s*[:\-]?\s*(\d+(?:[.,]\d+)?)/i,
+    /(?:area|size|superfície)\s*[:\-]?\s*(\d+(?:[.,]\d+)?)\s*(?:m²|sqm|sq|$)/i,
   ],
 };
 
@@ -184,6 +184,91 @@ function makeAbsoluteUrl(url: string, baseUrl: string): string {
 }
 
 // ============================================
+// JSON-LD STRUCTURED DATA EXTRACTION
+// ============================================
+
+interface JsonLdSpecs {
+  bedrooms?: number;
+  bathrooms?: number;
+  area?: number;
+}
+
+function extractJsonLd($: cheerio.CheerioAPI): JsonLdSpecs {
+  const specs: JsonLdSpecs = {};
+
+  $('script[type="application/ld+json"]').each((_, el) => {
+    try {
+      const raw = $(el).html();
+      if (!raw) return;
+      const data = JSON.parse(raw);
+
+      // Handle @graph arrays (common in Yoast/WordPress)
+      const nodes: any[] = Array.isArray(data)
+        ? data
+        : data?.["@graph"]
+          ? data["@graph"]
+          : [data];
+
+      for (const node of nodes) {
+        // Match RealEstateListing, SingleFamilyResidence, Apartment, House, Product, etc.
+        const type = (node?.["@type"] || "").toLowerCase();
+        const isRelevant =
+          type.includes("realestate") ||
+          type.includes("residence") ||
+          type.includes("apartment") ||
+          type.includes("house") ||
+          type.includes("product") ||
+          type.includes("accommodation") ||
+          type.includes("lodging");
+
+        if (!isRelevant) continue;
+
+        // Bedrooms
+        if (specs.bedrooms === undefined) {
+          const bed =
+            node.numberOfBedrooms ??
+            node.numberOfRooms ??
+            node.bedrooms;
+          if (typeof bed === "number" && bed > 0) specs.bedrooms = bed;
+        }
+
+        // Bathrooms
+        if (specs.bathrooms === undefined) {
+          const bath =
+            node.numberOfBathroomsTotal ??
+            node.numberOfBathrooms ??
+            node.bathrooms;
+          if (typeof bath === "number" && bath > 0) specs.bathrooms = bath;
+        }
+
+        // Floor size / area (may be a QuantitativeValue or raw number)
+        if (specs.area === undefined) {
+          const fs = node.floorSize;
+          if (fs) {
+            const val = typeof fs === "number" ? fs : (fs?.value ?? null);
+            if (typeof val === "number" && val > 0) {
+              // Convert from sqft if needed (some themes incorrectly label sqm as SQFT)
+              const unit = (fs?.unitText || fs?.unitCode || "").toUpperCase();
+              specs.area = unit === "SQFT" || unit === "FTK"
+                ? Math.round(val * 0.092903)  // real sqft → sqm
+                : val;
+              // Many Houzez sites mis-label m² as SQFT — if value < 500, it's likely already sqm
+              if ((unit === "SQFT" || unit === "FTK") && val < 500) {
+                specs.area = val;  // Trust the raw number; it's likely sqm mislabeled
+              }
+            }
+          }
+        }
+      }
+    } catch {
+      // Malformed JSON-LD — skip silently
+    }
+  });
+
+  return specs;
+}
+
+// ============================================
 // MAIN: GENERIC DETAIL EXTRACTION
 // ============================================
 
@@ -199,6 +284,17 @@ export function genericDetailExtract(
     // Auto-detect CMS if not specified
     const cmsType = config.cms_type || detectCMS(html);
     const preset = CMS_PRESETS[cmsType] || CMS_PRESETS.custom;
+
+    // ========================================
+    // JSON-LD STRUCTURED DATA (highest priority)
+    // ========================================
+    // Many CMS themes (Houzez, RealHomes, etc.) embed RealEstateListing /
+    // SingleFamilyResidence / Product schema. Parse it first — values here
+    // are machine-generated and more reliable than regex on page text.
+    const jsonLd = extractJsonLd($);
+    if (jsonLd.bedrooms !== undefined) result.bedrooms = jsonLd.bedrooms;
+    if (jsonLd.bathrooms !== undefined) result.bathrooms = jsonLd.bathrooms;
+    if (jsonLd.area !== undefined) result.area = jsonLd.area;
 
     // ========================================
     // TITLE EXTRACTION
@@ -319,8 +415,8 @@ export function genericDetailExtract(
     // ========================================
     const pageText = $("body").text();
 
-    // Bedrooms
-    if (config.selectors.bedrooms) {
+    // Bedrooms (JSON-LD may have set this already — only override if still undefined)
+    if (result.bedrooms === undefined && config.selectors.bedrooms) {
       const bedroomEl = $(config.selectors.bedrooms).first();
       if (bedroomEl.length) {
         result.bedrooms = extractNumber(bedroomEl.text());
@@ -337,8 +433,8 @@ export function genericDetailExtract(
       }
     }
 
-    // Bathrooms
-    if (config.selectors.bathrooms) {
+    // Bathrooms (JSON-LD may have set this already)
+    if (result.bathrooms === undefined && config.selectors.bathrooms) {
       const bathroomEl = $(config.selectors.bathrooms).first();
       if (bathroomEl.length) {
         result.bathrooms = extractNumber(bathroomEl.text());
@@ -373,8 +469,8 @@ export function genericDetailExtract(
       }
     }
 
-    // Area
-    if (config.selectors.area) {
+    // Area (JSON-LD may have set this already)
+    if (result.area === undefined && config.selectors.area) {
       const areaEl = $(config.selectors.area).first();
       if (areaEl.length) {
         result.area = extractNumber(areaEl.text());

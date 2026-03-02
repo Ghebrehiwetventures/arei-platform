@@ -6,6 +6,8 @@ export interface MortgageInput {
   propertyTaxPct: number;
   insuranceAnnual: number;
   hoaMonthly: number;
+  maintenanceMonthly: number;
+  utilitiesMonthly: number;
 }
 
 export interface MortgageResult {
@@ -15,6 +17,8 @@ export interface MortgageResult {
   monthlyTax: number;
   monthlyInsurance: number;
   monthlyHoa: number;
+  monthlyMaintenance: number;
+  monthlyUtilities: number;
   totalMonthly: number;
 }
 
@@ -35,9 +39,12 @@ export function calcMortgage(input: MortgageInput): MortgageResult {
   const monthlyTax = input.totalAmount * (input.propertyTaxPct / 100) / 12;
   const monthlyInsurance = input.insuranceAnnual / 12;
   const monthlyHoa = input.hoaMonthly;
+  const monthlyMaintenance = input.maintenanceMonthly;
+  const monthlyUtilities = input.utilitiesMonthly;
 
   const totalMonthly =
-    monthlyMortgage + monthlyTax + monthlyInsurance + monthlyHoa;
+    monthlyMortgage + monthlyTax + monthlyInsurance + monthlyHoa +
+    monthlyMaintenance + monthlyUtilities;
 
   return {
     downPayment,
@@ -46,6 +53,8 @@ export function calcMortgage(input: MortgageInput): MortgageResult {
     monthlyTax,
     monthlyInsurance,
     monthlyHoa,
+    monthlyMaintenance,
+    monthlyUtilities,
     totalMonthly,
   };
 }

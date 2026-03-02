@@ -68,6 +68,9 @@ interface IngestListing {
 // PROPERTY TYPE EXTRACTION
 // ============================================
 
+/** Canonical land/plot property types — shared across pipeline and UI */
+const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
+
 function extractPropertyType(title?: string, url?: string): string {
   const text = `${title || ""} ${url || ""}`.toLowerCase();
 
@@ -572,28 +575,30 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
     const currency = getCurrency(marketId);
     const country = getCountry(marketId);
 
+    const isLand = LAND_TYPES.test(fullListing?.property_type || "");
+
     return {
       id: listing.id,
       source_id: listing.sourceId,
       source_url: fullListing?.detailUrl || fullListing?.externalUrl || null,
       title: listing.title,
-      description: fullListing?.description,
-      description_html: fullListing?.description_html,
+      description: fullListing?.description ?? null,
+      description_html: fullListing?.description_html ?? null,
       price: listing.price,
       currency,
       country,
       island: locationResult.island,  // Works for both islands and regions
       city: locationResult.city,
-      bedrooms: listing.bedrooms ?? null,
-      bathrooms: listing.bathrooms ?? null,
-      property_size_sqm: listing.area_sqm ?? null,
-      land_area_sqm: null,
+      bedrooms: isLand ? null : (listing.bedrooms ?? null),
+      bathrooms: isLand ? null : (listing.bathrooms ?? null),
+      property_size_sqm: isLand ? null : (listing.area_sqm ?? null),
+      land_area_sqm: isLand ? (listing.area_sqm ?? null) : null,
       image_urls: fullListing?.imageUrls || [],
       status: "observe",
       violations: violations,
       // INVALID_PRICE is non-blocking: "price on request" listings are valid
       approved: violations.filter(v => v !== "INVALID_PRICE").length === 0,
-      property_type: fullListing?.property_type || undefined,
+      property_type: fullListing?.property_type ?? null,
       amenities: fullListing?.amenities || [],
       price_period: "sale",
     };

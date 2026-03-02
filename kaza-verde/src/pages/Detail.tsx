@@ -14,7 +14,29 @@ import MarketContext from "../components/MarketContext";
 import "./Detail.css";
 
 const PLACEHOLDER_BG = "linear-gradient(145deg,#5B8A72,#1A4A32)";
-const LAND_TYPES = /land|plot|terrain|lote/i;
+const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
+const LAND_TITLE = /\b(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)\b/i;
+
+/** Collapse WP size variants (-1024x768.jpg) into one image per base filename, keeping the largest. */
+function dedupeWpImages(urls: string[]): string[] {
+  const unique = [...new Set(urls)];
+  const groups = new Map<string, { url: string; area: number; order: number }>();
+  for (let i = 0; i < unique.length; i++) {
+    const url = unique[i];
+    const base = url.replace(/-\d{2,5}x\d{2,5}(\.\w+)$/, "$1");
+    const m = url.match(/-(\d{2,5})x(\d{2,5})\.\w+$/);
+    const area = m ? Number(m[1]) * Number(m[2]) : Infinity; // no suffix = original = largest
+    const existing = groups.get(base);
+    if (!existing) {
+      groups.set(base, { url, area, order: i });
+    } else if (area > existing.area) {
+      groups.set(base, { url, area, order: existing.order });
+    }
+  }
+  return Array.from(groups.values())
+    .sort((a, b) => a.order - b.order)
+    .map((g) => g.url);
+}
 
 /** Convert ALL CAPS titles to Title Case */
 function toTitleCase(str: string): string {
@@ -62,13 +84,14 @@ export default function Detail() {
           city: detail.city,
           price: detail.price,
           currency: detail.currency ?? "",
-          image_urls: [...new Set(detail.image_urls ?? [])],
+          image_urls: dedupeWpImages(detail.image_urls ?? []),
           bedrooms: detail.bedrooms,
           bathrooms: detail.bathrooms,
           property_type: detail.property_type,
           land_area_sqm: detail.land_area_sqm,
           property_size_sqm: detail.property_size_sqm,
           description: detail.description ?? null,
+          description_html: detail.description_html ?? null,
           first_seen_at: detail.first_seen_at,
           source_id: detail.source_id,
           source_url: detail.source_url,
@@ -192,11 +215,14 @@ export default function Detail() {
 
   const displayTitle = toTitleCase(listing.title);
 
+  const isLand = LAND_TYPES.test(listing.property_type ?? "") || LAND_TITLE.test(listing.title ?? "");
   const specs: { value: string; label: string }[] = [];
   if (listing.property_type) specs.push({ value: listing.property_type, label: "Type" });
-  const bed = formatBedrooms(listing.bedrooms);
-  if (bed) specs.push({ value: listing.bedrooms === 0 ? "Studio" : String(listing.bedrooms), label: bed === "Studio" ? "Type" : "Bedrooms" });
-  if (listing.bathrooms && listing.bathrooms > 0) specs.push({ value: String(listing.bathrooms), label: "Bathrooms" });
+  if (!isLand) {
+    const bed = formatBedrooms(listing.bedrooms);
+    if (bed) specs.push({ value: listing.bedrooms === 0 ? "Studio" : String(listing.bedrooms), label: bed === "Studio" ? "Type" : "Bedrooms" });
+    if (listing.bathrooms && listing.bathrooms > 0) specs.push({ value: String(listing.bathrooms), label: "Bathrooms" });
+  }
   if (listing.land_area_sqm) {
     specs.push({ value: `${listing.land_area_sqm.toLocaleString()}`, label: "m² Land" });
   }
@@ -315,7 +341,9 @@ export default function Detail() {
 
           <div className="dd">
             <h3>About this property</h3>
-            {listing.description ? (
+            {listing.description_html ? (
+              <div className="dd-html" dangerouslySetInnerHTML={{ __html: listing.description_html }} />
+            ) : listing.description ? (
               <p>{listing.description}</p>
             ) : (
               <p>
@@ -360,9 +388,7 @@ export default function Detail() {
         </aside>
       </div>
 
-      {listing.price &&
-        !LAND_TYPES.test(listing.property_type ?? "") &&
-        !LAND_TYPES.test(listing.title ?? "") && (
+      {listing.price && !isLand && (
         <MortgageCalculator price={listing.price} />
       )}
 

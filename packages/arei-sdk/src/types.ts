@@ -19,6 +19,7 @@ export interface ListingRow {
   property_size_sqm: number | null;
   land_area_sqm: number | null;
   description: string | null;
+  description_html: string | null;
   image_urls: string[] | null;
   source_id: string;
   source_url: string;
@@ -60,6 +61,7 @@ export interface ListingDetail {
   land_area_sqm: number | null;
   property_size_sqm: number | null;
   description: string | null;
+  description_html: string | null;
   image_urls: string[];
   source_id: string;
   source_url: string;

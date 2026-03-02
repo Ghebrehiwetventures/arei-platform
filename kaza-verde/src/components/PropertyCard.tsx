@@ -13,12 +13,17 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
   const navigate = useNavigate();
   const isNew = isNewListing(listing.first_seen_at);
 
+  const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
+  const LAND_TITLE = /\b(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)\b/i;
+  const isLand = LAND_TYPES.test(listing.property_type ?? "") || LAND_TITLE.test(listing.title ?? "");
   const specs: string[] = [];
-  const bed = formatBedrooms(listing.bedrooms);
-  if (bed) specs.push(bed);
-  const bath = formatBathrooms(listing.bathrooms);
-  if (bath) specs.push(bath);
-  if (listing.property_type === "Land" && listing.land_area_sqm) {
+  if (!isLand) {
+    const bed = formatBedrooms(listing.bedrooms);
+    if (bed) specs.push(bed);
+    const bath = formatBathrooms(listing.bathrooms);
+    if (bath) specs.push(bath);
+  }
+  if (isLand && listing.land_area_sqm) {
     specs.push(`${listing.land_area_sqm} m²`);
   }
 
