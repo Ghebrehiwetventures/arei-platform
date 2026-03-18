@@ -59,11 +59,11 @@ async function loadIngestReport(): Promise<IngestReport | null> {
     const response = await fetch("/cv_ingest_report.json");
     if (response.ok) {
       cachedReport = await response.json();
-      console.log("[diagnostics] Loaded ingest report from artifacts");
+      console.log("[arei-admin] Loaded ingest report from artifacts");
       return cachedReport;
     }
   } catch {
-    console.log("[diagnostics] No ingest report found, using MOCK data");
+    console.log("[arei-admin] No ingest report found, using MOCK data");
   }
   return null;
 }

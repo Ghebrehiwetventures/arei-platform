@@ -4,7 +4,7 @@
 --   2) Set bedrooms/bathrooms to NULL for land listings
 --
 -- Land types list mirrors the canonical LAND_TYPES regex used in
--- core/ingestMarket.ts, kaza-verde Detail.tsx, and PropertyCard.tsx:
+-- core/ingestMarket.ts, kazaverde-web Detail.tsx, and PropertyCard.tsx:
 --   /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i
 --
 -- HOW TO RUN (pick one):

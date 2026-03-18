@@ -227,7 +227,7 @@ Samma kod för 10, 20, 50 marknader. Linear cost scaling (inte exponential).
 - **Parsing:** Cheerio (HTML)
 - **Storage:** Supabase (PostgreSQL)
 - **Config:** YAML
-- **Diagnostics:** React + Vite (diagnostics app)
+- **AREI Admin:** React + Vite (`arei-admin` app)
 
 ## Next Architecture Steps
 

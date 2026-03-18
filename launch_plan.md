@@ -21,9 +21,15 @@ to:
 This plan is based on:
 
 - `docs/kaza-verde-cv-dominated-kpi.md`
-- the current `kaza-verde` app
+- the current `kazaverde-web` app
 - current live data/feed state
 - outstanding launch concerns raised on 2026-03-06
+
+## Deployment Mapping
+
+- App path: `/kazaverde-web`
+- Production project: `kazaverde-web`
+- Production is only verified when the intended change is visible on `https://kazaverde.com`
 
 ## 2. Definition Of Done
 

@@ -11,5 +11,5 @@
     "rootDir": "."
   },
   "include": ["core/**/*.ts", "markets/**/*.ts"],
-  "exclude": ["node_modules", "dist", "diagnostics"]
+  "exclude": ["node_modules", "dist", "arei-admin"]
 }
