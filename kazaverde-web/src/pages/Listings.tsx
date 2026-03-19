@@ -22,7 +22,7 @@ const DEFAULT_PAGE_SIZE = 24;
 type ViewMode = "grid" | "list";
 
 export default function Listings() {
-  useDocumentMeta("All Properties", "Browse all property listings in Cape Verde. Every island, every listing, one index.");
+  useDocumentMeta("All Properties", "Browse KazaVerde's read-only index of Cape Verde property listings by island and price range.");
   const [searchParams, setSearchParams] = useSearchParams();
   const initialIsland = searchParams.get("island") || "";
   const initialPage = Math.max(1, parseInt(searchParams.get("page") || "1", 10) || 1);
@@ -103,7 +103,7 @@ export default function Listings() {
     <>
       <div className="lh">
         <h1>All <em>Properties</em></h1>
-        <p>{total} listings across {islands.length || "multiple"} islands, aggregated from multiple tracked sources.</p>
+        <p>{total} source-linked listings across {islands.length || "multiple"} islands in KazaVerde's read-only index.</p>
       </div>
 
       <div className="fb">
