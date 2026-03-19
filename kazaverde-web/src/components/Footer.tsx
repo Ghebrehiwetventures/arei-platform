@@ -10,15 +10,15 @@ export default function Footer() {
         <div>
           <div className="fb_">KAZA<span>VERDE</span>.COM</div>
           <p className="fdesc">
-            Cape Verde's real estate aggregator. Every island, every listing, one index.
+            Cape Verde's read-only property index. Market truth over marketplace noise.
           </p>
         </div>
         <div className="fc">
           <h4>Discover</h4>
-          <span>New Listings</span>
-          <span>Ocean View</span>
-          <span>Price Drops</span>
-          <span>Sold History</span>
+          <span>Latest Listings</span>
+          <span>Saved Properties</span>
+          <span>Market Data</span>
+          <span>Source Links</span>
         </div>
         <div className="fc">
           <h4>Company</h4>

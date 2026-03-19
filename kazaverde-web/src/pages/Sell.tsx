@@ -3,7 +3,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import "./Rent.css";
 
 export default function Sell() {
-  useDocumentMeta("Sell", "List your Cape Verde property — coming soon.");
+  useDocumentMeta("Sell", "Direct seller submissions are not part of the current KazaVerde launch scope.");
   const navigate = useNavigate();
 
   return (
@@ -14,10 +14,10 @@ export default function Sell() {
           <polyline points="12 6 12 12 16 14" />
         </svg>
       </div>
-      <h1>Sell — <em>Coming Soon</em></h1>
+      <h1>Seller Submissions — <em>Not In Scope</em></h1>
       <p>
-        We're working on letting property owners list directly on KazaVerde.
-        In the meantime, explore our buy listings.
+        KazaVerde currently operates as a read-only index of tracked public listings.
+        Direct owner submissions are not part of the current launch scope.
       </p>
       <button className="bp" onClick={() => navigate("/listings")}>BROWSE LISTINGS</button>
     </div>

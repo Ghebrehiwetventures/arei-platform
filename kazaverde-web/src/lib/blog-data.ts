@@ -32,7 +32,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <hr>
 <h2>The Buying Process: Seven Steps</h2>
 <h3>Step 1: Find a Property</h3>
-<p>You can search independently, work with a licensed estate agent, or use a listing aggregator like <a href="https://kazaverde.com">KazaVerde</a> to compare properties across multiple sources and islands. Agents on the ground are particularly useful for understanding local nuances — different areas of the same island can vary significantly in infrastructure, rental potential, and community fees.</p>
+<p>You can search independently, work with a licensed estate agent, or use a source-linked property index like <a href="https://kazaverde.com">KazaVerde</a> to compare publicly listed properties across multiple sources and islands. Agents on the ground are particularly useful for understanding local nuances — different areas of the same island can vary significantly in infrastructure, rental potential, and community fees.</p>
 <h3>Step 2: Hire an Independent Lawyer</h3>
 <p>This is not optional. Hire a Cape Verdean <em>advogado</em> who is independent from the seller and the estate agent. Your lawyer will verify ownership, check for outstanding debts, review all contracts, and represent you at the notary. If you can&#39;t be physically present in Cape Verde for the transaction, your lawyer can act on your behalf through a Power of Attorney (<em>procuração</em>), which can be arranged at a notary or a Cape Verde embassy abroad.</p>
 <p>Typical lawyer fees: €500–1,500 depending on complexity.</p>
@@ -355,7 +355,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 </ul>
 <hr>
 <h2>Monitoring the Market</h2>
-<p>Property tax changes affect pricing, yields, and transaction volumes. KazaVerde tracks listings across the Cape Verde market and publishes market data including median prices by island and inventory trends.</p>
+<p>Property tax changes affect pricing, yields, and transaction volumes. KazaVerde tracks public listings across the Cape Verde market and publishes source-linked market context including median prices by island and tracked inventory levels.</p>
 <p><em>Stay informed at <a href="/market">kazaverde.com/market-data</a></em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
@@ -492,7 +492,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <hr>
 <h2>Doing Your Research</h2>
 <p>Understanding what properties are actually listed for — and how prices compare across islands, locations, and property types — is essential before committing capital.</p>
-<p><a href="https://kazaverde.com">KazaVerde</a> provides a searchable index of Cape Verde property listings with normalized pricing, verified specifications, and market data. Use it to understand the market before you engage with agents or developers.</p>
+<p><a href="https://kazaverde.com">KazaVerde</a> provides a searchable index of Cape Verde property listings with normalized pricing, source-linked detail pages, and market context. Use it to understand the market before you engage with agents or developers.</p>
 <p><em>Explore the current market at <a href="https://kazaverde.com">kazaverde.com</a></em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>

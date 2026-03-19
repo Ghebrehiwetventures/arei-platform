@@ -112,7 +112,7 @@ export default function Home() {
           Living
         </h1>
         <p className="hero-sub">
-          {error ? "Live property data could not be loaded." : "Cape Verde's real estate aggregator."}
+          {error ? "Live property data could not be loaded." : "Cape Verde's read-only property index."}
         </p>
         {error && (
           <div
@@ -149,7 +149,7 @@ export default function Home() {
           Living
         </h1>
         <p className="hero-sub">
-          Cape Verde's real estate aggregator. {stats.total} properties across {stats.islandCount} islands, from beachfront villas to volcanic terrain.
+          A read-only Cape Verde property index with {stats.total} tracked listings across {stats.islandCount} islands.
         </p>
         <div className="hero-acts">
           <button className="bp" onClick={() => navigate("/listings")}>BROWSE PROPERTIES</button>

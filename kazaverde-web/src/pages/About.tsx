@@ -5,33 +5,32 @@ import "./About.css";
 const SECTIONS = [
   {
     title: "What KazaVerde Is",
-    body: "KazaVerde is a property listing index for Cape Verde. We aggregate publicly available property listings from multiple sources, normalize them into a consistent format, and present them in a single searchable interface. Every listing links directly to its original source — we are a read-only index, not a broker or marketplace.",
+    body: "KazaVerde is a read-only property index for Cape Verde. We collect publicly accessible listing data from tracked source pages, normalize it into a consistent format, and present it in a searchable interface. Every listing links back to its original source page. KazaVerde is not a broker, marketplace, or transaction platform.",
   },
   {
     title: "Where the Data Comes From",
     body: null,
     list: [
       "Local real estate agency websites",
-      "International property portals with Cape Verde listings",
       "Developer and resort sales pages",
-      "Classified listing sites with property sections",
+      "Other publicly accessible source pages that meet our trust and normalization requirements",
     ],
-    note: "We do not disclose individual source domains to protect the integrity of our crawling infrastructure. Each listing clearly identifies its source by name and links to the original page.",
+    note: "We do not disclose individual source domains to protect the integrity of our crawling infrastructure. Each listing identifies its source by name and links to the original page. Broader portals may help us discover sources, but they are not treated as automatic truth sources for the public index.",
   },
   {
     title: "Update Cadence",
-    body: 'Our automated crawlers check each source at minimum once every 48 hours. Some high-volume sources are checked more frequently. The "Last checked" date on each listing reflects the most recent successful verification.',
+    body: 'Tracked sources are rechecked regularly. Cadence varies by source, crawl success, and launch priorities. The "Last checked" date on each listing reflects the most recent successful verification of that public record.',
   },
   {
     title: "Deduplication and Normalization",
-    body: "Properties that appear on multiple sources are deduplicated using a combination of address matching, price matching, image fingerprinting, and specification comparison. Normalization includes: converting all prices to euros (€), standardizing size to square meters (m²), mapping location data to island and city, and extracting structured specifications from unstructured listing descriptions.",
+    body: "Where duplicate public listings are detected, KazaVerde keeps one current public record rather than showing every duplicate variant. Normalization may include currency conversion for display, standardizing size units, mapping location data to canonical island and city names where reliable, and extracting structured specifications when the source supports it. Missing fields stay missing rather than being guessed.",
   },
 ];
 
-const BADGES = [
-  { name: "Verified Price", desc: "The listing had a clearly extractable numeric price. Listings where the price could not be extracted are marked 'Price on request'." },
-  { name: "Verified Specs", desc: "Bedrooms, bathrooms, and/or size were present as structured data or could be reliably extracted from the listing description." },
-  { name: "Verified Location", desc: "The island and city/area could be confirmed from the listing data. Some listings only specify the island without a specific city." },
+const QUALITY_NOTES = [
+  { name: "Price on request", desc: "A listing can remain in the public index even when the source does not expose a numeric price clearly enough for reliable extraction." },
+  { name: "Partial location", desc: "Some listings support island-level location confidently, but not a specific city or area. KazaVerde does not fill in missing location detail by guesswork." },
+  { name: "Source-first links", desc: "If you want to verify the latest public version of a listing, use the source link on the detail page. KazaVerde is a read-only index, not the original publisher." },
 ];
 
 export default function About() {
@@ -66,12 +65,12 @@ export default function About() {
         </div>
       ))}
 
-      {/* Badges */}
+      {/* Quality notes */}
       <div className="mi-section anim-fu delay-35">
-        <h3>Verified Badges Explained</h3>
-        <div className="sub">Badges reflect data quality, not property quality.</div>
+        <h3>How We Handle Incomplete Data</h3>
+        <div className="sub">Neutral fallbacks are better than fake certainty.</div>
         <div className="badge-grid">
-          {BADGES.map((b) => (
+          {QUALITY_NOTES.map((b) => (
             <div className="badge-card" key={b.name}>
               <div className="badge-header">
                 <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gr)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -92,7 +91,7 @@ export default function About() {
         <p className="about-body">
           <strong>KazaVerde does not claim full market coverage.</strong> Our index represents
           a meaningful sample of publicly advertised properties, but off-market deals, private
-          sales, and listings on sources we don't yet track are not included.
+          sales, and listings on sources we do not currently track are not included.
         </p>
         <div className="coverage-box">
           <div className="coverage-label">Current Coverage</div>

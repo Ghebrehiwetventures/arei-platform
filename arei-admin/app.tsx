@@ -2375,10 +2375,12 @@ function App() {
 }
 
 // ============================================
-// AUTH GATE — Password protection when VITE_ADMIN_PROTECTED=true (e.g. on Vercel)
+// AUTH GATE — Protected by default outside local dev unless explicitly disabled
 // ============================================
 
-const ADMIN_PROTECTED = import.meta.env.VITE_ADMIN_PROTECTED === "true";
+const ADMIN_PROTECTED =
+  import.meta.env.VITE_ADMIN_PROTECTED === "true" ||
+  (!import.meta.env.DEV && import.meta.env.VITE_ADMIN_PROTECTED !== "false");
 
 function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
   const [password, setPassword] = useState("");
@@ -2416,7 +2418,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
           Admin login
         </h1>
         <p className="label-style mb-6">
-          Africa Property Index — enter password
+          Internal dashboard - enter password
         </p>
         <form onSubmit={handleSubmit}>
           <input

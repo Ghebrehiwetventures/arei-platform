@@ -18,8 +18,6 @@ export default function Navbar() {
 
       <div className="nc hide-mobile">
         <NavLink to="/listings" className={({ isActive }) => (isActive ? "on" : "")}>BUY</NavLink>
-        <NavLink to="/rent" className={({ isActive }) => (isActive ? "on" : "")}>RENT</NavLink>
-        <NavLink to="/sell" className={({ isActive }) => (isActive ? "on" : "")}>SELL</NavLink>
         <NavLink to="/market" className={({ isActive }) => (isActive ? "on" : "")}>MARKET DATA</NavLink>
         <NavLink to="/blog" className={({ isActive }) => (isActive ? "on" : "")}>BLOG</NavLink>
         <NavLink to="/about" className={({ isActive }) => (isActive ? "on" : "")}>ABOUT</NavLink>
@@ -41,8 +39,6 @@ export default function Navbar() {
 
       <div className={`nc-mobile${menuOpen ? " open" : ""}`}>
         <NavLink to="/listings" className={({ isActive }) => (isActive ? "on" : "")} onClick={closeMenu}>BUY</NavLink>
-        <NavLink to="/rent" className={({ isActive }) => (isActive ? "on" : "")} onClick={closeMenu}>RENT</NavLink>
-        <NavLink to="/sell" className={({ isActive }) => (isActive ? "on" : "")} onClick={closeMenu}>SELL</NavLink>
         <NavLink to="/market" className={({ isActive }) => (isActive ? "on" : "")} onClick={closeMenu}>MARKET DATA</NavLink>
         <NavLink to="/blog" className={({ isActive }) => (isActive ? "on" : "")} onClick={closeMenu}>BLOG</NavLink>
         <NavLink to="/about" className={({ isActive }) => (isActive ? "on" : "")} onClick={closeMenu}>ABOUT</NavLink>
@@ -63,7 +59,6 @@ export default function Navbar() {
           SAVED
           <span className={`saved-badge${count === 0 ? " hide" : ""}`}>{count}</span>
         </NavLink>
-        <button className="bp hide-mobile" onClick={() => navigate("/sell")}>LIST PROPERTY</button>
       </div>
     </nav>
   );

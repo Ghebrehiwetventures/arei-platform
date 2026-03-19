@@ -3,7 +3,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import "./Rent.css";
 
 export default function Rent() {
-  useDocumentMeta("Rent", "Rental listings in Cape Verde — coming soon.");
+  useDocumentMeta("Rent", "Rental listings are not part of the current KazaVerde public launch feed.");
   const navigate = useNavigate();
 
   return (
@@ -14,10 +14,10 @@ export default function Rent() {
           <polyline points="12 6 12 12 16 14" />
         </svg>
       </div>
-      <h1>Rent — <em>Coming Soon</em></h1>
+      <h1>Rentals — <em>Not In Scope</em></h1>
       <p>
-        We're working on adding rental listings to the KazaVerde index.
-        In the meantime, explore our buy listings.
+        The current public launch feed covers Cape Verde buy listings and market data.
+        Rental inventory is not part of the current launch scope.
       </p>
       <button className="bp" onClick={() => navigate("/listings")}>BROWSE BUY LISTINGS</button>
     </div>
