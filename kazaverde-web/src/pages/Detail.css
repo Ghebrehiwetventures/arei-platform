@@ -165,72 +165,6 @@
   stroke-width: 2;
 }
 
-.detail-save-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 24px;
-  flex-wrap: wrap;
-}
-.detail-save {
-  display: inline-flex;
-  align-items: center;
-  gap: 10px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: var(--tx2);
-  cursor: pointer;
-  transition: color 0.2s, transform 0.2s;
-}
-.detail-save:hover {
-  transform: translateY(-1px);
-  color: var(--tx);
-}
-.detail-save-icon {
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--bd2);
-  border-radius: 9px;
-  background: rgba(255, 255, 255, 0.03);
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  transition: color 0.2s, background 0.2s, border-color 0.2s;
-}
-.detail-save svg {
-  width: 14px;
-  height: 14px;
-  stroke: currentColor;
-  fill: none;
-  stroke-width: 2;
-}
-.detail-save:hover .detail-save-icon {
-  border-color: var(--tx2);
-  background: rgba(255, 255, 255, 0.05);
-}
-.detail-save-copy {
-  font-size: 0.74rem;
-  font-weight: 800;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  line-height: 1;
-}
-.detail-save.is-saved {
-  color: var(--ac);
-}
-.detail-save.is-saved svg {
-  fill: currentColor;
-}
-.detail-save.is-saved .detail-save-icon {
-  border-color: rgba(217, 221, 64, 0.34);
-  background: rgba(217, 221, 64, 0.12);
-}
-.detail-save-note {
-  font-size: 0.82rem;
-  color: var(--tx3);
-}
-
 .dsg {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
@@ -360,6 +294,11 @@
   color: var(--tx3);
   margin-bottom: 24px;
 }
+.cc-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 .boc {
   width: 100%;
   text-align: center;
@@ -380,6 +319,28 @@
   box-sizing: border-box;
 }
 .boc:hover { border-color: var(--tx); }
+.detail-save-sidebar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+.detail-save-sidebar svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+  flex-shrink: 0;
+}
+.detail-save-sidebar.is-saved {
+  border-color: rgba(217, 221, 64, 0.34);
+  background: rgba(217, 221, 64, 0.12);
+  color: var(--ac);
+}
+.detail-save-sidebar.is-saved svg {
+  fill: currentColor;
+}
 
 /* Similar Properties section */
 .dsim {
@@ -555,7 +516,6 @@
   .dhi { height: 280px; }
   .dhi-price { display: none; }
   .dl { margin-bottom: 16px; }
-  .detail-save-row { margin-bottom: 24px; }
   .dm-price-bar {
     display: flex;
     align-items: center;
@@ -579,6 +539,13 @@
     color: var(--tx3);
     margin-top: 4px;
   }
+  .dm-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-left: auto;
+    flex-shrink: 0;
+  }
   .dm-cta {
     flex-shrink: 0;
     padding: 11px 18px;
@@ -592,6 +559,46 @@
     text-decoration: none;
     font-family: var(--fb);
     white-space: nowrap;
+  }
+  .dm-save {
+    width: 42px;
+    height: 42px;
+    border: 1px solid var(--bd2);
+    border-radius: 10px;
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--tx2);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+    transition: color 0.2s, background 0.2s, border-color 0.2s, transform 0.2s;
+  }
+  .dm-save:hover {
+    transform: translateY(-1px);
+    color: var(--tx);
+    border-color: var(--tx2);
+    background: rgba(255, 255, 255, 0.05);
+  }
+  .dm-save svg {
+    width: 15px;
+    height: 15px;
+    stroke: currentColor;
+    fill: none;
+    stroke-width: 2;
+  }
+  .dm-save.is-saved {
+    color: var(--ac);
+    border-color: rgba(217, 221, 64, 0.34);
+    background: rgba(217, 221, 64, 0.12);
+  }
+  .dm-save.is-saved svg {
+    fill: currentColor;
+  }
+  .dm-save:focus-visible {
+    outline: 2px solid rgba(217, 221, 64, 0.75);
+    outline-offset: 2px;
   }
   .ds { display: none; }
   .dsim { margin-top: 48px; padding-top: 32px; }

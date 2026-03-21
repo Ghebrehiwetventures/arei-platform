@@ -1,31 +1,26 @@
-import { useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "./Footer.css";
 
 export default function Footer() {
-  const navigate = useNavigate();
-
   return (
     <footer className="ft">
       <div className="fg">
         <div>
-          <div className="fb_">KAZA<span>VERDE</span>.COM</div>
+          <Link className="fb_" to="/">KAZA<span>VERDE</span>.COM</Link>
           <p className="fdesc">
             Cape Verde's read-only property index. Market truth over marketplace noise.
           </p>
         </div>
         <div className="fc">
           <h4>Discover</h4>
-          <span>Latest Listings</span>
-          <span>Saved Properties</span>
-          <span>Market Data</span>
-          <span>Source Links</span>
+          <Link to="/listings">Latest Listings</Link>
+          <Link to="/saved">Saved Properties</Link>
+          <Link to="/market">Market Data</Link>
         </div>
         <div className="fc">
           <h4>Company</h4>
-          <a onClick={() => navigate("/about")}>About Us</a>
-          <a onClick={() => navigate("/market")}>Market Data</a>
-          <a onClick={() => navigate("/blog")}>Blog</a>
-          <span>Press</span>
+          <Link to="/about">About Us</Link>
+          <Link to="/blog">Blog</Link>
         </div>
         <div className="fc">
           <h4>Connect</h4>

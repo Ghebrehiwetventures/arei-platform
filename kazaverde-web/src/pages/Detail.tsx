@@ -316,42 +316,36 @@ export default function Detail() {
             {formatLocation(listing.city, listing.island)}, Cape Verde
           </div>
 
-          <div className="detail-save-row">
-            <button
-              type="button"
-              className={`detail-save${saved ? " is-saved" : ""}`}
-              onClick={() => toggle(listing.id)}
-              aria-label={saved ? `Remove ${displayTitle} from saved properties` : `Save ${displayTitle} to saved properties`}
-              aria-pressed={saved}
-            >
-              <span className="detail-save-icon" aria-hidden="true">
-                <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
-                </svg>
-              </span>
-              <span className="detail-save-copy">{saved ? "Saved locally" : "Save property"}</span>
-            </button>
-            <p className="detail-save-note">Stored in this browser. No login required.</p>
-          </div>
-
           {/* Mobile-only: price + CTA visible early */}
-          {listing.price && (
-            <div className="dm-price-bar">
-              <div>
-                <div className="dm-price">{formatPrice(listing.price, listing.currency)}</div>
-                {listing.currency === "EUR" && (
-                  <div className="dm-price-cve">
-                    Approx. {(listing.price * 110.265).toLocaleString("en-US", { maximumFractionDigits: 0 })} CVE
-                  </div>
-                )}
-              </div>
+          <div className="dm-price-bar">
+            <div>
+              <div className="dm-price">{formatPrice(listing.price, listing.currency)}</div>
+              {listing.price && listing.currency === "EUR" && (
+                <div className="dm-price-cve">
+                  Approx. {(listing.price * 110.265).toLocaleString("en-US", { maximumFractionDigits: 0 })} CVE
+                </div>
+              )}
+            </div>
+            <div className="dm-actions">
               {listing.source_url && (
                 <a className="dm-cta" href={listing.source_url} target="_blank" rel="noopener noreferrer">
                   VIEW ON SOURCE
                 </a>
               )}
+              <button
+                type="button"
+                className={`dm-save${saved ? " is-saved" : ""}`}
+                onClick={() => toggle(listing.id)}
+                aria-label={saved ? `Remove ${displayTitle} from saved properties` : `Save ${displayTitle} to saved properties`}
+                aria-pressed={saved}
+                title={saved ? "Saved" : "Save"}
+              >
+                <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+              </button>
             </div>
-          )}
+          </div>
 
           {specs.length > 0 && (
             <div className="dsg">
@@ -399,11 +393,25 @@ export default function Detail() {
                 Approx. {(listing.price * 110.265).toLocaleString("en-US", { maximumFractionDigits: 0 })} CVE
               </div>
             )}
-            {listing.source_url && (
-              <a className="bp" style={{ width: "100%", textAlign: "center", padding: 14, borderRadius: 10, fontSize: "0.82rem", marginBottom: 10, display: "block" }} href={listing.source_url} target="_blank" rel="noopener noreferrer">
-                VIEW ON SOURCE
-              </a>
-            )}
+            <div className="cc-actions">
+              {listing.source_url && (
+                <a className="bp" style={{ width: "100%", textAlign: "center", padding: 14, borderRadius: 10, fontSize: "0.82rem", display: "block" }} href={listing.source_url} target="_blank" rel="noopener noreferrer">
+                  VIEW ON SOURCE
+                </a>
+              )}
+              <button
+                type="button"
+                className={`boc detail-save-sidebar${saved ? " is-saved" : ""}`}
+                onClick={() => toggle(listing.id)}
+                aria-label={saved ? `Remove ${displayTitle} from saved properties` : `Save ${displayTitle} to saved properties`}
+                aria-pressed={saved}
+              >
+                <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+                <span>{saved ? "Saved" : "Save property"}</span>
+              </button>
+            </div>
           </div>
         </aside>
       </div>
