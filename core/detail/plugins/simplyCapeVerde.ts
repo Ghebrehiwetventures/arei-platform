@@ -400,12 +400,85 @@ function parsePrice(priceText: string): number | undefined {
 
 function detectAvailabilityStatus(
   title: string | undefined,
-  priceText: string | undefined
+  priceText: string | undefined,
+  availabilityText?: string | undefined
 ): "sold_or_reserved" | undefined {
-  const searchText = `${title || ""} ${priceText || ""}`;
+  const searchText = `${title || ""} ${priceText || ""} ${availabilityText || ""}`;
   if (/\bsold\b|\breserved\b|under offer/i.test(searchText)) {
     return "sold_or_reserved";
   }
+  return undefined;
+}
+
+function flattenJsonLdNodes(input: unknown): Record<string, unknown>[] {
+  if (Array.isArray(input)) {
+    return input.flatMap((item) => flattenJsonLdNodes(item));
+  }
+
+  if (!input || typeof input !== "object") {
+    return [];
+  }
+
+  const record = input as Record<string, unknown>;
+  const graph = record["@graph"];
+  if (Array.isArray(graph)) {
+    return [record, ...graph.flatMap((item) => flattenJsonLdNodes(item))];
+  }
+
+  return [record];
+}
+
+function extractJsonLdPrice($: cheerio.CheerioAPI): number | undefined {
+  const candidates: string[] = [];
+
+  $('script[type="application/ld+json"]').each((_, el) => {
+    const raw = $(el).html();
+    if (!raw) return;
+
+    try {
+      const parsed = JSON.parse(raw);
+      const nodes = flattenJsonLdNodes(parsed);
+
+      for (const node of nodes) {
+        const directPrice = node.price;
+        if (typeof directPrice === "string" || typeof directPrice === "number") {
+          candidates.push(String(directPrice));
+        }
+
+        const offers = node.offers;
+        const offerList = Array.isArray(offers) ? offers : offers ? [offers] : [];
+        for (const offer of offerList) {
+          if (!offer || typeof offer !== "object") continue;
+          const offerPrice = (offer as Record<string, unknown>).price;
+          if (typeof offerPrice === "string" || typeof offerPrice === "number") {
+            candidates.push(String(offerPrice));
+          }
+        }
+      }
+    } catch {
+      // Ignore malformed JSON-LD for this source.
+    }
+  });
+
+  for (const candidate of candidates) {
+    const parsed = parsePrice(candidate);
+    if (parsed && parsed >= 500) {
+      return parsed;
+    }
+  }
+
+  return undefined;
+}
+
+function extractHomePriceInput($: cheerio.CheerioAPI): number | undefined {
+  const homePriceValue = $("#homePrice").attr("value") || $("#homePrice").val();
+  if (typeof homePriceValue === "string") {
+    const parsed = parsePrice(homePriceValue);
+    if (parsed && parsed >= 500) {
+      return parsed;
+    }
+  }
+
   return undefined;
 }
 
@@ -467,6 +540,26 @@ export const simplyCapeVerdePlugin: DetailPlugin = {
       price = parsePrice(priceElement);
     }
 
+    if (!price) {
+      const jsonLdPrice = extractJsonLdPrice($);
+      if (jsonLdPrice) {
+        price = jsonLdPrice;
+        if (!priceText) {
+          priceText = String(jsonLdPrice);
+        }
+      }
+    }
+
+    if (!price) {
+      const homePrice = extractHomePriceInput($);
+      if (homePrice) {
+        price = homePrice;
+        if (!priceText) {
+          priceText = String(homePrice);
+        }
+      }
+    }
+
     // Fallback: search for price pattern in page
     if (!price) {
       const bodyText = $("body").text();
@@ -479,7 +572,16 @@ export const simplyCapeVerdePlugin: DetailPlugin = {
       }
     }
 
-    const availabilityStatus = detectAvailabilityStatus(title, priceText);
+    const availabilityText = [
+      $(".item-price").first().text().trim(),
+      $(".property-price-wrap").first().text().trim(),
+      $(".item-price-wrap").first().text().trim(),
+      $("[class*='price-single-listing-text']").first().text().trim(),
+    ]
+      .filter((value) => value.length > 0)
+      .join(" ");
+
+    const availabilityStatus = detectAvailabilityStatus(title, priceText, availabilityText);
 
     // ========================================
     // D) Extract property specs

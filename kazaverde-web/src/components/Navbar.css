@@ -7,6 +7,18 @@
   z-index: 201;
 }
 
+.home-nav {
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  margin-right: calc(50% - 50vw);
+  padding: 18px max(24px, calc(50vw - 560px)) 18px;
+  background: rgba(242, 236, 228, 0.92);
+  backdrop-filter: blur(14px);
+  border-bottom: 1px solid rgba(26, 24, 20, 0.08);
+  position: sticky;
+  top: 0;
+}
+
 .logo {
   font-weight: 800;
   font-size: 1.05rem;
@@ -18,6 +30,12 @@
   z-index: 2;
 }
 .logo span { color: var(--ac); }
+
+.home-logo {
+  color: #1a1814;
+  letter-spacing: 0.18em;
+  font-size: 0.84rem;
+}
 
 .nc {
   display: flex;
@@ -35,6 +53,12 @@
 .nc a:hover,
 .nc a.on,
 .nc a.active { color: var(--tx); }
+.home-nav .nc a {
+  color: #736c63;
+}
+.home-nav .nc a:hover {
+  color: #1a1814;
+}
 .nc-soon {
   font-size: 0.78rem;
   font-weight: 600;
@@ -52,6 +76,21 @@
   gap: 16px;
   position: relative;
   z-index: 2;
+}
+
+.home-nav-cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 40px;
+  padding: 0 16px;
+  border-radius: 8px;
+  background: #1a1814;
+  color: #f2ece4;
+  font-size: 0.76rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
 }
 
 .nl {
@@ -151,6 +190,16 @@
 .nc-mobile a:hover,
 .nc-mobile a.on { color: var(--tx); }
 
+.home-nav-mobile {
+  background: #f2ece4;
+}
+.home-nav-mobile a {
+  color: #5c554d;
+}
+.home-nav-mobile a:hover {
+  color: #1a1814;
+}
+
 .nav-saved-mobile {
   display: flex;
   align-items: center;
@@ -177,11 +226,20 @@
     padding-top: 16px;
     padding-bottom: 16px;
   }
+  .home-nav {
+    padding-left: 20px;
+    padding-right: 20px;
+    background: rgba(242, 236, 228, 0.97);
+  }
   .nc { display: none; }
   .hide-desktop { display: flex !important; }
   .hide-mobile { display: none !important; }
-  .nr { display: none !important; }
+  .home-nav .nr { display: none !important; }
+  .nav:not(.home-nav) .nr { display: none !important; }
   .nav-hamburger { order: 2; }
+  .home-nav-hamburger {
+    color: #4f4942;
+  }
 }
 @media (min-width: 769px) {
   .hide-desktop { display: none !important; }

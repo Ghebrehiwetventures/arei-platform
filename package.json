@@ -6,6 +6,7 @@
   "scripts": {
     "dev": "npm run dev --prefix arei-admin",
     "dev:kaza": "npm run dev --prefix kazaverde-web",
+    "check:kazaverde-deploy": "node scripts/check-kazaverde-deploy.mjs",
     "pipeline:cv": "npx ts-node --transpile-only core/preflightCv.ts && npm run ingest:cv && npm run stale:cv && npm run kpi:cv && npm run regression:cv",
     "ingest:cv": "DETAIL_ENRICH=1 DETAIL_ENRICH_LIMIT=50 npx ts-node --transpile-only core/ingestCv.ts",
     "report:cv": "npx ts-node --transpile-only core/reportCv.ts",

@@ -21,6 +21,7 @@ function readRecentTimestamp(key: string, maxAgeMs: number) {
 
 export default function NewsletterPopup() {
   const { pathname } = useLocation();
+  const isLanding = pathname === "/";
   const [isSuppressed, setIsSuppressed] = useState(() => {
     return (
       readRecentTimestamp(DISMISSED_KEY, DISMISS_FOR_MS) ||
@@ -37,17 +38,17 @@ export default function NewsletterPopup() {
   const [canDismissFromBackdrop, setCanDismissFromBackdrop] = useState(false);
 
   useEffect(() => {
-    if (isSuppressed) return undefined;
+    if (isSuppressed || isLanding) return undefined;
 
     const timer = window.setTimeout(() => {
       setHasDelayElapsed(true);
     }, SHOW_DELAY_MS);
 
     return () => window.clearTimeout(timer);
-  }, [isSuppressed]);
+  }, [isLanding, isSuppressed]);
 
   useEffect(() => {
-    if (isSuppressed) return undefined;
+    if (isSuppressed || isLanding) return undefined;
 
     const countInteraction = () => {
       setInteractionCount((current) => Math.min(current + 1, REQUIRED_INTERACTIONS));
@@ -74,18 +75,18 @@ export default function NewsletterPopup() {
       window.removeEventListener("keydown", handleKeyDown);
       window.removeEventListener("scroll", handleScroll);
     };
-  }, [hasScrolledEnough, isSuppressed]);
+  }, [hasScrolledEnough, isLanding, isSuppressed]);
 
   useEffect(() => {
-    if (isSuppressed || status === "success") return;
+    if (isSuppressed || status === "success" || isLanding) return;
     setInteractionCount((current) => Math.min(current + 1, REQUIRED_INTERACTIONS));
-  }, [isSuppressed, pathname, status]);
+  }, [isLanding, isSuppressed, pathname, status]);
 
   useEffect(() => {
-    if (isSuppressed || isVisible || status === "success") return;
+    if (isSuppressed || isVisible || status === "success" || isLanding) return;
     if (!hasDelayElapsed || interactionCount < REQUIRED_INTERACTIONS) return;
     setIsVisible(true);
-  }, [hasDelayElapsed, interactionCount, isSuppressed, isVisible, status]);
+  }, [hasDelayElapsed, interactionCount, isLanding, isSuppressed, isVisible, status]);
 
   useEffect(() => {
     if (!isVisible) return undefined;
@@ -158,7 +159,7 @@ export default function NewsletterPopup() {
     }
   };
 
-  if (!isVisible) return null;
+  if (isLanding || !isVisible) return null;
 
   return (
     <div className="nl-popup-root" role="dialog" aria-modal="true" aria-labelledby="nl-popup-title">

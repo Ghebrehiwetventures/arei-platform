@@ -1,7 +1,37 @@
-import { Link } from "react-router-dom";
+import { Link, useLocation } from "react-router-dom";
 import "./Footer.css";
 
 export default function Footer() {
+  const { pathname } = useLocation();
+
+  if (pathname === "/") {
+    return (
+      <footer className="ft home-footer">
+        <div className="home-footer-top">
+          <div>
+            <div className="home-footer-logo">AREI</div>
+            <p className="home-footer-copy">
+              Africa Real Estate Index. A data infrastructure layer for fragmented property markets,
+              with live proof in Cape Verde.
+            </p>
+          </div>
+          <div className="home-footer-links">
+            <a href="#proof">Proof</a>
+            <a href="#model">Business model</a>
+            <a href="https://www.kazaverde.com" target="_blank" rel="noreferrer">
+              KazaVerde
+            </a>
+            <a href="mailto:info@kazaverde.com">Email</a>
+          </div>
+        </div>
+        <div className="home-footer-bottom">
+          <span>© 2026 Africa Real Estate Index</span>
+          <span>Built on the live KazaVerde feed and launch stack.</span>
+        </div>
+      </footer>
+    );
+  }
+
   return (
     <footer className="ft">
       <div className="fg">

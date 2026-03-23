@@ -1,15 +1,15 @@
 {
   "market": "cv",
-  "generated_at": "2026-03-02T20:02:06.836Z",
+  "generated_at": "2026-03-22T19:00:53.469Z",
   "sources": [
     {
       "source_id": "cv_terracaboverde",
-      "fetched_total": 48,
+      "fetched_total": 41,
       "kept_normalized": 0,
       "dropped": {
         "missing_price": 0,
         "missing_location": 0,
-        "missing_property_type": 48,
+        "missing_property_type": 41,
         "missing_images": 0,
         "invalid_area": 0,
         "invalid_bedrooms": 0,
@@ -36,12 +36,12 @@
     },
     {
       "source_id": "cv_homescasaverde",
-      "fetched_total": 53,
+      "fetched_total": 52,
       "kept_normalized": 0,
       "dropped": {
         "missing_price": 0,
         "missing_location": 2,
-        "missing_property_type": 51,
+        "missing_property_type": 50,
         "missing_images": 0,
         "invalid_area": 0,
         "invalid_bedrooms": 0,
@@ -87,9 +87,9 @@
       "fetched_total": 166,
       "kept_normalized": 0,
       "dropped": {
-        "missing_price": 23,
+        "missing_price": 24,
         "missing_location": 0,
-        "missing_property_type": 143,
+        "missing_property_type": 142,
         "missing_images": 0,
         "invalid_area": 0,
         "invalid_bedrooms": 0,
@@ -100,12 +100,12 @@
     },
     {
       "source_id": "cv_oceanproperty24",
-      "fetched_total": 10,
+      "fetched_total": 9,
       "kept_normalized": 0,
       "dropped": {
         "missing_price": 0,
         "missing_location": 0,
-        "missing_property_type": 10,
+        "missing_property_type": 9,
         "missing_images": 0,
         "invalid_area": 0,
         "invalid_bedrooms": 0,

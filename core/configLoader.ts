@@ -11,6 +11,7 @@ export type FetchMethod = "http" | "headless";
 export type PaginationType = "query_param" | "next_link" | "offset" | "cursor" | "path_segment" | "click_next" | "infinite_scroll" | "ajax_post" | "auto" | "none";
 export type StopCondition = "empty_listings" | "no_next_link" | "max_items" | "max_pages" | "total_from_page";
 export type DetailPolicy = "always" | "on_violation" | "never";
+export type SourceTier = "active" | "monitor" | "deprecated";
 
 export interface PaginationConfig {
   type: PaginationType;
@@ -80,6 +81,7 @@ export interface SourceConfig {
   type: string;
   userAgent?: string;
   lifecycleOverride?: "IN" | "OBSERVE" | "DROP";
+  sourceTier?: SourceTier;
 
   /** CMS type for preset fallbacks (auto-detected if not specified) */
   cms_type?: "elementor" | "wordpress" | "wix" | "squarespace" | "shopify" | "custom";
@@ -97,6 +99,7 @@ export interface SourceConfig {
   price_format?: PriceFormatConfig;
   location_patterns?: string[];
   id_prefix?: string;
+  identity_mode?: "content_hash" | "normalized_url";
   detail?: DetailConfig;
   allowed_image_hosts?: string[];
   allowed_image_url_patterns?: string[];

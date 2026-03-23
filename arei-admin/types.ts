@@ -73,6 +73,8 @@ export interface SourceQualityRowRaw {
   duplicate_rate?: number;
   freshness?: number;
   title_cleanliness?: number;
+  stale_share_pct?: number;
+  base_quality_score?: number;
   quality_score?: number;
   latest_run_delta_pct?: number | null;
   latest_run_warning?: boolean;

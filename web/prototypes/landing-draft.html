@@ -58,7 +58,7 @@
     .ticker-band{border-bottom:1px solid var(--line);overflow:hidden;padding:12px 0;}
     .ticker-track{display:flex;width:max-content;animation:tick 28s linear infinite;}
     .ticker-track:hover{animation-play-state:paused;}
-    @keyframes tick{from{transform:translateX(0);}to{transform:translateX(-50%);}}
+    @keyframes tick{from{transform:translateX(0);}to{transform:translateX(-25%);}}
     .ti{display:inline-flex;align-items:center;gap:8px;padding:0 24px;font-size:.67rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);white-space:nowrap;border-right:1px solid var(--line);}
     .ti.on{color:var(--ink);}
     .ti .d{width:4px;height:4px;border-radius:50%;background:currentColor;}
@@ -67,11 +67,11 @@
     .section{padding:72px 0;border-bottom:1px solid var(--line);}
     .s-label{font-size:.6rem;font-weight:700;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin-bottom:36px;}
     h2{font-size:clamp(1.9rem,3.8vw,3.2rem);font-weight:800;line-height:1.04;letter-spacing:-.04em;}
-    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:start;}
+    .two-col{display:grid;grid-template-columns:1fr 1fr;gap:48px;align-items:end;}
     .body-txt{font-size:.93rem;line-height:1.82;color:var(--muted);}
 
     /* ── MARKET OPPORTUNITY ── */
-    .opp-numbers{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:40px;}
+    .opp-numbers{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:40px;}
     .opp-num{background:var(--surface);padding:32px 28px;}
     .opp-val{font-size:clamp(2.4rem,5vw,4rem);font-weight:800;letter-spacing:-.05em;line-height:1;}
     .opp-desc{margin-top:10px;font-size:.78rem;font-weight:600;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
@@ -79,8 +79,8 @@
 
     /* ── WHY NOW ── */
     .tailwinds{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-top:48px;}
-    .tw{padding:24px;border:1px solid var(--line);border-radius:10px;background:var(--surface);transition:background .2s;}
-    .tw:hover{background:rgba(26,24,20,.04);}
+    .tw{padding:24px;border:1px solid var(--line);border-radius:10px;background:var(--surface);transition:border-color .2s;}
+    .tw:hover{border-color:var(--ink);}
     .tw-icon{width:28px;height:28px;margin-bottom:16px;color:var(--ink);opacity:.7;}
     .tw h3{font-size:.92rem;font-weight:700;letter-spacing:-.01em;margin-bottom:8px;}
     .tw p{font-size:.8rem;line-height:1.7;color:var(--muted);}
@@ -88,7 +88,7 @@
     /* ── ENGINE PILLARS ── */
     .pillars{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
     .pillar{background:var(--surface);padding:32px 26px;display:flex;flex-direction:column;gap:14px;transition:background .2s;}
-    .pillar:hover{background:rgba(26,24,20,.04);}
+    .pillar:hover{background:var(--bg);}
     .p-num{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
     .pillar h3{font-size:1rem;font-weight:700;letter-spacing:-.02em;}
     .pillar p{font-size:.82rem;line-height:1.72;color:var(--muted);}
@@ -104,39 +104,40 @@
     .flywheel-points{display:flex;flex-direction:column;gap:0;border:1px solid var(--line);border-radius:12px;overflow:hidden;background:var(--surface);}
     .fw-point{display:flex;align-items:flex-start;gap:14px;padding:18px 20px;border-bottom:1px solid var(--line);transition:background .2s;}
     .fw-point:last-child{border-bottom:none;}
-    .fw-point:hover{background:rgba(26,24,20,.04);}
+    .fw-point:hover{background:var(--bg);}
     .fw-n{font-size:.62rem;font-weight:800;letter-spacing:.1em;color:var(--muted);width:20px;flex-shrink:0;padding-top:2px;}
     .fw-text h4{font-size:.86rem;font-weight:700;}
     .fw-text p{font-size:.78rem;color:var(--muted);line-height:1.6;margin-top:3px;}
 
     /* ── PROOF: KAZAVERDE ── */
-    .proof-layout{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:start;}
-    .live-browser{border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 24px 64px rgba(13,13,12,.08);}
+    .proof-layout{display:grid;grid-template-columns:1.1fr .9fr;gap:40px;align-items:stretch;}
+    .live-browser{border:1px solid var(--line);border-radius:12px;overflow:hidden;box-shadow:0 24px 64px rgba(13,13,12,.08);display:flex;flex-direction:column;}
     .browser-chrome{display:flex;align-items:center;gap:8px;padding:11px 14px;background:rgba(13,13,12,.03);border-bottom:1px solid var(--line);}
     .cd{width:9px;height:9px;border-radius:50%;}
     .cd.r{background:#ff5f57;}.cd.y{background:#febc2e;}.cd.g{background:#28c840;}
     .b-url{flex:1;text-align:center;font-size:.66rem;color:var(--muted);background:var(--bg);border:1px solid var(--line);padding:3px 12px;border-radius:4px;}
     .b-open{font-size:.7rem;color:var(--muted);font-weight:600;padding:3px 8px;border:1px solid var(--line);border-radius:4px;transition:all .2s;white-space:nowrap;}
     .b-open:hover{background:var(--ink);color:var(--bg);border-color:var(--ink);}
-    .iframe-wrap{position:relative;height:480px;background:var(--surface);}
+    .iframe-wrap{position:relative;flex:1;min-height:400px;background:var(--surface);}
     .iframe-wrap iframe{width:100%;height:100%;border:none;display:block;}
     .iframe-fallback{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;background:var(--bg);text-align:center;padding:32px;}
     .iframe-fallback p{font-size:.82rem;color:var(--muted);line-height:1.6;max-width:26ch;}
-    .proof-copy{display:flex;flex-direction:column;gap:20px;}
+    .proof-copy{display:flex;flex-direction:column;gap:16px;justify-content:center;}
     .proof-copy h2{font-size:clamp(1.7rem,3.2vw,2.6rem);}
     .proof-copy .body-txt{font-size:.9rem;}
     .check-list{border:1px solid var(--line);border-radius:10px;overflow:hidden;background:var(--surface);}
     .ck-row{display:flex;align-items:flex-start;gap:11px;padding:13px 16px;border-bottom:1px solid var(--line);font-size:.82rem;color:var(--muted);line-height:1.5;transition:background .2s;}
     .ck-row:last-child{border-bottom:none;}
-    .ck-row:hover{background:rgba(26,24,20,.04);}
+    .ck-row:hover{background:var(--bg);}
     .ck{width:14px;height:14px;border-radius:50%;border:1.5px solid rgba(13,13,12,.2);display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;font-size:.5rem;font-weight:900;}
-    .proof-link{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:6px;border:1px solid var(--ink);font-size:.82rem;font-weight:700;transition:all .2s;width:fit-content;}
+    .live-inline-stat{display:inline-flex;align-items:baseline;gap:.3ch;white-space:nowrap;}
+    .proof-link{display:inline-flex;align-items:center;gap:8px;padding:12px 20px;border-radius:6px;border:1px solid var(--ink);font-size:.82rem;font-weight:700;transition:all .2s;width:fit-content;align-self:flex-start;}
     .proof-link:hover{background:var(--ink);color:var(--bg);}
 
     /* ── BUSINESS MODEL ── */
     .bm-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;margin-top:40px;}
     .bm{background:var(--surface);padding:32px 26px;display:flex;flex-direction:column;gap:12px;transition:background .2s;}
-    .bm:hover{background:rgba(26,24,20,.04);}
+    .bm:hover{background:var(--bg);}
     .bm-tier{font-size:.6rem;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);}
     .bm h3{font-size:1.05rem;font-weight:700;letter-spacing:-.02em;}
     .bm p{font-size:.82rem;line-height:1.7;color:var(--muted);}
@@ -150,7 +151,7 @@
     /* ── STATS BAR ── */
     .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border:1px solid var(--line);border-radius:12px;overflow:hidden;}
     .stat{background:var(--surface);padding:28px 24px;transition:background .2s;}
-    .stat:hover{background:rgba(26,24,20,.04);}
+    .stat:hover{background:var(--bg);}
     .stat-n{font-size:clamp(2rem,4vw,3rem);font-weight:800;letter-spacing:-.05em;line-height:1;font-variant-numeric:tabular-nums;}
     .stat-l{margin-top:7px;font-size:.66rem;font-weight:600;letter-spacing:.09em;text-transform:uppercase;color:var(--muted);}
 
@@ -185,6 +186,10 @@
     .cta-form textarea:focus{border-color:rgba(249,248,246,.4);}
     .cta-submit{padding:13px 24px;border-radius:7px;background:var(--bg);color:var(--ink);font-size:.86rem;font-weight:700;border:none;cursor:pointer;transition:opacity .2s;font-family:inherit;}
     .cta-submit:hover{opacity:.85;}
+    .cta-submit:disabled{opacity:.7;cursor:default;}
+    .cta-feedback{font-size:.78rem;line-height:1.6;}
+    .cta-feedback.ok{color:rgba(249,248,246,.78);}
+    .cta-feedback.err{color:#ffd1c4;}
     .cta-note{font-size:.7rem;color:rgba(249,248,246,.35);}
 
     /* ── CLOSING ── */
@@ -194,18 +199,20 @@
     .closing-ctas{display:flex;gap:14px;align-items:center;margin-top:8px;}
 
     /* ── FOOTER ── */
-    footer{border-top:1px solid var(--line);padding:20px 0 32px;}
-    .ft{width:min(calc(100% - 48px),var(--max));margin:0 auto;display:flex;align-items:center;justify-content:space-between;font-size:.74rem;color:var(--muted);}
-
-    /* ── REVEAL ── */
-    .rv{opacity:0;transition:opacity .5s ease;}
-    .rv.on{opacity:1;}
-    .d1{transition-delay:.08s}.d2{transition-delay:.16s}.d3{transition-delay:.24s}
+    footer{border-top:1px solid var(--line);padding:24px 0 36px;}
+    .ft{width:min(calc(100% - 48px),var(--max));margin:0 auto;display:flex;align-items:flex-start;justify-content:space-between;gap:32px;font-size:.74rem;color:var(--muted);}
+    .ft-brand{display:flex;flex-direction:column;gap:8px;max-width:34ch;}
+    .ft-copy{font-size:.78rem;line-height:1.65;color:var(--muted);}
+    .ft-meta{font-size:.7rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--muted);}
+    .ft-links{display:flex;align-items:center;gap:18px;flex-wrap:wrap;justify-content:flex-end;}
+    .ft-links a{font-size:.72rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);transition:color .2s;}
+    .ft-links a:hover{color:var(--ink);}
 
     /* ── RESPONSIVE ── */
     @media(max-width:920px){
       .two-col,.proof-layout,.flywheel-wrap,.cta-inner{grid-template-columns:1fr;}
-      .stats-row,.opp-numbers,.pillars,.bm-grid,.tailwinds{grid-template-columns:1fr 1fr;}
+      .stats-row,.pillars,.bm-grid,.tailwinds{grid-template-columns:1fr 1fr;}
+      .opp-numbers{grid-template-columns:1fr 1fr;}
       .m-row{grid-template-columns:2fr 1fr 1fr;}
       .m-row>*:nth-child(4),.m-row>*:nth-child(5){display:none;}
       .cta-band{padding:40px 28px;}
@@ -213,9 +220,32 @@
     }
     @media(max-width:600px){
       .nav-a{display:none;}
-      .stats-row,.opp-numbers,.bm-grid,.tailwinds{grid-template-columns:1fr;}
-      .pillars{grid-template-columns:1fr;}
-      h1{font-size:3rem;}
+      .nav-btn{font-size:.72rem;padding:6px 14px;}
+      .stats-row,.opp-numbers{grid-template-columns:1fr 1fr;}
+      .bm-grid{grid-template-columns:1fr;}
+      .tailwinds,.pillars{grid-template-columns:1fr;}
+      h1{font-size:2.6rem;}
+      h2{font-size:clamp(1.5rem,6vw,2rem);}
+      .section{padding:48px 0;}
+      .hero{min-height:calc(100svh - 56px);}
+      .hero-sub{font-size:.88rem;}
+      .hero-africa-wrap{opacity:.3;right:-20%;}
+      .opp-val{font-size:clamp(1.8rem,8vw,2.8rem);}
+      .stat-n{font-size:clamp(1.6rem,7vw,2.4rem);}
+      .m-row{grid-template-columns:1fr auto;}
+      .m-row>*:nth-child(2),.m-row>*:nth-child(3),.m-row>*:nth-child(4){display:none;}
+      .m-row>*:nth-child(5){display:block !important;}
+      .m-row.head>*:nth-child(5){display:none !important;}
+      .fw-svg{width:240px;height:240px;}
+      .flywheel-wrap{gap:32px;}
+      .cta-band{padding:32px 20px;border-radius:10px;margin-top:48px;margin-bottom:48px;}
+      .cta-inner{gap:32px;}
+      .proof-copy h2{font-size:1.5rem;}
+      .proof-link{display:none;}
+      .two-col{gap:24px;}
+      .body-txt{font-size:.86rem;}
+      .ft{flex-direction:column;gap:18px;}
+      .ft-links{justify-content:flex-start;gap:14px;}
     }
   </style>
 </head>
@@ -254,13 +284,7 @@
       viewBox 0 0 480 530. Key features: flat N coast, Horn sticking right,
       Gulf of Guinea bulge lower-left, Cape at bottom, Senegal westernmost.
     -->
-    <svg class="hero-africa" viewBox="0 0 480 530" xmlns="http://www.w3.org/2000/svg" fill="none">
-
-      <!--
-        Africa outline — geographically accurate, clockwise from Morocco NW.
-        Coordinate system: x=(lon+18)*6.86, y=(38-lat)*7.26
-        West edge ~18°W (Cap Vert), East ~52°E (Horn), N ~38°N, S ~35°S
-      -->
+    <svg class="hero-africa" viewBox="-80 0 560 530" xmlns="http://www.w3.org/2000/svg" fill="none">
       <path d="
         M 85,15
         Q 140,4 192,7
@@ -300,50 +324,47 @@
         stroke-linecap="round"
       />
 
-      <!-- Latitude lines (subtle dashed) -->
+      <!-- Latitude lines -->
       <line x1="85" y1="15" x2="192" y2="7"   stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
       <line x1="7" y1="127" x2="384" y2="145"  stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
       <line x1="3" y1="169" x2="432" y2="261"  stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
-      <!-- Equator (y≈276) slightly more visible -->
       <line x1="185" y1="276" x2="415" y2="260" stroke="rgba(13,13,12,0.055)" stroke-width=".7" stroke-dasharray="2 6"/>
       <line x1="206" y1="318" x2="398" y2="305" stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
       <line x1="206" y1="399" x2="377" y2="348" stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
       <line x1="240" y1="494" x2="363" y2="399" stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
 
-      <!-- Longitude lines (subtle dashed) -->
+      <!-- Longitude lines -->
       <line x1="123" y1="240" x2="123" y2="10"  stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
       <line x1="192" y1="7"   x2="192" y2="490" stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
       <line x1="261" y1="49"  x2="261" y2="529" stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
       <line x1="330" y1="49"  x2="330" y2="464" stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
       <line x1="398" y1="80"  x2="398" y2="305" stroke="rgba(13,13,12,0.03)" stroke-width=".6" stroke-dasharray="3 9"/>
 
-      <!-- Cape Verde — active market, pulsing dot (off west coast near Cap Vert) -->
-      <circle cx="3" cy="169" r="3" fill="rgba(13,13,12,0.28)"/>
-      <circle cx="3" cy="169" r="8" fill="none" stroke="rgba(13,13,12,0.14)" stroke-width="1">
+      <!-- Cape Verde — off west coast -->
+      <line x1="-35" y1="169" x2="3" y2="169" stroke="rgba(13,13,12,0.1)" stroke-width=".8" stroke-dasharray="3 5"/>
+      <text x="-35" y="160" text-anchor="middle" font-size="7.5" font-family="ui-sans-serif,system-ui" font-weight="700" fill="rgba(13,13,12,0.35)" letter-spacing=".06em">CV</text>
+      <circle cx="-35" cy="169" r="3" fill="rgba(13,13,12,0.3)"/>
+      <circle cx="-35" cy="169" r="8" fill="none" stroke="rgba(13,13,12,0.14)" stroke-width="1">
         <animate attributeName="r" values="5;15;5" dur="3s" repeatCount="indefinite"/>
         <animate attributeName="opacity" values="0.5;0;0.5" dur="3s" repeatCount="indefinite"/>
       </circle>
 
-      <!-- City dots: Lagos, Nairobi, Cairo, Cape Town, Casablanca, Accra -->
-      <circle cx="148" cy="232" r="2.2" fill="rgba(13,13,12,0.2)"/> <!-- Lagos -->
-      <circle cx="376" cy="285" r="2.2" fill="rgba(13,13,12,0.2)"/> <!-- Nairobi -->
-      <circle cx="336" cy="58"  r="2.2" fill="rgba(13,13,12,0.2)"/> <!-- Cairo -->
-      <circle cx="250" cy="522" r="2.2" fill="rgba(13,13,12,0.2)"/> <!-- Cape Town -->
-      <circle cx="71"  cy="33"  r="2.2" fill="rgba(13,13,12,0.2)"/> <!-- Casablanca -->
-      <circle cx="122" cy="235" r="2.2" fill="rgba(13,13,12,0.2)"/> <!-- Accra -->
+      <!-- City dots -->
+      <circle cx="148" cy="232" r="2.2" fill="rgba(13,13,12,0.2)"/>
+      <circle cx="376" cy="285" r="2.2" fill="rgba(13,13,12,0.2)"/>
+      <circle cx="336" cy="58"  r="2.2" fill="rgba(13,13,12,0.2)"/>
+      <circle cx="250" cy="522" r="2.2" fill="rgba(13,13,12,0.2)"/>
+      <circle cx="71"  cy="33"  r="2.2" fill="rgba(13,13,12,0.2)"/>
+      <circle cx="122" cy="235" r="2.2" fill="rgba(13,13,12,0.2)"/>
     </svg>
   </div>
 
   <div class="wrap hero-content">
-    <div class="hero-live">
-      <div class="ping"></div>
-      Index live · Cape Verde
-    </div>
     <div class="hero-tag"><span class="htd"></span>Africa Real Estate Index</div>
-    <h1>The index behind fragmented property markets.</h1>
+    <h1>The index behind fragmented real estate markets.</h1>
     <p class="hero-sub">
       54 countries. Trillions in real estate. Almost no structured data.
-      AREI is the infrastructure layer that changes that.
+      AREI is the index layer that changes that.
     </p>
     <div class="hero-ctas">
       <a class="btn-fill" href="#proof">See it live — KazaVerde</a>
@@ -371,6 +392,22 @@
     <span class="ti"><span class="d"></span>Tanzania · Pipeline</span>
     <span class="ti"><span class="d"></span>Rwanda · Pipeline</span>
     <span class="ti"><span class="d"></span>Senegal · Pipeline</span>
+    <span class="ti on"><span class="d"></span>Cape Verde · Live</span>
+    <span class="ti"><span class="d"></span>Nigeria · Pipeline</span>
+    <span class="ti"><span class="d"></span>Kenya · Pipeline</span>
+    <span class="ti"><span class="d"></span>Ghana · Pipeline</span>
+    <span class="ti"><span class="d"></span>Morocco · Pipeline</span>
+    <span class="ti"><span class="d"></span>Tanzania · Pipeline</span>
+    <span class="ti"><span class="d"></span>Rwanda · Pipeline</span>
+    <span class="ti"><span class="d"></span>Senegal · Pipeline</span>
+    <span class="ti on"><span class="d"></span>Cape Verde · Live</span>
+    <span class="ti"><span class="d"></span>Nigeria · Pipeline</span>
+    <span class="ti"><span class="d"></span>Kenya · Pipeline</span>
+    <span class="ti"><span class="d"></span>Ghana · Pipeline</span>
+    <span class="ti"><span class="d"></span>Morocco · Pipeline</span>
+    <span class="ti"><span class="d"></span>Tanzania · Pipeline</span>
+    <span class="ti"><span class="d"></span>Rwanda · Pipeline</span>
+    <span class="ti"><span class="d"></span>Senegal · Pipeline</span>
   </div>
 </div>
 
@@ -380,30 +417,33 @@
   <section class="section rv" id="opportunity">
     <div class="s-label">Market Opportunity</div>
     <div class="two-col">
-      <h2>Africa's property market is enormous — and nearly unmapped.</h2>
+      <h2>Africa's real estate market is enormous — and nearly unmapped.</h2>
       <p class="body-txt">
-        African real estate represents one of the largest untapped data opportunities on earth.
-        Rapid urbanization, a growing middle class, and rising institutional capital flows
-        are converging — but the infrastructure to make sense of it barely exists at scale.
-        Local portals exist in some markets. What does not exist is a normalized,
-        cross-source, pan-African index layer. That is the gap AREI fills.
+        African real estate is one of the largest untapped data opportunities on earth.
+        Local portals exist in some markets. A normalized, cross-source, pan-African index layer does not.
+        That is the gap AREI fills.
       </p>
     </div>
     <div class="opp-numbers">
       <div class="opp-num rv">
+        <div class="opp-val">$400T</div>
+        <div class="opp-desc">Global Real Estate</div>
+        <div class="opp-note">World's largest asset class, ~60% of all wealth. Africa: &lt;2% share, 18% of population.</div>
+      </div>
+      <div class="opp-num rv d1">
         <div class="opp-val">$1.7T</div>
         <div class="opp-desc">African Real Estate Market</div>
         <div class="opp-note">Combined residential, commercial & land value across sub-Saharan and North Africa</div>
       </div>
-      <div class="opp-num rv d1">
+      <div class="opp-num rv d2">
         <div class="opp-val">700M</div>
         <div class="opp-desc">New Urban Dwellers by 2050</div>
         <div class="opp-note">Africa adds more urban residents this century than any other continent</div>
       </div>
-      <div class="opp-num rv d2">
+      <div class="opp-num rv d3">
         <div class="opp-val">54</div>
         <div class="opp-desc">Markets. Zero Pan-African Index.</div>
-        <div class="opp-note">Local portals exist in some markets. No normalized, cross-source, multi-market data layer does. That is the gap.</div>
+        <div class="opp-note">No normalized, cross-source, multi-market data layer exists. That is the gap.</div>
       </div>
     </div>
   </section>
@@ -412,39 +452,39 @@
   <section class="section rv">
     <div class="s-label">Why Now</div>
     <div class="two-col" style="margin-bottom:48px;">
-      <h2>Four tailwinds that make this the right moment.</h2>
-      <p class="body-txt">The infrastructure to capture this opportunity — scraping, normalization, cloud data pipelines, LLM-assisted parsing — is mature enough today to do at low cost what would have required a large team five years ago.</p>
+      <h2>Six tailwinds that make this the right moment.</h2>
+      <p class="body-txt">Scraping, normalization, cloud pipelines, and LLM-assisted parsing now make this infrastructure affordable to build.</p>
     </div>
     <div class="tailwinds">
       <div class="tw rv">
         <svg class="tw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M3 21h18M9 21V7l6-4v18M3 21V11l6-4"/></svg>
         <h3>Fastest urbanising continent</h3>
-        <p>Africa's urban population is growing at 4%+ per year. More city-dwellers means more property transactions, more search intent, more data demand.</p>
+        <p>More city-dwellers means more transactions, more search intent, and more demand for market data.</p>
       </div>
       <div class="tw rv d1">
         <svg class="tw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="7" y="2" width="10" height="20" rx="2"/><circle cx="12" cy="17" r="1" fill="currentColor"/></svg>
         <h3>Mobile-first internet growth</h3>
-        <p>Smartphone penetration across Africa is rising 15% YoY. Property search is moving online — but the products to serve it don't exist yet.</p>
+        <p>Real estate search is moving online faster than the products and data layers serving it.</p>
       </div>
       <div class="tw rv d2">
         <svg class="tw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
         <h3>Institutional capital entering</h3>
-        <p>Global real estate funds are allocating to Africa for the first time. They need market intelligence. Right now there is almost none.</p>
+        <p>Institutional capital needs market intelligence. In many markets, there is still almost none.</p>
       </div>
       <div class="tw rv">
         <svg class="tw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M13 2 3 14h9l-1 8 10-12h-9l1-8z"/></svg>
         <h3>AI makes parsing cheap</h3>
-        <p>LLM-assisted data extraction means we can normalize fragmented listing data across languages, formats, and currencies at near-zero marginal cost.</p>
+        <p>LLM-assisted extraction makes fragmented listing data far cheaper to normalize across languages and formats.</p>
       </div>
       <div class="tw rv d1">
         <svg class="tw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><path d="M12 22c5.523 0 10-4.477 10-10S17.523 2 12 2 2 6.477 2 12s4.477 10 10 10z"/><path d="M2 12h20M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/></svg>
         <h3>No incumbent to displace</h3>
-        <p>CoStar took 30 years to become a $30B company in a market that already had data. Africa has no incumbent. The index layer is wide open.</p>
+        <p>Africa has no dominant pan-African incumbent. The index layer is still open.</p>
       </div>
       <div class="tw rv d2">
         <svg class="tw-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><path d="m8.59 13.51 6.83 3.98M15.41 6.51l-6.82 3.98"/></svg>
         <h3>Data network effects compound</h3>
-        <p>The first mover who builds clean, normalized, multi-market data creates a moat that gets stronger with every source added and every market entered.</p>
+        <p>Clean multi-market data compounds. Each added source and market strengthens the moat.</p>
       </div>
     </div>
   </section>
@@ -457,26 +497,26 @@
       <p class="body-txt">
         AREI sits beneath consumer products. We discover sources, ingest listings, normalize structure,
         and enforce trust rules before anything reaches a public surface.
-        Products like KazaVerde sit on top. So can B2B APIs, market reports, and third-party tools.
+        KazaVerde sits on top. So can APIs, reports, and third-party tools.
       </p>
     </div>
     <div class="pillars">
       <div class="pillar rv">
         <div class="p-num">01 — Discover</div>
         <h3>Source coverage</h3>
-        <p>We crawl brokers, portals, developer sites, and classifieds. More sources means better coverage — but only if the output stays usable.</p>
+        <p>We crawl brokers, portals, developer sites, and classifieds.</p>
         <div class="p-arr">→</div>
       </div>
       <div class="pillar rv d1">
         <div class="p-num">02 — Normalise</div>
         <h3>Structured truth</h3>
-        <p>Price, location, area, type, and source are extracted and standardised across formats, languages, and currencies. Comparison becomes possible.</p>
+        <p>Price, location, area, type, and source are standardized across formats, languages, and currencies.</p>
         <div class="p-arr">→</div>
       </div>
       <div class="pillar rv d2">
         <div class="p-num">03 — Trust</div>
         <h3>Quality enforcement</h3>
-        <p>Deduplication, completeness scoring, and source verification. We publish only what passes — no dumping raw volume into public surfaces.</p>
+        <p>Deduplication, completeness scoring, and source verification before publication.</p>
         <div class="p-arr">→</div>
       </div>
     </div>
@@ -488,9 +528,8 @@
     <div class="two-col" style="margin-bottom:48px;">
       <h2>A data flywheel that compounds over time.</h2>
       <p class="body-txt">
-        The more markets we index, the more valuable the platform becomes to users.
-        More users surface better data signals. Better signals attract more sources.
-        This is the same defensibility loop that made CoStar and Zillow nearly impossible to displace.
+        More markets improve the product. Better products attract more usage.
+        More usage improves the data. The loop compounds over time.
       </p>
     </div>
     <div class="flywheel-wrap">
@@ -499,11 +538,11 @@
           <!-- Slow rotating ring with arrows -->
           <g class="fw-ring">
             <circle cx="160" cy="160" r="110" stroke="rgba(13,13,12,0.08)" stroke-width="1" stroke-dasharray="6 6"/>
-            <!-- Arrow markers at 4 points -->
-            <path d="M160,50 L166,44 M160,50 L154,44" stroke="rgba(13,13,12,0.2)" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M270,160 L276,154 M270,160 L276,166" stroke="rgba(13,13,12,0.2)" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M160,270 L154,276 M160,270 L166,276" stroke="rgba(13,13,12,0.2)" stroke-width="1.5" stroke-linecap="round"/>
-            <path d="M50,160 L44,166 M50,160 L44,154" stroke="rgba(13,13,12,0.2)" stroke-width="1.5" stroke-linecap="round"/>
+            <!-- Arrow chevrons at diagonal midpoints, pointing clockwise -->
+            <g transform="translate(238,82) rotate(45)"><path d="M-5,-4 L3,0 L-5,4" stroke="rgba(13,13,12,0.3)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+            <g transform="translate(238,238) rotate(135)"><path d="M-5,-4 L3,0 L-5,4" stroke="rgba(13,13,12,0.3)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+            <g transform="translate(82,238) rotate(225)"><path d="M-5,-4 L3,0 L-5,4" stroke="rgba(13,13,12,0.3)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+            <g transform="translate(82,82) rotate(315)"><path d="M-5,-4 L3,0 L-5,4" stroke="rgba(13,13,12,0.3)" stroke-width="1.5" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
           </g>
           <!-- Static node: top -->
           <circle cx="160" cy="48" r="28" fill="var(--bg)" stroke="var(--line)" stroke-width="1"/>
@@ -532,28 +571,28 @@
           <div class="fw-n">01</div>
           <div class="fw-text">
             <h4>More sources → richer coverage</h4>
-            <p>Each new broker, portal, or developer site we ingest increases coverage. The index becomes more complete and more trustworthy.</p>
+            <p>Each new source makes the index more complete and more trustworthy.</p>
           </div>
         </div>
         <div class="fw-point">
           <div class="fw-n">02</div>
           <div class="fw-text">
             <h4>Better data → better products</h4>
-            <p>More complete data means better search, better price signals, better market context. Consumer and B2B surfaces improve automatically.</p>
+            <p>Better data improves search, price signals, and market context.</p>
           </div>
         </div>
         <div class="fw-point">
           <div class="fw-n">03</div>
           <div class="fw-text">
             <h4>Better products → more users</h4>
-            <p>Superior products attract more search traffic, more agents, and more institutional clients who rely on the index for market intelligence.</p>
+            <p>Better products attract more users, partners, and institutional demand.</p>
           </div>
         </div>
         <div class="fw-point">
           <div class="fw-n">04</div>
           <div class="fw-text">
             <h4>More users → more sources</h4>
-            <p>User engagement surfaces data gaps. New sources approach us. The index compounds — harder to replicate with each new market and source added.</p>
+            <p>Usage surfaces data gaps and pulls in more sources. The system compounds.</p>
           </div>
         </div>
       </div>
@@ -590,38 +629,16 @@
         <div class="s-label" style="margin-bottom:24px;">KazaVerde · Cape Verde</div>
         <h2>The model, in production.</h2>
         <p class="body-txt">
-          KazaVerde is a read-only property index for Cape Verde — built entirely on the AREI data engine.
-          It is live, public, and growing. It proves that the ingestion, normalization, and trust pipeline
-          can power a real consumer experience without a single manual listing.
+          KazaVerde is a live, read-only real estate index built on the AREI data engine.
+          It proves the model works in public without manual listing entry.
         </p>
         <div class="check-list">
-          <div class="ck-row"><div class="ck">✓</div>Listings from 16 sources, deduplicated and normalized</div>
-          <div class="ck-row"><div class="ck">✓</div>Source-linked detail pages — no misleading agent flows</div>
-          <div class="ck-row"><div class="ck">✓</div>~91% visible market coverage across all islands</div>
-          <div class="ck-row"><div class="ck">✓</div>Same pipeline runs on 5 markets with no code changes</div>
+          <div class="ck-row"><div class="ck">✓</div><span>Listings from <span class="live-inline-stat"><span id="proof-sources">16</span><span>sources,</span></span> deduplicated and normalized</span></div>
+          <div class="ck-row"><div class="ck">✓</div>Source-linked detail pages with no misleading agent flows</div>
           <div class="ck-row"><div class="ck">✓</div>Zero manually entered listings — fully automated</div>
+          <div class="ck-row"><div class="ck">✓</div>Live public proof built on the same AREI data engine</div>
         </div>
-        <a class="proof-link" href="https://www.kazaverde.com" target="_blank">Visit KazaVerde ↗</a>
-      </div>
-    </div>
-
-    <!-- LIVE STATS -->
-    <div class="stats-row" style="margin-top:32px;">
-      <div class="stat rv">
-        <div class="stat-n"><span class="counter" data-t="528">528</span></div>
-        <div class="stat-l">Active Listings</div>
-      </div>
-      <div class="stat rv d1">
-        <div class="stat-n"><span class="counter" data-t="16">16</span></div>
-        <div class="stat-l">Sources Tracked</div>
-      </div>
-      <div class="stat rv d2">
-        <div class="stat-n">~<span class="counter" data-t="91">91</span>%</div>
-        <div class="stat-l">Market Coverage</div>
-      </div>
-      <div class="stat rv d3">
-        <div class="stat-n"><span class="counter" data-t="5">5</span></div>
-        <div class="stat-l">Markets Live</div>
+        <a class="proof-link" href="https://www.kazaverde.com" target="_blank" style="margin-top:auto;">Visit KazaVerde ↗</a>
       </div>
     </div>
   </section>
@@ -632,16 +649,15 @@
     <div class="two-col" style="margin-bottom:40px;">
       <h2>Three revenue layers. One shared data engine.</h2>
       <p class="body-txt">
-        The same normalized data that powers consumer search can be licensed as an API,
-        packaged as a market report, and sold as an institutional index.
-        Marginal cost of adding a revenue layer is near zero — the infrastructure already exists.
+        The same normalized data can power consumer search, APIs, and institutional intelligence.
+        New revenue layers sit on infrastructure that already exists.
       </p>
     </div>
     <div class="bm-grid">
       <div class="bm rv">
         <div class="bm-tier">Layer 01 — B2C</div>
         <h3>Consumer Search</h3>
-        <p>Market-specific property search surfaces (KazaVerde model). Free search with premium features — alerts, comparisons, agent matching — on top.</p>
+        <p>Market-specific real estate search surfaces with premium features on top.</p>
         <ul class="bm-examples">
           <li>Price trend alerts</li>
           <li>Saved search & shortlisting</li>
@@ -652,7 +668,7 @@
       <div class="bm rv d1">
         <div class="bm-tier">Layer 02 — B2B</div>
         <h3>Data API</h3>
-        <p>Developer and enterprise access to normalized listing data, price indices, and market signals via API. Priced by market and call volume.</p>
+        <p>Developer and enterprise access to normalized listing data, price indices, and market signals via API.</p>
         <ul class="bm-examples">
           <li>Mortgage lenders & banks</li>
           <li>Real estate portals & apps</li>
@@ -663,7 +679,7 @@
       <div class="bm rv d2">
         <div class="bm-tier">Layer 03 — Institutional</div>
         <h3>Market Intelligence</h3>
-        <p>Quarterly price indices, market reports, and bespoke data sets for funds, banks, governments, and development institutions. The Bloomberg play.</p>
+        <p>Quarterly indices, market reports, and bespoke datasets for funds, banks, and public institutions.</p>
         <ul class="bm-examples">
           <li>Real estate investment funds</li>
           <li>Development finance institutions</li>
@@ -679,7 +695,7 @@
     <div class="s-label">Expansion Roadmap</div>
     <div class="two-col" style="margin-bottom:40px;">
       <h2>One system. Every market.</h2>
-      <p class="body-txt">Consumer surfaces are market-specific. The data engine underneath is not. We add a new market by configuring sources — the normalization, trust, and publish pipeline is identical across all of them.</p>
+      <p class="body-txt">Consumer surfaces are market-specific. The engine underneath is not. New markets are added by configuring sources, not rebuilding the stack.</p>
     </div>
     <div class="m-table">
       <div class="m-row head">
@@ -687,7 +703,7 @@
       </div>
       <div class="m-row">
         <div><div class="m-name">Cape Verde</div><div class="m-sub">KazaVerde · All islands</div></div>
-        <div class="m-val">16</div><div class="m-val">528</div><div class="m-val">~91%</div>
+        <div class="m-val" id="table-cv-sources">16</div><div class="m-val" id="table-cv-listings">528</div><div class="m-val">~91%</div>
         <div><span class="badge live"><span class="bdot"></span>Live</span></div>
       </div>
       <div class="m-row">
@@ -719,16 +735,17 @@
       <div>
         <div class="s-label" style="color:rgba(249,248,246,.4);">Get in touch</div>
         <h2>Investing in Africa's data infrastructure layer.</h2>
-        <p>We are in early conversations with investors who understand the African opportunity and the value of data network effects. If that's you, we'd like to talk.</p>
+        <p>We are speaking with investors who understand the African opportunity and the value of data network effects.</p>
       </div>
-      <div class="cta-form">
-        <input type="text" placeholder="Your name"/>
-        <input type="email" placeholder="Email address"/>
-        <input type="text" placeholder="Fund / Organisation (optional)"/>
-        <textarea placeholder="Tell us briefly about your interest or the context…"></textarea>
-        <button class="cta-submit" onclick="this.textContent='Sent ✓';this.disabled=true;">Send message</button>
+      <form class="cta-form" id="investor-form">
+        <input type="text" name="name" placeholder="Your name" required/>
+        <input type="email" name="email" placeholder="Email address" required/>
+        <input type="text" name="organisation" placeholder="Fund / Organisation (optional)"/>
+        <textarea name="message" placeholder="Tell us briefly about your interest or the context…"></textarea>
+        <button class="cta-submit" type="submit" id="investor-submit">Send message</button>
+        <div class="cta-feedback" id="investor-feedback" style="display:none;"></div>
         <span class="cta-note">No deck spam. We read every message.</span>
-      </div>
+      </form>
     </div>
   </div>
 
@@ -736,17 +753,98 @@
 
 <footer>
   <div class="ft">
-    <span class="logo">AREI</span>
-    <span>Standalone prototype · Does not affect production</span>
+    <div class="ft-brand">
+      <span class="logo">AREI</span>
+      <span class="ft-copy">The neutral data layer for African real estate. Infrastructure, not a portal.</span>
+      <span class="ft-meta">© 2026 Africa Real Estate Index</span>
+    </div>
+    <div class="ft-links">
+      <a href="https://www.linkedin.com/company/africa-real-estate-index/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+      <a href="https://x.com/AfricaREIndex" target="_blank" rel="noopener noreferrer">X (Twitter)</a>
+      <a href="/privacy.html">Privacy Policy</a>
+      <a href="/terms-of-service.html">Terms of Service</a>
+    </div>
   </div>
 </footer>
 
 <script>
-  // Reveal on scroll
-  const ro = new IntersectionObserver(es => es.forEach(e => {
-    if (e.isIntersecting) { e.target.classList.add('on'); ro.unobserve(e.target); }
-  }), { threshold: .06 });
-  document.querySelectorAll('.rv').forEach(el => ro.observe(el));
+  const INVESTOR_FORM_ENDPOINT = "https://formspree.io/f/mvzbknjb";
+  const LIVE_STATS_CONFIG = {
+    supabaseUrl: "https://bhqjdzjtiwckfuteycfl.supabase.co",
+    supabaseAnonKey: "sb_publishable_fFm5NsC3cWLYr_Wnx9OLWQ_Ytmnn-Wd",
+    view: "v1_feed_cv",
+    maxRows: 5000,
+  };
+
+  async function loadLiveStats() {
+    const { supabaseUrl, supabaseAnonKey, view, maxRows } = LIVE_STATS_CONFIG;
+    const endpoint = new URL(`${supabaseUrl}/rest/v1/${view}`);
+    endpoint.searchParams.set("select", "island,price,source_id");
+
+    const res = await fetch(endpoint.toString(), {
+      headers: {
+        apikey: supabaseAnonKey,
+        Authorization: `Bearer ${supabaseAnonKey}`,
+        Range: `0-${maxRows - 1}`,
+      },
+    });
+
+    if (!res.ok) throw new Error(`Live stats request failed: ${res.status}`);
+
+    const rows = await res.json();
+    const total = rows.length;
+    const sourceCount = new Set(rows.map(row => row.source_id).filter(Boolean)).size;
+    const islandCount = new Set(rows.map(row => row.island).filter(Boolean)).size;
+
+    const prices = rows
+      .map(row => row.price)
+      .filter(price => typeof price === "number" && price >= 10000 && price <= 5000000)
+      .sort((a, b) => a - b);
+
+    const medianPrice = prices.length >= 5
+      ? (prices.length % 2 === 0
+        ? Math.round((prices[prices.length / 2 - 1] + prices[prices.length / 2]) / 2)
+        : prices[Math.floor(prices.length / 2)])
+      : null;
+
+    return { total, sourceCount, islandCount, medianPrice };
+  }
+
+  function formatEuroCompact(value) {
+    if (value >= 1000000) return `€${(value / 1000000).toFixed(1)}M`;
+    if (value >= 1000) return `€${Math.round(value / 1000)}K`;
+    return `€${value}`;
+  }
+
+  function applyLiveStats(stats) {
+    const active = document.getElementById('stat-active-listings');
+    const sources = document.getElementById('stat-sources-tracked');
+    const proofSources = document.getElementById('proof-sources');
+    const tableSources = document.getElementById('table-cv-sources');
+    const tableListings = document.getElementById('table-cv-listings');
+
+    if (active) {
+      active.dataset.t = String(stats.total);
+      active.textContent = String(stats.total);
+    }
+    if (sources) {
+      sources.dataset.t = String(stats.sourceCount);
+      sources.textContent = String(stats.sourceCount);
+    }
+    if (proofSources) proofSources.textContent = String(stats.sourceCount);
+    if (tableSources) tableSources.textContent = String(stats.sourceCount);
+    if (tableListings) tableListings.textContent = String(stats.total);
+
+    const oppListings = document.getElementById('opp-live-listings');
+    const oppSources = document.getElementById('opp-live-sources');
+    const oppIslands = document.getElementById('opp-live-islands');
+    const oppMedian = document.getElementById('opp-live-median');
+
+    if (oppListings) oppListings.textContent = String(stats.total);
+    if (oppSources) oppSources.textContent = String(stats.sourceCount);
+    if (oppIslands) oppIslands.textContent = String(stats.islandCount);
+    if (oppMedian && stats.medianPrice) oppMedian.textContent = formatEuroCompact(stats.medianPrice);
+  }
 
   // Counter animation
   function runCounter(el) {
@@ -762,6 +860,61 @@
     if (e.isIntersecting) { runCounter(e.target); co.unobserve(e.target); }
   }), { threshold: .5 });
   document.querySelectorAll('.counter').forEach(el => co.observe(el));
+
+  loadLiveStats()
+    .then(applyLiveStats)
+    .catch(err => console.warn('[landing-draft] live stats unavailable', err));
+
+  const investorForm = document.getElementById('investor-form');
+  const investorSubmit = document.getElementById('investor-submit');
+  const investorFeedback = document.getElementById('investor-feedback');
+
+  if (investorForm && investorSubmit && investorFeedback) {
+    investorForm.addEventListener('submit', async (event) => {
+      event.preventDefault();
+
+      investorSubmit.disabled = true;
+      investorSubmit.textContent = 'Sending...';
+      investorFeedback.style.display = 'none';
+      investorFeedback.className = 'cta-feedback';
+      investorFeedback.textContent = '';
+
+      const formData = new FormData(investorForm);
+      formData.append('_subject', 'AREI investor enquiry');
+      formData.append('_source', 'AREI landing page');
+
+      try {
+        const response = await fetch(INVESTOR_FORM_ENDPOINT, {
+          method: 'POST',
+          headers: {
+            Accept: 'application/json',
+          },
+          body: formData,
+        });
+
+        if (!response.ok) {
+          throw new Error(`Investor form failed: ${response.status}`);
+        }
+
+        investorForm.reset();
+        investorFeedback.textContent = "Message sent. We'll follow up by email.";
+        investorFeedback.className = 'cta-feedback ok';
+        investorFeedback.style.display = 'block';
+        investorSubmit.textContent = 'Sent ✓';
+      } catch (error) {
+        console.warn('[landing-draft] investor form submit failed', error);
+        investorFeedback.textContent = 'Could not send just now. Please try again.';
+        investorFeedback.className = 'cta-feedback err';
+        investorFeedback.style.display = 'block';
+        investorSubmit.disabled = false;
+        investorSubmit.textContent = 'Send message';
+        return;
+      }
+
+      investorSubmit.disabled = false;
+      investorSubmit.textContent = 'Send message';
+    });
+  }
 
   // Iframe fallback — if blocked show the fallback overlay
   const frame = document.getElementById('kv-frame');

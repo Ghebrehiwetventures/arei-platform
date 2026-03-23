@@ -39,6 +39,7 @@ sources:
     url: https://terracaboverde.com/properties/
     type: html
     lifecycleOverride: IN
+    sourceTier: monitor
 
     # CMS type for selector fallbacks (auto-detected if not specified)
     cms_type: elementor
@@ -85,6 +86,8 @@ sources:
       thousands_separator: "."
       decimal_separator: ","
       multiplier: 1
+
+    identity_mode: normalized_url
 
     # Location patterns (uses locations.yml if not specified)
     # location_patterns: []  # Auto-loaded from markets/cv/locations.yml
@@ -133,6 +136,7 @@ sources:
     url: https://simplycapeverde.com/
     type: html
     lifecycleOverride: IN
+    sourceTier: active
     fetch_method: http   # AJAX POST uses plain fetch, no headless needed for listings
 
     # Houzez AJAX load-more pagination
@@ -212,6 +216,7 @@ sources:
     url: https://www.capeverdeproperty.co.uk/
     type: html
     lifecycleOverride: DROP  # Cloudflare JS challenge blocks all requests
+    sourceTier: deprecated
     fetch_method: http
     selectors:
       listing: ".property-card"
@@ -228,6 +233,7 @@ sources:
     url: https://www.ccoreinvestments.com/lista-propriedades
     type: html
     lifecycleOverride: OBSERVE  # Needs further investigation - JS-heavy CRM
+    sourceTier: deprecated
     fetch_method: headless
 
     pagination:
@@ -252,6 +258,7 @@ sources:
     url: https://www.homescasaverde.com/properties-for-sale/
     type: html
     lifecycleOverride: IN
+    sourceTier: monitor
     fetch_method: headless  # Houzez theme
 
     pagination:
@@ -329,6 +336,7 @@ sources:
     url: https://capeverdeproperty24.com/en/all-properties/for-sale
     type: html
     lifecycleOverride: IN
+    sourceTier: active
     fetch_method: http
 
     pagination:
@@ -395,6 +403,7 @@ sources:
     url: https://www.cabohouseproperty.com/featured/?offer-type=sale
     type: html
     lifecycleOverride: IN
+    sourceTier: monitor
     fetch_method: headless  # JS-heavy MyHome theme
 
     pagination:
@@ -455,6 +464,7 @@ sources:
     url: https://estatecv.com/en/properties/
     type: html
     lifecycleOverride: IN
+    sourceTier: active
     fetch_method: headless  # AJAX-loaded content
 
     pagination:
@@ -520,6 +530,7 @@ sources:
     url: https://www.oceanproperty24.com/listings/apartment/
     type: html
     lifecycleOverride: IN
+    sourceTier: monitor
     fetch_method: http  # WP Residence works with HTTP
 
     pagination:
@@ -582,6 +593,7 @@ sources:
     url: https://www.rightmove.co.uk/overseas-property/in-Cape-Verde.html
     type: html
     lifecycleOverride: DROP
+    sourceTier: deprecated
     selectors:
       listing: ".propertyCard"
       title: ".propertyCard-title"
@@ -593,6 +605,7 @@ sources:
     url: https://www.globallistings.com/residential-for-sale/cape-verde
     type: html
     lifecycleOverride: DROP
+    sourceTier: deprecated
     selectors:
       listing: ".listing"
       title: "h2, h3, .title"
@@ -604,6 +617,7 @@ sources:
     url: https://www.properstar.com/cape-verde/buy
     type: html
     lifecycleOverride: DROP
+    sourceTier: deprecated
     selectors:
       listing: "article, .listing-card"
       title: "h2, h3, .listing-title"
@@ -615,6 +629,7 @@ sources:
     url: https://cv.green-acres.com/en
     type: html
     lifecycleOverride: DROP
+    sourceTier: deprecated
     selectors:
       listing: "article, .listing, .ad-item"
       title: "h2, h3, .title"

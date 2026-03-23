@@ -8,6 +8,7 @@
 import * as cheerio from "cheerio";
 import * as crypto from "crypto";
 import { Browser, Page } from "puppeteer";
+import { normalizeUrl } from "./normalizeUrl";
 
 // Stealth: bypass Cloudflare/bot detection
 const puppeteerExtra = require("puppeteer-extra");
@@ -113,6 +114,8 @@ export interface SourceFetchConfig {
 
   /** ID prefix for generated listing IDs */
   id_prefix?: string;
+  /** Stable identity mode for generated listing IDs */
+  identity_mode?: "content_hash" | "normalized_url";
 
   /** CMS type for selector fallbacks (auto-detected if not specified) */
   cms_type?: CMSType;
@@ -184,6 +187,12 @@ function sleep(ms: number): Promise<void> {
 function generateListingId(prefix: string, title: string, price: number | undefined, url: string): string {
   const input = `${title || ""}|${price || ""}|${url}`;
   const hash = crypto.createHash("md5").update(input).digest("hex").slice(0, 12);
+  return `${prefix}_${hash}`;
+}
+
+function generateListingIdFromNormalizedUrl(prefix: string, url: string): string {
+  const normalized = normalizeUrl(url);
+  const hash = crypto.createHash("md5").update(normalized || url).digest("hex").slice(0, 12);
   return `${prefix}_${hash}`;
 }
 
@@ -594,7 +603,10 @@ function parseListingsFromHtml(
     const idPrefix = config.id_prefix || config.id.replace(/^cv_/, "");
 
     listings.push({
-      id: generateListingId(idPrefix, title, price, absoluteUrl),
+      id:
+        config.identity_mode === "normalized_url" && absoluteUrl
+          ? generateListingIdFromNormalizedUrl(idPrefix, absoluteUrl)
+          : generateListingId(idPrefix, title, price, absoluteUrl),
       sourceId: config.id,
       sourceName: config.name,
       title,
@@ -1519,6 +1531,7 @@ export function buildFetchConfigFromYaml(
     price_format: yamlSource.price_format,
     location_patterns: yamlSource.location_patterns || [],
     id_prefix: yamlSource.id_prefix,
+    identity_mode: yamlSource.identity_mode,
     ...overrides,
   };
 

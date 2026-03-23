@@ -294,6 +294,7 @@ type SourceQualitySortKey =
   | "tier_c_count"
   | "without_price_pct"
   | "without_location_pct"
+  | "stale_share_pct"
   | "multi_domain_gallery_rate"
   | "duplicate_cover_rate"
   | "grade";
@@ -558,6 +559,7 @@ function DashboardView() {
                     { key: "tier_a_count" as const, label: "Tier A" },
                     { key: "tier_b_count" as const, label: "Tier B" },
                     { key: "tier_c_count" as const, label: "Tier C" },
+                    { key: "stale_share_pct" as const, label: "Stale %" },
                     { key: "without_price_pct" as const, label: "No price %" },
                     { key: "without_location_pct" as const, label: "No location %" },
                     { key: "multi_domain_gallery_rate" as const, label: "Multi-domain %" },
@@ -593,6 +595,7 @@ function DashboardView() {
                   <td className="py-2 px-3 text-muted-foreground tabular-nums">{Number(r.tier_a_count ?? 0).toLocaleString()}</td>
                   <td className="py-2 px-3 text-muted-foreground tabular-nums">{Number(r.tier_b_count ?? 0).toLocaleString()}</td>
                   <td className="py-2 px-3 text-muted-foreground tabular-nums">{Number(r.tier_c_count ?? 0).toLocaleString()}</td>
+                  <td className="py-2 px-3 text-muted-foreground">{Number(r.stale_share_pct ?? 0).toFixed(1)}%</td>
                   <td className="py-2 px-3 text-muted-foreground">{Number(r.without_price_pct ?? 0).toFixed(1)}%</td>
                   <td className="py-2 px-3 text-muted-foreground">{Number(r.without_location_pct ?? 0).toFixed(1)}%</td>
                   <td className="py-2 px-3 text-muted-foreground">{Number(r.multi_domain_gallery_rate ?? 0).toFixed(1)}%</td>
