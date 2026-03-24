@@ -21,11 +21,6 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://kazaverde.com/rent</loc>
-    <changefreq>weekly</changefreq>
-    <priority>0.7</priority>
-  </url>
-  <url>
     <loc>https://kazaverde.com/blog</loc>
     <changefreq>weekly</changefreq>
     <priority>0.8</priority>
@@ -36,27 +31,27 @@
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://kazaverde.com/blog/nine-islands-cape-verde-which-one</loc>
+    <loc>https://kazaverde.com/blog/which-cape-verde-island-property</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://kazaverde.com/blog/cape-verde-property-prices-2026</loc>
+    <loc>https://kazaverde.com/blog/cape-verde-property-tax-reform-2026</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://kazaverde.com/blog/rental-yields-cape-verde-investors</loc>
+    <loc>https://kazaverde.com/blog/cape-verde-rental-yields-realistic</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://kazaverde.com/blog/legal-requirements-foreign-buyers-cape-verde</loc>
+    <loc>https://kazaverde.com/blog/cape-verde-green-card-residency</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>
   <url>
-    <loc>https://kazaverde.com/blog/sal-vs-boa-vista-property-comparison</loc>
+    <loc>https://kazaverde.com/blog/mistakes-buying-property-cape-verde</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

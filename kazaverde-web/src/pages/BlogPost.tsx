@@ -1,6 +1,7 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { getArticleBySlug } from "../lib/blog-data";
+import NewsletterCta from "../components/NewsletterCta";
 import "./BlogPost.css";
 
 export default function BlogPost() {
@@ -53,6 +54,11 @@ export default function BlogPost() {
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
       </article>
+
+      <NewsletterCta
+        heading={<>Stay informed on <em>Cape Verde property</em></>}
+        description="Monthly market updates, price trends by island, and regulatory changes — straight to your inbox."
+      />
     </>
   );
 }

@@ -322,3 +322,158 @@ The right move is:
 - one content map
 - one legal checklist
 - revise or archive stale docs
+
+## 9. Soft-Launch Distribution Execution
+
+Last updated: 2026-03-24
+
+This section covers earned distribution during the soft-live phase.
+It does not assume Google Ads, paid acquisition, or main-stage readiness.
+
+### Current distribution assets
+
+SEO:
+- robots.txt and sitemap.xml are live (12 URLs)
+- Google Search Console verification meta tag added to index.html
+- Search Console ownership verification pending deploy
+- useDocumentMeta hook provides title, description, canonical, and OG tags per page
+- No analytics wired up yet
+
+Content:
+- 6 blog articles live, embedded in blog-data.ts
+  1. buying-property-cape-verde-guide (buying process, legal, costs)
+  2. which-cape-verde-island-property (island comparison, data-driven)
+  3. cape-verde-property-tax-reform-2026 (2026 tax changes)
+  4. cape-verde-rental-yields-realistic (investment yields)
+  5. cape-verde-green-card-residency (residency-by-investment)
+  6. mistakes-buying-property-cape-verde (common buyer mistakes)
+
+Newsletter:
+- NewsletterCta component is live on site
+- Supabase table captures emails (anon insert-only, dedup on conflict)
+- No confirmation email or branded email flow yet
+- No email service provider integration (no send capability)
+
+Social:
+- No share buttons on blog posts
+- OG tags are set per page (title, description, site_name, url)
+- No og:image set on blog posts
+
+### Immediate distribution actions (soft-live phase)
+
+#### D1. Search Console baseline
+
+Status: in progress
+
+Steps:
+1. Deploy index.html with google-site-verification meta tag
+2. Click VERIFY in the open Search Console dialog
+3. Submit sitemap at Sitemaps > Add https://kazaverde.com/sitemap.xml
+4. Check index coverage after 48 to 72 hours
+5. Use URL Inspection to request indexing for the 6 core landing pages:
+   - /listings (highest priority, main discovery surface)
+   - /market (market data, differentiator)
+   - /blog/buying-property-cape-verde-guide (highest search intent article)
+   - /blog/cape-verde-property-tax-reform-2026 (timely, 2026-specific)
+   - /blog/cape-verde-rental-yields-realistic (investment audience)
+   - /blog/which-cape-verde-island-property (comparison intent)
+
+#### D2. Keyword-to-page alignment
+
+The 6 existing articles already cover the strongest Cape Verde property search intents.
+No new content is needed before main-stage. The priority is indexation, not volume.
+
+Primary keyword targets per page:
+- /blog/buying-property-cape-verde-guide → "buy property cape verde", "cape verde property guide"
+- /blog/which-cape-verde-island-property → "cape verde islands property", "sal vs boa vista property"
+- /blog/cape-verde-property-tax-reform-2026 → "cape verde property tax 2026", "cape verde ITI tax"
+- /blog/cape-verde-rental-yields-realistic → "cape verde rental yield", "cape verde property investment"
+- /blog/cape-verde-green-card-residency → "cape verde residency investment", "cape verde green card"
+- /blog/mistakes-buying-property-cape-verde → "buying property cape verde mistakes"
+- /listings → "cape verde property listings", "cape verde real estate"
+- /market → "cape verde property market", "cape verde property prices"
+
+Validation method: after Search Console has 2 weeks of data, check which queries are generating impressions and clicks. Adjust title tags and descriptions if actual search terms diverge from targets.
+
+#### D3. OG image for social sharing
+
+Status: not started
+
+The site sets og:title and og:description per page, but og:image is missing on most pages.
+Without og:image, social shares render with no preview image, which significantly reduces click-through.
+
+Fix:
+- Create one default OG image (1200x630) with KazaVerde branding and Cape Verde imagery
+- Set it as the fallback og:image in useDocumentMeta
+- Optionally create per-article OG images later
+
+This is a high-leverage small fix for any manual sharing or backlink outreach.
+
+#### D4. Newsletter growth during soft-live
+
+The newsletter form captures emails but cannot send anything yet.
+That is acceptable for soft-live: the goal is to build the subscriber list now and activate sends later.
+
+Growth tactics that work before email sends are active:
+- Newsletter CTA is already on the site (good)
+- Blog posts should end with a contextual newsletter hook (example: "Get monthly Cape Verde market updates" at the bottom of each article)
+- The /market page should include a newsletter CTA since market-data visitors are the highest-intent newsletter audience
+- Success message after subscribe should set expectations: "We'll email you when the first Cape Verde Property Index report is ready."
+
+Pre-send newsletter checklist (needed before first send):
+1. Choose an email service provider (Resend, Mailchimp, or Loops are reasonable options)
+2. Connect it to the Supabase subscriber table or migrate subscribers
+3. Create a branded email template matching the KazaVerde design system
+4. Write the first newsletter issue (Monthly Property Index format)
+5. Add explicit consent language to the subscribe form
+6. Add unsubscribe mechanism to comply with anti-spam law
+
+#### D5. Earned backlink targets
+
+No outreach budget is needed. The goal is to earn links from directories and communities where Cape Verde property buyers already look.
+
+Tier 1 — directory and community submissions:
+- Cape Verde expat forums (caboverde.com, expat.com/cape-verde)
+- Property portal directories that accept free listings (theglobalpropertyguide.com submission)
+- Cape Verde tourism and relocation guides
+- Portugal/Lusophone investment communities
+
+Tier 2 — content-driven link earning:
+- The tax reform article (2026-specific, timely) is the best candidate for earning links from tax and legal blogs
+- The buying guide is linkable from relocation and expat resources
+- The island comparison article can earn links from travel content
+
+Approach: manual submission to 5 to 10 relevant directories and communities, with a short description that stays within the read-only index positioning. No marketplace or transaction claims.
+
+#### D6. Analytics baseline
+
+Status: not started
+
+No analytics are currently wired up. Without measurement, distribution work cannot be validated.
+
+Minimum viable analytics:
+- Add a lightweight analytics tool (Plausible, Umami, or Vercel Analytics)
+- Track: page views, referrer sources, top pages, newsletter conversion rate
+- Do not add Google Analytics unless specifically needed; privacy-first tools are simpler and better aligned with the compliance posture
+
+This should be done before or alongside the Search Console activation so both SEO and on-site data start accumulating at the same time.
+
+### Distribution work that should wait
+
+The following should not start until main-stage or later:
+- Google Ads or any paid acquisition
+- Social media accounts or regular posting schedule
+- Partnership or co-marketing outreach
+- iPhone app v2 (per launch plan section 4.12)
+- Multi-language content distribution (wait for Portuguese launch quality)
+
+### What this phase should prove
+
+The soft-live distribution phase should prove:
+1. The site can be indexed and discovered through organic search.
+2. The existing 6 articles can generate impressions for Cape Verde property search terms.
+3. Newsletter signups accumulate without paid traffic.
+4. The read-only index positioning holds up in how people find and describe the site.
+5. Distribution learning from Market 1 is reusable for future markets.
+
+These are the inputs for deciding when to move to main-stage.
