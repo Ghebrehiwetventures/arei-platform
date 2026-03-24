@@ -7,11 +7,13 @@ Core canonical docs:
 - `docs/GOVERNANCE.md`
 - `docs/AREI_master_documentation_architecture.md`
 - `docs/AREI_documentation_audit.md`
-- `docs/06-go-to-market/brand-architecture.md`
-- `docs/02-data-engine/data-trust-rules.md`
-- `docs/03-product/mvp-scope.md`
 - `docs/01-strategy/vision.md`
 - `docs/01-strategy/cape-verde-beachhead.md`
+- `docs/06-go-to-market/brand-architecture.md`
+- `docs/06-go-to-market/launch-plan.md`
+- `docs/08-expansion/new-market-playbook.md`
+- `docs/02-data-engine/data-trust-rules.md`
+- `docs/03-product/mvp-scope.md`
 - `docs/03-product/v2-roadmap.md`
 - `docs/04-platform/tooling-handoff.md`
 - `docs/04-platform/security-baseline.md`
@@ -28,4 +30,4 @@ Governance defines hard project rules.
 The master documentation architecture defines how project knowledge should be structured.
 The audit maps current docs into that target structure and identifies what to create next.
 Brand architecture defines the canonical relationship between `AREI`, `AREI Admin`, and `KazaVerde`.
-The canonical set now covers strategy, trust rules, MVP boundaries, launch risk truth, v2 direction, brand architecture, platform handoff, security baseline, AI guardrails, and decision memory.
+The canonical set now covers company strategy, Market 1 strategy, launch execution, expansion playbook, trust rules, MVP boundaries, launch risk truth, v2 direction, brand architecture, platform handoff, security baseline, AI guardrails, and decision memory.

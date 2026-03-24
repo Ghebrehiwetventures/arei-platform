@@ -30,11 +30,12 @@ In this order:
 5. `docs/02-data-engine/data-trust-rules.md`
 6. `docs/03-product/mvp-scope.md`
 7. `docs/05-quality-control/launch-risks.md`
-8. `launch_plan.md`
+8. `docs/06-go-to-market/launch-plan.md`
 
 If working on strategy or product direction next, also read:
 - `docs/01-strategy/vision.md`
 - `docs/01-strategy/cape-verde-beachhead.md`
+- `docs/08-expansion/new-market-playbook.md`
 - `docs/03-product/v2-roadmap.md`
 - `docs/09-decisions/decision-log.md`
 
