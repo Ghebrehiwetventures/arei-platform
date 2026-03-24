@@ -1,0 +1,7 @@
+{
+  "buildCommand": "node ../../scripts/assert-vercel-build-target.cjs landing",
+  "framework": null,
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/landing-draft.html" }
+  ]
+}

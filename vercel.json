@@ -1,5 +1,5 @@
 {
-  "buildCommand": "cd packages/arei-sdk && npm install && npm run build && cd ../../kazaverde-web && npm install && npm run build",
+  "buildCommand": "node scripts/assert-vercel-build-target.cjs kazaverde && cd packages/arei-sdk && npm install && npm run build && cd ../../kazaverde-web && npm install && npm run build",
   "outputDirectory": "kazaverde-web/dist",
   "framework": null,
   "rewrites": [

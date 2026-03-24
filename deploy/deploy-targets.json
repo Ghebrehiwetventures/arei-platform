@@ -1,0 +1,20 @@
+{
+  "targets": {
+    "landing": {
+      "key": "landing",
+      "projectName": "africapropertyindex-landing",
+      "projectId": "prj_4B9hTVACdIa9IdlstS9xzjTdxXow",
+      "domain": "https://www.africarealestateindex.com",
+      "cwd": "web/prototypes",
+      "deployCommand": "npm run deploy:landing"
+    },
+    "kazaverde": {
+      "key": "kazaverde",
+      "projectName": "kazaverde-web",
+      "projectId": "prj_CZhdIjkWMZt6XuucwvmUmY6YH1cj",
+      "domain": "https://www.kazaverde.com",
+      "cwd": ".",
+      "deployCommand": "npm run deploy:kazaverde"
+    }
+  }
+}
