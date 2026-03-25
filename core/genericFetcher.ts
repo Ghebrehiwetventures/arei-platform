@@ -323,8 +323,16 @@ function parsePrice(priceText: string, config?: SourceFetchConfig["price_format"
     return undefined;
   }
 
+  // If the selector captures surrounding text (for example title + address + price),
+  // isolate the currency-bound fragment before parsing so "Porto Antigo 1 189.000€"
+  // does not become 1,189,000.
+  const boundedPriceMatch = priceText.match(
+    /(?:€\s*\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?|\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?\s*€|\$\s*\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?|\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?\s*\$|£\s*\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?|\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?\s*£)/
+  );
+  const candidateText = boundedPriceMatch?.[0]?.trim() || priceText;
+
   const currencySymbol = config?.currency_symbol || "€";
-  let cleaned = priceText.replace(new RegExp(currencySymbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "").trim();
+  let cleaned = candidateText.replace(new RegExp(currencySymbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "").trim();
 
   // Handle thousands separator based on config
   const thousandsSep = config?.thousands_separator || ".";
