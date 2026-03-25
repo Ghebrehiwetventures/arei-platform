@@ -1,5 +1,5 @@
 -- KazaVerde trust metrics RPCs now live in migrations/013_kazaverde_trust_views.sql.
--- Run migrations 012-014 and 019 in order in Supabase SQL Editor.
+-- Run migrations 012-014, 019, and 020 in order in Supabase SQL Editor.
 --
 -- This file is kept as a pointer so existing docs/tooling do not silently drift.
 --
@@ -12,3 +12,5 @@
 --   - public.get_source_stale_stats(p_market text default 'cv')
 -- Migration 019 updates:
 --   - public.get_source_quality_stats() to include stale_share_pct and a stale-adjusted quality_score
+-- Migration 020 updates:
+--   - public.get_source_quality_stats() to run as SECURITY DEFINER for anon/authenticated RPC access

@@ -114,6 +114,30 @@ export async function getLatestSyncLog(): Promise<LatestSyncLog | null> {
       };
     }
   } catch {
+    // Fall back to direct table query below.
+  }
+
+  try {
+    const { data, error } = await supabase
+      .from("ingest_runs")
+      .select("market,completed_at,total_listings,public_count,indexable_count,run_delta_pct,warning_flags")
+      .eq("status", "completed")
+      .eq("market", "cv")
+      .order("started_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!error && data) {
+      return {
+        at: data.completed_at || new Date().toISOString(),
+        marketName: data.market?.toUpperCase?.() || "CV",
+        totalListings: Number(data.total_listings) || 0,
+        visibleCount: Number(data.public_count) || 0,
+        indexableCount: data.indexable_count != null ? Number(data.indexable_count) : undefined,
+        deltaPct: data.run_delta_pct != null ? Number(data.run_delta_pct) : null,
+        warningFlags: Array.isArray(data.warning_flags) ? data.warning_flags : [],
+      };
+    }
+  } catch {
     // Fall back to artifact-based log below.
   }
 
@@ -295,6 +319,14 @@ interface SupabaseListing {
   status: string;
   approved: boolean;
   violations: string[] | null;
+  price_status?: string | null;
+  location_confidence?: string | null;
+  has_valid_image?: boolean | null;
+  duplicate_risk?: string | null;
+  trust_tier?: string | null;
+  review_reasons?: string[] | null;
+  multi_domain_gallery?: boolean | null;
+  is_stale?: boolean | null;
   property_type?: string | null;
   amenities?: string[] | null;
   price_period?: string | null;
@@ -512,70 +544,180 @@ function computeGradeFromQualityScore(score: number): { score: number; grade: "A
   return { score: Math.round(score), grade };
 }
 
+function emptyDashboardStats(): DashboardStats {
+  return {
+    totalListings: 0,
+    approvedCount: 0,
+    sourceCount: 0,
+    marketCount: 0,
+    sourceRows: [],
+  };
+}
+
+function toPct(count: number, total: number): number {
+  if (total <= 0) return 0;
+  return Math.round((count / total) * 10000) / 100;
+}
+
+function buildDashboardStats(raw: SourceQualityRowRaw[]): DashboardStats {
+  const marketSet = new Set<string>();
+  let totalListings = 0;
+  let approvedCount = 0;
+  const sourceRows: SourceQualityRow[] = raw.map((r) => {
+    const marketId = r.source_id.match(/^([a-z]{2})_/)?.[1] || "?";
+    marketSet.add(marketId);
+    totalListings += Number(r.listing_count);
+    approvedCount += Number(r.approved_count);
+    const n = Number(r.listing_count) || 1;
+    const approvedPct = (Number(r.approved_count) / n) * 100;
+    const imagePct = (Number(r.with_image_count) / n) * 100;
+    const pricePct = (Number(r.with_price_count) / n) * 100;
+    const { score, grade } =
+      r.quality_score != null
+        ? computeGradeFromQualityScore(Number(r.quality_score))
+        : computeGrade(approvedPct, imagePct, pricePct);
+    return {
+      ...r,
+      approved_pct: Math.round(approvedPct * 10) / 10,
+      with_image_pct: Math.round(imagePct * 10) / 10,
+      with_price_pct: Math.round(pricePct * 10) / 10,
+      score,
+      grade,
+      sourceName: sourceIdToName(r.source_id),
+      marketId,
+    };
+  });
+
+  const gradeOrder = { D: 0, C: 1, B: 2, A: 3 };
+  sourceRows.sort((a, b) => {
+    const g = gradeOrder[a.grade] - gradeOrder[b.grade];
+    if (g !== 0) return g;
+    return Number(b.listing_count) - Number(a.listing_count);
+  });
+
+  return {
+    totalListings,
+    approvedCount,
+    sourceCount: sourceRows.length,
+    marketCount: marketSet.size,
+    sourceRows,
+  };
+}
+
+const DASHBOARD_FALLBACK_COLS = [
+  "source_id",
+  "approved",
+  "price",
+  "price_status",
+  "has_valid_image",
+  "image_urls",
+  "trust_tier",
+  "location_confidence",
+  "city",
+  "island",
+  "multi_domain_gallery",
+  "review_reasons",
+  "duplicate_risk",
+  "is_stale",
+].join(",");
+
+async function loadDashboardStatsFromListings(): Promise<DashboardStats> {
+  const pageSize = 1000;
+  const rows: SupabaseListing[] = [];
+
+  for (let from = 0; ; from += pageSize) {
+    const { data, error } = await supabase
+      .from("listings")
+      .select(DASHBOARD_FALLBACK_COLS)
+      .order("source_id", { ascending: true })
+      .range(from, from + pageSize - 1);
+
+    if (error) {
+      console.warn("[Admin] Dashboard fallback query failed:", error.message);
+      return emptyDashboardStats();
+    }
+
+    const batch = (data || []) as SupabaseListing[];
+    rows.push(...batch);
+
+    if (batch.length < pageSize) break;
+  }
+
+  if (rows.length === 0) {
+    console.warn("[Admin] Dashboard fallback found no listings");
+    return emptyDashboardStats();
+  }
+
+  const groups = new Map<string, SupabaseListing[]>();
+  for (const row of rows) {
+    const bucket = groups.get(row.source_id) || [];
+    bucket.push(row);
+    groups.set(row.source_id, bucket);
+  }
+
+  const rawRows: SourceQualityRowRaw[] = Array.from(groups.entries()).map(([sourceId, sourceRows]) => {
+    const listingCount = sourceRows.length;
+    const approvedCount = sourceRows.filter((row) => row.approved === true).length;
+    const withImageCount = sourceRows.filter(
+      (row) => row.has_valid_image === true || (row.image_urls?.length ?? 0) > 0
+    ).length;
+    const withPriceCount = sourceRows.filter(
+      (row) => row.price != null || row.price_status === "ok" || row.price_status === "present"
+    ).length;
+    const tierACount = sourceRows.filter((row) => row.trust_tier === "A").length;
+    const tierBCount = sourceRows.filter((row) => row.trust_tier === "B").length;
+    const tierCCount = sourceRows.filter((row) => row.trust_tier === "C").length;
+    const withoutPriceCount = sourceRows.filter(
+      (row) => row.price_status === "missing" || (row.price_status == null && row.price == null)
+    ).length;
+    const withoutLocationCount = sourceRows.filter(
+      (row) =>
+        row.location_confidence === "missing" ||
+        (row.location_confidence == null && !row.city && !row.island)
+    ).length;
+    const multiDomainCount = sourceRows.filter((row) => row.multi_domain_gallery === true).length;
+    const duplicateCoverCount = sourceRows.filter((row) =>
+      row.review_reasons?.includes("DUPLICATE_COVER_IMAGE")
+    ).length;
+    const staleCount = sourceRows.filter((row) => row.is_stale === true).length;
+
+    return {
+      source_id: sourceId,
+      listing_count: listingCount,
+      approved_count: approvedCount,
+      with_image_count: withImageCount,
+      with_price_count: withPriceCount,
+      tier_a_count: tierACount,
+      tier_b_count: tierBCount,
+      tier_c_count: tierCCount,
+      without_price_pct: toPct(withoutPriceCount, listingCount),
+      without_location_pct: toPct(withoutLocationCount, listingCount),
+      multi_domain_gallery_rate: toPct(multiDomainCount, listingCount),
+      duplicate_cover_rate: toPct(duplicateCoverCount, listingCount),
+      stale_share_pct: toPct(staleCount, listingCount),
+    };
+  });
+
+  console.warn("[Admin] Falling back to listing-derived dashboard stats");
+  return buildDashboardStats(rawRows);
+}
+
 export async function getDashboardStats(): Promise<DashboardStats> {
   try {
     const { data: rows, error } = await supabase.rpc("get_source_quality_stats");
     if (error) {
       console.warn("[Admin] RPC get_source_quality_stats failed (run docs/supabase_rpc.sql?):", error.message);
-      return {
-        totalListings: 0,
-        approvedCount: 0,
-        sourceCount: 0,
-        marketCount: 0,
-        sourceRows: [],
-      };
+      return await loadDashboardStatsFromListings();
     }
     const raw = (rows || []) as SourceQualityRowRaw[];
-    const marketSet = new Set<string>();
-    let totalListings = 0;
-    let approvedCount = 0;
-    const sourceRows: SourceQualityRow[] = raw.map((r) => {
-      const marketId = r.source_id.match(/^([a-z]{2})_/)?.[1] || "?";
-      marketSet.add(marketId);
-      totalListings += Number(r.listing_count);
-      approvedCount += Number(r.approved_count);
-      const n = Number(r.listing_count) || 1;
-      const approvedPct = (Number(r.approved_count) / n) * 100;
-      const imagePct = (Number(r.with_image_count) / n) * 100;
-      const pricePct = (Number(r.with_price_count) / n) * 100;
-      const { score, grade } =
-        r.quality_score != null
-          ? computeGradeFromQualityScore(Number(r.quality_score))
-          : computeGrade(approvedPct, imagePct, pricePct);
-      return {
-        ...r,
-        approved_pct: Math.round(approvedPct * 10) / 10,
-        with_image_pct: Math.round(imagePct * 10) / 10,
-        with_price_pct: Math.round(pricePct * 10) / 10,
-        score,
-        grade,
-        sourceName: sourceIdToName(r.source_id),
-        marketId,
-      };
-    });
-    // Sort worst grade first (D, C, B, A), then by listing count desc
-    const gradeOrder = { D: 0, C: 1, B: 2, A: 3 };
-    sourceRows.sort((a, b) => {
-      const g = gradeOrder[a.grade] - gradeOrder[b.grade];
-      if (g !== 0) return g;
-      return Number(b.listing_count) - Number(a.listing_count);
-    });
-    return {
-      totalListings,
-      approvedCount,
-      sourceCount: sourceRows.length,
-      marketCount: marketSet.size,
-      sourceRows,
-    };
+    if (raw.length === 0) {
+      console.warn("[Admin] RPC get_source_quality_stats returned no rows");
+      return await loadDashboardStatsFromListings();
+    }
+    return buildDashboardStats(raw);
   } catch (err) {
     console.error("[Admin] getDashboardStats error:", err);
-    return {
-      totalListings: 0,
-      approvedCount: 0,
-      sourceCount: 0,
-      marketCount: 0,
-      sourceRows: [],
-    };
+    return await loadDashboardStatsFromListings();
   }
 }
 
