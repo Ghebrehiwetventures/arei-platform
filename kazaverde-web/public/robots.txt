@@ -1,4 +1,4 @@
 User-agent: *
 Allow: /
 
-Sitemap: https://kazaverde.com/sitemap.xml
+Sitemap: https://www.kazaverde.com/sitemap.xml
