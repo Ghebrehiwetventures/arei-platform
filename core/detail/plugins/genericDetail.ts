@@ -68,6 +68,14 @@ const SMALL_IMAGE_PATTERNS = [
 // Negation words for amenity detection
 const NEGATION_WORDS = ["no", "not", "without", "sem", "não", "nao"];
 
+function extractCurrencyBoundPriceText(text: string): string | undefined {
+  if (!text) return undefined;
+  const match = text.match(
+    /(?:€\s*\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?|\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?\s*€|\$\s*\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?|\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?\s*\$|£\s*\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?|\d{1,3}(?:[\s.,]\d{3})*(?:[.,]\d{2})?\s*£)/
+  );
+  return match?.[0]?.trim();
+}
+
 /**
  * Generic price parser — handles all common formats:
  *   "€ 38 000,00"  → 38000 (space thousands, comma decimal)
@@ -78,14 +86,15 @@ const NEGATION_WORDS = ["no", "not", "without", "sem", "não", "nao"];
  */
 function parseGenericPrice(priceText: string): number | undefined {
   if (!priceText) return undefined;
-  const lower = priceText.toLowerCase();
+  const candidateText = extractCurrencyBoundPriceText(priceText) || priceText;
+  const lower = candidateText.toLowerCase();
   if (lower.includes("call") || lower.includes("poa") || lower.includes("negotiat") ||
       lower.includes("request") || lower.includes("contact") || lower.includes("price on")) {
     return undefined;
   }
 
   // Remove currency symbols
-  let cleaned = priceText.replace(/[€$£R]/g, "").trim();
+  let cleaned = candidateText.replace(/[€$£R]/g, "").trim();
 
   // Detect format by analyzing separators
   // Space-separated thousands: "38 000,00" or "38 000"
@@ -196,14 +205,15 @@ function hasNegationBefore(text: string, keywordIndex: number, windowWords: numb
  */
 function parseConfiguredPrice(priceText: string, config: PriceFormatConfig): number | undefined {
   if (!priceText) return undefined;
-  const lower = priceText.toLowerCase();
+  const candidateText = extractCurrencyBoundPriceText(priceText) || priceText;
+  const lower = candidateText.toLowerCase();
   if (lower.includes("call") || lower.includes("poa") || lower.includes("negotiat") ||
       lower.includes("request") || lower.includes("contact") || lower.includes("price on")) {
     return undefined;
   }
 
   const currencySymbol = config.currency_symbol || "€";
-  let cleaned = priceText.replace(new RegExp(currencySymbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "").trim();
+  let cleaned = candidateText.replace(new RegExp(currencySymbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"), "g"), "").trim();
 
   const thousandsSep = config.thousands_separator || ".";
   const decimalSep = config.decimal_separator || ",";

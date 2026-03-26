@@ -9,6 +9,7 @@ import type { ListingDetail as ListingDetailType, ListingCard } from "arei-sdk";
 import type { DemoListing } from "../lib/demo-data";
 import { cardToDemoListing } from "../lib/transforms";
 import { formatPrice, formatLocation, formatBedrooms, formatBathrooms } from "../lib/format";
+import { looksItalian, stripHtml, translateItalianToEnglish } from "../lib/translation";
 import NotFound from "./NotFound";
 import MortgageCalculator from "../components/MortgageCalculator";
 import MarketContext from "../components/MarketContext";
@@ -58,6 +59,7 @@ export default function Detail() {
   const [error, setError] = useState<string | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
+  const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
 
   useDocumentMeta(
     listing?.title ?? (error ? "Property not found" : "Property"),
@@ -119,6 +121,31 @@ export default function Detail() {
       });
     return () => { cancelled = true; };
   }, [id]);
+
+  useEffect(() => {
+    let cancelled = false;
+    const sourceText = listing?.description_html
+      ? stripHtml(listing.description_html)
+      : (listing?.description ?? "");
+
+    if (!sourceText) {
+      setTranslatedDescription(null);
+      return () => { cancelled = true; };
+    }
+
+    if (!looksItalian(sourceText)) {
+      setTranslatedDescription(null);
+      return () => { cancelled = true; };
+    }
+
+    translateItalianToEnglish(sourceText).then((translated) => {
+      if (!cancelled) {
+        setTranslatedDescription(translated);
+      }
+    });
+
+    return () => { cancelled = true; };
+  }, [listing?.description, listing?.description_html]);
 
   /* Keyboard navigation for gallery — must be before any early returns */
   const images = listing?.image_urls ?? [];
@@ -287,20 +314,6 @@ export default function Detail() {
               <svg viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor" fill="none"><polyline points="9 18 15 12 9 6" /></svg>
             </button>
             <div className="dg-counter">{galleryIndex + 1} / {images.length}</div>
-            {images.length <= 8 && (
-              <div className="dg-thumbs">
-                {images.map((url, i) => (
-                  <button
-                    key={i}
-                    type="button"
-                    className={`dg-thumb${i === galleryIndex ? " on" : ""}`}
-                    onClick={(e) => { e.stopPropagation(); setGalleryIndex(i); }}
-                    style={{ backgroundImage: `url(${url})` }}
-                    aria-label={`View image ${i + 1}`}
-                  />
-                ))}
-              </div>
-            )}
           </>
         )}
       </div>
@@ -360,7 +373,9 @@ export default function Detail() {
 
           <div className="dd">
             <h3>About this property</h3>
-            {listing.description_html ? (
+            {translatedDescription ? (
+              <p>{translatedDescription}</p>
+            ) : listing.description_html ? (
               <div className="dd-html" dangerouslySetInnerHTML={{ __html: listing.description_html }} />
             ) : listing.description ? (
               <p>{listing.description}</p>
@@ -474,19 +489,6 @@ export default function Detail() {
             alt={`Photo ${galleryIndex + 1} of ${images.length}`}
             onClick={(e) => e.stopPropagation()}
           />
-          {images.length > 1 && images.length <= 12 && (
-            <div className="lb-thumbstrip" onClick={(e) => e.stopPropagation()}>
-              {images.map((url, i) => (
-                <button
-                  key={i}
-                  className={`lb-th${i === galleryIndex ? " on" : ""}`}
-                  onClick={() => setGalleryIndex(i)}
-                  style={{ backgroundImage: `url(${url})` }}
-                  aria-label={`View image ${i + 1}`}
-                />
-              ))}
-            </div>
-          )}
           <div className="lb-counter">{galleryIndex + 1} / {images.length}</div>
         </div>,
         document.body
