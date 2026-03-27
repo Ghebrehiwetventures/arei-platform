@@ -123,6 +123,16 @@
   transition: color 0.2s;
 }
 .fc_ a:hover { color: var(--ac); }
+.fc_legal {
+  display: flex;
+  gap: 16px;
+}
+.fc_legal a {
+  color: var(--tx3);
+  font-size: 0.78rem;
+  transition: color 0.2s;
+}
+.fc_legal a:hover { color: var(--ac); }
 
 @media (max-width: 1024px) {
   .fg { grid-template-columns: 1fr 1fr; gap: 32px; }

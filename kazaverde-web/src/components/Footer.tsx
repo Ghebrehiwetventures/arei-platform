@@ -61,6 +61,10 @@ export default function Footer() {
       </div>
       <div className="fc_">
         <span>© 2026 Kaza Verde</span>
+        <div className="fc_legal">
+          <Link to="/privacy">Privacy</Link>
+          <Link to="/cookie-policy">Cookies</Link>
+        </div>
         <a href="https://www.africarealestateindex.com/" target="_blank" rel="noopener noreferrer">
           Powered by Africa Real Estate Index
         </a>

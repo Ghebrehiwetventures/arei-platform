@@ -1,0 +1,60 @@
+.ck-banner {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 20px;
+  padding: 16px var(--px);
+  background: hsl(25 20% 14%);
+  border-top: 1px solid var(--bd);
+  animation: ck-slide 0.4s ease-out;
+}
+
+@keyframes ck-slide {
+  from { transform: translateY(100%); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.ck-text {
+  font-size: 0.82rem;
+  color: var(--tx2);
+  line-height: 1.6;
+  max-width: 600px;
+}
+
+.ck-link {
+  color: var(--ac) !important;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.ck-btn {
+  flex-shrink: 0;
+  padding: 8px 24px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--bg);
+  background: var(--ac);
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+.ck-btn:hover {
+  background: var(--ac2);
+}
+
+@media (max-width: 640px) {
+  .ck-banner {
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px 20px;
+    text-align: center;
+  }
+}
