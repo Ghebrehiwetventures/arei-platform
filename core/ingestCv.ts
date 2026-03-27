@@ -24,8 +24,7 @@ import { homesCasaVerdePlugin } from "./detail/plugins/homesCasaVerde";
 import { createGenericDetailPlugin } from "./detail/plugins/genericDetail";
 import { DetailEnrichmentInput } from "./detail/types";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
-import { parseLocation } from "./locationMapper";
-import { resolveCvIslandRecovery } from "./cvIslandRecovery";
+import { resolveCvNormalizedLocation } from "./cvLocationNormalization";
 
 // Generic config-driven fetcher — replaces all per-source parsers
 import {
@@ -58,6 +57,9 @@ interface IngestListing {
   parkingSpaces?: number | null;
   terraceArea?: number | null;
   amenities?: string[];
+  rawCity?: string;
+  rawArea?: string;
+  rawIsland?: string;
   // Detail enrichment tracking
   detail_enriched?: boolean;
   detail_error?: string | null;
@@ -325,6 +327,15 @@ async function enrichDetailPages(
           listing.location = extractResult.location;
           wasEnriched = true;
           console.log(`[${source.id} Detail]   location recovered: ${extractResult.location}`);
+        }
+        if (extractResult.rawCity) {
+          listing.rawCity = extractResult.rawCity;
+        }
+        if (extractResult.rawArea) {
+          listing.rawArea = extractResult.rawArea;
+        }
+        if (extractResult.rawIsland) {
+          listing.rawIsland = extractResult.rawIsland;
         }
 
         listing.detail_enriched = wasEnriched;
@@ -869,44 +880,17 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
     const classification = finalEvalResult.classifications.find((c) => c.listingId === listing.id);
     const violations = classification?.violations || [];
 
-    // Parse location into island and city using config-driven locationMapper.
-    // Try multiple text sources: location field → title → description (first 500 chars)
-    let island: string | undefined;
-    let city: string | undefined;
-    const locResult = parseLocation(listing.location, "cv");
-    if (locResult.island) {
-      island = locResult.island;
-      city = locResult.city;
-    }
-    if (!island && listing.title) {
-      const titleResult = parseLocation(listing.title, "cv");
-      if (titleResult.island) {
-        island = titleResult.island;
-        city = titleResult.city;
-      }
-    }
-    if (!island && fullListing?.description) {
-      const descResult = parseLocation(fullListing.description.substring(0, 500), "cv");
-      if (descResult.island) {
-        island = descResult.island;
-        city = descResult.city;
-      }
-    }
-    if (!island) {
-      const recovery = resolveCvIslandRecovery({
-        id: listing.id,
-        sourceId: listing.sourceId,
-        title: listing.title,
-        description: fullListing?.description,
-        sourceUrl: fullListing?.detailUrl || fullListing?.externalUrl || null,
-        rawIsland: listing.location,
-        rawCity: undefined,
-      });
-      if (recovery.kind === "resolved") {
-        island = recovery.island;
-        city = recovery.city ?? undefined;
-      }
-    }
+    const normalizedLocation = resolveCvNormalizedLocation({
+      id: listing.id,
+      sourceId: listing.sourceId,
+      title: listing.title,
+      description: fullListing?.description,
+      sourceUrl: fullListing?.detailUrl || fullListing?.externalUrl || null,
+      listLocation: listing.location,
+      rawCity: fullListing?.rawCity,
+      rawArea: fullListing?.rawArea,
+      rawIsland: fullListing?.rawIsland,
+    });
 
     return {
       id: listing.id,
@@ -917,8 +901,8 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       price: listing.price,
       currency: "EUR",
       country: "Cape Verde",
-      island,
-      city,
+      island: normalizedLocation.island,
+      city: normalizedLocation.city,
       bedrooms: listing.bedrooms ?? null,
       bathrooms: listing.bathrooms ?? null,
       property_size_sqm: listing.area_sqm ?? null,

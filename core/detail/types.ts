@@ -33,6 +33,9 @@ export interface DetailEnrichmentResult {
   description?: string;
   imageUrls: string[];
   location?: string;
+  rawCity?: string;
+  rawArea?: string;
+  rawIsland?: string;
   error?: string;
   // Structured property data
   bedrooms?: number | null;
@@ -60,6 +63,9 @@ export interface DetailExtractResult {
   description?: string;
   imageUrls: string[];
   location?: string;
+  rawCity?: string;
+  rawArea?: string;
+  rawIsland?: string;
   error?: string;
   // Structured property data
   bedrooms?: number | null;

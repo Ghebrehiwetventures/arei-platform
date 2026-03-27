@@ -188,6 +188,39 @@ function cleanDescription(text: string): string {
   return uniqueLines.join(" ").replace(/\s+/g, " ").trim();
 }
 
+function extractLabeledDetailValue(
+  $: cheerio.CheerioAPI,
+  labels: string[]
+): string | undefined {
+  const normalizedLabels = labels.map((label) => label.toLowerCase());
+
+  const detailSelectors = [
+    ".listing_detail",
+    ".property_listing_details .listing_detail",
+    "#accordion_property_address .listing_detail",
+  ];
+
+  for (const selector of detailSelectors) {
+    const $rows = $(selector);
+    if ($rows.length === 0) continue;
+
+    for (const row of $rows.toArray()) {
+      const $row = $(row);
+      const labelText = $row.find("strong").first().text().replace(/:\s*$/, "").trim().toLowerCase();
+      if (!labelText || !normalizedLabels.includes(labelText)) continue;
+
+      const cloned = $row.clone();
+      cloned.find("strong").remove();
+      const value = cloned.text().replace(/\s+/g, " ").trim().replace(/^:\s*/, "");
+      if (value) {
+        return value;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 function hasNegationBefore(text: string, keywordIndex: number, windowWords: number = 5): boolean {
   const before = text.slice(0, keywordIndex).toLowerCase();
   const words = before.split(/\s+/).filter(w => w.length > 0);
@@ -292,6 +325,9 @@ export function createGenericDetailPlugin(
       // A2) Extract location using config selector
       // ========================================
       let location: string | undefined;
+      const rawCity = extractLabeledDetailValue($, ["City"]);
+      const rawArea = extractLabeledDetailValue($, ["Area", "Neighborhood", "Neighbourhood"]);
+      const rawIsland = extractLabeledDetailValue($, ["State/County", "County/State", "Island", "State"]);
 
       if (detailConfig.selectors?.location) {
         const locSelector = detailConfig.selectors.location;
@@ -553,6 +589,9 @@ export function createGenericDetailPlugin(
         price,
         description,
         location,
+        rawCity,
+        rawArea,
+        rawIsland,
         imageUrls: imageUrls.slice(0, 20),
         bedrooms,
         bathrooms,
