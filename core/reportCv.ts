@@ -8,6 +8,8 @@ interface SourceReport {
   status: string;
   lastError?: string;
   debugErrors?: string[];
+  consecutiveFailureCount?: number;
+  lastErrorClass?: string;
 }
 
 interface ListingReport {
@@ -107,6 +109,12 @@ function runReport(): void {
       console.log(`  ${source.name} [${source.status}]`);
       if (source.lastError) {
         console.log(`    Error: ${source.lastError}`);
+      }
+      if (source.consecutiveFailureCount && source.consecutiveFailureCount > 0) {
+        console.log(`    Consecutive parser failures: ${source.consecutiveFailureCount}`);
+      }
+      if (source.lastErrorClass) {
+        console.log(`    Error class: ${source.lastErrorClass}`);
       }
       if (source.debugErrors && source.debugErrors.length > 0) {
         console.log(`    Debug errors: ${source.debugErrors.length}`);

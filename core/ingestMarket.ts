@@ -37,6 +37,13 @@ import {
   SourceFetchConfig,
   dedupeImageUrls,
 } from "./genericFetcher";
+import {
+  getSourceHealthEntry,
+  hasParserDiagnostics,
+  loadSourceHealth,
+  persistSourceHealth,
+  shouldAutoPauseSource,
+} from "./sourceHealth";
 
 // ============================================
 // LISTING TYPES
@@ -143,8 +150,6 @@ async function genericFetchSource(
 ): Promise<{ listings: IngestListing[]; state: SourceState; debugErrors?: string[] }> {
   const state = { ...sourceState };
   state.scrapeAttempts = 1;
-  const hasParserDiagnostics = (errors: string[]): boolean =>
-    errors.some((err) => err.startsWith("page_parse_error") || err.startsWith("listing_parse_error"));
 
   console.log(`[${source.id}] Fetching via ${source.fetch_method || "http"}...`);
 
@@ -330,6 +335,8 @@ interface SourceReport {
   repairAttempts: number;
   lastError?: string;
   debugErrors?: string[];
+  consecutiveFailureCount?: number;
+  lastErrorClass?: string;
 }
 
 interface ListingReport {
@@ -399,6 +406,7 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
   const sourceStates: Map<string, SourceState> = new Map();
   const sourceReports: SourceReport[] = [];
   const sourceDebugErrors: Map<string, string[] | undefined> = new Map();
+  const sourceHealth = loadSourceHealth();
 
   for (const source of sources) {
     sourceStates.set(source.id, createInitialState());
@@ -424,6 +432,16 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       state.status = SourceStatus.PARTIAL_OK;
       state.lastError = "Under observation";
       sourceStates.set(source.id, state);
+      continue;
+    }
+
+    const persistedHealth = getSourceHealthEntry(sourceHealth, marketId, source.id);
+    if (source.type === "html" && shouldAutoPauseSource(persistedHealth)) {
+      const state = sourceStates.get(source.id)!;
+      state.status = SourceStatus.PAUSED_BY_SYSTEM;
+      state.lastError = `Auto-paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs`;
+      sourceStates.set(source.id, state);
+      console.log(`[${source.id}] Auto-paused due to repeated parser failures`);
       continue;
     }
 
@@ -501,6 +519,7 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
   // Build reports
   for (const source of sources) {
     const state = sourceStates.get(source.id) || createInitialState();
+    const persistedHealth = getSourceHealthEntry(sourceHealth, marketId, source.id);
     sourceReports.push({
       id: source.id,
       name: source.name,
@@ -509,6 +528,8 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       repairAttempts: state.repairAttempts,
       lastError: state.lastError,
       debugErrors: sourceDebugErrors.get(source.id),
+      consecutiveFailureCount: persistedHealth?.consecutiveFailureCount || 0,
+      lastErrorClass: persistedHealth?.lastErrorClass,
     });
   }
 
@@ -561,6 +582,21 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
     visibleListings,
     hiddenListings,
   };
+
+  const persistedHealthAfterRun = persistSourceHealth(
+    marketId,
+    sourceReports.map((source) => ({
+      id: source.id,
+      status: source.status,
+      lastError: source.lastError,
+      debugErrors: source.debugErrors,
+    }))
+  );
+  for (const source of sourceReports) {
+    const persisted = getSourceHealthEntry(persistedHealthAfterRun, marketId, source.id);
+    source.consecutiveFailureCount = persisted?.consecutiveFailureCount || 0;
+    source.lastErrorClass = persisted?.lastErrorClass;
+  }
 
   // Write artifacts
   const artifactsDir = path.resolve(__dirname, "../artifacts");

@@ -27,6 +27,12 @@ import { upsertListings, SupabaseListing } from "./supabaseWriter";
 import { parseLocation } from "./locationMapper";
 import { resolveCvIslandRecovery } from "./cvIslandRecovery";
 import { deriveProjectMetadata } from "./projectMetadata";
+import {
+  getSourceHealthEntry,
+  loadSourceHealth,
+  persistSourceHealth,
+  shouldAutoPauseSource,
+} from "./sourceHealth";
 
 // Generic config-driven fetcher — replaces all per-source parsers
 import {
@@ -453,6 +459,8 @@ interface SourceReport {
   repairAttempts: number;
   lastError?: string;
   debugErrors?: string[];
+  consecutiveFailureCount?: number;
+  lastErrorClass?: string;
 }
 
 interface ListingReport {
@@ -531,6 +539,7 @@ export async function runCvIngest(): Promise<IngestReport> {
   const sourceStates: Map<string, SourceState> = new Map();
   const sourceDebugErrors: Map<string, string[] | undefined> = new Map();
   const sourceReports: SourceReport[] = [];
+  const sourceHealth = loadSourceHealth();
 
   if (!sourcesResult.success || !sourcesResult.data) {
     console.error("Failed to load sources config:", sourcesResult.error);
@@ -604,6 +613,16 @@ export async function runCvIngest(): Promise<IngestReport> {
     }
 
     // IN: proceed with normal ingest
+    const persistedHealth = getSourceHealthEntry(sourceHealth, marketId, source.id);
+    if (source.type === "html" && shouldAutoPauseSource(persistedHealth)) {
+      const state = sourceStates.get(source.id)!;
+      state.status = SourceStatus.PAUSED_BY_SYSTEM;
+      state.lastError = `Auto-paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs`;
+      sourceStates.set(source.id, state);
+      console.log(`[${source.id}] Auto-paused due to repeated parser failures`);
+      continue;
+    }
+
     try {
       if (source.type === "html") {
         // Real source - fetch and parse
@@ -820,6 +839,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
   // Build reports
   for (const source of sources) {
     const state = sourceStates.get(source.id) || createInitialState();
+    const persistedHealth = getSourceHealthEntry(sourceHealth, marketId, source.id);
     sourceReports.push({
       id: source.id,
       name: source.name,
@@ -828,6 +848,8 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       repairAttempts: state.repairAttempts,
       lastError: state.lastError,
       debugErrors: sourceDebugErrors.get(source.id),
+      consecutiveFailureCount: persistedHealth?.consecutiveFailureCount || 0,
+      lastErrorClass: persistedHealth?.lastErrorClass,
     });
   }
 
@@ -894,6 +916,21 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
     visibleListings,
     hiddenListings,
   };
+
+  const persistedHealthAfterRun = persistSourceHealth(
+    marketId,
+    sourceReports.map((source) => ({
+      id: source.id,
+      status: source.status,
+      lastError: source.lastError,
+      debugErrors: source.debugErrors,
+    }))
+  );
+  for (const source of sourceReports) {
+    const persisted = getSourceHealthEntry(persistedHealthAfterRun, marketId, source.id);
+    source.consecutiveFailureCount = persisted?.consecutiveFailureCount || 0;
+    source.lastErrorClass = persisted?.lastErrorClass;
+  }
 
   // Write artifact
   const artifactsDir = path.resolve(__dirname, "../artifacts");
