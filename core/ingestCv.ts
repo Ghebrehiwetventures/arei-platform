@@ -38,6 +38,7 @@ import {
   replaceListingImages,
 } from "./trustPersistence";
 import { sanitizeArtifactPayload } from "./redactSecrets";
+import { deriveProjectMetadata } from "./projectMetadata";
 
 // Generic config-driven fetcher — replaces all per-source parsers
 import {
@@ -55,9 +56,12 @@ interface IngestListing {
   id: string;
   sourceId: string;
   sourceName: string;
+  source_ref?: string | null;
   title?: string;
   price?: number;
   priceText?: string;
+  project_flag?: boolean | null;
+  project_start_price?: number | null;
   description?: string;
   imageUrls?: string[];
   location?: string;
@@ -399,6 +403,19 @@ async function enrichDetailPages(
             return { enriched: 0, failed: 1 };
           }
 
+          const projectMetadata = deriveProjectMetadata({
+            title: extractResult.title || listing.title,
+            description: extractResult.description || listing.description,
+            price: extractResult.price || listing.price,
+            priceText: extractResult.priceText || listing.priceText,
+            html: fetchResult.html,
+            existing: {
+              source_ref: listing.source_ref,
+              project_flag: listing.project_flag,
+              project_start_price: listing.project_start_price,
+            },
+          });
+
           let wasEnriched = false;
 
         // Update description if better
@@ -436,6 +453,11 @@ async function enrichDetailPages(
         if (extractResult.terraceArea !== undefined) listing.terraceArea = extractResult.terraceArea;
         if (extractResult.amenities && extractResult.amenities.length > 0) {
           listing.amenities = extractResult.amenities;
+        }
+        if (projectMetadata.source_ref) listing.source_ref = projectMetadata.source_ref;
+        if (projectMetadata.project_flag != null) listing.project_flag = projectMetadata.project_flag;
+        if (projectMetadata.project_start_price != null) {
+          listing.project_start_price = projectMetadata.project_start_price;
         }
         // Update title if we got a better one
         if (extractResult.title && extractResult.title.length > (listing.title?.length || 0)) {
@@ -511,9 +533,12 @@ async function fetchRealSource(
       id: p.id,
       sourceId: p.sourceId,
       sourceName: p.sourceName,
+      source_ref: p.source_ref ?? null,
       title: p.title,
       price: p.price,
       priceText: p.priceText,
+      project_flag: p.project_flag ?? null,
+      project_start_price: p.project_start_price ?? null,
       description: p.description,
       imageUrls: p.imageUrls,
       location: p.location,
@@ -551,10 +576,13 @@ interface ListingReport {
   sourceId: string;
   sourceName: string;
   sourceUrl?: string;
+  source_ref?: string | null;
   title?: string;
   description?: string;
   price?: number;
   priceText?: string;
+  project_flag?: boolean | null;
+  project_start_price?: number | null;
   location?: string;
   images: string[];
   // Structured property data
@@ -861,6 +889,11 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
         if (result.price !== undefined && result.price >= 500) listing.price = result.price;
         if (result.priceText) listing.priceText = result.priceText;
         if (result.availabilityStatus) listing.availabilityStatus = result.availabilityStatus;
+        if (result.source_ref) listing.source_ref = result.source_ref;
+        if (result.project_flag != null) listing.project_flag = result.project_flag;
+        if (result.project_start_price != null) {
+          listing.project_start_price = result.project_start_price;
+        }
         // Map structured property data from enrichment
         if (result.bedrooms !== undefined) listing.bedrooms = result.bedrooms;
         if (result.bathrooms !== undefined) listing.bathrooms = result.bathrooms;
@@ -951,6 +984,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       sourceId: listing.sourceId,
       sourceName: listing.sourceName,
       sourceUrl: listing.detailUrl || listing.externalUrl || "",
+      source_ref: listing.source_ref ?? null,
       title: listing.title,
       description: listing.description,
       price: listing.price,
@@ -960,6 +994,8 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
           : listing.price
             ? `${listing.price} EUR`
             : undefined,
+      project_flag: listing.project_flag ?? null,
+      project_start_price: listing.project_start_price ?? null,
       location: resolvedLocationLabel,
       images: listing.imageUrls || [],
       // Structured property data
@@ -1039,9 +1075,12 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       id: listing.id,
       source_id: listing.sourceId,
       source_url: fullListing?.detailUrl || fullListing?.externalUrl || null,
+      source_ref: fullListing?.source_ref ?? null,
       title: listing.title,
       description: fullListing?.description,
       price: listing.price,
+      project_flag: fullListing?.project_flag ?? null,
+      project_start_price: fullListing?.project_start_price ?? null,
       currency: "EUR",
       country: "Cape Verde",
       island: resolvedLocation?.island,

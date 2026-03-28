@@ -2112,6 +2112,7 @@ function ListingDetail({
 }) {
   const facts: Array<{ label: string; value: string | number | null | undefined }> = [
     { label: "Type", value: listing.property_type },
+    { label: "Source ref", value: listing.source_ref },
     { label: "Bedrooms", value: listing.bedrooms },
     { label: "Bathrooms", value: listing.bathrooms },
     { label: "Area (m²)", value: listing.area_sqm != null ? Math.round(listing.area_sqm) : null },
@@ -2121,6 +2122,8 @@ function ListingDetail({
     { label: "Status", value: listing.status },
     { label: "Approved", value: listing.approved != null ? (listing.approved ? "Yes" : "No") : null },
     { label: "Price period", value: listing.price_period },
+    { label: "Project", value: listing.project_flag != null ? (listing.project_flag ? "Yes" : "No") : null },
+    { label: "Project start price", value: listing.project_start_price },
   ].filter((x) => x.value != null && x.value !== "");
 
   return (

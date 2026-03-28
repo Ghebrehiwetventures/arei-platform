@@ -9,6 +9,7 @@ import * as cheerio from "cheerio";
 import * as crypto from "crypto";
 import { Browser, Page } from "puppeteer";
 import { normalizeUrl } from "./normalizeUrl";
+import { deriveProjectMetadata } from "./projectMetadata";
 
 // Stealth: bypass Cloudflare/bot detection
 const puppeteerExtra = require("puppeteer-extra");
@@ -146,9 +147,12 @@ export interface GenericParsedListing {
   id: string;
   sourceId: string;
   sourceName: string;
+  source_ref?: string | null;
   title?: string;
   price?: number;
   priceText?: string;
+  project_flag?: boolean | null;
+  project_start_price?: number | null;
   description?: string;
   imageUrls: string[];
   location?: string;
@@ -602,6 +606,12 @@ function parseListingsFromHtml(
 
     const idPrefix = config.id_prefix || config.id.replace(/^cv_/, "");
 
+    const projectMetadata = deriveProjectMetadata({
+      title,
+      price,
+      priceText,
+    });
+
     listings.push({
       id:
         config.identity_mode === "normalized_url" && absoluteUrl
@@ -609,9 +619,12 @@ function parseListingsFromHtml(
           : generateListingId(idPrefix, title, price, absoluteUrl),
       sourceId: config.id,
       sourceName: config.name,
+      source_ref: projectMetadata.source_ref,
       title,
       price,
       priceText,
+      project_flag: projectMetadata.project_flag,
+      project_start_price: projectMetadata.project_start_price,
       description: undefined, // Usually not available on list pages
       imageUrls: dedupeImageUrls(imageUrls).slice(0, 10),
       location: location || undefined,

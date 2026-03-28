@@ -28,9 +28,12 @@ export interface DetailEnrichmentResult {
   skipped?: boolean;
   skippedReason?: string;
   canonicalId?: string;
+  source_ref?: string | null;
   title?: string;
   price?: number;
   priceText?: string;
+  project_flag?: boolean | null;
+  project_start_price?: number | null;
   description?: string;
   imageUrls: string[];
   location?: string;

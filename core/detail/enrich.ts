@@ -9,6 +9,7 @@ import { generateCanonicalId } from "./canonicalId";
 import { fetchHtml, FetchResult, FetchOptions } from "../fetchHtml";
 import { RuleViolation } from "../goldenRules";
 import { SourceStatus } from "../status";
+import { deriveProjectMetadata } from "../projectMetadata";
 
 // Browser-like headers for SimplyCapeVerde to reduce CAPTCHA triggers
 const SIMPLY_BROWSER_HEADERS: Record<string, string> = {
@@ -258,6 +259,13 @@ export async function runDetailEnrichment(
       extractResult.price || input.currentPrice,
       extractResult.location || input.currentLocation
     );
+    const projectMetadata = deriveProjectMetadata({
+      title: extractResult.title || input.currentTitle,
+      description: extractResult.description || input.currentDescription,
+      price: extractResult.price || input.currentPrice,
+      priceText: extractResult.priceText,
+      html: fetchResult.html,
+    });
 
     results.push({
       listingId,
@@ -265,9 +273,12 @@ export async function runDetailEnrichment(
       success: true,
       enriched: wasEnriched,
       canonicalId,
+      source_ref: projectMetadata.source_ref,
       title: extractResult.title || input.currentTitle,
       price: extractResult.price || input.currentPrice,
       priceText: extractResult.priceText,
+      project_flag: projectMetadata.project_flag,
+      project_start_price: projectMetadata.project_start_price,
       description: extractResult.description || input.currentDescription,
       imageUrls: allImages,
       location: extractResult.location || input.currentLocation,

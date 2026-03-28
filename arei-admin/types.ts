@@ -24,12 +24,14 @@ export interface Listing {
   id: string;
   title?: string;
   price?: number;
+  project_start_price?: number | null;
   currency?: string;
   images: string[];
   description?: string;
   sourceId: string;
   sourceName: string;
   sourceUrl?: string | null;
+  source_ref?: string | null;
   location?: string;
   island?: string | null;
   city?: string | null;
@@ -43,6 +45,7 @@ export interface Listing {
   violations?: string[];
   amenities?: string[];
   price_period?: string;
+  project_flag?: boolean | null;
 }
 
 export interface Market {
