@@ -425,7 +425,9 @@ function parseListingsFromHtml(
   html: string,
   config: SourceFetchConfig,
   processedUrls: Set<string>,
-  now: Date
+  now: Date,
+  debugErrors?: string[],
+  pageUrl?: string
 ): GenericParsedListing[] {
   const $ = cheerio.load(html);
   const listings: GenericParsedListing[] = [];
@@ -434,193 +436,204 @@ function parseListingsFromHtml(
   const rejectPatterns = (config.reject_url_patterns || []).map((p) => new RegExp(p, "i"));
 
   // Find listing containers
-  $(config.selectors.listing).each((_, containerEl) => {
-    const $container = $(containerEl);
+  $(config.selectors.listing).each((containerIndex, containerEl) => {
+    try {
+      const $container = $(containerEl);
 
-    // Find detail link
-    // First check if the container itself is a link (common pattern)
-    let href = $container.attr("href");
+      // Find detail link
+      // First check if the container itself is a link (common pattern)
+      let href = $container.attr("href");
 
-    // If not, look for a link inside the container
-    if (!href) {
-      const linkSelector = config.selectors.link || "a[href]";
-      const $link = $container.find(linkSelector).first();
-      href = $link.attr("href");
-    }
-
-    if (!href) return;
-
-    // Reject patterns check
-    for (const pattern of rejectPatterns) {
-      if (pattern.test(href)) return;
-    }
-
-    // Skip already processed
-    const absoluteUrl = makeAbsoluteUrl(href, config.base_url);
-    if (processedUrls.has(absoluteUrl)) return;
-
-    // Validate URL structure if min_path_segments specified
-    if (config.min_path_segments) {
-      try {
-        const parsed = new URL(absoluteUrl);
-        const segments = parsed.pathname.split("/").filter((s) => s);
-        if (segments.length < config.min_path_segments) return;
-      } catch {
-        return;
+      // If not, look for a link inside the container
+      if (!href) {
+        const linkSelector = config.selectors.link || "a[href]";
+        const $link = $container.find(linkSelector).first();
+        href = $link.attr("href");
       }
-    }
 
-    processedUrls.add(absoluteUrl);
+      if (!href) return;
 
-    // Extract title
-    let title = "";
-    if (config.selectors.title) {
-      const $titles = $container.find(config.selectors.title);
-      $titles.each((_, titleEl) => {
-        const text = $(titleEl).text().trim();
-        if (text.length > 15 && (!title || text.length > title.length)) {
-          title = text;
+      // Reject patterns check
+      for (const pattern of rejectPatterns) {
+        if (pattern.test(href)) return;
+      }
+
+      // Skip already processed
+      const absoluteUrl = makeAbsoluteUrl(href, config.base_url);
+      if (processedUrls.has(absoluteUrl)) return;
+
+      // Validate URL structure if min_path_segments specified
+      if (config.min_path_segments) {
+        try {
+          const parsed = new URL(absoluteUrl);
+          const segments = parsed.pathname.split("/").filter((s) => s);
+          if (segments.length < config.min_path_segments) return;
+        } catch {
+          return;
         }
-      });
-    }
-
-    // Fallback: extract from URL slug
-    if (!title) {
-      const urlParts = absoluteUrl.split("/").filter((p) => p);
-      const slug = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
-      if (slug && !slug.includes("?")) {
-        title = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
       }
-    }
 
-    title = title.replace(/\s+/g, " ").trim().slice(0, 200);
+      // Extract title
+      let title = "";
+      if (config.selectors.title) {
+        const $titles = $container.find(config.selectors.title);
+        $titles.each((_, titleEl) => {
+          const text = $(titleEl).text().trim();
+          if (text.length > 15 && (!title || text.length > title.length)) {
+            title = text;
+          }
+        });
+      }
 
-    // Extract price
-    let price: number | undefined;
-    let priceText: string | undefined;
-    if (config.selectors.price) {
-      priceText = $container.find(config.selectors.price).first().text();
-      price = parsePrice(priceText, config.price_format);
-    }
+      // Fallback: extract from URL slug
+      if (!title) {
+        const urlParts = absoluteUrl.split("/").filter((p) => p);
+        const slug = urlParts[urlParts.length - 1] || urlParts[urlParts.length - 2];
+        if (slug && !slug.includes("?")) {
+          title = slug.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+        }
+      }
 
-    // Fallback: find price in container text
-    if (!price) {
-      const containerText = $container.text();
-      const pricePatterns = [/€\s*[\d.\s,]+/g, /[\d.\s,]+\s*€/g];
-      for (const pattern of pricePatterns) {
-        const matches = containerText.matchAll(pattern);
-        for (const match of matches) {
-          const parsed = parsePrice(match[0], config.price_format);
-          if (parsed && parsed > 10000 && (!price || parsed > price)) {
-            price = parsed;
+      title = title.replace(/\s+/g, " ").trim().slice(0, 200);
+
+      // Extract price
+      let price: number | undefined;
+      let priceText = "";
+      if (config.selectors.price) {
+        priceText = $container.find(config.selectors.price).first().text();
+        price = parsePrice(priceText, config.price_format);
+      }
+
+      // Fallback: find price in container text
+      if (!price) {
+        const containerText = $container.text();
+        const pricePatterns = [/€\s*[\d.\s,]+/g, /[\d.\s,]+\s*€/g];
+        for (const pattern of pricePatterns) {
+          const matches = containerText.matchAll(pattern);
+          for (const match of matches) {
+            const parsed = parsePrice(match[0], config.price_format);
+            if (parsed && parsed > 10000 && (!price || parsed > price)) {
+              price = parsed;
+            }
           }
         }
       }
+
+      // Extract images from style blocks
+      const imageUrls = extractImagesFromStyleBlocks($, $container, config.base_url);
+
+      // Also check img tags (and image tags for SVG/XML sites like Property24)
+      const imgSelector = config.selectors.image || "img, image";
+      $container.find(imgSelector).each((_, img) => {
+        const src = $(img).attr("src") || $(img).attr("data-src") || $(img).attr("xlink:href");
+        if (src) {
+          const absUrl = makeAbsoluteUrl(src, config.base_url);
+          if (absUrl && isValidImageUrl(absUrl) && !imageUrls.includes(absUrl)) {
+            imageUrls.push(absUrl);
+          }
+        }
+
+        // Also check background-image on the matched image element itself (common pattern)
+        // Many sites use div/span with background-image instead of <img> tags for lazy loading
+        const style = $(img).attr("style") || "";
+        const bgMatch = style.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/i);
+        if (bgMatch?.[1]) {
+          const absUrl = makeAbsoluteUrl(bgMatch[1], config.base_url);
+          if (absUrl && isValidImageUrl(absUrl) && !imageUrls.includes(absUrl)) {
+            imageUrls.push(absUrl);
+          }
+        }
+      });
+
+      // Fallback: Also check for any <image> tags (SVG/XML format)
+      $container.find("image[src*='prop24'], image[src*='roam']").each((_, img) => {
+        const src = $(img).attr("src");
+        if (src) {
+          const absUrl = makeAbsoluteUrl(src, config.base_url);
+          if (absUrl && isValidImageUrl(absUrl) && !imageUrls.includes(absUrl)) {
+            imageUrls.push(absUrl);
+          }
+        }
+      });
+
+      // Extract location
+      let location = "";
+      if (config.location_patterns && config.location_patterns.length > 0) {
+        // Search in container text AND img alt attributes (common pattern for location info)
+        const containerText = $container.text();
+        const imgAlts = $container.find("img").map((_, img) => $(img).attr("alt") || "").get().join(" ");
+        const searchText = `${containerText} ${imgAlts}`;
+
+        for (const patternStr of config.location_patterns) {
+          const pattern = new RegExp(patternStr, "i");
+          const match = searchText.match(pattern);
+          if (match) {
+            location = match[0];
+            break;
+          }
+        }
+      } else if (config.selectors.location) {
+        location = $container.find(config.selectors.location).first().text().trim();
+      }
+
+      // Fallback: Extract location from URL path segments (common pattern)
+      // URLs like /for-sale/houses/nairobi/karen/123 -> "nairobi, karen"
+      if (!location && absoluteUrl) {
+        try {
+          const urlPath = new URL(absoluteUrl).pathname;
+          const segments = urlPath.split("/").filter((s) => s && s.length > 2);
+          // Skip common non-location segments
+          const skipWords = ["for-sale", "for-rent", "houses", "apartments", "flats", "property", "properties", "listing", "detail", "en", "pt"];
+          const locationSegments = segments.filter((s) => !skipWords.includes(s.toLowerCase()) && !/^\d+/.test(s));
+          if (locationSegments.length >= 1) {
+            // Take up to 2 location segments (e.g., "nairobi, karen")
+            location = locationSegments.slice(0, 2).map((s) => s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())).join(", ");
+          }
+        } catch {
+          // Invalid URL, skip
+        }
+      }
+
+      // Skip invalid entries
+      if (!title || title.length < 5) return;
+      if (title.toLowerCase() === "en" || title.toLowerCase() === "pt") return;
+
+      const idPrefix = config.id_prefix || config.id.replace(/^cv_/, "");
+
+      const projectMetadata = deriveProjectMetadata({
+        title,
+        price,
+        priceText,
+      });
+
+      listings.push({
+        id: generateListingId(idPrefix, title, price, absoluteUrl),
+        sourceId: config.id,
+        sourceName: config.name,
+        source_ref: projectMetadata.source_ref,
+        title,
+        price,
+        priceText,
+        project_flag: projectMetadata.project_flag,
+        project_start_price: projectMetadata.project_start_price,
+        description: undefined, // Usually not available on list pages
+        imageUrls: dedupeImageUrls(imageUrls).slice(0, 10),
+        location: location || undefined,
+        detailUrl: absoluteUrl?.replace(/\/+$/, "") || absoluteUrl,
+        createdAt: now,
+      });
+      processedUrls.add(absoluteUrl);
+    } catch (err) {
+      const errorMessage = err instanceof Error ? err.message : String(err);
+      const contextParts = [
+        "listing_parse_error",
+        `source=${config.id}`,
+        pageUrl ? `page=${pageUrl}` : null,
+        `container_index=${containerIndex}`,
+        `error=${JSON.stringify(errorMessage)}`,
+      ].filter(Boolean);
+      debugErrors?.push(contextParts.join(" "));
     }
-
-    // Extract images from style blocks
-    const imageUrls = extractImagesFromStyleBlocks($, $container, config.base_url);
-
-    // Also check img tags (and image tags for SVG/XML sites like Property24)
-    const imgSelector = config.selectors.image || "img, image";
-    $container.find(imgSelector).each((_, img) => {
-      const src = $(img).attr("src") || $(img).attr("data-src") || $(img).attr("xlink:href");
-      if (src) {
-        const absUrl = makeAbsoluteUrl(src, config.base_url);
-        if (absUrl && isValidImageUrl(absUrl) && !imageUrls.includes(absUrl)) {
-          imageUrls.push(absUrl);
-        }
-      }
-
-      // Also check background-image on the matched image element itself (common pattern)
-      // Many sites use div/span with background-image instead of <img> tags for lazy loading
-      const style = $(img).attr("style") || "";
-      const bgMatch = style.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/i);
-      if (bgMatch?.[1]) {
-        const absUrl = makeAbsoluteUrl(bgMatch[1], config.base_url);
-        if (absUrl && isValidImageUrl(absUrl) && !imageUrls.includes(absUrl)) {
-          imageUrls.push(absUrl);
-        }
-      }
-    });
-
-    // Fallback: Also check for any <image> tags (SVG/XML format)
-    $container.find("image[src*='prop24'], image[src*='roam']").each((_, img) => {
-      const src = $(img).attr("src");
-      if (src) {
-        const absUrl = makeAbsoluteUrl(src, config.base_url);
-        if (absUrl && isValidImageUrl(absUrl) && !imageUrls.includes(absUrl)) {
-          imageUrls.push(absUrl);
-        }
-      }
-    });
-
-    // Extract location
-    let location = "";
-    if (config.location_patterns && config.location_patterns.length > 0) {
-      // Search in container text AND img alt attributes (common pattern for location info)
-      const containerText = $container.text();
-      const imgAlts = $container.find("img").map((_, img) => $(img).attr("alt") || "").get().join(" ");
-      const searchText = `${containerText} ${imgAlts}`;
-
-      for (const patternStr of config.location_patterns) {
-        const pattern = new RegExp(patternStr, "i");
-        const match = searchText.match(pattern);
-        if (match) {
-          location = match[0];
-          break;
-        }
-      }
-    } else if (config.selectors.location) {
-      location = $container.find(config.selectors.location).first().text().trim();
-    }
-
-    // Fallback: Extract location from URL path segments (common pattern)
-    // URLs like /for-sale/houses/nairobi/karen/123 -> "nairobi, karen"
-    if (!location && absoluteUrl) {
-      try {
-        const urlPath = new URL(absoluteUrl).pathname;
-        const segments = urlPath.split("/").filter((s) => s && s.length > 2);
-        // Skip common non-location segments
-        const skipWords = ["for-sale", "for-rent", "houses", "apartments", "flats", "property", "properties", "listing", "detail", "en", "pt"];
-        const locationSegments = segments.filter((s) => !skipWords.includes(s.toLowerCase()) && !/^\d+/.test(s));
-        if (locationSegments.length >= 1) {
-          // Take up to 2 location segments (e.g., "nairobi, karen")
-          location = locationSegments.slice(0, 2).map((s) => s.replace(/-/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())).join(", ");
-        }
-      } catch {
-        // Invalid URL, skip
-      }
-    }
-
-    // Skip invalid entries
-    if (!title || title.length < 5) return;
-    if (title.toLowerCase() === "en" || title.toLowerCase() === "pt") return;
-
-    const idPrefix = config.id_prefix || config.id.replace(/^cv_/, "");
-
-    const projectMetadata = deriveProjectMetadata({
-      title,
-      price,
-      priceText,
-    });
-
-    listings.push({
-      id: generateListingId(idPrefix, title, price, absoluteUrl),
-      sourceId: config.id,
-      sourceName: config.name,
-      source_ref: projectMetadata.source_ref,
-      title,
-      price,
-      priceText,
-      project_flag: projectMetadata.project_flag,
-      project_start_price: projectMetadata.project_start_price,
-      description: undefined, // Usually not available on list pages
-      imageUrls: dedupeImageUrls(imageUrls).slice(0, 10),
-      location: location || undefined,
-      detailUrl: absoluteUrl?.replace(/\/+$/, "") || absoluteUrl,
-      createdAt: now,
-    });
   });
 
   return listings;
@@ -1201,7 +1214,7 @@ export async function genericPaginatedFetcher(
       debug.pagesSuccessful++;
       debug.htmlLengths.push(html.length);
 
-      const pageListings = parseListingsFromHtml(html, config, processedUrls, now);
+      const pageListings = parseListingsFromHtml(html, config, processedUrls, now, debug.errors);
       debug.listingsPerPage.push(pageListings.length);
 
       if (process.env.DEBUG_GENERIC === "1") {
@@ -1322,7 +1335,7 @@ export async function genericPaginatedFetcher(
         debug.pagesSuccessful++;
 
         // Parse listings from HTML fragment
-        const pageListings = parseListingsFromHtml(htmlContent, config, processedUrls, now);
+        const pageListings = parseListingsFromHtml(htmlContent, config, processedUrls, now, debug.errors, ajaxUrl);
         debug.listingsPerPage.push(pageListings.length);
 
         if (process.env.DEBUG_GENERIC === "1") {
@@ -1425,7 +1438,7 @@ export async function genericPaginatedFetcher(
     debug.pagesSuccessful++;
 
     // Parse listings from this page
-    const pageListings = parseListingsFromHtml(result.html, config, processedUrls, now);
+    const pageListings = parseListingsFromHtml(result.html, config, processedUrls, now, debug.errors, url);
     debug.listingsPerPage.push(pageListings.length);
 
     if (process.env.DEBUG_GENERIC === "1") {
