@@ -14,6 +14,8 @@ export interface SourceState {
   debugErrors?: string[];
   consecutiveFailureCount?: number;
   lastErrorClass?: string;
+  pauseReason?: string;
+  pauseDetail?: string;
   pausedAt?: Date;
 }
 

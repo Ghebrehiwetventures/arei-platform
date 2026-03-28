@@ -36,6 +36,8 @@ async function runRepairLoop(
   while (true) {
     if (shouldStop(ctx)) {
       state.status = SourceStatus.PAUSED_BY_SYSTEM;
+      state.pauseReason = "repair_limit_exceeded";
+      state.pauseDetail = "Paused after retry/repair budget was exhausted";
       state.pausedAt = new Date();
       return { state, stopped: true, reason: "limit_exceeded" };
     }
@@ -61,6 +63,8 @@ async function runRepairLoop(
 
     if (shouldStop(ctx)) {
       state.status = SourceStatus.PAUSED_BY_SYSTEM;
+      state.pauseReason = "repair_limit_exceeded";
+      state.pauseDetail = "Paused after retry/repair budget was exhausted";
       state.pausedAt = new Date();
       return { state, stopped: true, reason: "limit_exceeded" };
     }

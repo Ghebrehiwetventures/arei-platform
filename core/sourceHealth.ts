@@ -10,6 +10,8 @@ export interface SourceHealthEntry {
   consecutiveFailureCount: number;
   lastStatus: SourceStatus | string;
   lastErrorClass: string;
+  pauseReason?: string;
+  pauseDetail?: string;
   lastSeenAt: string;
 }
 
@@ -24,6 +26,8 @@ export interface SourceHealthReportInput {
   status: SourceStatus | string;
   lastError?: string;
   debugErrors?: string[];
+  pauseReason?: string;
+  pauseDetail?: string;
 }
 
 const SOURCE_HEALTH_VERSION = 1;
@@ -109,8 +113,13 @@ export function persistSourceHealth(
     const lastErrorClass = classifyLastError(source.status, source.debugErrors);
     const wasAutoPausedByParserFailures =
       source.status === SourceStatus.PAUSED_BY_SYSTEM &&
-      source.lastError?.startsWith("Auto-paused after") === true &&
+      (source.pauseReason === "parser_failure_threshold" ||
+        source.lastError?.startsWith("Auto-paused after") === true) &&
       previous?.lastErrorClass === PARSER_FAILURE_ERROR_CLASS;
+    const pauseReason =
+      source.status === SourceStatus.PAUSED_BY_SYSTEM ? source.pauseReason || previous?.pauseReason : undefined;
+    const pauseDetail =
+      source.status === SourceStatus.PAUSED_BY_SYSTEM ? source.pauseDetail || source.lastError || previous?.pauseDetail : undefined;
 
     let consecutiveFailureCount = 0;
     if (lastErrorClass === PARSER_FAILURE_ERROR_CLASS) {
@@ -125,6 +134,8 @@ export function persistSourceHealth(
       consecutiveFailureCount,
       lastStatus: source.status,
       lastErrorClass: wasAutoPausedByParserFailures ? PARSER_FAILURE_ERROR_CLASS : lastErrorClass,
+      pauseReason,
+      pauseDetail,
       lastSeenAt: now,
     };
   }

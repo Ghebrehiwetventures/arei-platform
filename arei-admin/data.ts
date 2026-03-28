@@ -17,6 +17,8 @@ interface IngestReportSource {
   debugErrors?: string[];
   consecutiveFailureCount?: number;
   lastErrorClass?: string;
+  pauseReason?: string;
+  pauseDetail?: string;
 }
 
 interface IngestReportListing {
@@ -102,6 +104,8 @@ function convertReportToMarket(report: IngestReport): Market {
       debugErrors: s.debugErrors,
       consecutiveFailureCount: s.consecutiveFailureCount,
       lastErrorClass: s.lastErrorClass,
+      pauseReason: s.pauseReason,
+      pauseDetail: s.pauseDetail,
     },
   }));
 

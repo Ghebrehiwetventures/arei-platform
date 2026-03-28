@@ -461,6 +461,8 @@ interface SourceReport {
   debugErrors?: string[];
   consecutiveFailureCount?: number;
   lastErrorClass?: string;
+  pauseReason?: string;
+  pauseDetail?: string;
 }
 
 interface ListingReport {
@@ -618,6 +620,10 @@ export async function runCvIngest(): Promise<IngestReport> {
       const state = sourceStates.get(source.id)!;
       state.status = SourceStatus.PAUSED_BY_SYSTEM;
       state.lastError = `Auto-paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs`;
+      state.pauseReason = persistedHealth?.pauseReason || "parser_failure_threshold";
+      state.pauseDetail =
+        persistedHealth?.pauseDetail ||
+        `Paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs`;
       sourceStates.set(source.id, state);
       console.log(`[${source.id}] Auto-paused due to repeated parser failures`);
       continue;
@@ -810,6 +816,11 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       const state = sourceStates.get(enrichResult.pausedSource.sourceId);
       if (state) {
         state.status = enrichResult.pausedSource.status;
+        state.pauseReason = enrichResult.pausedSource.pauseReason;
+        state.pauseDetail = enrichResult.pausedSource.pauseDetail;
+        if (enrichResult.pausedSource.pauseDetail) {
+          state.lastError = enrichResult.pausedSource.pauseDetail;
+        }
         sourceStates.set(enrichResult.pausedSource.sourceId, state);
       }
     }
@@ -850,6 +861,8 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       debugErrors: sourceDebugErrors.get(source.id),
       consecutiveFailureCount: persistedHealth?.consecutiveFailureCount || 0,
       lastErrorClass: persistedHealth?.lastErrorClass,
+      pauseReason: state.pauseReason || persistedHealth?.pauseReason,
+      pauseDetail: state.pauseDetail || persistedHealth?.pauseDetail,
     });
   }
 
@@ -924,12 +937,16 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       status: source.status,
       lastError: source.lastError,
       debugErrors: source.debugErrors,
+      pauseReason: source.pauseReason,
+      pauseDetail: source.pauseDetail,
     }))
   );
   for (const source of sourceReports) {
     const persisted = getSourceHealthEntry(persistedHealthAfterRun, marketId, source.id);
     source.consecutiveFailureCount = persisted?.consecutiveFailureCount || 0;
     source.lastErrorClass = persisted?.lastErrorClass;
+    source.pauseReason = persisted?.pauseReason;
+    source.pauseDetail = persisted?.pauseDetail;
   }
 
   // Write artifact

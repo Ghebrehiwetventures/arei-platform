@@ -10,6 +10,8 @@ interface SourceReport {
   debugErrors?: string[];
   consecutiveFailureCount?: number;
   lastErrorClass?: string;
+  pauseReason?: string;
+  pauseDetail?: string;
 }
 
 interface ListingReport {
@@ -109,6 +111,12 @@ function runReport(): void {
       console.log(`  ${source.name} [${source.status}]`);
       if (source.lastError) {
         console.log(`    Error: ${source.lastError}`);
+      }
+      if (source.pauseReason) {
+        console.log(`    Pause reason: ${source.pauseReason}`);
+      }
+      if (source.pauseDetail) {
+        console.log(`    Pause detail: ${source.pauseDetail}`);
       }
       if (source.consecutiveFailureCount && source.consecutiveFailureCount > 0) {
         console.log(`    Consecutive parser failures: ${source.consecutiveFailureCount}`);

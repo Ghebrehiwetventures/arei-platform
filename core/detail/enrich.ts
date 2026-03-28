@@ -77,7 +77,7 @@ export async function runDetailEnrichment(
 ): Promise<{
   results: DetailEnrichmentResult[];
   summary: EnrichmentSummary;
-  pausedSource?: { sourceId: string; status: SourceStatus };
+  pausedSource?: { sourceId: string; status: SourceStatus; pauseReason?: string; pauseDetail?: string };
 }> {
   const factory = getStrategyFactory();
 
@@ -182,7 +182,12 @@ export async function runDetailEnrichment(
         continue;
       }
       stoppedReason = "HTTP_403";
-      pausedSource = { sourceId: input.sourceId, status: SourceStatus.PAUSED_BY_SYSTEM };
+      pausedSource = {
+        sourceId: input.sourceId,
+        status: SourceStatus.PAUSED_BY_SYSTEM,
+        pauseReason: "detail_http_403",
+        pauseDetail: `Detail enrichment paused after HTTP 403 for ${detailUrl}`,
+      };
       console.log(`[Enrichment] 403 - PAUSED_BY_SYSTEM`);
       break;
     }
@@ -194,7 +199,12 @@ export async function runDetailEnrichment(
         continue;
       }
       stoppedReason = "HTTP_429";
-      pausedSource = { sourceId: input.sourceId, status: SourceStatus.PAUSED_BY_SYSTEM };
+      pausedSource = {
+        sourceId: input.sourceId,
+        status: SourceStatus.PAUSED_BY_SYSTEM,
+        pauseReason: "detail_http_429",
+        pauseDetail: `Detail enrichment paused after HTTP 429 for ${detailUrl}`,
+      };
       console.log(`[Enrichment] 429 - PAUSED_BY_SYSTEM`);
       break;
     }
@@ -206,7 +216,12 @@ export async function runDetailEnrichment(
         continue;
       }
       stoppedReason = "CAPTCHA";
-      pausedSource = { sourceId: input.sourceId, status: SourceStatus.PAUSED_BY_SYSTEM };
+      pausedSource = {
+        sourceId: input.sourceId,
+        status: SourceStatus.PAUSED_BY_SYSTEM,
+        pauseReason: "detail_captcha",
+        pauseDetail: `Detail enrichment paused after CAPTCHA detection for ${detailUrl}`,
+      };
       console.log(`[Enrichment] CAPTCHA - PAUSED_BY_SYSTEM`);
       break;
     }

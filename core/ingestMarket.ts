@@ -337,6 +337,8 @@ interface SourceReport {
   debugErrors?: string[];
   consecutiveFailureCount?: number;
   lastErrorClass?: string;
+  pauseReason?: string;
+  pauseDetail?: string;
 }
 
 interface ListingReport {
@@ -440,6 +442,10 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       const state = sourceStates.get(source.id)!;
       state.status = SourceStatus.PAUSED_BY_SYSTEM;
       state.lastError = `Auto-paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs`;
+      state.pauseReason = persistedHealth?.pauseReason || "parser_failure_threshold";
+      state.pauseDetail =
+        persistedHealth?.pauseDetail ||
+        `Paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs`;
       sourceStates.set(source.id, state);
       console.log(`[${source.id}] Auto-paused due to repeated parser failures`);
       continue;
@@ -530,6 +536,8 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       debugErrors: sourceDebugErrors.get(source.id),
       consecutiveFailureCount: persistedHealth?.consecutiveFailureCount || 0,
       lastErrorClass: persistedHealth?.lastErrorClass,
+      pauseReason: state.pauseReason || persistedHealth?.pauseReason,
+      pauseDetail: state.pauseDetail || persistedHealth?.pauseDetail,
     });
   }
 
@@ -590,12 +598,16 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       status: source.status,
       lastError: source.lastError,
       debugErrors: source.debugErrors,
+      pauseReason: source.pauseReason,
+      pauseDetail: source.pauseDetail,
     }))
   );
   for (const source of sourceReports) {
     const persisted = getSourceHealthEntry(persistedHealthAfterRun, marketId, source.id);
     source.consecutiveFailureCount = persisted?.consecutiveFailureCount || 0;
     source.lastErrorClass = persisted?.lastErrorClass;
+    source.pauseReason = persisted?.pauseReason;
+    source.pauseDetail = persisted?.pauseDetail;
   }
 
   // Write artifacts
