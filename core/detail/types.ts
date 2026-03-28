@@ -31,12 +31,9 @@ export interface DetailEnrichmentResult {
   source_ref?: string | null;
   title?: string;
   price?: number;
-<<<<<<< HEAD
-=======
   priceText?: string;
   project_flag?: boolean | null;
   project_start_price?: number | null;
->>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
   description?: string;
   imageUrls: string[];
   location?: string;
@@ -64,6 +61,7 @@ export interface DetailExtractResult {
   success: boolean;
   title?: string;
   price?: number;
+  priceText?: string;
   description?: string;
   imageUrls: string[];
   location?: string;

@@ -26,22 +26,7 @@ import { DetailEnrichmentInput } from "./detail/types";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
 import { parseLocation } from "./locationMapper";
 import { resolveCvIslandRecovery } from "./cvIslandRecovery";
-<<<<<<< HEAD
-=======
-import {
-  runTrustStage,
-  LocationConfidence,
-  TrustStageInput,
-} from "./trustStage";
-import { computeTrustMetrics } from "./trustMetrics";
-import {
-  persistRunAndSourceMetrics,
-  replaceDuplicateMatches,
-  replaceListingImages,
-} from "./trustPersistence";
-import { sanitizeArtifactPayload } from "./redactSecrets";
 import { deriveProjectMetadata } from "./projectMetadata";
->>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
 
 // Generic config-driven fetcher — replaces all per-source parsers
 import {
@@ -62,12 +47,9 @@ interface IngestListing {
   source_ref?: string | null;
   title?: string;
   price?: number;
-<<<<<<< HEAD
-=======
   priceText?: string;
   project_flag?: boolean | null;
   project_start_price?: number | null;
->>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
   description?: string;
   imageUrls?: string[];
   location?: string;
@@ -301,57 +283,20 @@ async function enrichDetailPages(
           continue;
         }
 
-<<<<<<< HEAD
+        const projectMetadata = deriveProjectMetadata({
+          title: extractResult.title || listing.title,
+          description: extractResult.description || listing.description,
+          price: extractResult.price || listing.price,
+          priceText: extractResult.priceText || listing.priceText,
+          html: fetchResult.html,
+          existing: {
+            source_ref: listing.source_ref,
+            project_flag: listing.project_flag,
+            project_start_price: listing.project_start_price,
+          },
+        });
+
         let wasEnriched = false;
-=======
-        // Rate limit
-        if (delayMs > 0) {
-          const jitterMs = delayMs === configuredDelayMs
-            ? Math.floor(Math.random() * 1000)
-            : 0;
-          await sleep(delayMs + jitterMs);
-        }
-
-        try {
-          const DETAIL_FETCH_TIMEOUT_MS = 45_000;
-          const fetchResult = useHeadless
-            ? await Promise.race([
-                fetchHeadless(listing.detailUrl),
-                new Promise<{ success: false; error: string }>((_, reject) =>
-                  setTimeout(() => reject(new Error(`detail fetch timeout after ${DETAIL_FETCH_TIMEOUT_MS / 1000}s`)), DETAIL_FETCH_TIMEOUT_MS)
-                ),
-              ])
-            : await fetchHtml(listing.detailUrl);
-
-          if (!fetchResult.success || !fetchResult.html) {
-            listing.detail_error = fetchResult.error || "fetch failed";
-            console.log(`[${source.id} Detail] ✗ ${listing.id} fetch failed`);
-            return { enriched: 0, failed: 1 };
-          }
-
-          const extractResult = plugin.extract(fetchResult.html, listing.detailUrl);
-
-          if (!extractResult.success) {
-            listing.detail_error = "extraction failed";
-            console.log(`[${source.id} Detail] ✗ ${listing.id} extraction failed`);
-            return { enriched: 0, failed: 1 };
-          }
-
-          const projectMetadata = deriveProjectMetadata({
-            title: extractResult.title || listing.title,
-            description: extractResult.description || listing.description,
-            price: extractResult.price || listing.price,
-            priceText: extractResult.priceText || listing.priceText,
-            html: fetchResult.html,
-            existing: {
-              source_ref: listing.source_ref,
-              project_flag: listing.project_flag,
-              project_start_price: listing.project_start_price,
-            },
-          });
-
-          let wasEnriched = false;
->>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
 
         // Update description if better
         if (extractResult.description && extractResult.description.length >= 50) {
@@ -379,6 +324,9 @@ async function enrichDetailPages(
           listing.price = extractResult.price;
           wasEnriched = true;
           console.log(`[${source.id} Detail]   price recovered: ${extractResult.price}`);
+        }
+        if (extractResult.priceText && extractResult.priceText !== listing.priceText) {
+          listing.priceText = extractResult.priceText;
         }
 
         // Update structured data
@@ -467,12 +415,9 @@ async function fetchRealSource(
       source_ref: p.source_ref ?? null,
       title: p.title,
       price: p.price,
-<<<<<<< HEAD
-=======
       priceText: p.priceText,
       project_flag: p.project_flag ?? null,
       project_start_price: p.project_start_price ?? null,
->>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
       description: p.description,
       imageUrls: p.imageUrls,
       location: p.location,
@@ -813,29 +758,13 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
         listing.detail_error = null;
         listing.detail_skipped_reason = null;
 
-<<<<<<< HEAD
-        // Apply enriched data
-        if (result.enriched) {
-          listing.imageUrls = result.imageUrls;
-          if (result.description) listing.description = result.description;
-          if (result.title) listing.title = result.title;
-          if (result.price !== undefined && result.price >= 500) listing.price = result.price;
-          // Map structured property data from enrichment
-          if (result.bedrooms !== undefined) listing.bedrooms = result.bedrooms;
-          if (result.bathrooms !== undefined) listing.bathrooms = result.bathrooms;
-          if (result.parkingSpaces !== undefined) listing.parkingSpaces = result.parkingSpaces;
-          if (result.terraceArea !== undefined) listing.terraceArea = result.terraceArea;
-          if (result.amenities !== undefined) listing.amenities = result.amenities;
-        }
-=======
         // Apply extracted data even when enrichment was "lightweight" and only
-        // recovered trust signals such as price text or availability status.
+        // recovered metadata or price text.
         listing.imageUrls = result.imageUrls;
         if (result.description) listing.description = result.description;
         if (result.title) listing.title = result.title;
         if (result.price !== undefined && result.price >= 500) listing.price = result.price;
         if (result.priceText) listing.priceText = result.priceText;
-        if (result.availabilityStatus) listing.availabilityStatus = result.availabilityStatus;
         if (result.source_ref) listing.source_ref = result.source_ref;
         if (result.project_flag != null) listing.project_flag = result.project_flag;
         if (result.project_start_price != null) {
@@ -847,7 +776,6 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
         if (result.parkingSpaces !== undefined) listing.parkingSpaces = result.parkingSpaces;
         if (result.terraceArea !== undefined) listing.terraceArea = result.terraceArea;
         if (result.amenities !== undefined) listing.amenities = result.amenities;
->>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
       }
     }
 
@@ -912,20 +840,10 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       title: listing.title,
       description: listing.description,
       price: listing.price,
-<<<<<<< HEAD
-      priceText: listing.price ? `${listing.price} EUR` : undefined,
-      location: listing.location,
-=======
-      priceText:
-        trust.price_status === "on_request"
-          ? "Price on request"
-          : listing.price
-            ? `${listing.price} EUR`
-            : undefined,
+      priceText: listing.priceText || (listing.price ? `${listing.price} EUR` : undefined),
       project_flag: listing.project_flag ?? null,
       project_start_price: listing.project_start_price ?? null,
-      location: resolvedLocationLabel,
->>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
+      location: listing.location,
       images: listing.imageUrls || [],
       // Structured property data
       bedrooms: listing.bedrooms,

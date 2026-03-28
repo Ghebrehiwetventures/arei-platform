@@ -271,12 +271,9 @@ export async function runDetailEnrichment(
       source_ref: projectMetadata.source_ref,
       title: extractResult.title || input.currentTitle,
       price: extractResult.price || input.currentPrice,
-<<<<<<< HEAD
-=======
       priceText: extractResult.priceText,
       project_flag: projectMetadata.project_flag,
       project_start_price: projectMetadata.project_start_price,
->>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
       description: extractResult.description || input.currentDescription,
       imageUrls: allImages,
       location: extractResult.location || input.currentLocation,
