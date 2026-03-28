@@ -64,7 +64,7 @@ Current execution note:
 
 | Identifier | Current value | Proposed value | Layer | Where it appears | Downstream dependencies | Risk level | Rollback note | Decision status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| KazaVerde Vercel project | `kazaverde-web` | no change | technical | Vercel project UI; `docs/kazaverde_deploy_contract.md`; `.vercel-deploy.md`; `docs/04-platform/tooling-handoff.md` | production deploys; preview URLs; deploy docs; release reporting; custom domain attachment | High | Rename project back; re-check domain attachment and build settings | keep |
+| KazaVerde Vercel project | `kazaverde-web` | no change | technical | Vercel project UI; `docs/kazaverde_deploy_contract.md`; `docs/04-platform/vercel-deploy.md`; `docs/04-platform/tooling-handoff.md` | production deploys; preview URLs; deploy docs; release reporting; custom domain attachment | High | Rename project back; re-check domain attachment and build settings | keep |
 | Admin Vercel project | `arei-admin` | no change | technical | Vercel project UI; `arei-admin/DEPLOY.md`; deploy scripts/docs | admin deploys; preview URLs; deploy docs; internal operations runbooks | High | Rename project back; re-check root directory and build settings | keep |
 | KazaVerde preview domain pattern | `<project>.vercel.app` for `kazaverde-web` | no change | technical | `docs/kazaverde_deploy_contract.md` | preview verification; deploy reports; release checks | Medium | Revert project rename if preview URL identity causes confusion | keep |
 
@@ -72,7 +72,7 @@ Current execution note:
 
 | Identifier | Current value | Proposed value | Layer | Where it appears | Downstream dependencies | Risk level | Rollback note | Decision status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| KazaVerde production domain | `kazaverde.com` | no change | public | `docs/kazaverde_deploy_contract.md`; `.vercel-deploy.md`; `docs/04-platform/tooling-handoff.md`; `kazaverde-web/public/robots.txt`; `kazaverde-web/public/sitemap.xml`; app content | production verification; SEO; sitemap; deploy validation; public trust | High | Reattach `kazaverde.com` to the correct Vercel project and re-verify production | keep |
+| KazaVerde production domain | `kazaverde.com` | no change | public | `docs/kazaverde_deploy_contract.md`; `docs/04-platform/vercel-deploy.md`; `docs/04-platform/tooling-handoff.md`; `kazaverde-web/public/robots.txt`; `kazaverde-web/public/sitemap.xml`; app content | production verification; SEO; sitemap; deploy validation; public trust | High | Reattach `kazaverde.com` to the correct Vercel project and re-verify production | keep |
 | KazaVerde preview domain class | `*.vercel.app` | no change | technical | `docs/kazaverde_deploy_contract.md` | preview testing; deploy reporting; production-vs-preview checks | Low | Restore prior project naming if preview-domain drift creates confusion | keep |
 | Admin public custom domain | none documented | no public custom domain planned | public | deployment docs only; Vercel UI audit required | admin access model; internal routing expectations | Medium | Remove any accidental public-domain assignment from admin project | keep |
 
@@ -81,7 +81,7 @@ Current execution note:
 | Identifier | Current value | Proposed value | Layer | Where it appears | Downstream dependencies | Risk level | Rollback note | Decision status |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 | KazaVerde deploy contract doc | `docs/kazaverde_deploy_contract.md` | no file rename; align content only | technical | `docs/kazaverde_deploy_contract.md` | KazaVerde deploy verification; production sign-off; release reporting | Medium | Revert doc-only commit if mapping becomes less clear | keep |
-| Monorepo Vercel deploy doc | `.vercel-deploy.md` | no file rename; align content only | technical | `.vercel-deploy.md` | Vercel setup; root-directory assumptions; deploy workflow | Medium | Revert doc-only commit if workflow becomes ambiguous | keep |
+| Monorepo Vercel deploy doc | `docs/04-platform/vercel-deploy.md` | no further file rename planned | technical | `docs/04-platform/vercel-deploy.md` | Vercel setup; root-directory assumptions; deploy workflow | Medium | Revert doc-only commit if workflow becomes ambiguous | keep |
 | Admin deploy doc | `arei-admin/DEPLOY.md` | no file rename; align content only | technical | `arei-admin/DEPLOY.md` | admin deployment; root-directory rules; internal ops workflow | Medium | Revert doc-only commit if admin deployment guidance regresses | keep |
 | Platform tooling handoff doc | `docs/04-platform/tooling-handoff.md` | no file rename; align content only | technical | `docs/04-platform/tooling-handoff.md` | onboarding; handoff; implementation context | Low | Revert doc-only commit if naming map becomes inconsistent | keep |
 | Security baseline doc | `docs/04-platform/security-baseline.md` | no file rename; align content only | technical | `docs/04-platform/security-baseline.md` | security review; deploy assumptions; admin/public boundary | Low | Revert doc-only commit if naming or surface boundaries become unclear | keep |

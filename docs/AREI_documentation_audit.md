@@ -82,7 +82,7 @@ docs/
 | Current file | Target bucket | Target canonical doc | Notes |
 |---|---|---|---|
 | `docs/ARCHITECTURE.md` | 02 Data Engine | `02-data-engine/ingestion-architecture.md` | Strong base for generic pipeline architecture. |
-| `GENERIC_PIPELINE_GUIDE_v2.md` | 02 Data Engine | `02-data-engine/ingestion-architecture.md` or `02-data-engine/normalization-rules.md` | Consolidate with architecture, avoid parallel explanations. |
+| `docs/02-data-engine/generic-pipeline-guide-v2.md` | 02 Data Engine | `02-data-engine/ingestion-architecture.md` or `02-data-engine/normalization-rules.md` | Consolidate with architecture, avoid parallel explanations. |
 | `docs/fingerprint_v1.md` | 02 Data Engine | `02-data-engine/deduplication.md` | Keep frozen logic, move canonical summary to dedup doc. |
 | `docs/dedup_observability_triggers_v1.md` | 02 Data Engine | `02-data-engine/deduplication.md` | Observability belongs with dedup behavior. |
 | `markets/cv/README.md` | 02 Data Engine | `02-data-engine/source-registry.md` and `02-data-engine/market-coverage-metrics.md` | Useful source and coverage input. |
@@ -98,15 +98,15 @@ docs/
 | `docs/FINAL_POC_SUMMARY.md` | 01 Strategy | `01-strategy/vision.md` and `01-strategy/market-thesis.md` | Use as supporting evidence, not terminal doc. |
 | `docs/POC_RESULTS.md` | 02 Data Engine | `02-data-engine/market-coverage-metrics.md` | Strong quantitative input. |
 | `docs/kaza-verde-cv-dominated-kpi.md` | 05 Quality Control | `05-quality-control/launch-risks.md` and `05-quality-control/qa-checklist.md` | KPI thresholds should inform launch readiness. |
-| `launch_plan.md` | 06 Go To Market | `06-go-to-market/launch-plan.md` | Near-direct canonical input. |
+| `docs/06-go-to-market/launch-plan.md` | 06 Go To Market | `06-go-to-market/launch-plan.md` | Near-direct canonical input. |
 | `docs/kazaverde_deploy_contract.md` | 04 Platform | `04-platform/deployment.md` | Canonical deploy truth. |
-| `.vercel-deploy.md` | 04 Platform | `04-platform/deployment.md` | Consolidate monorepo deploy details. |
+| `docs/04-platform/vercel-deploy.md` | 04 Platform | `04-platform/deployment.md` | Consolidate monorepo deploy details. |
 | `arei-admin/DEPLOY.md` | 04 Platform | `04-platform/deployment.md` and `04-platform/admin-tools.md` | Admin deployment plus admin surface context. |
 | `arei-admin/FAS1_VERIFICATION.md` | 05 Quality Control | `05-quality-control/validation-reports.md` or `05-quality-control/qa-checklist.md` | Verification procedure should become a repeatable QC artifact. |
 | `packages/arei-sdk/README.md` | 04 Platform | `04-platform/api-layer.md` | Good input for public data access model. |
 | `docs/ADD_NEW_MARKET.md` | 08 Expansion | `08-expansion/new-market-playbook.md` | Strong starting point. |
 | `docs/MIGRATION_LOVABLE_TO_LOCAL.md` | 04 Platform | `04-platform/tooling-handoff.md` | Keep only enduring repo/tooling knowledge. |
-| `web/README.md` | 04 Platform | `04-platform/tooling-handoff.md` | Migration staging context, likely reduced after cleanup. |
+| `archive/web/README.md` | 04 Platform | `04-platform/tooling-handoff.md` | Historical migration staging context, not active repo structure. |
 | `docs/GOVERNANCE.md` | Cross-cutting | Keep as root canonical governance doc | Should remain top-level and referenced everywhere. |
 | `docs/README.md` | Cross-cutting | Keep as root docs entrypoint | Should point to governance, architecture, and audit. |
 

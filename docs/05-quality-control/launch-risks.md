@@ -260,7 +260,7 @@ Important launch, trust, and product decisions are spread across multiple markdo
 
 Current evidence:
 - the repo only just gained the canonical documentation architecture and audit
-- launch-critical knowledge still lives across `launch_plan.md`, feed docs, KPI docs, governance, and product code
+- launch-critical knowledge still lives across `docs/06-go-to-market/launch-plan.md`, feed docs, KPI docs, governance, and product code
 
 Why it matters:
 - execution across tools becomes inconsistent

@@ -25,7 +25,7 @@ Bygg körs från **repo root** så att `packages/arei-sdk` finns under build.
 | Inställning | Värde |
 |-------------|--------|
 | **Root Directory** | *Tom* (lämna blankt) — så att repo root används |
-| **Build Command** | Överskrids av [vercel.json](vercel.json) i repo root |
+| **Build Command** | Överskrids av `vercel.json` i repo root |
 | **Output Directory** | Överskrids av `vercel.json` → `kazaverde-web/dist` |
 
 ### Övrigt i Vercel
@@ -45,4 +45,4 @@ npx vercel deploy --prod   # production
 
 ---
 
-Om Root Directory istället är `kazaverde-web` används [kazaverde-web/vercel.json](kazaverde-web/vercel.json); då finns inte `../packages/arei-sdk` i bygget och deploy fallerar.
+Om Root Directory istället är `kazaverde-web` används `kazaverde-web/vercel.json`; då finns inte `../packages/arei-sdk` i bygget och deploy fallerar.
