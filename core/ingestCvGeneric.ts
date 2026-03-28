@@ -187,6 +187,8 @@ async function genericFetchSource(
 ): Promise<{ listings: IngestListing[]; state: SourceState; debugErrors?: string[] }> {
   const state = { ...sourceState };
   state.scrapeAttempts = 1;
+  const hasParserDiagnostics = (errors: string[]): boolean =>
+    errors.some((err) => err.startsWith("page_parse_error") || err.startsWith("listing_parse_error"));
 
   console.log(`[${source.id}] Fetching via ${source.fetch_method || "http"}...`);
 
@@ -212,7 +214,9 @@ async function genericFetchSource(
   const result = await genericPaginatedFetcher(fetchConfig, fetchFn);
 
   if (result.listings.length === 0) {
-    state.status = SourceStatus.PARTIAL_OK;
+    state.status = hasParserDiagnostics(result.debug.errors)
+      ? SourceStatus.BROKEN_SOURCE
+      : SourceStatus.PARTIAL_OK;
     state.lastError = `No listings found (${result.debug.stopReason})`;
     console.log(`[${source.id}] No listings found. Stop reason: ${result.debug.stopReason}`);
 
