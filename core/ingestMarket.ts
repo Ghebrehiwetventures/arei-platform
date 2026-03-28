@@ -140,7 +140,7 @@ function sleep(ms: number): Promise<void> {
 async function genericFetchSource(
   source: SourceConfig,
   sourceState: SourceState
-): Promise<{ listings: IngestListing[]; state: SourceState }> {
+): Promise<{ listings: IngestListing[]; state: SourceState; debugErrors?: string[] }> {
   const state = { ...sourceState };
   state.scrapeAttempts = 1;
 
@@ -197,7 +197,7 @@ async function genericFetchSource(
     property_type: extractPropertyType(l.title, l.detailUrl),
   }));
 
-  return { listings, state };
+  return { listings, state, debugErrors: result.debug.errors };
 }
 
 // ============================================
@@ -325,6 +325,7 @@ interface SourceReport {
   scrapeAttempts: number;
   repairAttempts: number;
   lastError?: string;
+  debugErrors?: string[];
 }
 
 interface ListingReport {
@@ -393,6 +394,7 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
 
   const sourceStates: Map<string, SourceState> = new Map();
   const sourceReports: SourceReport[] = [];
+  const sourceDebugErrors: Map<string, string[] | undefined> = new Map();
 
   for (const source of sources) {
     sourceStates.set(source.id, createInitialState());
@@ -425,6 +427,7 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       if (source.type === "html") {
         const result = await genericFetchSource(source, sourceStates.get(source.id)!);
         sourceStates.set(source.id, result.state);
+        sourceDebugErrors.set(source.id, result.debugErrors);
         allListings.push(...result.listings);
       } else {
         const state = sourceStates.get(source.id)!;
@@ -501,6 +504,7 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       scrapeAttempts: state.scrapeAttempts,
       repairAttempts: state.repairAttempts,
       lastError: state.lastError,
+      debugErrors: sourceDebugErrors.get(source.id),
     });
   }
 

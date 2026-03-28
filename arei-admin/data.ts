@@ -14,6 +14,7 @@ interface IngestReportSource {
   scrapeAttempts: number;
   repairAttempts: number;
   lastError?: string;
+  debugErrors?: string[];
 }
 
 interface IngestReportListing {
@@ -96,6 +97,7 @@ function convertReportToMarket(report: IngestReport): Market {
       scrapeAttempts: s.scrapeAttempts,
       repairAttempts: s.repairAttempts,
       lastError: s.lastError,
+      debugErrors: s.debugErrors,
     },
   }));
 

@@ -7,6 +7,7 @@ interface SourceReport {
   name: string;
   status: string;
   lastError?: string;
+  debugErrors?: string[];
 }
 
 interface ListingReport {
@@ -106,6 +107,12 @@ function runReport(): void {
       console.log(`  ${source.name} [${source.status}]`);
       if (source.lastError) {
         console.log(`    Error: ${source.lastError}`);
+      }
+      if (source.debugErrors && source.debugErrors.length > 0) {
+        console.log(`    Debug errors: ${source.debugErrors.length}`);
+        for (const err of source.debugErrors.slice(0, 3)) {
+          console.log(`      - ${err}`);
+        }
       }
     }
   }

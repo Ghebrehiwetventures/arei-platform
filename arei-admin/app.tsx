@@ -1837,7 +1837,12 @@ function SourceTable({ sources }: { sources: Source[] }) {
                   whiteSpace: "nowrap",
                 }}
               >
-                {s.state.lastError || "-"}
+                <div>{s.state.lastError || "-"}</div>
+                {s.state.debugErrors && s.state.debugErrors.length > 0 && (
+                  <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 4 }}>
+                    {s.state.debugErrors.length} debug error{s.state.debugErrors.length === 1 ? "" : "s"}
+                  </div>
+                )}
               </td>
             </tr>
           ))}
