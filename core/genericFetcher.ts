@@ -8,6 +8,11 @@
 import * as cheerio from "cheerio";
 import * as crypto from "crypto";
 import { Browser, Page } from "puppeteer";
+<<<<<<< HEAD
+=======
+import { normalizeUrl } from "./normalizeUrl";
+import { deriveProjectMetadata } from "./projectMetadata";
+>>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
 
 // Stealth: bypass Cloudflare/bot detection
 const puppeteerExtra = require("puppeteer-extra");
@@ -143,8 +148,15 @@ export interface GenericParsedListing {
   id: string;
   sourceId: string;
   sourceName: string;
+  source_ref?: string | null;
   title?: string;
   price?: number;
+<<<<<<< HEAD
+=======
+  priceText?: string;
+  project_flag?: boolean | null;
+  project_start_price?: number | null;
+>>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
   description?: string;
   imageUrls: string[];
   location?: string;
@@ -593,12 +605,25 @@ function parseListingsFromHtml(
 
     const idPrefix = config.id_prefix || config.id.replace(/^cv_/, "");
 
+    const projectMetadata = deriveProjectMetadata({
+      title,
+      price,
+      priceText,
+    });
+
     listings.push({
       id: generateListingId(idPrefix, title, price, absoluteUrl),
       sourceId: config.id,
       sourceName: config.name,
+      source_ref: projectMetadata.source_ref,
       title,
       price,
+<<<<<<< HEAD
+=======
+      priceText,
+      project_flag: projectMetadata.project_flag,
+      project_start_price: projectMetadata.project_start_price,
+>>>>>>> a647b45 (Persist project metadata on listings and expose it in admin)
       description: undefined, // Usually not available on list pages
       imageUrls: dedupeImageUrls(imageUrls).slice(0, 10),
       location: location || undefined,
