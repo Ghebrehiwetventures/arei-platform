@@ -497,8 +497,9 @@ function parseListingsFromHtml(
 
     // Extract price
     let price: number | undefined;
+    let priceText: string | undefined;
     if (config.selectors.price) {
-      const priceText = $container.find(config.selectors.price).first().text();
+      priceText = $container.find(config.selectors.price).first().text();
       price = parsePrice(priceText, config.price_format);
     }
 
