@@ -381,7 +381,7 @@ async function enrichDetailPages(
 async function fetchRealSource(
   source: SourceConfig,
   sourceState: SourceState
-): Promise<{ listings: IngestListing[]; state: SourceState }> {
+): Promise<{ listings: IngestListing[]; state: SourceState; debugErrors?: string[] }> {
   const state = { ...sourceState };
   state.scrapeAttempts = 1;
 
@@ -428,7 +428,7 @@ async function fetchRealSource(
       area_sqm: p.area_sqm,
     }));
 
-    return { listings, state };
+    return { listings, state, debugErrors: result.debug.errors };
   } catch (err) {
     state.status = SourceStatus.BROKEN_SOURCE;
     state.lastError = err instanceof Error ? err.message.slice(0, 200) : String(err).slice(0, 200);
@@ -448,6 +448,7 @@ interface SourceReport {
   scrapeAttempts: number;
   repairAttempts: number;
   lastError?: string;
+  debugErrors?: string[];
 }
 
 interface ListingReport {
@@ -524,6 +525,7 @@ export async function runCvIngest(): Promise<IngestReport> {
   const rulesResult = loadRulesConfig(marketId);
 
   const sourceStates: Map<string, SourceState> = new Map();
+  const sourceDebugErrors: Map<string, string[] | undefined> = new Map();
   const sourceReports: SourceReport[] = [];
 
   if (!sourcesResult.success || !sourcesResult.data) {
@@ -603,6 +605,7 @@ export async function runCvIngest(): Promise<IngestReport> {
         // Real source - fetch and parse
         const result = await fetchRealSource(source, sourceStates.get(source.id)!);
         sourceStates.set(source.id, result.state);
+        sourceDebugErrors.set(source.id, result.debugErrors);
         allListings.push(...result.listings);
       } else {
         // Stub source
@@ -820,6 +823,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       scrapeAttempts: state.scrapeAttempts,
       repairAttempts: state.repairAttempts,
       lastError: state.lastError,
+      debugErrors: sourceDebugErrors.get(source.id),
     });
   }
 

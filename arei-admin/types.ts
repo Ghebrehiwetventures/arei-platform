@@ -11,6 +11,7 @@ export interface SourceState {
   scrapeAttempts: number;
   repairAttempts: number;
   lastError?: string;
+  debugErrors?: string[];
   pausedAt?: Date;
 }
 

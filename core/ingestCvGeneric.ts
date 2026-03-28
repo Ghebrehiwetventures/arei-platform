@@ -184,7 +184,7 @@ function sleep(ms: number): Promise<void> {
 async function genericFetchSource(
   source: SourceConfig,
   sourceState: SourceState
-): Promise<{ listings: IngestListing[]; state: SourceState }> {
+): Promise<{ listings: IngestListing[]; state: SourceState; debugErrors?: string[] }> {
   const state = { ...sourceState };
   state.scrapeAttempts = 1;
 
@@ -245,7 +245,7 @@ async function genericFetchSource(
     area_sqm: l.area_sqm,
   }));
 
-  return { listings, state };
+  return { listings, state, debugErrors: result.debug.errors };
 }
 
 /**
@@ -402,6 +402,7 @@ interface SourceReport {
   scrapeAttempts: number;
   repairAttempts: number;
   lastError?: string;
+  debugErrors?: string[];
 }
 
 interface ListingReport {
@@ -473,6 +474,7 @@ export async function runCvIngestGeneric(): Promise<IngestReport> {
 
   const sourceStates: Map<string, SourceState> = new Map();
   const sourceReports: SourceReport[] = [];
+  const sourceDebugErrors: Map<string, string[] | undefined> = new Map();
 
   if (!sourcesResult.success || !sourcesResult.data) {
     console.error("Failed to load sources config:", sourcesResult.error);
@@ -536,6 +538,7 @@ export async function runCvIngestGeneric(): Promise<IngestReport> {
         // GENERIC: No source-specific branching!
         const result = await genericFetchSource(source, sourceStates.get(source.id)!);
         sourceStates.set(source.id, result.state);
+        sourceDebugErrors.set(source.id, result.debugErrors);
         allListings.push(...result.listings);
       } else {
         // Stub source
@@ -629,6 +632,7 @@ export async function runCvIngestGeneric(): Promise<IngestReport> {
       scrapeAttempts: state.scrapeAttempts,
       repairAttempts: state.repairAttempts,
       lastError: state.lastError,
+      debugErrors: sourceDebugErrors.get(source.id),
     });
   }
 
