@@ -30,22 +30,27 @@
 ## Fas 2: Setup lokalt
 
 ### Plats i projektet
+
+Historical note:
+- `web/` was later archived to `archive/web/` because it was only a placeholder and not an active app.
+- If this migration path is revived, restore or recreate a dedicated frontend staging directory intentionally.
+
 ```
 (projektrot)/
-  web/          ← Lovable-export här (ny dir)
+  archive/web/  ← historisk placeholder, ej aktiv app
   core/         ← Pipeline (oförändrad)
   markets/      ← YAML (oförändrad)
 ```
 
 ### Steg
 ```bash
-# 1. Skapa web/ och extrahera
-mkdir -p web
-unzip lovable-export.zip -d web/
-# ELLER: om export är flat, flytta innehållet till web/
+# 1. Skapa separat staging-dir och extrahera
+mkdir -p frontend-import
+unzip lovable-export.zip -d frontend-import/
+# ELLER: om export är flat, flytta innehållet till frontend-import/
 
 # 2. Installera dependencies
-cd web && npm install
+cd frontend-import && npm install
 
 # 3. Skapa .env (kopiera från .env.example om finns)
 cp .env.example .env
@@ -72,7 +77,7 @@ npm run dev
 ### Ta bort Lovable-artefakter
 ```bash
 # Sök efter Lovable-specifikt
-grep -r "lovable\|gpt-engineer" web/
+grep -r "lovable\|gpt-engineer" frontend-import/
 ```
 
 - [ ] Ta bort Lovable-branding
@@ -96,7 +101,7 @@ grep -r "lovable\|gpt-engineer" web/
 ### Setup
 1. **Vercel CLI:** `npm i -g vercel`
 2. **Connect repo:** Vercel Dashboard → Import Project → africa-property-index
-3. **Root Directory:** Sätt till `web` (om frontend ligger i web/)
+3. **Root Directory:** Sätt till frontendens faktiska katalog
 4. **Framework Preset:** Vite eller Next.js (auto-detect)
 5. **Build command:** `npm run build` (default)
 6. **Output directory:** `dist` (Vite) eller `.next` (Next.js)

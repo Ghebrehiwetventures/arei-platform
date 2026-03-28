@@ -296,7 +296,7 @@ Validation:
 Evidence examples:
 - PR diff for `docs/kazaverde_deploy_contract.md`.
 - PR diff for `arei-admin/DEPLOY.md`.
-- PR diff for `.vercel-deploy.md`.
+- PR diff for `docs/04-platform/vercel-deploy.md`.
 - PR diff for `docs/04-platform/tooling-handoff.md`.
 - PR diff for `docs/04-platform/security-baseline.md`.
 

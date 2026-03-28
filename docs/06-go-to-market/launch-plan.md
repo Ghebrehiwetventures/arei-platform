@@ -218,7 +218,7 @@ Important note:
 
 Recommended docs to maintain:
 
-- `launch_plan.md` - canonical launch tracker
+- `docs/06-go-to-market/launch-plan.md` - canonical launch tracker
 - `seo_plan.md` - keyword clusters, landing pages, Search Console, backlinks
 - `content_map.md` - article plan and internal linking map
 - `legal_checklist.md` - privacy, cookies, newsletter compliance

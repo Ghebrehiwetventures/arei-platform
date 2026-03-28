@@ -23,6 +23,7 @@ Before changing anything, a new tool should understand six things:
 
 In this order:
 
+1. `ROOT_MAP.md`
 1. `docs/GOVERNANCE.md`
 2. `docs/AREI_master_documentation_architecture.md`
 3. `docs/AREI_documentation_audit.md`
@@ -30,7 +31,7 @@ In this order:
 5. `docs/02-data-engine/data-trust-rules.md`
 6. `docs/03-product/mvp-scope.md`
 7. `docs/05-quality-control/launch-risks.md`
-8. `launch_plan.md`
+8. `docs/06-go-to-market/launch-plan.md`
 
 If working on strategy or product direction next, also read:
 - `docs/01-strategy/vision.md`
@@ -120,6 +121,7 @@ Useful commands and entry points:
 - `npm run dev` for admin
 - `npm run dev:kaza` for KazaVerde
 - `npm run pipeline:cv`
+- `ROOT_MAP.md`
 
 ### Consumer frontend
 
