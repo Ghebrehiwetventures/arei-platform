@@ -429,16 +429,17 @@ function parseListingsFromHtml(
   debugErrors?: string[],
   pageUrl?: string
 ): GenericParsedListing[] {
-  const $ = cheerio.load(html);
   const listings: GenericParsedListing[] = [];
+  try {
+    const $ = cheerio.load(html);
 
-  // Build reject patterns as RegExp
-  const rejectPatterns = (config.reject_url_patterns || []).map((p) => new RegExp(p, "i"));
+    // Build reject patterns as RegExp
+    const rejectPatterns = (config.reject_url_patterns || []).map((p) => new RegExp(p, "i"));
 
-  // Find listing containers
-  $(config.selectors.listing).each((containerIndex, containerEl) => {
-    try {
-      const $container = $(containerEl);
+    // Find listing containers
+    $(config.selectors.listing).each((containerIndex, containerEl) => {
+      try {
+        const $container = $(containerEl);
 
       // Find detail link
       // First check if the container itself is a link (common pattern)
@@ -622,19 +623,30 @@ function parseListingsFromHtml(
         detailUrl: absoluteUrl?.replace(/\/+$/, "") || absoluteUrl,
         createdAt: now,
       });
-      processedUrls.add(absoluteUrl);
-    } catch (err) {
-      const errorMessage = err instanceof Error ? err.message : String(err);
-      const contextParts = [
-        "listing_parse_error",
-        `source=${config.id}`,
-        pageUrl ? `page=${pageUrl}` : null,
-        `container_index=${containerIndex}`,
-        `error=${JSON.stringify(errorMessage)}`,
-      ].filter(Boolean);
-      debugErrors?.push(contextParts.join(" "));
-    }
-  });
+        processedUrls.add(absoluteUrl);
+      } catch (err) {
+        const errorMessage = err instanceof Error ? err.message : String(err);
+        const contextParts = [
+          "listing_parse_error",
+          `source=${config.id}`,
+          pageUrl ? `page=${pageUrl}` : null,
+          `container_index=${containerIndex}`,
+          `error=${JSON.stringify(errorMessage)}`,
+        ].filter(Boolean);
+        debugErrors?.push(contextParts.join(" "));
+      }
+    });
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : String(err);
+    const contextParts = [
+      "page_parse_error",
+      `source=${config.id}`,
+      pageUrl ? `page=${pageUrl}` : null,
+      `error=${JSON.stringify(errorMessage)}`,
+    ].filter(Boolean);
+    debugErrors?.push(contextParts.join(" "));
+    return [];
+  }
 
   return listings;
 }
