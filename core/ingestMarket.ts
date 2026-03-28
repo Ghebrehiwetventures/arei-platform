@@ -46,8 +46,11 @@ interface IngestListing {
   id: string;
   sourceId: string;
   sourceName: string;
+  source_ref?: string | null;
   title?: string;
   price?: number;
+  project_flag?: boolean | null;
+  project_start_price?: number | null;
   description?: string;
   description_html?: string;
   imageUrls?: string[];
@@ -178,8 +181,11 @@ async function genericFetchSource(
     id: l.id,
     sourceId: l.sourceId,
     sourceName: l.sourceName,
+    source_ref: l.source_ref ?? null,
     title: l.title,
     price: l.price,
+    project_flag: l.project_flag ?? null,
+    project_start_price: l.project_start_price ?? null,
     description: l.description,
     imageUrls: l.imageUrls,
     location: l.location,
@@ -581,10 +587,13 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       id: listing.id,
       source_id: listing.sourceId,
       source_url: fullListing?.detailUrl || fullListing?.externalUrl || null,
+      source_ref: fullListing?.source_ref ?? null,
       title: listing.title,
       description: fullListing?.description ?? null,
       description_html: fullListing?.description_html ?? null,
       price: listing.price,
+      project_flag: fullListing?.project_flag ?? null,
+      project_start_price: fullListing?.project_start_price ?? null,
       currency,
       country,
       island: locationResult.island,  // Works for both islands and regions

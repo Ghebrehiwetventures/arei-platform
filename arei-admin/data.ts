@@ -241,9 +241,12 @@ interface SupabaseListing {
   id: string;
   source_id: string;
   source_url: string | null;
+  source_ref?: string | null;
   title: string | null;
   description: string | null;
   price: number | null;
+  project_flag?: boolean | null;
+  project_start_price?: number | null;
   currency: string;
   island: string | null;
   city: string | null;
@@ -350,6 +353,7 @@ async function loadFromSupabase(): Promise<Market[]> {
         sourceId: l.source_id,
         sourceName: sources.find(s => s.id === l.source_id)?.name || l.source_id,
         sourceUrl: l.source_url,
+        source_ref: l.source_ref ?? null,
         location: [l.city, l.island].filter(Boolean).join(", ") || undefined,
         island: l.island,
         city: l.city,
@@ -360,6 +364,8 @@ async function loadFromSupabase(): Promise<Market[]> {
         property_type: l.property_type || undefined,
         status: l.status,
         approved: l.approved,
+        project_flag: l.project_flag ?? null,
+        project_start_price: l.project_start_price ?? null,
         violations: l.violations || undefined,
         amenities: l.amenities || undefined,
         price_period: l.price_period || undefined,
@@ -563,7 +569,7 @@ export interface ListingsResult {
 }
 
 const LISTING_COLS =
-  "id,title,price,currency,source_id,source_url,island,city,bedrooms,bathrooms,property_size_sqm,image_urls,approved,created_at,updated_at";
+  "id,title,price,project_start_price,currency,source_id,source_url,source_ref,project_flag,island,city,bedrooms,bathrooms,property_size_sqm,image_urls,approved,created_at,updated_at";
 
 export async function getListings(
   marketId: string,
@@ -614,6 +620,7 @@ export async function getListings(
         sourceId: l.source_id,
         sourceName: sourceNameMap.get(l.source_id)!,
         sourceUrl: l.source_url,
+        source_ref: l.source_ref ?? null,
         location: [l.city, l.island].filter(Boolean).join(", ") || undefined,
         island: l.island,
         city: l.city,
@@ -621,6 +628,8 @@ export async function getListings(
         bathrooms: l.bathrooms,
         area_sqm: l.property_size_sqm,
         approved: l.approved,
+        project_flag: l.project_flag ?? null,
+        project_start_price: l.project_start_price ?? null,
       };
     });
     return { data: listings, totalCount: count ?? 0 };
@@ -645,6 +654,7 @@ export async function getListingById(id: string): Promise<Listing | null> {
       sourceId: l.source_id,
       sourceName: sourceIdToName(l.source_id),
       sourceUrl: l.source_url,
+      source_ref: l.source_ref ?? null,
       location: [l.city, l.island].filter(Boolean).join(", ") || undefined,
       island: l.island,
       city: l.city,
@@ -655,6 +665,8 @@ export async function getListingById(id: string): Promise<Listing | null> {
       property_type: l.property_type || undefined,
       status: l.status,
       approved: l.approved,
+      project_flag: l.project_flag ?? null,
+      project_start_price: l.project_start_price ?? null,
       violations: l.violations || undefined,
       amenities: l.amenities || undefined,
       price_period: l.price_period || undefined,

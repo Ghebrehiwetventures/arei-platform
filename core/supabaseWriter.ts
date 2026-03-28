@@ -8,10 +8,13 @@ export interface SupabaseListing {
   id: string;
   source_id: string;
   source_url: string | null;
+  source_ref?: string | null;
   title?: string;
   description?: string;
   description_html?: string;
   price?: number;
+  project_flag?: boolean | null;
+  project_start_price?: number | null;
   currency: string;
   island?: string;
   city?: string;
