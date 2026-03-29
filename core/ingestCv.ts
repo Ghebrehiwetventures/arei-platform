@@ -463,6 +463,7 @@ interface SourceReport {
   lastErrorClass?: string;
   pauseReason?: string;
   pauseDetail?: string;
+  lastSeenAt?: string;
 }
 
 interface ListingReport {
@@ -863,6 +864,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       lastErrorClass: persistedHealth?.lastErrorClass,
       pauseReason: state.pauseReason || persistedHealth?.pauseReason,
       pauseDetail: state.pauseDetail || persistedHealth?.pauseDetail,
+      lastSeenAt: persistedHealth?.lastSeenAt,
     });
   }
 
@@ -947,6 +949,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
     source.lastErrorClass = persisted?.lastErrorClass;
     source.pauseReason = persisted?.pauseReason;
     source.pauseDetail = persisted?.pauseDetail;
+    source.lastSeenAt = persisted?.lastSeenAt;
   }
 
   // Write artifact

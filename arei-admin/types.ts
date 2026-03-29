@@ -16,6 +16,7 @@ export interface SourceState {
   lastErrorClass?: string;
   pauseReason?: string;
   pauseDetail?: string;
+  lastSeenAt?: string;
   pausedAt?: Date;
 }
 

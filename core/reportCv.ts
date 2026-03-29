@@ -12,6 +12,7 @@ interface SourceReport {
   lastErrorClass?: string;
   pauseReason?: string;
   pauseDetail?: string;
+  lastSeenAt?: string;
 }
 
 interface ListingReport {
@@ -123,6 +124,9 @@ function runReport(): void {
       }
       if (source.lastErrorClass) {
         console.log(`    Error class: ${source.lastErrorClass}`);
+      }
+      if (source.lastSeenAt) {
+        console.log(`    Last seen: ${source.lastSeenAt}`);
       }
       if (source.debugErrors && source.debugErrors.length > 0) {
         console.log(`    Debug errors: ${source.debugErrors.length}`);

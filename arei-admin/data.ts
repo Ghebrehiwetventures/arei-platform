@@ -19,6 +19,7 @@ interface IngestReportSource {
   lastErrorClass?: string;
   pauseReason?: string;
   pauseDetail?: string;
+  lastSeenAt?: string;
 }
 
 interface IngestReportListing {
@@ -106,6 +107,7 @@ function convertReportToMarket(report: IngestReport): Market {
       lastErrorClass: s.lastErrorClass,
       pauseReason: s.pauseReason,
       pauseDetail: s.pauseDetail,
+      lastSeenAt: s.lastSeenAt,
     },
   }));
 

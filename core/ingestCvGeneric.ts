@@ -416,6 +416,7 @@ interface SourceReport {
   lastErrorClass?: string;
   pauseReason?: string;
   pauseDetail?: string;
+  lastSeenAt?: string;
 }
 
 interface ListingReport {
@@ -666,6 +667,7 @@ export async function runCvIngestGeneric(): Promise<IngestReport> {
       lastErrorClass: persistedHealth?.lastErrorClass,
       pauseReason: state.pauseReason || persistedHealth?.pauseReason,
       pauseDetail: state.pauseDetail || persistedHealth?.pauseDetail,
+      lastSeenAt: persistedHealth?.lastSeenAt,
     });
   }
 
@@ -742,6 +744,7 @@ export async function runCvIngestGeneric(): Promise<IngestReport> {
     source.lastErrorClass = persisted?.lastErrorClass;
     source.pauseReason = persisted?.pauseReason;
     source.pauseDetail = persisted?.pauseDetail;
+    source.lastSeenAt = persisted?.lastSeenAt;
   }
 
   // Write artifacts

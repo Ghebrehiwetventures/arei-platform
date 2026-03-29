@@ -1848,6 +1848,16 @@ function SourceTable({ sources }: { sources: Source[] }) {
                     {s.state.pauseDetail}
                   </div>
                 )}
+                {s.state.lastErrorClass && (
+                  <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 4 }}>
+                    class: {s.state.lastErrorClass}
+                  </div>
+                )}
+                {s.state.lastSeenAt && (
+                  <div style={{ color: "#888", fontSize: 11, marginTop: 4 }}>
+                    seen: {s.state.lastSeenAt}
+                  </div>
+                )}
                 {s.state.consecutiveFailureCount && s.state.consecutiveFailureCount > 0 && (
                   <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 4 }}>
                     {s.state.consecutiveFailureCount} consecutive parser failure{s.state.consecutiveFailureCount === 1 ? "" : "s"}
