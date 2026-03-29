@@ -1,4 +1,4 @@
-import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, SourceQualityRowRaw } from "./types";
+import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, SourceQualityRowRaw, IngestRunPhase } from "./types";
 import { supabase } from "./supabase";
 
 // ============================================
@@ -42,6 +42,10 @@ interface IngestReport {
   marketId: string;
   marketName: string;
   generatedAt: string;
+  runPhase?: IngestRunPhase;
+  isFinal?: boolean;
+  runStartedAt?: string;
+  artifactWrittenAt?: string;
   summary: {
     totalListings: number;
     visibleCount: number;
@@ -80,16 +84,42 @@ export interface LatestSyncLog {
   marketName: string;
   totalListings: number;
   visibleCount: number;
+  runPhase?: IngestRunPhase;
+  isFinal?: boolean;
+  runStartedAt?: string;
+  artifactWrittenAt?: string;
+  phaseLabel: string;
+}
+
+function getRunPhaseLabel(report: Pick<IngestReport, "runPhase" | "isFinal">): string {
+  if (report.runPhase === "post_fetch_snapshot") {
+    return "In progress snapshot";
+  }
+  if (report.runPhase === "final_post_enrichment") {
+    return "Final run result";
+  }
+  if (report.isFinal === false) {
+    return "In progress snapshot";
+  }
+  if (report.isFinal === true) {
+    return "Final run result";
+  }
+  return "Legacy report";
 }
 
 export async function getLatestSyncLog(): Promise<LatestSyncLog | null> {
   const report = await loadIngestReport();
   if (!report?.generatedAt) return null;
   return {
-    at: report.generatedAt,
+    at: report.artifactWrittenAt ?? report.generatedAt,
     marketName: report.marketName ?? report.marketId ?? "—",
     totalListings: report.summary?.totalListings ?? 0,
     visibleCount: report.summary?.visibleCount ?? 0,
+    runPhase: report.runPhase,
+    isFinal: report.isFinal,
+    runStartedAt: report.runStartedAt,
+    artifactWrittenAt: report.artifactWrittenAt ?? report.generatedAt,
+    phaseLabel: getRunPhaseLabel(report),
   };
 }
 

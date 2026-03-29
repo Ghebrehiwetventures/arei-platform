@@ -29,6 +29,10 @@ interface IngestReport {
   marketId: string;
   marketName: string;
   generatedAt: string;
+  runPhase?: "post_fetch_snapshot" | "final_post_enrichment";
+  isFinal?: boolean;
+  runStartedAt?: string;
+  artifactWrittenAt?: string;
   summary: {
     totalListings: number;
     visibleCount: number;
@@ -54,6 +58,29 @@ function runReport(): void {
 
   // Summary
   console.log("\n=== Cape Verde Market Report ===\n");
+  const runPhaseLabel =
+    report.runPhase === "post_fetch_snapshot"
+      ? "In progress snapshot"
+      : report.runPhase === "final_post_enrichment"
+        ? "Final run result"
+        : report.isFinal === false
+          ? "In progress snapshot"
+          : report.isFinal === true
+            ? "Final run result"
+            : "Legacy report (phase unknown)";
+  console.log(`Run phase: ${runPhaseLabel}`);
+  if (report.runPhase) {
+    console.log(`Run phase key: ${report.runPhase}`);
+  }
+  if (typeof report.isFinal === "boolean") {
+    console.log(`Is final: ${report.isFinal ? "yes" : "no"}`);
+  }
+  if (report.runStartedAt) {
+    console.log(`Run started: ${report.runStartedAt}`);
+  }
+  if (report.artifactWrittenAt) {
+    console.log(`Artifact written: ${report.artifactWrittenAt}`);
+  }
   console.log(`Generated: ${report.generatedAt}`);
   console.log(`Total Listings: ${report.summary.totalListings}`);
   console.log(`Visible: ${report.summary.visibleCount}`);
