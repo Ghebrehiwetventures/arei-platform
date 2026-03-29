@@ -6,7 +6,7 @@
   "scripts": {
     "sync-sdk": "npm --prefix ../packages/arei-sdk install && npm --prefix ../packages/arei-sdk run build",
     "dev": "npm run sync-sdk && vite",
-    "build": "npm run sync-sdk && tsc -b && vite build",
+    "build": "npm run sync-sdk && tsc -b && vite build && node ./scripts/prerender-phase1.mjs",
     "preview": "vite preview"
   },
   "dependencies": {
