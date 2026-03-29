@@ -211,6 +211,19 @@ function StatusBadge({ status }: { status: SourceStatus }) {
   );
 }
 
+function RunPhaseBadge({ latestSync }: { latestSync: LatestSyncLog }) {
+  const isFinal = latestSync.isFinal === true || latestSync.runPhase === "final_post_enrichment";
+  const classes = isFinal
+    ? "bg-green/15 text-green border-green"
+    : "bg-amber/15 text-amber border-amber";
+
+  return (
+    <span className={`inline-block border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${classes}`}>
+      {latestSync.phaseLabel}
+    </span>
+  );
+}
+
 // ============================================
 // PRICE FORMATTER + CURRENCY CONVERSION
 // ============================================
@@ -287,7 +300,7 @@ type SourceQualitySortKey = "sourceName" | "marketId" | "listing_count" | "appro
 function DashboardView() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
-  const [latestSync, setLatestSync] = useState<{ at: string; marketName: string; totalListings: number; visibleCount: number } | null>(null);
+  const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
   const [exportingRunReport, setExportingRunReport] = useState(false);
   const [sortKey, setSortKey] = useState<SourceQualitySortKey>("listing_count");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -479,6 +492,16 @@ function DashboardView() {
               </span>
             )}
           </p>
+          {latestSync && (
+            <div className="mb-2 flex flex-wrap items-center gap-2">
+              <RunPhaseBadge latestSync={latestSync} />
+              {latestSync.runPhase && (
+                <span className="text-muted-foreground text-xs font-mono">
+                  {latestSync.runPhase}
+                </span>
+              )}
+            </div>
+          )}
           {!latestSync && (
             <p className="text-muted-foreground text-xs mb-2">
               Runs are logged in CI/CD. Serve the app with <code className="bg-background px-1">artifacts/cv_ingest_report.json</code> in place to see last sync from the report.
@@ -1503,6 +1526,16 @@ function StatsView() {
                 ? new Date(latestSync.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
                 : "—"}
             </div>
+            {latestSync && (
+              <div className="mt-2 flex flex-wrap items-center gap-2">
+                <RunPhaseBadge latestSync={latestSync} />
+                {latestSync.runPhase && (
+                  <span className="text-muted-foreground text-xs font-mono">
+                    {latestSync.runPhase}
+                  </span>
+                )}
+              </div>
+            )}
             {syncMissing && (
               <p className="text-amber text-xs mt-1 font-mono">⚠ No sync report (serve cv_ingest_report.json for timestamp)</p>
             )}

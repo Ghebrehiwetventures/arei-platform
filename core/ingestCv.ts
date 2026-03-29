@@ -498,10 +498,16 @@ interface HiddenListingReport extends ListingReport {
   violations: RuleViolation[];
 }
 
+type IngestRunPhase = "post_fetch_snapshot" | "final_post_enrichment";
+
 interface IngestReport {
   marketId: string;
   marketName: string;
   generatedAt: string;
+  runPhase?: IngestRunPhase;
+  isFinal?: boolean;
+  runStartedAt?: string;
+  artifactWrittenAt?: string;
   summary: {
     totalListings: number;
     visibleCount: number;
@@ -617,12 +623,22 @@ function buildIngestReport(
   totalListings: number,
   visibleListings: ListingReport[],
   hiddenListings: HiddenListingReport[],
-  duplicatesRemoved: number
+  duplicatesRemoved: number,
+  runMetadata?: {
+    runPhase: IngestRunPhase;
+    isFinal: boolean;
+    runStartedAt: string;
+  }
 ): IngestReport {
+  const artifactWrittenAt = new Date().toISOString();
   return {
     marketId,
     marketName,
-    generatedAt: new Date().toISOString(),
+    generatedAt: artifactWrittenAt,
+    runPhase: runMetadata?.runPhase,
+    isFinal: runMetadata?.isFinal,
+    runStartedAt: runMetadata?.runStartedAt,
+    artifactWrittenAt,
     summary: {
       totalListings,
       visibleCount: visibleListings.length,
@@ -654,6 +670,7 @@ function writeIngestReportArtifact(report: IngestReport): string {
 export async function runCvIngest(): Promise<IngestReport> {
   const marketId = "cv";
   const marketName = "Cape Verde";
+  const runStartedAt = new Date().toISOString();
 
   console.log(`\n=== Starting ingest for market: ${marketId} ===\n`);
 
@@ -683,6 +700,10 @@ export async function runCvIngest(): Promise<IngestReport> {
       marketId,
       marketName,
       generatedAt: new Date().toISOString(),
+      runPhase: "final_post_enrichment",
+      isFinal: true,
+      runStartedAt,
+      artifactWrittenAt: new Date().toISOString(),
       summary: {
         totalListings: 0,
         visibleCount: 0,
@@ -842,7 +863,12 @@ export async function runCvIngest(): Promise<IngestReport> {
     evalResult.totalListings,
     earlyListingsReport.visibleListings,
     earlyListingsReport.hiddenListings,
-    earlyListingsReport.duplicatesRemoved
+    earlyListingsReport.duplicatesRemoved,
+    {
+      runPhase: "post_fetch_snapshot",
+      isFinal: false,
+      runStartedAt,
+    }
   );
   const earlyReportPath = writeIngestReportArtifact(earlyReport);
   console.log(`[Artifacts] Early operational snapshot written to: ${earlyReportPath}`);
@@ -1042,7 +1068,12 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
     finalEvalResult.totalListings,
     finalListingsReport.visibleListings,
     finalListingsReport.hiddenListings,
-    finalListingsReport.duplicatesRemoved
+    finalListingsReport.duplicatesRemoved,
+    {
+      runPhase: "final_post_enrichment",
+      isFinal: true,
+      runStartedAt,
+    }
   );
   const outputPath = writeIngestReportArtifact(report);
 

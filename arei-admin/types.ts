@@ -89,3 +89,5 @@ export interface DashboardStats {
   marketCount: number;
   sourceRows: SourceQualityRow[];
 }
+
+export type IngestRunPhase = "post_fetch_snapshot" | "final_post_enrichment";
