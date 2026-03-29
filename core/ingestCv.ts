@@ -31,6 +31,7 @@ import {
   getSourceHealthEntry,
   loadSourceHealth,
   persistSourceHealth,
+  SourceHealthEntry,
   shouldAutoPauseSource,
 } from "./sourceHealth";
 
@@ -513,6 +514,139 @@ interface IngestReport {
   hiddenListings: HiddenListingReport[];
 }
 
+function buildSourceReports(
+  sources: SourceConfig[],
+  sourceStates: Map<string, SourceState>,
+  sourceDebugErrors: Map<string, string[] | undefined>,
+  sourceHealth: Record<string, SourceHealthEntry>,
+  marketId: string
+): SourceReport[] {
+  return sources.map((source) => {
+    const state = sourceStates.get(source.id) || createInitialState();
+    const persistedHealth = getSourceHealthEntry(sourceHealth, marketId, source.id);
+    return {
+      id: source.id,
+      name: source.name,
+      status: state.status,
+      scrapeAttempts: state.scrapeAttempts,
+      repairAttempts: state.repairAttempts,
+      lastError: state.lastError,
+      debugErrors: sourceDebugErrors.get(source.id),
+      consecutiveFailureCount: persistedHealth?.consecutiveFailureCount || 0,
+      lastErrorClass: persistedHealth?.lastErrorClass,
+      pauseReason: state.pauseReason || persistedHealth?.pauseReason,
+      pauseDetail: state.pauseDetail || persistedHealth?.pauseDetail,
+      lastSeenAt: persistedHealth?.lastSeenAt,
+    };
+  });
+}
+
+function applyPersistedHealthToSourceReports(
+  marketId: string,
+  sourceReports: SourceReport[],
+  persistedHealth: Record<string, SourceHealthEntry>
+): void {
+  for (const source of sourceReports) {
+    const persisted = getSourceHealthEntry(persistedHealth, marketId, source.id);
+    source.consecutiveFailureCount = persisted?.consecutiveFailureCount || 0;
+    source.lastErrorClass = persisted?.lastErrorClass;
+    source.pauseReason = source.pauseReason || persisted?.pauseReason;
+    source.pauseDetail = source.pauseDetail || persisted?.pauseDetail;
+    source.lastSeenAt = persisted?.lastSeenAt;
+  }
+}
+
+function buildListingsReport(
+  allListings: IngestListing[],
+  classifications: ReturnType<typeof batchEvaluateMarket>["classifications"]
+): { visibleListings: ListingReport[]; hiddenListings: HiddenListingReport[]; duplicatesRemoved: number } {
+  const visibleListings: ListingReport[] = [];
+  const hiddenListings: HiddenListingReport[] = [];
+  let duplicatesRemoved = 0;
+
+  for (const classification of classifications) {
+    const listing = allListings.find((l) => l.id === classification.listingId);
+    if (!listing) continue;
+
+    const baseReport: ListingReport = {
+      id: listing.id,
+      sourceId: listing.sourceId,
+      sourceName: listing.sourceName,
+      sourceUrl: listing.detailUrl || listing.externalUrl || "",
+      source_ref: listing.source_ref ?? null,
+      title: listing.title,
+      description: listing.description,
+      price: listing.price,
+      priceText: listing.priceText || (listing.price ? `${listing.price} EUR` : undefined),
+      project_flag: listing.project_flag ?? null,
+      project_start_price: listing.project_start_price ?? null,
+      location: listing.location,
+      images: listing.imageUrls || [],
+      bedrooms: listing.bedrooms,
+      bathrooms: listing.bathrooms,
+      area_sqm: listing.area_sqm,
+      parkingSpaces: listing.parkingSpaces,
+      terraceArea: listing.terraceArea,
+      amenities: listing.amenities,
+      detail_enriched: listing.detail_enriched,
+      detail_error: listing.detail_error,
+      detail_skipped_reason: listing.detail_skipped_reason,
+    };
+
+    if (classification.visibility === ListingVisibility.VISIBLE) {
+      visibleListings.push(baseReport);
+    } else {
+      hiddenListings.push({
+        ...baseReport,
+        violations: classification.violations,
+      });
+      if (classification.violations.includes(RuleViolation.DUPLICATE)) {
+        duplicatesRemoved++;
+      }
+    }
+  }
+
+  return { visibleListings, hiddenListings, duplicatesRemoved };
+}
+
+function buildIngestReport(
+  marketId: string,
+  marketName: string,
+  sources: SourceConfig[],
+  sourceReports: SourceReport[],
+  totalListings: number,
+  visibleListings: ListingReport[],
+  hiddenListings: HiddenListingReport[],
+  duplicatesRemoved: number
+): IngestReport {
+  return {
+    marketId,
+    marketName,
+    generatedAt: new Date().toISOString(),
+    summary: {
+      totalListings,
+      visibleCount: visibleListings.length,
+      hiddenCount: hiddenListings.length,
+      duplicatesRemoved,
+      sourceCount: sources.length,
+    },
+    sources: sourceReports,
+    visibleListings,
+    hiddenListings,
+  };
+}
+
+function writeIngestReportArtifact(report: IngestReport): string {
+  const artifactsDir = path.resolve(__dirname, "../artifacts");
+  if (!fs.existsSync(artifactsDir)) {
+    fs.mkdirSync(artifactsDir, { recursive: true });
+  }
+
+  const outputPath = path.join(artifactsDir, "cv_ingest_report.json");
+  fs.writeFileSync(outputPath, JSON.stringify(report, null, 2));
+  return outputPath;
+}
+
 // ============================================
 // MAIN INGEST FUNCTION
 // ============================================
@@ -541,8 +675,7 @@ export async function runCvIngest(): Promise<IngestReport> {
 
   const sourceStates: Map<string, SourceState> = new Map();
   const sourceDebugErrors: Map<string, string[] | undefined> = new Map();
-  const sourceReports: SourceReport[] = [];
-  const sourceHealth = loadSourceHealth();
+  const sourceHealthAtRunStart = loadSourceHealth();
 
   if (!sourcesResult.success || !sourcesResult.data) {
     console.error("Failed to load sources config:", sourcesResult.error);
@@ -616,7 +749,7 @@ export async function runCvIngest(): Promise<IngestReport> {
     }
 
     // IN: proceed with normal ingest
-    const persistedHealth = getSourceHealthEntry(sourceHealth, marketId, source.id);
+    const persistedHealth = getSourceHealthEntry(sourceHealthAtRunStart, marketId, source.id);
     if (source.type === "html" && shouldAutoPauseSource(persistedHealth)) {
       const state = sourceStates.get(source.id)!;
       state.status = SourceStatus.PAUSED_BY_SYSTEM;
@@ -659,6 +792,61 @@ export async function runCvIngest(): Promise<IngestReport> {
   allListings.push(...stubListings);
 
   console.log(`\nTotal listings collected: ${allListings.length}\n`);
+
+  const sourceReportsAfterFetch = buildSourceReports(
+    sources,
+    sourceStates,
+    sourceDebugErrors,
+    sourceHealthAtRunStart,
+    marketId
+  );
+  const persistedHealthAfterFetch = persistSourceHealth(
+    marketId,
+    sourceReportsAfterFetch.map((source) => ({
+      id: source.id,
+      status: source.status,
+      lastError: source.lastError,
+      debugErrors: source.debugErrors,
+      pauseReason: source.pauseReason,
+      pauseDetail: source.pauseDetail,
+    })),
+    sourceHealthAtRunStart
+  );
+  applyPersistedHealthToSourceReports(marketId, sourceReportsAfterFetch, persistedHealthAfterFetch);
+
+  const marketListingsAfterFetch: MarketListingInput[] = allListings.map((l) => ({
+    id: l.id,
+    sourceId: l.sourceId,
+    title: l.title,
+    price: l.price,
+    description: l.description,
+    imageUrls: l.imageUrls,
+    location: l.location,
+    sourceUrl: l.detailUrl || l.externalUrl || null,
+    sourceStatus: sourceStates.get(l.sourceId)?.status || SourceStatus.OK,
+    createdAt: l.createdAt,
+  }));
+
+  const sourceStatusMap: SourceStatusMap = {};
+  for (const source of sources) {
+    sourceStatusMap[source.id] = sourceStates.get(source.id)?.status || SourceStatus.OK;
+  }
+
+  const evalResult = batchEvaluateMarket(marketId, marketListingsAfterFetch, sourceStatusMap);
+  const earlyListingsReport = buildListingsReport(allListings, evalResult.classifications);
+  const earlyReport = buildIngestReport(
+    marketId,
+    marketName,
+    sources,
+    sourceReportsAfterFetch,
+    evalResult.totalListings,
+    earlyListingsReport.visibleListings,
+    earlyListingsReport.hiddenListings,
+    earlyListingsReport.duplicatesRemoved
+  );
+  const earlyReportPath = writeIngestReportArtifact(earlyReport);
+  console.log(`[Artifacts] Early operational snapshot written to: ${earlyReportPath}`);
+
   const dropReport = {
     market: marketId,
     generated_at: new Date().toISOString(),
@@ -711,30 +899,6 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
 
   dropReport.sources.push(stats);
 }
-
-
-  // Convert to MarketListingInput format
-  const marketListings: MarketListingInput[] = allListings.map((l) => ({
-    id: l.id,
-    sourceId: l.sourceId,
-    title: l.title,
-    price: l.price,
-    description: l.description,
-    imageUrls: l.imageUrls,
-    location: l.location,
-    sourceUrl: l.detailUrl || l.externalUrl || null,
-    sourceStatus: sourceStates.get(l.sourceId)?.status || SourceStatus.OK,
-    createdAt: l.createdAt,
-  }));
-
-  // Build source status map
-  const sourceStatusMap: SourceStatusMap = {};
-  for (const source of sources) {
-    sourceStatusMap[source.id] = sourceStates.get(source.id)?.status || SourceStatus.OK;
-  }
-
-  // Run batch evaluation
-  const evalResult = batchEvaluateMarket(marketId, marketListings, sourceStatusMap);
 
   // Detail enrichment (if enabled via env)
   const detailEnrichEnabled = process.env.DETAIL_ENRICH === "1";
@@ -848,89 +1012,14 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
 
   const finalEvalResult = batchEvaluateMarket(marketId, updatedMarketListings, sourceStatusMap);
 
-  // Build reports
-  for (const source of sources) {
-    const state = sourceStates.get(source.id) || createInitialState();
-    const persistedHealth = getSourceHealthEntry(sourceHealth, marketId, source.id);
-    sourceReports.push({
-      id: source.id,
-      name: source.name,
-      status: state.status,
-      scrapeAttempts: state.scrapeAttempts,
-      repairAttempts: state.repairAttempts,
-      lastError: state.lastError,
-      debugErrors: sourceDebugErrors.get(source.id),
-      consecutiveFailureCount: persistedHealth?.consecutiveFailureCount || 0,
-      lastErrorClass: persistedHealth?.lastErrorClass,
-      pauseReason: state.pauseReason || persistedHealth?.pauseReason,
-      pauseDetail: state.pauseDetail || persistedHealth?.pauseDetail,
-      lastSeenAt: persistedHealth?.lastSeenAt,
-    });
-  }
-
-  const visibleListings: ListingReport[] = [];
-  const hiddenListings: HiddenListingReport[] = [];
-  let duplicatesRemoved = 0;
-
-  for (const classification of finalEvalResult.classifications) {
-    const listing = allListings.find((l) => l.id === classification.listingId);
-    if (!listing) continue;
-
-    const baseReport: ListingReport = {
-      id: listing.id,
-      sourceId: listing.sourceId,
-      sourceName: listing.sourceName,
-      sourceUrl: listing.detailUrl || listing.externalUrl || "",
-      source_ref: listing.source_ref ?? null,
-      title: listing.title,
-      description: listing.description,
-      price: listing.price,
-      priceText: listing.priceText || (listing.price ? `${listing.price} EUR` : undefined),
-      project_flag: listing.project_flag ?? null,
-      project_start_price: listing.project_start_price ?? null,
-      location: listing.location,
-      images: listing.imageUrls || [],
-      // Structured property data
-      bedrooms: listing.bedrooms,
-      bathrooms: listing.bathrooms,
-      area_sqm: listing.area_sqm,
-      parkingSpaces: listing.parkingSpaces,
-      terraceArea: listing.terraceArea,
-      amenities: listing.amenities,
-      // Detail enrichment tracking
-      detail_enriched: listing.detail_enriched,
-      detail_error: listing.detail_error,
-      detail_skipped_reason: listing.detail_skipped_reason,
-    };
-
-    if (classification.visibility === ListingVisibility.VISIBLE) {
-      visibleListings.push(baseReport);
-    } else {
-      hiddenListings.push({
-        ...baseReport,
-        violations: classification.violations,
-      });
-      if (classification.violations.includes(RuleViolation.DUPLICATE)) {
-        duplicatesRemoved++;
-      }
-    }
-  }
-
-  const report: IngestReport = {
-    marketId,
-    marketName,
-    generatedAt: new Date().toISOString(),
-    summary: {
-      totalListings: finalEvalResult.totalListings,
-      visibleCount: finalEvalResult.visibleCount,
-      hiddenCount: finalEvalResult.hiddenCount,
-      duplicatesRemoved,
-      sourceCount: sources.length,
-    },
-    sources: sourceReports,
-    visibleListings,
-    hiddenListings,
-  };
+  const sourceReports = buildSourceReports(
+    sources,
+    sourceStates,
+    sourceDebugErrors,
+    sourceHealthAtRunStart,
+    marketId
+  );
+  const finalListingsReport = buildListingsReport(allListings, finalEvalResult.classifications);
 
   const persistedHealthAfterRun = persistSourceHealth(
     marketId,
@@ -941,34 +1030,28 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       debugErrors: source.debugErrors,
       pauseReason: source.pauseReason,
       pauseDetail: source.pauseDetail,
-    }))
+    })),
+    sourceHealthAtRunStart
   );
-  for (const source of sourceReports) {
-    const persisted = getSourceHealthEntry(persistedHealthAfterRun, marketId, source.id);
-    source.consecutiveFailureCount = persisted?.consecutiveFailureCount || 0;
-    source.lastErrorClass = persisted?.lastErrorClass;
-    source.pauseReason = persisted?.pauseReason;
-    source.pauseDetail = persisted?.pauseDetail;
-    source.lastSeenAt = persisted?.lastSeenAt;
-  }
-
-  // Write artifact
-  const artifactsDir = path.resolve(__dirname, "../artifacts");
-  if (!fs.existsSync(artifactsDir)) {
-    fs.mkdirSync(artifactsDir, { recursive: true });
-  }
-
-
-
-  const outputPath = path.join(artifactsDir, "cv_ingest_report.json");
-  fs.writeFileSync(outputPath, JSON.stringify(report, null, 2));
+  applyPersistedHealthToSourceReports(marketId, sourceReports, persistedHealthAfterRun);
+  const report = buildIngestReport(
+    marketId,
+    marketName,
+    sources,
+    sourceReports,
+    finalEvalResult.totalListings,
+    finalListingsReport.visibleListings,
+    finalListingsReport.hiddenListings,
+    finalListingsReport.duplicatesRemoved
+  );
+  const outputPath = writeIngestReportArtifact(report);
 
   console.log(`\n=== Ingest Complete ===`);
   console.log(`Report written to: ${outputPath}`);
   console.log(`Summary: ${report.summary.visibleCount} visible, ${report.summary.hiddenCount} hidden, ${report.summary.duplicatesRemoved} duplicates\n`);
 
   // Write all listings to Supabase (both visible and hidden)
-  const allReportListings = [...visibleListings, ...hiddenListings];
+  const allReportListings = [...finalListingsReport.visibleListings, ...finalListingsReport.hiddenListings];
   console.log(`\n[Supabase] Writing ${allReportListings.length} listings...`);
   const supabaseListings: SupabaseListing[] = allReportListings.map((listing) => {
     const fullListing = allListings.find((l) => l.id === listing.id);
@@ -1051,7 +1134,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
   const verifyCount = Math.min(3, supabaseListings.length);
   for (let i = 0; i < verifyCount; i++) {
     const supabaseItem = supabaseListings[i];
-    const reportItem = visibleListings.find((r) => r.id === supabaseItem.id);
+    const reportItem = finalListingsReport.visibleListings.find((r) => r.id === supabaseItem.id);
     const supabaseDescLen = supabaseItem.description?.length ?? 0;
     const reportDescLen = reportItem?.description?.length ?? 0;
     const match = supabaseDescLen === reportDescLen ? "✓ MATCH" : "✗ MISMATCH";
@@ -1061,7 +1144,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
 
 
 console.log("ABOUT TO WRITE DROP REPORT");
-const dropPath = path.join(artifactsDir, "cv_drop_report.json");
+const dropPath = path.join(path.resolve(__dirname, "../artifacts"), "cv_drop_report.json");
 fs.writeFileSync(dropPath, JSON.stringify(dropReport, null, 2));
 console.log(`Drop report written to: ${dropPath}`);
 

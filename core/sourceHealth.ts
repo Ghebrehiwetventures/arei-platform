@@ -101,10 +101,11 @@ function classifyLastError(status: SourceStatus | string, debugErrors?: string[]
 
 export function persistSourceHealth(
   marketId: string,
-  sourceReports: SourceHealthReportInput[]
+  sourceReports: SourceHealthReportInput[],
+  existingSourceHealth?: Record<string, SourceHealthEntry>
 ): Record<string, SourceHealthEntry> {
   const artifactPath = getSourceHealthArtifactPath();
-  const sourceHealth = loadSourceHealth();
+  const sourceHealth = { ...(existingSourceHealth || loadSourceHealth()) };
   const now = new Date().toISOString();
 
   for (const source of sourceReports) {
