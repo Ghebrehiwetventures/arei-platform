@@ -21,7 +21,7 @@
     { "source": "/about", "destination": "/about/index.html" },
     { "source": "/privacy", "destination": "/privacy/index.html" },
     { "source": "/cookie-policy", "destination": "/cookie-policy/index.html" },
-    { "source": "/(.*)", "destination": "/__spa/fallback/index.html" }
+    { "source": "/(.*)", "destination": "/spa-fallback/index.html" }
   ],
   "headers": [
     {
