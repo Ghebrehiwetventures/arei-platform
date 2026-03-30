@@ -1,4 +1,15 @@
-import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, SourceQualityRowRaw, IngestRunPhase } from "./types";
+import {
+  Market,
+  Source,
+  Listing,
+  SourceStatus,
+  DashboardStats,
+  SourceQualityRow,
+  SourceQualityRowRaw,
+  IngestRunPhase,
+  ContentDraft,
+  ContentDraftStatus,
+} from "./types";
 import { supabase } from "./supabase";
 
 // ============================================
@@ -736,4 +747,243 @@ export async function getMarketIds(): Promise<{ id: string; name: string }[]> {
   return Array.from(set)
     .sort()
     .map((id) => ({ id, name: names[id] || id.toUpperCase() }));
+}
+
+// ============================================
+// CONTENT DRAFT AGENT V1
+// Local persistence for this phase; human approval stays in admin.
+// ============================================
+
+const CONTENT_DRAFTS_STORAGE_KEY = "arei_admin_content_drafts_v1";
+const MAX_CONTENT_DRAFTS_PER_RUN = 5;
+
+function getStorage() {
+  if (typeof window === "undefined") return null;
+  return window.localStorage;
+}
+
+function readStoredContentDrafts(): ContentDraft[] {
+  const storage = getStorage();
+  if (!storage) return [];
+  try {
+    const raw = storage.getItem(CONTENT_DRAFTS_STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    return parsed.filter(
+      (item): item is ContentDraft =>
+        Boolean(item) &&
+        typeof item.id === "string" &&
+        typeof item.sourceListingId === "string" &&
+        typeof item.listingTitle === "string" &&
+        typeof item.selectedImage === "string" &&
+        typeof item.suggestedCaption === "string" &&
+        Array.isArray(item.suggestedHashtags) &&
+        typeof item.suggestedChannel === "string" &&
+        typeof item.createdAt === "string" &&
+        typeof item.status === "string"
+    );
+  } catch {
+    return [];
+  }
+}
+
+function writeStoredContentDrafts(drafts: ContentDraft[]) {
+  const storage = getStorage();
+  if (!storage) return;
+  storage.setItem(CONTENT_DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+}
+
+function slugifyTag(value: string): string {
+  return value
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/[^a-zA-Z0-9\s]/g, " ")
+    .trim()
+    .split(/\s+/)
+    .slice(0, 3)
+    .map((part, index) => (index === 0 ? part.toLowerCase() : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()))
+    .join("");
+}
+
+function formatCompactPrice(listing: Listing): string | null {
+  if (listing.price == null) return null;
+  const currency = listing.currency || "EUR";
+  const symbol = currency === "EUR" ? "EUR " : currency === "USD" ? "$" : `${currency} `;
+  return `${symbol}${Math.round(listing.price).toLocaleString()}`;
+}
+
+function getListingLocationLabel(listing: Listing): string {
+  return [listing.city, listing.island].filter(Boolean).join(", ") || listing.location || "Cape Verde";
+}
+
+function chooseSuggestedChannel(listing: Listing): ContentDraft["suggestedChannel"] {
+  if (listing.project_flag) return "linkedin";
+  if ((listing.images?.length ?? 0) >= 4 || (listing.price ?? 0) >= 250000) return "instagram";
+  return "facebook";
+}
+
+function buildSuggestedHashtags(listing: Listing): string[] {
+  const tags = [
+    "AfricaPropertyIndex",
+    listing.island ? slugifyTag(listing.island) : null,
+    listing.city ? slugifyTag(listing.city) : null,
+    listing.property_type ? slugifyTag(listing.property_type) : "PropertyListing",
+    listing.bedrooms ? `${listing.bedrooms}Bed` : null,
+  ].filter(Boolean) as string[];
+  return Array.from(new Set(tags)).slice(0, 5);
+}
+
+function buildCaption(listing: Listing): string {
+  const title = listing.title || "Featured listing";
+  const location = getListingLocationLabel(listing);
+  const price = formatCompactPrice(listing);
+  const facts = [
+    listing.bedrooms ? `${listing.bedrooms} bed` : null,
+    listing.bathrooms ? `${listing.bathrooms} bath` : null,
+    listing.area_sqm ? `${Math.round(listing.area_sqm)} m2` : null,
+  ].filter(Boolean);
+
+  const opener = `${title} in ${location}.`;
+  const valueLine = price ? ` Asking ${price}.` : "";
+  const factsLine = facts.length > 0 ? ` Highlights: ${facts.join(" · ")}.` : "";
+  const closer = " Draft only for approval review. Not published.";
+
+  return `${opener}${valueLine}${factsLine}${closer}`.trim();
+}
+
+function scoreListingForContent(listing: Listing): number {
+  let score = 0;
+  if (listing.approved) score += 5;
+  if ((listing.images?.length ?? 0) > 0) score += Math.min(4, listing.images.length);
+  if (listing.price != null) score += 2;
+  if (listing.title) score += 2;
+  if (listing.description && listing.description.length >= 120) score += 1;
+  if (listing.bedrooms != null) score += 1;
+  if (listing.bathrooms != null) score += 1;
+  if (listing.area_sqm != null) score += 1;
+  if (listing.project_flag) score += 1;
+  return score;
+}
+
+async function getLiveContentCandidateListings(limit = 80): Promise<Listing[]> {
+  const feedSources = ["v1_feed_cv_indexable", "v1_feed_cv"] as const;
+
+  try {
+    for (const feedSource of feedSources) {
+      const { data, error } = await supabase
+        .from(feedSource)
+        .select("id,title,price,currency,source_id,source_url,source_ref,project_flag,project_start_price,island,city,bedrooms,bathrooms,property_size_sqm,image_urls,approved,property_type,description")
+        .order("updated_at", { ascending: false })
+        .limit(limit);
+
+      if (error) {
+        console.warn(`[Admin] Could not load content candidates from ${feedSource}:`, error.message);
+        continue;
+      }
+
+      const candidates = ((data || []) as SupabaseListing[])
+        .map((l) => ({
+          id: l.id,
+          title: l.title || undefined,
+          price: l.price ?? undefined,
+          currency: l.currency,
+          images: (l.image_urls || []).filter(Boolean),
+          description: l.description || undefined,
+          sourceId: l.source_id,
+          sourceName: sourceIdToName(l.source_id),
+          sourceUrl: l.source_url,
+          source_ref: l.source_ref ?? null,
+          location: [l.city, l.island].filter(Boolean).join(", ") || undefined,
+          island: l.island,
+          city: l.city,
+          bedrooms: l.bedrooms,
+          bathrooms: l.bathrooms,
+          area_sqm: l.property_size_sqm,
+          approved: l.approved,
+          project_flag: l.project_flag ?? null,
+          project_start_price: l.project_start_price ?? null,
+          property_type: l.property_type || undefined,
+        }))
+        .filter((listing) => listing.images.length > 0);
+
+      if (candidates.length > 0) {
+        console.info(`[Admin] Loaded ${candidates.length} content candidates from ${feedSource}`);
+        return candidates;
+      }
+    }
+
+    return [];
+  } catch (err) {
+    console.warn("[Admin] Failed to load live content candidates:", err);
+    return [];
+  }
+}
+
+function getFallbackContentCandidateListings(markets: Market[]): Listing[] {
+  return markets
+    .flatMap((market) => market.listings)
+    .filter((listing) => listing.approved !== false && listing.images.length > 0);
+}
+
+function createDraftFromListing(listing: Listing): ContentDraft {
+  const createdAt = new Date().toISOString();
+  return {
+    id: `draft_${listing.id}_${createdAt.slice(0, 10)}`,
+    sourceListingId: listing.id,
+    listingTitle: listing.title || "Untitled listing",
+    selectedImage: listing.images[0],
+    suggestedCaption: buildCaption(listing),
+    suggestedHashtags: buildSuggestedHashtags(listing),
+    suggestedChannel: chooseSuggestedChannel(listing),
+    createdAt,
+    status: "pending",
+  };
+}
+
+export async function getContentDrafts(): Promise<ContentDraft[]> {
+  return readStoredContentDrafts().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+}
+
+export async function generateContentDrafts(): Promise<ContentDraft[]> {
+  const existingDrafts = readStoredContentDrafts();
+  const todayKey = new Date().toISOString().slice(0, 10);
+  const existingListingIds = new Set(
+    existingDrafts
+      .filter((draft) => draft.createdAt.slice(0, 10) === todayKey)
+      .map((draft) => draft.sourceListingId)
+  );
+
+  let candidates = await getLiveContentCandidateListings();
+  if (candidates.length === 0) {
+    candidates = getFallbackContentCandidateListings(await getMarketsAsync());
+  }
+
+  const selected = candidates
+    .filter((listing) => !existingListingIds.has(listing.id))
+    .sort((a, b) => scoreListingForContent(b) - scoreListingForContent(a))
+    .slice(0, MAX_CONTENT_DRAFTS_PER_RUN);
+
+  const newDrafts = selected.map(createDraftFromListing);
+  const merged = [...newDrafts, ...existingDrafts].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  writeStoredContentDrafts(merged);
+  return merged;
+}
+
+export async function updateContentDraftStatus(
+  id: string,
+  status: ContentDraftStatus,
+  statusNote?: string
+): Promise<ContentDraft[]> {
+  const updated = readStoredContentDrafts().map((draft) =>
+    draft.id === id
+      ? {
+          ...draft,
+          status,
+          statusNote: statusNote?.trim() ? statusNote.trim() : undefined,
+        }
+      : draft
+  );
+  writeStoredContentDrafts(updated);
+  return updated.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
 }

@@ -8,13 +8,16 @@ import {
   getListings,
   getListingById,
   getMarketIds,
+  getContentDrafts,
+  generateContentDrafts,
+  updateContentDraftStatus,
   type ListingsFilters,
   type ListingsSortKey,
   type LatestSyncLog,
 } from "./data";
 
 const SYNC_STALE_MINUTES = 24 * 60 * 3; // 3 days
-import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow } from "./types";
+import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
 
 // ============================================
 // IMAGE GALLERY — arrows on hover, dot navigation
@@ -285,6 +288,254 @@ function GradeBadge({ grade }: { grade: "A" | "B" | "C" | "D" }) {
     <span className={`inline-block px-2 py-0.5 text-sm font-bold ${classes[grade] ?? "bg-muted-foreground text-background"}`}>
       {grade}
     </span>
+  );
+}
+
+function DraftStatusBadge({ status }: { status: ContentDraftStatus }) {
+  const labels: Record<ContentDraftStatus, string> = {
+    pending: "Pending approval",
+    approved: "Approved",
+    rejected: "Rejected",
+    revision_requested: "Revision requested",
+  };
+  const classes: Record<ContentDraftStatus, string> = {
+    pending: "bg-amber/15 text-amber border-amber",
+    approved: "bg-green/15 text-green border-green",
+    rejected: "bg-red/15 text-red border-red",
+    revision_requested: "bg-muted text-foreground border-foreground",
+  };
+
+  return (
+    <span className={`inline-block border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${classes[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
+
+function AgentsApprovalsView() {
+  const [drafts, setDrafts] = useState<ContentDraft[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [statusFilter, setStatusFilter] = useState<ContentDraftStatus | "all">("all");
+  const [typeFilter, setTypeFilter] = useState<"all" | "content_draft">("content_draft");
+
+  useEffect(() => {
+    let cancelled = false;
+    getContentDrafts().then((items) => {
+      if (!cancelled) {
+        setDrafts(items);
+        setLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    try {
+      const next = await generateContentDrafts();
+      setDrafts(next);
+    } finally {
+      setGenerating(false);
+      setLoading(false);
+    }
+  };
+
+  const handleStatusUpdate = async (draftId: string, status: ContentDraftStatus) => {
+    const note =
+      status === "revision_requested"
+        ? window.prompt("What should be revised before this draft can be approved?", "") ?? ""
+        : "";
+    const next = await updateContentDraftStatus(draftId, status, note);
+    setDrafts(next);
+  };
+
+  const filteredDrafts = drafts.filter((draft) => {
+    if (typeFilter !== "all" && typeFilter !== "content_draft") return false;
+    if (statusFilter !== "all" && draft.status !== statusFilter) return false;
+    return true;
+  });
+
+  const pendingCount = drafts.filter((draft) => draft.status === "pending").length;
+
+  return (
+    <div className="space-y-8">
+      <section>
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+          <div>
+            <div className="label-style mb-2">Agents &gt; Approvals</div>
+            <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+              Content Draft Agent v1
+            </h2>
+            <p className="label-style max-w-3xl">
+              Generates 3 to 5 reviewable content drafts from live listing data. Everything stays human-gated in approvals. Nothing is published automatically.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleGenerate}
+            disabled={generating}
+            className="border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+          >
+            {generating ? "Generating…" : "Generate content drafts"}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="label-style mb-1">Total drafts</div>
+            <div className="text-2xl font-bold text-foreground tabular-nums">{drafts.length}</div>
+          </div>
+          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="label-style mb-1">Pending approval</div>
+            <div className="text-2xl font-bold text-amber tabular-nums">{pendingCount}</div>
+          </div>
+          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="label-style mb-1">Publishing</div>
+            <div className="text-lg font-bold text-foreground">Disabled</div>
+            <div className="text-xs text-muted-foreground font-mono mt-1">Draft to approval only</div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border border-border bg-muted/30 p-4">
+        <div className="label-style mb-3">Filters</div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label className="label-style block mb-1">Approval queue</label>
+            <select
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value as "all" | "content_draft")}
+              className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full"
+            >
+              <option value="content_draft">Content drafts</option>
+              <option value="all">All approval items</option>
+            </select>
+          </div>
+          <div>
+            <label className="label-style block mb-1">Status</label>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as ContentDraftStatus | "all")}
+              className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full"
+            >
+              <option value="all">All statuses</option>
+              <option value="pending">Pending approval</option>
+              <option value="approved">Approved</option>
+              <option value="rejected">Rejected</option>
+              <option value="revision_requested">Revision requested</option>
+            </select>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        {loading && <p className="text-muted-foreground text-sm font-mono">Loading approvals…</p>}
+        {!loading && filteredDrafts.length === 0 && (
+          <div className="border border-border p-6 bg-muted text-sm font-mono text-muted-foreground">
+            No content drafts yet. Generate drafts to pull candidates from live listings into Approvals.
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {filteredDrafts.map((draft) => (
+            <article key={draft.id} className="border border-foreground brutalist-shadow-sm overflow-hidden bg-background">
+              <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr]">
+                <div className="bg-muted min-h-[180px]">
+                  {draft.selectedImage ? (
+                    <img
+                      src={draft.selectedImage}
+                      alt={draft.listingTitle}
+                      className="w-full h-full min-h-[180px] object-cover"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).style.display = "none";
+                      }}
+                    />
+                  ) : (
+                    <div className="h-full min-h-[180px] flex items-center justify-center text-muted-foreground text-sm font-mono">
+                      No image
+                    </div>
+                  )}
+                </div>
+
+                <div className="p-5">
+                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                    <div>
+                      <div className="label-style mb-1">Content draft · not published</div>
+                      <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">
+                        {draft.listingTitle}
+                      </h3>
+                      <p className="text-xs text-muted-foreground font-mono mt-1">
+                        Listing {draft.sourceListingId} · Created {new Date(draft.createdAt).toLocaleString()}
+                      </p>
+                    </div>
+                    <DraftStatusBadge status={draft.status} />
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_0.7fr] gap-5">
+                    <div className="space-y-4">
+                      <div>
+                        <div className="label-style mb-1">Suggested caption</div>
+                        <p className="text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap m-0">
+                          {draft.suggestedCaption}
+                        </p>
+                      </div>
+                      <div>
+                        <div className="label-style mb-1">Suggested hashtags</div>
+                        <p className="text-sm text-foreground font-mono m-0">
+                          {draft.suggestedHashtags.map((tag) => `#${tag}`).join(" ")}
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="bg-muted border border-border p-3">
+                        <div className="label-style mb-1">Suggested channel</div>
+                        <div className="text-base font-bold text-foreground uppercase">{draft.suggestedChannel}</div>
+                      </div>
+                      {draft.statusNote && (
+                        <div className="bg-muted border border-border p-3">
+                          <div className="label-style mb-1">Revision note</div>
+                          <p className="text-sm text-foreground font-mono whitespace-pre-wrap m-0">
+                            {draft.statusNote}
+                          </p>
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div className="flex flex-wrap gap-2 mt-5">
+                    <button
+                      type="button"
+                      onClick={() => handleStatusUpdate(draft.id, "approved")}
+                      className="border border-green px-3 py-2 text-xs font-mono uppercase tracking-widest text-green hover:bg-green hover:text-background transition-colors"
+                    >
+                      Approve
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusUpdate(draft.id, "rejected")}
+                      className="border border-red px-3 py-2 text-xs font-mono uppercase tracking-widest text-red hover:bg-red hover:text-background transition-colors"
+                    >
+                      Reject
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleStatusUpdate(draft.id, "revision_requested")}
+                      className="border border-foreground px-3 py-2 text-xs font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
+                    >
+                      Request revision
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+    </div>
   );
 }
 
@@ -2370,7 +2621,7 @@ function MarketDetail({
 // APP (Dashboard | Listings)
 // ============================================
 
-type Tab = "dashboard" | "listings" | "sources" | "stats";
+type Tab = "dashboard" | "listings" | "sources" | "stats" | "agents";
 
 function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
@@ -2429,6 +2680,17 @@ function App() {
           >
             Stats
           </button>
+          <button
+            onClick={() => setTab("agents")}
+            className={
+              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
+              (tab === "agents"
+                ? "bg-foreground text-background"
+                : "hover:bg-foreground hover:text-background")
+            }
+          >
+            Agents
+          </button>
         </nav>
       </header>
 
@@ -2436,6 +2698,7 @@ function App() {
       {tab === "listings" && <ListingsTabView />}
       {tab === "sources" && <SourcesView />}
       {tab === "stats" && <StatsView />}
+      {tab === "agents" && <AgentsApprovalsView />}
     </div>
   );
 }
