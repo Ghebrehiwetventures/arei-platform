@@ -5,6 +5,7 @@
   "rewrites": [
     { "source": "/market", "destination": "/market/index.html" },
     { "source": "/blog", "destination": "/blog/index.html" },
+    { "source": "/blog/(.*)", "destination": "/blog/$1/index.html" },
     { "source": "/about", "destination": "/about/index.html" },
     { "source": "/privacy", "destination": "/privacy/index.html" },
     { "source": "/cookie-policy", "destination": "/cookie-policy/index.html" },

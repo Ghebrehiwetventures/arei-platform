@@ -5,56 +5,19 @@ import { fileURLToPath } from "node:url";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../dist");
 const baseHtmlPath = path.join(distDir, "index.html");
+const blogDataPath = path.resolve(__dirname, "../src/lib/blog-data.ts");
 const siteUrl = "https://www.kazaverde.com";
 const ogImage = `${siteUrl}/favicon.svg`;
 
-const BLOG_ARTICLES = [
-  {
-    href: "/blog/buying-property-cape-verde-guide",
-    title: "How to Buy Property in Cape Verde: A Step-by-Step Guide for Foreign Buyers",
-    description:
-      "Foreign nationals can buy freehold property in Cape Verde. This guide covers the buying process, legal checks, taxes, fees, and common mistakes.",
-  },
-  {
-    href: "/blog/which-cape-verde-island-property",
-    title: "Which Cape Verde Island Should You Buy Property On? A Data-Driven Comparison",
-    description:
-      "A practical comparison of Sal, Boa Vista, Santiago, Sao Vicente, Fogo, and Maio for price level, rental demand, and buyer fit.",
-  },
-  {
-    href: "/blog/cape-verde-property-tax-reform-2026",
-    title: "Cape Verde Property Tax Reform 2026: What Buyers Need to Know",
-    description:
-      "A plain-English breakdown of the 2026 property tax changes, including transfer tax, annual property tax, and implications for buyers.",
-  },
-  {
-    href: "/blog/cape-verde-rental-yields-realistic",
-    title: "Cape Verde Rental Yields: What to Realistically Expect",
-    description:
-      "An evidence-led look at short-term rental income, costs, and what realistic net yields look like across Cape Verde property markets.",
-  },
-  {
-    href: "/blog/cape-verde-green-card-residency",
-    title: "Cape Verde Green Card Residency Through Property Investment",
-    description:
-      "How the Green Card program works, who qualifies, and what property investors should understand before relying on residency benefits.",
-  },
-  {
-    href: "/blog/mistakes-buying-property-cape-verde",
-    title: "Mistakes to Avoid When Buying Property in Cape Verde",
-    description:
-      "A practical checklist of the legal, operational, and due-diligence mistakes that can make a Cape Verde property purchase go wrong.",
-  },
-];
-
-function page(title, description, body) {
-  return { title, description, body };
+function page(title, description, body, options = {}) {
+  return { title, description, body, ...options };
 }
 
-const routes = [
-  {
-    route: "/",
-    ...page(
+function getStaticRoutes(blogArticles) {
+  return [
+    {
+      route: "/",
+      ...page(
       "KazaVerde — Cape Verde Real Estate",
       "A read-only index of Cape Verde property listings with source-linked market coverage.",
       `
@@ -91,10 +54,10 @@ const routes = [
         </main>
       `,
     ),
-  },
-  {
-    route: "/market",
-    ...page(
+    },
+    {
+      route: "/market",
+      ...page(
       "Market Data — KazaVerde",
       "Median prices by island, inventory trends, and Cape Verde property market insights.",
       `
@@ -128,10 +91,10 @@ const routes = [
         </main>
       `,
     ),
-  },
-  {
-    route: "/blog",
-    ...page(
+    },
+    {
+      route: "/blog",
+      ...page(
       "Blog — KazaVerde",
       "Cape Verde real estate insights, guides, and market analysis. Property buying, islands, legal requirements, and investment tips.",
       `
@@ -145,10 +108,10 @@ const routes = [
           <section>
             <h2>Featured guides</h2>
             <ul>
-              ${BLOG_ARTICLES.map(
+              ${blogArticles.map(
                 (article) => `
                   <li>
-                    <a href="${article.href}">${escapeHtml(article.title)}</a>
+                    <a href="/blog/${article.slug}">${escapeHtml(article.title)}</a>
                     <p>${escapeHtml(article.description)}</p>
                   </li>
                 `,
@@ -158,10 +121,10 @@ const routes = [
         </main>
       `,
     ),
-  },
-  {
-    route: "/about",
-    ...page(
+    },
+    {
+      route: "/about",
+      ...page(
       "About — KazaVerde",
       "How KazaVerde works. Data sources, update cadence, deduplication, and transparency.",
       `
@@ -188,10 +151,10 @@ const routes = [
         </main>
       `,
     ),
-  },
-  {
-    route: "/privacy",
-    ...page(
+    },
+    {
+      route: "/privacy",
+      ...page(
       "Privacy Policy — KazaVerde",
       "How KazaVerde handles your data, what we collect, and your rights.",
       `
@@ -221,10 +184,10 @@ const routes = [
         </main>
       `,
     ),
-  },
-  {
-    route: "/cookie-policy",
-    ...page(
+    },
+    {
+      route: "/cookie-policy",
+      ...page(
       "Cookie Policy — KazaVerde",
       "What cookies and local storage KazaVerde uses and why.",
       `
@@ -254,10 +217,13 @@ const routes = [
         </main>
       `,
     ),
-  },
-];
+    },
+  ];
+}
 
 async function main() {
+  const blogArticles = await loadBlogArticles();
+  const routes = [...getStaticRoutes(blogArticles), ...getBlogArticleRoutes(blogArticles)];
   const baseHtml = await readFile(baseHtmlPath, "utf8");
 
   for (const route of routes) {
@@ -277,18 +243,20 @@ async function main() {
 
 function renderRouteHtml(baseHtml, route) {
   const canonicalUrl = new URL(route.route, `${siteUrl}/`).toString();
+  const ogType = route.ogType ?? "website";
+  const documentTitle = route.title.includes("KazaVerde") ? route.title : `${route.title} — KazaVerde`;
   const headExtras = [
     `<link rel="canonical" href="${canonicalUrl}" />`,
-    `<meta property="og:title" content="${escapeHtml(route.title)}" />`,
+    `<meta property="og:title" content="${escapeHtml(documentTitle)}" />`,
     `<meta property="og:description" content="${escapeHtml(route.description)}" />`,
-    `<meta property="og:type" content="website" />`,
+    `<meta property="og:type" content="${escapeHtml(ogType)}" />`,
     `<meta property="og:url" content="${canonicalUrl}" />`,
     `<meta property="og:site_name" content="KazaVerde" />`,
-    `<meta property="og:image" content="${ogImage}" />`,
+    `<meta property="og:image" content="${escapeHtml(route.image ?? ogImage)}" />`,
   ].join("\n    ");
 
   return baseHtml
-    .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(route.title)}</title>`)
+    .replace(/<title>[\s\S]*?<\/title>/, `<title>${escapeHtml(documentTitle)}</title>`)
     .replace(
       /<meta name="description" content="[\s\S]*?" \/>/,
       `<meta name="description" content="${escapeHtml(route.description)}" />`,
@@ -328,6 +296,53 @@ function escapeHtml(value) {
     .replace(/</g, "&lt;")
     .replace(/>/g, "&gt;")
     .replace(/"/g, "&quot;");
+}
+
+async function loadBlogArticles() {
+  const source = await readFile(blogDataPath, "utf8");
+  const sanitizedSource = source
+    .replace(/export interface BlogArticle[\s\S]*?\n}\n\n/, "")
+    .replace(/export const BLOG_ARTICLES: BlogArticle\[] =/, "const BLOG_ARTICLES =")
+    .replace(/\nexport function getArticleBySlug[\s\S]*$/, "\n");
+  const moduleUrl = `data:text/javascript;charset=utf-8,${encodeURIComponent(`${sanitizedSource}\nexport { BLOG_ARTICLES };`)}`;
+  const module = await import(moduleUrl);
+  return module.BLOG_ARTICLES;
+}
+
+function getBlogArticleRoutes(blogArticles) {
+  return blogArticles.map((article) => ({
+    route: `/blog/${article.slug}`,
+    ...page(
+      article.title,
+      article.description,
+      renderBlogArticleBody(article),
+      { ogType: "article", image: article.heroImage || ogImage },
+    ),
+  }));
+}
+
+function renderBlogArticleBody(article) {
+  const formattedDate = new Date(`${article.date}T00:00:00Z`).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+    timeZone: "UTC",
+  });
+
+  return `
+    <main>
+      <a href="/blog">Back to blog</a>
+
+      <article>
+        <p>${escapeHtml(formattedDate)} · ${escapeHtml(article.readTime)}</p>
+        <h1>${escapeHtml(article.title)}</h1>
+        <p>${article.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join(" ")}</p>
+        <div>
+${indent(article.content.trim(), 5)}
+        </div>
+      </article>
+    </main>
+  `;
 }
 
 main().catch((error) => {
