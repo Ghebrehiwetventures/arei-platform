@@ -12,9 +12,15 @@ import {
   type ListingsSortKey,
   type LatestSyncLog,
 } from "./data";
+import {
+  phaseAAgentCards,
+  phaseAAgentQueue,
+  phaseAKazaVerdeStatus,
+  phaseAWeeklyCommand,
+} from "./phaseASeed";
 
 const SYNC_STALE_MINUTES = 24 * 60 * 3; // 3 days
-import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow } from "./types";
+import { Source, Listing, SourceStatus, DashboardStats, SourceQualityRow } from "./types";
 
 // ============================================
 // IMAGE GALLERY — arrows on hover, dot navigation
@@ -601,6 +607,78 @@ function DashboardView() {
         )}
       </section>
     </div>
+  );
+}
+
+function SyncLogsView() {
+  const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getLatestSyncLog().then((log) => {
+      if (cancelled) return;
+      setLatestSync(log);
+      setLoading(false);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return (
+    <section className="space-y-4">
+      <div>
+        <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+          Sync Logs
+        </h2>
+        <p className="label-style">Latest report-backed sync visibility</p>
+      </div>
+
+      <div className="border border-foreground brutalist-shadow-sm p-5 bg-muted">
+        {loading && <p className="text-muted-foreground font-mono text-sm">Loading sync logs…</p>}
+        {!loading && latestSync && (
+          <div className="space-y-4">
+            <div className="flex flex-wrap items-center gap-3">
+              <RunPhaseBadge latestSync={latestSync} />
+              {latestSync.runPhase && (
+                <span className="text-xs text-muted-foreground font-mono">{latestSync.runPhase}</span>
+              )}
+            </div>
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="border border-border bg-background p-4">
+                <div className="label-style mb-1">Synced at</div>
+                <div className="text-sm font-mono text-foreground">
+                  {new Date(latestSync.at).toLocaleString()}
+                </div>
+              </div>
+              <div className="border border-border bg-background p-4">
+                <div className="label-style mb-1">Market</div>
+                <div className="text-sm font-mono text-foreground">{latestSync.marketName}</div>
+              </div>
+              <div className="border border-border bg-background p-4">
+                <div className="label-style mb-1">Total listings</div>
+                <div className="text-sm font-mono text-foreground">{latestSync.totalListings.toLocaleString()}</div>
+              </div>
+              <div className="border border-border bg-background p-4">
+                <div className="label-style mb-1">Visible listings</div>
+                <div className="text-sm font-mono text-green">{latestSync.visibleCount.toLocaleString()}</div>
+              </div>
+            </div>
+          </div>
+        )}
+        {!loading && !latestSync && (
+          <div className="space-y-3">
+            <p className="text-sm text-amber font-mono">
+              No sync report is currently loaded. Serve the ingest artifact to make sync visibility explicit.
+            </p>
+            <p className="text-xs text-muted-foreground font-mono">
+              This view uses the existing report artifact path and does not add any new sync execution behavior.
+            </p>
+          </div>
+        )}
+      </div>
+    </section>
   );
 }
 
@@ -2249,7 +2327,7 @@ function ListingsGrid({
 }: {
   listings: Listing[];
   page: number;
-  setPage: (p: number) => void;
+  setPage: React.Dispatch<React.SetStateAction<number>>;
   onSelectListing: (l: Listing) => void;
 }) {
   const totalPages = Math.max(1, Math.ceil(listings.length / PAGE_SIZE));
@@ -2367,75 +2445,552 @@ function MarketDetail({
 }
 
 // ============================================
-// APP (Dashboard | Listings)
+// APP (Phase A)
 // ============================================
 
-type Tab = "dashboard" | "listings" | "sources" | "stats";
+type RoutePath =
+  | "/overview"
+  | "/data"
+  | "/data/listings"
+  | "/data/sources"
+  | "/data/stats"
+  | "/data/sync-logs"
+  | "/agents"
+  | "/agents/overview"
+  | "/agents/approvals"
+  | "/agents/runs";
+
+const DEFAULT_ROUTE: RoutePath = "/overview";
+
+function normalizeRoute(hash: string): RoutePath {
+  const cleaned = hash.replace(/^#/, "").trim() || DEFAULT_ROUTE;
+  if (
+    cleaned === "/overview" ||
+    cleaned === "/data" ||
+    cleaned === "/data/listings" ||
+    cleaned === "/data/sources" ||
+    cleaned === "/data/stats" ||
+    cleaned === "/data/sync-logs" ||
+    cleaned === "/agents" ||
+    cleaned === "/agents/overview" ||
+    cleaned === "/agents/approvals" ||
+    cleaned === "/agents/runs"
+  ) {
+    return cleaned;
+  }
+  return DEFAULT_ROUTE;
+}
+
+function useHashRoute(): RoutePath {
+  const [route, setRoute] = useState<RoutePath>(() => normalizeRoute(window.location.hash));
+
+  useEffect(() => {
+    if (!window.location.hash) {
+      window.location.hash = DEFAULT_ROUTE;
+      return;
+    }
+
+    const syncRoute = () => {
+      const nextRoute = normalizeRoute(window.location.hash);
+      setRoute(nextRoute);
+      if (window.location.hash !== `#${nextRoute}`) {
+        window.location.replace(`#${nextRoute}`);
+      }
+    };
+
+    window.addEventListener("hashchange", syncRoute);
+    syncRoute();
+    return () => {
+      window.removeEventListener("hashchange", syncRoute);
+    };
+  }, []);
+
+  return route;
+}
+
+function RouteButton({
+  active,
+  label,
+  route,
+}: {
+  active: boolean;
+  label: string;
+  route: RoutePath;
+}) {
+  return (
+    <a
+      href={`#${route}`}
+      aria-current={active ? "page" : undefined}
+      className={
+        "inline-block border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors no-underline " +
+        (active
+          ? "bg-foreground text-background"
+          : "hover:bg-foreground hover:text-background")
+      }
+    >
+      {label}
+    </a>
+  );
+}
+
+function OverviewHero() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([getDashboardStats(), getLatestSyncLog()]).then(([dashboardStats, syncLog]) => {
+      if (cancelled) return;
+      setStats(dashboardStats);
+      setLatestSync(syncLog);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const cards = [
+    {
+      label: "Phase",
+      value: "A",
+      tone: "text-foreground",
+      hint: "Narrow admin shell in place",
+    },
+    {
+      label: "Visible listings",
+      value: stats ? stats.approvedCount.toLocaleString() : "—",
+      tone: "text-green",
+      hint: "Live data when RPC is available",
+    },
+    {
+      label: "Sources tracked",
+      value: stats ? String(stats.sourceCount) : "—",
+      tone: "text-foreground",
+      hint: "From current source quality feed",
+    },
+    {
+      label: "Latest sync",
+      value: latestSync?.at ? new Date(latestSync.at).toLocaleDateString() : "No report",
+      tone: latestSync?.at ? "text-foreground" : "text-amber",
+      hint: latestSync?.phaseLabel ?? "Artifact-backed when present",
+    },
+  ];
+
+  return (
+    <section className="border border-foreground brutalist-shadow-sm p-6 bg-muted mb-8">
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div className="max-w-3xl">
+          <p className="label-style mb-2">AREI Admin 2.0</p>
+          <h2 className="font-sans font-black text-2xl sm:text-4xl uppercase tracking-tight text-foreground mb-3">
+            Overview, Data, and Agents
+          </h2>
+          <p className="text-sm sm:text-base text-muted-foreground font-mono leading-relaxed max-w-2xl">
+            Phase A keeps the current auth gate and working data views, reorganized into a tighter operations shell.
+            Growth and Markets remain intentionally out of scope for this pass.
+          </p>
+        </div>
+        <div className="border border-amber bg-amber/10 px-4 py-3 max-w-sm">
+          <div className="label-style text-amber mb-1">Scope guard</div>
+          <p className="text-sm text-foreground font-mono">
+            No autonomous public actions are enabled. Agents are assistive and human-gated only.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mt-6">
+        {cards.map((card) => (
+          <div key={card.label} className="border border-border bg-background p-4">
+            <div className="label-style mb-1">{card.label}</div>
+            <div className={`text-xl font-bold font-mono ${card.tone}`}>{card.value}</div>
+            <div className="text-xs text-muted-foreground mt-2">{card.hint}</div>
+          </div>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function OverviewView() {
+  const [stats, setStats] = useState<DashboardStats | null>(null);
+  const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    Promise.all([getDashboardStats(), getLatestSyncLog()]).then(([dashboardStats, syncLog]) => {
+      if (cancelled) return;
+      setStats(dashboardStats);
+      setLatestSync(syncLog);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const approvedPct = stats?.totalListings ? Math.round((stats.approvedCount / stats.totalListings) * 100) : 0;
+  const healthSummary = [
+    {
+      label: "Approved",
+      value: stats ? `${approvedPct}%` : "—",
+      tone: approvedPct >= 70 ? "text-green" : approvedPct >= 40 ? "text-amber" : "text-red",
+    },
+    {
+      label: "Sources",
+      value: stats ? String(stats.sourceCount) : "—",
+      tone: "text-foreground",
+    },
+    {
+      label: "Markets",
+      value: stats ? String(stats.marketCount) : "—",
+      tone: "text-foreground",
+    },
+    {
+      label: "Sync state",
+      value: latestSync?.phaseLabel ?? "No report",
+      tone: latestSync ? "text-foreground" : "text-amber",
+    },
+  ];
+
+  const immediateActions = [
+    latestSync?.at
+      ? `Check the latest sync from ${new Date(latestSync.at).toLocaleString()} and confirm no manual intervention is needed`
+      : "Load the latest ingest report so sync trust signals are visible",
+    "Review weak approval or coverage signals in Data > Sources or Data > Stats",
+    "Keep all external/public actions human-gated and outside Phase A automation",
+  ];
+
+  return (
+    <div className="space-y-8">
+      <OverviewHero />
+
+      <section className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+        <article className="border border-foreground brutalist-shadow-sm p-5 bg-muted">
+          <p className="label-style mb-2">Weekly command card</p>
+          <h3 className="font-sans font-bold text-xl uppercase tracking-tight text-foreground mb-3">
+            {phaseAWeeklyCommand.title}
+          </h3>
+          <p className="text-sm text-foreground font-mono mb-3">{phaseAWeeklyCommand.focus}</p>
+          <p className="text-xs text-muted-foreground font-mono mb-4">Operator: {phaseAWeeklyCommand.operator}</p>
+          <div className="space-y-2">
+            {phaseAWeeklyCommand.checkpoints.map((checkpoint) => (
+              <div key={checkpoint} className="border border-border bg-background px-3 py-2 text-sm font-mono text-muted-foreground">
+                {checkpoint}
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="border border-foreground brutalist-shadow-sm p-5 bg-muted">
+          <p className="label-style mb-2">System Pulse</p>
+          <h3 className="font-sans font-bold text-xl uppercase tracking-tight text-foreground mb-3">
+            Operational pulse
+          </h3>
+          <div className="grid grid-cols-2 gap-4">
+            <div className="border border-border bg-background p-4">
+              <div className="label-style mb-1">Latest sync</div>
+              <div className="font-mono text-foreground">{latestSync?.phaseLabel ?? "No sync report"}</div>
+              <div className="text-xs text-muted-foreground mt-2">
+                {latestSync?.at ? new Date(latestSync.at).toLocaleString() : "Artifact-backed when available"}
+              </div>
+            </div>
+            <div className="border border-border bg-background p-4">
+              <div className="label-style mb-1">Visible inventory</div>
+              <div className="font-mono text-green">{stats ? stats.approvedCount.toLocaleString() : "—"}</div>
+              <div className="text-xs text-muted-foreground mt-2">
+                {stats ? `${stats.totalListings.toLocaleString()} total tracked listings` : "Waiting for live metrics"}
+              </div>
+            </div>
+          </div>
+        </article>
+      </section>
+
+      <section className="border border-border bg-muted/30 p-5">
+        <p className="label-style mb-3">Health summary row</p>
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          {healthSummary.map((item) => (
+            <div key={item.label} className="border border-border bg-background p-4">
+              <div className="label-style mb-1">{item.label}</div>
+              <div className={`font-mono text-lg ${item.tone}`}>{item.value}</div>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+        <article className="border border-border bg-muted/30 p-5 xl:col-span-2">
+          <p className="label-style mb-3">Immediate action queue</p>
+          <div className="space-y-3">
+            {immediateActions.map((action) => (
+              <div key={action} className="border border-border bg-background px-4 py-3 text-sm text-foreground font-mono">
+                {action}
+              </div>
+            ))}
+          </div>
+        </article>
+
+        <article className="border border-border bg-muted/30 p-5">
+          <p className="label-style mb-3">Agent pulse</p>
+          <div className="space-y-3">
+            {phaseAAgentCards.map((agent) => (
+              <div key={agent.id} className="border border-border bg-background px-4 py-3">
+                <div className="flex items-center justify-between gap-3">
+                  <span className="font-mono text-sm text-foreground">{agent.name}</span>
+                  <AgentStatusBadge status={agent.status} />
+                </div>
+                <p className="text-xs text-muted-foreground font-mono mt-2">{agent.summary}</p>
+              </div>
+            ))}
+          </div>
+        </article>
+      </section>
+
+      <section className="border border-foreground brutalist-shadow-sm p-5 bg-muted">
+        <p className="label-style mb-2">KazaVerde status block</p>
+        <h3 className="font-sans font-bold text-xl uppercase tracking-tight text-foreground mb-3">
+          KazaVerde downstream status
+        </h3>
+        <div className="flex flex-wrap items-center gap-3 mb-3">
+          <span className="border border-amber bg-amber/15 text-amber px-2 py-1 text-xs font-semibold uppercase tracking-wide">
+            {phaseAKazaVerdeStatus.state}
+          </span>
+          <span className="text-sm text-muted-foreground font-mono">
+            Public surface remains dependent on trusted data and human review.
+          </span>
+        </div>
+        <p className="text-sm text-foreground font-mono mb-4">{phaseAKazaVerdeStatus.summary}</p>
+        <div className="space-y-2">
+          {phaseAKazaVerdeStatus.notes.map((note) => (
+            <div key={note} className="border border-border bg-background px-3 py-2 text-sm text-muted-foreground font-mono">
+              {note}
+            </div>
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
+function DataView({ route }: { route: RoutePath }) {
+  const dataSection =
+    route === "/data/sources"
+      ? "sources"
+      : route === "/data/stats"
+        ? "stats"
+        : route === "/data/sync-logs"
+          ? "sync-logs"
+          : "listings";
+
+  return (
+    <div className="space-y-8">
+      <section className="border border-border bg-muted/40 p-5">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <p className="label-style mb-2">Data</p>
+            <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-2">
+              Live operational data surfaces
+            </h2>
+            <p className="text-sm text-muted-foreground font-mono max-w-2xl">
+              Listings and source health remain backed by the existing Supabase queries and report artifact fallback.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <RouteButton active={dataSection === "listings"} label="Listings" route="/data/listings" />
+            <RouteButton active={dataSection === "sources"} label="Sources" route="/data/sources" />
+            <RouteButton active={dataSection === "stats"} label="Stats" route="/data/stats" />
+            <RouteButton active={dataSection === "sync-logs"} label="Sync Logs" route="/data/sync-logs" />
+          </div>
+        </div>
+      </section>
+
+      {dataSection === "listings" && <ListingsTabView />}
+      {dataSection === "sources" && <SourcesView />}
+      {dataSection === "stats" && <StatsView />}
+      {dataSection === "sync-logs" && <SyncLogsView />}
+    </div>
+  );
+}
+
+type AgentStatus = "live-signal" | "seeded" | "human-gated";
+
+function AgentStatusBadge({ status }: { status: AgentStatus }) {
+  const classes: Record<AgentStatus, string> = {
+    "live-signal": "bg-green/15 text-green border-green",
+    seeded: "bg-amber/15 text-amber border-amber",
+    "human-gated": "bg-muted text-foreground border-border",
+  };
+  const labels: Record<AgentStatus, string> = {
+    "live-signal": "Live signal",
+    seeded: "Seeded",
+    "human-gated": "Human gated",
+  };
+
+  return (
+    <span className={`inline-block border px-2 py-1 text-xs font-semibold uppercase tracking-wide ${classes[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
+
+function AgentsView({ route }: { route: RoutePath }) {
+  const agentSection =
+    route === "/agents/approvals"
+      ? "approvals"
+      : route === "/agents/runs"
+        ? "runs"
+        : "overview";
+
+  return (
+    <div className="space-y-8">
+      <section className="border border-foreground brutalist-shadow-sm p-6 bg-muted">
+        <p className="label-style mb-2">Agents</p>
+        <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-3">
+          Human-gated operational assistants
+        </h2>
+        <p className="text-sm text-muted-foreground font-mono max-w-3xl">
+          This Phase A surface is intentionally narrow. It shows operator-facing agent roles and queue ideas, but it does
+          not execute outbound communication, market actions, or any autonomous public behavior.
+        </p>
+        <div className="flex flex-wrap gap-2 mt-4">
+          <RouteButton active={agentSection === "overview"} label="Overview" route="/agents/overview" />
+          <RouteButton active={agentSection === "approvals"} label="Approvals" route="/agents/approvals" />
+          <RouteButton active={agentSection === "runs"} label="Runs" route="/agents/runs" />
+        </div>
+      </section>
+
+      {agentSection === "overview" && (
+        <section className="grid grid-cols-1 xl:grid-cols-3 gap-4">
+          {phaseAAgentCards.map((agent) => (
+            <article key={agent.id} className="border border-border bg-muted/40 p-5">
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <div className="label-style mb-1">{agent.lane}</div>
+                  <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">
+                    {agent.name}
+                  </h3>
+                </div>
+                <AgentStatusBadge status={agent.status} />
+              </div>
+
+              <p className="text-sm text-foreground font-mono leading-relaxed mb-4">{agent.summary}</p>
+
+              <div className="space-y-3 text-sm font-mono">
+                <div>
+                  <div className="label-style mb-1">Responsibility</div>
+                  <p className="text-foreground">{agent.responsibility}</p>
+                </div>
+                <div>
+                  <div className="label-style mb-1">Inputs</div>
+                  <p className="text-muted-foreground">{agent.inputs.join(" · ")}</p>
+                </div>
+                <div>
+                  <div className="label-style mb-1">Outputs</div>
+                  <p className="text-muted-foreground">{agent.outputs.join(" · ")}</p>
+                </div>
+                <div>
+                  <div className="label-style mb-1">Next step</div>
+                  <p className="text-foreground">{agent.nextStep}</p>
+                </div>
+              </div>
+
+              <div className="mt-5 flex flex-wrap items-center justify-between gap-3 border-t border-border pt-4">
+                <span className="text-xs text-amber font-mono uppercase tracking-wide">
+                  Public actions disabled
+                </span>
+                <button
+                  type="button"
+                  disabled
+                  className="border border-border px-3 py-2 text-xs font-mono uppercase tracking-widest opacity-60 cursor-not-allowed"
+                >
+                  Coming later
+                </button>
+              </div>
+            </article>
+          ))}
+        </section>
+      )}
+
+      {agentSection === "approvals" && (
+        <section className="border border-border bg-muted/30 p-5">
+          <div className="space-y-3">
+            {phaseAAgentQueue.map((item) => (
+              <div key={item.id} className="border border-border bg-background p-4">
+                <div className="flex flex-wrap items-center justify-between gap-3">
+                  <div>
+                    <div className="font-mono text-foreground">{item.title}</div>
+                    <p className="text-xs text-muted-foreground mt-2">{item.note}</p>
+                  </div>
+                  <div className="text-right">
+                    <div className="label-style mb-1">Approval owner</div>
+                    <div className="text-sm font-mono text-foreground">{item.owner}</div>
+                  </div>
+                </div>
+                <div className="mt-3 border-t border-border pt-3 text-xs text-amber font-mono uppercase tracking-wide">
+                  Human approval required
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {agentSection === "runs" && (
+        <section className="border border-border bg-muted/30 p-5">
+          <div className="space-y-3">
+            {phaseAAgentCards.map((agent) => (
+              <div key={agent.id} className="border border-border bg-background p-4 flex flex-wrap items-start justify-between gap-4">
+                <div className="min-w-0">
+                  <div className="font-mono text-foreground">{agent.name}</div>
+                  <p className="text-xs text-muted-foreground mt-2">{agent.nextStep}</p>
+                </div>
+                <div className="text-right min-w-[160px]">
+                  <div className="label-style mb-1">Run state</div>
+                  <AgentStatusBadge status={agent.status} />
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
+    </div>
+  );
+}
+
+const LEGACY_PHASE_ZERO_COMPONENTS = [StatsView, MarketOverview, MarketDetail];
+void LEGACY_PHASE_ZERO_COMPONENTS;
 
 function App() {
-  const [tab, setTab] = useState<Tab>("dashboard");
+  const route = useHashRoute();
+  const section = route.startsWith("/data") ? "data" : route.startsWith("/agents") ? "agents" : "overview";
 
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
       <header className="border-b border-border pb-4 mb-8">
-        <h1 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
-          Africa Property Index
-        </h1>
-        <p className="label-style mt-0">
-          Pan-African Real Estate Index — Admin
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div>
+            <h1 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+              AREI Admin 2.0
+            </h1>
+            <p className="label-style mt-0">
+              Pan-African Real Estate Index — Internal operations surface
+            </p>
+          </div>
+          <div className="text-right">
+            <div className="label-style mb-1">Phase A</div>
+            <p className="text-xs text-muted-foreground font-mono max-w-xs">
+              Built only for Overview, Data, and Agents. Growth and Markets are intentionally deferred.
+            </p>
+          </div>
+        </div>
+
         <nav className="flex flex-wrap gap-2 mt-4">
-          <button
-            onClick={() => setTab("dashboard")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "dashboard"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setTab("listings")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "listings"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Listings
-          </button>
-          <button
-            onClick={() => setTab("sources")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "sources"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Sources
-          </button>
-          <button
-            onClick={() => setTab("stats")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "stats"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Stats
-          </button>
+          <RouteButton active={section === "overview"} label="Overview" route="/overview" />
+          <RouteButton active={section === "data"} label="Data" route="/data" />
+          <RouteButton active={section === "agents"} label="Agents" route="/agents" />
         </nav>
       </header>
 
-      {tab === "dashboard" && <DashboardView />}
-      {tab === "listings" && <ListingsTabView />}
-      {tab === "sources" && <SourcesView />}
-      {tab === "stats" && <StatsView />}
+      {section === "overview" && <OverviewView />}
+      {section === "data" && <DataView route={route} />}
+      {section === "agents" && <AgentsView route={route} />}
     </div>
   );
 }
