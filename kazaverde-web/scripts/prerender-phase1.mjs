@@ -6,7 +6,7 @@ import { AREIClient } from "../../packages/arei-sdk/dist/index.js";
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../dist");
 const baseHtmlPath = path.join(distDir, "index.html");
-const spaFallbackPath = path.join(distDir, "__spa", "fallback", "index.html");
+const spaFallbackPath = path.join(distDir, "spa-fallback", "index.html");
 const blogDataPath = path.resolve(__dirname, "../src/lib/blog-data.ts");
 const prerenderListingsPath = path.resolve(__dirname, "../src/lib/prerender-listings.ts");
 const siteUrl = "https://www.kazaverde.com";
