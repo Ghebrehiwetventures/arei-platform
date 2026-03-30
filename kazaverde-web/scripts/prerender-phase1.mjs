@@ -1,13 +1,17 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import { AREIClient } from "../../packages/arei-sdk/dist/index.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../dist");
 const baseHtmlPath = path.join(distDir, "index.html");
 const blogDataPath = path.resolve(__dirname, "../src/lib/blog-data.ts");
+const prerenderListingsPath = path.resolve(__dirname, "../src/lib/prerender-listings.ts");
 const siteUrl = "https://www.kazaverde.com";
 const ogImage = `${siteUrl}/favicon.svg`;
+const publicSupabaseUrl = "https://bhqjdzjtiwckfuteycfl.supabase.co";
+const publicSupabaseAnonKey = "sb_publishable_fFm5NsC3cWLYr_Wnx9OLWQ_Ytmnn-Wd";
 
 function page(title, description, body, options = {}) {
   return { title, description, body, ...options };
@@ -223,7 +227,8 @@ function getStaticRoutes(blogArticles) {
 
 async function main() {
   const blogArticles = await loadBlogArticles();
-  const routes = [...getStaticRoutes(blogArticles), ...getBlogArticleRoutes(blogArticles)];
+  const listingRoutes = await getListingDetailRoutes();
+  const routes = [...getStaticRoutes(blogArticles), ...getBlogArticleRoutes(blogArticles), ...listingRoutes];
   const baseHtml = await readFile(baseHtmlPath, "utf8");
 
   for (const route of routes) {
@@ -309,6 +314,14 @@ async function loadBlogArticles() {
   return module.BLOG_ARTICLES;
 }
 
+async function loadListingPrerenderIds() {
+  const source = await readFile(prerenderListingsPath, "utf8");
+  const sanitizedSource = source.replace(/ as const;/g, ";");
+  const moduleUrl = `data:text/javascript;charset=utf-8,${encodeURIComponent(sanitizedSource)}`;
+  const module = await import(moduleUrl);
+  return module.PRERENDER_LISTING_IDS;
+}
+
 function getBlogArticleRoutes(blogArticles) {
   return blogArticles.map((article) => ({
     route: `/blog/${article.slug}`,
@@ -343,6 +356,152 @@ ${indent(article.content.trim(), 5)}
       </article>
     </main>
   `;
+}
+
+async function getListingDetailRoutes() {
+  try {
+    const client = new AREIClient({
+      supabaseUrl: process.env.VITE_SUPABASE_URL || publicSupabaseUrl,
+      supabaseAnonKey: process.env.VITE_SUPABASE_ANON_KEY || publicSupabaseAnonKey,
+    });
+    const listingIds = await loadListingPrerenderIds();
+    const details = await Promise.all(
+      listingIds.map(async (id) => {
+        try {
+          return await client.getListing(id);
+        } catch (error) {
+          console.warn(`[prerender-phase1] Skipping listing ${id}:`, error instanceof Error ? error.message : error);
+          return null;
+        }
+      }),
+    );
+
+    return details
+      .filter((detail) => detail !== null)
+      .map((detail) => ({
+        route: `/listing/${detail.id}`,
+        ...page(
+          buildListingSeoTitle(detail),
+          buildListingSeoDescription(detail),
+          renderListingDetailBody(detail),
+          {
+            ogType: "website",
+            image: detail.image_urls[0] || ogImage,
+          },
+        ),
+      }));
+  } catch (error) {
+    console.warn("[prerender-phase1] Listing prerender skipped:", error instanceof Error ? error.message : error);
+    return [];
+  }
+}
+
+function buildListingSeoTitle(detail) {
+  return toTitleCase(detail.title || "Property");
+}
+
+function buildListingSeoDescription(detail) {
+  const parts = [
+    buildListingSeoTitle(detail),
+    `in ${detail.city ? `${detail.city}, ` : ""}${detail.island}, Cape Verde`,
+  ];
+
+  if (detail.price) {
+    parts.push(formatPrice(detail.price, detail.currency));
+  }
+
+  if (detail.property_type) {
+    parts.push(isLandListing(detail) ? `${detail.property_type} listing` : detail.property_type);
+  }
+
+  if (!isLandListing(detail) && detail.bedrooms != null) {
+    parts.push(detail.bedrooms === 0 ? "studio" : `${detail.bedrooms}-bedroom`);
+  }
+
+  return parts.join(" · ");
+}
+
+function renderListingDetailBody(detail) {
+  const specs = [];
+
+  if (detail.property_type) {
+    specs.push({ label: "Type", value: detail.property_type });
+  }
+
+  if (!isLandListing(detail) && detail.bedrooms != null) {
+    specs.push({ label: detail.bedrooms === 0 ? "Layout" : "Bedrooms", value: detail.bedrooms === 0 ? "Studio" : String(detail.bedrooms) });
+  }
+
+  if (!isLandListing(detail) && detail.bathrooms != null && detail.bathrooms > 0) {
+    specs.push({ label: "Bathrooms", value: String(detail.bathrooms) });
+  }
+
+  if (detail.property_size_sqm != null) {
+    specs.push({ label: "Interior", value: `${detail.property_size_sqm.toLocaleString("en-US")} m²` });
+  }
+
+  if (detail.land_area_sqm != null) {
+    specs.push({ label: "Land", value: `${detail.land_area_sqm.toLocaleString("en-US")} m²` });
+  }
+
+  const descriptionHtml = detail.description_html || (detail.description ? `<p>${escapeHtml(detail.description)}</p>` : "");
+  const lastChecked = detail.last_seen_at
+    ? new Date(detail.last_seen_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })
+    : null;
+  const firstImage = detail.image_urls[0];
+
+  return `
+    <main>
+      <a href="/listings">Back to listings</a>
+
+      <article>
+        <p>${escapeHtml(formatLocation(detail.city, detail.island))}, Cape Verde</p>
+        <h1>${escapeHtml(buildListingSeoTitle(detail))}</h1>
+        <p>${escapeHtml(formatPrice(detail.price, detail.currency))}</p>
+        ${firstImage ? `<p><img src="${escapeHtml(firstImage)}" alt="${escapeHtml(buildListingSeoTitle(detail))}" loading="eager" /></p>` : ""}
+        ${specs.length > 0 ? `<ul>\n${specs.map((spec) => `          <li><strong>${escapeHtml(spec.label)}:</strong> ${escapeHtml(spec.value)}</li>`).join("\n")}\n        </ul>` : ""}
+        <div>
+${indent(descriptionHtml.trim() || "<p>Property details available on the source listing page.</p>", 5)}
+        </div>
+        <p>Source: <a href="${escapeHtml(detail.source_url)}">${escapeHtml(formatSourceLabel(detail.source_id))}</a></p>
+        ${lastChecked ? `<p>Last checked: ${escapeHtml(lastChecked)}</p>` : ""}
+      </article>
+    </main>
+  `;
+}
+
+function formatPrice(price, currency = "EUR") {
+  if (!price || price <= 0) return "Price on request";
+  const symbol = currency === "CVE" ? "CVE " : "€";
+  return `${symbol}${price.toLocaleString("en-US")}`;
+}
+
+function formatLocation(city, island) {
+  return city ? `${city}, ${island}` : island;
+}
+
+function formatSourceLabel(sourceId) {
+  const knownLabels = {
+    cv_gabetticasecapoverde: "Gabetti Case Cape Verde",
+    cv_terracaboverde: "Terra Cabo Verde",
+    tcv: "Terra Cabo Verde",
+    ecv: "EstateCV",
+  };
+  const prefix = String(sourceId || "").split(/[:_]/)[0];
+  return knownLabels[sourceId] || knownLabels[prefix] || String(sourceId || "Partner listing");
+}
+
+function isLandListing(detail) {
+  const landTypes = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
+  const landTitle = /\b(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)\b/i;
+  return landTypes.test(detail.property_type ?? "") || landTitle.test(detail.title ?? "");
+}
+
+function toTitleCase(value) {
+  if (!value || value !== value.toUpperCase()) return value;
+  return value
+    .toLowerCase()
+    .replace(/(?:^|\s|[-/])\S/g, (char) => char.toUpperCase());
 }
 
 main().catch((error) => {

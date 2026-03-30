@@ -48,6 +48,34 @@ function toTitleCase(str: string): string {
     .replace(/(?:^|\s|[-/])\S/g, (c) => c.toUpperCase());
 }
 
+function buildListingMetaTitle(title: string | null | undefined): string {
+  const normalized = title ? toTitleCase(title) : "Property";
+  return normalized;
+}
+
+function buildListingMetaDescription(detail: DemoListing | null, isLand: boolean): string {
+  if (!detail) return "Property listing in Cape Verde";
+
+  const parts = [
+    buildListingMetaTitle(detail.title),
+    `in ${detail.city ? `${detail.city}, ` : ""}${detail.island}, Cape Verde`,
+  ];
+
+  if (detail.price) {
+    parts.push(`${formatPrice(detail.price, detail.currency)}`);
+  }
+
+  if (detail.property_type) {
+    parts.push(isLand ? `${detail.property_type} listing` : detail.property_type);
+  }
+
+  if (!isLand && detail.bedrooms != null) {
+    parts.push(detail.bedrooms === 0 ? "studio" : `${detail.bedrooms}-bedroom`);
+  }
+
+  return parts.join(" · ");
+}
+
 export default function Detail() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
@@ -61,9 +89,14 @@ export default function Detail() {
   const [lightboxOpen, setLightboxOpen] = useState(false);
   const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
 
+  const listingForMeta = listing;
+  const listingIsLand =
+    listingForMeta != null &&
+    (LAND_TYPES.test(listingForMeta.property_type ?? "") || LAND_TITLE.test(listingForMeta.title ?? ""));
+
   useDocumentMeta(
-    listing?.title ?? (error ? "Property not found" : "Property"),
-    listing ? `Property in ${listing.island}${listing.city ? `, ${listing.city}` : ""}. Cape Verde real estate.` : "Property listing in Cape Verde",
+    listingForMeta ? buildListingMetaTitle(listingForMeta.title) : (error ? "Property not found" : "Property"),
+    buildListingMetaDescription(listingForMeta, Boolean(listingIsLand)),
     listing?.image_urls?.[0] ? { image: listing.image_urls[0] } : undefined
   );
 

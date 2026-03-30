@@ -9,13 +9,8 @@ import type { DemoListing } from "../lib/demo-data";
 import { cardToDemoListing, detailToDemoListing } from "../lib/transforms";
 import { mergeCuratedFeaturedListings, selectFeaturedListings } from "../lib/featured";
 import { formatMedian } from "../lib/format";
+import { CURATED_FEATURED_IDS } from "../lib/prerender-listings";
 import "./Home.css";
-
-const CURATED_FEATURED_IDS = [
-  "tcv_08491fc587b1",
-  "tcv_90471aee58ab",
-  "cv_gabetticasecapoverde:CV-TER355",
-];
 
 /* Static gradients for island explorer cards */
 const ISLAND_BG: Record<string, string> = {
