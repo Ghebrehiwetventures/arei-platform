@@ -820,7 +820,9 @@ async function listStoredContentDrafts(): Promise<ContentDraft[]> {
 async function insertContentDrafts(drafts: ContentDraft[]): Promise<void> {
   if (drafts.length === 0) return;
 
-  const { error } = await supabase.from("content_drafts").insert(drafts.map(mapContentDraftToInsert));
+  const { error } = await supabase
+    .from("content_drafts")
+    .upsert(drafts.map(mapContentDraftToInsert), { onConflict: "id", ignoreDuplicates: true });
   if (error) {
     throw new Error(`[Admin] Failed to persist content drafts: ${error.message}`);
   }
