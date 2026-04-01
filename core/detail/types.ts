@@ -39,7 +39,6 @@ export interface DetailEnrichmentResult {
   location?: string;
   error?: string;
   // Structured property data
-  areaSqm?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
   parkingSpaces?: number | null;
@@ -68,7 +67,6 @@ export interface DetailExtractResult {
   location?: string;
   error?: string;
   // Structured property data
-  areaSqm?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
   parkingSpaces?: number | null;

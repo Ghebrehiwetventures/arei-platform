@@ -70,88 +70,10 @@ interface IngestListing {
   parkingSpaces?: number | null;
   terraceArea?: number | null;
   amenities?: string[];
-  property_type?: string;
   // Detail enrichment tracking
   detail_enriched?: boolean;
   detail_error?: string | null;
   detail_skipped_reason?: string | null;
-}
-
-const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
-const FAST_VERIFY_ENV = "CV_FAST_VERIFY_INGEST";
-const FAST_VERIFY_DELAY_ENV = "CV_FAST_VERIFY_DELAY_MS";
-const FAST_VERIFY_JITTER_ENV = "CV_FAST_VERIFY_JITTER_MS";
-const VERIFY_SKIP_EARLY_DETAIL_ENV = "CV_VERIFY_SKIP_EARLY_DETAIL";
-const VERIFY_EARLY_DETAIL_LIMIT_ENV = "CV_VERIFY_EARLY_DETAIL_LIMIT";
-
-interface EarlyDetailVerificationMode {
-  skip: boolean;
-  limit?: number;
-}
-
-function extractPropertyType(title?: string, url?: string): string {
-  const text = `${title || ""} ${url || ""}`.toLowerCase();
-
-  if (/\b(villa|villas)\b/.test(text)) return "villa";
-  if (/\b(apartment|apartments|flat|flats|apt)\b/.test(text)) return "apartment";
-  if (/\b(house|houses|home|homes)\b/.test(text)) return "house";
-  if (/\b(townhouse|townhouses|town house)\b/.test(text)) return "townhouse";
-  if (/\b(penthouse|penthouses)\b/.test(text)) return "penthouse";
-  if (/\b(studio|studios|bedsitter)\b/.test(text)) return "studio";
-  if (/\b(bungalow|bungalows)\b/.test(text)) return "bungalow";
-  if (/\b(maisonette|maisonettes)\b/.test(text)) return "maisonette";
-  if (/\b(duplex|duplexes)\b/.test(text)) return "duplex";
-  if (/\b(land|plot|plots|acre|acres)\b/.test(text)) return "land";
-  if (/\b(commercial|office|shop|warehouse)\b/.test(text)) return "commercial";
-  if (/\b(for.?sale|bedroom|bed)\b/.test(text)) return "house";
-
-  return "property";
-}
-
-function applyFastVerificationOverrides(sources: SourceConfig[]): SourceConfig[] {
-  if (process.env[FAST_VERIFY_ENV] !== "1") {
-    return sources;
-  }
-
-  const fastDelayMs = parseInt(process.env[FAST_VERIFY_DELAY_ENV] || "100", 10);
-  const fastJitterMs = parseInt(process.env[FAST_VERIFY_JITTER_ENV] || "0", 10);
-
-  console.log(
-    `[FastVerify] Enabled ${FAST_VERIFY_ENV}=1 (delay_ms=${fastDelayMs}, jitter_ms=${fastJitterMs})`
-  );
-
-  return sources.map((source) => ({
-    ...source,
-    delay_ms: fastDelayMs,
-    jitter_ms: fastJitterMs,
-    detail: source.detail
-      ? {
-          ...source.detail,
-          delay_ms: fastDelayMs,
-        }
-      : source.detail,
-  }));
-}
-
-function getEarlyDetailVerificationMode(): EarlyDetailVerificationMode {
-  if (process.env[VERIFY_SKIP_EARLY_DETAIL_ENV] === "1") {
-    return { skip: true };
-  }
-
-  const rawLimit = process.env[VERIFY_EARLY_DETAIL_LIMIT_ENV];
-  if (!rawLimit) {
-    return { skip: false };
-  }
-
-  const parsedLimit = parseInt(rawLimit, 10);
-  if (!Number.isFinite(parsedLimit) || parsedLimit < 0) {
-    console.warn(
-      `[Verify] Ignoring invalid ${VERIFY_EARLY_DETAIL_LIMIT_ENV}=${rawLimit}`
-    );
-    return { skip: false };
-  }
-
-  return { skip: false, limit: parsedLimit };
 }
 
 // ============================================
@@ -299,22 +221,6 @@ async function enrichDetailPages(
   sources: SourceConfig[]
 ): Promise<void> {
   const factory = getStrategyFactory();
-  const verificationMode = getEarlyDetailVerificationMode();
-
-  if (verificationMode.skip) {
-    console.log(
-      `[Verify] Skipping config-driven early detail pass because ${VERIFY_SKIP_EARLY_DETAIL_ENV}=1`
-    );
-    return;
-  }
-
-  if (verificationMode.limit !== undefined) {
-    console.log(
-      `[Verify] Capping config-driven early detail pass at ${verificationMode.limit} operations via ${VERIFY_EARLY_DETAIL_LIMIT_ENV}`
-    );
-  }
-
-  let detailOperations = 0;
 
   for (const source of sources) {
     if (!source.detail?.enabled) continue;
@@ -335,16 +241,6 @@ async function enrichDetailPages(
     let failedCount = 0;
 
     for (const listing of sourceListings) {
-      if (
-        verificationMode.limit !== undefined &&
-        detailOperations >= verificationMode.limit
-      ) {
-        console.log(
-          `[Verify] Early detail cap reached after ${detailOperations} operations; continuing to writer/upsert`
-        );
-        return;
-      }
-
       if (!listing.detailUrl) continue;
 
       // Policy check: "on_violation" only enriches if listing is missing critical fields
@@ -363,7 +259,6 @@ async function enrichDetailPages(
 
       // Rate limit
       await sleep(delayMs + Math.floor(Math.random() * 1000));
-      detailOperations++;
 
       try {
         const DETAIL_FETCH_TIMEOUT_MS = 45_000;
@@ -442,9 +337,6 @@ async function enrichDetailPages(
         }
 
         // Update structured data
-        if (extractResult.areaSqm !== undefined) {
-          listing.area_sqm = extractResult.areaSqm;
-        }
         if (extractResult.bedrooms !== undefined) listing.bedrooms = extractResult.bedrooms;
         if (extractResult.bathrooms !== undefined) listing.bathrooms = extractResult.bathrooms;
         if (extractResult.parkingSpaces !== undefined) listing.parkingSpaces = extractResult.parkingSpaces;
@@ -545,7 +437,6 @@ async function fetchRealSource(
       bedrooms: p.bedrooms,
       bathrooms: p.bathrooms,
       area_sqm: p.area_sqm,
-      property_type: extractPropertyType(p.title, p.detailUrl),
     }));
 
     return { listings, state, debugErrors: result.debug.errors };
@@ -837,7 +728,7 @@ export async function runCvIngest(): Promise<IngestReport> {
     console.warn(`Rules config warning: ${rulesResult.error}`);
   }
 
-  const sources = applyFastVerificationOverrides(sourcesResult.data.sources);
+  const sources = sourcesResult.data.sources;
   console.log(`Found ${sources.length} sources in config\n`);
 
   // Initialize source states
@@ -1103,7 +994,6 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
           listing.project_start_price = result.project_start_price;
         }
         // Map structured property data from enrichment
-        if (result.areaSqm !== undefined) listing.area_sqm = result.areaSqm;
         if (result.bedrooms !== undefined) listing.bedrooms = result.bedrooms;
         if (result.bathrooms !== undefined) listing.bathrooms = result.bathrooms;
         if (result.parkingSpaces !== undefined) listing.parkingSpaces = result.parkingSpaces;
@@ -1238,9 +1128,6 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       }
     }
 
-    const propertyType = fullListing?.property_type || extractPropertyType(listing.title, fullListing?.detailUrl || fullListing?.externalUrl || undefined);
-    const isLand = LAND_TYPES.test(propertyType);
-
     return {
       id: listing.id,
       source_id: listing.sourceId,
@@ -1255,17 +1142,17 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       country: "Cape Verde",
       island,
       city,
-      bedrooms: isLand ? null : (listing.bedrooms ?? null),
-      bathrooms: isLand ? null : (listing.bathrooms ?? null),
-      property_size_sqm: isLand ? null : (listing.area_sqm ?? null),
-      land_area_sqm: isLand ? (listing.area_sqm ?? null) : null,
+      bedrooms: listing.bedrooms ?? null,
+      bathrooms: listing.bathrooms ?? null,
+      property_size_sqm: listing.area_sqm ?? null,
+      land_area_sqm: null,
       image_urls: fullListing?.imageUrls || [],
       status: "observe",
       violations: violations,
       // INVALID_PRICE is non-blocking: "price on request" listings are valid
       // Other violations (MISSING_TITLE, INSUFFICIENT_IMAGES, etc.) still block
       approved: violations.filter(v => v !== "INVALID_PRICE").length === 0,
-      property_type: propertyType,
+      property_type: undefined,
       amenities: fullListing?.amenities || [],
       price_period: "sale",
     };

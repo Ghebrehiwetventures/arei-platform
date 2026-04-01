@@ -10,8 +10,8 @@ export interface SupabaseListing {
   source_url: string | null;
   source_ref?: string | null;
   title?: string;
-  description?: string | null;
-  description_html?: string | null;
+  description?: string;
+  description_html?: string;
   price?: number;
   project_flag?: boolean | null;
   project_start_price?: number | null;
@@ -28,7 +28,7 @@ export interface SupabaseListing {
   approved: boolean;
   dedup_key?: string;
   country?: string;
-  property_type?: string | null;
+  property_type?: string;
   amenities?: string[];
   price_period?: string;
   canonical_id?: string | null;

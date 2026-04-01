@@ -554,10 +554,10 @@ export function createGenericDetailPlugin(
         description,
         location,
         imageUrls: imageUrls.slice(0, 20),
-        areaSqm,
         bedrooms,
         bathrooms,
         parkingSpaces,
+        terraceArea: areaSqm, // mapped to terraceArea for interface compat
         amenities: Array.from(amenities),
       };
     },

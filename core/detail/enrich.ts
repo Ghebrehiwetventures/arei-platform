@@ -125,9 +125,7 @@ export async function runDetailEnrichment(
 
   const results: DetailEnrichmentResult[] = [];
   let stoppedReason: "CAPTCHA" | "HTTP_403" | "HTTP_429" | undefined;
-  let pausedSource:
-    | { sourceId: string; status: SourceStatus; pauseReason?: string; pauseDetail?: string }
-    | undefined;
+  let pausedSource: { sourceId: string; status: SourceStatus } | undefined;
 
   while (!queue.isEmpty()) {
     const delayMs = queue.getDelayForNext();
@@ -263,9 +261,7 @@ export async function runDetailEnrichment(
 
     const wasEnriched =
       allImages.length > input.currentImageUrls.length ||
-      (extractResult.description?.length || 0) > (input.currentDescription?.length || 0) ||
-      ((extractResult.areaSqm ?? null) !== null &&
-        (input.currentArea == null || extractResult.areaSqm !== input.currentArea));
+      (extractResult.description?.length || 0) > (input.currentDescription?.length || 0);
 
     const canonicalId = generateCanonicalId(
       input.sourceId,
@@ -297,7 +293,6 @@ export async function runDetailEnrichment(
       imageUrls: allImages,
       location: extractResult.location || input.currentLocation,
       // Structured property data from extraction
-      areaSqm: extractResult.areaSqm,
       bedrooms: extractResult.bedrooms,
       bathrooms: extractResult.bathrooms,
       parkingSpaces: extractResult.parkingSpaces,
