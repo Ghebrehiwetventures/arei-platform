@@ -751,47 +751,92 @@ export async function getMarketIds(): Promise<{ id: string; name: string }[]> {
 
 // ============================================
 // CONTENT DRAFT AGENT V1
-// Local persistence for this phase; human approval stays in admin.
+// Supabase persistence for this phase; human approval stays in admin.
 // ============================================
 
-const CONTENT_DRAFTS_STORAGE_KEY = "arei_admin_content_drafts_v1";
 const MAX_CONTENT_DRAFTS_PER_RUN = 5;
 
-function getStorage() {
-  if (typeof window === "undefined") return null;
-  return window.localStorage;
+interface ContentDraftRow {
+  id: string;
+  source_listing_id: string;
+  listing_title: string;
+  selected_image: string;
+  suggested_caption: string;
+  suggested_hashtags: string[] | null;
+  suggested_channel: ContentDraft["suggestedChannel"];
+  created_at: string;
+  status: ContentDraftStatus;
+  status_note: string | null;
 }
 
-function readStoredContentDrafts(): ContentDraft[] {
-  const storage = getStorage();
-  if (!storage) return [];
-  try {
-    const raw = storage.getItem(CONTENT_DRAFTS_STORAGE_KEY);
-    if (!raw) return [];
-    const parsed = JSON.parse(raw);
-    if (!Array.isArray(parsed)) return [];
-    return parsed.filter(
-      (item): item is ContentDraft =>
-        Boolean(item) &&
-        typeof item.id === "string" &&
-        typeof item.sourceListingId === "string" &&
-        typeof item.listingTitle === "string" &&
-        typeof item.selectedImage === "string" &&
-        typeof item.suggestedCaption === "string" &&
-        Array.isArray(item.suggestedHashtags) &&
-        typeof item.suggestedChannel === "string" &&
-        typeof item.createdAt === "string" &&
-        typeof item.status === "string"
-    );
-  } catch {
+function isContentDraftStatus(value: string): value is ContentDraftStatus {
+  return value === "pending" || value === "approved" || value === "rejected" || value === "revision_requested";
+}
+
+function mapContentDraftRow(row: ContentDraftRow): ContentDraft {
+  return {
+    id: row.id,
+    sourceListingId: row.source_listing_id,
+    listingTitle: row.listing_title,
+    selectedImage: row.selected_image,
+    suggestedCaption: row.suggested_caption,
+    suggestedHashtags: Array.isArray(row.suggested_hashtags) ? row.suggested_hashtags.filter(Boolean) : [],
+    suggestedChannel: row.suggested_channel,
+    createdAt: row.created_at,
+    status: isContentDraftStatus(row.status) ? row.status : "pending",
+    statusNote: row.status_note || undefined,
+  };
+}
+
+function mapContentDraftToInsert(row: ContentDraft) {
+  return {
+    id: row.id,
+    source_listing_id: row.sourceListingId,
+    listing_title: row.listingTitle,
+    selected_image: row.selectedImage,
+    suggested_caption: row.suggestedCaption,
+    suggested_hashtags: row.suggestedHashtags,
+    suggested_channel: row.suggestedChannel,
+    created_at: row.createdAt,
+    status: row.status,
+    status_note: row.statusNote ?? null,
+  };
+}
+
+async function listStoredContentDrafts(): Promise<ContentDraft[]> {
+  const { data, error } = await supabase
+    .from("content_drafts")
+    .select("id,source_listing_id,listing_title,selected_image,suggested_caption,suggested_hashtags,suggested_channel,created_at,status,status_note")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[Admin] Failed to load content drafts from Supabase:", error.message);
     return [];
+  }
+
+  return ((data || []) as ContentDraftRow[]).map(mapContentDraftRow);
+}
+
+async function insertContentDrafts(drafts: ContentDraft[]): Promise<void> {
+  if (drafts.length === 0) return;
+
+  const { error } = await supabase.from("content_drafts").insert(drafts.map(mapContentDraftToInsert));
+  if (error) {
+    throw new Error(`[Admin] Failed to persist content drafts: ${error.message}`);
   }
 }
 
-function writeStoredContentDrafts(drafts: ContentDraft[]) {
-  const storage = getStorage();
-  if (!storage) return;
-  storage.setItem(CONTENT_DRAFTS_STORAGE_KEY, JSON.stringify(drafts));
+async function updateStoredContentDraftStatus(id: string, status: ContentDraftStatus, statusNote?: string): Promise<void> {
+  const payload = {
+    status,
+    status_note: statusNote?.trim() ? statusNote.trim() : null,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from("content_drafts").update(payload).eq("id", id);
+  if (error) {
+    throw new Error(`[Admin] Failed to update content draft status: ${error.message}`);
+  }
 }
 
 function slugifyTag(value: string): string {
@@ -936,11 +981,11 @@ function createDraftFromListing(listing: Listing): ContentDraft {
 }
 
 export async function getContentDrafts(): Promise<ContentDraft[]> {
-  return readStoredContentDrafts().sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  return listStoredContentDrafts();
 }
 
 export async function generateContentDrafts(): Promise<ContentDraft[]> {
-  const existingDrafts = readStoredContentDrafts();
+  const existingDrafts = await listStoredContentDrafts();
   const todayKey = new Date().toISOString().slice(0, 10);
   const existingListingIds = new Set(
     existingDrafts
@@ -956,9 +1001,8 @@ export async function generateContentDrafts(): Promise<ContentDraft[]> {
     .slice(0, MAX_CONTENT_DRAFTS_PER_RUN);
 
   const newDrafts = selected.map(createDraftFromListing);
-  const merged = [...newDrafts, ...existingDrafts].sort((a, b) => b.createdAt.localeCompare(a.createdAt));
-  writeStoredContentDrafts(merged);
-  return merged;
+  await insertContentDrafts(newDrafts);
+  return listStoredContentDrafts();
 }
 
 export async function updateContentDraftStatus(
@@ -966,15 +1010,6 @@ export async function updateContentDraftStatus(
   status: ContentDraftStatus,
   statusNote?: string
 ): Promise<ContentDraft[]> {
-  const updated = readStoredContentDrafts().map((draft) =>
-    draft.id === id
-      ? {
-          ...draft,
-          status,
-          statusNote: statusNote?.trim() ? statusNote.trim() : undefined,
-        }
-      : draft
-  );
-  writeStoredContentDrafts(updated);
-  return updated.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+  await updateStoredContentDraftStatus(id, status, statusNote);
+  return listStoredContentDrafts();
 }
