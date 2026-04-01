@@ -1,3 +1,4 @@
+import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSaved } from "../hooks/useSaved";
 import type { DemoListing } from "../lib/demo-data";
@@ -15,6 +16,11 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
   const { toggle, isSaved } = useSaved();
   const isNew = isNewListing(listing.first_seen_at);
   const saved = isSaved(listing.id);
+  const [imageIndex, setImageIndex] = useState(0);
+  const touchStartX = useRef(0);
+  const touchStartY = useRef(0);
+  const touchAxis = useRef<"x" | "y" | null>(null);
+  const suppressClickRef = useRef(false);
 
   const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
   const LAND_TITLE = /\b(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)\b/i;
@@ -30,18 +36,91 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
     specs.push(`${listing.land_area_sqm} m²`);
   }
 
+  useEffect(() => {
+    setImageIndex(0);
+  }, [listing.id]);
+
+  useEffect(() => {
+    if (listing.image_urls.length < 2) return;
+
+    const preloaders = listing.image_urls.map((url) => {
+      const img = new Image();
+      img.src = url;
+      return img;
+    });
+
+    return () => {
+      preloaders.forEach((img) => {
+        img.onload = null;
+        img.onerror = null;
+      });
+    };
+  }, [listing.image_urls]);
+
+  const hasMultipleImages = listing.image_urls.length > 1;
+
   const heroStyle: React.CSSProperties = listing.image_urls.length > 0
-    ? { backgroundImage: `url(${listing.image_urls[0]})`, backgroundSize: "cover", backgroundPosition: "center" }
+    ? { backgroundImage: `url(${listing.image_urls[imageIndex]})`, backgroundSize: "cover", backgroundPosition: "center" }
     : { background: listing._bg };
 
   const isList = viewMode === "list";
 
+  const handleCardClick = () => {
+    if (suppressClickRef.current) {
+      suppressClickRef.current = false;
+      return;
+    }
+    navigate(`/listing/${listing.id}`);
+  };
+
+  const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!hasMultipleImages) return;
+    touchStartX.current = e.touches[0].clientX;
+    touchStartY.current = e.touches[0].clientY;
+    touchAxis.current = null;
+  };
+
+  const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!hasMultipleImages) return;
+    const deltaX = e.touches[0].clientX - touchStartX.current;
+    const deltaY = e.touches[0].clientY - touchStartY.current;
+
+    if (!touchAxis.current) {
+      if (Math.abs(deltaX) < 10 && Math.abs(deltaY) < 10) return;
+      touchAxis.current = Math.abs(deltaX) > Math.abs(deltaY) ? "x" : "y";
+    }
+
+    if (touchAxis.current === "x") {
+      suppressClickRef.current = true;
+    }
+  };
+
+  const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!hasMultipleImages) return;
+    const deltaX = e.changedTouches[0].clientX - touchStartX.current;
+    const deltaY = e.changedTouches[0].clientY - touchStartY.current;
+    const isHorizontalSwipe = touchAxis.current === "x" && Math.abs(deltaX) >= 42 && Math.abs(deltaX) > Math.abs(deltaY);
+    touchAxis.current = null;
+    if (!isHorizontalSwipe) return;
+
+    suppressClickRef.current = true;
+    window.setTimeout(() => {
+      suppressClickRef.current = false;
+    }, 300);
+    setImageIndex((current) => {
+      if (deltaX > 0) {
+        return current <= 0 ? listing.image_urls.length - 1 : current - 1;
+      }
+      return current >= listing.image_urls.length - 1 ? 0 : current + 1;
+    });
+  };
+
   return (
     <article
       className={`pc${isList ? " pc-list" : ""}`}
-      onClick={() => navigate(`/listing/${listing.id}`)}
+      onClick={handleCardClick}
     >
-      <div className="pci">
+      <div className="pci" onTouchStart={onTouchStart} onTouchMove={onTouchMove} onTouchEnd={onTouchEnd}>
         <div className="ph" style={heroStyle} />
         <button
           type="button"

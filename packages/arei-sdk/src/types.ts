@@ -41,6 +41,7 @@ export interface ListingCard {
   bedrooms: number | null;
   bathrooms: number | null;
   land_area_sqm: number | null;
+  image_urls: string[];
   image_url: string | null;
   source_id: string;
   first_seen_at: string;

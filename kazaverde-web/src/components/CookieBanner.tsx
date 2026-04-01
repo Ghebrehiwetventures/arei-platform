@@ -31,15 +31,20 @@ export default function CookieBanner() {
   if (!visible) return null;
 
   return (
-    <div className="ck-banner" role="dialog" aria-label="Cookie notice">
-      <p className="ck-text">
-        This site uses localStorage for saved properties and cookieless analytics to understand
-        how visitors use the site. No advertising trackers.{" "}
-        <Link to="/cookie-policy" className="ck-link">Learn more</Link>
-      </p>
-      <button className="ck-btn" onClick={accept} type="button">
-        Got it
-      </button>
+    <div className="ck-shell">
+      <div className="ck-banner" role="dialog" aria-label="Cookie notice" aria-live="polite">
+        <div className="ck-copy">
+          <span className="ck-eyebrow">Privacy note</span>
+          <p className="ck-text">
+            This site uses localStorage for saved properties and cookieless analytics to understand
+            how visitors use the site. No advertising trackers.{" "}
+            <Link to="/cookie-policy" className="ck-link">Learn more</Link>
+          </p>
+        </div>
+        <button className="ck-btn" onClick={accept} type="button">
+          Got it
+        </button>
+      </div>
     </div>
   );
 }

@@ -27,6 +27,7 @@ function sanitizePrice(price: number | null): number | null {
 
 /** Raw row → ListingCard (for grids) */
 export function toListingCard(row: ListingRow): ListingCard {
+  const imageUrls = row.image_urls ?? [];
   return {
     id: row.id,
     title: row.title,
@@ -38,7 +39,8 @@ export function toListingCard(row: ListingRow): ListingCard {
     bedrooms: row.bedrooms,
     bathrooms: row.bathrooms,
     land_area_sqm: row.land_area_sqm,
-    image_url: row.image_urls?.[0] ?? null,
+    image_urls: imageUrls,
+    image_url: imageUrls[0] ?? null,
     source_id: row.source_id,
     first_seen_at: row.first_seen_at,
     is_new: isNew(row.first_seen_at),

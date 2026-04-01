@@ -12,7 +12,7 @@ export function cardToDemoListing(card: ListingCard): DemoListing {
     city: card.city,
     price: card.price,
     currency: card.currency ?? "",
-    image_urls: card.image_url ? [card.image_url] : [],
+    image_urls: card.image_urls?.length ? card.image_urls : (card.image_url ? [card.image_url] : []),
     bedrooms: card.bedrooms,
     bathrooms: card.bathrooms,
     property_type: card.property_type,

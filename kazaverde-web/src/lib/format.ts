@@ -15,6 +15,18 @@ export function formatPrice(price: number | null, currency = "EUR"): string {
   return symbol + price.toLocaleString("en-US");
 }
 
+export function formatCompactPrice(price: number | null, currency = "EUR"): string {
+  if (!price || price <= 0) return "Price on request";
+
+  const symbol = currency === "CVE" ? "CVE " : "€";
+
+  if (price >= 1_000_000) {
+    return `${symbol}${(price / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
+  }
+
+  return symbol + price.toLocaleString("en-US");
+}
+
 export function formatLocation(city: string | null, island: string): string {
   return city ? `${city}, ${island}` : island;
 }

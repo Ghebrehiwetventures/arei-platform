@@ -517,40 +517,74 @@
   .dhi-price { display: none; }
   .dl { margin-bottom: 16px; }
   .dm-price-bar {
-    display: flex;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
     align-items: center;
-    justify-content: space-between;
-    gap: 16px;
+    column-gap: 12px;
+    row-gap: 8px;
     margin-bottom: 24px;
-    padding: 16px;
+    padding: 14px 16px;
     background: var(--bg2);
     border-radius: 12px;
     border: 1px solid var(--bd);
+  }
+  .dm-price-bar.dm-price-bar-tight {
+    column-gap: 10px;
+    padding: 12px 14px;
+  }
+  .dm-price-copy {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-width: 0;
+    align-self: start;
+  }
+  .dm-price-copy > * {
+    white-space: nowrap;
+  }
+  .dm-price-copy .dm-price-cve {
+    min-width: 0;
+    white-space: normal;
   }
   .dm-price {
     font-family: var(--fd);
     font-size: 1.6rem;
     font-weight: 700;
     color: var(--ac);
-    line-height: 1;
+    line-height: 0.96;
+    letter-spacing: -0.01em;
+  }
+  .dm-price.dm-price-long {
+    font-size: 1.36rem;
+    letter-spacing: -0.02em;
+  }
+  .dm-price.dm-price-xlong {
+    font-size: 1.28rem;
+    letter-spacing: -0.03em;
+  }
+  .dm-price-exact {
+    font-size: 0.76rem;
+    color: var(--tx2);
+    margin-top: 6px;
   }
   .dm-price-cve {
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     color: var(--tx3);
-    margin-top: 4px;
+    margin-top: 2px;
   }
   .dm-actions {
     display: flex;
     align-items: center;
     gap: 10px;
-    margin-left: auto;
-    flex-shrink: 0;
+    justify-self: end;
+    flex-wrap: nowrap;
   }
   .dm-cta {
     flex-shrink: 0;
-    padding: 11px 18px;
+    min-height: 42px;
+    padding: 11px 16px;
     border-radius: 8px;
-    font-size: 0.72rem;
+    font-size: 0.7rem;
     font-weight: 700;
     letter-spacing: 0.04em;
     text-transform: uppercase;
@@ -599,6 +633,17 @@
   .dm-save:focus-visible {
     outline: 2px solid rgba(217, 221, 64, 0.75);
     outline-offset: 2px;
+  }
+
+  @media (max-width: 380px) {
+    .dm-price-bar {
+      grid-template-columns: 1fr;
+      row-gap: 10px;
+    }
+
+    .dm-actions {
+      justify-self: start;
+    }
   }
   .ds { display: none; }
   .dsim { margin-top: 48px; padding-top: 32px; }

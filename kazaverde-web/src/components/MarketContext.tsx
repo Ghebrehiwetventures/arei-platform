@@ -16,6 +16,15 @@ interface StatCard {
   percentile?: number; // 0-100, for visual bar
 }
 
+function formatShortDate(value: string): string {
+  const date = new Date(value);
+  if (Number.isNaN(date.getTime())) return "Recent";
+  return new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+  }).format(date);
+}
+
 export default function MarketContext({ island, price }: Props) {
   const [ctx, setCtx] = useState<IslandContext | null>(null);
   const [loading, setLoading] = useState(true);
@@ -85,6 +94,14 @@ export default function MarketContext({ island, price }: Props) {
       label: "Price Percentile",
       note: p >= 50 ? "Above island median" : "Below island median",
       percentile: p,
+    });
+  }
+
+  if (cards.length < 4 && ctx.lastUpdated) {
+    cards.push({
+      value: formatShortDate(ctx.lastUpdated),
+      label: "Last Seen",
+      note: "Latest tracked update",
     });
   }
 

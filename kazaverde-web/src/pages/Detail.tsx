@@ -19,6 +19,27 @@ const PLACEHOLDER_BG = "linear-gradient(145deg,#5B8A72,#1A4A32)";
 const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
 const LAND_TITLE = /\b(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)\b/i;
 
+function parseAreaSqmFromText(text: string): number | null {
+  const matches = [...text.matchAll(/(\d{1,3}(?:[.,\s]\d{3})+|\d+(?:[.,]\d+)?)\s*m²/gi)];
+  if (matches.length === 0) return null;
+
+  for (const match of matches) {
+    const raw = match[1].trim();
+
+    // Thousands-grouped forms like 13.571 or 13,571
+    if (/^\d{1,3}(?:[.,\s]\d{3})+$/.test(raw)) {
+      const normalized = Number(raw.replace(/[.,\s]/g, ""));
+      if (Number.isFinite(normalized) && normalized > 0) return normalized;
+      continue;
+    }
+
+    const normalized = Number(raw.replace(",", "."));
+    if (Number.isFinite(normalized) && normalized > 0) return normalized;
+  }
+
+  return null;
+}
+
 /** Collapse WP size variants (-1024x768.jpg) into one image per base filename, keeping the largest. */
 function dedupeWpImages(urls: string[]): string[] {
   const unique = [...new Set(urls)];
@@ -281,8 +302,20 @@ export default function Detail() {
 
   const displayTitle = toTitleCase(listing.title);
   const saved = isSaved(listing.id);
+  const mobileDisplayPrice = formatPrice(listing.price, listing.currency);
+  const showMobileCvePrice = Boolean(listing.price && listing.currency === "EUR");
+  const isLongMobilePrice = mobileDisplayPrice.length >= 10;
+  const isVeryLongMobilePrice = mobileDisplayPrice.length >= 11;
 
   const isLand = LAND_TYPES.test(listing.property_type ?? "") || LAND_TITLE.test(listing.title ?? "");
+  const sourceText = listing.description_html ? stripHtml(listing.description_html) : (listing.description ?? "");
+  const parsedAreaFromText = parseAreaSqmFromText(sourceText);
+  const effectiveLandAreaSqm =
+    isLand
+    && parsedAreaFromText
+    && (!listing.land_area_sqm || parsedAreaFromText > listing.land_area_sqm * 50)
+      ? parsedAreaFromText
+      : listing.land_area_sqm;
   const specs: { value: string; label: string }[] = [];
   if (listing.property_type) specs.push({ value: listing.property_type, label: "Type" });
   if (!isLand) {
@@ -290,8 +323,8 @@ export default function Detail() {
     if (bed) specs.push({ value: listing.bedrooms === 0 ? "Studio" : String(listing.bedrooms), label: bed === "Studio" ? "Type" : "Bedrooms" });
     if (listing.bathrooms && listing.bathrooms > 0) specs.push({ value: String(listing.bathrooms), label: "Bathrooms" });
   }
-  if (listing.land_area_sqm) {
-    specs.push({ value: `${listing.land_area_sqm.toLocaleString()}`, label: "m² Land" });
+  if (effectiveLandAreaSqm) {
+    specs.push({ value: `${effectiveLandAreaSqm.toLocaleString()}`, label: "m² Land" });
   }
 
   const mainImageStyle: React.CSSProperties =
@@ -363,12 +396,16 @@ export default function Detail() {
           </div>
 
           {/* Mobile-only: price + CTA visible early */}
-          <div className="dm-price-bar">
-            <div>
-              <div className="dm-price">{formatPrice(listing.price, listing.currency)}</div>
-              {listing.price && listing.currency === "EUR" && (
+          <div className={`dm-price-bar${isLongMobilePrice ? " dm-price-bar-tight" : ""}`}>
+            <div className="dm-price-copy">
+              <div
+                className={`dm-price${isLongMobilePrice ? " dm-price-long" : ""}${isVeryLongMobilePrice ? " dm-price-xlong" : ""}`}
+              >
+                {mobileDisplayPrice}
+              </div>
+              {showMobileCvePrice && (
                 <div className="dm-price-cve">
-                  Approx. {(listing.price * 110.265).toLocaleString("en-US", { maximumFractionDigits: 0 })} CVE
+                  Approx. {(listing.price! * 110.265).toLocaleString("en-US", { maximumFractionDigits: 0 })} CVE
                 </div>
               )}
             </div>
@@ -416,7 +453,7 @@ export default function Detail() {
               <p>
                 This property is located in {formatLocation(listing.city, listing.island)}, Cape Verde.
                 {listing.property_type ? ` Listed as ${listing.property_type.toLowerCase()}.` : ""}
-                {listing.land_area_sqm ? ` Land area: ${listing.land_area_sqm.toLocaleString()} m².` : ""}
+                {effectiveLandAreaSqm ? ` Land area: ${effectiveLandAreaSqm.toLocaleString()} m².` : ""}
               </p>
             )}
             <p className="dd-source">

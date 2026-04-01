@@ -1,17 +1,27 @@
-.ck-banner {
+.ck-shell {
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
+  left: auto;
+  right: 20px;
+  bottom: calc(18px + env(safe-area-inset-bottom, 0px));
   z-index: 9999;
   display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 20px;
-  padding: 16px var(--px);
-  background: hsl(25 20% 14%);
-  border-top: 1px solid var(--bd);
+  justify-content: flex-end;
+  pointer-events: none;
+}
+
+.ck-banner {
+  display: flex;
+  align-items: flex-end;
+  gap: 18px;
+  width: min(360px, calc(100vw - 40px));
+  padding: 16px 16px 14px;
+  background: linear-gradient(180deg, rgba(54, 42, 34, 0.97) 0%, rgba(42, 33, 27, 0.98) 100%);
+  border: 1px solid rgba(154, 138, 123, 0.32);
+  border-radius: 16px;
+  box-shadow: 0 18px 42px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(18px);
   animation: ck-slide 0.4s ease-out;
+  pointer-events: auto;
 }
 
 @keyframes ck-slide {
@@ -19,11 +29,25 @@
   to   { transform: translateY(0);    opacity: 1; }
 }
 
+.ck-copy {
+  min-width: 0;
+}
+
+.ck-eyebrow {
+  display: inline-block;
+  margin-bottom: 8px;
+  font-size: 0.65rem;
+  font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ac);
+}
+
 .ck-text {
-  font-size: 0.82rem;
-  color: var(--tx2);
-  line-height: 1.6;
-  max-width: 600px;
+  font-size: 0.76rem;
+  color: hsl(36 24% 73%);
+  line-height: 1.5;
+  max-width: 30ch;
 }
 
 .ck-link {
@@ -34,27 +58,52 @@
 
 .ck-btn {
   flex-shrink: 0;
-  padding: 8px 24px;
-  font-size: 0.78rem;
+  align-self: flex-end;
+  padding: 9px 16px;
+  font-size: 0.7rem;
   font-weight: 700;
   letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--bg);
   background: var(--ac);
   border: none;
-  border-radius: 6px;
+  border-radius: 10px;
   cursor: pointer;
-  transition: background 0.2s;
+  box-shadow: 0 10px 24px rgba(217, 221, 64, 0.18);
+  transition: background 0.2s, transform 0.2s;
 }
 .ck-btn:hover {
   background: var(--ac2);
+  transform: translateY(-1px);
 }
 
 @media (max-width: 640px) {
+  .ck-shell {
+    left: 16px;
+    right: 16px;
+    bottom: calc(14px + env(safe-area-inset-bottom, 0px));
+    justify-content: center;
+  }
+
   .ck-banner {
     flex-direction: column;
-    gap: 12px;
-    padding: 16px 20px;
-    text-align: center;
+    align-items: stretch;
+    gap: 14px;
+    width: min(100%, 360px);
+    padding: 16px;
+    border-radius: 16px;
+  }
+
+  .ck-copy {
+    text-align: left;
+  }
+
+  .ck-text {
+    max-width: none;
+    font-size: 0.78rem;
+  }
+
+  .ck-btn {
+    align-self: flex-start;
   }
 }
