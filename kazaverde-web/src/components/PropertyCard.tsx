@@ -17,6 +17,7 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
   const isNew = isNewListing(listing.first_seen_at);
   const saved = isSaved(listing.id);
   const [imageIndex, setImageIndex] = useState(0);
+  const [hasInteractedWithGallery, setHasInteractedWithGallery] = useState(false);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
   const touchAxis = useRef<"x" | "y" | null>(null);
@@ -38,24 +39,23 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
 
   useEffect(() => {
     setImageIndex(0);
+    setHasInteractedWithGallery(false);
   }, [listing.id]);
 
   useEffect(() => {
-    if (listing.image_urls.length < 2) return;
+    if (!hasInteractedWithGallery || listing.image_urls.length < 2 || imageIndex < 0) return;
 
-    const preloaders = listing.image_urls.map((url) => {
-      const img = new Image();
-      img.src = url;
-      return img;
-    });
+    const nextIndex = imageIndex >= listing.image_urls.length - 1 ? 0 : imageIndex + 1;
+    if (nextIndex === imageIndex) return;
+
+    const img = new Image();
+    img.src = listing.image_urls[nextIndex];
 
     return () => {
-      preloaders.forEach((img) => {
-        img.onload = null;
-        img.onerror = null;
-      });
+      img.onload = null;
+      img.onerror = null;
     };
-  }, [listing.image_urls]);
+  }, [hasInteractedWithGallery, imageIndex, listing.image_urls]);
 
   const hasMultipleImages = listing.image_urls.length > 1;
 
@@ -107,6 +107,7 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
     window.setTimeout(() => {
       suppressClickRef.current = false;
     }, 300);
+    setHasInteractedWithGallery(true);
     setImageIndex((current) => {
       if (deltaX > 0) {
         return current <= 0 ? listing.image_urls.length - 1 : current - 1;
