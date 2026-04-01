@@ -873,7 +873,7 @@ async function getLiveContentCandidateListings(limit = 80): Promise<Listing[]> {
     for (const feedSource of feedSources) {
       const { data, error } = await supabase
         .from(feedSource)
-        .select("id,title,price,currency,source_id,source_url,source_ref,project_flag,project_start_price,island,city,bedrooms,bathrooms,property_size_sqm,image_urls,approved,property_type,description")
+        .select("id,title,price,currency,source_id,source_url,island,city,bedrooms,bathrooms,property_size_sqm,image_urls,approved,property_type,description")
         .order("updated_at", { ascending: false })
         .limit(limit);
 
@@ -920,12 +920,6 @@ async function getLiveContentCandidateListings(limit = 80): Promise<Listing[]> {
   }
 }
 
-function getFallbackContentCandidateListings(markets: Market[]): Listing[] {
-  return markets
-    .flatMap((market) => market.listings)
-    .filter((listing) => listing.approved !== false && listing.images.length > 0);
-}
-
 function createDraftFromListing(listing: Listing): ContentDraft {
   const createdAt = new Date().toISOString();
   return {
@@ -954,10 +948,7 @@ export async function generateContentDrafts(): Promise<ContentDraft[]> {
       .map((draft) => draft.sourceListingId)
   );
 
-  let candidates = await getLiveContentCandidateListings();
-  if (candidates.length === 0) {
-    candidates = getFallbackContentCandidateListings(await getMarketsAsync());
-  }
+  const candidates = await getLiveContentCandidateListings();
 
   const selected = candidates
     .filter((listing) => !existingListingIds.has(listing.id))
