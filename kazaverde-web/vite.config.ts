@@ -5,6 +5,7 @@ import { PRERENDER_LISTING_IDS } from "./src/lib/prerender-listings";
 const prerenderedListingIds = new Set(PRERENDER_LISTING_IDS);
 
 export default defineConfig({
+  envDir: "..",
   plugins: [
     react(),
     {

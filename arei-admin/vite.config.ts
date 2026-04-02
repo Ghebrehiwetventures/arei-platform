@@ -8,6 +8,7 @@ const artifactsDir = path.resolve(__dirname, "../artifacts");
 const publicDir = fs.existsSync(artifactsDir) ? artifactsDir : path.resolve(__dirname, "public");
 
 export default defineConfig({
+  envDir: "..",
   plugins: [react(), tailwindcss()],
   publicDir,
   server: {

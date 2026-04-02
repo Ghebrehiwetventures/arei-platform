@@ -7,3 +7,6 @@ reports/
 .vercel
 dist/
 web/prototypes/
+.env
+arei-admin/.env.local
+AGENTS.md
