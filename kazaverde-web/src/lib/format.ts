@@ -6,7 +6,19 @@
 const NEW_LISTING_DAYS = 7;
 const SOURCE_LABELS: Record<string, string> = {
   cv_terracaboverde: "Terra Cabo Verde",
+  cv_simplycapeverde: "Simply Cape Verde",
+  cv_homescasaverde: "Homes Casa Verde",
+  cv_capeverdeproperty24: "Cape Verde Property 24",
   cv_gabetticasecapoverde: "Gabetti Case Cape Verde",
+  cv_cabohouseproperty: "Cabo House Property",
+  cv_estatecv: "Estate CV",
+  cv_oceanproperty24: "Ocean Property 24",
+  cv_capeverdepropertyuk: "Cape Verde Property UK",
+  cv_ccoreinvestments: "CCore Investments",
+  cv_rightmove: "Rightmove Overseas",
+  cv_globallistings: "Global Listings",
+  cv_properstar: "Properstar",
+  cv_greenacres: "Green Acres",
 };
 
 export function formatPrice(price: number | null, currency = "EUR"): string {
