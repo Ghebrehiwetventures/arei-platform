@@ -37,6 +37,7 @@ export default function Listings() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [islands, setIslands] = useState<{ island: string; count: number }[]>([]);
+  const [retryCount, setRetryCount] = useState(0);
 
   useEffect(() => {
     arei.getIslandOptions().then(setIslands).catch(() => {});
@@ -68,36 +69,20 @@ export default function Listings() {
         setTotal(result.total);
         setTotalPages(result.totalPages);
       } catch (e) {
+        console.error("[Listings] Failed to load listings", e);
         setListings([]);
         setTotal(0);
         setTotalPages(0);
-        setError(e instanceof Error ? e.message : "Kunde inte ladda listor.");
+        setError("We could not load listings right now. Please try again.");
       } finally {
         setLoading(false);
       }
     }
     load();
-  }, [page, pageSize, island, priceBucket]);
+  }, [page, pageSize, island, priceBucket, retryCount]);
 
   const from = total > 0 ? (page - 1) * pageSize + 1 : 0;
   const to = Math.min(page * pageSize, total);
-
-  if (loading) return <div>Loading properties...</div>;
-
-  if (error) {
-    return (
-      <div className="lh" style={{ padding: "2rem", maxWidth: 560 }}>
-        <h1>All <em>Properties</em></h1>
-        <div style={{ marginTop: 16, padding: 16, background: "#fef2f2", borderRadius: 8, color: "#991b1b" }}>
-          <strong>Kunde inte ladda listor</strong>
-          <p style={{ margin: "8px 0 0", fontSize: 14 }}>{error}</p>
-          <p style={{ margin: "12px 0 0", fontSize: 13, opacity: 0.9 }}>
-            Kontrollera att <code>.env</code> innehåller VITE_SUPABASE_URL och VITE_SUPABASE_ANON_KEY, och att Supabase-projektet är tillgängligt.
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <>
@@ -147,13 +132,35 @@ export default function Listings() {
         <span className="rc hide-mobile">Showing {from}–{to} of {total}</span>
       </div>
 
-      <div className={viewMode === "list" ? "list-view" : "grid-3"} style={viewMode === "grid" ? { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 } : undefined}>
-        {listings.map((l) => (
-          <PropertyCard key={l.id} listing={l} viewMode={viewMode} />
-        ))}
-      </div>
+      {loading ? (
+        <div>Loading properties...</div>
+      ) : error ? (
+        <div
+          className="empty-state"
+          style={{ marginTop: 24, textAlign: "center" }}
+          role="status"
+          aria-live="polite"
+        >
+          <h3>We could not load listings right now.</h3>
+          <p>Please try again.</p>
+          <button
+            type="button"
+            className="pnn on"
+            onClick={() => setRetryCount((count) => count + 1)}
+            style={{ cursor: "pointer" }}
+          >
+            Retry
+          </button>
+        </div>
+      ) : (
+        <div className={viewMode === "list" ? "list-view" : "grid-3"} style={viewMode === "grid" ? { display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 } : undefined}>
+          {listings.map((l) => (
+            <PropertyCard key={l.id} listing={l} viewMode={viewMode} />
+          ))}
+        </div>
+      )}
 
-      {listings.length === 0 && (
+      {!loading && !error && listings.length === 0 && (
         <div className="empty-state">
           <h3>No properties match your filters</h3>
           <p>Try adjusting your search criteria.</p>
