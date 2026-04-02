@@ -7,6 +7,7 @@ import { DetailQueue } from "./queue";
 import { getStrategyFactory } from "./strategyFactory";
 import { generateCanonicalId } from "./canonicalId";
 import { fetchHtml, FetchResult, FetchOptions } from "../fetchHtml";
+import { fetchHeadless } from "../fetchHeadless";
 import { RuleViolation } from "../goldenRules";
 import { SourceStatus } from "../status";
 import { deriveProjectMetadata } from "../projectMetadata";
@@ -20,6 +21,7 @@ const SIMPLY_BROWSER_HEADERS: Record<string, string> = {
   "Cache-Control": "no-cache",
   "Pragma": "no-cache",
 };
+const DETAIL_HEADLESS_SOURCES_ENV = "CV_DETAIL_HEADLESS_SOURCES";
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -69,6 +71,16 @@ function isTerraListPage(url: string): boolean {
   } catch {
     return false;
   }
+}
+
+function shouldUseHeadlessDetailFetch(sourceId: string): boolean {
+  const raw = process.env[DETAIL_HEADLESS_SOURCES_ENV]?.trim();
+  if (!raw) return false;
+
+  const allowed = new Set(
+    raw.split(",").map((value) => value.trim()).filter(Boolean)
+  );
+  return allowed.has(sourceId);
 }
 
 export async function runDetailEnrichment(
@@ -172,7 +184,10 @@ export async function runDetailEnrichment(
     const fetchOpts: FetchOptions | undefined = isSimply
       ? { headers: SIMPLY_BROWSER_HEADERS }
       : undefined;
-    const fetchResult: FetchResult = await fetchHtml(detailUrl, fetchOpts);
+    const useHeadlessDetailFetch = shouldUseHeadlessDetailFetch(input.sourceId);
+    const fetchResult: FetchResult = useHeadlessDetailFetch
+      ? await fetchHeadless(detailUrl)
+      : await fetchHtml(detailUrl, fetchOpts);
 
     // CAPTCHA/403/429 handling
     // Simply: skip listing and continue (don't stop the whole run)
@@ -211,7 +226,7 @@ export async function runDetailEnrichment(
       break;
     }
 
-    if (fetchResult.html && fetchResult.html.toLowerCase().includes("captcha")) {
+    if (!useHeadlessDetailFetch && fetchResult.html && fetchResult.html.toLowerCase().includes("captcha")) {
       if (input.sourceId === "cv_simplycapeverde") {
         console.log(`[Enrichment] ✗ ${listingId} url=${detailUrl} reason=captcha`);
         results.push({ listingId, detailUrl, success: false, enriched: false, skipped: true, skippedReason: "captcha", imageUrls: input.currentImageUrls });
@@ -242,7 +257,6 @@ export async function runDetailEnrichment(
     }
 
     const extractResult = plugin.extract(fetchResult.html, detailUrl);
-
     if (!extractResult.success) {
       console.log(`[Enrichment] ✗ ${listingId} url=${detailUrl} reason=plugin returned success:false`);
       results.push({

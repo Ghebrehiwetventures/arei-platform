@@ -83,6 +83,7 @@ const FAST_VERIFY_DELAY_ENV = "CV_FAST_VERIFY_DELAY_MS";
 const FAST_VERIFY_JITTER_ENV = "CV_FAST_VERIFY_JITTER_MS";
 const VERIFY_SKIP_EARLY_DETAIL_ENV = "CV_VERIFY_SKIP_EARLY_DETAIL";
 const VERIFY_EARLY_DETAIL_LIMIT_ENV = "CV_VERIFY_EARLY_DETAIL_LIMIT";
+const SOURCE_FILTER_ENV = "CV_SOURCE_FILTER";
 
 interface EarlyDetailVerificationMode {
   skip: boolean;
@@ -152,6 +153,20 @@ function getEarlyDetailVerificationMode(): EarlyDetailVerificationMode {
   }
 
   return { skip: false, limit: parsedLimit };
+}
+
+function filterSourcesByEnv(sources: SourceConfig[]): SourceConfig[] {
+  const raw = process.env[SOURCE_FILTER_ENV]?.trim();
+  if (!raw) return sources;
+
+  const allowed = new Set(
+    raw.split(",").map((value) => value.trim()).filter(Boolean)
+  );
+  const filtered = sources.filter((source) => allowed.has(source.id));
+  console.log(
+    `[RunFilter] ${SOURCE_FILTER_ENV}=${raw} -> ${filtered.length} source(s)`
+  );
+  return filtered;
 }
 
 // ============================================
@@ -837,7 +852,9 @@ export async function runCvIngest(): Promise<IngestReport> {
     console.warn(`Rules config warning: ${rulesResult.error}`);
   }
 
-  const sources = applyFastVerificationOverrides(sourcesResult.data.sources);
+  const sources = filterSourcesByEnv(
+    applyFastVerificationOverrides(sourcesResult.data.sources)
+  );
   console.log(`Found ${sources.length} sources in config\n`);
 
   // Initialize source states
