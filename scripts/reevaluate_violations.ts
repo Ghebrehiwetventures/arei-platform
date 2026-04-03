@@ -72,6 +72,7 @@ async function loadRows(): Promise<DbRow[]> {
       .from("listings")
       .select("id, source_id, title, price, description, image_urls, source_url, violations, approved")
       .in("source_id", TARGET_SOURCES)
+      .eq("approved", false)
       .range(offset, offset + BATCH_SIZE - 1);
 
     if (error) throw new Error(`Failed to load rows: ${error.message}`);
