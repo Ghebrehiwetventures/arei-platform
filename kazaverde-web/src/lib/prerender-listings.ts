@@ -1,7 +1,7 @@
 export const CURATED_FEATURED_IDS = [
-  "tcv_08491fc587b1",
-  "tcv_90471aee58ab",
-  "cv_gabetticasecapoverde:CV-TER355",
+  "tcv_ba753c539a1b",
+  "cv_gabetticasecapoverde:CV-TER379",
+  "ecv_4f9d29d41403",
 ] as const;
 
 export const PRERENDER_LISTING_IDS = [
@@ -13,6 +13,5 @@ export const PRERENDER_LISTING_IDS = [
   "tcv_9fd89e02a045",
   "tcv_a26cf7666960",
   "cv_gabetticasecapoverde:CV-AP387",
-  "cv_gabetticasecapoverde:CV-AP266",
   "cv_gabetticasecapoverde:CV-AP208",
 ] as const;
