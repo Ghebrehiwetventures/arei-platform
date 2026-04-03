@@ -198,18 +198,18 @@ export default function Home() {
       </SectionHeader>
       <div className="is anim-fu delay-35">
         {islands.map((island) => (
-          <div
+          <a
             key={island.name}
             className="ic"
+            href={`/listings?island=${encodeURIComponent(island.name)}`}
             style={{ background: island.bg }}
-            onClick={() => navigate(`/listings?island=${encodeURIComponent(island.name)}`)}
           >
             <div className="ov" />
             <div className="ic-i">
               <h3>{island.name}</h3>
               <span>{island.count} properties</span>
             </div>
-          </div>
+          </a>
         ))}
       </div>
 

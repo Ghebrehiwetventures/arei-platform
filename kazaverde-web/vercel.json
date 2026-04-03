@@ -18,6 +18,7 @@
     { "source": "/listing/cv_gabetticasecapoverde:CV-AP387", "destination": "/listing/cv_gabetticasecapoverde:CV-AP387/index.html" },
     { "source": "/listing/cv_gabetticasecapoverde:CV-AP266", "destination": "/listing/cv_gabetticasecapoverde:CV-AP266/index.html" },
     { "source": "/listing/cv_gabetticasecapoverde:CV-AP208", "destination": "/listing/cv_gabetticasecapoverde:CV-AP208/index.html" },
+    { "source": "/listings", "destination": "/listings/index.html" },
     { "source": "/about", "destination": "/about/index.html" },
     { "source": "/privacy", "destination": "/privacy/index.html" },
     { "source": "/cookie-policy", "destination": "/cookie-policy/index.html" },
