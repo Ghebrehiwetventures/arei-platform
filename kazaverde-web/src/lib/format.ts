@@ -7,7 +7,6 @@ const NEW_LISTING_DAYS = 7;
 const SOURCE_LABELS: Record<string, string> = {
   cv_simplycapeverde: "Simply Cape Verde",
   cv_terracaboverde: "Terra Cabo Verde",
-  cv_simplycapeverde: "Simply Cape Verde",
   cv_homescasaverde: "Homes Casa Verde",
   cv_capeverdeproperty24: "Cape Verde Property 24",
   cv_gabetticasecapoverde: "Gabetti Case Cape Verde",
