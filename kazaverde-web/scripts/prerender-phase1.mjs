@@ -18,7 +18,7 @@ function page(title, description, body, options = {}) {
   return { title, description, body, ...options };
 }
 
-function getStaticRoutes(blogArticles) {
+function getStaticRoutes(blogArticles, listingRoutes = []) {
   return [
     {
       route: "/",
@@ -191,6 +191,39 @@ function getStaticRoutes(blogArticles) {
     ),
     },
     {
+      route: "/listings",
+      ...page(
+      "Cape Verde Properties for Sale — KazaVerde",
+      "Browse tracked property listings across Cape Verde. Source-linked homes, apartments, villas, and land for sale on Sal, Boa Vista, Santiago, and more.",
+      `
+        <main>
+          <section>
+            <p>Property Listings</p>
+            <h1>Cape Verde Properties for Sale</h1>
+            <p>
+              A read-only index of tracked property listings across Cape Verde. Every listing links back
+              to its original source page so buyers can verify details directly before contacting an agent.
+            </p>
+            <p>
+              <a href="/listings?island=Sal">Properties in Sal</a> ·
+              <a href="/listings?island=Boa%20Vista">Properties in Boa Vista</a> ·
+              <a href="/listings?island=Santiago">Properties in Santiago</a> ·
+              <a href="/listings?island=S%C3%A3o%20Vicente">Properties in São Vicente</a>
+            </p>
+          </section>
+
+          ${listingRoutes.length > 0 ? `
+          <section>
+            <h2>Recently tracked properties</h2>
+            <ul>
+              ${listingRoutes.map((lr) => `<li><a href="${escapeHtml(lr.route)}">${escapeHtml(lr.title)}</a></li>`).join("\n              ")}
+            </ul>
+          </section>` : ""}
+        </main>
+      `,
+    ),
+    },
+    {
       route: "/cookie-policy",
       ...page(
       "Cookie Policy — KazaVerde",
@@ -229,7 +262,7 @@ function getStaticRoutes(blogArticles) {
 async function main() {
   const blogArticles = await loadBlogArticles();
   const listingRoutes = await getListingDetailRoutes();
-  const routes = [...getStaticRoutes(blogArticles), ...getBlogArticleRoutes(blogArticles), ...listingRoutes];
+  const routes = [...getStaticRoutes(blogArticles, listingRoutes), ...getBlogArticleRoutes(blogArticles), ...listingRoutes];
   const baseHtml = await readFile(baseHtmlPath, "utf8");
 
   await mkdir(path.dirname(spaFallbackPath), { recursive: true });
