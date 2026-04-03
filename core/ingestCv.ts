@@ -1,4 +1,4 @@
-import { fetchHeadless } from "./fetchHeadless";
+import { fetchHeadless, FetchResult } from "./fetchHeadless";
 import { initSourceStats, normalizeOrDrop } from './dropReport'
 
 
@@ -22,7 +22,7 @@ import { terraCaboVerdePlugin } from "./detail/plugins/terraCaboVerde";
 import { simplyCapeVerdePlugin } from "./detail/plugins/simplyCapeVerde";
 import { homesCasaVerdePlugin } from "./detail/plugins/homesCasaVerde";
 import { createGenericDetailPlugin } from "./detail/plugins/genericDetail";
-import { DetailEnrichmentInput } from "./detail/types";
+import { DetailEnrichmentInput, DetailExtractResult, DetailPlugin } from "./detail/types";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
 import { parseLocation } from "./locationMapper";
 import { resolveCvIslandRecovery } from "./cvIslandRecovery";
@@ -83,6 +83,9 @@ const FAST_VERIFY_DELAY_ENV = "CV_FAST_VERIFY_DELAY_MS";
 const FAST_VERIFY_JITTER_ENV = "CV_FAST_VERIFY_JITTER_MS";
 const VERIFY_SKIP_EARLY_DETAIL_ENV = "CV_VERIFY_SKIP_EARLY_DETAIL";
 const VERIFY_EARLY_DETAIL_LIMIT_ENV = "CV_VERIFY_EARLY_DETAIL_LIMIT";
+const ESTATECV_SOURCE_ID = "cv_estatecv";
+const ESTATECV_DETAIL_RETRY_DELAY_MS = 1500;
+const ESTATECV_MIN_DETAIL_IMAGES = 3;
 
 interface EarlyDetailVerificationMode {
   skip: boolean;
@@ -152,6 +155,82 @@ function getEarlyDetailVerificationMode(): EarlyDetailVerificationMode {
   }
 
   return { skip: false, limit: parsedLimit };
+}
+
+async function fetchDetailHtmlWithTimeout(
+  detailUrl: string,
+  useHeadless: boolean
+): Promise<FetchResult> {
+  const DETAIL_FETCH_TIMEOUT_MS = 45_000;
+  return useHeadless
+    ? await Promise.race([
+        fetchHeadless(detailUrl),
+        new Promise<FetchResult>((_, reject) =>
+          setTimeout(
+            () =>
+              reject(
+                new Error(
+                  `detail fetch timeout after ${DETAIL_FETCH_TIMEOUT_MS / 1000}s`
+                )
+              ),
+            DETAIL_FETCH_TIMEOUT_MS
+          )
+        ),
+      ])
+    : await fetchHtml(detailUrl);
+}
+
+function shouldRetryEstateCvDetail(
+  sourceId: string,
+  currentImageCount: number,
+  fetchResult: FetchResult,
+  extractResult?: DetailExtractResult
+): boolean {
+  if (sourceId !== ESTATECV_SOURCE_ID) return false;
+  if (!fetchResult.success || !fetchResult.html) return true;
+  if (!extractResult?.success) return true;
+  return (
+    currentImageCount <= 1 &&
+    (extractResult.imageUrls?.length || 0) < ESTATECV_MIN_DETAIL_IMAGES
+  );
+}
+
+async function fetchAndExtractDetail(
+  plugin: DetailPlugin,
+  source: SourceConfig,
+  listing: IngestListing,
+  useHeadless: boolean
+): Promise<{ fetchResult: FetchResult; extractResult?: DetailExtractResult; attempts: number }> {
+  let attempts = 0;
+  let fetchResult = await fetchDetailHtmlWithTimeout(listing.detailUrl!, useHeadless);
+  attempts++;
+
+  let extractResult =
+    fetchResult.success && fetchResult.html
+      ? plugin.extract(fetchResult.html, listing.detailUrl!)
+      : undefined;
+
+  if (
+    shouldRetryEstateCvDetail(
+      source.id,
+      listing.imageUrls?.length || 0,
+      fetchResult,
+      extractResult
+    )
+  ) {
+    console.log(
+      `[${source.id} Detail] retrying ${listing.id} after unstable detail response`
+    );
+    await sleep(ESTATECV_DETAIL_RETRY_DELAY_MS);
+    fetchResult = await fetchDetailHtmlWithTimeout(listing.detailUrl!, useHeadless);
+    attempts++;
+    extractResult =
+      fetchResult.success && fetchResult.html
+        ? plugin.extract(fetchResult.html, listing.detailUrl!)
+        : undefined;
+  }
+
+  return { fetchResult, extractResult, attempts };
 }
 
 // ============================================
@@ -366,15 +445,15 @@ async function enrichDetailPages(
       detailOperations++;
 
       try {
-        const DETAIL_FETCH_TIMEOUT_MS = 45_000;
-        const fetchResult = useHeadless
-          ? await Promise.race([
-              fetchHeadless(listing.detailUrl),
-              new Promise<{ success: false; error: string }>((_, reject) =>
-                setTimeout(() => reject(new Error(`detail fetch timeout after ${DETAIL_FETCH_TIMEOUT_MS / 1000}s`)), DETAIL_FETCH_TIMEOUT_MS)
-              ),
-            ])
-          : await fetchHtml(listing.detailUrl);
+        const plugin = factory.getPlugin(source.id);
+        if (!plugin) continue;
+
+        const { fetchResult, extractResult } = await fetchAndExtractDetail(
+          plugin,
+          source,
+          listing,
+          useHeadless
+        );
 
         if (!fetchResult.success || !fetchResult.html) {
           failedCount++;
@@ -383,12 +462,7 @@ async function enrichDetailPages(
           continue;
         }
 
-        const plugin = factory.getPlugin(source.id);
-        if (!plugin) continue;
-
-        const extractResult = plugin.extract(fetchResult.html, listing.detailUrl);
-
-        if (!extractResult.success) {
+        if (!extractResult?.success) {
           failedCount++;
           listing.detail_error = "extraction failed";
           console.log(`[${source.id} Detail] ✗ ${listing.id} extraction failed`);
