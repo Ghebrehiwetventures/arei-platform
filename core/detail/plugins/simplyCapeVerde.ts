@@ -275,7 +275,8 @@ function parseArea(value: string): number | null {
   const parsed = parseFloat(match[1]);
   if (isNaN(parsed) || parsed <= 0) return null;
 
-  if (/\bsq\s*ft\b|\bsqft\b|\bsquare\s*feet\b/i.test(normalized)) {
+  // Some SimplyCapeVerde pages concatenate the unit with the label, e.g. "645 SqFtArea Size".
+  if (/\bsq\s*ft(?=\b|area\b)|\bsqft(?=\b|area\b)|\bsquare\s*feet\b/i.test(normalized)) {
     return Math.round(parsed * 0.092903 * 100) / 100;
   }
 
