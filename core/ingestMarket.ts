@@ -288,8 +288,22 @@ async function genericDetailEnrichment(
 
       let wasEnriched = false;
 
-      if (extractResult.description && extractResult.description.length >= 50) {
-        listing.description = extractResult.description;
+      // Prefer explicit plain-text description; fall back to stripping description_html
+      // when description is absent or too short. Fixes sources (e.g. cv_simplycapeverde,
+      // cv_homescasaverde) that store rich content only in description_html.
+      let plainDescription = extractResult.description;
+      if ((!plainDescription || plainDescription.length < 50) && extractResult.description_html) {
+        const stripped = extractResult.description_html
+          .replace(/<[^>]+>/g, " ")
+          .replace(/\s+/g, " ")
+          .trim();
+        if (stripped.length >= 50) {
+          plainDescription = stripped;
+        }
+      }
+
+      if (plainDescription && plainDescription.length >= 50) {
+        listing.description = plainDescription;
         if (extractResult.description_html) {
           listing.description_html = extractResult.description_html;
         }
