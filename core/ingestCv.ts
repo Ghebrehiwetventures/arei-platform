@@ -934,8 +934,11 @@ export async function runCvIngest(): Promise<IngestReport> {
   // Collect all listings from all sources
   const allListings: IngestListing[] = [];
 
+  const ingestSourceFilter = process.env.ENRICH_SOURCE_ID || null;
+
   // Process each source
   for (const source of sources) {
+    if (ingestSourceFilter && source.id !== ingestSourceFilter) continue;
     const lifecycle = lifecycleMap.get(source.id);
 
     // DROP: skip entirely
@@ -1132,9 +1135,12 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
     factory.register(simplyCapeVerdePlugin);
     factory.register(homesCasaVerdePlugin);
 
+    const enrichSourceFilter = process.env.ENRICH_SOURCE_ID || null;
+
     // Build enrichment inputs from hidden listings only
     const enrichmentInputs: DetailEnrichmentInput[] = evalResult.classifications
       .filter((c) => c.visibility !== ListingVisibility.VISIBLE)
+      .filter((c) => !enrichSourceFilter || allListings.find((l) => l.id === c.listingId)?.sourceId === enrichSourceFilter)
       .map((c) => {
         const listing = allListings.find((l) => l.id === c.listingId);
         return {

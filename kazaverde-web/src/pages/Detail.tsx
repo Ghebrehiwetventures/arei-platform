@@ -446,7 +446,7 @@ export default function Detail() {
             {translatedDescription ? (
               <p>{translatedDescription}</p>
             ) : listing.description_html ? (
-              <div className="dd-html" dangerouslySetInnerHTML={{ __html: listing.description_html }} />
+              <div className="dd-html" dangerouslySetInnerHTML={{ __html: listing.description_html.replace(/<a\b[^>]*>([\s\S]*?)<\/a>/gi, "$1") }} />
             ) : listing.description ? (
               <p>{listing.description}</p>
             ) : (

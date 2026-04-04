@@ -256,6 +256,7 @@ export const homesCasaVerdePlugin: DetailPlugin = {
 
   extract(html: string, baseUrl: string): DetailExtractResult {
     const $ = cheerio.load(html);
+    console.log(`[homesCasaVerde] ${baseUrl} ld+json blocks: ${$('script[type="application/ld+json"]').length}`);
     const extracted = extractHomesCasaVerdeImages(html, baseUrl);
     const description = collectJsonLdDescription($);
     return {

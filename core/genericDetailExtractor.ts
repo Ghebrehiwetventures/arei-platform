@@ -11,15 +11,40 @@ import { DetailConfig, SelectorsConfig } from "./configLoader";
 import { CMSType, CMS_PRESETS, detectCMS, getImageAttrs } from "./cmsPresets";
 import { dedupeImageUrls } from "./genericFetcher";
 
-// Strict HTML sanitization: only structural tags allowed
+// Strict HTML sanitization: structural tags only, no links
 const SANITIZE_OPTIONS: sanitize.IOptions = {
-  allowedTags: ["h2", "h3", "h4", "p", "ul", "ol", "li", "strong", "em", "a", "br"],
-  allowedAttributes: {
-    a: ["href"],
-  },
-  allowedSchemes: ["https", "http", "mailto"],
+  allowedTags: ["h2", "h3", "h4", "p", "ul", "ol", "li", "strong", "em", "br"],
+  allowedAttributes: {},
   disallowedTagsMode: "discard",
 };
+
+// Junk text patterns to strip from plain-text descriptions.
+// Covers CTAs, source-site nav fragments, and legal boilerplate.
+const DESCRIPTION_JUNK_PATTERNS: RegExp[] = [
+  /\bread\s*more\b/gi,
+  /\bread\s*less\b/gi,
+  /\bprivacy\s*policy\b/gi,
+  /\bcookie\s*policy\b/gi,
+  /\bterms\s*(?:of\s*(?:use|service))?\b/gi,
+  /\ball\s*rights\s*reserved\b/gi,
+  /©[^\n]*/g,
+  /\bvisit\s+cape\s+verde\b[^\n]*/gi,
+];
+
+// Remove all <a> elements (including their text) from an HTML fragment
+// before sanitizing, so link text like "Read More" or promo anchors
+// do not survive into description_html.
+function stripAnchors(rawHtml: string): string {
+  const $r = cheerio.load(rawHtml, null, false);
+  $r("a").remove();
+  return $r.html() || "";
+}
+
+function stripDescriptionJunk(text: string): string {
+  let out = text;
+  for (const p of DESCRIPTION_JUNK_PATTERNS) out = out.replace(p, " ");
+  return out.replace(/\s{2,}/g, " ").trim();
+}
 
 // ============================================
 // DETAIL EXTRACTION CONFIG (from sources.yml)
@@ -322,14 +347,14 @@ export function genericDetailExtract(
       for (const sel of selectors) {
         const descEl = $(sel);
         if (descEl.length) {
-          const text = descEl.text().trim();
+          const text = stripDescriptionJunk(descEl.text().trim());
           if (text.length >= 50 && (!result.description || text.length > result.description.length)) {
             result.description = text;
-            // Sanitize the HTML version (strict whitelist)
+            // Sanitize the HTML version (strict whitelist, no anchors)
             // Join all matched elements to avoid losing content when selector hits multiple nodes
             const rawHtml = descEl.map((_, el) => $.html(el)).get().join("");
             if (rawHtml) {
-              const cleaned = sanitize(rawHtml, SANITIZE_OPTIONS).trim();
+              const cleaned = sanitize(stripAnchors(rawHtml), SANITIZE_OPTIONS).trim();
               if (cleaned.length > 0) {
                 result.description_html = cleaned;
               }
@@ -350,12 +375,12 @@ export function genericDetailExtract(
         }
       });
       if (longestText) {
-        result.description = longestText;
+        result.description = stripDescriptionJunk(longestText);
         // Sanitize the HTML version for fallback too
         if (longestEl) {
           const rawHtml = $(longestEl).html();
           if (rawHtml) {
-            const cleaned = sanitize(rawHtml, SANITIZE_OPTIONS).trim();
+            const cleaned = sanitize(stripAnchors(rawHtml), SANITIZE_OPTIONS).trim();
             if (cleaned.length > 0) {
               result.description_html = cleaned;
             }
