@@ -10,6 +10,8 @@ import {
   getMarketIds,
   getContentDrafts,
   generateContentDrafts,
+  getAgentV1Selections,
+  getAgentMapRows,
   updateContentDraftStatus,
   type ListingsFilters,
   type ListingsSortKey,
@@ -17,7 +19,7 @@ import {
 } from "./data";
 
 const SYNC_STALE_MINUTES = 24 * 60 * 3; // 3 days
-import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
+import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus, ListingSelection, AgentMapCategory, AgentMapPriority, AgentMapRow, AgentMapStatus, AgentMapStrategicImportance } from "./types";
 
 // ============================================
 // IMAGE GALLERY — arrows on hover, dot navigation
@@ -312,12 +314,226 @@ function DraftStatusBadge({ status }: { status: ContentDraftStatus }) {
   );
 }
 
+function AgentMapStatusBadge({ status }: { status: AgentMapStatus }) {
+  const classes: Record<AgentMapStatus, string> = {
+    human_only: "bg-muted text-foreground border-foreground",
+    human_plus_ai: "bg-amber/15 text-amber border-amber",
+    candidate_for_agent: "bg-blue-500/15 text-blue-300 border-blue-400",
+    in_progress: "bg-green/15 text-green border-green",
+    live: "bg-green/20 text-green border-green",
+    parked: "bg-red/10 text-red border-red",
+  };
+
+  return (
+    <span className={`inline-block border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${classes[status]}`}>
+      {status.replaceAll("_", " ")}
+    </span>
+  );
+}
+
+function AgentMapPriorityBadge({ priority }: { priority: AgentMapPriority }) {
+  const classes: Record<AgentMapPriority, string> = {
+    now: "bg-red/10 text-red border-red",
+    next: "bg-amber/15 text-amber border-amber",
+    later: "bg-muted text-foreground border-foreground",
+  };
+
+  return (
+    <span className={`inline-block border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${classes[priority]}`}>
+      {priority}
+    </span>
+  );
+}
+
+function AgentMapImportanceBadge({ importance }: { importance: AgentMapStrategicImportance }) {
+  const classes: Record<AgentMapStrategicImportance, string> = {
+    critical: "bg-red/10 text-red border-red",
+    high: "bg-amber/15 text-amber border-amber",
+    medium: "bg-muted text-foreground border-foreground",
+  };
+
+  return (
+    <span className={`inline-block border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${classes[importance]}`}>
+      {importance}
+    </span>
+  );
+}
+
+const AGENT_MAP_CATEGORY_ORDER: AgentMapCategory[] = [
+  "Sales / Revenue",
+  "Data / Source Ops",
+  "Editorial / Content",
+  "SEO / Market Intelligence",
+  "Distribution / Growth",
+  "Founder / Decision Support",
+];
+
+function AgentMapView() {
+  const [rows, setRows] = useState<AgentMapRow[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAgentMapRows().then((items) => {
+      if (!cancelled) {
+        setRows(items);
+        setLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const totalRows = rows.length;
+  const salesRows = rows.filter((row) => row.category === "Sales / Revenue").length;
+  const nowRows = rows.filter((row) => row.priority === "now").length;
+  const criticalRows = rows.filter((row) => row.strategicImportance === "critical").length;
+
+  const groupedRows = AGENT_MAP_CATEGORY_ORDER.map((category) => ({
+    category,
+    rows: rows
+      .filter((row) => row.category === category)
+      .sort((a, b) => {
+        const priorityOrder = { now: 0, next: 1, later: 2 };
+        const importanceOrder = { critical: 0, high: 1, medium: 2 };
+        return (
+          priorityOrder[a.priority] - priorityOrder[b.priority] ||
+          importanceOrder[a.strategicImportance] - importanceOrder[b.strategicImportance] ||
+          a.function.localeCompare(b.function)
+        );
+      }),
+  })).filter((group) => group.rows.length > 0);
+
+  return (
+    <section className="space-y-6">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <div className="label-style mb-2">Agents &gt; Map</div>
+          <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+            Agent Map
+          </h2>
+          <p className="label-style max-w-4xl">
+            Manual planning surface for business functions, candidate agent roles, and what matters now. This is for visibility and prioritization, not execution orchestration.
+          </p>
+        </div>
+      </div>
+
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
+        <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+          <div className="label-style mb-1">Functions mapped</div>
+          <div className="text-2xl font-bold text-foreground tabular-nums">{totalRows}</div>
+        </div>
+        <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+          <div className="label-style mb-1">Sales / Revenue</div>
+          <div className="text-2xl font-bold text-red tabular-nums">{salesRows}</div>
+        </div>
+        <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+          <div className="label-style mb-1">Priority now</div>
+          <div className="text-2xl font-bold text-amber tabular-nums">{nowRows}</div>
+        </div>
+        <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+          <div className="label-style mb-1">Strategic critical</div>
+          <div className="text-2xl font-bold text-foreground tabular-nums">{criticalRows}</div>
+        </div>
+      </div>
+
+      <div className="border border-border bg-muted/30 p-4">
+        <div className="label-style mb-2">How to read this</div>
+        <p className="text-sm font-mono text-foreground leading-relaxed m-0">
+          `status` shows whether the work stays human, is human-guided with AI, or is a future candidate for agentization. `priority` is now / next / later. `strategic importance` is the forcing function for planning, with Sales / Revenue shown explicitly so roadmap work does not drift into content-only interventions.
+        </p>
+      </div>
+
+      {loading && <p className="text-muted-foreground text-sm font-mono">Loading agent map…</p>}
+
+      <div className="space-y-5">
+        {groupedRows.map((group) => (
+          <section key={group.category} className="space-y-3">
+            <div className="flex items-center justify-between gap-3">
+              <div>
+                <div className="label-style">{group.category}</div>
+                <div className="text-xs font-mono text-muted-foreground">{group.rows.length} mapped functions</div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
+              {group.rows.map((row) => (
+                <article key={row.id} className="border border-foreground brutalist-shadow-sm bg-background p-4 space-y-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="label-style mb-1">{row.function}</div>
+                      <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">
+                        {row.candidateAgent}
+                      </h3>
+                      <p className="text-xs text-muted-foreground font-mono mt-1 mb-0">
+                        Owner: {row.currentOwner}
+                      </p>
+                    </div>
+                    <div className="flex flex-wrap gap-2 justify-end">
+                      <AgentMapPriorityBadge priority={row.priority} />
+                      <AgentMapImportanceBadge importance={row.strategicImportance} />
+                      <AgentMapStatusBadge status={row.status} />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    <div>
+                      <div className="label-style mb-1">Required inputs</div>
+                      <ul className="space-y-1 text-sm text-foreground font-mono m-0 pl-5">
+                        {row.requiredInputs.map((input) => (
+                          <li key={input}>{input}</li>
+                        ))}
+                      </ul>
+                    </div>
+                    <div>
+                      <div className="label-style mb-1">Expected outputs</div>
+                      <ul className="space-y-1 text-sm text-foreground font-mono m-0 pl-5">
+                        {row.expectedOutputs.map((output) => (
+                          <li key={output}>{output}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  </div>
+
+                  <div>
+                    <div className="label-style mb-1">Notes</div>
+                    <p className="text-sm text-foreground font-mono leading-relaxed m-0 whitespace-pre-wrap">
+                      {row.notes}
+                    </p>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </section>
+        ))}
+      </div>
+    </section>
+  );
+}
+
 function AgentsApprovalsView() {
+  const [selections, setSelections] = useState<ListingSelection[]>([]);
+  const [selectorLoading, setSelectorLoading] = useState(true);
+  const [selectorRunning, setSelectorRunning] = useState(false);
   const [drafts, setDrafts] = useState<ContentDraft[]>([]);
   const [loading, setLoading] = useState(true);
   const [generating, setGenerating] = useState(false);
   const [statusFilter, setStatusFilter] = useState<ContentDraftStatus | "all">("all");
   const [typeFilter, setTypeFilter] = useState<"all" | "content_draft">("content_draft");
+
+  useEffect(() => {
+    let cancelled = false;
+    getAgentV1Selections().then((items) => {
+      if (!cancelled) {
+        setSelections(items);
+        setSelectorLoading(false);
+      }
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -331,6 +547,17 @@ function AgentsApprovalsView() {
       cancelled = true;
     };
   }, []);
+
+  const handleRunSelector = async () => {
+    setSelectorRunning(true);
+    try {
+      const next = await getAgentV1Selections();
+      setSelections(next);
+    } finally {
+      setSelectorRunning(false);
+      setSelectorLoading(false);
+    }
+  };
 
   const handleGenerate = async () => {
     setGenerating(true);
@@ -362,12 +589,158 @@ function AgentsApprovalsView() {
 
   return (
     <div className="space-y-8">
+      <AgentMapView />
+
       <section>
         <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
           <div>
             <div className="label-style mb-2">Agents &gt; Approvals</div>
             <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
-              Content Draft Agent v1
+              Agent V1 Listing Selector
+            </h2>
+            <p className="label-style max-w-3xl">
+              Ranks current KazaVerde listings for editorial attention, explains the selection, and suggests a content angle. This is review-only and does not publish anything.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleRunSelector}
+            disabled={selectorRunning}
+            className="border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+          >
+            {selectorRunning ? "Running…" : "Run selector"}
+          </button>
+        </div>
+
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="label-style mb-1">Selected now</div>
+            <div className="text-2xl font-bold text-foreground tabular-nums">{selections.length}</div>
+          </div>
+          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="label-style mb-1">Strongest signal</div>
+            <div className="text-2xl font-bold text-amber tabular-nums">{selections[0]?.selectionTheme ?? "n/a"}</div>
+          </div>
+          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="label-style mb-1">Publishing</div>
+            <div className="text-lg font-bold text-foreground">Disabled</div>
+            <div className="text-xs text-muted-foreground font-mono mt-1">Selection only. No autoposting.</div>
+          </div>
+        </div>
+      </section>
+
+      <section>
+        {selectorLoading && <p className="text-muted-foreground text-sm font-mono">Running selector…</p>}
+        {!selectorLoading && selections.length === 0 && (
+          <div className="border border-border p-6 bg-muted text-sm font-mono text-muted-foreground">
+            No listings cleared the current Agent V1 threshold. That is an acceptable outcome for this selector.
+          </div>
+        )}
+
+        <div className="space-y-4">
+          {selections.map((selection) => (
+            <article key={selection.listingId} className="border border-foreground brutalist-shadow-sm overflow-hidden bg-background">
+              <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr]">
+                <div className="bg-muted min-h-[180px]">
+                  <img
+                    src={selection.selectedImage}
+                    alt={selection.title}
+                    className="w-full h-full min-h-[180px] object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                </div>
+
+                <div className="p-5 space-y-4">
+                  <div className="flex flex-wrap items-start justify-between gap-3">
+                    <div>
+                      <div className="label-style mb-1">Rank #{selection.rank} · {selection.selectionTheme}</div>
+                      <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">
+                        {selection.title}
+                      </h3>
+                      <p className="text-xs text-muted-foreground font-mono mt-1">
+                        {selection.locationLabel} · {selection.sourceName} · {selection.listingId}
+                      </p>
+                    </div>
+                    <div className="border border-foreground px-3 py-2 text-right">
+                      <div className="label-style mb-1">Score</div>
+                      <div className="text-xl font-bold text-foreground tabular-nums">{selection.totalScore}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-1 xl:grid-cols-[1.2fr_0.8fr] gap-5">
+                    <div className="space-y-4">
+                      <div>
+                        <div className="label-style mb-1">Why this made the cut</div>
+                        <ul className="space-y-2 text-sm text-foreground font-mono m-0 pl-5">
+                          {selection.reasons.map((reason) => (
+                            <li key={reason}>{reason}</li>
+                          ))}
+                        </ul>
+                      </div>
+                      <div>
+                        <div className="label-style mb-1">Suggested content angle</div>
+                        <p className="text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap m-0">
+                          {selection.contentAngle}
+                        </p>
+                      </div>
+                      {selection.warnings.length > 0 && (
+                        <div>
+                          <div className="label-style mb-1">Review cautions</div>
+                          <ul className="space-y-2 text-sm text-foreground font-mono m-0 pl-5">
+                            {selection.warnings.map((warning) => (
+                              <li key={warning}>{warning}</li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                    </div>
+
+                    <div className="space-y-4">
+                      <div className="bg-muted border border-border p-3">
+                        <div className="label-style mb-1">Price</div>
+                        <div className="text-base font-bold text-foreground">{selection.priceLabel || "No clear price"}</div>
+                      </div>
+                      <div className="bg-muted border border-border p-3">
+                        <div className="label-style mb-1">Source</div>
+                        {selection.sourceUrl ? (
+                          <a href={selection.sourceUrl} target="_blank" rel="noreferrer" className="text-sm font-mono underline break-all">
+                            Open source listing
+                          </a>
+                        ) : (
+                          <div className="text-sm font-mono text-muted-foreground">No source link</div>
+                        )}
+                      </div>
+                      <div className="bg-muted border border-border p-3">
+                        <div className="label-style mb-2">Score breakdown</div>
+                        <div className="space-y-2">
+                          {selection.scoreBreakdown.map((part) => (
+                            <div key={part.key}>
+                              <div className="flex items-center justify-between text-xs font-mono">
+                                <span>{part.label}</span>
+                                <span>{part.score}/{part.maxScore}</span>
+                              </div>
+                              <p className="text-xs text-muted-foreground font-mono mt-1 mb-0">{part.note}</p>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </article>
+          ))}
+        </div>
+      </section>
+
+      <section>
+        <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
+          <div>
+            <div className="label-style mb-2">Agents &gt; Drafts</div>
+            <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+              Content Draft Generator
             </h2>
             <p className="label-style max-w-3xl">
               Generates 3 to 5 reviewable content drafts from live listing data. Everything stays human-gated in approvals. Nothing is published automatically.
