@@ -53,11 +53,11 @@ function ImageGallery({
       <div
         style={{
           ...sizeStyle,
-          background: "#1a1a2e",
+          background: "#eef2f8",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#555",
+          color: "#697386",
           fontSize: 13,
           borderRadius: "8px 8px 0 0",
         }}
@@ -82,8 +82,8 @@ function ImageGallery({
     position: "absolute",
     top: "50%",
     transform: "translateY(-50%)",
-    background: "rgba(0,0,0,0.55)",
-    color: "#fff",
+    background: "rgba(255,255,255,0.88)",
+    color: "#141826",
     border: "none",
     borderRadius: "50%",
     width: 32,
@@ -188,7 +188,7 @@ function ImageGallery({
           position: "absolute",
           top: 8,
           right: 8,
-          background: "rgba(0,0,0,0.6)",
+          background: "rgba(20,24,38,0.72)",
           color: "#fff",
           fontSize: 11,
           padding: "2px 7px",
@@ -323,8 +323,8 @@ function WorkflowFeedbackBanner({ message }: { message: string | null }) {
   if (!message) return null;
 
   return (
-    <div className="border border-green bg-green/10 text-green brutalist-shadow-sm p-3">
-      <div className="label-style mb-1">Workflow update</div>
+    <div className="app-surface-subtle border border-green/20 bg-green/10 text-green p-4">
+      <div className="section-kicker mb-1">Workflow update</div>
       <p className="text-sm font-mono m-0">{message}</p>
     </div>
   );
@@ -425,36 +425,36 @@ function AgentMapView() {
     <section className="space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <div className="label-style mb-2">Agents &gt; Map</div>
-          <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+          <div className="section-kicker mb-2">Agents / Map</div>
+          <h2 className="font-sans font-black text-2xl sm:text-3xl tracking-tight text-foreground mb-1">
             Agent Map
           </h2>
-          <p className="label-style max-w-4xl">
+          <p className="section-note">
             Manual planning surface for business functions, candidate agent roles, and what matters now. This is for visibility and prioritization, not execution orchestration.
           </p>
         </div>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
-        <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+        <div className="app-metric-card">
           <div className="label-style mb-1">Functions mapped</div>
           <div className="text-2xl font-bold text-foreground tabular-nums">{totalRows}</div>
         </div>
-        <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+        <div className="app-metric-card">
           <div className="label-style mb-1">Sales / Revenue</div>
           <div className="text-2xl font-bold text-red tabular-nums">{salesRows}</div>
         </div>
-        <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+        <div className="app-metric-card">
           <div className="label-style mb-1">Priority now</div>
           <div className="text-2xl font-bold text-amber tabular-nums">{nowRows}</div>
         </div>
-        <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+        <div className="app-metric-card">
           <div className="label-style mb-1">Strategic critical</div>
           <div className="text-2xl font-bold text-foreground tabular-nums">{criticalRows}</div>
         </div>
       </div>
 
-      <div className="border border-border bg-muted/30 p-4">
+      <div className="app-surface-subtle p-4">
         <div className="label-style mb-2">How to read this</div>
         <p className="text-sm font-mono text-foreground leading-relaxed m-0">
           `status` shows whether the work stays human, is human-guided with AI, or is a future candidate for agentization. `priority` is now / next / later. `strategic importance` is the forcing function for planning, with Sales / Revenue shown explicitly so roadmap work does not drift into content-only interventions.
@@ -475,11 +475,11 @@ function AgentMapView() {
 
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-4">
               {group.rows.map((row) => (
-                <article key={row.id} className="border border-foreground brutalist-shadow-sm bg-background p-4 space-y-4">
+                <article key={row.id} className="detail-panel p-4 space-y-4">
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="label-style mb-1">{row.function}</div>
-                      <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">
+                      <h3 className="font-sans font-bold text-lg tracking-tight text-foreground">
                         {row.candidateAgent}
                       </h3>
                       <p className="text-xs text-muted-foreground font-mono mt-1 mb-0">
@@ -589,17 +589,17 @@ function SelectorEvalView() {
   return (
     <section className="space-y-6">
       <div>
-        <div className="label-style mb-2">Agents &gt; Selector Eval</div>
-        <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+        <div className="section-kicker mb-2">Agents / Selector Eval</div>
+        <h2 className="font-sans font-black text-2xl sm:text-3xl tracking-tight text-foreground mb-1">
           Selector Eval
         </h2>
-        <p className="label-style max-w-4xl">
+        <p className="section-note">
           Manual eval loop for Agent V1. Use the checked-in seed set and runner script to verify selector quality before more tuning.
         </p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-4">
-        <div className="border border-foreground brutalist-shadow-sm bg-background p-4 space-y-4">
+        <div className="detail-panel p-4 space-y-4">
           <div>
             <div className="label-style mb-1">Run locally</div>
             <code className="block bg-muted border border-border px-3 py-3 text-sm font-mono text-foreground whitespace-pre-wrap">
@@ -620,12 +620,12 @@ function SelectorEvalView() {
           </div>
         </div>
 
-        <div className="border border-foreground brutalist-shadow-sm bg-background p-4">
+        <div className="detail-panel p-4">
           <div className="label-style mb-2">What this checks</div>
           <div className="space-y-3">
             {metrics.map(([label, note]) => (
               <div key={label}>
-                <div className="text-sm font-bold uppercase tracking-wide text-foreground">{label}</div>
+                <div className="text-sm font-semibold tracking-tight text-foreground">{label}</div>
                 <p className="text-sm font-mono text-muted-foreground m-0">{note}</p>
               </div>
             ))}
@@ -923,11 +923,11 @@ function AgentsWorkflowView() {
         <section className="space-y-5">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <div className="label-style mb-2">Workflow &gt; Select</div>
-              <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+              <div className="section-kicker mb-2">Workflow / Select</div>
+              <h2 className="font-sans font-black text-2xl sm:text-3xl tracking-tight text-foreground mb-1">
                 Select Listings
               </h2>
-              <p className="label-style max-w-4xl">
+              <p className="section-note">
                 Review ranked candidates, inspect the evidence, and decide what should move into drafting. Evidence comes first. Score stays secondary.
               </p>
             </div>
@@ -935,22 +935,22 @@ function AgentsWorkflowView() {
               type="button"
               onClick={handleRunSelector}
               disabled={selectorRunning}
-              className="border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+              className="app-button app-button-primary disabled:opacity-50"
             >
               {selectorRunning ? "Running…" : "Run selector"}
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Candidates</div>
               <div className="text-2xl font-bold text-foreground tabular-nums">{selections.length}</div>
             </div>
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Current theme</div>
               <div className="text-2xl font-bold text-amber tabular-nums">{activeSelection?.selectionTheme ?? "n/a"}</div>
             </div>
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Next step</div>
               <div className="text-lg font-bold text-foreground">Send to Draft</div>
               <div className="text-xs text-muted-foreground font-mono mt-1">Selection only. Publishing remains out of scope.</div>
@@ -965,8 +965,8 @@ function AgentsWorkflowView() {
           )}
 
           {selections.length > 0 && activeSelection && (
-            <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-5">
-              <aside className="border border-foreground brutalist-shadow-sm bg-background p-3">
+            <div className="workflow-layout">
+              <aside className="queue-panel">
                 <div className="label-style mb-3">Candidate queue</div>
                 <div className="space-y-2">
                   {selections.map((selection) => {
@@ -976,12 +976,12 @@ function AgentsWorkflowView() {
                         key={selection.listingId}
                         type="button"
                         onClick={() => setActiveSelectionId(selection.listingId)}
-                        className={`w-full text-left border p-3 transition-colors ${isActive ? "border-foreground bg-muted" : "border-border hover:border-foreground"}`}
+                        className={`queue-item ${isActive ? "is-active" : ""}`}
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
                             <div className="label-style mb-1">#{selection.rank} · {selection.selectionTheme}</div>
-                            <div className="text-sm font-bold uppercase tracking-wide text-foreground line-clamp-2">{selection.title}</div>
+                            <div className="text-sm font-semibold tracking-tight text-foreground line-clamp-2">{selection.title}</div>
                             <div className="text-xs font-mono text-muted-foreground mt-1">{selection.locationLabel}</div>
                           </div>
                           <div className="text-right">
@@ -996,13 +996,13 @@ function AgentsWorkflowView() {
               </aside>
 
               <section className="space-y-5">
-                <div className="border border-foreground brutalist-shadow-sm bg-background overflow-hidden">
+                <div className="detail-panel">
                   <div className="grid grid-cols-1 lg:grid-cols-[minmax(0,1.2fr)_360px] gap-0">
                     <div className="p-5 space-y-5">
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <div className="label-style mb-1">Rank #{activeSelection.rank} · {activeSelection.selectionTheme}</div>
-                          <h3 className="font-sans font-bold text-xl uppercase tracking-tight text-foreground">{activeSelection.title}</h3>
+                          <h3 className="font-sans font-bold text-xl tracking-tight text-foreground">{activeSelection.title}</h3>
                           <p className="text-xs text-muted-foreground font-mono mt-1">
                             {activeSelection.locationLabel} · {activeSelection.sourceName} · {activeSelection.listingId}
                           </p>
@@ -1012,7 +1012,7 @@ function AgentsWorkflowView() {
                             type="button"
                             onClick={() => handleSendToDraft(activeSelection.listingId)}
                             disabled={creatingDraftForListingId === activeSelection.listingId}
-                            className="border border-foreground px-3 py-2 text-xs font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+                            className="app-button app-button-primary disabled:opacity-50"
                           >
                             {creatingDraftForListingId === activeSelection.listingId ? "Sending…" : "Send to Draft"}
                           </button>
@@ -1023,7 +1023,7 @@ function AgentsWorkflowView() {
                       <ImageGallery images={[activeSelection.selectedImage]} width={900} height={420} responsive />
                     </div>
 
-                    <div className="bg-muted border border-border p-3">
+                    <div className="app-surface-subtle p-3">
                       <div className="label-style mb-1">Image review note</div>
                       <p className="text-sm font-mono text-foreground m-0">
                         This stage currently shows the selected lead image for review, not the full source gallery.
@@ -1032,7 +1032,7 @@ function AgentsWorkflowView() {
 
                       <div className="grid grid-cols-1 xl:grid-cols-[1fr_0.9fr] gap-5">
                         <div className="space-y-4">
-                          <div className="bg-muted border border-border p-4">
+                          <div className="app-surface-subtle p-4">
                             <div className="label-style mb-2">Evidence</div>
                             <ul className="space-y-2 text-sm text-foreground font-mono m-0 pl-5">
                               {activeSelection.reasons.map((reason) => (
@@ -1041,7 +1041,7 @@ function AgentsWorkflowView() {
                             </ul>
                           </div>
 
-                          <div className="bg-muted border border-border p-4">
+                          <div className="app-surface-subtle p-4">
                             <div className="label-style mb-2">Suggested angle</div>
                             <p className="text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap m-0">
                               {activeSelection.contentAngle}
@@ -1049,7 +1049,7 @@ function AgentsWorkflowView() {
                           </div>
 
                           {usefulWarnings.length > 0 && (
-                            <div className="bg-muted border border-border p-4">
+                            <div className="app-surface-subtle p-4">
                               <div className="label-style mb-2">Review cautions</div>
                               <ul className="space-y-2 text-sm text-foreground font-mono m-0 pl-5">
                                 {usefulWarnings.map((warning) => (
@@ -1061,11 +1061,11 @@ function AgentsWorkflowView() {
                         </div>
 
                         <div className="space-y-4">
-                          <div className="bg-muted border border-border p-4">
+                          <div className="app-surface-subtle p-4">
                             <div className="label-style mb-1">Price</div>
                             <div className="text-base font-bold text-foreground">{activeSelection.priceLabel || "No clear price"}</div>
                           </div>
-                          <div className="bg-muted border border-border p-4">
+                          <div className="app-surface-subtle p-4">
                             <div className="label-style mb-1">Source</div>
                             {activeSelection.sourceUrl ? (
                               <a href={activeSelection.sourceUrl} target="_blank" rel="noreferrer" className="text-sm font-mono underline break-all">
@@ -1075,19 +1075,19 @@ function AgentsWorkflowView() {
                               <div className="text-sm font-mono text-muted-foreground">No source link</div>
                             )}
                           </div>
-                          <div className="bg-muted border border-border p-4">
+                          <div className="app-surface-subtle p-4">
                             <div className="label-style mb-1">Ranking input</div>
                             <div className="text-sm font-mono text-foreground">Theme: {activeSelection.selectionTheme}</div>
                             <div className="text-xl font-bold text-foreground tabular-nums mt-2">{activeSelection.totalScore}</div>
                             <div className="text-xs text-muted-foreground font-mono mt-1">Score stays secondary to visible evidence.</div>
                           </div>
                           {selectionContextLabel && (
-                            <div className="bg-muted border border-border p-4">
+                            <div className="app-surface-subtle p-4">
                               <div className="label-style mb-1">KazaVerde context</div>
                               <p className="text-sm font-mono text-foreground m-0">{selectionContextLabel}</p>
                             </div>
                           )}
-                          <div className="bg-muted border border-border p-4">
+                          <div className="app-surface-subtle p-4">
                             <div className="label-style mb-2">Score breakdown</div>
                             <div className="space-y-2">
                               {activeSelection.scoreBreakdown.map((part) => (
@@ -1105,7 +1105,7 @@ function AgentsWorkflowView() {
                       </div>
                     </div>
 
-                    <aside className="border-l border-border bg-muted/30 p-5 space-y-4">
+                    <aside className="border-l border-border bg-[#f8fafc] p-6 space-y-4">
                       <div>
                         <div className="label-style mb-1">Workflow step</div>
                         <div className="text-base font-bold text-foreground">Select</div>
@@ -1140,11 +1140,11 @@ function AgentsWorkflowView() {
         <section className="space-y-5">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <div className="label-style mb-2">Workflow &gt; Draft</div>
-              <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+              <div className="section-kicker mb-2">Workflow / Draft</div>
+              <h2 className="font-sans font-black text-2xl sm:text-3xl tracking-tight text-foreground mb-1">
                 Draft Content
               </h2>
-              <p className="label-style max-w-4xl">
+              <p className="section-note">
                 Prepare short, factual drafts quickly. Use this stage to move selected listings into approval, not to perfect creative writing.
               </p>
             </div>
@@ -1152,22 +1152,22 @@ function AgentsWorkflowView() {
               type="button"
               onClick={handleGenerate}
               disabled={generating}
-              className="border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+              className="app-button app-button-primary disabled:opacity-50"
             >
               {generating ? "Generating…" : "Generate content drafts"}
             </button>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Draft stage items</div>
               <div className="text-2xl font-bold text-foreground tabular-nums">{draftStageDrafts.length}</div>
             </div>
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">In approval queue</div>
               <div className="text-2xl font-bold text-amber tabular-nums">{pendingCount}</div>
             </div>
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Next step</div>
               <div className="text-lg font-bold text-foreground">Move to Approve</div>
               <div className="text-xs text-muted-foreground font-mono mt-1">Approval remains human gated.</div>
@@ -1182,8 +1182,8 @@ function AgentsWorkflowView() {
           )}
 
           {draftStageDrafts.length > 0 && (
-            <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-5">
-              <aside className="border border-foreground brutalist-shadow-sm bg-background p-3">
+            <div className="workflow-layout">
+              <aside className="queue-panel">
                 <div className="label-style mb-3">Draft queue</div>
                 <div className="space-y-2">
                   {draftStageDrafts.map((draft) => {
@@ -1193,10 +1193,10 @@ function AgentsWorkflowView() {
                         key={draft.id}
                         type="button"
                         onClick={() => setActiveDraftId(draft.id)}
-                        className={`w-full text-left border p-3 transition-colors ${isActive ? "border-foreground bg-muted" : "border-border hover:border-foreground"}`}
+                        className={`queue-item ${isActive ? "is-active" : ""}`}
                       >
                         <div className="label-style mb-1">{draft.status === "revision_requested" ? "Needs revision in Draft" : "Draft ready for review"}</div>
-                        <div className="text-sm font-bold uppercase tracking-wide text-foreground line-clamp-2">{draft.listingTitle}</div>
+                        <div className="text-sm font-semibold tracking-tight text-foreground line-clamp-2">{draft.listingTitle}</div>
                         <div className="text-xs font-mono text-muted-foreground mt-1">{draft.suggestedChannel} · {new Date(draft.createdAt).toLocaleDateString()}</div>
                       </button>
                     );
@@ -1205,7 +1205,7 @@ function AgentsWorkflowView() {
               </aside>
 
               {activeDraft && (
-                <section className="border border-foreground brutalist-shadow-sm bg-background overflow-hidden">
+                <section className="detail-panel">
                   <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr]">
                     <div className="bg-muted min-h-[260px]">
                       {activeDraft.selectedImage ? (
@@ -1228,7 +1228,7 @@ function AgentsWorkflowView() {
                       <div className="flex flex-wrap items-start justify-between gap-3">
                         <div>
                           <div className="label-style mb-1">Draft stage item</div>
-                          <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">{activeDraft.listingTitle}</h3>
+                          <h3 className="font-sans font-bold text-lg tracking-tight text-foreground">{activeDraft.listingTitle}</h3>
                           <p className="text-xs text-muted-foreground font-mono mt-1">
                             Listing {activeDraft.sourceListingId} · Created {new Date(activeDraft.createdAt).toLocaleString()}
                           </p>
@@ -1261,11 +1261,11 @@ function AgentsWorkflowView() {
                         </div>
 
                         <div className="space-y-4">
-                          <div className="bg-muted border border-border p-3">
+                          <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Suggested channel</div>
                             <div className="text-base font-bold text-foreground uppercase">{activeDraft.suggestedChannel}</div>
                           </div>
-                          <div className="bg-muted border border-border p-3">
+                          <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Workflow step</div>
                             <p className="text-sm font-mono text-foreground m-0">
                               Review the draft, then move it into the approval queue when it is ready for human approval.
@@ -1279,7 +1279,7 @@ function AgentsWorkflowView() {
                           type="button"
                           onClick={() => handleMarkReadyForApproval(activeDraft.id)}
                           disabled={activeDraft.status === "pending" || activeDraft.status === "approved"}
-                          className="border border-foreground px-3 py-2 text-xs font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+                          className="app-button app-button-primary disabled:opacity-50"
                         >
                           {activeDraft.status === "pending" ? "Already in approval queue" : "Move to Approve"}
                         </button>
@@ -1299,33 +1299,33 @@ function AgentsWorkflowView() {
         <section className="space-y-5">
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
-              <div className="label-style mb-2">Workflow &gt; Publish</div>
-              <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+              <div className="section-kicker mb-2">Workflow / Publish</div>
+              <h2 className="font-sans font-black text-2xl sm:text-3xl tracking-tight text-foreground mb-1">
                 Publish Queue
               </h2>
-              <p className="label-style max-w-4xl">
+              <p className="section-note">
                 Prepare approved drafts for manual publishing. Freeze approved content, choose a channel, and track manual publish state. No channel integrations.
               </p>
             </div>
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Publish items</div>
               <div className="text-2xl font-bold text-foreground tabular-nums">{filteredPublishItems.length}</div>
             </div>
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Ready to publish</div>
               <div className="text-2xl font-bold text-amber tabular-nums">{publishItems.filter((item) => item.status === "ready_to_publish").length}</div>
             </div>
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Manual only</div>
               <div className="text-lg font-bold text-foreground">No autoposting</div>
               <div className="text-xs text-muted-foreground font-mono mt-1">Use this stage to prepare and record manual posting.</div>
             </div>
           </div>
 
-          <section className="border border-border bg-muted/30 p-4">
+          <section className="app-surface-subtle p-4">
             <div className="label-style mb-3">Publish filters</div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
               <div>
@@ -1333,7 +1333,7 @@ function AgentsWorkflowView() {
                 <select
                   value={publishStatusFilter}
                   onChange={(e) => setPublishStatusFilter(e.target.value as PublishItemStatus | "all")}
-                  className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full"
+                  className="app-input font-mono"
                 >
                   <option value="ready_to_publish">Ready to publish</option>
                   <option value="scheduled">Scheduled</option>
@@ -1354,8 +1354,8 @@ function AgentsWorkflowView() {
           )}
 
           {filteredPublishItems.length > 0 && activePublishItem && (
-            <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-5">
-              <aside className="border border-foreground brutalist-shadow-sm bg-background p-3">
+            <div className="workflow-layout">
+              <aside className="queue-panel">
                 <div className="label-style mb-3">Publish queue</div>
                 <div className="space-y-2">
                   {filteredPublishItems.map((item) => {
@@ -1365,7 +1365,7 @@ function AgentsWorkflowView() {
                         key={item.id}
                         type="button"
                         onClick={() => setActivePublishId(item.id)}
-                        className={`w-full text-left border p-3 transition-colors ${isActive ? "border-foreground bg-muted" : "border-border hover:border-foreground"}`}
+                        className={`queue-item ${isActive ? "is-active" : ""}`}
                       >
                         <div className="space-y-2">
                           <div className="flex items-start justify-between gap-2">
@@ -1383,7 +1383,7 @@ function AgentsWorkflowView() {
                 </div>
               </aside>
 
-              <section className="border border-foreground brutalist-shadow-sm bg-background overflow-hidden">
+              <section className="detail-panel">
                 <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr]">
                   <div className="bg-muted min-h-[260px]">
                     {activePublishItem.selectedImageUrl ? (
@@ -1413,13 +1413,13 @@ function AgentsWorkflowView() {
                     </div>
 
                     {duplicatePublishWarning && (
-                      <div className="border border-red bg-red/10 text-red p-3">
+                      <div className="app-surface-subtle border border-red/20 bg-red/10 text-red p-3">
                         <div className="label-style mb-1">Duplicate blocked</div>
                         <p className="text-sm font-mono m-0">{duplicatePublishWarning}</p>
                       </div>
                     )}
 
-                    <div className="bg-muted border border-border p-3">
+                    <div className="app-surface-subtle p-3">
                       <div className="label-style mb-1">Publish rule</div>
                       <p className="text-sm text-muted-foreground font-mono m-0">
                         Each approved draft can have one publish item per channel. Change channel here only if you want this exact item to own that channel.
@@ -1436,7 +1436,7 @@ function AgentsWorkflowView() {
                         </div>
 
                         {manualPostedMode && (
-                          <div className="border border-foreground bg-muted/40 p-4 space-y-3">
+                          <div className="app-surface-subtle p-4 space-y-3">
                             <div className="label-style mb-1">Confirm manual posting</div>
                             <div>
                               <label className="label-style block mb-1">Published at</label>
@@ -1444,7 +1444,7 @@ function AgentsWorkflowView() {
                                 type="datetime-local"
                                 value={manualPostedPublishedAt}
                                 onChange={(e) => setManualPostedPublishedAt(e.target.value)}
-                                className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full"
+                                className="app-input font-mono"
                               />
                             </div>
                             <div>
@@ -1453,7 +1453,7 @@ function AgentsWorkflowView() {
                                 type="url"
                                 value={manualPostedUrl}
                                 onChange={(e) => setManualPostedUrl(e.target.value)}
-                                className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full"
+                                className="app-input font-mono"
                                 placeholder="https://..."
                               />
                             </div>
@@ -1463,7 +1463,7 @@ function AgentsWorkflowView() {
                                 type="button"
                                 onClick={() => handleConfirmManualPosted(activePublishItem)}
                                 disabled={publishSaving}
-                                className="border border-green px-3 py-2 text-xs font-mono uppercase tracking-widest text-green hover:bg-green hover:text-background transition-colors disabled:opacity-50"
+                                className="app-button app-button-success disabled:opacity-50"
                               >
                                 {publishSaving ? "Saving…" : "Confirm manually posted"}
                               </button>
@@ -1473,7 +1473,7 @@ function AgentsWorkflowView() {
                                   setManualPostedMode(false);
                                   setManualPostedError(null);
                                 }}
-                                className="border border-foreground px-3 py-2 text-xs font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
+                                className="app-button"
                               >
                                 Cancel
                               </button>
@@ -1489,7 +1489,7 @@ function AgentsWorkflowView() {
                             value={publishFormChannel}
                             onChange={(e) => setPublishFormChannel(e.target.value as PublishChannel)}
                             disabled={activePublishItem.status === "published" || activePublishItem.status === "failed" || activePublishItem.status === "cancelled"}
-                            className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full disabled:opacity-60"
+                            className="app-input font-mono disabled:opacity-60"
                           >
                             <option value="instagram">instagram</option>
                             <option value="facebook">facebook</option>
@@ -1504,7 +1504,7 @@ function AgentsWorkflowView() {
                             value={publishFormMode}
                             onChange={(e) => setPublishFormMode(e.target.value as "publish_now" | "schedule_later")}
                             disabled={activePublishItem.status === "published" || activePublishItem.status === "failed" || activePublishItem.status === "cancelled"}
-                            className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full disabled:opacity-60"
+                            className="app-input font-mono disabled:opacity-60"
                           >
                             <option value="publish_now">publish_now</option>
                             <option value="schedule_later">schedule_later</option>
@@ -1518,7 +1518,7 @@ function AgentsWorkflowView() {
                               value={publishFormScheduledFor}
                               onChange={(e) => setPublishFormScheduledFor(e.target.value)}
                               disabled={activePublishItem.status === "published" || activePublishItem.status === "failed" || activePublishItem.status === "cancelled"}
-                              className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full disabled:opacity-60"
+                              className="app-input font-mono disabled:opacity-60"
                             />
                           </div>
                         )}
@@ -1528,17 +1528,17 @@ function AgentsWorkflowView() {
                             value={publishFormOperatorNotes}
                             onChange={(e) => setPublishFormOperatorNotes(e.target.value)}
                             disabled={activePublishItem.status === "published" || activePublishItem.status === "failed" || activePublishItem.status === "cancelled"}
-                            className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full min-h-[100px] disabled:opacity-60"
+                            className="app-input font-mono min-h-[100px] disabled:opacity-60"
                           />
                         </div>
                         {activePublishItem.publishedAt && (
-                          <div className="bg-muted border border-border p-3">
+                          <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Published at</div>
                             <div className="text-sm font-mono text-foreground">{new Date(activePublishItem.publishedAt).toLocaleString()}</div>
                           </div>
                         )}
                         {activePublishItem.postUrl && (
-                          <div className="bg-muted border border-border p-3">
+                          <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Post URL</div>
                             <a href={activePublishItem.postUrl} target="_blank" rel="noreferrer" className="text-sm font-mono underline break-all">
                               {activePublishItem.postUrl}
@@ -1546,7 +1546,7 @@ function AgentsWorkflowView() {
                           </div>
                         )}
                         {activePublishItem.status === "published" && (
-                          <div className="bg-muted border border-border p-3">
+                          <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Read-only state</div>
                             <p className="text-sm text-muted-foreground font-mono m-0">
                               This item is locked because manual posting has been recorded.
@@ -1554,7 +1554,7 @@ function AgentsWorkflowView() {
                           </div>
                         )}
                         {activePublishItem.status === "failed" && (
-                          <div className="bg-muted border border-border p-3">
+                          <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Read-only state</div>
                             <p className="text-sm text-muted-foreground font-mono m-0">
                               This item is locked after being marked as failed. Create a new path later only if the publishing decision changes.
@@ -1562,7 +1562,7 @@ function AgentsWorkflowView() {
                           </div>
                         )}
                         {activePublishItem.status === "cancelled" && (
-                          <div className="bg-muted border border-border p-3">
+                          <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Read-only state</div>
                             <p className="text-sm text-muted-foreground font-mono m-0">
                               This item is locked after cancellation. Reopen the workflow from Approve if publishing should resume later.
@@ -1585,7 +1585,7 @@ function AgentsWorkflowView() {
                             })
                           }
                           disabled={publishSaving || (publishFormMode === "schedule_later" && !publishFormScheduledFor)}
-                          className="border border-foreground px-3 py-2 text-xs font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+                          className="app-button disabled:opacity-50"
                         >
                           {publishSaving ? "Saving…" : "Save publish setup"}
                         </button>
@@ -1594,7 +1594,7 @@ function AgentsWorkflowView() {
                         <button
                           type="button"
                           onClick={() => handleOpenManualPosted(activePublishItem)}
-                          className="border border-green px-3 py-2 text-xs font-mono uppercase tracking-widest text-green hover:bg-green hover:text-background transition-colors"
+                          className="app-button app-button-primary"
                         >
                           Record manual publish now
                         </button>
@@ -1603,7 +1603,7 @@ function AgentsWorkflowView() {
                         <button
                           type="button"
                           onClick={() => handleOpenManualPosted(activePublishItem)}
-                          className="border border-green px-3 py-2 text-xs font-mono uppercase tracking-widest text-green hover:bg-green hover:text-background transition-colors"
+                          className="app-button app-button-success"
                         >
                           Mark manually posted
                         </button>
@@ -1614,7 +1614,7 @@ function AgentsWorkflowView() {
                             type="button"
                             onClick={() => handlePublishStatusAction(activePublishItem.id, "failed")}
                             disabled={publishSaving}
-                            className="border border-red px-3 py-2 text-xs font-mono uppercase tracking-widest text-red hover:bg-red hover:text-background transition-colors disabled:opacity-50"
+                            className="app-button app-button-danger disabled:opacity-50"
                           >
                             Mark failed
                           </button>
@@ -1622,7 +1622,7 @@ function AgentsWorkflowView() {
                             type="button"
                             onClick={() => handlePublishStatusAction(activePublishItem.id, "cancelled")}
                             disabled={publishSaving}
-                            className="border border-foreground px-3 py-2 text-xs font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+                            className="app-button disabled:opacity-50"
                           >
                             Cancel
                           </button>
@@ -1642,33 +1642,33 @@ function AgentsWorkflowView() {
       <section className="space-y-5">
         <div className="flex flex-wrap items-end justify-between gap-4">
           <div>
-            <div className="label-style mb-2">Workflow &gt; Approve</div>
-            <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+            <div className="section-kicker mb-2">Workflow / Approve</div>
+            <h2 className="font-sans font-black text-2xl sm:text-3xl tracking-tight text-foreground mb-1">
               Approve Drafts
             </h2>
-            <p className="label-style max-w-4xl">
+            <p className="section-note">
               Human gate before any publish step. Review the draft, asset, and revision note, then approve, request revision, or reject.
             </p>
           </div>
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Approval queue</div>
               <div className="text-2xl font-bold text-foreground tabular-nums">{approvalDrafts.length}</div>
             </div>
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">In approval queue</div>
               <div className="text-2xl font-bold text-amber tabular-nums">{pendingCount}</div>
             </div>
-            <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
+            <div className="app-metric-card">
               <div className="label-style mb-1">Next step</div>
               <div className="text-lg font-bold text-foreground">Approve, then send to Publish</div>
               <div className="text-xs text-muted-foreground font-mono mt-1">Publish setup is manual. No posting integrations.</div>
             </div>
         </div>
 
-        <section className="border border-border bg-muted/30 p-4">
+        <section className="app-surface-subtle p-4">
           <div className="label-style mb-3">Approval filters</div>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div>
@@ -1676,7 +1676,7 @@ function AgentsWorkflowView() {
               <select
                 value={approvalStatusFilter}
                 onChange={(e) => setApprovalStatusFilter(e.target.value as ContentDraftStatus | "all")}
-                className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full"
+                className="app-input font-mono"
               >
                 <option value="pending">In approval queue</option>
                 <option value="approved">Approved</option>
@@ -1696,8 +1696,8 @@ function AgentsWorkflowView() {
         )}
 
         {approvalDrafts.length > 0 && activeApprovalDraft && (
-          <div className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-5">
-            <aside className="border border-foreground brutalist-shadow-sm bg-background p-3">
+          <div className="workflow-layout">
+            <aside className="queue-panel">
               <div className="label-style mb-3">Approval queue</div>
               <div className="space-y-2">
                 {approvalDrafts.map((draft) => {
@@ -1707,11 +1707,11 @@ function AgentsWorkflowView() {
                       key={draft.id}
                       type="button"
                       onClick={() => setActiveApprovalId(draft.id)}
-                      className={`w-full text-left border p-3 transition-colors ${isActive ? "border-foreground bg-muted" : "border-border hover:border-foreground"}`}
+                      className={`queue-item ${isActive ? "is-active" : ""}`}
                     >
                       <div className="flex items-start justify-between gap-2">
                         <div>
-                          <div className="text-sm font-bold uppercase tracking-wide text-foreground line-clamp-2">{draft.listingTitle}</div>
+                          <div className="text-sm font-semibold tracking-tight text-foreground line-clamp-2">{draft.listingTitle}</div>
                           <div className="text-xs font-mono text-muted-foreground mt-1">{new Date(draft.createdAt).toLocaleDateString()}</div>
                         </div>
                         <DraftStatusBadge status={draft.status} />
@@ -1722,7 +1722,7 @@ function AgentsWorkflowView() {
               </div>
             </aside>
 
-            <section className="border border-foreground brutalist-shadow-sm bg-background overflow-hidden">
+            <section className="detail-panel">
               <div className="grid grid-cols-1 lg:grid-cols-[280px_1fr]">
                 <div className="bg-muted min-h-[260px]">
                   {activeApprovalDraft.selectedImage ? (
@@ -1745,7 +1745,7 @@ function AgentsWorkflowView() {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <div className="label-style mb-1">Approval review</div>
-                      <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">{activeApprovalDraft.listingTitle}</h3>
+                      <h3 className="font-sans font-bold text-lg tracking-tight text-foreground">{activeApprovalDraft.listingTitle}</h3>
                       <p className="text-xs text-muted-foreground font-mono mt-1">Listing {activeApprovalDraft.sourceListingId}</p>
                     </div>
                     <DraftStatusBadge status={activeApprovalDraft.status} />
@@ -1768,12 +1768,12 @@ function AgentsWorkflowView() {
                     </div>
 
                     <div className="space-y-4">
-                      <div className="bg-muted border border-border p-3">
+                      <div className="app-surface-subtle p-3">
                         <div className="label-style mb-1">Suggested channel</div>
                         <div className="text-base font-bold text-foreground uppercase">{activeApprovalDraft.suggestedChannel}</div>
                       </div>
                       {activeApprovalDraft.statusNote && (
-                        <div className="bg-muted border border-border p-3">
+                        <div className="app-surface-subtle p-3">
                           <div className="label-style mb-1">Revision note</div>
                           <p className="text-sm text-foreground font-mono whitespace-pre-wrap m-0">
                             {activeApprovalDraft.statusNote}
@@ -1787,21 +1787,21 @@ function AgentsWorkflowView() {
                     <button
                       type="button"
                       onClick={() => handleStatusUpdate(activeApprovalDraft.id, "approved")}
-                      className="border border-green px-3 py-2 text-xs font-mono uppercase tracking-widest text-green hover:bg-green hover:text-background transition-colors"
+                      className="app-button app-button-success"
                     >
                       Approve
                     </button>
                     <button
                       type="button"
                       onClick={() => handleStatusUpdate(activeApprovalDraft.id, "rejected")}
-                      className="border border-red px-3 py-2 text-xs font-mono uppercase tracking-widest text-red hover:bg-red hover:text-background transition-colors"
+                      className="app-button app-button-danger"
                     >
                       Reject
                     </button>
                     <button
                       type="button"
                       onClick={() => handleStatusUpdate(activeApprovalDraft.id, "revision_requested")}
-                      className="border border-foreground px-3 py-2 text-xs font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
+                      className="app-button"
                     >
                       Request revision
                     </button>
@@ -1810,7 +1810,7 @@ function AgentsWorkflowView() {
                         type="button"
                         onClick={() => handleSendToPublish(activeApprovalDraft.id)}
                         disabled={publishSaving}
-                        className="border border-blue-400 px-3 py-2 text-xs font-mono uppercase tracking-widest text-blue-300 hover:bg-blue-400 hover:text-background transition-colors disabled:opacity-50"
+                        className="app-button app-button-primary disabled:opacity-50"
                       >
                         {publishSaving ? "Opening…" : "Send to Publish"}
                       </button>
@@ -1827,20 +1827,20 @@ function AgentsWorkflowView() {
 
   return (
     <div className="space-y-8">
-      <section className="space-y-4">
+      <section className="space-y-5">
         <div>
-          <div className="label-style mb-2">Agents</div>
-          <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+          <div className="section-kicker mb-2">Agents</div>
+          <h2 className="font-sans font-black text-2xl sm:text-3xl tracking-tight text-foreground mb-1">
             Operator Workflow
           </h2>
-          <p className="label-style max-w-4xl">
+          <p className="section-note">
             Use the workflow stages to move listings from selection into drafts and human approval. Eval and Agent Map stay visible as separate support surfaces.
           </p>
         </div>
 
         <WorkflowFeedbackBanner message={workflowFeedback} />
 
-        <div className="flex flex-wrap gap-2">
+        <div className="app-subnav">
           {([
             ["workflow", "Workflow"],
             ["eval", "Selector Eval"],
@@ -1853,9 +1853,7 @@ function AgentsWorkflowView() {
                 setSubnav(value);
                 setWorkflowFeedback(null);
               }}
-              className={`border px-4 py-2 text-xs font-mono uppercase tracking-widest transition-colors ${
-                subnav === value ? "border-foreground bg-foreground text-background" : "border-foreground hover:bg-foreground hover:text-background"
-              }`}
+              className={`app-subnav-button ${subnav === value ? "is-active" : ""}`}
             >
               {label}
             </button>
@@ -1863,7 +1861,7 @@ function AgentsWorkflowView() {
         </div>
 
         {subnav === "workflow" && (
-          <div className="flex flex-wrap gap-2 border-b border-border pb-4">
+          <div className="app-subnav">
             {([
               ["select", "Select"],
               ["draft", "Draft"],
@@ -1877,9 +1875,7 @@ function AgentsWorkflowView() {
                   setStage(value);
                   setWorkflowFeedback(null);
                 }}
-                className={`border px-4 py-2 text-xs font-mono uppercase tracking-widest transition-colors ${
-                  stage === value ? "border-foreground bg-muted text-foreground" : "border-border text-muted-foreground hover:border-foreground hover:text-foreground"
-                }`}
+                className={`app-subnav-button ${stage === value ? "is-active" : ""}`}
               >
                 {label}
               </button>
@@ -3981,80 +3977,74 @@ type Tab = "dashboard" | "listings" | "sources" | "stats" | "agents";
 
 function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
+  const tabs: Array<{ value: Tab; label: string; note: string }> = [
+    { value: "dashboard", label: "Dashboard", note: "Platform pulse" },
+    { value: "listings", label: "Listings", note: "Universe review" },
+    { value: "sources", label: "Sources", note: "Source health" },
+    { value: "stats", label: "Stats", note: "Ops metrics" },
+    { value: "agents", label: "Agents", note: "Workflow" },
+  ];
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      <header className="border-b border-border pb-4 mb-8">
-        <h1 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
-          Africa Property Index
-        </h1>
-        <p className="label-style mt-0">
-          Pan-African Real Estate Index — Admin
-        </p>
-        <nav className="flex flex-wrap gap-2 mt-4">
-          <button
-            onClick={() => setTab("dashboard")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "dashboard"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setTab("listings")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "listings"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Listings
-          </button>
-          <button
-            onClick={() => setTab("sources")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "sources"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Sources
-          </button>
-          <button
-            onClick={() => setTab("stats")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "stats"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Stats
-          </button>
-          <button
-            onClick={() => setTab("agents")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "agents"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Agents
-          </button>
-        </nav>
-      </header>
+    <div className="admin-shell">
+      <aside className="admin-sidebar">
+        <div className="admin-sidebar-brand">
+          <div className="section-kicker mb-2">AREI Admin</div>
+          <h1 className="font-sans text-[28px] leading-none font-black tracking-tight text-foreground m-0">
+            Africa Property Index
+          </h1>
+          <p className="section-note mt-3 mb-0">
+            Internal operations workspace for listings, sources, and workflow review.
+          </p>
+        </div>
 
-      {tab === "dashboard" && <DashboardView />}
-      {tab === "listings" && <ListingsTabView />}
-      {tab === "sources" && <SourcesView />}
-      {tab === "stats" && <StatsView />}
-      {tab === "agents" && <AgentsWorkflowView />}
+        <nav className="admin-sidebar-nav">
+          {tabs.map((item) => (
+            <button
+              key={item.value}
+              type="button"
+              onClick={() => setTab(item.value)}
+              className={`admin-sidebar-link ${tab === item.value ? "is-active" : ""}`}
+            >
+              <span>
+                <span className="block text-sm font-semibold">{item.label}</span>
+                <span className="block text-xs font-mono text-muted-foreground mt-1">{item.note}</span>
+              </span>
+            </button>
+          ))}
+        </nav>
+
+        <div className="mt-auto app-surface-subtle p-4">
+          <div className="section-kicker mb-1">Workspace</div>
+          <div className="text-sm font-semibold text-foreground">Daily operations</div>
+          <p className="text-sm text-muted-foreground leading-relaxed m-0 mt-2">
+            Desktop-first internal admin for selection, approvals, and source oversight.
+          </p>
+        </div>
+      </aside>
+
+      <main className="admin-main">
+        <header className="admin-topbar">
+          <div>
+            <div className="section-kicker mb-1">Current area</div>
+            <div className="text-2xl font-semibold tracking-tight text-foreground">
+              {tabs.find((item) => item.value === tab)?.label}
+            </div>
+          </div>
+          <div className="text-right">
+            <div className="section-kicker mb-1">Product</div>
+            <div className="text-sm font-mono text-muted-foreground">Pan-African real estate operations</div>
+          </div>
+        </header>
+
+        <div className="admin-content">
+          {tab === "dashboard" && <DashboardView />}
+          {tab === "listings" && <ListingsTabView />}
+          {tab === "sources" && <SourcesView />}
+          {tab === "stats" && <StatsView />}
+          {tab === "agents" && <AgentsWorkflowView />}
+        </div>
+      </main>
     </div>
   );
 }
