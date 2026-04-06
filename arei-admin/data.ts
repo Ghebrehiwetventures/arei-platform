@@ -11,6 +11,10 @@ import {
   ContentDraftStatus,
   ListingSelection,
   AgentMapRow,
+  PublishChannel,
+  PublishItem,
+  PublishItemStatus,
+  PublishMode,
 } from "./types";
 import { supabase } from "./supabase";
 import { selectListingsForAttention } from "./listingSelector";
@@ -786,8 +790,41 @@ interface ContentDraftRow {
   status_note: string | null;
 }
 
+interface PublishItemRow {
+  id: string;
+  source_listing_id: string;
+  content_draft_id: string;
+  channel: PublishChannel;
+  publish_mode: PublishMode;
+  publish_status: PublishItemStatus;
+  final_copy: string;
+  selected_image_url: string;
+  scheduled_for: string | null;
+  published_at: string | null;
+  post_url: string | null;
+  operator_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 function isContentDraftStatus(value: string): value is ContentDraftStatus {
   return value === "pending" || value === "approved" || value === "rejected" || value === "revision_requested";
+}
+
+function isPublishChannel(value: string): value is PublishChannel {
+  return value === "instagram" || value === "facebook" || value === "linkedin" || value === "blog" || value === "other";
+}
+
+function isPublishMode(value: string): value is PublishMode {
+  return value === "publish_now" || value === "schedule_later";
+}
+
+function isPublishItemStatus(value: string): value is PublishItemStatus {
+  return value === "ready_to_publish" || value === "scheduled" || value === "published" || value === "failed" || value === "cancelled";
+}
+
+function getInitialPublishChannel(value?: string | null): PublishChannel {
+  return value && isPublishChannel(value) ? value : "instagram";
 }
 
 function mapContentDraftRow(row: ContentDraftRow): ContentDraft {
@@ -817,6 +854,44 @@ function mapContentDraftToInsert(row: ContentDraft) {
     created_at: row.createdAt,
     status: row.status,
     status_note: row.statusNote ?? null,
+  };
+}
+
+function mapPublishItemRow(row: PublishItemRow): PublishItem {
+  return {
+    id: row.id,
+    sourceListingId: row.source_listing_id,
+    contentDraftId: row.content_draft_id,
+    channel: isPublishChannel(row.channel) ? row.channel : "instagram",
+    publishMode: isPublishMode(row.publish_mode) ? row.publish_mode : "publish_now",
+    status: isPublishItemStatus(row.publish_status) ? row.publish_status : "ready_to_publish",
+    finalCopy: row.final_copy,
+    selectedImageUrl: row.selected_image_url,
+    scheduledFor: row.scheduled_for,
+    publishedAt: row.published_at,
+    postUrl: row.post_url,
+    operatorNotes: row.operator_notes,
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
+function mapPublishItemToInsert(row: PublishItem) {
+  return {
+    id: row.id,
+    source_listing_id: row.sourceListingId,
+    content_draft_id: row.contentDraftId,
+    channel: row.channel,
+    publish_mode: row.publishMode,
+    publish_status: row.status,
+    final_copy: row.finalCopy,
+    selected_image_url: row.selectedImageUrl,
+    scheduled_for: row.scheduledFor ?? null,
+    published_at: row.publishedAt ?? null,
+    post_url: row.postUrl ?? null,
+    operator_notes: row.operatorNotes ?? null,
+    created_at: row.createdAt,
+    updated_at: row.updatedAt,
   };
 }
 
@@ -855,6 +930,48 @@ async function updateStoredContentDraftStatus(id: string, status: ContentDraftSt
   const { error } = await supabase.from("content_drafts").update(payload).eq("id", id);
   if (error) {
     throw new Error(`[Admin] Failed to update content draft status: ${error.message}`);
+  }
+}
+
+async function listStoredPublishItems(): Promise<PublishItem[]> {
+  const { data, error } = await supabase
+    .from("publish_items")
+    .select("id,source_listing_id,content_draft_id,channel,publish_mode,publish_status,final_copy,selected_image_url,scheduled_for,published_at,post_url,operator_notes,created_at,updated_at")
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[Admin] Failed to load publish items from Supabase:", error.message);
+    return [];
+  }
+
+  return ((data || []) as PublishItemRow[]).map(mapPublishItemRow);
+}
+
+async function insertPublishItem(item: PublishItem): Promise<void> {
+  const { error } = await supabase
+    .from("publish_items")
+    .insert(mapPublishItemToInsert(item));
+
+  if (error) {
+    throw new Error(`[Admin] Failed to persist publish item: ${error.message}`);
+  }
+}
+
+async function updateStoredPublishItem(id: string, payload: Partial<PublishItem>): Promise<void> {
+  const updatePayload = {
+    channel: payload.channel,
+    publish_mode: payload.publishMode,
+    publish_status: payload.status,
+    scheduled_for: payload.scheduledFor ?? undefined,
+    published_at: payload.publishedAt ?? undefined,
+    post_url: payload.postUrl ?? undefined,
+    operator_notes: payload.operatorNotes ?? undefined,
+    updated_at: new Date().toISOString(),
+  };
+
+  const { error } = await supabase.from("publish_items").update(updatePayload).eq("id", id);
+  if (error) {
+    throw new Error(`[Admin] Failed to update publish item: ${error.message}`);
   }
 }
 
@@ -1145,6 +1262,24 @@ export async function generateContentDrafts(): Promise<ContentDraft[]> {
   return listStoredContentDrafts();
 }
 
+export async function createContentDraftFromListing(listingId: string): Promise<ContentDraft[]> {
+  const listing = await getListingById(listingId);
+  if (!listing) {
+    throw new Error(`[Admin] Could not create content draft: listing ${listingId} not found`);
+  }
+
+  const existingDrafts = await listStoredContentDrafts();
+  const latestForListing = existingDrafts.find((draft) => draft.sourceListingId === listingId);
+  const nextDraft = createDraftFromListing(listing);
+
+  if (latestForListing?.id === nextDraft.id) {
+    return existingDrafts;
+  }
+
+  await insertContentDrafts([nextDraft]);
+  return listStoredContentDrafts();
+}
+
 export async function updateContentDraftStatus(
   id: string,
   status: ContentDraftStatus,
@@ -1152,6 +1287,108 @@ export async function updateContentDraftStatus(
 ): Promise<ContentDraft[]> {
   await updateStoredContentDraftStatus(id, status, statusNote);
   return listStoredContentDrafts();
+}
+
+export async function getPublishItems(): Promise<PublishItem[]> {
+  return listStoredPublishItems();
+}
+
+export async function createOrOpenPublishItemFromDraft(contentDraftId: string): Promise<{ items: PublishItem[]; activeItemId: string; created: boolean }> {
+  const drafts = await listStoredContentDrafts();
+  const draft = drafts.find((item) => item.id === contentDraftId);
+  if (!draft) {
+    throw new Error(`[Admin] Could not create publish item: draft ${contentDraftId} not found`);
+  }
+  if (draft.status !== "approved") {
+    throw new Error(`[Admin] Could not create publish item: draft ${contentDraftId} is not approved`);
+  }
+
+  const items = await listStoredPublishItems();
+  const initialChannel = getInitialPublishChannel(draft.suggestedChannel);
+  const existing = items.find((item) => item.contentDraftId === contentDraftId && item.channel === initialChannel);
+  if (existing) {
+    return { items, activeItemId: existing.id, created: false };
+  }
+
+  const now = new Date().toISOString();
+  const nextItem: PublishItem = {
+    id: `publish_${contentDraftId}_${initialChannel}`,
+    sourceListingId: draft.sourceListingId,
+    contentDraftId,
+    channel: initialChannel,
+    publishMode: "publish_now",
+    status: "ready_to_publish",
+    finalCopy: draft.suggestedCaption,
+    selectedImageUrl: draft.selectedImage,
+    operatorNotes: null,
+    scheduledFor: null,
+    publishedAt: null,
+    postUrl: null,
+    createdAt: now,
+    updatedAt: now,
+  };
+
+  await insertPublishItem(nextItem);
+  const nextItems = await listStoredPublishItems();
+  return { items: nextItems, activeItemId: nextItem.id, created: true };
+}
+
+export async function updatePublishItemSetup(
+  id: string,
+  updates: { channel: PublishChannel; publishMode: PublishMode; scheduledFor?: string | null; operatorNotes?: string | null }
+): Promise<{ items: PublishItem[]; duplicateBlocked: boolean }> {
+  const items = await listStoredPublishItems();
+  const current = items.find((item) => item.id === id);
+  if (!current) {
+    throw new Error(`[Admin] Could not update publish item: ${id} not found`);
+  }
+
+  const duplicate = items.find((item) => item.id !== id && item.contentDraftId === current.contentDraftId && item.channel === updates.channel);
+  if (duplicate) {
+    return { items, duplicateBlocked: true };
+  }
+
+  if (updates.publishMode === "schedule_later" && !updates.scheduledFor?.trim()) {
+    throw new Error(`[Admin] Could not schedule publish item: scheduledFor is required`);
+  }
+
+  await updateStoredPublishItem(id, {
+    channel: updates.channel,
+    publishMode: updates.publishMode,
+    scheduledFor: updates.publishMode === "schedule_later" ? updates.scheduledFor ?? null : null,
+    operatorNotes: updates.operatorNotes ?? null,
+    status: updates.publishMode === "schedule_later" ? "scheduled" : "ready_to_publish",
+  });
+
+  return { items: await listStoredPublishItems(), duplicateBlocked: false };
+}
+
+export async function updatePublishItemStatus(
+  id: string,
+  status: PublishItemStatus,
+  fields?: { publishedAt?: string | null; postUrl?: string | null; operatorNotes?: string | null; scheduledFor?: string | null }
+): Promise<PublishItem[]> {
+  if (status === "published") {
+    if (!fields?.publishedAt?.trim()) {
+      throw new Error(`[Admin] Could not publish item: publishedAt is required`);
+    }
+    if (!fields?.postUrl?.trim()) {
+      throw new Error(`[Admin] Could not publish item: postUrl is required`);
+    }
+  }
+
+  if (status === "scheduled" && !fields?.scheduledFor?.trim()) {
+    throw new Error(`[Admin] Could not schedule publish item: scheduledFor is required`);
+  }
+
+  await updateStoredPublishItem(id, {
+    status,
+    publishedAt: fields?.publishedAt ?? undefined,
+    postUrl: fields?.postUrl ?? undefined,
+    operatorNotes: fields?.operatorNotes ?? undefined,
+    scheduledFor: fields?.scheduledFor ?? undefined,
+  });
+  return listStoredPublishItems();
 }
 
 export async function getAgentMapRows(): Promise<AgentMapRow[]> {

@@ -96,6 +96,10 @@ export type IngestRunPhase = "post_fetch_snapshot" | "final_post_enrichment";
 
 export type ContentDraftStatus = "pending" | "approved" | "rejected" | "revision_requested";
 
+export type PublishChannel = "instagram" | "facebook" | "linkedin" | "blog" | "other";
+export type PublishMode = "publish_now" | "schedule_later";
+export type PublishItemStatus = "ready_to_publish" | "scheduled" | "published" | "failed" | "cancelled";
+
 export interface ContentDraft {
   id: string;
   sourceListingId: string;
@@ -107,6 +111,23 @@ export interface ContentDraft {
   createdAt: string;
   status: ContentDraftStatus;
   statusNote?: string;
+}
+
+export interface PublishItem {
+  id: string;
+  sourceListingId: string;
+  contentDraftId: string;
+  channel: PublishChannel;
+  publishMode: PublishMode;
+  status: PublishItemStatus;
+  finalCopy: string;
+  selectedImageUrl: string;
+  scheduledFor?: string | null;
+  publishedAt?: string | null;
+  postUrl?: string | null;
+  operatorNotes?: string | null;
+  createdAt: string;
+  updatedAt: string;
 }
 
 export interface ListingSelectorScorePart {
