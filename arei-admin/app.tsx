@@ -325,7 +325,7 @@ function WorkflowFeedbackBanner({ message }: { message: string | null }) {
   return (
     <div className="app-surface-subtle border border-green/20 bg-green/10 text-green p-4">
       <div className="section-kicker mb-1">Workflow update</div>
-      <p className="text-sm font-mono m-0">{message}</p>
+      <p className="text-sm m-0 leading-relaxed">{message}</p>
     </div>
   );
 }
@@ -953,13 +953,13 @@ function AgentsWorkflowView() {
             <div className="app-metric-card">
               <div className="label-style mb-1">Next step</div>
               <div className="text-lg font-bold text-foreground">Send to Draft</div>
-              <div className="text-xs text-muted-foreground font-mono mt-1">Selection only. Publishing remains out of scope.</div>
+              <div className="text-xs text-muted-foreground mt-1">Selection only. Publishing remains out of scope.</div>
             </div>
           </div>
 
-          {selectorLoading && <p className="text-muted-foreground text-sm font-mono">Running selector…</p>}
+          {selectorLoading && <p className="text-muted-foreground text-sm">Running selector…</p>}
           {!selectorLoading && selections.length === 0 && (
-            <div className="border border-border p-6 bg-muted text-sm font-mono text-muted-foreground">
+            <div className="border border-border p-6 bg-muted text-sm text-muted-foreground">
               No listings cleared the current Agent V1 threshold. That is an acceptable outcome for this selector.
             </div>
           )}
@@ -982,11 +982,11 @@ function AgentsWorkflowView() {
                           <div>
                             <div className="label-style mb-1">#{selection.rank} · {selection.selectionTheme}</div>
                             <div className="text-sm font-semibold tracking-tight text-foreground line-clamp-2">{selection.title}</div>
-                            <div className="text-xs font-mono text-muted-foreground mt-1">{selection.locationLabel}</div>
+                            <div className="text-xs text-muted-foreground mt-1">{selection.locationLabel}</div>
                           </div>
                           <div className="text-right">
                             <div className="text-sm font-bold tabular-nums text-foreground">{selection.totalScore}</div>
-                            <div className="text-[11px] font-mono text-muted-foreground">{selection.sourceName}</div>
+                            <div className="text-[11px] text-muted-foreground">{selection.sourceName}</div>
                           </div>
                         </div>
                       </button>
@@ -1003,7 +1003,7 @@ function AgentsWorkflowView() {
                         <div>
                           <div className="label-style mb-1">Rank #{activeSelection.rank} · {activeSelection.selectionTheme}</div>
                           <h3 className="font-sans font-bold text-xl tracking-tight text-foreground">{activeSelection.title}</h3>
-                          <p className="text-xs text-muted-foreground font-mono mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             {activeSelection.locationLabel} · {activeSelection.sourceName} · {activeSelection.listingId}
                           </p>
                         </div>
@@ -1025,7 +1025,7 @@ function AgentsWorkflowView() {
 
                     <div className="app-surface-subtle p-3">
                       <div className="label-style mb-1">Image review note</div>
-                      <p className="text-sm font-mono text-foreground m-0">
+                      <p className="text-sm text-foreground m-0 leading-relaxed">
                         This stage currently shows the selected lead image for review, not the full source gallery.
                       </p>
                     </div>
@@ -1034,7 +1034,7 @@ function AgentsWorkflowView() {
                         <div className="space-y-4">
                           <div className="app-surface-subtle p-4">
                             <div className="label-style mb-2">Evidence</div>
-                            <ul className="space-y-2 text-sm text-foreground font-mono m-0 pl-5">
+                            <ul className="space-y-2 text-sm text-foreground m-0 pl-5 leading-relaxed">
                               {activeSelection.reasons.map((reason) => (
                                 <li key={reason}>{reason}</li>
                               ))}
@@ -1043,7 +1043,7 @@ function AgentsWorkflowView() {
 
                           <div className="app-surface-subtle p-4">
                             <div className="label-style mb-2">Suggested angle</div>
-                            <p className="text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap m-0">
+                            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap m-0">
                               {activeSelection.contentAngle}
                             </p>
                           </div>
@@ -1051,7 +1051,7 @@ function AgentsWorkflowView() {
                           {usefulWarnings.length > 0 && (
                             <div className="app-surface-subtle p-4">
                               <div className="label-style mb-2">Review cautions</div>
-                              <ul className="space-y-2 text-sm text-foreground font-mono m-0 pl-5">
+                              <ul className="space-y-2 text-sm text-foreground m-0 pl-5 leading-relaxed">
                                 {usefulWarnings.map((warning) => (
                                   <li key={warning}>{warning}</li>
                                 ))}
@@ -1068,23 +1068,23 @@ function AgentsWorkflowView() {
                           <div className="app-surface-subtle p-4">
                             <div className="label-style mb-1">Source</div>
                             {activeSelection.sourceUrl ? (
-                              <a href={activeSelection.sourceUrl} target="_blank" rel="noreferrer" className="text-sm font-mono underline break-all">
+                              <a href={activeSelection.sourceUrl} target="_blank" rel="noreferrer" className="text-sm underline break-all">
                                 Open source listing
                               </a>
                             ) : (
-                              <div className="text-sm font-mono text-muted-foreground">No source link</div>
+                              <div className="text-sm text-muted-foreground">No source link</div>
                             )}
                           </div>
                           <div className="app-surface-subtle p-4">
                             <div className="label-style mb-1">Ranking input</div>
-                            <div className="text-sm font-mono text-foreground">Theme: {activeSelection.selectionTheme}</div>
+                            <div className="text-sm text-foreground">Theme: {activeSelection.selectionTheme}</div>
                             <div className="text-xl font-bold text-foreground tabular-nums mt-2">{activeSelection.totalScore}</div>
-                            <div className="text-xs text-muted-foreground font-mono mt-1">Score stays secondary to visible evidence.</div>
+                            <div className="text-xs text-muted-foreground mt-1">Score stays secondary to visible evidence.</div>
                           </div>
                           {selectionContextLabel && (
                             <div className="app-surface-subtle p-4">
                               <div className="label-style mb-1">KazaVerde context</div>
-                              <p className="text-sm font-mono text-foreground m-0">{selectionContextLabel}</p>
+                              <p className="text-sm text-foreground m-0 leading-relaxed">{selectionContextLabel}</p>
                             </div>
                           )}
                           <div className="app-surface-subtle p-4">
@@ -1092,11 +1092,11 @@ function AgentsWorkflowView() {
                             <div className="space-y-2">
                               {activeSelection.scoreBreakdown.map((part) => (
                                 <div key={part.key}>
-                                  <div className="flex items-center justify-between text-xs font-mono">
+                                  <div className="flex items-center justify-between text-xs">
                                     <span>{part.label}</span>
                                     <span>{part.score}/{part.maxScore}</span>
                                   </div>
-                                  <p className="text-xs text-muted-foreground font-mono mt-1 mb-0">{part.note}</p>
+                                  <p className="text-xs text-muted-foreground mt-1 mb-0 leading-relaxed">{part.note}</p>
                                 </div>
                               ))}
                             </div>
@@ -1109,19 +1109,19 @@ function AgentsWorkflowView() {
                       <div>
                         <div className="label-style mb-1">Workflow step</div>
                         <div className="text-base font-bold text-foreground">Select</div>
-                        <p className="text-sm font-mono text-muted-foreground m-0 mt-1">
+                        <p className="text-sm text-muted-foreground m-0 mt-1 leading-relaxed">
                           Review evidence first, then decide whether to send this listing into drafting.
                         </p>
                       </div>
                       <div>
                         <div className="label-style mb-1">Current actions</div>
-                        <p className="text-sm font-mono text-foreground m-0">
+                        <p className="text-sm text-foreground m-0 leading-relaxed">
                           Send to Draft is active. Hold and reject decisions are intentionally deferred in this phase.
                         </p>
                       </div>
                       <div>
                         <div className="label-style mb-1">Deferred</div>
-                        <p className="text-sm font-mono text-muted-foreground m-0">
+                        <p className="text-sm text-muted-foreground m-0 leading-relaxed">
                           Publish, measurement, and learning remain out of this phase.
                         </p>
                       </div>
@@ -1170,13 +1170,13 @@ function AgentsWorkflowView() {
             <div className="app-metric-card">
               <div className="label-style mb-1">Next step</div>
               <div className="text-lg font-bold text-foreground">Move to Approve</div>
-              <div className="text-xs text-muted-foreground font-mono mt-1">Approval remains human gated.</div>
+              <div className="text-xs text-muted-foreground mt-1">Approval remains human gated.</div>
             </div>
           </div>
 
-          {loading && <p className="text-muted-foreground text-sm font-mono">Loading drafts…</p>}
+          {loading && <p className="text-muted-foreground text-sm">Loading drafts…</p>}
           {!loading && draftStageDrafts.length === 0 && (
-            <div className="border border-border p-6 bg-muted text-sm font-mono text-muted-foreground">
+            <div className="border border-border p-6 bg-muted text-sm text-muted-foreground">
               No drafts in the Draft stage. Send a listing to Draft from Select or generate a fresh batch.
             </div>
           )}
@@ -1197,7 +1197,7 @@ function AgentsWorkflowView() {
                       >
                         <div className="label-style mb-1">{draft.status === "revision_requested" ? "Needs revision in Draft" : "Draft ready for review"}</div>
                         <div className="text-sm font-semibold tracking-tight text-foreground line-clamp-2">{draft.listingTitle}</div>
-                        <div className="text-xs font-mono text-muted-foreground mt-1">{draft.suggestedChannel} · {new Date(draft.createdAt).toLocaleDateString()}</div>
+                        <div className="text-xs text-muted-foreground mt-1">{draft.suggestedChannel} · {new Date(draft.createdAt).toLocaleDateString()}</div>
                       </button>
                     );
                   })}
@@ -1229,7 +1229,7 @@ function AgentsWorkflowView() {
                         <div>
                           <div className="label-style mb-1">Draft stage item</div>
                           <h3 className="font-sans font-bold text-lg tracking-tight text-foreground">{activeDraft.listingTitle}</h3>
-                          <p className="text-xs text-muted-foreground font-mono mt-1">
+                          <p className="text-xs text-muted-foreground mt-1">
                             Listing {activeDraft.sourceListingId} · Created {new Date(activeDraft.createdAt).toLocaleString()}
                           </p>
                         </div>
@@ -1240,20 +1240,20 @@ function AgentsWorkflowView() {
                         <div className="space-y-4">
                           <div>
                             <div className="label-style mb-1">Prepared copy</div>
-                            <p className="text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap m-0">
+                            <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap m-0">
                               {activeDraft.suggestedCaption}
                             </p>
                           </div>
                           <div>
                             <div className="label-style mb-1">Suggested hashtags</div>
-                            <p className="text-sm text-foreground font-mono m-0">
+                            <p className="text-sm text-foreground m-0 leading-relaxed">
                               {activeDraft.suggestedHashtags.map((tag) => `#${tag}`).join(" ")}
                             </p>
                           </div>
                           {activeDraft.statusNote && (
                             <div>
                               <div className="label-style mb-1">Revision note</div>
-                              <p className="text-sm text-foreground font-mono whitespace-pre-wrap m-0">
+                              <p className="text-sm text-foreground whitespace-pre-wrap m-0 leading-relaxed">
                                 {activeDraft.statusNote}
                               </p>
                             </div>
@@ -1267,14 +1267,14 @@ function AgentsWorkflowView() {
                           </div>
                           <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Workflow step</div>
-                            <p className="text-sm font-mono text-foreground m-0">
+                            <p className="text-sm text-foreground m-0 leading-relaxed">
                               Review the draft, then move it into the approval queue when it is ready for human approval.
                             </p>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex flex-wrap gap-2">
+                      <div className="app-action-row">
                         <button
                           type="button"
                           onClick={() => handleMarkReadyForApproval(activeDraft.id)}
@@ -1321,7 +1321,7 @@ function AgentsWorkflowView() {
             <div className="app-metric-card">
               <div className="label-style mb-1">Manual only</div>
               <div className="text-lg font-bold text-foreground">No autoposting</div>
-              <div className="text-xs text-muted-foreground font-mono mt-1">Use this stage to prepare and record manual posting.</div>
+              <div className="text-xs text-muted-foreground mt-1">Use this stage to prepare and record manual posting.</div>
             </div>
           </div>
 
@@ -1346,9 +1346,9 @@ function AgentsWorkflowView() {
             </div>
           </section>
 
-          {publishLoading && <p className="text-muted-foreground text-sm font-mono">Loading publish queue…</p>}
+          {publishLoading && <p className="text-muted-foreground text-sm">Loading publish queue…</p>}
           {!publishLoading && filteredPublishItems.length === 0 && (
-            <div className="border border-border p-6 bg-muted text-sm font-mono text-muted-foreground">
+            <div className="border border-border p-6 bg-muted text-sm text-muted-foreground">
               No publish items match the current filter. Send an approved draft to Publish from Approve.
             </div>
           )}
@@ -1372,7 +1372,7 @@ function AgentsWorkflowView() {
                             <div className="text-sm font-bold uppercase tracking-wide text-foreground line-clamp-2">{item.channel} · {item.contentDraftId}</div>
                             <PublishStatusBadge status={item.status} />
                           </div>
-                          <div className="text-xs font-mono text-muted-foreground">
+                          <div className="text-xs text-muted-foreground">
                             {new Date(item.createdAt).toLocaleDateString()}
                             {item.scheduledFor ? ` · ${new Date(item.scheduledFor).toLocaleString()}` : ""}
                           </div>
@@ -1406,8 +1406,8 @@ function AgentsWorkflowView() {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <div className="label-style mb-1">Publish setup</div>
-                        <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">{activePublishItem.contentDraftId}</h3>
-                        <p className="text-xs text-muted-foreground font-mono mt-1">Listing {activePublishItem.sourceListingId}</p>
+                        <h3 className="font-sans font-bold text-lg tracking-tight text-foreground">{activePublishItem.contentDraftId}</h3>
+                        <p className="text-xs text-muted-foreground mt-1">Listing {activePublishItem.sourceListingId}</p>
                       </div>
                       <PublishStatusBadge status={activePublishItem.status} />
                     </div>
@@ -1415,13 +1415,13 @@ function AgentsWorkflowView() {
                     {duplicatePublishWarning && (
                       <div className="app-surface-subtle border border-red/20 bg-red/10 text-red p-3">
                         <div className="label-style mb-1">Duplicate blocked</div>
-                        <p className="text-sm font-mono m-0">{duplicatePublishWarning}</p>
+                        <p className="text-sm m-0 leading-relaxed">{duplicatePublishWarning}</p>
                       </div>
                     )}
 
                     <div className="app-surface-subtle p-3">
                       <div className="label-style mb-1">Publish rule</div>
-                      <p className="text-sm text-muted-foreground font-mono m-0">
+                      <p className="text-sm text-muted-foreground m-0 leading-relaxed">
                         Each approved draft can have one publish item per channel. Change channel here only if you want this exact item to own that channel.
                       </p>
                     </div>
@@ -1430,7 +1430,7 @@ function AgentsWorkflowView() {
                       <div className="space-y-4">
                         <div>
                           <div className="label-style mb-1">Frozen final copy</div>
-                          <p className="text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap m-0">
+                          <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap m-0">
                             {activePublishItem.finalCopy}
                           </p>
                         </div>
@@ -1457,7 +1457,7 @@ function AgentsWorkflowView() {
                                 placeholder="https://..."
                               />
                             </div>
-                            {manualPostedError && <p className="text-sm font-mono text-red m-0">{manualPostedError}</p>}
+                            {manualPostedError && <p className="text-sm text-red m-0">{manualPostedError}</p>}
                             <div className="flex flex-wrap gap-2">
                               <button
                                 type="button"
@@ -1534,13 +1534,13 @@ function AgentsWorkflowView() {
                         {activePublishItem.publishedAt && (
                           <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Published at</div>
-                            <div className="text-sm font-mono text-foreground">{new Date(activePublishItem.publishedAt).toLocaleString()}</div>
+                            <div className="text-sm text-foreground">{new Date(activePublishItem.publishedAt).toLocaleString()}</div>
                           </div>
                         )}
                         {activePublishItem.postUrl && (
                           <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Post URL</div>
-                            <a href={activePublishItem.postUrl} target="_blank" rel="noreferrer" className="text-sm font-mono underline break-all">
+                            <a href={activePublishItem.postUrl} target="_blank" rel="noreferrer" className="text-sm underline break-all">
                               {activePublishItem.postUrl}
                             </a>
                           </div>
@@ -1548,7 +1548,7 @@ function AgentsWorkflowView() {
                         {activePublishItem.status === "published" && (
                           <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Read-only state</div>
-                            <p className="text-sm text-muted-foreground font-mono m-0">
+                            <p className="text-sm text-muted-foreground m-0 leading-relaxed">
                               This item is locked because manual posting has been recorded.
                             </p>
                           </div>
@@ -1556,7 +1556,7 @@ function AgentsWorkflowView() {
                         {activePublishItem.status === "failed" && (
                           <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Read-only state</div>
-                            <p className="text-sm text-muted-foreground font-mono m-0">
+                            <p className="text-sm text-muted-foreground m-0 leading-relaxed">
                               This item is locked after being marked as failed. Create a new path later only if the publishing decision changes.
                             </p>
                           </div>
@@ -1564,7 +1564,7 @@ function AgentsWorkflowView() {
                         {activePublishItem.status === "cancelled" && (
                           <div className="app-surface-subtle p-3">
                             <div className="label-style mb-1">Read-only state</div>
-                            <p className="text-sm text-muted-foreground font-mono m-0">
+                            <p className="text-sm text-muted-foreground m-0 leading-relaxed">
                               This item is locked after cancellation. Reopen the workflow from Approve if publishing should resume later.
                             </p>
                           </div>
@@ -1572,62 +1572,58 @@ function AgentsWorkflowView() {
                       </div>
                     </div>
 
-                    <div className="flex flex-wrap gap-2 mt-5">
-                      {(activePublishItem.status === "ready_to_publish" || activePublishItem.status === "scheduled") && (
-                        <button
-                          type="button"
-                          onClick={() =>
-                            handlePublishSetupSave(activePublishItem, {
-                              channel: publishFormChannel,
-                              publishMode: publishFormMode,
-                              scheduledFor: publishFormScheduledFor,
-                              operatorNotes: publishFormOperatorNotes,
-                            })
+                    <div className="app-action-row mt-5">
+                      <button
+                        type="button"
+                        onClick={() =>
+                          handlePublishSetupSave(activePublishItem, {
+                            channel: publishFormChannel,
+                            publishMode: publishFormMode,
+                            scheduledFor: publishFormScheduledFor,
+                            operatorNotes: publishFormOperatorNotes,
+                          })
+                        }
+                        disabled={
+                          publishSaving ||
+                          activePublishItem.status === "published" ||
+                          activePublishItem.status === "failed" ||
+                          activePublishItem.status === "cancelled" ||
+                          (publishFormMode === "schedule_later" && !publishFormScheduledFor)
+                        }
+                        className="app-button disabled:opacity-50"
+                      >
+                        {publishSaving ? "Saving…" : "Save publish setup"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (activePublishItem.status === "ready_to_publish" || activePublishItem.status === "scheduled") {
+                            handleOpenManualPosted(activePublishItem);
                           }
-                          disabled={publishSaving || (publishFormMode === "schedule_later" && !publishFormScheduledFor)}
-                          className="app-button disabled:opacity-50"
-                        >
-                          {publishSaving ? "Saving…" : "Save publish setup"}
-                        </button>
-                      )}
-                      {activePublishItem.status === "ready_to_publish" && (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenManualPosted(activePublishItem)}
-                          className="app-button app-button-primary"
-                        >
-                          Record manual publish now
-                        </button>
-                      )}
-                      {activePublishItem.status === "scheduled" && (
-                        <button
-                          type="button"
-                          onClick={() => handleOpenManualPosted(activePublishItem)}
-                          className="app-button app-button-success"
-                        >
-                          Mark manually posted
-                        </button>
-                      )}
-                      {(activePublishItem.status === "ready_to_publish" || activePublishItem.status === "scheduled") && (
-                        <>
-                          <button
-                            type="button"
-                            onClick={() => handlePublishStatusAction(activePublishItem.id, "failed")}
-                            disabled={publishSaving}
-                            className="app-button app-button-danger disabled:opacity-50"
-                          >
-                            Mark failed
-                          </button>
-                          <button
-                            type="button"
-                            onClick={() => handlePublishStatusAction(activePublishItem.id, "cancelled")}
-                            disabled={publishSaving}
-                            className="app-button disabled:opacity-50"
-                          >
-                            Cancel
-                          </button>
-                        </>
-                      )}
+                        }}
+                        disabled={!(activePublishItem.status === "ready_to_publish" || activePublishItem.status === "scheduled")}
+                        className={`app-button ${
+                          activePublishItem.status === "scheduled" ? "app-button-success" : "app-button-primary"
+                        } disabled:opacity-50`}
+                      >
+                        {activePublishItem.status === "scheduled" ? "Mark manually posted" : "Record manual publish now"}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePublishStatusAction(activePublishItem.id, "failed")}
+                        disabled={publishSaving || !(activePublishItem.status === "ready_to_publish" || activePublishItem.status === "scheduled")}
+                        className="app-button app-button-danger disabled:opacity-50"
+                      >
+                        Mark failed
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handlePublishStatusAction(activePublishItem.id, "cancelled")}
+                        disabled={publishSaving || !(activePublishItem.status === "ready_to_publish" || activePublishItem.status === "scheduled")}
+                        className="app-button disabled:opacity-50"
+                      >
+                        Cancel
+                      </button>
                     </div>
                   </div>
                 </div>
@@ -1664,7 +1660,7 @@ function AgentsWorkflowView() {
             <div className="app-metric-card">
               <div className="label-style mb-1">Next step</div>
               <div className="text-lg font-bold text-foreground">Approve, then send to Publish</div>
-              <div className="text-xs text-muted-foreground font-mono mt-1">Publish setup is manual. No posting integrations.</div>
+              <div className="text-xs text-muted-foreground mt-1">Publish setup is manual. No posting integrations.</div>
             </div>
         </div>
 
@@ -1688,9 +1684,9 @@ function AgentsWorkflowView() {
           </div>
         </section>
 
-        {loading && <p className="text-muted-foreground text-sm font-mono">Loading approvals…</p>}
+        {loading && <p className="text-muted-foreground text-sm">Loading approvals…</p>}
         {!loading && approvalDrafts.length === 0 && (
-          <div className="border border-border p-6 bg-muted text-sm font-mono text-muted-foreground">
+          <div className="border border-border p-6 bg-muted text-sm text-muted-foreground">
             No drafts match the current approval filter.
           </div>
         )}
@@ -1712,7 +1708,7 @@ function AgentsWorkflowView() {
                       <div className="flex items-start justify-between gap-2">
                         <div>
                           <div className="text-sm font-semibold tracking-tight text-foreground line-clamp-2">{draft.listingTitle}</div>
-                          <div className="text-xs font-mono text-muted-foreground mt-1">{new Date(draft.createdAt).toLocaleDateString()}</div>
+                          <div className="text-xs text-muted-foreground mt-1">{new Date(draft.createdAt).toLocaleDateString()}</div>
                         </div>
                         <DraftStatusBadge status={draft.status} />
                       </div>
@@ -1746,7 +1742,7 @@ function AgentsWorkflowView() {
                     <div>
                       <div className="label-style mb-1">Approval review</div>
                       <h3 className="font-sans font-bold text-lg tracking-tight text-foreground">{activeApprovalDraft.listingTitle}</h3>
-                      <p className="text-xs text-muted-foreground font-mono mt-1">Listing {activeApprovalDraft.sourceListingId}</p>
+                      <p className="text-xs text-muted-foreground mt-1">Listing {activeApprovalDraft.sourceListingId}</p>
                     </div>
                     <DraftStatusBadge status={activeApprovalDraft.status} />
                   </div>
@@ -1755,13 +1751,13 @@ function AgentsWorkflowView() {
                     <div className="space-y-4">
                       <div>
                         <div className="label-style mb-1">Final draft copy</div>
-                        <p className="text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap m-0">
+                        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap m-0">
                           {activeApprovalDraft.suggestedCaption}
                         </p>
                       </div>
                       <div>
                         <div className="label-style mb-1">Suggested hashtags</div>
-                        <p className="text-sm text-foreground font-mono m-0">
+                        <p className="text-sm text-foreground m-0 leading-relaxed">
                           {activeApprovalDraft.suggestedHashtags.map((tag) => `#${tag}`).join(" ")}
                         </p>
                       </div>
@@ -1775,7 +1771,7 @@ function AgentsWorkflowView() {
                       {activeApprovalDraft.statusNote && (
                         <div className="app-surface-subtle p-3">
                           <div className="label-style mb-1">Revision note</div>
-                          <p className="text-sm text-foreground font-mono whitespace-pre-wrap m-0">
+                          <p className="text-sm text-foreground whitespace-pre-wrap m-0 leading-relaxed">
                             {activeApprovalDraft.statusNote}
                           </p>
                         </div>
@@ -1783,7 +1779,7 @@ function AgentsWorkflowView() {
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 mt-5">
+                  <div className="app-action-row mt-5">
                     <button
                       type="button"
                       onClick={() => handleStatusUpdate(activeApprovalDraft.id, "approved")}
@@ -1813,6 +1809,15 @@ function AgentsWorkflowView() {
                         className="app-button app-button-primary disabled:opacity-50"
                       >
                         {publishSaving ? "Opening…" : "Send to Publish"}
+                      </button>
+                    )}
+                    {activeApprovalDraft.status !== "approved" && (
+                      <button
+                        type="button"
+                        disabled
+                        className="app-button app-button-primary disabled:opacity-50"
+                      >
+                        Send to Publish
                       </button>
                     )}
                   </div>
