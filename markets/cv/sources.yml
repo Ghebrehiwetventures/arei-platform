@@ -484,8 +484,8 @@ sources:
       policy: always
       delay_ms: 3000
       selectors:
-        description: ".property__description p, .entry-content p, [class*='description'] p"
-        images: ".property__gallery img, .swiper-slide img, .gallery img, img[src*='uploads']"
+        description: ".pageContent__text p[data-start], .property__description p, .entry-content p, [class*='description'] p"
+        images: "img.gallery__img, .swiper-slide img, .gallery img, img[src*='uploads']"
         # Price in detail pages: "Price: 479 491 €" format in spans
         price: ".property__content p span:first-child"
       spec_patterns:

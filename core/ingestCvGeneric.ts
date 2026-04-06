@@ -60,6 +60,7 @@ interface IngestListing {
   project_flag?: boolean | null;
   project_start_price?: number | null;
   description?: string;
+  description_html?: string;
   imageUrls?: string[];
   location?: string;
   detailUrl?: string;
@@ -350,6 +351,9 @@ async function genericDetailEnrichment(
       // Update listing with enriched data
       if (extractResult.description && extractResult.description.length >= 50) {
         listing.description = extractResult.description;
+        if (extractResult.description_html) {
+          listing.description_html = extractResult.description_html;
+        }
         wasEnriched = true;
       }
 
@@ -519,8 +523,13 @@ export async function runCvIngestGeneric(): Promise<IngestReport> {
   // Collect all listings
   const allListings: IngestListing[] = [];
 
+  // Optional single-source filter for targeted runs (e.g. CV_SOURCE_FILTER=cv_estatecv)
+  const cvSourceFilter = process.env.CV_SOURCE_FILTER || null;
+
   // Process each source - NO IF/ELSE FOR SOURCE TYPE!
   for (const source of sources) {
+    if (cvSourceFilter && source.id !== cvSourceFilter) continue;
+
     const lifecycle = lifecycleMap.get(source.id);
 
     // DROP: skip
@@ -780,6 +789,7 @@ export async function runCvIngestGeneric(): Promise<IngestReport> {
       source_ref: fullListing?.source_ref ?? null,
       title: listing.title,
       description: fullListing?.description,
+      description_html: fullListing?.description_html ?? null,
       price: listing.price,
       project_flag: fullListing?.project_flag ?? null,
       project_start_price: fullListing?.project_start_price ?? null,
