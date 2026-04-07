@@ -54,6 +54,14 @@ export function formatBathrooms(bathrooms: number | null): string | null {
   return `${bathrooms} Bath`;
 }
 
+export function formatAreaSqm(area: number | null): string | null {
+  if (area === null || area === undefined || area <= 0) return null;
+  if (Number.isInteger(area)) {
+    return `${area.toLocaleString("en-US", { maximumFractionDigits: 0 })} m²`;
+  }
+  return `${area.toLocaleString("en-US", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} m²`;
+}
+
 export function isNewListing(firstSeenAt: string | null): boolean {
   if (!firstSeenAt) return false;
   const diff = Date.now() - new Date(firstSeenAt).getTime();

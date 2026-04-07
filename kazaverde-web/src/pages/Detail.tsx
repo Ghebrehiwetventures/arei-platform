@@ -8,7 +8,7 @@ import { arei } from "../lib/arei";
 import type { ListingDetail as ListingDetailType, ListingCard } from "arei-sdk";
 import type { DemoListing } from "../lib/demo-data";
 import { cardToDemoListing } from "../lib/transforms";
-import { formatPrice, formatLocation, formatBedrooms, formatBathrooms, formatSourceLabel } from "../lib/format";
+import { formatPrice, formatLocation, formatBedrooms, formatBathrooms, formatSourceLabel, formatAreaSqm } from "../lib/format";
 import { looksItalian, stripHtml, translateItalianToEnglish } from "../lib/translation";
 import NotFound from "./NotFound";
 import MortgageCalculator from "../components/MortgageCalculator";
@@ -318,13 +318,17 @@ export default function Detail() {
       : listing.land_area_sqm;
   const specs: { value: string; label: string }[] = [];
   if (listing.property_type) specs.push({ value: listing.property_type, label: "Type" });
+  if (isLand) {
+    const landSize = formatAreaSqm(listing.land_area_sqm);
+    if (landSize) specs.push({ value: landSize, label: "Land size" });
+  } else {
+    const propertySize = formatAreaSqm(listing.property_size_sqm);
+    if (propertySize) specs.push({ value: propertySize, label: "Size" });
+  }
   if (!isLand) {
     const bed = formatBedrooms(listing.bedrooms);
     if (bed) specs.push({ value: listing.bedrooms === 0 ? "Studio" : String(listing.bedrooms), label: bed === "Studio" ? "Type" : "Bedrooms" });
     if (listing.bathrooms && listing.bathrooms > 0) specs.push({ value: String(listing.bathrooms), label: "Bathrooms" });
-  }
-  if (effectiveLandAreaSqm) {
-    specs.push({ value: `${effectiveLandAreaSqm.toLocaleString()}`, label: "m² Land" });
   }
 
   const mainImageStyle: React.CSSProperties =
