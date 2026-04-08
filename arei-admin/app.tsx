@@ -46,16 +46,16 @@ function ImageGallery({
       <div
         style={{
           ...sizeStyle,
-          background: "#1a1a2e",
+          background: "#16161a",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#555",
-          fontSize: 13,
+          color: "#5a5a65",
+          fontSize: 12,
           borderRadius: "8px 8px 0 0",
         }}
       >
-        NO IMAGE
+        No image
       </div>
     );
   }
@@ -201,14 +201,14 @@ function ImageGallery({
 
 function StatusBadge({ status }: { status: SourceStatus }) {
   const classes: Record<string, string> = {
-    OK: "bg-green text-primary-foreground",
-    PARTIAL_OK: "bg-amber text-foreground",
-    BROKEN_SOURCE: "bg-red text-primary-foreground",
-    UNSCRAPABLE: "bg-red text-primary-foreground",
-    PAUSED_BY_SYSTEM: "bg-amber text-foreground",
+    OK: "bg-green-muted text-green",
+    PARTIAL_OK: "bg-amber-muted text-amber",
+    BROKEN_SOURCE: "bg-red-muted text-red",
+    UNSCRAPABLE: "bg-red-muted text-red",
+    PAUSED_BY_SYSTEM: "bg-amber-muted text-amber",
   };
   return (
-    <span className={`inline-block px-2 py-0.5 text-xs font-semibold ${classes[status] ?? "bg-muted-foreground text-background"}`}>
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded-md ${classes[status] ?? "bg-surface-3 text-foreground-muted"}`}>
       {status}
     </span>
   );
@@ -217,11 +217,11 @@ function StatusBadge({ status }: { status: SourceStatus }) {
 function RunPhaseBadge({ latestSync }: { latestSync: LatestSyncLog }) {
   const isFinal = latestSync.isFinal === true || latestSync.runPhase === "final_post_enrichment";
   const classes = isFinal
-    ? "bg-green/15 text-green border-green"
-    : "bg-amber/15 text-amber border-amber";
+    ? "bg-green-muted text-green"
+    : "bg-amber-muted text-amber";
 
   return (
-    <span className={`inline-block border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${classes}`}>
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded-md ${classes}`}>
       {latestSync.phaseLabel}
     </span>
   );
@@ -279,13 +279,13 @@ function formatPrice(
 
 function GradeBadge({ grade }: { grade: "A" | "B" | "C" | "D" }) {
   const classes: Record<string, string> = {
-    A: "bg-green text-primary-foreground",
-    B: "bg-green/80 text-primary-foreground",
-    C: "bg-amber text-foreground",
-    D: "bg-red text-primary-foreground",
+    A: "bg-green-muted text-green",
+    B: "bg-green-muted text-green",
+    C: "bg-amber-muted text-amber",
+    D: "bg-red-muted text-red",
   };
   return (
-    <span className={`inline-block px-2 py-0.5 text-sm font-bold ${classes[grade] ?? "bg-muted-foreground text-background"}`}>
+    <span className={`inline-flex items-center justify-center w-7 h-6 text-xs font-semibold rounded-md ${classes[grade] ?? "bg-surface-3 text-foreground-muted"}`}>
       {grade}
     </span>
   );
@@ -293,20 +293,20 @@ function GradeBadge({ grade }: { grade: "A" | "B" | "C" | "D" }) {
 
 function DraftStatusBadge({ status }: { status: ContentDraftStatus }) {
   const labels: Record<ContentDraftStatus, string> = {
-    pending: "Pending approval",
+    pending: "Pending",
     approved: "Approved",
     rejected: "Rejected",
-    revision_requested: "Revision requested",
+    revision_requested: "Revision",
   };
   const classes: Record<ContentDraftStatus, string> = {
-    pending: "bg-amber/15 text-amber border-amber",
-    approved: "bg-green/15 text-green border-green",
-    rejected: "bg-red/15 text-red border-red",
-    revision_requested: "bg-muted text-foreground border-foreground",
+    pending: "bg-amber-muted text-amber",
+    approved: "bg-green-muted text-green",
+    rejected: "bg-red-muted text-red",
+    revision_requested: "bg-surface-3 text-foreground-muted",
   };
 
   return (
-    <span className={`inline-block border px-2 py-0.5 text-xs font-semibold uppercase tracking-wide ${classes[status]}`}>
+    <span className={`inline-block px-2.5 py-1 text-[11px] font-medium rounded-md ${classes[status]}`}>
       {labels[status]}
     </span>
   );
@@ -361,180 +361,192 @@ function AgentsApprovalsView() {
   const pendingCount = drafts.filter((draft) => draft.status === "pending").length;
 
   return (
-    <div className="space-y-8">
-      <section>
-        <div className="flex flex-wrap items-end justify-between gap-4 mb-4">
-          <div>
-            <div className="label-style mb-2">Agents &gt; Approvals</div>
-            <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
-              Content Draft Agent v1
-            </h2>
-            <p className="label-style max-w-3xl">
-              Generates 3 to 5 reviewable content drafts from live listing data. Everything stays human-gated in approvals. Nothing is published automatically.
-            </p>
-          </div>
+    <div className="space-y-6">
+      {/* ── Page header ─────────────────────────────────────────── */}
+      <div className="flex flex-wrap items-start justify-between gap-4">
+        <div>
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+            Content Drafts
+          </h1>
+          <p className="text-sm text-foreground-muted mt-1">
+            Review and approve AI-generated content before publishing. Nothing is published automatically.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={generating}
+          className="px-4 py-2 text-sm font-medium rounded-lg transition-all disabled:opacity-50"
+          style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)", color: "#09090b" }}
+        >
+          {generating ? "Generating…" : "Generate drafts"}
+        </button>
+      </div>
+
+      {/* ── Stats row ───────────────────────────────────────────── */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="surface-2 rounded-lg p-4 border border-border">
+          <div className="text-xs text-foreground-muted mb-1.5">Total drafts</div>
+          <div className="text-xl font-semibold tabular-nums">{drafts.length}</div>
+        </div>
+        <div className="surface-2 rounded-lg p-4 border border-border">
+          <div className="text-xs text-foreground-muted mb-1.5">Pending</div>
+          <div className="text-xl font-semibold text-amber tabular-nums">{pendingCount}</div>
+        </div>
+        <div className="surface-2 rounded-lg p-4 border border-border">
+          <div className="text-xs text-foreground-muted mb-1.5">Publishing</div>
+          <div className="text-sm font-medium text-foreground-subtle">Manual only</div>
+        </div>
+      </div>
+
+      {/* ── Filters ─────────────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-3 items-end">
+        <div>
+          <label className="text-[11px] text-foreground-subtle block mb-1">Queue</label>
+          <select
+            value={typeFilter}
+            onChange={(e) => setTypeFilter(e.target.value as "all" | "content_draft")}
+            className="bg-surface-2 border border-border text-foreground px-3 py-1.5 text-sm rounded-md"
+          >
+            <option value="content_draft">Content drafts</option>
+            <option value="all">All items</option>
+          </select>
+        </div>
+        <div>
+          <label className="text-[11px] text-foreground-subtle block mb-1">Status</label>
+          <select
+            value={statusFilter}
+            onChange={(e) => setStatusFilter(e.target.value as ContentDraftStatus | "all")}
+            className="bg-surface-2 border border-border text-foreground px-3 py-1.5 text-sm rounded-md"
+          >
+            <option value="all">All</option>
+            <option value="pending">Pending</option>
+            <option value="approved">Approved</option>
+            <option value="rejected">Rejected</option>
+            <option value="revision_requested">Revision requested</option>
+          </select>
+        </div>
+      </div>
+
+      {/* ── Draft list ──────────────────────────────────────────── */}
+      {loading && <p className="text-foreground-muted text-sm py-8">Loading drafts…</p>}
+
+      {!loading && filteredDrafts.length === 0 && (
+        <div className="surface-2 rounded-xl border border-border p-10 text-center">
+          <div className="text-3xl mb-3 opacity-30">◉</div>
+          <h3 className="text-base font-semibold text-foreground mb-1">No drafts yet</h3>
+          <p className="text-sm text-foreground-muted max-w-md mx-auto">
+            Generate drafts to pull candidates from live listings. Each draft goes through review before anything is published.
+          </p>
           <button
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+            className="mt-4 px-4 py-2 text-sm font-medium rounded-lg transition-all disabled:opacity-50"
+            style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)", color: "#09090b" }}
           >
-            {generating ? "Generating…" : "Generate content drafts"}
+            {generating ? "Generating…" : "Generate drafts"}
           </button>
         </div>
+      )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
-            <div className="label-style mb-1">Total drafts</div>
-            <div className="text-2xl font-bold text-foreground tabular-nums">{drafts.length}</div>
-          </div>
-          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
-            <div className="label-style mb-1">Pending approval</div>
-            <div className="text-2xl font-bold text-amber tabular-nums">{pendingCount}</div>
-          </div>
-          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
-            <div className="label-style mb-1">Publishing</div>
-            <div className="text-lg font-bold text-foreground">Disabled</div>
-            <div className="text-xs text-muted-foreground font-mono mt-1">Draft to approval only</div>
-          </div>
-        </div>
-      </section>
+      <div className="space-y-3">
+        {filteredDrafts.map((draft) => (
+          <article key={draft.id} className="surface-2 rounded-lg border border-border overflow-hidden">
+            <div className="grid grid-cols-1 md:grid-cols-[200px_1fr]">
+              {/* Image */}
+              <div className="bg-surface-3 min-h-[160px]">
+                {draft.selectedImage ? (
+                  <img
+                    src={draft.selectedImage}
+                    alt={draft.listingTitle}
+                    className="w-full h-full min-h-[160px] object-cover"
+                    onError={(e) => {
+                      (e.target as HTMLImageElement).style.display = "none";
+                    }}
+                  />
+                ) : (
+                  <div className="h-full min-h-[160px] flex items-center justify-center text-foreground-subtle text-sm">
+                    No image
+                  </div>
+                )}
+              </div>
 
-      <section className="border border-border bg-muted/30 p-4">
-        <div className="label-style mb-3">Filters</div>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <label className="label-style block mb-1">Approval queue</label>
-            <select
-              value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value as "all" | "content_draft")}
-              className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full"
-            >
-              <option value="content_draft">Content drafts</option>
-              <option value="all">All approval items</option>
-            </select>
-          </div>
-          <div>
-            <label className="label-style block mb-1">Status</label>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value as ContentDraftStatus | "all")}
-              className="bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full"
-            >
-              <option value="all">All statuses</option>
-              <option value="pending">Pending approval</option>
-              <option value="approved">Approved</option>
-              <option value="rejected">Rejected</option>
-              <option value="revision_requested">Revision requested</option>
-            </select>
-          </div>
-        </div>
-      </section>
-
-      <section>
-        {loading && <p className="text-muted-foreground text-sm font-mono">Loading approvals…</p>}
-        {!loading && filteredDrafts.length === 0 && (
-          <div className="border border-border p-6 bg-muted text-sm font-mono text-muted-foreground">
-            No content drafts yet. Generate drafts to pull candidates from live listings into Approvals.
-          </div>
-        )}
-
-        <div className="space-y-4">
-          {filteredDrafts.map((draft) => (
-            <article key={draft.id} className="border border-foreground brutalist-shadow-sm overflow-hidden bg-background">
-              <div className="grid grid-cols-1 lg:grid-cols-[220px_1fr]">
-                <div className="bg-muted min-h-[180px]">
-                  {draft.selectedImage ? (
-                    <img
-                      src={draft.selectedImage}
-                      alt={draft.listingTitle}
-                      className="w-full h-full min-h-[180px] object-cover"
-                      onError={(e) => {
-                        (e.target as HTMLImageElement).style.display = "none";
-                      }}
-                    />
-                  ) : (
-                    <div className="h-full min-h-[180px] flex items-center justify-center text-muted-foreground text-sm font-mono">
-                      No image
-                    </div>
-                  )}
+              {/* Content */}
+              <div className="p-5">
+                <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                  <div>
+                    <h3 className="text-base font-semibold text-foreground leading-tight">
+                      {draft.listingTitle}
+                    </h3>
+                    <p className="text-xs text-foreground-subtle mt-1 font-mono">
+                      {draft.sourceListingId} · {new Date(draft.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                  <DraftStatusBadge status={draft.status} />
                 </div>
 
-                <div className="p-5">
-                  <div className="flex flex-wrap items-start justify-between gap-3 mb-3">
+                <div className="grid grid-cols-1 lg:grid-cols-[1.3fr_0.7fr] gap-4">
+                  <div className="space-y-3">
                     <div>
-                      <div className="label-style mb-1">Content draft · not published</div>
-                      <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">
-                        {draft.listingTitle}
-                      </h3>
-                      <p className="text-xs text-muted-foreground font-mono mt-1">
-                        Listing {draft.sourceListingId} · Created {new Date(draft.createdAt).toLocaleString()}
+                      <div className="text-[11px] text-foreground-subtle mb-1">Caption</div>
+                      <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap m-0">
+                        {draft.suggestedCaption}
                       </p>
                     </div>
-                    <DraftStatusBadge status={draft.status} />
-                  </div>
-
-                  <div className="grid grid-cols-1 xl:grid-cols-[1.3fr_0.7fr] gap-5">
-                    <div className="space-y-4">
-                      <div>
-                        <div className="label-style mb-1">Suggested caption</div>
-                        <p className="text-sm text-foreground font-mono leading-relaxed whitespace-pre-wrap m-0">
-                          {draft.suggestedCaption}
-                        </p>
-                      </div>
-                      <div>
-                        <div className="label-style mb-1">Suggested hashtags</div>
-                        <p className="text-sm text-foreground font-mono m-0">
-                          {draft.suggestedHashtags.map((tag) => `#${tag}`).join(" ")}
-                        </p>
-                      </div>
-                    </div>
-
-                    <div className="space-y-4">
-                      <div className="bg-muted border border-border p-3">
-                        <div className="label-style mb-1">Suggested channel</div>
-                        <div className="text-base font-bold text-foreground uppercase">{draft.suggestedChannel}</div>
-                      </div>
-                      {draft.statusNote && (
-                        <div className="bg-muted border border-border p-3">
-                          <div className="label-style mb-1">Revision note</div>
-                          <p className="text-sm text-foreground font-mono whitespace-pre-wrap m-0">
-                            {draft.statusNote}
-                          </p>
-                        </div>
-                      )}
+                    <div>
+                      <div className="text-[11px] text-foreground-subtle mb-1">Hashtags</div>
+                      <p className="text-sm text-foreground-muted m-0 font-mono">
+                        {draft.suggestedHashtags.map((tag) => `#${tag}`).join(" ")}
+                      </p>
                     </div>
                   </div>
 
-                  <div className="flex flex-wrap gap-2 mt-5">
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(draft.id, "approved")}
-                      className="border border-green px-3 py-2 text-xs font-mono uppercase tracking-widest text-green hover:bg-green hover:text-background transition-colors"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(draft.id, "rejected")}
-                      className="border border-red px-3 py-2 text-xs font-mono uppercase tracking-widest text-red hover:bg-red hover:text-background transition-colors"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(draft.id, "revision_requested")}
-                      className="border border-foreground px-3 py-2 text-xs font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
-                    >
-                      Request revision
-                    </button>
+                  <div className="space-y-3">
+                    <div className="surface-3 rounded-md p-3">
+                      <div className="text-[11px] text-foreground-subtle mb-1">Channel</div>
+                      <div className="text-sm font-medium text-foreground capitalize">{draft.suggestedChannel}</div>
+                    </div>
+                    {draft.statusNote && (
+                      <div className="rounded-md p-3 bg-amber-muted">
+                        <div className="text-[11px] text-amber mb-1">Revision note</div>
+                        <p className="text-sm text-foreground whitespace-pre-wrap m-0">
+                          {draft.statusNote}
+                        </p>
+                      </div>
+                    )}
                   </div>
                 </div>
+
+                {/* Actions */}
+                <div className="flex flex-wrap gap-2 mt-4 pt-4 border-t border-border">
+                  <button
+                    type="button"
+                    onClick={() => handleStatusUpdate(draft.id, "approved")}
+                    className="px-3 py-1.5 text-xs font-medium rounded-md bg-green-muted text-green hover:bg-green hover:text-primary-foreground transition-colors"
+                  >
+                    Approve
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleStatusUpdate(draft.id, "rejected")}
+                    className="px-3 py-1.5 text-xs font-medium rounded-md bg-red-muted text-red hover:bg-red hover:text-primary-foreground transition-colors"
+                  >
+                    Reject
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleStatusUpdate(draft.id, "revision_requested")}
+                    className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+                  >
+                    Request revision
+                  </button>
+                </div>
               </div>
-            </article>
-          ))}
-        </div>
-      </section>
+            </div>
+          </article>
+        ))}
+      </div>
     </div>
   );
 }
@@ -581,7 +593,7 @@ function DashboardView() {
 
   if (loading) {
     return (
-      <div className="py-12 text-muted-foreground font-mono">
+      <div className="py-12 text-foreground-muted text-sm">
         Loading dashboard…
       </div>
     );
@@ -589,8 +601,9 @@ function DashboardView() {
 
   if (!stats) {
     return (
-      <div className="py-12 text-foreground font-mono">
-        Failed to load dashboard. Ensure Supabase RPC <code className="bg-muted px-1">get_source_quality_stats</code> exists (see docs/supabase_rpc.sql).
+      <div className="py-12 text-sm">
+        <p className="text-foreground mb-1">Failed to load dashboard</p>
+        <p className="text-foreground-muted">Ensure Supabase RPC <code className="font-mono text-foreground-muted">get_source_quality_stats</code> exists.</p>
       </div>
     );
   }
@@ -644,211 +657,191 @@ function DashboardView() {
   };
 
   return (
-    <div className="space-y-10">
-      {/* ── Data health ───────────────────────────────────────────── */}
-      <section>
-        <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
-          Data health
-        </h2>
-        <p className="label-style mb-6">
-          Overview of data quality and sources
+    <div className="space-y-8">
+      {/* ── Page header ─────────────────────────────────────────── */}
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          Dashboard
+        </h1>
+        <p className="text-sm text-foreground-muted mt-1">
+          Data quality overview and source health
         </p>
+      </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
-          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
-            <div className="label-style mb-1">Total listings</div>
-            <div className="text-2xl font-bold text-foreground tabular-nums">
-              {stats.totalListings.toLocaleString()}
-            </div>
-          </div>
-          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
-            <div className="label-style mb-1">Approved (visible)</div>
-            <div className="text-2xl font-bold text-green tabular-nums">
-              {stats.approvedCount.toLocaleString()}
-            </div>
-          </div>
-          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
-            <div className="label-style mb-1">Sources</div>
-            <div className="text-2xl font-bold text-foreground tabular-nums">{stats.sourceCount}</div>
-          </div>
-          <div className="bg-muted border border-foreground brutalist-shadow-sm p-4">
-            <div className="label-style mb-1">Markets</div>
-            <div className="text-2xl font-bold text-foreground tabular-nums">{stats.marketCount}</div>
+      {/* ── KPI cards ───────────────────────────────────────────── */}
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+        <div className="surface-2 rounded-lg p-4 border border-border">
+          <div className="text-xs text-foreground-muted mb-2">Total listings</div>
+          <div className="text-2xl font-semibold tabular-nums">
+            {stats.totalListings.toLocaleString()}
           </div>
         </div>
+        <div className="surface-2 rounded-lg p-4 border border-border">
+          <div className="text-xs text-foreground-muted mb-2">Approved</div>
+          <div className="text-2xl font-semibold text-green tabular-nums">
+            {stats.approvedCount.toLocaleString()}
+          </div>
+          <div className="text-xs text-foreground-subtle mt-1 tabular-nums">{approvedPct}% rate</div>
+        </div>
+        <div className="surface-2 rounded-lg p-4 border border-border">
+          <div className="text-xs text-foreground-muted mb-2">Sources</div>
+          <div className="text-2xl font-semibold tabular-nums">{stats.sourceCount}</div>
+        </div>
+        <div className="surface-2 rounded-lg p-4 border border-border">
+          <div className="text-xs text-foreground-muted mb-2">Markets</div>
+          <div className="text-2xl font-semibold tabular-nums">{stats.marketCount}</div>
+        </div>
+      </div>
 
-        <div className="flex flex-wrap gap-4 items-center mb-2">
-          <span className="label-style">Overall health status:</span>
+      {/* ── Health + alerts ─────────────────────────────────────── */}
+      <div className="flex flex-wrap gap-3">
+        <div className="flex items-center gap-2.5">
+          <span className="text-xs text-foreground-muted">Health:</span>
           <span
             className={
-              approvedPct >= 70
-                ? "bg-green text-primary-foreground px-3 py-1 text-sm font-bold uppercase"
+              "text-xs font-medium px-2.5 py-1 rounded-md " +
+              (approvedPct >= 70
+                ? "bg-green-muted text-green"
                 : approvedPct >= 40
-                  ? "bg-amber text-foreground px-3 py-1 text-sm font-bold uppercase"
-                  : "bg-red text-primary-foreground px-3 py-1 text-sm font-bold uppercase"
+                  ? "bg-amber-muted text-amber"
+                  : "bg-red-muted text-red")
             }
           >
             {healthLabel}
           </span>
-          <span className="text-muted-foreground text-sm tabular-nums">
-            ({approvedPct}% approved)
-          </span>
         </div>
+      </div>
 
-        {/* Need attention / Performing well */}
-        {(worst.length > 0 || best.length > 0) && (
-          <div className="flex flex-wrap gap-4 mt-4">
-            {worst.length > 0 && (
-              <div className="flex-1 min-w-[200px] border border-foreground brutalist-shadow-sm p-4 bg-amber/10">
-                <div className="label-style text-amber mb-2">Needs attention</div>
-                <p className="text-foreground text-sm font-mono">
-                  {worst.map((r) => r.sourceName).join(", ")}
-                </p>
-              </div>
-            )}
-            {best.length > 0 && (
-              <div className="flex-1 min-w-[200px] border border-foreground brutalist-shadow-sm p-4 bg-green/10">
-                <div className="label-style text-green mb-2">Performing well</div>
-                <p className="text-foreground text-sm font-mono">
-                  {best.map((r) => r.sourceName).join(", ")}
-                </p>
-              </div>
-            )}
-          </div>
-        )}
-      </section>
-
-      {/* ── Latest sync logs ───────────────────────────────────────── */}
-      <section>
-        <h2 className="font-sans font-black text-xl sm:text-2xl uppercase tracking-tight text-foreground mb-1">
-          Latest sync logs
-        </h2>
-        <p className="label-style mb-4">
-          Latest runs and sync status
-        </p>
-        <div className="border border-foreground brutalist-shadow-sm p-4 bg-muted">
-          <p className="text-muted-foreground text-sm mb-2">
-            Last synced:{" "}
-            <span className="text-foreground font-mono">
-              {latestSync?.at
-                ? new Date(latestSync.at).toLocaleString(undefined, {
-                    dateStyle: "medium",
-                    timeStyle: "short",
-                  })
-                : "—"}
-            </span>
-            {latestSync && (
-              <span className="text-muted-foreground text-xs ml-2">
-                ({latestSync.marketName}: {latestSync.totalListings} total, {latestSync.visibleCount} visible)
-              </span>
-            )}
-          </p>
-          {latestSync && (
-            <div className="mb-2 flex flex-wrap items-center gap-2">
-              <RunPhaseBadge latestSync={latestSync} />
-              {latestSync.runPhase && (
-                <span className="text-muted-foreground text-xs font-mono">
-                  {latestSync.runPhase}
-                </span>
-              )}
+      {(worst.length > 0 || best.length > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {worst.length > 0 && (
+            <div className="rounded-lg p-4 border border-border bg-amber-muted">
+              <div className="text-xs font-medium text-amber mb-2">Needs attention</div>
+              <p className="text-sm text-foreground">
+                {worst.map((r) => r.sourceName).join(", ")}
+              </p>
             </div>
           )}
-          {!latestSync && (
-            <p className="text-muted-foreground text-xs mb-2">
-              Runs are logged in CI/CD. Serve the app with <code className="bg-background px-1">artifacts/cv_ingest_report.json</code> in place to see last sync from the report.
-            </p>
+          {best.length > 0 && (
+            <div className="rounded-lg p-4 border border-border bg-green-muted">
+              <div className="text-xs font-medium text-green mb-2">Performing well</div>
+              <p className="text-sm text-foreground">
+                {best.map((r) => r.sourceName).join(", ")}
+              </p>
+            </div>
           )}
-          <div className="flex flex-wrap gap-2 mt-2">
-            <button
-              type="button"
-              onClick={handleExportRunReport}
-              disabled={exportingRunReport || !latestSync}
-              className="border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        </div>
+      )}
+
+      {/* ── Latest sync ─────────────────────────────────────────── */}
+      <section className="surface-2 rounded-lg border border-border p-5">
+        <div className="flex items-center justify-between mb-3">
+          <h2 className="text-base font-semibold text-foreground">Latest sync</h2>
+          {latestSync && <RunPhaseBadge latestSync={latestSync} />}
+        </div>
+        <div className="text-sm text-foreground-muted mb-3">
+          {latestSync?.at
+            ? new Date(latestSync.at).toLocaleString(undefined, {
+                dateStyle: "medium",
+                timeStyle: "short",
+              })
+            : "No sync data"}
+          {latestSync && (
+            <span className="text-foreground-subtle ml-2">
+              {latestSync.marketName}: {latestSync.totalListings} total, {latestSync.visibleCount} visible
+            </span>
+          )}
+        </div>
+        {!latestSync && (
+          <p className="text-xs text-foreground-subtle mb-3">
+            Serve <code className="font-mono text-foreground-muted">cv_ingest_report.json</code> to see sync timestamps.
+          </p>
+        )}
+        <div className="flex flex-wrap gap-2">
+          <button
+            type="button"
+            onClick={handleExportRunReport}
+            disabled={exportingRunReport || !latestSync}
+            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+          >
+            {exportingRunReport ? "Exporting…" : "Export report"}
+          </button>
+          {GITHUB_ACTIONS_URL && (
+            <a
+              href={GITHUB_ACTIONS_URL}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
             >
-              {exportingRunReport ? "Exporting…" : "Export run report (JSON)"}
-            </button>
-            {GITHUB_ACTIONS_URL && (
-              <a
-                href={GITHUB_ACTIONS_URL}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-block border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors"
-              >
-                Open GitHub Actions →
-              </a>
-            )}
-          </div>
-          {!GITHUB_ACTIONS_URL && (
-            <p className="text-muted-foreground text-xs mt-2">
-              Set <code className="bg-background px-1">VITE_GITHUB_ACTIONS_URL</code> to link to run history.
-            </p>
+              GitHub Actions
+            </a>
           )}
         </div>
       </section>
 
-      {/* ── Source quality table ───────────────────────────────────── */}
+      {/* ── Source quality table ─────────────────────────────────── */}
       <section>
-        <h2 className="font-sans font-black text-xl sm:text-2xl uppercase tracking-tight text-foreground mb-1">
-          Source quality
-        </h2>
-        <p className="label-style mb-4">
-          Per source: count, approved %, images, prices, grade
-        </p>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[700px] border-collapse">
-            <thead>
-              <tr className="border-b border-border">
-                {(
-                  [
-                    { key: "sourceName" as const, label: "Source" },
-                    { key: "marketId" as const, label: "Market" },
-                    { key: "listing_count" as const, label: "Count" },
-                    { key: "approved_pct" as const, label: "Approved %" },
-                    { key: "with_image_pct" as const, label: "With image %" },
-                    { key: "with_price_pct" as const, label: "With price %" },
-                    { key: "grade" as const, label: "Grade" },
-                  ] as const
-                ).map(({ key, label }) => (
-                  <th key={key} className="text-left py-2 px-3">
-                    <button
-                      type="button"
-                      onClick={() => handleSort(key)}
-                      className="label-style w-full text-left flex items-center gap-1 hover:text-foreground transition-colors"
-                    >
-                      {label}
-                      {sortKey === key && (
-                        <span className="text-foreground" aria-hidden>
-                          {sortDir === "asc" ? "↑" : "↓"}
-                        </span>
-                      )}
-                    </button>
-                  </th>
-                ))}
-              </tr>
-            </thead>
-            <tbody>
-              {sortedSourceRows.map((r: SourceQualityRow) => (
-                <tr key={r.source_id} className="border-b border-border hover:bg-muted/50">
-                  <td className="py-2 px-3 font-medium text-foreground">{r.sourceName}</td>
-                  <td className="py-2 px-3 text-muted-foreground">{r.marketId}</td>
-                  <td className="py-2 px-3 text-muted-foreground tabular-nums">
-                    {Number(r.listing_count).toLocaleString()}
-                  </td>
-                  <td className="py-2 px-3 text-muted-foreground">{r.approved_pct}%</td>
-                  <td className="py-2 px-3 text-muted-foreground">{r.with_image_pct}%</td>
-                  <td className="py-2 px-3 text-muted-foreground">{r.with_price_pct}%</td>
-                  <td className="py-2 px-3">
-                    <GradeBadge grade={r.grade} />
-                  </td>
+        <h2 className="text-base font-semibold text-foreground mb-4">Source quality</h2>
+        <div className="surface-2 rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[700px]">
+              <thead>
+                <tr className="border-b border-border">
+                  {(
+                    [
+                      { key: "sourceName" as const, label: "Source" },
+                      { key: "marketId" as const, label: "Market" },
+                      { key: "listing_count" as const, label: "Count" },
+                      { key: "approved_pct" as const, label: "Approved %" },
+                      { key: "with_image_pct" as const, label: "Image %" },
+                      { key: "with_price_pct" as const, label: "Price %" },
+                      { key: "grade" as const, label: "Grade" },
+                    ] as const
+                  ).map(({ key, label }) => (
+                    <th key={key} className="text-left py-2.5 px-3">
+                      <button
+                        type="button"
+                        onClick={() => handleSort(key)}
+                        className="text-[11px] uppercase tracking-wider text-foreground-subtle font-medium w-full text-left flex items-center gap-1 hover:text-foreground transition-colors"
+                      >
+                        {label}
+                        {sortKey === key && (
+                          <span className="text-foreground" aria-hidden>
+                            {sortDir === "asc" ? "↑" : "↓"}
+                          </span>
+                        )}
+                      </button>
+                    </th>
+                  ))}
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody>
+                {sortedSourceRows.map((r: SourceQualityRow) => (
+                  <tr key={r.source_id} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
+                    <td className="py-2.5 px-3 text-sm font-medium text-foreground">{r.sourceName}</td>
+                    <td className="py-2.5 px-3 text-sm text-foreground-muted">{r.marketId}</td>
+                    <td className="py-2.5 px-3 text-sm text-foreground-muted tabular-nums font-mono">
+                      {Number(r.listing_count).toLocaleString()}
+                    </td>
+                    <td className="py-2.5 px-3 text-sm text-foreground-muted tabular-nums font-mono">{r.approved_pct}%</td>
+                    <td className="py-2.5 px-3 text-sm text-foreground-muted tabular-nums font-mono">{r.with_image_pct}%</td>
+                    <td className="py-2.5 px-3 text-sm text-foreground-muted tabular-nums font-mono">{r.with_price_pct}%</td>
+                    <td className="py-2.5 px-3">
+                      <GradeBadge grade={r.grade} />
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
         {stats.sourceRows.length === 0 && (
-          <p className="text-muted-foreground text-sm mt-4">
-            No source data. Run the SQL in <code className="bg-muted px-1">docs/supabase_rpc.sql</code> in Supabase.
-          </p>
+          <div className="surface-2 rounded-lg border border-border p-8 text-center mt-4">
+            <p className="text-sm text-foreground-muted">No source data available.</p>
+            <p className="text-xs text-foreground-subtle mt-1">
+              Run the SQL in <code className="font-mono">docs/supabase_rpc.sql</code> in Supabase.
+            </p>
+          </div>
         )}
       </section>
     </div>
@@ -872,110 +865,41 @@ function ListingCard({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
-      style={{
-        background: "#16213e",
-        borderRadius: 12,
-        overflow: "hidden",
-        width: 280,
-        boxShadow: "0 2px 12px rgba(0,0,0,0.3)",
-        transition: "transform 0.15s, box-shadow 0.15s",
-        cursor: "pointer",
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = "translateY(-2px)";
-        e.currentTarget.style.boxShadow = "0 6px 24px rgba(0,0,0,0.4)";
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = "translateY(0)";
-        e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.3)";
-      }}
+      className="surface-2 rounded-lg overflow-hidden w-[280px] border border-border cursor-pointer transition-all hover:border-border-strong hover:translate-y-[-1px]"
     >
       <ImageGallery images={listing.images} width={280} height={190} />
 
-      <div style={{ padding: "12px 14px" }}>
-        {/* Property type badge */}
+      <div className="p-3.5">
         {listing.property_type && (
-          <span
-            style={{
-              background: "#0f3460",
-              color: "#7ec8e3",
-              fontSize: 10,
-              padding: "2px 8px",
-              borderRadius: 4,
-              textTransform: "uppercase",
-              fontWeight: 600,
-              letterSpacing: 0.5,
-            }}
-          >
+          <span className="inline-block bg-accent-muted text-accent text-[10px] font-medium px-2 py-0.5 rounded">
             {listing.property_type}
           </span>
         )}
 
-        {/* Title */}
-        <div
-          style={{
-            color: "#e8e8e8",
-            fontWeight: 600,
-            fontSize: 14,
-            marginTop: 6,
-            lineHeight: 1.3,
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-            whiteSpace: "nowrap",
-          }}
-        >
+        <div className="text-sm font-medium text-foreground mt-1.5 truncate leading-tight">
           {listing.title || "[No title]"}
         </div>
 
-        {/* Location */}
         {listing.location && (
-          <div style={{ color: "#888", fontSize: 12, marginTop: 2 }}>
-            {listing.location}
-          </div>
+          <div className="text-foreground-muted text-xs mt-0.5">{listing.location}</div>
         )}
 
-        {/* Price */}
-        <div
-          style={{
-            color: "#7ec8e3",
-            fontSize: 18,
-            fontWeight: 700,
-            marginTop: 8,
-          }}
-        >
+        <div className="text-accent text-lg font-semibold mt-2 font-mono tabular-nums">
           {formatPrice(listing.price, listing.currency)}
         </div>
 
-        {/* Specs row */}
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            marginTop: 8,
-            color: "#999",
-            fontSize: 12,
-          }}
-        >
+        <div className="flex gap-3 mt-2 text-foreground-muted text-xs">
           {listing.bedrooms != null && <span>{listing.bedrooms} bed</span>}
           {listing.bathrooms != null && <span>{listing.bathrooms} bath</span>}
           {listing.area_sqm != null && (
             <span>{Math.round(listing.area_sqm)} m&sup2;</span>
           )}
           {!listing.bedrooms && !listing.bathrooms && !listing.area_sqm && (
-            <span style={{ color: "#555" }}>No specs</span>
+            <span className="text-foreground-subtle">No specs</span>
           )}
         </div>
 
-        {/* Source */}
-        <div
-          style={{
-            color: "#555",
-            fontSize: 11,
-            marginTop: 8,
-            borderTop: "1px solid #1a1a3e",
-            paddingTop: 8,
-          }}
-        >
+        <div className="text-foreground-subtle text-[11px] mt-2 pt-2 border-t border-border">
           {listing.sourceName}
         </div>
       </div>
@@ -1154,17 +1078,17 @@ function ListingsTabView() {
     );
   }
 
-  const inputCls = "bg-background border border-foreground text-foreground px-3 py-2 text-sm font-mono w-full";
+  const inputCls = "bg-surface-2 border border-border text-foreground px-3 py-1.5 text-sm rounded-md w-full";
 
   return (
     <div>
-      <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
             Listings
-          </h2>
-          <p className="label-style">
-            Browse by market. Server-side pagination.
+          </h1>
+          <p className="text-sm text-foreground-muted mt-1">
+            Browse and filter across all markets
           </p>
         </div>
         <div className="flex gap-2">
@@ -1173,7 +1097,7 @@ function ListingsTabView() {
               setFilters({});
               setPage(1);
             }}
-            className="border border-foreground px-4 py-2 text-sm font-mono hover:bg-foreground hover:text-background transition-colors"
+            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
           >
             Clear filters
           </button>
@@ -1182,9 +1106,9 @@ function ListingsTabView() {
               type="button"
               onClick={() => setExportOpen((o) => !o)}
               disabled={exporting}
-              className="border border-foreground px-4 py-2 text-sm font-mono hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
             >
-              {exporting ? "Exporting…" : "Export report"}
+              {exporting ? "Exporting…" : "Export"}
             </button>
             {exportOpen && (
               <>
@@ -1193,18 +1117,18 @@ function ListingsTabView() {
                   aria-hidden
                   onClick={() => setExportOpen(false)}
                 />
-                <div className="absolute right-0 top-full z-20 mt-1 min-w-[220px] border border-foreground bg-background py-1">
+                <div className="absolute right-0 top-full z-20 mt-1 min-w-[200px] surface-3 border border-border rounded-lg py-1 shadow-lg">
                   <button
                     type="button"
                     onClick={handleExportPage}
-                    className="block w-full px-4 py-2 text-left text-sm font-mono hover:bg-muted"
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors"
                   >
                     This page (CSV)
                   </button>
                   <button
                     type="button"
                     onClick={handleExportAll}
-                    className="block w-full px-4 py-2 text-left text-sm font-mono hover:bg-muted"
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors"
                   >
                     All matching, max {EXPORT_ALL_MAX.toLocaleString()} (CSV)
                   </button>
@@ -1215,11 +1139,11 @@ function ListingsTabView() {
         </div>
       </div>
 
-      <div className="border border-border bg-muted/30 p-4 mb-6">
-        <div className="label-style mb-3">Filters</div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-6 gap-4">
+      <div className="surface-2 rounded-lg border border-border p-4 mb-6">
+        <div className="text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           <div>
-            <label className="label-style block mb-1">Market</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
             <select
               value={marketId}
               onChange={(e) => {
@@ -1237,7 +1161,7 @@ function ListingsTabView() {
             </select>
           </div>
           <div>
-            <label className="label-style block mb-1">Source</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Source</label>
             <select
               value={filters.sourceId ?? ""}
               onChange={(e) => {
@@ -1255,7 +1179,7 @@ function ListingsTabView() {
             </select>
           </div>
           <div>
-            <label className="label-style block mb-1">Display prices in</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Display prices in</label>
             <select
               value={displayCurrency}
               onChange={(e) => setDisplayCurrency(e.target.value as DisplayCurrency)}
@@ -1267,7 +1191,7 @@ function ListingsTabView() {
             </select>
           </div>
           <div>
-            <label className="label-style block mb-1">Approved</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Approved</label>
             <select
               value={filters.approved === undefined ? "" : filters.approved ? "yes" : "no"}
               onChange={(e) => {
@@ -1283,7 +1207,7 @@ function ListingsTabView() {
             </select>
           </div>
           <div>
-            <label className="label-style block mb-1">Updated from</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Updated from</label>
             <input
               type="date"
               value={filters.importedAfter ?? ""}
@@ -1295,7 +1219,7 @@ function ListingsTabView() {
             />
           </div>
           <div>
-            <label className="label-style block mb-1">Updated to</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Updated to</label>
             <input
               type="date"
               value={filters.importedBefore ?? ""}
@@ -1307,7 +1231,7 @@ function ListingsTabView() {
             />
           </div>
           <div className="sm:col-span-2 md:col-span-1">
-            <label className="label-style block mb-1">Title search</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Title search</label>
             <input
               type="text"
               value={filters.titleSearch ?? ""}
@@ -1320,7 +1244,7 @@ function ListingsTabView() {
             />
           </div>
           <div>
-            <label className="label-style block mb-1">Price min</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Price min</label>
             <input
               type="number"
               value={filters.priceMin ?? ""}
@@ -1333,7 +1257,7 @@ function ListingsTabView() {
             />
           </div>
           <div>
-            <label className="label-style block mb-1">Price max</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Price max</label>
             <input
               type="number"
               value={filters.priceMax ?? ""}
@@ -1346,7 +1270,7 @@ function ListingsTabView() {
             />
           </div>
           <div>
-            <label className="label-style block mb-1">Island</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Island</label>
             <input
               type="text"
               value={filters.island ?? ""}
@@ -1359,7 +1283,7 @@ function ListingsTabView() {
             />
           </div>
           <div>
-            <label className="label-style block mb-1">City</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">City</label>
             <input
               type="text"
               value={filters.city ?? ""}
@@ -1372,7 +1296,7 @@ function ListingsTabView() {
             />
           </div>
           <div>
-            <label className="label-style block mb-1">Beds min</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Beds min</label>
             <input
               type="number"
               min={0}
@@ -1386,7 +1310,7 @@ function ListingsTabView() {
             />
           </div>
           <div>
-            <label className="label-style block mb-1">Baths min</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Baths min</label>
             <input
               type="number"
               min={0}
@@ -1400,7 +1324,7 @@ function ListingsTabView() {
             />
           </div>
           <div>
-            <label className="label-style block mb-1">Area min (m²)</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Area min (m²)</label>
             <input
               type="number"
               min={0}
@@ -1414,7 +1338,7 @@ function ListingsTabView() {
             />
           </div>
           <div>
-            <label className="label-style block mb-1">Area max (m²)</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Area max (m²)</label>
             <input
               type="number"
               min={0}
@@ -1430,121 +1354,124 @@ function ListingsTabView() {
         </div>
       </div>
 
-      {loading && <p className="text-muted-foreground text-sm mb-4">Loading…</p>}
+      {loading && <p className="text-foreground-muted text-sm py-8">Loading listings…</p>}
 
       {!loading && (
         <>
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[800px] border-collapse">
-              <thead>
-                <tr className="border-b border-border">
-                  {LISTINGS_COLUMNS.map(({ key, label }) =>
-                    key === "photo" || key === "grade" || key === "action" ? (
-                      <th key={key} className="text-left py-2 px-3 label-style">
-                        {label}
-                      </th>
-                    ) : (
-                      <th key={key} className="text-left py-2 px-3">
-                        <button
-                          type="button"
-                          onClick={() => handleSort(key)}
-                          className="label-style w-full text-left flex items-center gap-1 hover:text-foreground transition-colors"
-                        >
+          <div className="surface-2 rounded-lg border border-border overflow-hidden">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1000px]">
+                <thead>
+                  <tr className="border-b border-border">
+                    {LISTINGS_COLUMNS.map(({ key, label }) =>
+                      key === "photo" || key === "grade" || key === "action" ? (
+                        <th key={key} className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">
                           {label}
-                          {sortBy === key && (
-                            <span className="text-foreground" aria-hidden>
-                              {sortDir === "asc" ? "↑" : "↓"}
-                            </span>
-                          )}
-                        </button>
-                      </th>
-                    )
-                  )}
-                </tr>
-              </thead>
-              <tbody>
-                {result.data.map((l) => (
-                  <tr
-                    key={l.id}
-                    className="border-b border-border cursor-pointer hover:bg-muted/50"
-                    onClick={() => {
-                      setDetailLoading(true);
-                      getListingById(l.id).then((full) => {
-                        setDetailLoading(false);
-                        if (full) setDetailListing(full);
-                      });
-                    }}
-                  >
-                    <td className="py-2 px-3 w-14">
-                      {l.images.length > 0 ? (
-                        <img
-                          src={l.images[0]}
-                          alt=""
-                          className="w-12 h-9 object-cover"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = "none";
-                          }}
-                        />
+                        </th>
                       ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      )}
-                    </td>
-                    <td className="py-2 px-3 text-foreground max-w-[220px] truncate">
-                      {l.title || "[No title]"}
-                    </td>
-                    <td className="py-2 px-3 text-foreground font-medium">
-                      {formatPrice(l.price, l.currency, displayCurrency)}
-                    </td>
-                    <td className="py-2 px-3 text-muted-foreground">{l.island ?? "—"}</td>
-                    <td className="py-2 px-3 text-muted-foreground">{l.city ?? "—"}</td>
-                    <td className="py-2 px-3 text-muted-foreground">{l.bedrooms ?? "—"}</td>
-                    <td className="py-2 px-3 text-muted-foreground">{l.bathrooms ?? "—"}</td>
-                    <td className="py-2 px-3 text-muted-foreground">
-                      {l.area_sqm != null ? Math.round(l.area_sqm) + " m²" : "—"}
-                    </td>
-                    <td className="py-2 px-3 text-muted-foreground text-sm">{l.sourceName}</td>
-                    <td className="py-2 px-3">
-                      {gradeBySourceId.get(l.sourceId) ? (
-                        <GradeBadge grade={gradeBySourceId.get(l.sourceId)!} />
-                      ) : (
-                        <span className="text-muted-foreground text-xs">—</span>
-                      )}
-                    </td>
-                    <td className="py-2 px-3">
-                      <button
-                        onClick={(ev) => {
-                          ev.stopPropagation();
-                          setDetailLoading(true);
-                          getListingById(l.id).then((full) => {
-                            setDetailLoading(false);
-                            if (full) setDetailListing(full);
-                          });
-                        }}
-                        className="border border-foreground px-2 py-1 text-xs font-mono hover:bg-foreground hover:text-background transition-colors"
-                      >
-                        View
-                      </button>
-                    </td>
+                        <th key={key} className="text-left py-2.5 px-3">
+                          <button
+                            type="button"
+                            onClick={() => handleSort(key)}
+                            className="text-[11px] uppercase tracking-wider text-foreground-subtle font-medium w-full text-left flex items-center gap-1 hover:text-foreground transition-colors"
+                          >
+                            {label}
+                            {sortBy === key && (
+                              <span className="text-foreground" aria-hidden>
+                                {sortDir === "asc" ? "↑" : "↓"}
+                              </span>
+                            )}
+                          </button>
+                        </th>
+                      )
+                    )}
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {result.data.map((l) => (
+                    <tr
+                      key={l.id}
+                      className="border-b border-border last:border-0 cursor-pointer hover:bg-surface-3/50 transition-colors"
+                      onClick={() => {
+                        setDetailLoading(true);
+                        getListingById(l.id).then((full) => {
+                          setDetailLoading(false);
+                          if (full) setDetailListing(full);
+                        });
+                      }}
+                    >
+                      <td className="py-2 px-3 w-14">
+                        {l.images.length > 0 ? (
+                          <img
+                            src={l.images[0]}
+                            alt=""
+                            className="w-12 h-9 object-cover rounded"
+                            onError={(e) => {
+                              (e.target as HTMLImageElement).style.display = "none";
+                            }}
+                          />
+                        ) : (
+                          <span className="text-foreground-subtle text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3 text-sm text-foreground max-w-[220px] truncate">
+                        {l.title || "[No title]"}
+                      </td>
+                      <td className="py-2 px-3 text-sm text-foreground font-medium font-mono tabular-nums">
+                        {formatPrice(l.price, l.currency, displayCurrency)}
+                      </td>
+                      <td className="py-2 px-3 text-sm text-foreground-muted">{l.island ?? "—"}</td>
+                      <td className="py-2 px-3 text-sm text-foreground-muted">{l.city ?? "—"}</td>
+                      <td className="py-2 px-3 text-sm text-foreground-muted tabular-nums">{l.bedrooms ?? "—"}</td>
+                      <td className="py-2 px-3 text-sm text-foreground-muted tabular-nums">{l.bathrooms ?? "—"}</td>
+                      <td className="py-2 px-3 text-sm text-foreground-muted font-mono tabular-nums">
+                        {l.area_sqm != null ? Math.round(l.area_sqm) + " m²" : "—"}
+                      </td>
+                      <td className="py-2 px-3 text-xs text-foreground-muted">{l.sourceName}</td>
+                      <td className="py-2 px-3">
+                        {gradeBySourceId.get(l.sourceId) ? (
+                          <GradeBadge grade={gradeBySourceId.get(l.sourceId)!} />
+                        ) : (
+                          <span className="text-foreground-subtle text-xs">—</span>
+                        )}
+                      </td>
+                      <td className="py-2 px-3">
+                        <button
+                          onClick={(ev) => {
+                            ev.stopPropagation();
+                            setDetailLoading(true);
+                            getListingById(l.id).then((full) => {
+                              setDetailLoading(false);
+                              if (full) setDetailListing(full);
+                            });
+                          }}
+                          className="px-2 py-1 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+                        >
+                          View
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
+
           <div className="flex items-center gap-3 mt-4">
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="border border-foreground px-3 py-2 text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed hover:bg-foreground hover:text-background transition-colors"
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Previous
             </button>
-            <span className="text-muted-foreground text-sm tabular-nums">
+            <span className="text-foreground-muted text-xs tabular-nums">
               Page {page} of {totalPages} · {result.totalCount.toLocaleString()} total
             </span>
             <button
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="border border-foreground px-3 py-2 text-sm font-mono disabled:opacity-50 disabled:cursor-not-allowed hover:bg-foreground hover:text-background transition-colors"
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Next
             </button>
@@ -1553,8 +1480,10 @@ function ListingsTabView() {
       )}
 
       {detailLoading && (
-        <div className="fixed inset-0 bg-foreground/50 flex items-center justify-center text-background font-mono">
-          Loading listing…
+        <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
+          <div className="surface-2 rounded-lg p-6 border border-border text-sm text-foreground-muted">
+            Loading listing…
+          </div>
         </div>
       )}
     </div>
@@ -1586,7 +1515,7 @@ function SourcesView() {
 
   if (loading || !stats) {
     return (
-      <div className="py-12 text-muted-foreground font-mono">
+      <div className="py-12 text-foreground-muted text-sm">
         Loading sources…
       </div>
     );
@@ -1606,55 +1535,55 @@ function SourcesView() {
   });
 
   return (
-    <div className="space-y-10">
-      <section>
-        <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Sources
-        </h2>
-        <p className="label-style mb-6">
-          All sources by country / market. Listings count, approval, image and price coverage, grade.
+        </h1>
+        <p className="text-sm text-foreground-muted mt-1">
+          All sources grouped by market
         </p>
-      </section>
+      </div>
 
       {marketIds.map((marketId) => {
         const rows = byMarket.get(marketId)!;
         const marketName = marketNameById.get(marketId) ?? marketId;
         const totalListings = rows.reduce((acc, r) => acc + Number(r.listing_count), 0);
         return (
-          <section key={marketId} className="border border-foreground brutalist-shadow-sm overflow-hidden">
-            <div className="bg-muted border-b border-border px-4 py-3 flex flex-wrap items-center justify-between gap-2">
-              <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground">
-                {marketName} ({marketId})
+          <section key={marketId} className="surface-2 rounded-lg border border-border overflow-hidden">
+            <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-border">
+              <h3 className="text-sm font-semibold text-foreground">
+                {marketName}
               </h3>
-              <span className="label-style tabular-nums">
+              <span className="text-xs text-foreground-muted tabular-nums">
                 {rows.length} source{rows.length !== 1 ? "s" : ""} · {totalListings.toLocaleString()} listings
               </span>
             </div>
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[600px] border-collapse">
+              <table className="w-full min-w-[700px]">
                 <thead>
-                  <tr className="border-b border-border bg-muted/50">
-                    <th className="text-left py-2 px-3 label-style">Source</th>
-                    <th className="text-right py-2 px-3 label-style">Listings</th>
-                    <th className="text-right py-2 px-3 label-style">Approved %</th>
-                    <th className="text-right py-2 px-3 label-style">With image %</th>
-                    <th className="text-right py-2 px-3 label-style">With price %</th>
-                    <th className="text-left py-2 px-3 label-style">Grade</th>
+                  <tr className="border-b border-border">
+                    <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Source</th>
+                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Listings</th>
+                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Approved</th>
+                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Images</th>
+                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Prices</th>
+                    <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Grade</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows
                     .sort((a, b) => Number(b.listing_count) - Number(a.listing_count))
                     .map((r) => (
-                      <tr key={r.source_id} className="border-b border-border hover:bg-muted/30">
-                        <td className="py-2 px-3 font-medium text-foreground">{r.sourceName}</td>
-                        <td className="py-2 px-3 text-right text-muted-foreground tabular-nums">
+                      <tr key={r.source_id} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
+                        <td className="py-2.5 px-3 text-sm font-medium text-foreground">{r.sourceName}</td>
+                        <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">
                           {Number(r.listing_count).toLocaleString()}
                         </td>
-                        <td className="py-2 px-3 text-right text-muted-foreground">{r.approved_pct}%</td>
-                        <td className="py-2 px-3 text-right text-muted-foreground">{r.with_image_pct}%</td>
-                        <td className="py-2 px-3 text-right text-muted-foreground">{r.with_price_pct}%</td>
-                        <td className="py-2 px-3">
+                        <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.approved_pct}%</td>
+                        <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.with_image_pct}%</td>
+                        <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.with_price_pct}%</td>
+                        <td className="py-2.5 px-3">
                           <GradeBadge grade={r.grade} />
                         </td>
                       </tr>
@@ -1667,9 +1596,13 @@ function SourcesView() {
       })}
 
       {marketIds.length === 0 && (
-        <p className="text-muted-foreground text-sm">
-          No source data. Ensure Supabase RPC <code className="bg-muted px-1">get_source_quality_stats</code> exists.
-        </p>
+        <div className="surface-2 rounded-xl border border-border p-10 text-center">
+          <div className="text-3xl mb-3 opacity-30">⬡</div>
+          <h3 className="text-base font-semibold text-foreground mb-1">No source data</h3>
+          <p className="text-sm text-foreground-muted">
+            Run <code className="font-mono text-foreground-muted">get_source_quality_stats</code> RPC in Supabase.
+          </p>
+        </div>
       )}
     </div>
   );
@@ -1700,7 +1633,7 @@ function StatsView() {
 
   if (loading || !stats) {
     return (
-      <div className="py-12 text-muted-foreground font-mono">
+      <div className="py-12 text-foreground-muted text-sm">
         Loading stats…
       </div>
     );
@@ -1754,57 +1687,48 @@ function StatsView() {
     (singleSourceMarkets.length ? 1 : 0);
 
   return (
-    <div className="space-y-10">
-      <section>
-        <h2 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
           Stats
-        </h2>
-        <p className="label-style mb-6">
-          Developer-focused metrics and red flags
+        </h1>
+        <p className="text-sm text-foreground-muted mt-1">
+          Metrics and red flags
         </p>
-      </section>
+      </div>
 
-      {/* Pulse & sync */}
-      <section className="border border-foreground brutalist-shadow-sm p-6 bg-muted">
-        <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground mb-4">
-          Pulse
-        </h3>
+      {/* Pulse */}
+      <section className="surface-2 rounded-lg border border-border p-5">
+        <h2 className="text-base font-semibold text-foreground mb-4">Pulse</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
-            <div className="label-style mb-1">Last sync</div>
-            <div className="font-mono text-foreground">
+            <div className="text-xs text-foreground-muted mb-1">Last sync</div>
+            <div className="text-sm text-foreground font-mono">
               {latestSync?.at
                 ? new Date(latestSync.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
                 : "—"}
             </div>
             {latestSync && (
-              <div className="mt-2 flex flex-wrap items-center gap-2">
-                <RunPhaseBadge latestSync={latestSync} />
-                {latestSync.runPhase && (
-                  <span className="text-muted-foreground text-xs font-mono">
-                    {latestSync.runPhase}
-                  </span>
-                )}
-              </div>
+              <div className="mt-2"><RunPhaseBadge latestSync={latestSync} /></div>
             )}
             {syncMissing && (
-              <p className="text-amber text-xs mt-1 font-mono">⚠ No sync report (serve cv_ingest_report.json for timestamp)</p>
+              <p className="text-amber text-xs mt-1">No sync report available</p>
             )}
             {syncStale && syncAt && (
-              <p className="text-amber text-xs mt-1 font-mono">
-                ⚠ Stale: {Math.round(syncAgeMinutes! / (60 * 24))} days ago
+              <p className="text-amber text-xs mt-1">
+                Stale: {Math.round(syncAgeMinutes! / (60 * 24))} days ago
               </p>
             )}
           </div>
           <div>
-            <div className="label-style mb-1">Overall approval rate</div>
-            <div className={`font-mono text-2xl font-bold tabular-nums ${approvedPct >= 70 ? "text-green" : approvedPct >= 40 ? "text-amber" : "text-red"}`}>
+            <div className="text-xs text-foreground-muted mb-1">Approval rate</div>
+            <div className={`text-2xl font-semibold tabular-nums font-mono ${approvedPct >= 70 ? "text-green" : approvedPct >= 40 ? "text-amber" : "text-red"}`}>
               {approvedPct.toFixed(1)}%
             </div>
           </div>
           <div>
-            <div className="label-style mb-1">Red-flag count</div>
-            <div className={`font-mono text-2xl font-bold tabular-nums ${flagCount === 0 ? "text-green" : flagCount <= 3 ? "text-amber" : "text-red"}`}>
+            <div className="text-xs text-foreground-muted mb-1">Red flags</div>
+            <div className={`text-2xl font-semibold tabular-nums font-mono ${flagCount === 0 ? "text-green" : flagCount <= 3 ? "text-amber" : "text-red"}`}>
               {flagCount}
             </div>
           </div>
@@ -1813,59 +1737,62 @@ function StatsView() {
 
       {/* Red flags */}
       <section>
-        <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground mb-4">
-          Red flags & warnings
-        </h3>
-        <div className="space-y-3">
+        <h2 className="text-base font-semibold text-foreground mb-3">Flags & warnings</h2>
+        <div className="space-y-2">
           {syncMissing && (
-            <div className="border-l-4 border-amber bg-amber/10 p-3 font-mono text-sm">
-              <span className="text-amber font-bold">Sync</span> — No ingest report loaded. Last sync time unknown.
+            <div className="rounded-lg p-3 bg-amber-muted text-sm flex gap-2 items-start">
+              <span className="text-amber font-medium shrink-0">Sync</span>
+              <span className="text-foreground-muted">No ingest report loaded</span>
             </div>
           )}
           {syncStale && !syncMissing && (
-            <div className="border-l-4 border-amber bg-amber/10 p-3 font-mono text-sm">
-              <span className="text-amber font-bold">Stale sync</span> — Last sync &gt; 3 days ago. Consider re-running the pipeline.
+            <div className="rounded-lg p-3 bg-amber-muted text-sm flex gap-2 items-start">
+              <span className="text-amber font-medium shrink-0">Stale</span>
+              <span className="text-foreground-muted">Last sync &gt; 3 days ago</span>
             </div>
           )}
           {gradeD.length > 0 && (
-            <div className="border-l-4 border-red bg-red/10 p-3 font-mono text-sm">
-              <span className="text-red font-bold">Grade D</span> — {gradeD.length} source(s): {gradeD.map((r) => r.sourceName).join(", ")}
+            <div className="rounded-lg p-3 bg-red-muted text-sm flex gap-2 items-start">
+              <span className="text-red font-medium shrink-0">Grade D</span>
+              <span className="text-foreground-muted">{gradeD.length} source(s): {gradeD.map((r) => r.sourceName).join(", ")}</span>
             </div>
           )}
-          {gradeC.length > 0 && gradeC.length <= 5 && (
-            <div className="border-l-4 border-amber bg-amber/10 p-3 font-mono text-sm">
-              <span className="text-amber font-bold">Grade C</span> — {gradeC.length} source(s): {gradeC.map((r) => r.sourceName).join(", ")}
-            </div>
-          )}
-          {gradeC.length > 5 && (
-            <div className="border-l-4 border-amber bg-amber/10 p-3 font-mono text-sm">
-              <span className="text-amber font-bold">Grade C</span> — {gradeC.length} sources (review source quality table)
+          {gradeC.length > 0 && (
+            <div className="rounded-lg p-3 bg-amber-muted text-sm flex gap-2 items-start">
+              <span className="text-amber font-medium shrink-0">Grade C</span>
+              <span className="text-foreground-muted">
+                {gradeC.length <= 5
+                  ? `${gradeC.length} source(s): ${gradeC.map((r) => r.sourceName).join(", ")}`
+                  : `${gradeC.length} sources (review source quality table)`}
+              </span>
             </div>
           )}
           {noImages.length > 0 && (
-            <div className="border-l-4 border-red bg-red/10 p-3 font-mono text-sm">
-              <span className="text-red font-bold">&lt;10% with image</span> — {noImages.length} source(s): {noImages.slice(0, 5).map((r) => r.sourceName).join(", ")}
-              {noImages.length > 5 && ` +${noImages.length - 5} more`}
+            <div className="rounded-lg p-3 bg-red-muted text-sm flex gap-2 items-start">
+              <span className="text-red font-medium shrink-0">&lt;10% images</span>
+              <span className="text-foreground-muted">{noImages.slice(0, 5).map((r) => r.sourceName).join(", ")}{noImages.length > 5 && ` +${noImages.length - 5} more`}</span>
             </div>
           )}
           {noPrice.length > 0 && (
-            <div className="border-l-4 border-red bg-red/10 p-3 font-mono text-sm">
-              <span className="text-red font-bold">&lt;10% with price</span> — {noPrice.length} source(s): {noPrice.slice(0, 5).map((r) => r.sourceName).join(", ")}
-              {noPrice.length > 5 && ` +${noPrice.length - 5} more`}
+            <div className="rounded-lg p-3 bg-red-muted text-sm flex gap-2 items-start">
+              <span className="text-red font-medium shrink-0">&lt;10% prices</span>
+              <span className="text-foreground-muted">{noPrice.slice(0, 5).map((r) => r.sourceName).join(", ")}{noPrice.length > 5 && ` +${noPrice.length - 5} more`}</span>
             </div>
           )}
           {lowApproved.length > 0 && lowApproved.length <= 5 && (
-            <div className="border-l-4 border-amber bg-amber/10 p-3 font-mono text-sm">
-              <span className="text-amber font-bold">&lt;50% approved</span> — {lowApproved.map((r) => r.sourceName).join(", ")}
+            <div className="rounded-lg p-3 bg-amber-muted text-sm flex gap-2 items-start">
+              <span className="text-amber font-medium shrink-0">&lt;50% approved</span>
+              <span className="text-foreground-muted">{lowApproved.map((r) => r.sourceName).join(", ")}</span>
             </div>
           )}
           {singleSourceMarkets.length > 0 && (
-            <div className="border-l-4 border-amber bg-amber/10 p-3 font-mono text-sm">
-              <span className="text-amber font-bold">Single-source market</span> — {singleSourceMarkets.join(", ")}. No redundancy if source fails.
+            <div className="rounded-lg p-3 bg-amber-muted text-sm flex gap-2 items-start">
+              <span className="text-amber font-medium shrink-0">Single source</span>
+              <span className="text-foreground-muted">{singleSourceMarkets.join(", ")}</span>
             </div>
           )}
           {flagCount === 0 && (
-            <div className="border-l-4 border-green bg-green/10 p-3 font-mono text-sm text-green">
+            <div className="rounded-lg p-3 bg-green-muted text-sm text-green">
               No red flags or warnings.
             </div>
           )}
@@ -1873,27 +1800,21 @@ function StatsView() {
       </section>
 
       {/* Grade distribution */}
-      <section className="border border-border p-6 bg-muted">
-        <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground mb-4">
-          Grade distribution
-        </h3>
-        <div className="flex flex-wrap gap-4 items-end">
+      <section className="surface-2 rounded-lg border border-border p-5">
+        <h2 className="text-base font-semibold text-foreground mb-4">Grade distribution</h2>
+        <div className="flex flex-wrap gap-6 items-end">
           {(["A", "B", "C", "D"] as const).map((g) => (
-            <div key={g} className="flex flex-col items-center gap-1">
-              <div
-                className={`w-14 font-mono text-2xl font-bold tabular-nums ${
-                  g === "A" ? "text-green" : g === "B" ? "text-green/80" : g === "C" ? "text-amber" : "text-red"
-                }`}
-              >
+            <div key={g} className="flex flex-col items-center gap-1.5">
+              <div className="text-lg font-semibold tabular-nums font-mono">
                 {gradeCounts[g] ?? 0}
               </div>
               <div
-                className={`w-14 border border-foreground ${
+                className={`w-12 rounded ${
                   g === "A" ? "bg-green" : g === "B" ? "bg-green/70" : g === "C" ? "bg-amber" : "bg-red"
                 }`}
-                style={{ height: `${Math.max(20, (gradeCounts[g] ?? 0) * 16)}px` }}
+                style={{ height: `${Math.max(16, (gradeCounts[g] ?? 0) * 14)}px` }}
               />
-              <span className="label-style">Grade {g}</span>
+              <span className="text-[11px] text-foreground-subtle">{g}</span>
             </div>
           ))}
         </div>
@@ -1901,93 +1822,89 @@ function StatsView() {
 
       {/* By market */}
       <section>
-        <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground mb-4">
-          By market
-        </h3>
-        <div className="overflow-x-auto">
-          <table className="w-full min-w-[400px] border-collapse">
-            <thead>
-              <tr className="border-b border-border">
-                <th className="text-left py-2 px-3 label-style">Market</th>
-                <th className="text-right py-2 px-3 label-style">Listings</th>
-                <th className="text-right py-2 px-3 label-style">Sources</th>
-                <th className="text-right py-2 px-3 label-style">Approved %</th>
-                <th className="text-left py-2 px-3 label-style">Worst grade</th>
-              </tr>
-            </thead>
-            <tbody>
-              {[...byMarket.entries()]
-                .sort((a, b) => b[1].listings - a[1].listings)
-                .map(([marketId, v]) => {
-                  const avgApproved = v.listings > 0 ? (100 * v.approvedSum) / v.listings : 0;
-                  const worstGrade = ["D", "C", "B", "A"][v.worstGrade - 1] as "A" | "B" | "C" | "D";
-                  return (
-                    <tr key={marketId} className="border-b border-border hover:bg-muted/50">
-                      <td className="py-2 px-3 font-medium">{marketId.toUpperCase()}</td>
-                      <td className="py-2 px-3 text-right tabular-nums">{v.listings.toLocaleString()}</td>
-                      <td className="py-2 px-3 text-right tabular-nums">{v.sources}</td>
-                      <td className="py-2 px-3 text-right tabular-nums">{avgApproved.toFixed(1)}%</td>
-                      <td className="py-2 px-3">
-                        <GradeBadge grade={worstGrade} />
-                      </td>
-                    </tr>
-                  );
-                })}
-            </tbody>
-          </table>
+        <h2 className="text-base font-semibold text-foreground mb-3">By market</h2>
+        <div className="surface-2 rounded-lg border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[400px]">
+              <thead>
+                <tr className="border-b border-border">
+                  <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Market</th>
+                  <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Listings</th>
+                  <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Sources</th>
+                  <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Approved</th>
+                  <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Worst</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...byMarket.entries()]
+                  .sort((a, b) => b[1].listings - a[1].listings)
+                  .map(([marketId, v]) => {
+                    const avgApproved = v.listings > 0 ? (100 * v.approvedSum) / v.listings : 0;
+                    const worstGrade = ["D", "C", "B", "A"][v.worstGrade - 1] as "A" | "B" | "C" | "D";
+                    return (
+                      <tr key={marketId} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
+                        <td className="py-2.5 px-3 text-sm font-medium">{marketId.toUpperCase()}</td>
+                        <td className="py-2.5 px-3 text-right text-sm tabular-nums font-mono">{v.listings.toLocaleString()}</td>
+                        <td className="py-2.5 px-3 text-right text-sm tabular-nums font-mono">{v.sources}</td>
+                        <td className="py-2.5 px-3 text-right text-sm tabular-nums font-mono">{avgApproved.toFixed(1)}%</td>
+                        <td className="py-2.5 px-3">
+                          <GradeBadge grade={worstGrade} />
+                        </td>
+                      </tr>
+                    );
+                  })}
+              </tbody>
+            </table>
+          </div>
         </div>
       </section>
 
       {/* Data quality snapshot */}
-      <section className="border border-border p-6 bg-muted">
-        <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground mb-4">
-          Data quality snapshot
-        </h3>
+      <section className="surface-2 rounded-lg border border-border p-5">
+        <h2 className="text-base font-semibold text-foreground mb-4">Data quality</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
-            <div className="label-style mb-1">Listings with image</div>
-            <div className="font-mono text-xl font-bold tabular-nums">{globalImagePct.toFixed(1)}%</div>
+            <div className="text-xs text-foreground-muted mb-1">With image</div>
+            <div className="text-xl font-semibold tabular-nums font-mono">{globalImagePct.toFixed(1)}%</div>
           </div>
           <div>
-            <div className="label-style mb-1">Listings with price</div>
-            <div className="font-mono text-xl font-bold tabular-nums">{globalPricePct.toFixed(1)}%</div>
+            <div className="text-xs text-foreground-muted mb-1">With price</div>
+            <div className="text-xl font-semibold tabular-nums font-mono">{globalPricePct.toFixed(1)}%</div>
           </div>
           <div>
-            <div className="label-style mb-1">Approved (visible)</div>
-            <div className="font-mono text-xl font-bold tabular-nums">{approvedPct.toFixed(1)}%</div>
+            <div className="text-xs text-foreground-muted mb-1">Approved</div>
+            <div className="text-xl font-semibold tabular-nums font-mono">{approvedPct.toFixed(1)}%</div>
           </div>
           <div>
-            <div className="label-style mb-1">Total listings</div>
-            <div className="font-mono text-xl font-bold tabular-nums">{stats.totalListings.toLocaleString()}</div>
+            <div className="text-xs text-foreground-muted mb-1">Total</div>
+            <div className="text-xl font-semibold tabular-nums font-mono">{stats.totalListings.toLocaleString()}</div>
           </div>
         </div>
       </section>
 
       {/* Outliers */}
       <section>
-        <h3 className="font-sans font-bold text-lg uppercase tracking-tight text-foreground mb-4">
-          Outliers
-        </h3>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 font-mono text-sm">
+        <h2 className="text-base font-semibold text-foreground mb-3">Outliers</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {bestApproved && (
-            <div className="border border-border p-3 bg-muted">
-              <span className="label-style block mb-1">Best approval rate</span>
-              <span className="text-foreground font-medium">{bestApproved.sourceName}</span>
-              <span className="text-green ml-2">{bestApproved.approved_pct.toFixed(1)}%</span>
+            <div className="surface-2 rounded-lg border border-border p-4">
+              <div className="text-xs text-foreground-muted mb-1">Best approval</div>
+              <div className="text-sm font-medium text-foreground">{bestApproved.sourceName}</div>
+              <div className="text-green text-sm font-mono mt-0.5">{bestApproved.approved_pct.toFixed(1)}%</div>
             </div>
           )}
           {worstImage && (
-            <div className="border border-border p-3 bg-muted">
-              <span className="label-style block mb-1">Lowest image coverage</span>
-              <span className="text-foreground font-medium">{worstImage.sourceName}</span>
-              <span className="text-red ml-2">{worstImage.with_image_pct.toFixed(1)}%</span>
+            <div className="surface-2 rounded-lg border border-border p-4">
+              <div className="text-xs text-foreground-muted mb-1">Lowest images</div>
+              <div className="text-sm font-medium text-foreground">{worstImage.sourceName}</div>
+              <div className="text-red text-sm font-mono mt-0.5">{worstImage.with_image_pct.toFixed(1)}%</div>
             </div>
           )}
           {worstPrice && (
-            <div className="border border-border p-3 bg-muted">
-              <span className="label-style block mb-1">Lowest price coverage</span>
-              <span className="text-foreground font-medium">{worstPrice.sourceName}</span>
-              <span className="text-red ml-2">{worstPrice.with_price_pct.toFixed(1)}%</span>
+            <div className="surface-2 rounded-lg border border-border p-4">
+              <div className="text-xs text-foreground-muted mb-1">Lowest prices</div>
+              <div className="text-sm font-medium text-foreground">{worstPrice.sourceName}</div>
+              <div className="text-red text-sm font-mono mt-0.5">{worstPrice.with_price_pct.toFixed(1)}%</div>
             </div>
           )}
         </div>
@@ -2004,21 +1921,21 @@ function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
   const markets = getMarkets();
   return (
     <div>
-      <h1 style={{ color: "#e8e8e8", marginBottom: 4 }}>AFRICA PROPERTY INDEX</h1>
-      <p style={{ color: "#555", fontSize: 13, marginTop: 0 }}>
+      <h1 style={{ color: "#ececef", marginBottom: 4 }}>AFRICA PROPERTY INDEX</h1>
+      <p style={{ color: "#5a5a65", fontSize: 13, marginTop: 0 }}>
         Pan-African Real Estate Index
       </p>
-      <hr style={{ borderColor: "#222" }} />
+      <hr style={{ borderColor: "#1e1e24" }} />
       <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: 700 }}>
         <thead>
-          <tr style={{ borderBottom: "1px solid #333" }}>
+          <tr style={{ borderBottom: "1px solid #1e1e24" }}>
             {["Market", "Status", "Sources", "Listings", ""].map((h) => (
               <th
                 key={h}
                 style={{
                   textAlign: "left",
                   padding: "10px 14px",
-                  color: "#888",
+                  color: "#8b8b96",
                   fontSize: 12,
                   fontWeight: 500,
                   textTransform: "uppercase",
@@ -2034,23 +1951,23 @@ function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
           {markets.map((m) => (
             <tr
               key={m.id}
-              style={{ borderBottom: "1px solid #1a1a2e", cursor: "pointer" }}
+              style={{ borderBottom: "1px solid #16161a", cursor: "pointer" }}
               onClick={() => onSelect(m.id)}
             >
-              <td style={{ padding: "12px 14px", color: "#e8e8e8", fontWeight: 500 }}>
+              <td style={{ padding: "12px 14px", color: "#ececef", fontWeight: 500 }}>
                 {m.name}
               </td>
               <td style={{ padding: "12px 14px" }}>
                 <StatusBadge status={m.status} />
               </td>
-              <td style={{ padding: "12px 14px", color: "#bbb" }}>{m.sources.length}</td>
-              <td style={{ padding: "12px 14px", color: "#bbb" }}>{m.listings.length}</td>
+              <td style={{ padding: "12px 14px", color: "#8b8b96" }}>{m.sources.length}</td>
+              <td style={{ padding: "12px 14px", color: "#8b8b96" }}>{m.listings.length}</td>
               <td style={{ padding: "12px 14px" }}>
                 <button
                   onClick={() => onSelect(m.id)}
                   style={{
-                    background: "#0f3460",
-                    color: "#7ec8e3",
+                    background: "#1c1c22",
+                    color: "#e2a336",
                     border: "none",
                     padding: "6px 14px",
                     borderRadius: 6,
@@ -2077,17 +1994,17 @@ function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
 function SourceTable({ sources }: { sources: Source[] }) {
   return (
     <div>
-      <h3 style={{ color: "#e8e8e8" }}>Sources ({sources.length})</h3>
+      <h3 style={{ color: "#ececef" }}>Sources ({sources.length})</h3>
       <table style={{ borderCollapse: "collapse", width: "100%" }}>
         <thead>
-          <tr style={{ borderBottom: "1px solid #333" }}>
+          <tr style={{ borderBottom: "1px solid #1e1e24" }}>
             {["Name", "Status", "Scrapes", "Repairs", "Error"].map((h) => (
               <th
                 key={h}
                 style={{
                   textAlign: "left",
                   padding: "8px 12px",
-                  color: "#888",
+                  color: "#8b8b96",
                   fontSize: 11,
                   textTransform: "uppercase",
                 }}
@@ -2099,15 +2016,15 @@ function SourceTable({ sources }: { sources: Source[] }) {
         </thead>
         <tbody>
           {sources.map((s) => (
-            <tr key={s.id} style={{ borderBottom: "1px solid #1a1a2e" }}>
-              <td style={{ padding: "8px 12px", color: "#ccc", fontSize: 13 }}>{s.name}</td>
+            <tr key={s.id} style={{ borderBottom: "1px solid #16161a" }}>
+              <td style={{ padding: "8px 12px", color: "#ececef", fontSize: 13 }}>{s.name}</td>
               <td style={{ padding: "8px 12px" }}>
                 <StatusBadge status={s.state.status} />
               </td>
-              <td style={{ padding: "8px 12px", color: "#bbb", fontSize: 13 }}>
+              <td style={{ padding: "8px 12px", color: "#8b8b96", fontSize: 13 }}>
                 {s.state.scrapeAttempts}
               </td>
-              <td style={{ padding: "8px 12px", color: "#bbb", fontSize: 13 }}>
+              <td style={{ padding: "8px 12px", color: "#8b8b96", fontSize: 13 }}>
                 {s.state.repairAttempts}
               </td>
               <td
@@ -2138,7 +2055,7 @@ function SourceTable({ sources }: { sources: Source[] }) {
                   </div>
                 )}
                 {s.state.lastSeenAt && (
-                  <div style={{ color: "#888", fontSize: 11, marginTop: 4 }}>
+                  <div style={{ color: "#8b8b96", fontSize: 11, marginTop: 4 }}>
                     seen: {s.state.lastSeenAt}
                   </div>
                 )}
@@ -2249,8 +2166,8 @@ function FilterBar({
   const propertyTypes = Array.from(new Set(listings.map((l) => l.property_type).filter(Boolean))) as string[];
 
   return (
-    <div style={{ background: "#1a1a2e", padding: 16, borderRadius: 8, marginBottom: 20 }}>
-      <h4 style={{ color: "#e8e8e8", marginTop: 0, marginBottom: 12 }}>Filters</h4>
+    <div style={{ background: "#16161a", padding: 16, borderRadius: 8, marginBottom: 20 }}>
+      <h4 style={{ color: "#ececef", marginTop: 0, marginBottom: 12 }}>Filters</h4>
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: 12 }}>
         <input
           type="text"
@@ -2337,7 +2254,7 @@ function FilterBar({
             <option key={s.id} value={s.id}>{s.name}</option>
           ))}
         </select>
-        <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#bbb", fontSize: 13 }}>
+        <label style={{ display: "flex", alignItems: "center", gap: 8, color: "#8b8b96", fontSize: 13 }}>
           <input
             type="checkbox"
             checked={filters.priceOnRequest}
@@ -2350,8 +2267,8 @@ function FilterBar({
         onClick={() => setFilters(defaultFilters)}
         style={{
           marginTop: 12,
-          background: "#333",
-          color: "#ccc",
+          background: "#1c1c22",
+          color: "#ececef",
           border: "none",
           padding: "6px 14px",
           borderRadius: 6,
@@ -2366,10 +2283,10 @@ function FilterBar({
 }
 
 const inputStyle: React.CSSProperties = {
-  background: "#0f0f1a",
-  border: "1px solid #333",
-  color: "#e8e8e8",
-  padding: "8px 10px",
+  background: "#16161a",
+  border: "1px solid #1e1e24",
+  color: "#ececef",
+  padding: "6px 10px",
   borderRadius: 6,
   fontSize: 13,
 };
@@ -2408,12 +2325,12 @@ function ListingDetail({
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <button
           onClick={onBack}
-          className="border border-foreground px-4 py-2 text-sm font-mono text-foreground hover:bg-foreground hover:text-background transition-colors"
+          className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
         >
-          ← Back to list
+          ← Back
         </button>
-        <div className="flex items-center gap-4">
-          <span className="text-xl font-bold text-foreground">
+        <div className="flex items-center gap-3">
+          <span className="text-lg font-semibold text-foreground font-mono tabular-nums">
             {formatPrice(listing.price, listing.currency, displayCurrency)}
           </span>
           {listing.sourceUrl && (
@@ -2421,9 +2338,9 @@ function ListingDetail({
               href={listing.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest no-underline hover:bg-foreground hover:text-background transition-colors"
+              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
             >
-              View original listing ↗
+              View original ↗
             </a>
           )}
         </div>
@@ -2434,22 +2351,20 @@ function ListingDetail({
           <div className="w-full max-w-[560px] aspect-[560/360] overflow-hidden rounded-lg">
             <ImageGallery images={listing.images} width={560} height={360} responsive />
           </div>
-          <h2 className="font-sans font-black text-xl uppercase tracking-tight text-foreground mt-4">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground mt-4">
             {listing.title || "[No title]"}
           </h2>
           {listing.location && (
-            <p className="text-muted-foreground text-sm mt-1">
-              📍 {listing.location}
-            </p>
+            <p className="text-foreground-muted text-sm mt-1">{listing.location}</p>
           )}
           {facts.length > 0 && (
-            <div className="bg-muted border border-border p-4 mt-4">
-              <h4 className="label-style mt-0 mb-2">Key facts</h4>
-              <dl className="m-0 text-sm text-foreground font-mono">
+            <div className="surface-2 rounded-lg border border-border p-4 mt-4">
+              <h4 className="text-xs text-foreground-subtle mb-3">Key facts</h4>
+              <dl className="m-0 text-sm text-foreground">
                 {facts.map((f) => (
-                  <div key={f.label} className="flex gap-2 mb-1">
-                    <dt className="m-0 min-w-[100px]">{f.label}:</dt>
-                    <dd className="m-0">{String(f.value)}</dd>
+                  <div key={f.label} className="flex gap-2 mb-1.5">
+                    <dt className="m-0 min-w-[100px] text-foreground-muted">{f.label}</dt>
+                    <dd className="m-0 font-mono">{String(f.value)}</dd>
                   </div>
                 ))}
               </dl>
@@ -2457,30 +2372,30 @@ function ListingDetail({
           )}
           {listing.amenities && listing.amenities.length > 0 && (
             <div className="mt-4">
-              <h4 className="label-style">Amenities</h4>
-              <p className="text-foreground text-sm font-mono">{listing.amenities.join(", ")}</p>
+              <h4 className="text-xs text-foreground-subtle mb-1">Amenities</h4>
+              <p className="text-foreground text-sm">{listing.amenities.join(", ")}</p>
             </div>
           )}
           {listing.violations && listing.violations.length > 0 && (
             <div className="mt-4">
-              <h4 className="label-style text-amber">Violations</h4>
-              <p className="text-foreground text-sm font-mono">{listing.violations.join(", ")}</p>
+              <h4 className="text-xs text-amber mb-1">Violations</h4>
+              <p className="text-foreground text-sm">{listing.violations.join(", ")}</p>
             </div>
           )}
         </div>
         <div>
-          <div className="bg-muted border border-border p-4">
-            <h4 className="label-style mt-0 mb-2">Description</h4>
-            <p className="text-foreground text-sm font-mono leading-relaxed whitespace-pre-wrap">
+          <div className="surface-2 rounded-lg border border-border p-4">
+            <h4 className="text-xs text-foreground-subtle mb-2">Description</h4>
+            <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
               {listing.description || "No description."}
             </p>
           </div>
-          <div className="mt-4 text-muted-foreground text-xs font-mono">
-            <p className="m-1"><strong>Source:</strong> {listing.sourceName}</p>
-            <p className="m-1"><strong>ID:</strong> {listing.id}</p>
+          <div className="mt-4 text-foreground-subtle text-xs">
+            <p className="m-1"><span className="text-foreground-muted">Source:</span> {listing.sourceName}</p>
+            <p className="m-1"><span className="text-foreground-muted">ID:</span> <span className="font-mono">{listing.id}</span></p>
           </div>
-          <div className="bg-muted border border-border p-3 mt-4 text-muted-foreground text-xs font-mono">
-            This listing is aggregated from an external source. Africa Property Index does not verify accuracy or facilitate transactions.
+          <div className="surface-2 rounded-lg border border-border p-3 mt-4 text-foreground-subtle text-xs">
+            Aggregated from an external source. Africa Property Index does not verify accuracy or facilitate transactions.
           </div>
         </div>
       </div>
@@ -2509,7 +2424,7 @@ function ListingsGrid({
 
   return (
     <div>
-      <h3 style={{ color: "#e8e8e8" }}>
+      <h3 style={{ color: "#ececef" }}>
         Listings ({listings.length})
         {totalPages > 1 && ` – Page ${page} of ${totalPages}`}
       </h3>
@@ -2522,15 +2437,15 @@ function ListingsGrid({
         <div style={{ display: "flex", gap: 8, marginTop: 20, alignItems: "center" }}>
           <button
             disabled={page <= 1}
-            onClick={() => setPage((p) => p - 1)}
+            onClick={() => setPage(page - 1)}
             style={{ ...inputStyle, cursor: page <= 1 ? "not-allowed" : "pointer" }}
           >
             Previous
           </button>
-          <span style={{ color: "#888" }}>{page} / {totalPages}</span>
+          <span style={{ color: "#8b8b96" }}>{page} / {totalPages}</span>
           <button
             disabled={page >= totalPages}
-            onClick={() => setPage((p) => p + 1)}
+            onClick={() => setPage(page + 1)}
             style={{ ...inputStyle, cursor: page >= totalPages ? "not-allowed" : "pointer" }}
           >
             Next
@@ -2560,7 +2475,7 @@ function MarketDetail({
   if (!market) {
     return (
       <div>
-        <p style={{ color: "#e8e8e8" }}>Market not found: {marketId}</p>
+        <p style={{ color: "#ececef" }}>Market not found: {marketId}</p>
         <button onClick={onBack}>Back</button>
       </div>
     );
@@ -2585,8 +2500,8 @@ function MarketDetail({
           onClick={onBack}
           style={{
             background: "none",
-            border: "1px solid #333",
-            color: "#888",
+            border: "1px solid #1e1e24",
+            color: "#8b8b96",
             padding: "6px 14px",
             borderRadius: 6,
             cursor: "pointer",
@@ -2595,12 +2510,12 @@ function MarketDetail({
         >
           Back
         </button>
-        <h1 style={{ color: "#e8e8e8", margin: 0 }}>{market.name}</h1>
+        <h1 style={{ color: "#ececef", margin: 0 }}>{market.name}</h1>
         <StatusBadge status={market.status} />
       </div>
-      <hr style={{ borderColor: "#222" }} />
+      <hr style={{ borderColor: "#1e1e24" }} />
       <SourceTable sources={market.sources} />
-      <hr style={{ borderColor: "#222", margin: "24px 0" }} />
+      <hr style={{ borderColor: "#1e1e24", margin: "24px 0" }} />
       <FilterBar
         filters={filters}
         setFilters={(f) => { setFilters(f); setPage(1); }}
@@ -2623,82 +2538,87 @@ function MarketDetail({
 
 type Tab = "dashboard" | "listings" | "sources" | "stats" | "agents";
 
+const NAV_ITEMS: { key: Tab; label: string; icon: string }[] = [
+  { key: "dashboard", label: "Dashboard", icon: "◈" },
+  { key: "listings", label: "Listings", icon: "▤" },
+  { key: "sources", label: "Sources", icon: "⬡" },
+  { key: "stats", label: "Stats", icon: "◫" },
+  { key: "agents", label: "Agents", icon: "◉" },
+];
+
 function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
 
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
-      <header className="border-b border-border pb-4 mb-8">
-        <h1 className="font-sans font-black text-2xl sm:text-3xl uppercase tracking-tight text-foreground mb-1">
-          Africa Property Index
-        </h1>
-        <p className="label-style mt-0">
-          Pan-African Real Estate Index — Admin
-        </p>
-        <nav className="flex flex-wrap gap-2 mt-4">
-          <button
-            onClick={() => setTab("dashboard")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "dashboard"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Dashboard
-          </button>
-          <button
-            onClick={() => setTab("listings")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "listings"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Listings
-          </button>
-          <button
-            onClick={() => setTab("sources")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "sources"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Sources
-          </button>
-          <button
-            onClick={() => setTab("stats")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "stats"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Stats
-          </button>
-          <button
-            onClick={() => setTab("agents")}
-            className={
-              "border border-foreground px-4 py-2 text-sm font-mono uppercase tracking-widest transition-colors " +
-              (tab === "agents"
-                ? "bg-foreground text-background"
-                : "hover:bg-foreground hover:text-background")
-            }
-          >
-            Agents
-          </button>
-        </nav>
-      </header>
+    <div className="flex h-screen overflow-hidden">
+      {/* ── Sidebar ──────────────────────────────── */}
+      <aside className="sidebar">
+        <div className="px-5 pt-6 pb-5">
+          <div className="flex items-center gap-2.5">
+            <div
+              className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
+              style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)" }}
+            >
+              A
+            </div>
+            <div>
+              <div className="text-[13px] font-semibold text-foreground tracking-tight leading-none">
+                AREI
+              </div>
+              <div className="text-[11px] text-foreground-muted mt-0.5">
+                Admin Console
+              </div>
+            </div>
+          </div>
+        </div>
 
-      {tab === "dashboard" && <DashboardView />}
-      {tab === "listings" && <ListingsTabView />}
-      {tab === "sources" && <SourcesView />}
-      {tab === "stats" && <StatsView />}
-      {tab === "agents" && <AgentsApprovalsView />}
+        <div className="px-3 mb-2">
+          <div className="text-[10px] uppercase tracking-wider text-foreground-subtle font-medium px-2 mb-1.5">
+            Navigation
+          </div>
+        </div>
+
+        <nav className="flex-1 px-3 space-y-0.5">
+          {NAV_ITEMS.map(({ key, label, icon }) => (
+            <button
+              key={key}
+              onClick={() => setTab(key)}
+              className={
+                "w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-md transition-all duration-150 " +
+                (tab === key
+                  ? "bg-accent/15 text-accent border-l-2 border-accent"
+                  : "text-foreground-muted hover:text-foreground hover:bg-surface-2 border-l-2 border-transparent")
+              }
+            >
+              <span className="text-base leading-none opacity-70">{icon}</span>
+              {label}
+              {key === "agents" && (
+                <span className="ml-auto text-[10px] font-semibold bg-accent/15 text-accent px-1.5 py-0.5 rounded">
+                  NEW
+                </span>
+              )}
+            </button>
+          ))}
+        </nav>
+
+        <div className="px-3 pb-4 mt-auto">
+          <div className="surface-2 rounded-lg px-3 py-3">
+            <div className="text-[11px] text-foreground-subtle mb-1">Africa Property Index</div>
+            <div className="text-[11px] text-foreground-muted">Pan-African Real Estate</div>
+          </div>
+        </div>
+      </aside>
+
+      {/* ── Main content ─────────────────────────── */}
+      <main className="flex-1 overflow-y-auto">
+        <div className="max-w-[1200px] px-8 py-8">
+          {tab === "dashboard" && <DashboardView />}
+          {tab === "listings" && <ListingsTabView />}
+          {tab === "sources" && <SourcesView />}
+          {tab === "stats" && <StatsView />}
+          {tab === "agents" && <AgentsApprovalsView />}
+        </div>
+      </main>
     </div>
   );
 }
@@ -2742,33 +2662,45 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
 
   return (
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
-      <div className="border border-foreground brutalist-shadow-sm p-8 max-w-sm w-full bg-muted">
-        <h1 className="font-sans font-black text-xl uppercase tracking-tight text-foreground mb-2">
-          Admin login
-        </h1>
-        <p className="label-style mb-6">
-          Internal dashboard - enter password
-        </p>
-        <form onSubmit={handleSubmit}>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            placeholder="Password"
-            className="w-full bg-background border border-foreground text-foreground px-4 py-3 font-mono mb-4"
-            autoFocus
-          />
-          {error && (
-            <p className="text-red text-sm font-mono mb-4">{error}</p>
-          )}
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full border border-foreground px-4 py-3 text-sm font-mono uppercase tracking-widest hover:bg-foreground hover:text-background transition-colors disabled:opacity-50"
+      <div className="w-full max-w-sm">
+        <div className="flex items-center gap-2.5 mb-8 justify-center">
+          <div
+            className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold"
+            style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)" }}
           >
-            {loading ? "Checking…" : "Log in"}
-          </button>
-        </form>
+            A
+          </div>
+          <span className="text-lg font-semibold tracking-tight">AREI</span>
+        </div>
+        <div className="surface-2 rounded-xl p-7 border border-border">
+          <h1 className="text-lg font-semibold text-foreground mb-1 text-center">
+            Sign in to Admin
+          </h1>
+          <p className="text-sm text-foreground-muted mb-6 text-center">
+            Enter your password to continue
+          </p>
+          <form onSubmit={handleSubmit}>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password"
+              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded-lg mb-4 focus:border-accent focus:outline-none transition-colors"
+              autoFocus
+            />
+            {error && (
+              <p className="text-red text-sm mb-4">{error}</p>
+            )}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full px-4 py-2.5 text-sm font-medium rounded-lg transition-all disabled:opacity-50"
+              style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)", color: "#09090b" }}
+            >
+              {loading ? "Checking…" : "Sign in"}
+            </button>
+          </form>
+        </div>
       </div>
     </div>
   );
@@ -2792,8 +2724,8 @@ function AuthGate({ children }: { children: React.ReactNode }) {
   if (!ADMIN_PROTECTED) return <>{children}</>;
   if (status === "loading") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center font-mono text-muted-foreground">
-        Checking…
+      <div className="min-h-screen bg-background flex items-center justify-center text-foreground-muted text-sm">
+        Checking access…
       </div>
     );
   }
