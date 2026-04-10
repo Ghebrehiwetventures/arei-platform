@@ -221,27 +221,75 @@ sources:
 
   # ============================================
   # CCORE INVESTMENTS
-  # CasafariCRM-based, requires headless + property list URL
+  # CasafariCRM / Proppy CRM - server-side rendered, no headless needed
+  # Listing URL: /lista-propriedades?page=N
+  # Detail URL:  /detalhe-propriedade/{slug}/{id}
+  # DOM: each listing is <a class="propertyItemStyle11"> - container IS the link
+  # Images served from cdn.proppy.app CDN (no lazy loading, in HTML directly)
   # ============================================
   - id: cv_ccoreinvestments
     name: "CCore Investments"
     url: https://www.ccoreinvestments.com/lista-propriedades
     type: html
-    lifecycleOverride: OBSERVE  # Needs further investigation - JS-heavy CRM
-    fetch_method: headless
+    lifecycleOverride: IN
+    fetch_method: http  # Server-rendered HTML, no JS rendering required
 
     pagination:
-      type: none
+      type: query_param
+      param: "page"
+      start: 1
+      first_no_param: false  # Page 1 uses ?page=1 explicitly
 
+    delay_ms: 2500
+    jitter_ms: 1000
+    max_items: 200
+    max_pages: 15
+    stop_condition: empty_listings
+
+    # CasafariCRM (Proppy) DOM structure:
+    # - Listing container = <a class="propertyItemStyle11"> (the anchor is the card)
+    # - Price: "384 748 €" with non-breaking space (&#160;) as thousands separator
     selectors:
-      listing: ".property-card, .list__item, article"
-      link: "a[href*='propriedad']"
-      title: "h2, h3, .title"
-      price: ".price"
-      image: "img"
+      listing: "a.propertyItemStyle11"
+      # no `link` needed — container is the anchor, genericFetcher reads $container.attr("href")
+      title: "h3.propertyItemStyle11__title"
+      price: "span.propertyItemStyle11__price"
+      location: "h4.propertyItemStyle11__subTitle"
+      image: "img.propertyItemStyle11__img"
+
+    price_format:
+      currency_symbol: "€"
+      thousands_separator: " "   # Covers both regular space and &#160; non-breaking space
+      decimal_separator: ","
+
+    id_prefix: "ccore"
 
     detail:
-      enabled: false
+      enabled: true
+      policy: always
+      delay_ms: 2500
+      selectors:
+        description: ".description, [class*='description'] p, .observations p, p"
+        images: "img[src*='cdn.proppy.app'], img[src*='propertyphotos'], .gallery img, .slider img"
+      spec_patterns:
+        bedrooms:
+          - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
+          - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\bT(\\d+)\\b"
+          - "(?:T|Tipologia)\\s*(\\d+)"
+        bathrooms:
+          - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
+          - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
+        area:
+          - "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m|metros?\\s*quadrados?)"
+          - "(?:area|size|superf[ií]cie|[aá]rea)\\s*[:\\-]?\\s*(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq|$)"
+      amenity_keywords:
+        pool: ["pool", "piscina", "swimming"]
+        sea_view: ["sea view", "vista mar", "ocean view"]
+        balcony: ["balcony", "varanda"]
+        garden: ["garden", "jardim"]
+        air_conditioning: ["air conditioning", "ar condicionado", "a/c"]
+        parking: ["parking", "garage", "estacionamento"]
 
   # ============================================
   # HOMES CASA VERDE

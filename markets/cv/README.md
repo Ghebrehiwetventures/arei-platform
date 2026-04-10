@@ -16,11 +16,11 @@
 | `cv_cabohouseproperty` | Cabo House Property | IN | headless | MyHome theme |
 | `cv_estatecv` | Estate CV | IN | headless | Multi-island |
 | `cv_oceanproperty24` | Ocean Property 24 | IN | http | WP Residence |
+| `cv_ccoreinvestments` | CCore Investments | IN | http | CasafariCRM/Proppy, ?page=N pagination |
 
 ## Dropped Sources
 
 - **cv_capeverdepropertyuk** – Cloudflare blocks all requests
-- **cv_ccoreinvestments** – CasafariCRM needs investigation
 
 ## Known Issues
 
