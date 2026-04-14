@@ -1327,6 +1327,10 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
     const propertyType = fullListing?.property_type || extractPropertyType(listing.title, fullListing?.detailUrl || fullListing?.externalUrl || undefined);
     const isLand = LAND_TYPES.test(propertyType);
 
+    // Fallback order: source-level currency → market-level currency
+    const sourceConfig = sources.find(s => s.id === listing.sourceId);
+    const currency = sourceConfig?.currency ?? getCurrency(marketId);
+
     return {
       id: listing.id,
       source_id: listing.sourceId,
@@ -1337,7 +1341,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       price: listing.price,
       project_flag: fullListing?.project_flag ?? null,
       project_start_price: fullListing?.project_start_price ?? null,
-      currency: getCurrency(marketId),
+      currency,
       country: "Cape Verde",
       island,
       city,
