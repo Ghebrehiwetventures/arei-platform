@@ -18,6 +18,11 @@ import CookieBanner from "./components/CookieBanner";
 function ScrollToTop() {
   const { pathname } = useLocation();
   useLayoutEffect(() => {
+    // Prevent browser from auto-restoring scroll position on navigation
+    if ("scrollRestoration" in history) {
+      history.scrollRestoration = "manual";
+    }
+
     // Footer and nav stay mounted across routes, so blur any focused shell link
     // before forcing scroll restoration. Otherwise some browsers keep the
     // focused footer link in view after navigation.
@@ -30,6 +35,8 @@ function ScrollToTop() {
     window.scrollTo({ top: 0, left: 0, behavior: "auto" });
 
     const id = window.requestAnimationFrame(() => {
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
       window.scrollTo({ top: 0, left: 0, behavior: "auto" });
     });
 

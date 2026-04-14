@@ -321,19 +321,21 @@ export class AREIClient {
   // =========================================================================
   async getMarketStats(): Promise<{
     total: number;
+    sourceCount: number;
     islands: IslandMedianStat[];
   }> {
-    // Fetch all prices + islands for stats computation.
+    // Fetch all prices + islands + source_ids for stats computation.
     // With ~400 rows this is efficient. For larger feeds, move to an RPC.
 
     const { data, error } = await this.sb
       .from(VIEW)
-      .select("island, price");
+      .select("island, price, source_id");
 
     if (error) throw new Error(`getMarketStats failed: ${error.message}`);
 
-    const rows = (data ?? []) as { island: string; price: number | null }[];
+    const rows = (data ?? []) as { island: string; price: number | null; source_id: string | null }[];
     const total = rows.length;
+    const sourceCount = new Set(rows.map((r) => r.source_id).filter(Boolean)).size;
 
     // Group prices by island, applying outlier filter
     const byIsland = new Map<string, number[]>();
@@ -370,7 +372,7 @@ export class AREIClient {
     // Sort by count descending
     islands.sort((a, b) => b.n_price - a.n_price);
 
-    return { total, islands };
+    return { total, sourceCount, islands };
   }
 
   // =========================================================================

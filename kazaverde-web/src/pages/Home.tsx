@@ -12,6 +12,9 @@ import { formatMedian } from "../lib/format";
 import { CURATED_FEATURED_IDS } from "../lib/prerender-listings";
 import "./Home.css";
 
+/* Number of actively configured scrape sources (lifecycleOverride: IN in markets/cv/sources.yml) */
+const ACTIVE_SOURCE_COUNT = 9;
+
 /* Static gradients for island explorer cards */
 const ISLAND_BG: Record<string, string> = {
   Sal: "linear-gradient(180deg, #5CB8E6 0%, #3A9AC8 35%, #E8D5A0 36%, #D4C088 50%, #2A8A7A 51%, #1A6A5A 100%)",
@@ -30,6 +33,7 @@ interface HomeData {
   stats: {
     total: number;
     islandCount: number;
+    sourceCount: number;
     medianPrice: number | null;
     islands: { name: string; median: number | null; count: number; totalListings: number }[];
   };
@@ -88,6 +92,7 @@ export default function Home() {
           stats: {
             total: statsRes.total,
             islandCount: islandsRes.length,
+            sourceCount: statsRes.sourceCount,
             medianPrice,
             islands: statsRes.islands.map((i) => ({
               name: i.island,
@@ -177,8 +182,8 @@ export default function Home() {
       {/* Stats strip */}
       <div className="sr anim-fu delay-25">
         <div className="si"><div className="sn">{stats.total}</div><div className="sl">Active Listings</div></div>
-        <div className="si"><div className="sn">{stats.islandCount}</div><div className="sl">Islands</div></div>
-        <div className="si"><div className="sn">Multiple</div><div className="sl">Tracked Sources</div></div>
+        <div className="si si-desktop-only"><div className="sn">{stats.islandCount}</div><div className="sl">Islands</div></div>
+        <div className="si"><div className="sn">{ACTIVE_SOURCE_COUNT}</div><div className="sl">Active Sources</div></div>
         <div className="si"><div className="sn">{stats.medianPrice ? formatMedian(stats.medianPrice) : "—"}</div><div className="sl">Estimated Median Price</div></div>
       </div>
 

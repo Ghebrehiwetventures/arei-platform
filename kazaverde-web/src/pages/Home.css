@@ -155,11 +155,16 @@
   .hero { padding: 48px 0 56px; }
   .hero h1 { font-size: 3.2rem; }
   .sr {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 24px 16px;
-    padding: 32px 0;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-around;
+    gap: 8px;
+    padding: 28px 16px;
   }
+  .si { flex: 1; }
+  .si-desktop-only { display: none; }
+  .sn { font-size: 1.8rem; }
+  .sl { font-size: 0.65rem; }
   .mp-grid {
     grid-template-columns: 1fr;
     gap: 12px;

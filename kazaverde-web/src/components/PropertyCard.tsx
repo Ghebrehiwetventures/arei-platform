@@ -9,9 +9,10 @@ interface Props {
   listing: DemoListing;
   index?: number;
   viewMode?: "grid" | "list";
+  disableSwipe?: boolean;
 }
 
-export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: Props) {
+export default function PropertyCard({ listing, index = 0, viewMode = "grid", disableSwipe = false }: Props) {
   const navigate = useNavigate();
   const { toggle, isSaved } = useSaved();
   const isNew = isNewListing(listing.first_seen_at);
@@ -74,14 +75,14 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
   };
 
   const onTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!hasMultipleImages) return;
+    if (!hasMultipleImages || disableSwipe) return;
     touchStartX.current = e.touches[0].clientX;
     touchStartY.current = e.touches[0].clientY;
     touchAxis.current = null;
   };
 
   const onTouchMove = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!hasMultipleImages) return;
+    if (!hasMultipleImages || disableSwipe) return;
     const deltaX = e.touches[0].clientX - touchStartX.current;
     const deltaY = e.touches[0].clientY - touchStartY.current;
 
@@ -96,7 +97,7 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
   };
 
   const onTouchEnd = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!hasMultipleImages) return;
+    if (!hasMultipleImages || disableSwipe) return;
     const deltaX = e.changedTouches[0].clientX - touchStartX.current;
     const deltaY = e.changedTouches[0].clientY - touchStartY.current;
     const isHorizontalSwipe = touchAxis.current === "x" && Math.abs(deltaX) >= 42 && Math.abs(deltaX) > Math.abs(deltaY);
