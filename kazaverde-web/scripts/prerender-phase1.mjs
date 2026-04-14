@@ -50,6 +50,15 @@ function getStaticRoutes(blogArticles, listingRoutes = []) {
           </section>
 
           <section>
+            <h2>Browse by island</h2>
+            <ul>
+              <li><a href="/listings/sal">Property for sale in Sal</a></li>
+              <li><a href="/listings/boa-vista">Property for sale in Boa Vista</a></li>
+              <li><a href="/listings">All Cape Verde properties</a></li>
+            </ul>
+          </section>
+
+          <section>
             <h2>Built for discovery, not transactions</h2>
             <p>
               KazaVerde is not a broker or marketplace. Each property links back to its original source page,
@@ -206,7 +215,7 @@ function getStaticRoutes(blogArticles, listingRoutes = []) {
             </p>
             <p>
               <a href="/listings/sal">Properties in Sal</a> ·
-              <a href="/listings?island=Boa%20Vista">Properties in Boa Vista</a> ·
+              <a href="/listings/boa-vista">Properties in Boa Vista</a> ·
               <a href="/listings?island=Santiago">Properties in Santiago</a> ·
               <a href="/listings?island=S%C3%A3o%20Vicente">Properties in São Vicente</a>
             </p>

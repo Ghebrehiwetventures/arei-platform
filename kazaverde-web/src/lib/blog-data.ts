@@ -469,7 +469,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h2>What Drives Rental Income in Cape Verde</h2>
 <p>Several factors determine whether a property sits at the top or bottom of the yield range.</p>
 <ul>
-<li><strong>Island and location:</strong> Sal (especially Santa Maria) has the strongest rental demand due to its international airport, tourism infrastructure, and name recognition. Boa Vista is growing. Other islands have thinner rental markets.</li>
+<li><strong>Island and location:</strong> <a href="/listings/sal">Sal</a> (especially Santa Maria) has the strongest rental demand due to its international airport, tourism infrastructure, and name recognition. <a href="/listings/boa-vista">Boa Vista</a> is growing. Other islands have thinner rental markets.</li>
 <li><strong>Proximity to the beach:</strong> Cape Verde&#39;s appeal is fundamentally beaches and sunshine. Properties within walking distance of good beaches command higher rates and better occupancy.</li>
 <li><strong>Property quality and presentation:</strong> Well-maintained, nicely furnished properties with modern amenities (reliable WiFi, air conditioning, good kitchen) outperform dated or basic units significantly. The market is becoming more competitive as new developments raise the standard.</li>
 <li><strong>Management quality:</strong> In a managed scheme, the management company&#39;s marketing reach, platform presence, and guest service standards directly impact occupancy and rates. A poor management company can turn a great property into a mediocre investment.</li>
