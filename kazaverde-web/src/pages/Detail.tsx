@@ -532,7 +532,7 @@ export default function Detail() {
           </div>
           <div className="dsim-grid" ref={simRef}>
             {similar.map((s) => (
-              <PropertyCard key={s.id} listing={s} />
+              <PropertyCard key={s.id} listing={s} disableSwipe />
             ))}
           </div>
         </section>

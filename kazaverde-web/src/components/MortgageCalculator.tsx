@@ -96,6 +96,10 @@ export default function MortgageCalculator({ price }: Props) {
   }));
   const [showExtra, setShowExtra] = useState(false);
 
+  // Raw string states for decimal inputs so the decimal point isn't lost while typing
+  const [rawInterestRate, setRawInterestRate] = useState(String(DEFAULTS.interestRate));
+  const [rawPropertyTaxPct, setRawPropertyTaxPct] = useState(String(DEFAULTS.propertyTaxPct));
+
   const set = <K extends keyof MortgageInput>(key: K, val: MortgageInput[K]) =>
     setInput((prev) => ({ ...prev, [key]: val }));
 
@@ -155,8 +159,13 @@ export default function MortgageCalculator({ price }: Props) {
               <input
                 type="text"
                 inputMode="decimal"
-                value={input.interestRate}
-                onChange={(e) => set("interestRate", Math.min(15, parseNum(e.target.value, true)))}
+                value={rawInterestRate}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+                  setRawInterestRate(raw);
+                  const n = raw === "" || raw === "." ? 0 : Number(raw);
+                  if (!isNaN(n)) set("interestRate", Math.min(15, n));
+                }}
               />
               <input
                 type="range"
@@ -165,7 +174,11 @@ export default function MortgageCalculator({ price }: Props) {
                 max={15}
                 step={0.1}
                 value={input.interestRate}
-                onChange={(e) => set("interestRate", Number(e.target.value))}
+                onChange={(e) => {
+                  const n = Number(e.target.value);
+                  set("interestRate", n);
+                  setRawInterestRate(String(n));
+                }}
               />
             </div>
 
@@ -204,8 +217,13 @@ export default function MortgageCalculator({ price }: Props) {
               <input
                 type="text"
                 inputMode="decimal"
-                value={input.propertyTaxPct}
-                onChange={(e) => set("propertyTaxPct", parseNum(e.target.value, true))}
+                value={rawPropertyTaxPct}
+                onChange={(e) => {
+                  const raw = e.target.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+                  setRawPropertyTaxPct(raw);
+                  const n = raw === "" || raw === "." ? 0 : Number(raw);
+                  if (!isNaN(n)) set("propertyTaxPct", n);
+                }}
               />
             </div>
 
