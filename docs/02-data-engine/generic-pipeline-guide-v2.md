@@ -776,7 +776,7 @@ $ grep -n "if.*marketId.*===" core/ingestMarket.ts
 
 | Källa | Status | Anledning |
 |-------|--------|-----------|
-| cv_ccoreinvestments | OBSERVE | CasafariCRM - behöver ytterligare undersökning |
+| cv_ccoreinvestments | IN | CasafariCRM/Proppy - server-rendered, HTTP fetch, ?page=N pagination, onboarded |
 | cv_capeverdepropertyuk | 403 | Blockerad - behöver proxy/external acquisition |
 
 ### Körlogg

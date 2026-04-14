@@ -191,6 +191,7 @@ interface JsonLdSpecs {
   bedrooms?: number;
   bathrooms?: number;
   area?: number;
+  description?: string;
 }
 
 function extractJsonLd($: cheerio.CheerioAPI): JsonLdSpecs {
@@ -265,6 +266,32 @@ function extractJsonLd($: cheerio.CheerioAPI): JsonLdSpecs {
     }
   });
 
+  // Second pass: extract description from any node regardless of @type.
+  // Some CRMs (e.g. CasafariCRM/Proppy) place the property description on a
+  // WebSite or non-real-estate node that the relevancy filter above skips.
+  if (specs.description === undefined) {
+    $('script[type="application/ld+json"]').each((_, el) => {
+      try {
+        const raw = $(el).html();
+        if (!raw) return;
+        const data = JSON.parse(raw);
+        const nodes: any[] = Array.isArray(data)
+          ? data
+          : data?.["@graph"] ? data["@graph"] : [data];
+        for (const node of nodes) {
+          if (typeof node.description === "string") {
+            const text = node.description.trim();
+            if (text.length >= 50 && (!specs.description || text.length > specs.description.length)) {
+              specs.description = text;
+            }
+          }
+        }
+      } catch {
+        // Malformed JSON-LD — skip silently
+      }
+    });
+  }
+
   return specs;
 }
 
@@ -338,7 +365,13 @@ export function genericDetailExtract(
         }
       }
     }
-    // Fallback: find longest paragraph
+    // Fallback 1: JSON-LD description (covers CRMs like CasafariCRM that store
+    // description in structured data rather than visible HTML paragraphs)
+    if ((!result.description || result.description.length < 50) && jsonLd.description) {
+      result.description = jsonLd.description;
+    }
+
+    // Fallback 2: find longest paragraph
     if (!result.description || result.description.length < 50) {
       let longestText = "";
       let longestEl: any = null;

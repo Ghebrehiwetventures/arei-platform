@@ -84,6 +84,10 @@ export interface SourceConfig {
   /** CMS type for preset fallbacks (auto-detected if not specified) */
   cms_type?: "elementor" | "wordpress" | "wix" | "squarespace" | "shopify" | "custom";
 
+  /** ISO 4217 currency code for this source (e.g. "EUR", "CVE").
+   *  Overrides the market-level currency from locations.yml when set. */
+  currency?: string;
+
   // Extended fields for generic fetcher
   fetch_method?: FetchMethod;
   pagination?: PaginationConfig;
