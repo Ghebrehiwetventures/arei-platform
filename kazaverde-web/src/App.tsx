@@ -47,6 +47,7 @@ export default function App() {
         <Route path="/" element={<Home />} />
         <Route path="/listings" element={<Listings />} />
         <Route path="/listings/sal" element={<Navigate to="/listings?island=Sal" replace />} />
+        <Route path="/listings/boa-vista" element={<Navigate to="/listings?island=Boa%20Vista" replace />} />
         <Route path="/listing/:id" element={<Detail />} />
         <Route path="/market" element={<Market />} />
         <Route path="/saved" element={<Saved />} />

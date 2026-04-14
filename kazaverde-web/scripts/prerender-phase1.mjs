@@ -271,6 +271,53 @@ function getStaticRoutes(blogArticles, listingRoutes = []) {
     ),
     },
     {
+      route: "/listings/boa-vista",
+      ...page(
+      "Property for Sale in Boa Vista, Cape Verde | KazaVerde",
+      "Browse property listings for sale in Boa Vista, Cape Verde. Beach villas, resort apartments, and coastal properties in Sal Rei and across the island.",
+      (() => {
+        const boaVistaListings = listingRoutes.filter(
+          (lr) => lr.description.includes(", Boa Vista,") || lr.description.includes("in Boa Vista,")
+        );
+        return `
+        <main>
+          <section>
+            <p>Boa Vista · Cape Verde</p>
+            <h1>Property for Sale in Boa Vista, Cape Verde</h1>
+            <p>
+              Boa Vista is Cape Verde&#39;s main growth market — property prices run 15–25% below equivalent
+              properties on Sal, with its own international airport and expanding tourism infrastructure.
+              Sal Rei is the commercial center; most development clusters along the coast. Browse
+              source-linked listings below.
+            </p>
+            <p><a href="/listings">View all Cape Verde properties</a></p>
+          </section>
+
+          ${boaVistaListings.length > 0 ? `
+          <section>
+            <h2>Boa Vista listings in the index</h2>
+            <ul>
+              ${boaVistaListings.map((lr) => `<li><a href="${escapeHtml(lr.route)}">${escapeHtml(lr.title)}</a></li>`).join("\n              ")}
+            </ul>
+          </section>` : ""}
+
+          <section>
+            <h2>Buying property in Boa Vista</h2>
+            <p>
+              Boa Vista is often described as where Sal was 5–10 years ago: a growing short-term rental
+              market, lower entry prices, and an active development pipeline. For buyers who want beach-island
+              investment at a more accessible price point, Boa Vista is the primary alternative to Sal.
+            </p>
+            <p>
+              <a href="/blog/which-cape-verde-island-property">Compare Boa Vista with other Cape Verde islands</a> ·
+              <a href="/blog/cape-verde-rental-yields-realistic">Rental yield analysis</a>
+            </p>
+          </section>
+        </main>
+      `})(),
+    ),
+    },
+    {
       route: "/cookie-policy",
       ...page(
       "Cookie Policy — KazaVerde",

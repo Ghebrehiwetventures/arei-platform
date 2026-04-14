@@ -247,6 +247,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <p><strong>What the market looks like:</strong> Property prices are generally 15–25% lower than equivalent properties on Sal, offering a potential entry point for buyers who want beach-island investment at a more accessible price. The development pipeline is active, with several new projects targeting both investors and lifestyle buyers.</p>
 <p><strong>Rental potential:</strong> Growing but more seasonal than Sal. As flight connections increase and tourism infrastructure matures, rental demand is trending upward. Boa Vista is often positioned as where Sal was 5–10 years ago in terms of market development.</p>
 <p><strong>Things to consider:</strong> Less developed infrastructure means fewer restaurants, shops, and services outside the resort zones. This is evolving, but buyers should visit and assess whether the current level of development meets their needs.</p>
+<p><a href="/listings/boa-vista">Browse current Boa Vista properties for sale</a> in KazaVerde&#39;s index.</p>
 <hr>
 <h2>Santiago: Beyond Tourism</h2>
 <p>Santiago is Cape Verde&#39;s largest and most populated island, home to the capital Praia. It&#39;s the economic, political, and cultural heart of the archipelago — and its property market reflects a broader economy, not just tourism.</p>
