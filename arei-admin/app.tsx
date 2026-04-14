@@ -17,6 +17,25 @@ import {
 } from "./data";
 
 const SYNC_STALE_MINUTES = 24 * 60 * 3; // 3 days
+
+// ============================================
+// THEME TOGGLE — respects system preference, persists to localStorage
+// ============================================
+
+function useTheme() {
+  const [dark, setDark] = useState(() => {
+    const stored = localStorage.getItem("arei-theme");
+    if (stored) return stored === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+  });
+
+  useEffect(() => {
+    document.documentElement.classList.toggle("dark", dark);
+    localStorage.setItem("arei-theme", dark ? "dark" : "light");
+  }, [dark]);
+
+  return [dark, () => setDark((d) => !d)] as const;
+}
 import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
 
 // ============================================
@@ -46,11 +65,11 @@ function ImageGallery({
       <div
         style={{
           ...sizeStyle,
-          background: "#16161a",
+          background: "var(--color-surface-2)",
           display: "flex",
           alignItems: "center",
           justifyContent: "center",
-          color: "#5a5a65",
+          color: "var(--color-foreground-subtle)",
           fontSize: 12,
           borderRadius: "8px 8px 0 0",
         }}
@@ -365,7 +384,7 @@ function AgentsApprovalsView() {
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
             Content Drafts
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -376,26 +395,25 @@ function AgentsApprovalsView() {
           type="button"
           onClick={handleGenerate}
           disabled={generating}
-          className="px-4 py-2 text-sm font-medium rounded-lg transition-all disabled:opacity-50"
-          style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)", color: "#09090b" }}
+          className="px-5 py-2.5 text-sm font-medium rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
         >
           {generating ? "Generating…" : "Generate drafts"}
         </button>
       </div>
 
       {/* ── Stats row ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-3">
-        <div className="surface-2 rounded-lg p-4 border border-border">
-          <div className="text-xs text-foreground-muted mb-1.5">Total drafts</div>
-          <div className="text-xl font-semibold tabular-nums">{drafts.length}</div>
+      <div className="grid grid-cols-3 gap-4">
+        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Total drafts</div>
+          <div className="text-3xl font-bold tabular-nums tracking-tight">{drafts.length}</div>
         </div>
-        <div className="surface-2 rounded-lg p-4 border border-border">
-          <div className="text-xs text-foreground-muted mb-1.5">Pending</div>
-          <div className="text-xl font-semibold text-amber tabular-nums">{pendingCount}</div>
+        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Pending</div>
+          <div className="text-3xl font-bold text-amber tabular-nums tracking-tight">{pendingCount}</div>
         </div>
-        <div className="surface-2 rounded-lg p-4 border border-border">
-          <div className="text-xs text-foreground-muted mb-1.5">Publishing</div>
-          <div className="text-sm font-medium text-foreground-subtle">Manual only</div>
+        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Publishing</div>
+          <div className="text-sm font-medium text-foreground-muted mt-1">Manual only</div>
         </div>
       </div>
 
@@ -406,7 +424,7 @@ function AgentsApprovalsView() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as "all" | "content_draft")}
-            className="bg-surface-2 border border-border text-foreground px-3 py-1.5 text-sm rounded-md"
+            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded-lg"
           >
             <option value="content_draft">Content drafts</option>
             <option value="all">All items</option>
@@ -417,7 +435,7 @@ function AgentsApprovalsView() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as ContentDraftStatus | "all")}
-            className="bg-surface-2 border border-border text-foreground px-3 py-1.5 text-sm rounded-md"
+            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded-lg"
           >
             <option value="all">All</option>
             <option value="pending">Pending</option>
@@ -432,18 +450,19 @@ function AgentsApprovalsView() {
       {loading && <p className="text-foreground-muted text-sm py-8">Loading drafts…</p>}
 
       {!loading && filteredDrafts.length === 0 && (
-        <div className="surface-2 rounded-xl border border-border p-10 text-center">
-          <div className="text-3xl mb-3 opacity-30">◉</div>
-          <h3 className="text-base font-semibold text-foreground mb-1">No drafts yet</h3>
-          <p className="text-sm text-foreground-muted max-w-md mx-auto">
+        <div className="surface-1 rounded-xl border border-border border-dashed p-14 text-center">
+          <div className="w-12 h-12 rounded-full bg-accent-muted flex items-center justify-center mx-auto mb-4">
+            <span className="text-accent text-lg">◉</span>
+          </div>
+          <h3 className="text-base font-semibold text-foreground mb-1.5">No drafts yet</h3>
+          <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
             Generate drafts to pull candidates from live listings. Each draft goes through review before anything is published.
           </p>
           <button
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="mt-4 px-4 py-2 text-sm font-medium rounded-lg transition-all disabled:opacity-50"
-            style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)", color: "#09090b" }}
+            className="mt-5 px-5 py-2.5 text-sm font-medium rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
           >
             {generating ? "Generating…" : "Generate drafts"}
           </button>
@@ -452,7 +471,7 @@ function AgentsApprovalsView() {
 
       <div className="space-y-3">
         {filteredDrafts.map((draft) => (
-          <article key={draft.id} className="surface-2 rounded-lg border border-border overflow-hidden">
+          <article key={draft.id} className="surface-1 rounded-xl border border-border overflow-hidden">
             <div className="grid grid-cols-1 md:grid-cols-[200px_1fr]">
               {/* Image */}
               <div className="bg-surface-3 min-h-[160px]">
@@ -660,7 +679,7 @@ function DashboardView() {
     <div className="space-y-8">
       {/* ── Page header ─────────────────────────────────────────── */}
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
           Dashboard
         </h1>
         <p className="text-sm text-foreground-muted mt-1">
@@ -669,27 +688,27 @@ function DashboardView() {
       </div>
 
       {/* ── KPI cards ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="surface-2 rounded-lg p-4 border border-border">
-          <div className="text-xs text-foreground-muted mb-2">Total listings</div>
-          <div className="text-2xl font-semibold tabular-nums">
+      <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Total listings</div>
+          <div className="text-3xl font-bold tabular-nums tracking-tight">
             {stats.totalListings.toLocaleString()}
           </div>
         </div>
-        <div className="surface-2 rounded-lg p-4 border border-border">
-          <div className="text-xs text-foreground-muted mb-2">Approved</div>
-          <div className="text-2xl font-semibold text-green tabular-nums">
+        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Approved</div>
+          <div className="text-3xl font-bold text-green tabular-nums tracking-tight">
             {stats.approvedCount.toLocaleString()}
           </div>
-          <div className="text-xs text-foreground-subtle mt-1 tabular-nums">{approvedPct}% rate</div>
+          <div className="text-xs text-foreground-subtle mt-1.5 tabular-nums">{approvedPct}% rate</div>
         </div>
-        <div className="surface-2 rounded-lg p-4 border border-border">
-          <div className="text-xs text-foreground-muted mb-2">Sources</div>
-          <div className="text-2xl font-semibold tabular-nums">{stats.sourceCount}</div>
+        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Sources</div>
+          <div className="text-3xl font-bold tabular-nums tracking-tight">{stats.sourceCount}</div>
         </div>
-        <div className="surface-2 rounded-lg p-4 border border-border">
-          <div className="text-xs text-foreground-muted mb-2">Markets</div>
-          <div className="text-2xl font-semibold tabular-nums">{stats.marketCount}</div>
+        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Markets</div>
+          <div className="text-3xl font-bold tabular-nums tracking-tight">{stats.marketCount}</div>
         </div>
       </div>
 
@@ -734,7 +753,7 @@ function DashboardView() {
       )}
 
       {/* ── Latest sync ─────────────────────────────────────────── */}
-      <section className="surface-2 rounded-lg border border-border p-5">
+      <section className="surface-1 rounded-xl border border-border p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-semibold text-foreground">Latest sync</h2>
           {latestSync && <RunPhaseBadge latestSync={latestSync} />}
@@ -782,11 +801,11 @@ function DashboardView() {
       {/* ── Source quality table ─────────────────────────────────── */}
       <section>
         <h2 className="text-base font-semibold text-foreground mb-4">Source quality</h2>
-        <div className="surface-2 rounded-lg border border-border overflow-hidden">
+        <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px]">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-border bg-surface-2">
                   {(
                     [
                       { key: "sourceName" as const, label: "Source" },
@@ -805,11 +824,9 @@ function DashboardView() {
                         className="text-[11px] uppercase tracking-wider text-foreground-subtle font-medium w-full text-left flex items-center gap-1 hover:text-foreground transition-colors"
                       >
                         {label}
-                        {sortKey === key && (
-                          <span className="text-foreground" aria-hidden>
-                            {sortDir === "asc" ? "↑" : "↓"}
-                          </span>
-                        )}
+                        <span className={sortKey === key ? "text-foreground" : "invisible"} aria-hidden>
+                          {sortKey === key && sortDir === "asc" ? "↑" : "↓"}
+                        </span>
                       </button>
                     </th>
                   ))}
@@ -836,10 +853,13 @@ function DashboardView() {
           </div>
         </div>
         {stats.sourceRows.length === 0 && (
-          <div className="surface-2 rounded-lg border border-border p-8 text-center mt-4">
-            <p className="text-sm text-foreground-muted">No source data available.</p>
-            <p className="text-xs text-foreground-subtle mt-1">
-              Run the SQL in <code className="font-mono">docs/supabase_rpc.sql</code> in Supabase.
+          <div className="surface-1 rounded-xl border border-border border-dashed p-12 text-center mt-4">
+            <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-3">
+              <span className="text-foreground-subtle text-sm">⬡</span>
+            </div>
+            <p className="text-sm font-medium text-foreground mb-1">No source data available</p>
+            <p className="text-xs text-foreground-muted">
+              Run the SQL in <code className="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded">docs/supabase_rpc.sql</code> in Supabase.
             </p>
           </div>
         )}
@@ -865,7 +885,7 @@ function ListingCard({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
-      className="surface-2 rounded-lg overflow-hidden w-[280px] border border-border cursor-pointer transition-all hover:border-border-strong hover:translate-y-[-1px]"
+      className="surface-1 rounded-xl overflow-hidden w-[280px] border border-border cursor-pointer transition-all hover:border-border-strong hover:translate-y-[-1px]"
     >
       <ImageGallery images={listing.images} width={280} height={190} />
 
@@ -1078,13 +1098,13 @@ function ListingsTabView() {
     );
   }
 
-  const inputCls = "bg-surface-2 border border-border text-foreground px-3 py-1.5 text-sm rounded-md w-full";
+  const inputCls = "bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded-lg w-full";
 
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
             Listings
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -1117,18 +1137,18 @@ function ListingsTabView() {
                   aria-hidden
                   onClick={() => setExportOpen(false)}
                 />
-                <div className="absolute right-0 top-full z-20 mt-1 min-w-[200px] surface-3 border border-border rounded-lg py-1 shadow-lg">
+                <div className="absolute right-0 top-full z-20 mt-1 min-w-[200px] surface-1 border border-border rounded-xl py-1 shadow-lg">
                   <button
                     type="button"
                     onClick={handleExportPage}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors"
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors rounded-lg"
                   >
                     This page (CSV)
                   </button>
                   <button
                     type="button"
                     onClick={handleExportAll}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors"
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors rounded-lg"
                   >
                     All matching, max {EXPORT_ALL_MAX.toLocaleString()} (CSV)
                   </button>
@@ -1139,7 +1159,7 @@ function ListingsTabView() {
         </div>
       </div>
 
-      <div className="surface-2 rounded-lg border border-border p-4 mb-6">
+      <div className="surface-1 rounded-xl border border-border p-4 mb-6">
         <div className="text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
           <div>
@@ -1358,11 +1378,11 @@ function ListingsTabView() {
 
       {!loading && (
         <>
-          <div className="surface-2 rounded-lg border border-border overflow-hidden">
+          <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1000px]">
                 <thead>
-                  <tr className="border-b border-border">
+                  <tr className="border-b border-border bg-surface-2">
                     {LISTINGS_COLUMNS.map(({ key, label }) =>
                       key === "photo" || key === "grade" || key === "action" ? (
                         <th key={key} className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">
@@ -1376,11 +1396,9 @@ function ListingsTabView() {
                             className="text-[11px] uppercase tracking-wider text-foreground-subtle font-medium w-full text-left flex items-center gap-1 hover:text-foreground transition-colors"
                           >
                             {label}
-                            {sortBy === key && (
-                              <span className="text-foreground" aria-hidden>
-                                {sortDir === "asc" ? "↑" : "↓"}
-                              </span>
-                            )}
+                            <span className={sortBy === key ? "text-foreground" : "invisible"} aria-hidden>
+                              {sortBy === key && sortDir === "asc" ? "↑" : "↓"}
+                            </span>
                           </button>
                         </th>
                       )
@@ -1481,7 +1499,7 @@ function ListingsTabView() {
 
       {detailLoading && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="surface-2 rounded-lg p-6 border border-border text-sm text-foreground-muted">
+          <div className="surface-1 rounded-xl p-6 border border-border text-sm text-foreground-muted">
             Loading listing…
           </div>
         </div>
@@ -1537,7 +1555,7 @@ function SourcesView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
           Sources
         </h1>
         <p className="text-sm text-foreground-muted mt-1">
@@ -1550,8 +1568,8 @@ function SourcesView() {
         const marketName = marketNameById.get(marketId) ?? marketId;
         const totalListings = rows.reduce((acc, r) => acc + Number(r.listing_count), 0);
         return (
-          <section key={marketId} className="surface-2 rounded-lg border border-border overflow-hidden">
-            <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-border">
+          <section key={marketId} className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
+            <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface-2">
               <h3 className="text-sm font-semibold text-foreground">
                 {marketName}
               </h3>
@@ -1562,7 +1580,7 @@ function SourcesView() {
             <div className="overflow-x-auto">
               <table className="w-full min-w-[700px]">
                 <thead>
-                  <tr className="border-b border-border">
+                  <tr className="border-b border-border bg-surface-2">
                     <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Source</th>
                     <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Listings</th>
                     <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Approved</th>
@@ -1596,11 +1614,13 @@ function SourcesView() {
       })}
 
       {marketIds.length === 0 && (
-        <div className="surface-2 rounded-xl border border-border p-10 text-center">
-          <div className="text-3xl mb-3 opacity-30">⬡</div>
-          <h3 className="text-base font-semibold text-foreground mb-1">No source data</h3>
-          <p className="text-sm text-foreground-muted">
-            Run <code className="font-mono text-foreground-muted">get_source_quality_stats</code> RPC in Supabase.
+        <div className="surface-1 rounded-xl border border-border border-dashed p-14 text-center">
+          <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-4">
+            <span className="text-foreground-subtle text-lg">⬡</span>
+          </div>
+          <h3 className="text-base font-semibold text-foreground mb-1.5">No source data</h3>
+          <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
+            Run <code className="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded text-foreground-muted">get_source_quality_stats</code> RPC in Supabase to populate this view.
           </p>
         </div>
       )}
@@ -1689,7 +1709,7 @@ function StatsView() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-semibold tracking-tight text-foreground">
+        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
           Stats
         </h1>
         <p className="text-sm text-foreground-muted mt-1">
@@ -1698,7 +1718,7 @@ function StatsView() {
       </div>
 
       {/* Pulse */}
-      <section className="surface-2 rounded-lg border border-border p-5">
+      <section className="surface-1 rounded-xl border border-border p-5">
         <h2 className="text-base font-semibold text-foreground mb-4">Pulse</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
           <div>
@@ -1800,7 +1820,7 @@ function StatsView() {
       </section>
 
       {/* Grade distribution */}
-      <section className="surface-2 rounded-lg border border-border p-5">
+      <section className="surface-1 rounded-xl border border-border p-5">
         <h2 className="text-base font-semibold text-foreground mb-4">Grade distribution</h2>
         <div className="flex flex-wrap gap-6 items-end">
           {(["A", "B", "C", "D"] as const).map((g) => (
@@ -1823,11 +1843,11 @@ function StatsView() {
       {/* By market */}
       <section>
         <h2 className="text-base font-semibold text-foreground mb-3">By market</h2>
-        <div className="surface-2 rounded-lg border border-border overflow-hidden">
+        <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[400px]">
               <thead>
-                <tr className="border-b border-border">
+                <tr className="border-b border-border bg-surface-2">
                   <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Market</th>
                   <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Listings</th>
                   <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Sources</th>
@@ -1860,7 +1880,7 @@ function StatsView() {
       </section>
 
       {/* Data quality snapshot */}
-      <section className="surface-2 rounded-lg border border-border p-5">
+      <section className="surface-1 rounded-xl border border-border p-5">
         <h2 className="text-base font-semibold text-foreground mb-4">Data quality</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
@@ -1887,21 +1907,21 @@ function StatsView() {
         <h2 className="text-base font-semibold text-foreground mb-3">Outliers</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {bestApproved && (
-            <div className="surface-2 rounded-lg border border-border p-4">
+            <div className="surface-1 rounded-xl border border-border p-4">
               <div className="text-xs text-foreground-muted mb-1">Best approval</div>
               <div className="text-sm font-medium text-foreground">{bestApproved.sourceName}</div>
               <div className="text-green text-sm font-mono mt-0.5">{bestApproved.approved_pct.toFixed(1)}%</div>
             </div>
           )}
           {worstImage && (
-            <div className="surface-2 rounded-lg border border-border p-4">
+            <div className="surface-1 rounded-xl border border-border p-4">
               <div className="text-xs text-foreground-muted mb-1">Lowest images</div>
               <div className="text-sm font-medium text-foreground">{worstImage.sourceName}</div>
               <div className="text-red text-sm font-mono mt-0.5">{worstImage.with_image_pct.toFixed(1)}%</div>
             </div>
           )}
           {worstPrice && (
-            <div className="surface-2 rounded-lg border border-border p-4">
+            <div className="surface-1 rounded-xl border border-border p-4">
               <div className="text-xs text-foreground-muted mb-1">Lowest prices</div>
               <div className="text-sm font-medium text-foreground">{worstPrice.sourceName}</div>
               <div className="text-red text-sm font-mono mt-0.5">{worstPrice.with_price_pct.toFixed(1)}%</div>
@@ -1921,26 +1941,18 @@ function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
   const markets = getMarkets();
   return (
     <div>
-      <h1 style={{ color: "#ececef", marginBottom: 4 }}>AFRICA PROPERTY INDEX</h1>
-      <p style={{ color: "#5a5a65", fontSize: 13, marginTop: 0 }}>
+      <h1 className="text-foreground mb-1">AFRICA PROPERTY INDEX</h1>
+      <p className="text-foreground-subtle text-[13px] mt-0">
         Pan-African Real Estate Index
       </p>
-      <hr style={{ borderColor: "#1e1e24" }} />
-      <table style={{ borderCollapse: "collapse", width: "100%", maxWidth: 700 }}>
+      <hr className="border-border" />
+      <table className="border-collapse w-full max-w-[700px]">
         <thead>
-          <tr style={{ borderBottom: "1px solid #1e1e24" }}>
+          <tr className="border-b border-border">
             {["Market", "Status", "Sources", "Listings", ""].map((h) => (
               <th
                 key={h}
-                style={{
-                  textAlign: "left",
-                  padding: "10px 14px",
-                  color: "#8b8b96",
-                  fontSize: 12,
-                  fontWeight: 500,
-                  textTransform: "uppercase",
-                  letterSpacing: 0.5,
-                }}
+                className="text-left px-3.5 py-2.5 text-foreground-muted text-[11px] font-medium uppercase tracking-wide"
               >
                 {h}
               </th>
@@ -1951,30 +1963,21 @@ function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
           {markets.map((m) => (
             <tr
               key={m.id}
-              style={{ borderBottom: "1px solid #16161a", cursor: "pointer" }}
+              className="border-b border-muted cursor-pointer hover:bg-surface-1 transition-colors"
               onClick={() => onSelect(m.id)}
             >
-              <td style={{ padding: "12px 14px", color: "#ececef", fontWeight: 500 }}>
+              <td className="px-3.5 py-3 text-foreground font-medium">
                 {m.name}
               </td>
-              <td style={{ padding: "12px 14px" }}>
+              <td className="px-3.5 py-3">
                 <StatusBadge status={m.status} />
               </td>
-              <td style={{ padding: "12px 14px", color: "#8b8b96" }}>{m.sources.length}</td>
-              <td style={{ padding: "12px 14px", color: "#8b8b96" }}>{m.listings.length}</td>
-              <td style={{ padding: "12px 14px" }}>
+              <td className="px-3.5 py-3 text-foreground-muted">{m.sources.length}</td>
+              <td className="px-3.5 py-3 text-foreground-muted">{m.listings.length}</td>
+              <td className="px-3.5 py-3">
                 <button
                   onClick={() => onSelect(m.id)}
-                  style={{
-                    background: "#1c1c22",
-                    color: "#e2a336",
-                    border: "none",
-                    padding: "6px 14px",
-                    borderRadius: 6,
-                    cursor: "pointer",
-                    fontSize: 12,
-                    fontWeight: 600,
-                  }}
+                  className="bg-surface-3 text-accent px-3.5 py-1.5 rounded-md text-xs font-semibold cursor-pointer border-0 hover:bg-surface-2 transition-colors"
                 >
                   View
                 </button>
@@ -1994,20 +1997,14 @@ function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
 function SourceTable({ sources }: { sources: Source[] }) {
   return (
     <div>
-      <h3 style={{ color: "#ececef" }}>Sources ({sources.length})</h3>
-      <table style={{ borderCollapse: "collapse", width: "100%" }}>
+      <h3 className="text-foreground">Sources ({sources.length})</h3>
+      <table className="border-collapse w-full">
         <thead>
-          <tr style={{ borderBottom: "1px solid #1e1e24" }}>
+          <tr className="border-b border-border">
             {["Name", "Status", "Scrapes", "Repairs", "Error"].map((h) => (
               <th
                 key={h}
-                style={{
-                  textAlign: "left",
-                  padding: "8px 12px",
-                  color: "#8b8b96",
-                  fontSize: 11,
-                  textTransform: "uppercase",
-                }}
+                className="text-left px-3 py-2 text-foreground-muted text-[11px] uppercase"
               >
                 {h}
               </th>
@@ -2016,56 +2013,48 @@ function SourceTable({ sources }: { sources: Source[] }) {
         </thead>
         <tbody>
           {sources.map((s) => (
-            <tr key={s.id} style={{ borderBottom: "1px solid #16161a" }}>
-              <td style={{ padding: "8px 12px", color: "#ececef", fontSize: 13 }}>{s.name}</td>
-              <td style={{ padding: "8px 12px" }}>
+            <tr key={s.id} className="border-b border-muted">
+              <td className="px-3 py-2 text-foreground text-[13px]">{s.name}</td>
+              <td className="px-3 py-2">
                 <StatusBadge status={s.state.status} />
               </td>
-              <td style={{ padding: "8px 12px", color: "#8b8b96", fontSize: 13 }}>
+              <td className="px-3 py-2 text-foreground-muted text-[13px]">
                 {s.state.scrapeAttempts}
               </td>
-              <td style={{ padding: "8px 12px", color: "#8b8b96", fontSize: 13 }}>
+              <td className="px-3 py-2 text-foreground-muted text-[13px]">
                 {s.state.repairAttempts}
               </td>
               <td
-                style={{
-                  padding: "8px 12px",
-                  color: s.state.lastError ? "#ef4444" : "#555",
-                  fontSize: 12,
-                  maxWidth: 300,
-                  overflow: "hidden",
-                  textOverflow: "ellipsis",
-                  whiteSpace: "nowrap",
-                }}
+                className={`px-3 py-2 text-[12px] max-w-[300px] overflow-hidden text-ellipsis whitespace-nowrap ${s.state.lastError ? "text-red" : "text-foreground-subtle"}`}
               >
                 <div>{s.state.lastError || "-"}</div>
                 {s.state.pauseReason && (
-                  <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 4 }}>
+                  <div className="text-amber text-[11px] mt-1">
                     pause: {s.state.pauseReason}
                   </div>
                 )}
                 {s.state.pauseDetail && (
-                  <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 4 }}>
+                  <div className="text-amber text-[11px] mt-1">
                     {s.state.pauseDetail}
                   </div>
                 )}
                 {s.state.lastErrorClass && (
-                  <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 4 }}>
+                  <div className="text-amber text-[11px] mt-1">
                     class: {s.state.lastErrorClass}
                   </div>
                 )}
                 {s.state.lastSeenAt && (
-                  <div style={{ color: "#8b8b96", fontSize: 11, marginTop: 4 }}>
+                  <div className="text-foreground-muted text-[11px] mt-1">
                     seen: {s.state.lastSeenAt}
                   </div>
                 )}
                 {s.state.consecutiveFailureCount && s.state.consecutiveFailureCount > 0 && (
-                  <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 4 }}>
+                  <div className="text-amber text-[11px] mt-1">
                     {s.state.consecutiveFailureCount} consecutive parser failure{s.state.consecutiveFailureCount === 1 ? "" : "s"}
                   </div>
                 )}
                 {s.state.debugErrors && s.state.debugErrors.length > 0 && (
-                  <div style={{ color: "#f59e0b", fontSize: 11, marginTop: 4 }}>
+                  <div className="text-amber text-[11px] mt-1">
                     {s.state.debugErrors.length} debug error{s.state.debugErrors.length === 1 ? "" : "s"}
                   </div>
                 )}
@@ -2358,7 +2347,7 @@ function ListingDetail({
             <p className="text-foreground-muted text-sm mt-1">{listing.location}</p>
           )}
           {facts.length > 0 && (
-            <div className="surface-2 rounded-lg border border-border p-4 mt-4">
+            <div className="surface-1 rounded-xl border border-border p-4 mt-4">
               <h4 className="text-xs text-foreground-subtle mb-3">Key facts</h4>
               <dl className="m-0 text-sm text-foreground">
                 {facts.map((f) => (
@@ -2384,7 +2373,7 @@ function ListingDetail({
           )}
         </div>
         <div>
-          <div className="surface-2 rounded-lg border border-border p-4">
+          <div className="surface-1 rounded-xl border border-border p-4">
             <h4 className="text-xs text-foreground-subtle mb-2">Description</h4>
             <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
               {listing.description || "No description."}
@@ -2394,7 +2383,7 @@ function ListingDetail({
             <p className="m-1"><span className="text-foreground-muted">Source:</span> {listing.sourceName}</p>
             <p className="m-1"><span className="text-foreground-muted">ID:</span> <span className="font-mono">{listing.id}</span></p>
           </div>
-          <div className="surface-2 rounded-lg border border-border p-3 mt-4 text-foreground-subtle text-xs">
+          <div className="surface-1 rounded-xl border border-border p-3 mt-4 text-foreground-subtle text-xs">
             Aggregated from an external source. Africa Property Index does not verify accuracy or facilitate transactions.
           </div>
         </div>
@@ -2548,6 +2537,7 @@ const NAV_ITEMS: { key: Tab; label: string; icon: string }[] = [
 
 function App() {
   const [tab, setTab] = useState<Tab>("dashboard");
+  const [dark, toggleTheme] = useTheme();
 
   return (
     <div className="flex h-screen overflow-hidden">
@@ -2555,10 +2545,7 @@ function App() {
       <aside className="sidebar">
         <div className="px-5 pt-6 pb-5">
           <div className="flex items-center gap-2.5">
-            <div
-              className="w-8 h-8 rounded-lg flex items-center justify-center text-sm font-bold"
-              style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)" }}
-            >
+            <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center text-sm font-bold text-primary-foreground">
               A
             </div>
             <div>
@@ -2574,7 +2561,7 @@ function App() {
 
         <div className="px-3 mb-2">
           <div className="text-[10px] uppercase tracking-wider text-foreground-subtle font-medium px-2 mb-1.5">
-            Navigation
+            Main menu
           </div>
         </div>
 
@@ -2584,16 +2571,16 @@ function App() {
               key={key}
               onClick={() => setTab(key)}
               className={
-                "w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-md transition-all duration-150 " +
+                "w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 " +
                 (tab === key
-                  ? "bg-accent/15 text-accent border-l-2 border-accent"
-                  : "text-foreground-muted hover:text-foreground hover:bg-surface-2 border-l-2 border-transparent")
+                  ? "bg-surface-2 text-foreground"
+                  : "text-foreground-muted hover:text-foreground hover:bg-surface-2")
               }
             >
-              <span className="text-base leading-none opacity-70">{icon}</span>
+              <span className="text-base leading-none opacity-50">{icon}</span>
               {label}
               {key === "agents" && (
-                <span className="ml-auto text-[10px] font-semibold bg-accent/15 text-accent px-1.5 py-0.5 rounded">
+                <span className="ml-auto text-[10px] font-medium bg-green-muted text-green px-1.5 py-0.5 rounded-md">
                   NEW
                 </span>
               )}
@@ -2601,17 +2588,24 @@ function App() {
           ))}
         </nav>
 
-        <div className="px-3 pb-4 mt-auto">
-          <div className="surface-2 rounded-lg px-3 py-3">
-            <div className="text-[11px] text-foreground-subtle mb-1">Africa Property Index</div>
+        <div className="px-3 pb-4 mt-auto space-y-2">
+          <button
+            onClick={toggleTheme}
+            className="w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-all duration-150"
+          >
+            <span className="text-base leading-none opacity-50">{dark ? "☀" : "☾"}</span>
+            {dark ? "Light mode" : "Dark mode"}
+          </button>
+          <div className="rounded-lg px-3 py-3 border border-border">
+            <div className="text-[11px] text-foreground-subtle mb-0.5">Africa Property Index</div>
             <div className="text-[11px] text-foreground-muted">Pan-African Real Estate</div>
           </div>
         </div>
       </aside>
 
       {/* ── Main content ─────────────────────────── */}
-      <main className="flex-1 overflow-y-auto">
-        <div className="max-w-[1200px] px-8 py-8">
+      <main className="flex-1 overflow-y-auto bg-background">
+        <div className="max-w-[1200px] mx-auto px-8 py-8">
           {tab === "dashboard" && <DashboardView />}
           {tab === "listings" && <ListingsTabView />}
           {tab === "sources" && <SourcesView />}
@@ -2664,15 +2658,12 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2.5 mb-8 justify-center">
-          <div
-            className="w-9 h-9 rounded-lg flex items-center justify-center text-sm font-bold"
-            style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)" }}
-          >
+          <div className="w-9 h-9 rounded-lg bg-foreground flex items-center justify-center text-sm font-bold text-primary-foreground">
             A
           </div>
           <span className="text-lg font-semibold tracking-tight">AREI</span>
         </div>
-        <div className="surface-2 rounded-xl p-7 border border-border">
+        <div className="surface-1 rounded-xl p-7 border border-border">
           <h1 className="text-lg font-semibold text-foreground mb-1 text-center">
             Sign in to Admin
           </h1>
@@ -2685,7 +2676,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded-lg mb-4 focus:border-accent focus:outline-none transition-colors"
+              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded-lg mb-4 focus:border-foreground-subtle focus:outline-none transition-colors"
               autoFocus
             />
             {error && (
@@ -2694,8 +2685,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-2.5 text-sm font-medium rounded-lg transition-all disabled:opacity-50"
-              style={{ background: "linear-gradient(135deg, #e2a336, #d4891a)", color: "#09090b" }}
+              className="w-full px-4 py-2.5 text-sm font-medium rounded-lg bg-foreground text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50"
             >
               {loading ? "Checking…" : "Sign in"}
             </button>

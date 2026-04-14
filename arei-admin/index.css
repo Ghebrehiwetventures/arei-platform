@@ -1,42 +1,74 @@
 @import "tailwindcss";
 
-/* ── Theme — Modern dark SaaS ─────────────────────────────────────── */
+/* ── Theme — Light minimal SaaS ───────────────────────────────────── */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
 
-  /* Surface depth system */
-  --color-background: #09090b;
-  --color-surface-1: #0f0f12;
-  --color-surface-2: #16161a;
-  --color-surface-3: #1c1c22;
+  /* Surface depth system — light */
+  --color-background: #fafafa;
+  --color-surface-1: #ffffff;
+  --color-surface-2: #f5f5f7;
+  --color-surface-3: #efefef;
 
-  --color-foreground: #ececef;
-  --color-foreground-muted: #8b8b96;
-  --color-foreground-subtle: #5a5a65;
+  --color-foreground: #111113;
+  --color-foreground-muted: #6b7280;
+  --color-foreground-subtle: #9ca3af;
 
-  --color-primary: #ececef;
-  --color-primary-foreground: #09090b;
+  --color-primary: #111113;
+  --color-primary-foreground: #ffffff;
 
-  /* Keep muted/muted-foreground for Tailwind compat */
-  --color-muted: #16161a;
-  --color-muted-foreground: #8b8b96;
+  /* Tailwind compat */
+  --color-muted: #f5f5f7;
+  --color-muted-foreground: #6b7280;
 
-  --color-border: #1e1e24;
-  --color-border-strong: #2a2a32;
+  --color-border: #e5e7eb;
+  --color-border-strong: #d1d5db;
 
   /* Accent — warm amber-gold for CTAs */
-  --color-accent: #e2a336;
-  --color-accent-foreground: #09090b;
-  --color-accent-muted: rgba(226, 163, 54, 0.12);
+  --color-accent: #d97706;
+  --color-accent-foreground: #ffffff;
+  --color-accent-muted: rgba(217, 119, 6, 0.08);
 
   /* Semantic */
+  --color-green: #059669;
+  --color-green-muted: rgba(5, 150, 105, 0.08);
+  --color-amber: #d97706;
+  --color-amber-muted: rgba(217, 119, 6, 0.08);
+  --color-red: #dc2626;
+  --color-red-muted: rgba(220, 38, 38, 0.06);
+}
+
+/* ── Dark mode overrides ─────────────────────────────────────────── */
+.dark {
+  --color-background: #0b0b0d;
+  --color-surface-1: #141416;
+  --color-surface-2: #1c1c1f;
+  --color-surface-3: #242428;
+
+  --color-foreground: #ededef;
+  --color-foreground-muted: #9ca3af;
+  --color-foreground-subtle: #6b7280;
+
+  --color-primary: #ededef;
+  --color-primary-foreground: #0b0b0d;
+
+  --color-muted: #1c1c1f;
+  --color-muted-foreground: #9ca3af;
+
+  --color-border: #2a2a2e;
+  --color-border-strong: #3a3a3f;
+
+  --color-accent: #f59e0b;
+  --color-accent-foreground: #0b0b0d;
+  --color-accent-muted: rgba(245, 158, 11, 0.12);
+
   --color-green: #34d399;
   --color-green-muted: rgba(52, 211, 153, 0.12);
   --color-amber: #fbbf24;
   --color-amber-muted: rgba(251, 191, 36, 0.12);
   --color-red: #f87171;
-  --color-red-muted: rgba(248, 113, 113, 0.12);
+  --color-red-muted: rgba(248, 113, 113, 0.1);
 }
 
 /* ── Base ─────────────────────────────────────────────────────────── */
@@ -50,7 +82,7 @@ body {
   color: var(--color-foreground);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  font-size: 13.5px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -61,10 +93,10 @@ body {
 
 /* ── Sidebar ──────────────────────────────────────────────────────── */
 @utility sidebar {
-  width: 240px;
-  min-width: 240px;
-  background: #0c0c0f;
-  border-right: 1px solid var(--color-border-strong);
+  width: 248px;
+  min-width: 248px;
+  background: var(--color-surface-1);
+  border-right: 1px solid var(--color-border);
   display: flex;
   flex-direction: column;
   height: 100vh;
@@ -85,27 +117,18 @@ body {
   background: var(--color-surface-3);
 }
 
-/* ── Label (used sparingly for section overlines) ─────────────────── */
-@utility label-style {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--color-foreground-subtle);
-  font-weight: 500;
-}
-
-/* ── Admin layout ──────────────────────────────────────────────────── */
+/* ── Admin layout ────────────────────────────────────────────────── */
 table {
   border-collapse: collapse;
 }
 
 button {
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 input, select, textarea {
-  border-radius: 6px;
+  border-radius: 8px;
 }
 
 /* ── Scrollbar (subtle) ──────────────────────────────────────────── */
@@ -125,6 +148,15 @@ input, select, textarea {
 
 ::-webkit-scrollbar-thumb:hover {
   background: var(--color-foreground-subtle);
+}
+
+/* ── Section card elevation ──────────────────────────────────────── */
+.shadow-sm {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.dark .shadow-sm {
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 /* ── Focus ring ──────────────────────────────────────────────────── */
