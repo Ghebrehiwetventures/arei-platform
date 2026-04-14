@@ -19,7 +19,7 @@ const DEFAULT_HEADERS: Record<string, string> = {
 
 export async function fetchHtml(url: string, opts?: FetchOptions): Promise<FetchResult> {
   const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 10000);
+  const timeout = setTimeout(() => controller.abort(), 20000);
 
   // Merge custom headers on top of defaults
   const headers = { ...DEFAULT_HEADERS, ...opts?.headers };
@@ -55,7 +55,7 @@ export async function fetchHtml(url: string, opts?: FetchOptions): Promise<Fetch
       if (err.name === "AbortError") {
         return {
           success: false,
-          error: "Request timeout (10s)",
+          error: "Request timeout (20s)",
         };
       }
       return {
