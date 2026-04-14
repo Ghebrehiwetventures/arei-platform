@@ -24,7 +24,7 @@ import { homesCasaVerdePlugin } from "./detail/plugins/homesCasaVerde";
 import { createGenericDetailPlugin } from "./detail/plugins/genericDetail";
 import { DetailEnrichmentInput, DetailExtractResult, DetailPlugin } from "./detail/types";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
-import { parseLocation } from "./locationMapper";
+import { parseLocation, getCurrency } from "./locationMapper";
 import { resolveCvIslandRecovery } from "./cvIslandRecovery";
 import { deriveProjectMetadata } from "./projectMetadata";
 import {
@@ -1337,7 +1337,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       price: listing.price,
       project_flag: fullListing?.project_flag ?? null,
       project_start_price: fullListing?.project_start_price ?? null,
-      currency: "EUR",
+      currency: getCurrency(marketId),
       country: "Cape Verde",
       island,
       city,

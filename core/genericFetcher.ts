@@ -322,6 +322,14 @@ export function dedupeImageUrls(urls: string[]): string[] {
 function parsePrice(priceText: string, config?: SourceFetchConfig["price_format"]): number | undefined {
   if (!priceText) return undefined;
 
+  // CVE escudo format: "35.000.000$00" — strip the "$NN" centavo suffix before any other parsing.
+  // This pattern (digits + "$" + exactly 2 digits at end of string) is unique to Cape Verdean Escudo
+  // and does not conflict with USD/EUR price strings.
+  const cveSuffixMatch = priceText.match(/^([\d.,\s\u00A0]+)\$\d{2}$/);
+  if (cveSuffixMatch) {
+    priceText = cveSuffixMatch[1].trim();
+  }
+
   // Skip "Call for price", "POA", "negotiated", etc.
   const lower = priceText.toLowerCase();
   if (lower.includes("call") || lower.includes("poa") || lower.includes("negotiat") || lower.includes("request") || lower.includes("contact")) {
