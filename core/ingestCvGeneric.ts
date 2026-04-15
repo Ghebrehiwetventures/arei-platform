@@ -780,7 +780,9 @@ export async function runCvIngestGeneric(): Promise<IngestReport> {
 
     // CONFIG-DRIVEN location parsing - no hardcoded logic
     const locationResult = parseLocation(listing.location, marketId);
-    const currency = getCurrency(marketId);
+    // Fallback order: source-level currency → market-level currency
+    const sourceConfig = sources.find(s => s.id === listing.sourceId);
+    const currency = sourceConfig?.currency ?? getCurrency(marketId);
 
     return {
       id: listing.id,

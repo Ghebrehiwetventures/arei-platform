@@ -651,7 +651,9 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
 
     // CONFIG-DRIVEN location parsing
     const locationResult = parseLocation(listing.location, marketId);
-    const currency = getCurrency(marketId);
+    // Fallback order: source-level currency → market-level currency
+    const sourceConfig = sources.find(s => s.id === listing.sourceId);
+    const currency = sourceConfig?.currency ?? getCurrency(marketId);
     const country = getCountry(marketId);
 
     const isLand = LAND_TYPES.test(fullListing?.property_type || "");

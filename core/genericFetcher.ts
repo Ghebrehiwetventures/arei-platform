@@ -107,6 +107,8 @@ export interface SourceFetchConfig {
     thousands_separator?: "." | "," | " ";
     decimal_separator?: "." | ",";
     multiplier?: number; // e.g. 1000 if prices shown in thousands
+    price_min?: number;  // Parsed value below this is treated as invalid
+    price_max?: number;  // Parsed value above this is treated as invalid
   };
 
   /** Location extraction patterns (regex strings) */
@@ -217,12 +219,22 @@ function isValidImageUrl(url: string): boolean {
   return !invalidPatterns.some((p) => lower.includes(p));
 }
 
-/** Normalize URL: force https, strip query params, hash, trailing slashes. */
+/** Normalize URL: force https, strip query params, hash, trailing slashes.
+ *  Query params are preserved when the path is a script file (e.g. file.php,
+ *  image.aspx) because in those cases the query string IS the image identity
+ *  (e.g. nhakaza.cv/file.php?filename=/1463/photo.jpg). Stripping would
+ *  collapse every image from the same host to the same key. */
 function normalizeImageUrl(url: string): string {
   try {
     const u = new URL(url);
     u.protocol = "https:";
-    u.search = "";
+    // Only strip query params for static image paths (pathname ends in an
+    // image extension).  Script-served images (*.php, *.aspx, *.cfm, etc.)
+    // use the query string to identify the file — preserve it.
+    const isStaticImage = /\.(jpe?g|png|webp|gif|avif|svg)$/i.test(u.pathname);
+    if (isStaticImage) {
+      u.search = "";
+    }
     u.hash = "";
     u.pathname = u.pathname.replace(/\/+$/, "");
     return u.href;
@@ -379,7 +391,13 @@ function parsePrice(priceText: string, config?: SourceFetchConfig["price_format"
 
   // Apply multiplier if prices shown in thousands
   const multiplier = config?.multiplier || 1;
-  return num * multiplier;
+  const result = num * multiplier;
+
+  // Sanity range check — catches digit-drop/digit-repeat parsing errors
+  if (config?.price_min !== undefined && result < config.price_min) return undefined;
+  if (config?.price_max !== undefined && result > config.price_max) return undefined;
+
+  return result;
 }
 
 // ============================================

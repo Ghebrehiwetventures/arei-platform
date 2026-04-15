@@ -649,11 +649,14 @@ sources:
       link: "a[href*='view_page=show_ad']"
       title: "h4"
       price: ".fp_price"
+      location: "p:has(.flaticon-placeholder)"   # "Em Palmarejo , Praia , Santiago" — list cards only; featured cards fall back to URL-path extraction
       image: ".thumb img"
 
     price_format:
       currency_symbol: "$"     # CVE escudo; "$NN" centavo suffix already stripped by parsePrice()
       thousands_separator: "." # "35.000.000$00" uses dots as thousands separators
+      price_min: 500000        # 500,000 CVE ≈ €4,500 — below this is a parsing error or rental price leaking into buy feed
+      price_max: 2000000000    # 2,000,000,000 CVE ≈ €18M — above this is a parsing error (extra digit)
 
     id_prefix: "nk"
 
@@ -662,8 +665,8 @@ sources:
       policy: always
       delay_ms: 3000
       selectors:
-        description: "[class*='desc'] p, .listing_desc_header ~ div p"
-        images: "img[src*='/med/'], .carousel-item img, .slider_main_photo img"
+        description: ".listing_single_description p"  # Verified: <div class="listing_single_description"><p class="mb25">description text</p></div>
+        images: ".listing_single_property_slider a.popup-img"  # Full-size images via lightbox anchors (href has no /med/ prefix); fallback picks up img[src*='/med/'] thumbnails
         bedrooms: "li:contains('Tipologia')"
         bathrooms: "li:contains('WC')"
       spec_patterns:

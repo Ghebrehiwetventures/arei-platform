@@ -36,6 +36,10 @@ export interface PriceFormatConfig {
   thousands_separator?: "." | "," | " ";
   decimal_separator?: "." | ",";
   multiplier?: number;
+  /** Parsed price must be >= price_min to be accepted (post-multiplier). */
+  price_min?: number;
+  /** Parsed price must be <= price_max to be accepted (post-multiplier). */
+  price_max?: number;
 }
 
 export interface DetailConfig {

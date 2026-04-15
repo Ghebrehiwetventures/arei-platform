@@ -127,6 +127,27 @@ const DEFAULT_NEGATION_WORDS = [
 ];
 
 // ============================================
+// UTILITY: Strip contact info from description
+// ============================================
+// Classifieds portals (e.g. NhaKaza) embed phone numbers and email addresses
+// in the listing description text. These are never meaningful property data and
+// should not be stored. This strips:
+//   - Lines that start with a contact header keyword (Contactos, Tel, Email, etc.)
+//   - Lines containing an email address
+//   - Trailing whitespace/newlines left behind
+function stripContactInfo(text: string): string {
+  const lines = text.split(/\r?\n/);
+  const cleaned = lines.filter(line => {
+    const t = line.trim();
+    // Drop lines that are clearly contact headers or contain an email address
+    if (/^(contactos?|contacts?|tel|phone|tlm|tlf|e?-?mail)\s*[:\-]?\s*/i.test(t)) return false;
+    if (/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/.test(t)) return false;
+    return true;
+  });
+  return cleaned.join("\n").trim();
+}
+
+// ============================================
 // UTILITY: Extract number from text
 // ============================================
 
@@ -395,6 +416,14 @@ export function genericDetailExtract(
           }
         }
       }
+    }
+
+    // Strip contact info (phone/email) from description — classifieds portals
+    // often embed agent contact details directly in the listing text.
+    if (result.description) {
+      result.description = stripContactInfo(result.description);
+      // Re-check minimum length after stripping
+      if (result.description.length < 50) result.description = undefined;
     }
 
     // ========================================
