@@ -2564,7 +2564,11 @@ function App() {
       )}
 
       {/* ── Sidebar ──────────────────────────────── */}
-      <aside className={"sidebar" + (sidebarOpen ? " sidebar-open" : "")}>
+      <aside className={
+        "sidebar fixed md:sticky top-0 z-40 md:z-auto h-dvh md:h-screen " +
+        "transition-transform duration-200 ease-out md:transition-none " +
+        (sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0")
+      }>
         <div className="px-5 pt-6 pb-5">
           <div className="flex items-center gap-2.5">
             <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center text-sm font-bold text-primary-foreground">
