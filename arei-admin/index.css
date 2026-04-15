@@ -74,6 +74,8 @@
 /* ── Base ─────────────────────────────────────────────────────────── */
 html {
   scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 body {
@@ -84,6 +86,8 @@ body {
   -moz-osx-font-smoothing: grayscale;
   font-size: 14px;
   line-height: 1.5;
+  overflow-x: hidden;
+  max-width: 100%;
 }
 
 ::selection {
