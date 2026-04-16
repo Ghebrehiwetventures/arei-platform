@@ -355,7 +355,8 @@ nav{
   border-bottom:var(--bp-stroke) dashed var(--bp-line-soft);
   font-size:12px;color:var(--bp-text);
 }
-.bp-row:last-child{border-bottom:none}
+.bp-row:last-child,
+.bp-row:has(+ .mkt-summary){border-bottom:none}
 .bp-row-label{letter-spacing:.04em}
 .bp-row-value{
   font-size:10px;letter-spacing:.14em;text-transform:uppercase;
