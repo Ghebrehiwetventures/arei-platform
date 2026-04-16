@@ -19,166 +19,257 @@
 <meta name="twitter:title" content="AREI — Africa Real Estate Index">
 <meta name="twitter:description" content="No data layer exists for African real estate. AREI is building the index layer that makes fragmented markets searchable, comparable, and investable.">
 <meta name="twitter:image" content="https://www.africarealestateindex.com/arei-og.png">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%23111'/%3E%3Cpath d='M32 14 46 50h-7l-3.1-8H28l-3.1 8h-7L32 14Zm1.2 21-1.1-3.2c-1-2.8-1.7-5.2-2.2-7.1h-.3c-.5 1.9-1.2 4.3-2.2 7.1L26.3 35Z' fill='%23fafafa'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' fill='%230a0a0a'/%3E%3Cpath d='M32 14 46 50h-7l-3.1-8H28l-3.1 8h-7L32 14Zm1.2 21-1.1-3.2c-1-2.8-1.7-5.2-2.2-7.1h-.3c-.5 1.9-1.2 4.3-2.2 7.1L26.3 35Z' fill='%23fafafa'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
+/* ═══════════════════════════════════════════
+   AREI DESIGN SYSTEM — Brutalist / Swiss
+   ═══════════════════════════════════════════ */
+:root{
+  --green:#8ecf8e;
+  --deep-green:#2d4a3e;
+  --black:#0a0a0a;
+  --white:#fafafa;
+  --off-white:#f2f0ec;
+  --gray:#888;
+  --rule:rgba(0,0,0,.15);
+  --rule-dark:rgba(255,255,255,.15);
+  --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+}
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{
-  font-family:'Inter',ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
-  background:#fafafa;color:#111;
+  font-family:var(--mono);
+  background:var(--white);color:var(--black);
   -webkit-font-smoothing:antialiased;
-  font-size:15px;line-height:1.6;overflow-x:hidden;
+  font-size:14px;line-height:1.7;overflow-x:hidden;
 }
 html{scroll-behavior:smooth}
 a{color:inherit;text-decoration:none}
-.rv{opacity:0;transform:translateY(18px);transition:opacity .7s cubic-bezier(.16,1,.3,1),transform .7s cubic-bezier(.16,1,.3,1)}
-.rv.v{opacity:1;transform:translateY(0)}
 
-/* ─── NAV (landing-draft style) ─── */
+/* ─── REVEAL ─── */
+.rv{opacity:0;transition:opacity .6s ease}
+.rv.v{opacity:1}
+
+/* ─── SHARED ─── */
+.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+
+/* ─── NAV ─── */
 nav{
   position:sticky;top:0;z-index:200;
-  background:color-mix(in srgb, #fafafa 88%, transparent);
-  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  background:var(--green);
 }
 .nav-inner{
-  max-width:1120px;margin:0 auto;height:56px;
+  max-width:1120px;margin:0 auto;height:52px;
   display:flex;align-items:center;justify-content:space-between;
   padding:0 24px;
 }
-.logo{font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase}
-.nav-links{display:flex;align-items:center;gap:24px}
-.nav-a{font-size:13px;color:#888;transition:color .2s}
-.nav-a:hover{color:#111}
+.logo{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase}
+.nav-links{display:flex;align-items:center;gap:28px}
+.nav-a{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.5);transition:color .2s}
+.nav-a:hover{color:var(--black)}
 .nav-btn{
-  padding:7px 16px;border-radius:8px;
-  background:#111;color:#fafafa;
-  font-size:13px;font-weight:500;transition:opacity .2s;
+  padding:6px 16px;
+  border:1px solid var(--black);
+  font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  font-family:var(--mono);
+  transition:background .2s,color .2s;
 }
-.nav-btn:hover{opacity:.75}
-
-/* ─── WRAP ─── */
-.wrap{max-width:1120px;margin:0 auto;padding:0 24px}
+.nav-btn:hover{background:var(--black);color:var(--white)}
 
 /* ─── HERO ─── */
-.hero-section{position:relative;padding:160px 0 0;overflow:hidden}
-.hero-grid{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;
-  -webkit-mask-image:linear-gradient(to bottom,rgba(0,0,0,.5) 0%,rgba(0,0,0,0) 75%);
-  mask-image:linear-gradient(to bottom,rgba(0,0,0,.5) 0%,rgba(0,0,0,0) 75%);
+.hero-section{
+  background:var(--green);
+  padding:120px 0 120px;
 }
-.hero{position:relative;max-width:760px;margin:0 auto;text-align:center}
 .hero h1{
-  font-size:clamp(38px,6vw,60px);font-weight:400;line-height:1.04;
-  letter-spacing:-2.5px;margin-bottom:28px;color:#000;
+  font-size:clamp(32px,5.5vw,56px);font-weight:400;line-height:1.15;
+  letter-spacing:-.02em;color:var(--black);
+  max-width:780px;margin-bottom:24px;
 }
-.hero p{font-size:16px;color:#888;line-height:1.75;max-width:540px;margin:0 auto 32px}
-.hero-ctas{display:flex;gap:12px;align-items:center;justify-content:center;flex-wrap:wrap}
-.btn-fill{
+.hero-sub{
+  font-size:clamp(15px,1.4vw,17px);color:rgba(0,0,0,.65);line-height:1.6;
+  max-width:620px;margin-bottom:40px;
+}
+.hero-ctas{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
+.btn-primary{
   display:inline-flex;align-items:center;gap:8px;
-  padding:12px 28px;border-radius:10px;
-  background:#111;color:#fafafa;font-size:14px;font-weight:500;
-  transition:opacity .2s;border:none;cursor:pointer;
+  padding:14px 26px;
+  border:1px solid var(--black);background:var(--black);
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  font-family:var(--mono);color:var(--green);
+  cursor:pointer;transition:opacity .2s;
 }
-.btn-fill:hover{opacity:.75}
-.btn-ghost{
-  font-size:14px;color:#888;font-weight:500;
-  border-bottom:1px solid rgba(0,0,0,.1);padding-bottom:1px;
-  transition:color .2s,border-color .2s;
+.btn-primary:hover{opacity:.85}
+.btn-outline{
+  display:inline-flex;align-items:center;gap:8px;
+  padding:14px 26px;
+  border:1px solid var(--black);background:transparent;
+  font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
+  font-family:var(--mono);color:var(--black);
+  cursor:pointer;transition:background .2s,color .2s;
 }
-.btn-ghost:hover{color:#111;border-color:rgba(0,0,0,.3)}
-
-/* ─── PROOF STRIP ─── */
-.proof-strip{
-  margin-top:56px;padding:20px 0;
-  border-top:1px solid rgba(0,0,0,.06);
-  border-bottom:1px solid rgba(0,0,0,.06);
-  display:flex;gap:32px;align-items:center;justify-content:center;flex-wrap:wrap;
+.btn-outline:hover{background:var(--black);color:var(--white)}
+.btn-secondary{
+  font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;
+  color:rgba(0,0,0,.55);transition:color .2s;
+  border-bottom:1px solid rgba(0,0,0,.15);padding-bottom:2px;
 }
-.ps-item{font-size:13px;color:#888;display:flex;align-items:center;gap:8px}
-.ps-item strong{color:#111;font-weight:600}
-.ps-dot{width:6px;height:6px;border-radius:50%;background:#22c55e;box-shadow:0 0 0 3px rgba(34,197,94,.12)}
-
-/* ─── DATA SOURCES STRIP ─── */
+.btn-secondary:hover{color:var(--black);border-color:var(--black)}
 .sources-strip{
-  margin-top:24px;display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;
+  padding:20px 0 24px;
+  font-size:11px;color:rgba(0,0,0,.4);
+  display:flex;align-items:center;gap:8px;flex-wrap:wrap;
 }
-.sources-label{font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:#bbb}
-.sources-list{display:flex;align-items:center;gap:6px;font-size:12px;color:#aaa;font-weight:500}
-.sources-list span::after{content:"·";margin-left:6px;color:#d4d4d4}
+.sources-strip strong{font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.55)}
+.sources-list{display:flex;gap:4px;flex-wrap:wrap}
+.sources-list span::after{content:" /";color:rgba(0,0,0,.2)}
 .sources-list span:last-child::after{content:none}
 
-/* ─── API WINDOW ─── */
-.api-frame{margin-top:56px;padding-bottom:100px;position:relative;max-width:920px;margin-left:auto;margin-right:auto}
-.api-window{background:#0a0a0a;border-radius:12px;overflow:hidden;box-shadow:0 24px 64px rgba(0,0,0,.1)}
-.aw-bar{display:flex;align-items:center;gap:6px;padding:10px 16px;background:rgba(255,255,255,.02);border-bottom:1px solid rgba(255,255,255,.06)}
-.aw-dot{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,.08)}
-.aw-title{margin-left:10px;font-size:10px;color:rgba(255,255,255,.2);letter-spacing:.5px}
-.aw-status{margin-left:auto;display:flex;align-items:center;gap:6px;font-size:9px;color:rgba(255,255,255,.15);font-family:'Inter',sans-serif;letter-spacing:.3px}
-.aw-status-dot{width:5px;height:5px;border-radius:50%;background:#22c55e;box-shadow:0 0 4px rgba(34,197,94,.4)}
-.aw-body{display:grid;grid-template-columns:1.1fr .9fr}
-.aw-req{display:flex;border-right:1px solid rgba(255,255,255,.06)}
-.aw-ln{padding:16px 0 16px 14px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;line-height:1.8;
-  color:rgba(255,255,255,.07);text-align:right;user-select:none;min-width:26px}
-.aw-code{padding:16px 16px 16px 10px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10.5px;line-height:1.8;color:rgba(255,255,255,.35);flex:1}
-.aw-code .h{color:rgba(255,255,255,.8)}
-.aw-code .c{color:rgba(255,255,255,.13);font-style:italic}
-.aw-code .endpoint{color:rgba(255,255,255,.5)}
-.aw-code .param{color:rgba(255,255,255,.22)}
-.aw-code .val{color:#7dd3a0}
-.aw-res{padding:16px 18px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:10px;line-height:1.75;color:rgba(255,255,255,.3);overflow:hidden;
-  background:rgba(255,255,255,.015)}
-.aw-res .lbl{font-family:'Inter',sans-serif;font-size:9px;letter-spacing:1.2px;text-transform:uppercase;color:rgba(255,255,255,.12);margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.aw-res .lbl .ok{color:#7dd3a0}
-.aw-res .rk{color:rgba(255,255,255,.2)}
-.aw-res .rs{color:#7dd3a0}
-.aw-res .rn{color:#93b5fc}
-.aw-res .rb{color:rgba(255,255,255,.4)}
-.aw-res-line{opacity:0;transform:translateY(4px);transition:opacity .3s ease,transform .3s ease}
-.aw-res-line.typed{opacity:1;transform:translateY(0)}
+/* ─── SPLIT PANEL ─── */
+.split-panel{
+  display:grid;grid-template-columns:1fr 1fr;
+  border-top:1px solid rgba(0,0,0,.1);
+}
+.split-left{background:var(--green);padding:48px 32px}
+.split-right{background:var(--white);padding:48px 32px;font-size:13px}
+.panel-title{
+  font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  margin-bottom:20px;padding-bottom:12px;
+  border-bottom:1px solid rgba(0,0,0,.12);
+  color:rgba(0,0,0,.5);
+}
+.split-right .panel-title{border-color:var(--rule);color:var(--gray)}
+
+.index-row{
+  display:grid;grid-template-columns:72px 1fr auto;
+  align-items:baseline;gap:12px;
+  padding:14px 0;
+  border-bottom:1px solid rgba(0,0,0,.08);
+}
+.index-row:last-child{border-bottom:none}
+.ir-label{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.4)}
+.ir-title{font-size:clamp(16px,2vw,22px);font-weight:400;letter-spacing:-.01em}
+.ir-num{font-size:13px;font-weight:400;color:rgba(0,0,0,.25);text-align:right}
+
+.spec-grid{display:grid;grid-template-columns:1fr 1fr;gap:32px;margin-top:24px}
+.spec-block .spec-title{
+  font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gray);margin-bottom:12px;padding-bottom:8px;
+  border-bottom:1px solid var(--rule);
+}
+.spec-block .spec-item{font-size:12px;color:rgba(0,0,0,.6);padding:4px 0;line-height:1.6}
+.spec-block .spec-item .arrow{color:rgba(0,0,0,.25);margin-right:4px}
 
 /* ─── SECTION ─── */
-.section{padding:120px 0;position:relative}
-.section::after{
-  content:'';position:absolute;bottom:0;left:50%;
-  transform:translateX(-50%);
-  width:min(1120px, calc(100% - 48px));
-  border-bottom:1px solid rgba(0,0,0,.06);
+.section{padding:120px 0}
+.section-compact{padding:80px 0}
+.section-compact .section-head{margin-bottom:32px}
+.section-dark{background:var(--deep-green);color:var(--white)}
+.section-green{background:var(--green);color:var(--black)}
+.section-off{background:var(--off-white)}
+
+.section-head{
+  display:flex;justify-content:space-between;align-items:flex-start;
+  margin-bottom:48px;gap:24px;
 }
+.section-head-left{flex:1;max-width:700px}
+.section-head .ey{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gray);margin-bottom:16px;display:block;
+}
+.section-dark .section-head .ey{color:rgba(255,255,255,.3)}
+.section-head h2{
+  font-size:clamp(24px,3.5vw,40px);font-weight:400;line-height:1.15;
+  letter-spacing:-.02em;
+}
+.ey-dot{
+  display:inline-block;width:7px;height:7px;border-radius:50%;
+  background:#22c55e;margin-right:8px;vertical-align:middle;
+  box-shadow:0 0 0 0 rgba(34,197,94,.5);
+  animation:ey-pulse 2s ease-in-out infinite;
+}
+@keyframes ey-pulse{
+  0%,100%{box-shadow:0 0 0 0 rgba(34,197,94,.45)}
+  50%{box-shadow:0 0 0 6px rgba(34,197,94,0)}
+}
+@media(prefers-reduced-motion:reduce){
+  .ey-dot{animation:none}
+}
+.section-head p{font-size:14px;color:var(--gray);line-height:1.7;margin-top:16px;max-width:560px}
+.section-head p + p{margin-top:14px}
+.section-dark .section-head p{color:rgba(255,255,255,.4)}
 
-/* ─── SECTION HEAD ─── */
-.sh{margin-bottom:48px;max-width:760px;margin-left:auto;margin-right:auto;text-align:center}
-.sh .ey{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:#888;margin-bottom:16px;display:block}
-.sh h2{font-size:clamp(1.6rem,3.2vw,2.4rem);font-weight:600;line-height:1.08;letter-spacing:-.03em;color:#000;margin-bottom:14px}
-.sh p{font-size:15px;color:#888;line-height:1.75}
+/* ─── GAP SECTION: 2-column (text + stats sidebar) ─── */
+.gap-grid{
+  display:grid;grid-template-columns:1.1fr 1fr;
+  gap:80px;align-items:start;
+}
+.gap-text .ey{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gray);margin-bottom:16px;display:block;
+}
+.gap-text h2{
+  font-size:clamp(24px,3.5vw,40px);font-weight:400;line-height:1.15;
+  letter-spacing:-.02em;margin-bottom:20px;
+}
+.gap-text p{font-size:14px;color:var(--gray);line-height:1.75}
+.gap-stats{
+  display:flex;flex-direction:column;
+  border-top:1px solid var(--rule);
+}
+.gap-stat{
+  display:grid;grid-template-columns:140px 1fr;
+  align-items:baseline;gap:20px;
+  padding:22px 0;
+  border-bottom:1px solid var(--rule);
+}
+.gap-stat-num{
+  font-size:clamp(22px,2.6vw,30px);font-weight:400;letter-spacing:-.02em;line-height:1;
+  color:var(--black);
+}
+.gap-stat-desc{font-size:13px;color:var(--gray);line-height:1.5}
 
-/* ─── STAT CARDS ─── */
-.stat-cards{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.06);border-radius:12px;overflow:hidden}
-.sc{background:#fff;padding:28px 24px;transition:background .2s}
-.sc:hover{background:#f5f5f5}
-.sc strong{display:block;font-size:clamp(1.8rem,3.5vw,2.6rem);font-weight:600;letter-spacing:-.04em;line-height:1;margin-bottom:8px;color:#000}
-.sc p{font-size:13px;color:#888;line-height:1.5}
+/* ─── STAT ROWS (legacy) ─── */
+.stat-rows{border-top:1px solid var(--rule)}
+.stat-row{
+  display:grid;grid-template-columns:160px 1fr auto;
+  align-items:baseline;gap:24px;
+  padding:24px 0;
+  border-bottom:1px solid var(--rule);
+}
+.sr-num{font-size:clamp(28px,4vw,44px);font-weight:400;letter-spacing:-.03em;line-height:1}
+.sr-desc{font-size:14px;color:var(--gray);line-height:1.6;max-width:480px}
+.sr-idx{font-size:12px;color:rgba(0,0,0,.15);text-align:right}
 
-/* ─── PROBLEM CARDS ─── */
-.problems{display:grid;grid-template-columns:repeat(3,1fr);gap:20px;background:none;border:none;border-radius:0;overflow:visible}
-.prob{background:#fff;padding:32px 28px;transition:box-shadow .25s,border-color .25s;border:1px solid rgba(0,0,0,.06);border-radius:12px}
-.prob:hover{box-shadow:0 8px 24px rgba(0,0,0,.06);border-color:rgba(0,0,0,.1)}
-.prob h3{font-size:15px;font-weight:600;margin-bottom:10px}
-.prob p{font-size:14px;color:#888;line-height:1.7}
+/* ─── GAP ROWS ─── */
+.gap-rows{border-top:1px solid var(--rule-dark)}
+.gap-row{padding:32px 0;border-bottom:1px solid var(--rule-dark)}
+.gap-row h3{
+  font-size:clamp(16px,2vw,22px);font-weight:500;letter-spacing:.04em;
+  text-transform:uppercase;margin-bottom:10px;
+}
+.gap-row p{font-size:14px;color:rgba(255,255,255,.4);line-height:1.7;max-width:600px}
 
-/* ─── DATA TRANSFORM VISUAL ─── */
-.dtv{display:grid;grid-template-columns:1fr 1fr;gap:0;border-radius:14px;overflow:hidden;border:1px solid rgba(0,0,0,.06);box-shadow:0 16px 56px rgba(0,0,0,.06)}
-.dtv-panel{padding:32px;font-family:'SF Mono',Menlo,Consolas,monospace;font-size:11.5px;line-height:2}
-.dtv-raw{background:#fff}
-.dtv-out{background:#0a0a0a;color:rgba(255,255,255,.7)}
-.dtv-label{font-family:'Inter',sans-serif;font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;margin-bottom:16px;display:block}
-.dtv-raw .dtv-label{color:#bbb}
-.dtv-out .dtv-label{color:rgba(255,255,255,.2)}
-.dtv-raw .src{display:block;padding:6px 0;border-bottom:1px solid #f0f0f0;color:#888;
-  opacity:0;transform:translateX(-12px);transition:opacity .45s ease,transform .45s ease}
+/* ─── DATA TRANSFORM ─── */
+.dtv{display:grid;grid-template-columns:1fr 1fr;overflow:hidden;border:1px solid rgba(0,0,0,.1)}
+.dtv-panel{padding:40px 32px;font-size:12px;line-height:2}
+.dtv-raw{background:var(--green)}
+.dtv-out{background:var(--deep-green);color:rgba(255,255,255,.7)}
+.dtv-label{
+  font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  margin-bottom:20px;padding-bottom:10px;display:block;
+}
+.dtv-raw .dtv-label{color:rgba(0,0,0,.45);border-bottom:1px solid rgba(0,0,0,.1)}
+.dtv-out .dtv-label{color:rgba(255,255,255,.2);border-bottom:1px solid rgba(255,255,255,.08)}
+.dtv-raw .src{
+  display:block;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06);color:rgba(0,0,0,.55);
+  opacity:0;transform:translateX(-8px);transition:opacity .4s ease,transform .4s ease;
+}
 .dtv-raw .src:last-child{border-bottom:none}
-.dtv-raw .src b{color:#111;font-weight:600}
-.dtv-raw .src em{font-style:normal;color:#bbb;font-size:10px}
+.dtv-raw .src b{color:var(--black);font-weight:600}
+.dtv-raw .src em{font-style:normal;color:rgba(0,0,0,.25);font-size:10px}
 .dtv.animated .dtv-raw .src{opacity:1;transform:translateX(0)}
 .dtv-out .jl{display:block;opacity:0;transform:translateY(4px);transition:opacity .35s ease,transform .35s ease}
 .dtv.animated .dtv-out .jl{opacity:1;transform:translateY(0)}
@@ -186,157 +277,363 @@ nav{
 .dtv-out .val{color:#fff}
 .dtv-out .str{color:#7dd3a0}
 .dtv-out .num{color:#93b5fc}
-.dtv-out .jl-cursor{display:inline-block;width:6px;height:13px;background:rgba(255,255,255,.45);margin-left:1px;
-  animation:blink 1s step-end infinite;vertical-align:text-bottom;opacity:0}
+.dtv-out .jl-cursor{
+  display:inline-block;width:6px;height:13px;background:rgba(255,255,255,.45);
+  margin-left:1px;animation:blink 1s step-end infinite;vertical-align:text-bottom;opacity:0;
+}
 .dtv.animated .jl-cursor.on{opacity:1}
-
-/* ─── WHY NOW CARDS ─── */
-.wn-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.06);border-radius:12px;overflow:hidden}
-.wn{background:#fff;padding:28px 24px;transition:background .2s}
-.wn:hover{background:#f5f5f5}
-.wn h3{font-size:15px;font-weight:600;margin-bottom:10px}
-.wn p{font-size:14px;color:#888;line-height:1.7}
-
-/* ─── LISTING CAROUSEL ─── */
-.lc-track{display:flex;gap:16px;overflow-x:auto;scroll-snap-type:x mandatory;-webkit-overflow-scrolling:touch;
-  padding:8px 8px 20px;scrollbar-width:none}
-.lc-track::-webkit-scrollbar{display:none}
-.lc-track::before,.lc-track::after{content:'';flex:0 0 24px}
-.proof-cta{margin-top:8px;display:flex;justify-content:center}
-
-.lc-card{flex:0 0 260px;scroll-snap-align:start;border-radius:12px;overflow:hidden;
-  border:1px solid rgba(0,0,0,.06);background:#fff;transition:box-shadow .2s,border-color .2s}
-.lc-card:hover{box-shadow:0 6px 18px rgba(0,0,0,.05);border-color:rgba(0,0,0,.08)}
-.lc-img{height:156px;position:relative;overflow:hidden;background:#f4f4f4}
-.lc-img img{width:100%;height:100%;object-fit:cover;display:block}
-.lc-body{padding:14px 16px 15px}
-.lc-topline{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:#b1b1b1;margin-bottom:10px}
-.lc-price{font-size:20px;font-weight:600;letter-spacing:-.02em;color:#111;margin-bottom:8px}
-.lc-title{font-size:13px;font-weight:500;color:#111;line-height:1.45;margin-bottom:6px;
-  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
-.lc-loc{font-size:12px;color:#8d8d8d}
-.lc-meta{display:none}
-
-/* ─── WHY NOW ─── */
-.wn-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.06);border-radius:12px;overflow:hidden}
-.wn{background:#fff;padding:28px 24px;transition:background .2s}
-.wn:hover{background:#f5f5f5}
-.wn h3{font-size:15px;font-weight:600;margin-bottom:10px}
-.wn p{font-size:14px;color:#888;line-height:1.7}
-
-/* ─── REVENUE ─── */
-.rev-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:rgba(0,0,0,.06);border:1px solid rgba(0,0,0,.06);border-radius:12px;overflow:hidden}
-.rev{background:#fff;padding:28px 24px;transition:background .2s}
-.rev:hover{background:#f5f5f5}
-.rev-tier{font-size:11px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#bbb;margin-bottom:12px}
-.rev h3{font-size:15px;font-weight:600;margin-bottom:6px}
-.rev p{font-size:14px;color:#888;line-height:1.7}
-
-/* ─── CTA ─── */
-.cta-band{
-  background:#111;color:#fafafa;border-radius:14px;
-  padding:72px 56px;position:relative;overflow:hidden;
-  margin:80px 0;
-}
-.cta-band::before{content:'';position:absolute;top:-60%;right:-5%;width:500px;height:500px;border-radius:50%;border:1px solid rgba(255,255,255,.04);pointer-events:none}
-.cta-inner{position:relative;z-index:1;max-width:680px;margin:0 auto;text-align:center}
-.cta-inner .ey{font-size:12px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;color:rgba(255,255,255,.3);margin-bottom:16px;display:block}
-.cta-inner h2{font-size:clamp(1.6rem,3vw,2.4rem);font-weight:600;line-height:1.1;letter-spacing:-.03em;margin-bottom:16px}
-.cta-inner p{font-size:15px;color:rgba(255,255,255,.45);line-height:1.75;margin-bottom:22px}
-.cta-inner .btn-cta{
-  display:inline-flex;align-items:center;gap:8px;
-  padding:9px 20px;border-radius:8px;
-  background:#fafafa;color:#111;font-size:13px;font-weight:500;
-  transition:opacity .2s;border:none;cursor:pointer;
-}
-.cta-inner .btn-cta:hover{opacity:.85}
-.cta-micro{margin-top:14px;font-size:13px;color:rgba(255,255,255,.25)}
-.cta-form{display:flex;flex-direction:column;gap:12px;margin-top:28px}
-.cta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.cta-form input,.cta-form textarea{
-  width:100%;padding:13px 14px;border-radius:10px;
-  border:1px solid rgba(255,255,255,.12);background:rgba(255,255,255,.05);
-  color:#fafafa;font:inherit;outline:none;transition:border-color .15s,background .15s;
-}
-.cta-form input::placeholder,.cta-form textarea::placeholder{color:rgba(255,255,255,.28)}
-.cta-form input:focus,.cta-form textarea:focus{
-  border-color:rgba(255,255,255,.3);background:rgba(255,255,255,.07);
-}
-.cta-form textarea{min-height:110px;resize:vertical}
-.cta-actions{display:flex;align-items:center;justify-content:center;gap:14px;flex-wrap:wrap}
-.cta-feedback{font-size:13px;line-height:1.5}
-.cta-feedback.ok{color:rgba(255,255,255,.78)}
-.cta-feedback.err{color:#ffd1c4}
-
-/* ─── FOOTER ─── */
-footer{padding:60px 0 40px}
-.footer-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:40px;align-items:start}
-.footer-brand .f-logo{font-size:14px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:16px;display:block;color:#000}
-.footer-brand p{font-size:14px;color:#888;line-height:1.7;max-width:280px;margin-bottom:20px}
-.footer-status{
-  display:inline-flex;align-items:center;gap:8px;
-  font-size:13px;color:#888;font-weight:500;
-  padding:6px 14px;border:1px solid rgba(0,0,0,.08);border-radius:100px;
-}
-.footer-status .sd{width:6px;height:6px;border-radius:50%;background:#22c55e}
-.footer-col h4{font-size:15px;font-weight:600;color:#000;margin-bottom:18px}
-.footer-col a{display:block;font-size:14px;color:#888;margin-bottom:12px;transition:color .15s}
-.footer-col a:hover{color:#111}
-
-/* ─── API TYPING ANIMATION ─── */
-.aw-line{opacity:0;transform:translateY(6px);transition:opacity .5s ease,transform .5s ease}
-.aw-line.typed{opacity:1;transform:translateY(0)}
-.aw-cursor{display:inline-block;width:7px;height:14px;background:rgba(255,255,255,.5);margin-left:2px;
-  animation:blink 1s step-end infinite;vertical-align:text-bottom}
 @keyframes blink{50%{opacity:0}}
 
-/* ─── API GLOW ─── */
-.api-window{position:relative}
-.api-window::after{
-  content:'';position:absolute;inset:-1px;border-radius:15px;
-  background:conic-gradient(from 180deg,rgba(255,255,255,0),rgba(255,255,255,.04),rgba(255,255,255,0));
-  -webkit-mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-  mask:linear-gradient(#fff 0 0) content-box,linear-gradient(#fff 0 0);
-  -webkit-mask-composite:xor;mask-composite:exclude;
-  padding:1px;pointer-events:none;
-  animation:glow-rotate 8s linear infinite;
+/* ═══════════════════════════════════════════
+   BLUEPRINT VISUAL SYSTEM
+   Shared across pipeline, market status, and
+   any future data visualizations.
+   ═══════════════════════════════════════════ */
+:root{
+  --bp-line:rgba(0,0,0,.3);
+  --bp-line-soft:rgba(0,0,0,.12);
+  --bp-label:rgba(0,0,0,.42);
+  --bp-text:rgba(0,0,0,.72);
+  --bp-muted:rgba(0,0,0,.35);
+  --bp-active:#2d6a4f;
+  --bp-stroke:1px;
 }
-@keyframes glow-rotate{to{--angle:360deg}}
-.api-frame{position:relative}
-.api-frame::before{
-  content:'';position:absolute;top:50%;left:50%;
-  width:600px;height:400px;
-  transform:translate(-50%,-50%);
-  background:radial-gradient(ellipse,rgba(100,120,255,.04) 0%,transparent 70%);
-  pointer-events:none;filter:blur(60px);
+.section-dark{
+  --bp-line:rgba(255,255,255,.32);
+  --bp-line-soft:rgba(255,255,255,.12);
+  --bp-label:rgba(255,255,255,.4);
+  --bp-text:rgba(255,255,255,.78);
+  --bp-muted:rgba(255,255,255,.32);
+  --bp-active:#8ecf8e;
 }
+
+/* ── Panel — the base container ── */
+.bp-panel{
+  border:var(--bp-stroke) solid var(--bp-line);
+  padding:28px;
+  position:relative;
+  background:transparent;
+}
+.bp-panel-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding-bottom:14px;margin-bottom:20px;
+  border-bottom:var(--bp-stroke) solid var(--bp-line-soft);
+}
+.bp-panel-title{
+  font-size:10px;font-weight:600;letter-spacing:.16em;text-transform:uppercase;
+  color:var(--bp-label);
+}
+.bp-panel-meta{
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--bp-muted);
+}
+
+/* ── Node markers ── */
+.bp-node{
+  width:10px;height:10px;flex:0 0 10px;
+  border:var(--bp-stroke) solid var(--bp-line);
+  display:inline-block;position:relative;
+}
+.bp-node-active{
+  background:var(--bp-active);border-color:var(--bp-active);
+}
+.bp-node-active::after{
+  content:'';position:absolute;inset:-5px;border-radius:50%;
+  background:var(--bp-active);opacity:.18;
+  animation:bp-pulse 2.4s ease-in-out infinite;
+}
+@keyframes bp-pulse{
+  0%,100%{opacity:.1;transform:scale(.9)}
+  50%{opacity:.22;transform:scale(1.4)}
+}
+
+/* ── Row with leader dots ── */
+.bp-row{
+  display:grid;grid-template-columns:20px 1fr auto;
+  align-items:center;gap:16px;
+  padding:12px 0;
+  border-bottom:var(--bp-stroke) dashed var(--bp-line-soft);
+  font-size:12px;color:var(--bp-text);
+}
+.bp-row:last-child{border-bottom:none}
+.bp-row-label{letter-spacing:.04em}
+.bp-row-value{
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bp-muted);
+}
+.bp-row-active .bp-row-value{color:var(--bp-active)}
+.bp-row-active .bp-row-label{color:var(--bp-text)}
+.bp-row-link{cursor:pointer;transition:background .2s}
+.bp-row-link:hover{background:color-mix(in srgb,var(--bp-active) 6%,transparent)}
+.bp-row-sub{
+  font-size:10px;letter-spacing:.08em;color:var(--bp-muted);
+  margin-left:10px;font-weight:400;
+  transition:color .2s;
+}
+.bp-row-link:hover .bp-row-sub{color:var(--bp-active)}
+
+/* ── Engine Transformation: messy → clean continuous flow (no frame) ── */
+.engine-transform{width:100%}
+
+.transform-cols{
+  display:grid;grid-template-columns:1fr 160px 1fr;
+  gap:0;align-items:stretch;
+}
+.transform-col{padding:0 18px;min-width:0;display:flex;flex-direction:column}
+.transform-col-label{
+  font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bp-muted);padding-bottom:12px;margin-bottom:14px;
+  border-bottom:var(--bp-stroke) solid var(--bp-line-soft);
+}
+
+/* Engine node — clearly labeled center element */
+.engine-node{
+  display:flex;flex-direction:column;align-items:center;gap:14px;
+  padding:16px 12px;
+  border:var(--bp-stroke) solid var(--bp-line);
+  background:transparent;
+  position:relative;
+}
+.engine-node::before{
+  content:'';position:absolute;left:50%;top:-8px;width:1px;height:8px;
+  background:var(--bp-line);
+}
+.engine-node::after{
+  content:'';position:absolute;left:50%;bottom:-8px;width:1px;height:8px;
+  background:var(--bp-line);
+}
+.engine-node-dot{
+  width:8px;height:8px;background:var(--bp-active);
+  animation:bp-pulse 2.4s ease-in-out infinite;
+}
+.engine-node-label{
+  font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;
+  color:var(--bp-text);text-align:center;line-height:1.4;
+}
+.transform-mask{
+  height:220px;overflow:hidden;position:relative;
+  -webkit-mask-image:linear-gradient(to bottom, transparent 0, #000 18%, #000 82%, transparent 100%);
+  mask-image:linear-gradient(to bottom, transparent 0, #000 18%, #000 82%, transparent 100%);
+}
+.transform-stream{
+  display:flex;flex-direction:column;
+  animation:xfm-scroll 22s linear infinite;
+}
+@keyframes xfm-scroll{
+  from{transform:translateY(0)}
+  to{transform:translateY(-50%)}
+}
+.xfm-item{
+  padding:10px 0;font-size:12px;line-height:1.5;
+  border-bottom:var(--bp-stroke) dashed var(--bp-line-soft);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;
+}
+/* Raw input: right-aligned — items flow toward the engine */
+.transform-raw .transform-col-label{text-align:right}
+.transform-raw .xfm-item{color:var(--bp-muted);text-align:right}
+.transform-raw .xfm-item:nth-child(2n){color:var(--bp-text);opacity:.75}
+.transform-raw .xfm-item:nth-child(3n){letter-spacing:.03em}
+.transform-raw .xfm-item:nth-child(4n){opacity:.6}
+/* Structured output: left-aligned — items flow away from the engine */
+.transform-clean .xfm-item{
+  color:var(--bp-text);font-variant-numeric:tabular-nums;
+}
+.xfm-price{color:var(--bp-active);font-weight:500}
+
+.transform-engine{
+  display:flex;align-items:center;justify-content:center;
+  position:relative;
+}
+/* Flow indicator lines — dashed connectors from engine node to each stream edge */
+.transform-engine::before,.transform-engine::after{
+  content:'';position:absolute;top:50%;height:1px;
+  border-top:var(--bp-stroke) dashed var(--bp-line);
+}
+.transform-engine::before{left:-18px;right:calc(50% + 48px)}
+.transform-engine::after{right:-18px;left:calc(50% + 48px)}
+
+.log-footer{
+  display:flex;justify-content:space-between;
+  margin-top:20px;padding-top:16px;
+  border-top:var(--bp-stroke) solid var(--bp-line-soft);
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bp-muted);
+}
+
+@media(prefers-reduced-motion:reduce){
+  .bp-node-active::after,.engine-node-dot{animation:none;opacity:.5}
+  .transform-stream{animation:none}
+}
+
+/* ─── CAROUSEL ─── */
+.lc-track{
+  display:flex;gap:16px;overflow-x:auto;
+  -webkit-overflow-scrolling:touch;padding:8px 0 20px;scrollbar-width:none;
+}
+.lc-track::-webkit-scrollbar{display:none}
+.proof-cta{margin-top:24px}
+.lc-card{
+  flex:0 0 260px;overflow:hidden;
+  border:1px solid var(--rule);background:var(--white);
+  transition:border-color .2s;
+}
+.lc-card:hover{border-color:rgba(0,0,0,.3)}
+.lc-img{height:156px;overflow:hidden;background:#e8e8e8}
+.lc-img img{width:100%;height:100%;object-fit:cover;display:block}
+.lc-body{padding:14px 16px 16px}
+.lc-topline{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.35);margin-bottom:10px}
+.lc-price{font-size:18px;font-weight:500;letter-spacing:-.01em;color:var(--black);margin-bottom:8px}
+.lc-title{
+  font-size:12px;font-weight:400;color:rgba(0,0,0,.6);line-height:1.5;margin-bottom:6px;
+  display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden;
+}
+.lc-loc{font-size:11px;color:var(--gray)}
+.lc-meta{display:none}
+
+/* ─── WHAT'S NEXT — Market Status Panel (Blueprint) ─── */
+.next-grid{
+  display:grid;grid-template-columns:1fr 1fr;gap:80px;align-items:center;
+}
+.next-text .ey{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gray);margin-bottom:16px;display:block;
+}
+.next-text h2{
+  font-size:clamp(24px,3.5vw,40px);font-weight:400;line-height:1.15;
+  letter-spacing:-.02em;margin-bottom:16px;
+}
+.next-text p{font-size:14px;color:var(--gray);line-height:1.7;margin-top:14px;max-width:480px}
+
+/* Market status panel uses shared .bp-panel + .bp-row */
+.mkt-panel .bp-row{padding:14px 0}
+.mkt-summary{
+  display:flex;justify-content:space-between;
+  margin-top:16px;padding-top:16px;
+  border-top:var(--bp-stroke) solid var(--bp-line-soft);
+  font-size:10px;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bp-muted);
+}
+
+/* ─── LIST ROWS ─── */
+.list-rows{border-top:1px solid var(--rule)}
+.section-dark .list-rows{border-top-color:var(--rule-dark)}
+.list-row{
+  display:grid;grid-template-columns:80px 1fr auto;
+  align-items:baseline;gap:20px;
+  padding:28px 0;
+  border-bottom:1px solid var(--rule);
+}
+.section-dark .list-row{border-bottom-color:var(--rule-dark)}
+.lr-label{font-size:10px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:var(--gray)}
+.section-dark .lr-label{color:rgba(255,255,255,.25)}
+.lr-content h3{font-size:clamp(16px,2vw,20px);font-weight:500;margin-bottom:6px}
+.lr-content p{font-size:13px;color:var(--gray);line-height:1.7}
+.section-dark .lr-content p{color:rgba(255,255,255,.35)}
+.lr-idx{font-size:12px;color:rgba(0,0,0,.12)}
+.section-dark .lr-idx{color:rgba(255,255,255,.08)}
+
+/* ─── CTA ─── */
+.cta-section{background:var(--green);padding:100px 0}
+.cta-inner{max-width:600px}
+.cta-inner .ey{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(0,0,0,.4);margin-bottom:16px;display:block;
+}
+.cta-inner h2{
+  font-size:clamp(22px,3vw,36px);font-weight:400;line-height:1.15;
+  letter-spacing:-.02em;margin-bottom:12px;
+}
+.cta-inner>p{font-size:14px;color:rgba(0,0,0,.5);line-height:1.7;margin-bottom:32px}
+.cta-form{display:flex;flex-direction:column;gap:12px}
+.cta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.cta-form input,.cta-form textarea{
+  width:100%;padding:12px 14px;
+  border:1px solid rgba(0,0,0,.15);background:transparent;
+  color:var(--black);font-family:var(--mono);font-size:13px;
+  outline:none;transition:border-color .15s;
+}
+.cta-form input::placeholder,.cta-form textarea::placeholder{color:rgba(0,0,0,.3)}
+.cta-form input:focus,.cta-form textarea:focus{border-color:rgba(0,0,0,.5)}
+.cta-form textarea{min-height:100px;resize:vertical}
+.cta-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+.cta-feedback{font-size:13px;line-height:1.5}
+.cta-feedback.ok{color:rgba(0,0,0,.7)}
+.cta-feedback.err{color:#c44}
+.cta-micro{margin-top:20px;font-size:12px;color:rgba(0,0,0,.3)}
+
+/* ─── FOOTER ─── */
+footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
+.footer-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:40px;align-items:start}
+.footer-brand .f-logo{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px;display:block}
+.footer-brand p{font-size:12px;color:var(--gray);line-height:1.7;max-width:280px;margin-bottom:20px}
+.footer-status{
+  display:inline-flex;align-items:center;gap:8px;
+  font-size:11px;color:var(--gray);font-weight:500;
+  padding:6px 14px;border:1px solid var(--rule);
+}
+.footer-status .sd{width:6px;height:6px;border-radius:50%;background:#22c55e}
+.footer-col h4{
+  font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--gray);margin-bottom:18px;padding-bottom:10px;
+  border-bottom:1px solid var(--rule);
+}
+.footer-col a{display:block;font-size:12px;color:var(--gray);margin-bottom:10px;transition:color .15s}
+.footer-col a:hover{color:var(--black)}
+.footer-bottom{
+  margin-top:40px;padding-top:24px;border-top:1px solid var(--rule);
+  display:flex;justify-content:space-between;align-items:baseline;
+}
+.footer-copy{font-size:10px;color:rgba(0,0,0,.25);letter-spacing:.08em;text-transform:uppercase}
+.footer-idx{font-size:clamp(40px,6vw,64px);font-weight:300;color:rgba(0,0,0,.06);line-height:1}
 
 /* ─── RESPONSIVE ─── */
 @media(max-width:860px){
-  .aw-body{grid-template-columns:1fr}
-  .aw-res{display:none}
-  .aw-req{border-right:none}
-  .aw-code{font-size:10px}
-  .stat-cards{grid-template-columns:1fr 1fr}
-  .problems,.wn-cards,.rev-grid{grid-template-columns:1fr}
-  .dtv{grid-template-columns:1fr;border-radius:14px}
-  .dtv-panel{padding:24px 20px;font-size:10.5px;line-height:1.9}
-  .cta-band{padding:48px 28px}
+  .split-panel{grid-template-columns:1fr}
+  .split-left,.split-right{padding:32px 24px}
+  .spec-grid{grid-template-columns:1fr}
+  .stat-row{grid-template-columns:120px 1fr auto}
+  .dtv{grid-template-columns:1fr}
+  .dtv-panel{padding:28px 20px;font-size:11px;line-height:1.9}
+  .gap-grid{grid-template-columns:1fr;gap:48px}
+  .gap-stat{grid-template-columns:100px 1fr;gap:16px;padding:16px 0}
+  .transform-cols{grid-template-columns:1fr;gap:0}
+  .transform-col{padding:0;margin-bottom:16px}
+  .transform-engine{height:auto;padding:20px 0}
+  .transform-engine::before,.transform-engine::after{
+    left:50%;right:auto;top:0;bottom:0;width:1px;height:auto;
+    border-top:none;border-left:var(--bp-stroke) dashed var(--bp-line);
+  }
+  .transform-engine::before{top:0;bottom:calc(50% + 28px)}
+  .transform-engine::after{bottom:0;top:calc(50% + 28px)}
+  .transform-mask{height:170px}
+  .engine-transform{padding:0}
+  .list-row{grid-template-columns:64px 1fr auto}
+  .section{padding:80px 0}
+  .cta-section{padding:64px 0}
   .cta-row{grid-template-columns:1fr}
-  .hero h1{font-size:clamp(1.8rem,5vw,2.8rem)}
+  .hero h1{font-size:clamp(26px,5vw,40px)}
+  .section-head{flex-direction:column}
+  .next-grid{grid-template-columns:1fr;gap:48px}
 }
 @media(max-width:560px){
   .nav-a{display:none}
-  .stat-cards{grid-template-columns:1fr 1fr}
-  .proof-strip{gap:20px}
-  .hero-section{padding:100px 0 0}
-  .section{padding:64px 0}
+  .stat-row{grid-template-columns:1fr;gap:8px}
+  .sr-num{font-size:clamp(24px,8vw,36px)}
+  .sr-idx{display:none}
+  .list-row{grid-template-columns:1fr;gap:8px}
+  .lr-label{margin-bottom:-4px}
+  .lr-idx{display:none}
+  .hero-section{padding:60px 0 0}
+  .hero-top{flex-direction:column;gap:8px}
+  .hero-meta{gap:16px}
+  .section{padding:56px 0}
+  .cta-section{padding:56px 0}
   .footer-grid{grid-template-columns:1fr 1fr;gap:24px}
   .footer-grid>div:first-child{grid-column:1/-1}
-  .cta-band{margin:48px 0;border-radius:10px;padding:36px 20px}
+  .index-row{grid-template-columns:56px 1fr auto}
 }
 @media(prefers-reduced-motion:reduce){
-  .rv{opacity:1;transform:none;transition:none}
+  .rv{opacity:1;transition:none}
 }
 </style>
 </head>
@@ -344,180 +641,66 @@ footer{padding:60px 0 40px}
 
 <nav>
   <div class="nav-inner">
-    <a class="logo" href="#top">AREI</a>
+    <a class="logo" href="#top">Africa Real Estate Index</a>
     <div class="nav-links">
-      <a class="nav-a" href="#opportunity">Opportunity</a>
-      <a class="nav-a" href="#proof">Proof</a>
-      <a class="nav-a" href="#model">Model</a>
-      <a class="nav-btn" href="#contact">Investor enquiry</a>
+      <a class="nav-a" href="#opportunity">Gap</a>
+      <a class="nav-a" href="#proof">Live</a>
+      <a class="nav-a" href="#model">Next</a>
+      <a class="nav-btn" href="#contact">Investor Enquiry</a>
     </div>
   </div>
 </nav>
 
 <!-- ═══ HERO ═══ -->
 <section class="hero-section">
-  <svg class="hero-grid" xmlns="http://www.w3.org/2000/svg"><defs><pattern id="g" width="72" height="72" patternUnits="userSpaceOnUse"><line x1="0" y1="0" x2="72" y2="0" stroke="rgba(13,13,12,0.07)" stroke-width=".6" stroke-dasharray="3 6"/><line x1="0" y1="0" x2="0" y2="72" stroke="rgba(13,13,12,0.07)" stroke-width=".6" stroke-dasharray="3 6"/><circle cx="0" cy="0" r="1.8" fill="rgba(13,13,12,0.14)"/></pattern></defs><rect width="100%" height="100%" fill="url(#g)"/></svg>
   <div class="wrap">
     <div class="hero rv">
-      <h1>No data layer exists for African real estate.<br>We're building it.</h1>
-      <p>54 markets. Fragmented, local, unstructured. AREI is building the index layer that makes African real estate searchable, comparable, and investable.</p>
+      <h1>Africa's property data is everywhere. We bring it together.</h1>
+      <p class="hero-sub">We pull them together, clean them up, and make them searchable. Starting with Cape Verde.</p>
       <div class="hero-ctas">
-        <a href="#contact" class="btn-fill">Investor enquiry</a>
-        <a href="#proof" class="btn-ghost">See live proof</a>
+        <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-primary">Visit KazaVerde [&rarr;]</a>
+        <a href="#contact" class="btn-secondary">Investor enquiry &rarr;</a>
       </div>
-      <div class="sources-strip" style="margin-top:32px">
-        <span class="sources-label">Aggregating from</span>
+      <div class="sources-strip">
+        <strong>Aggregating</strong>
         <div class="sources-list">
           <span>RE/MAX</span><span>OLX</span><span>Casa.cv</span><span>Facebook Marketplace</span><span>iMoverde</span>
         </div>
       </div>
     </div>
-
-    <!-- API WINDOW -->
-    <div class="api-frame rv">
-      <div class="api-window">
-        <div class="aw-bar">
-          <span class="aw-dot"></span><span class="aw-dot"></span><span class="aw-dot"></span>
-          <span class="aw-title">AREI Data API · v1</span>
-          <div class="aw-status"><span class="aw-status-dot"></span>Connected</div>
-        </div>
-        <div class="aw-body">
-          <div class="aw-req">
-            <div class="aw-ln" aria-hidden="true">
-<div class="aw-line">1</div>
-<div class="aw-line">2</div>
-<div class="aw-line">3</div>
-<div class="aw-line">4</div>
-<div class="aw-line">5</div>
-<div class="aw-line">6</div>
-<div class="aw-line">7</div>
-<div class="aw-line">8</div>
-<div class="aw-line">9</div>
-<div class="aw-line">10</div>
-<div class="aw-line">11</div>
-<div class="aw-line">12</div>
-<div class="aw-line">13</div>
-<div class="aw-line">14</div>
-            </div>
-            <div class="aw-code" id="api-code">
-<div class="aw-line"><span class="c">// List all indexed markets</span></div>
-<div class="aw-line"><span class="h">GET</span> <span class="endpoint">/v1/markets</span></div>
-<div class="aw-line">&nbsp;</div>
-<div class="aw-line"><span class="c">// Query residential listings in Cape Verde</span></div>
-<div class="aw-line"><span class="h">GET</span> <span class="endpoint">/v1/listings</span></div>
-<div class="aw-line">  <span class="param">?market=</span><span class="val">CV</span></div>
-<div class="aw-line">  <span class="param">&amp;type=</span><span class="val">residential</span></div>
-<div class="aw-line">  <span class="param">&amp;min_beds=</span><span class="val">2</span></div>
-<div class="aw-line">&nbsp;</div>
-<div class="aw-line"><span class="c">// Market-level price indices</span></div>
-<div class="aw-line"><span class="h">GET</span> <span class="endpoint">/v1/indices</span></div>
-<div class="aw-line">  <span class="param">?market=</span><span class="val">CV</span></div>
-<div class="aw-line">  <span class="param">&amp;metric=</span><span class="val">price_sqm</span></div>
-<div class="aw-line">  <span class="param">&amp;period=</span><span class="val">6m</span><span class="aw-cursor"></span></div>
-            </div>
-          </div>
-          <div class="aw-res" id="api-res">
-            <div class="lbl"><span class="ok">200</span> /v1/listings</div>
-<div class="aw-res-line"><span class="rb">{</span></div>
-<div class="aw-res-line">  <span class="rk">"total":</span> <span class="rn">347</span>,</div>
-<div class="aw-res-line">  <span class="rk">"market":</span> <span class="rs">"CV"</span>,</div>
-<div class="aw-res-line">  <span class="rk">"results":</span> <span class="rb">[{</span></div>
-<div class="aw-res-line">    <span class="rk">"id":</span> <span class="rs">"cv_0847"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"price":</span> <span class="rn">74000</span>,</div>
-<div class="aw-res-line">    <span class="rk">"currency":</span> <span class="rs">"EUR"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"type":</span> <span class="rs">"apartment"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"beds":</span> <span class="rn">2</span>,</div>
-<div class="aw-res-line">    <span class="rk">"area_sqm":</span> <span class="rn">68</span>,</div>
-<div class="aw-res-line">    <span class="rk">"location":</span> <span class="rs">"Sal Rei"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"island":</span> <span class="rs">"Boa Vista"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"source":</span> <span class="rs">"remax.cv"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"score":</span> <span class="rn">0.94</span></div>
-<div class="aw-res-line">  <span class="rb">},</span></div>
-<div class="aw-res-line">  <span class="rb">{</span></div>
-<div class="aw-res-line">    <span class="rk">"id":</span> <span class="rs">"cv_1203"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"price":</span> <span class="rn">89500</span>,</div>
-<div class="aw-res-line">    <span class="rk">"currency":</span> <span class="rs">"EUR"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"type":</span> <span class="rs">"apartment"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"beds":</span> <span class="rn">2</span>,</div>
-<div class="aw-res-line">    <span class="rk">"area_sqm":</span> <span class="rn">74</span>,</div>
-<div class="aw-res-line">    <span class="rk">"location":</span> <span class="rs">"Paul"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"island":</span> <span class="rs">"Santo Antão"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"source":</span> <span class="rs">"casa.cv"</span>,</div>
-<div class="aw-res-line">    <span class="rk">"score":</span> <span class="rn">0.87</span></div>
-<div class="aw-res-line">  <span class="rb">}, ...]</span></div>
-<div class="aw-res-line"><span class="rb">}</span></div>
-          </div>
-        </div>
-      </div>
-    </div>
   </div>
-
 
 </section>
 
 
-<!-- ═══ 1. THE MARKET REALITY ═══ -->
+<!-- ═══ 1. THE GAP ═══ -->
 <section class="section" id="opportunity">
   <div class="wrap">
-    <div class="sh rv">
-      <span class="ey">The opportunity</span>
-      <h2>The world's largest asset class.<br>Africa's most underserved data market.</h2>
+    <div class="section-head rv">
+      <div class="section-head-left">
+        <span class="ey">The Gap</span>
+        <h2>If you're an investor looking at Africa, you can't see the market.</h2>
+        <p>Global real estate is worth nearly $400 trillion. Africa holds 17% of the world's population and is urbanizing faster than any other continent. But to an investor sitting in London or Dubai, most of it is a blank map. Not because the value isn't there. Because no one has structured it.</p>
+      </div>
     </div>
-    <div class="stat-cards rv">
-      <div class="sc"><strong>$400T</strong><p>Global real estate value</p></div>
-      <div class="sc"><strong>1–2%</strong><p>Africa's share, despite 17% of the population</p></div>
-      <div class="sc"><strong>54</strong><p>Countries. Zero pan-African property index.</p></div>
-      <div class="sc"><strong>#1</strong><p>Fastest-urbanizing continent on earth</p></div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ═══ 2. THE GAP ═══ -->
-<section class="section">
-  <div class="wrap">
-    <div class="sh rv">
-      <span class="ey">The gap</span>
-      <h2>The market exists.<br>The data layer does not.</h2>
-    </div>
-    <div class="problems rv">
-      <div class="prob"><h3>Fragmentation</h3><p>Listings sit across brokers, Facebook groups, portals, and classifieds — each with its own format and language.</p></div>
-      <div class="prob"><h3>No comparability</h3><p>Euros in Praia, shillings in Nairobi, cedis in Accra. No common structure for price, type, or location.</p></div>
-      <div class="prob"><h3>Nothing to build on</h3><p>No API, no feed, no structured dataset. Every analysis starts from scratch.</p></div>
+    <div class="stat-rows rv">
+      <div class="stat-row"><div class="sr-num">$400T</div><div class="sr-desc">The world's largest asset class.</div><div class="sr-idx">001</div></div>
+      <div class="stat-row"><div class="sr-num">17%</div><div class="sr-desc">Africa's share of the world's population.</div><div class="sr-idx">002</div></div>
+      <div class="stat-row"><div class="sr-num">#1</div><div class="sr-desc">Fastest-urbanizing continent on earth.</div><div class="sr-idx">003</div></div>
+      <div class="stat-row"><div class="sr-num">54</div><div class="sr-desc">Countries, each with its own market.</div><div class="sr-idx">004</div></div>
     </div>
   </div>
 </section>
 
 
 <!-- ═══ 3. THE ENGINE ═══ -->
-<section class="section">
+<section class="section section-dark section-compact">
   <div class="wrap">
-    <div class="sh rv">
-      <span class="ey">The engine</span>
-      <h2>We don't sell properties.<br>We structure the data behind them.</h2>
-      <p>Our engine crawls brokers, portals, and classifieds across markets — then normalizes every listing into a clean, structured format. Price, location, type, and area are extracted regardless of language. Each record is deduplicated and scored before it enters the index.</p>
-    </div>
-    <div class="dtv rv" id="dtv">
-      <div class="dtv-panel dtv-raw">
-        <span class="dtv-label">Raw sources</span>
-        <span class="src"><b>imoverde.cv</b> &nbsp;T3 Santa Maria · 185.000€ · 87m2 <em>PT</em></span>
-        <span class="src"><b>remax.cv</b> &nbsp;Villa com Piscina, Praia — 312 000 € <em>PT</em></span>
-        <span class="src"><b>facebook.com</b> &nbsp;Studio Mindelo 94500eur contacto: +238… <em>PT</em></span>
-        <span class="src"><b>casa.cv</b> &nbsp;Apartamento T1 · São Vicente · negociável <em>PT</em></span>
-        <span class="src"><b>olx.cv</b> &nbsp;Terreno Sal 250m² 45000 euros <em>PT</em></span>
-      </div>
-      <div class="dtv-panel dtv-out">
-        <span class="dtv-label">AREI structured output</span>
-<span class="jl"><span class="key">{</span></span>
-<span class="jl">  <span class="key">"price":</span> <span class="num">185000</span>,</span>
-<span class="jl">  <span class="key">"currency":</span> <span class="str">"EUR"</span>,</span>
-<span class="jl">  <span class="key">"type":</span> <span class="str">"apartment"</span>,</span>
-<span class="jl">  <span class="key">"beds":</span> <span class="num">3</span>,</span>
-<span class="jl">  <span class="key">"area_sqm":</span> <span class="num">87</span>,</span>
-<span class="jl">  <span class="key">"location":</span> <span class="str">"Santa Maria, Sal"</span>,</span>
-<span class="jl">  <span class="key">"source":</span> <span class="str">"imoverde.cv"</span>,</span>
-<span class="jl">  <span class="key">"market":</span> <span class="str">"CV"</span></span>
-<span class="jl"><span class="key">}</span><span class="jl-cursor"></span></span>
+    <div class="section-head rv">
+      <div class="section-head-left">
+        <span class="ey">The Engine</span>
+        <h2>We don't sell properties. We structure the data behind them.</h2>
+        <p>Listings arrive messy — across languages, currencies, and formats. Our engine extracts, normalizes, and deduplicates every one into a single clean schema.</p>
       </div>
     </div>
   </div>
@@ -525,86 +708,105 @@ footer{padding:60px 0 40px}
 
 
 <!-- ═══ 4. LIVE PROOF ═══ -->
-<section class="section" id="proof">
+<section class="section section-off" id="proof">
   <div class="wrap">
-    <div class="sh rv">
-      <span class="ey">Live proof</span>
-      <h2>KazaVerde — the Zillow of<br>Cape Verde. Powered by AREI.</h2>
-      <p>The first consumer product built entirely on the AREI engine. Every listing aggregated, structured, and published automatically — zero manual entries. One country proved the model. Fifty-three more to go.</p>
+    <div class="section-head rv">
+      <div class="section-head-left">
+        <span class="ey"><span class="ey-dot"></span>Live</span>
+        <h2>KazaVerde is the first product built on the engine.</h2>
+        <p>Every listing aggregated, cleaned, and published automatically.</p>
+      </div>
     </div>
     <div class="lc-track rv" id="lc-track">
       <div class="lc-card">
-        <div class="lc-img" style="background:linear-gradient(135deg,#c8d5b9,#8fc0a9)"><div class="lc-tag">Apartment</div><div class="lc-price">&euro;55,000</div></div>
-        <div class="lc-body"><div class="lc-title">One-bedroom flat in Estrela Do Mar</div><div class="lc-loc">Santa Maria, Sal</div><div class="lc-meta">1 Bed · 1 Bath</div></div>
+        <div class="lc-img" style="background:#d4d4d4"></div>
+        <div class="lc-body"><div class="lc-topline">Apartment</div><div class="lc-price">&euro;55,000</div><div class="lc-title">One-bedroom flat in Estrela Do Mar</div><div class="lc-loc">Santa Maria, Sal</div></div>
       </div>
       <div class="lc-card">
-        <div class="lc-img" style="background:linear-gradient(135deg,#dbb68f,#c49a6c)"><div class="lc-tag">Apartment</div><div class="lc-price">&euro;74,000</div></div>
-        <div class="lc-body"><div class="lc-title">1-bedroom flat in the centre of Sal Rei</div><div class="lc-loc">Sal Rei, Boa Vista</div><div class="lc-meta">1 Bed · 1 Bath</div></div>
+        <div class="lc-img" style="background:#c8c8c8"></div>
+        <div class="lc-body"><div class="lc-topline">Apartment</div><div class="lc-price">&euro;74,000</div><div class="lc-title">1-bedroom flat in the centre of Sal Rei</div><div class="lc-loc">Sal Rei, Boa Vista</div></div>
       </div>
       <div class="lc-card">
-        <div class="lc-img" style="background:linear-gradient(135deg,#e8c4a0,#d4a574)"><div class="lc-tag">Villa</div><div class="lc-price">&euro;315,000</div></div>
-        <div class="lc-body"><div class="lc-title">Villetta a Murdeira</div><div class="lc-loc">Murdeira, Sal</div><div class="lc-meta">3 Bed · 2 Bath</div></div>
+        <div class="lc-img" style="background:#bcbcbc"></div>
+        <div class="lc-body"><div class="lc-topline">Villa</div><div class="lc-price">&euro;315,000</div><div class="lc-title">Villetta a Murdeira</div><div class="lc-loc">Murdeira, Sal</div></div>
       </div>
       <div class="lc-card">
-        <div class="lc-img" style="background:linear-gradient(135deg,#b8cce0,#8aa8c8)"><div class="lc-tag">Apartment</div><div class="lc-price">&euro;89,500</div></div>
-        <div class="lc-body"><div class="lc-title">Bright apartment near Angulo Beach</div><div class="lc-loc">Paul, Santo Antão</div><div class="lc-meta">2 Bed · 1 Bath</div></div>
+        <div class="lc-img" style="background:#d0d0d0"></div>
+        <div class="lc-body"><div class="lc-topline">Apartment</div><div class="lc-price">&euro;89,500</div><div class="lc-title">Bright apartment near Angulo Beach</div><div class="lc-loc">Paul, Santo Antão</div></div>
       </div>
       <div class="lc-card">
-        <div class="lc-img" style="background:linear-gradient(135deg,#d4c5a9,#bfa97a)"><div class="lc-tag">Apartment</div><div class="lc-price">&euro;90,000</div></div>
-        <div class="lc-body"><div class="lc-title">Furnished 2-bed on the frontline</div><div class="lc-loc">Sal Rei, Boa Vista</div><div class="lc-meta">2 Bed · 2 Bath</div></div>
+        <div class="lc-img" style="background:#c4c4c4"></div>
+        <div class="lc-body"><div class="lc-topline">Apartment</div><div class="lc-price">&euro;90,000</div><div class="lc-title">Furnished 2-bed on the frontline</div><div class="lc-loc">Sal Rei, Boa Vista</div></div>
       </div>
       <div class="lc-card">
-        <div class="lc-img" style="background:linear-gradient(135deg,#e8d5b8,#c9b896)"><div class="lc-tag">Land</div><div class="lc-price">&euro;74,000</div></div>
-        <div class="lc-body"><div class="lc-title">Terreno a Maio per costruzione</div><div class="lc-loc">Vila Do Maio, Maio</div><div class="lc-meta">1 170 m²</div></div>
+        <div class="lc-img" style="background:#d8d8d8"></div>
+        <div class="lc-body"><div class="lc-topline">Land</div><div class="lc-price">&euro;74,000</div><div class="lc-title">Terreno a Maio per costruzione</div><div class="lc-loc">Vila Do Maio, Maio</div></div>
       </div>
     </div>
     <div class="proof-cta rv">
-      <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-fill">Visit KazaVerde</a>
+      <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-outline">Visit KazaVerde [&rarr;]</a>
     </div>
   </div>
 </section>
 
 
-<!-- ═══ 5. WHY NOW ═══ -->
-<section class="section">
-  <div class="wrap">
-    <div class="sh rv">
-      <span class="ey">Why now</span>
-      <h2>This wasn't possible three years ago.<br>The window won't stay open.</h2>
-      <p>Three structural shifts converged at the same moment. No incumbent has moved yet.</p>
-    </div>
-    <div class="wn-cards rv">
-      <div class="wn"><h3>AI removed the cost barrier</h3><p>Normalization across Portuguese, French, Arabic, and Swahili no longer requires a parser per language. LLMs solve this at scale.</p></div>
-      <div class="wn"><h3>The position is still open</h3><p>There is no Zillow for Africa. No CoStar. No pan-African property data layer of any kind. The index position is unclaimed.</p></div>
-      <div class="wn"><h3>Each market compounds the moat</h3><p>Better data attracts developers and lenders. Developer demand creates monetization. Each new market makes the next one cheaper to launch.</p></div>
-    </div>
-  </div>
-</section>
-
-
-<!-- ═══ 6. REVENUE ═══ -->
+<!-- ═══ 5. WHAT'S NEXT ═══ -->
 <section class="section" id="model">
   <div class="wrap">
-    <div class="sh rv">
-      <span class="ey">Business model</span>
-      <h2>One data engine. Three ways to monetize.</h2>
-    </div>
-    <div class="rev-grid rv">
-      <div class="rev"><div class="rev-tier">Layer 01</div><h3>Consumer search</h3><p>Market-specific search products built on the AREI engine. KazaVerde is the first.</p></div>
-      <div class="rev"><div class="rev-tier">Layer 02</div><h3>Data access</h3><p>APIs, feeds, and enterprise integrations for developers, PropTech, and financial services.</p></div>
-      <div class="rev"><div class="rev-tier">Layer 03</div><h3>Market intelligence</h3><p>Indices, reports, and bespoke datasets for funds, banks, and institutions.</p></div>
+    <div class="next-grid rv">
+      <div class="next-text">
+        <span class="ey">What's Next</span>
+        <h2>One engine. One market at a time.</h2>
+        <p>Cape Verde is live. More markets are in the pipeline. Every new market adds to the same clean dataset.</p>
+        <p>Each market brings its own quirks: local languages, broker networks, listing platforms. The engine absorbs them. Once a market is onboarded, ingestion, deduplication, and publication run automatically &mdash; and feed every product built on the data underneath.</p>
+      </div>
+      <div class="bp-panel mkt-panel">
+        <div class="bp-panel-head">
+          <span class="bp-panel-title">Market Status</span>
+          <span class="bp-panel-meta">v1</span>
+        </div>
+        <a class="bp-row bp-row-active bp-row-link" href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer">
+          <span class="bp-node bp-node-active"></span>
+          <span class="bp-row-label">Cape Verde <span class="bp-row-sub">&rarr; KazaVerde</span></span>
+          <span class="bp-row-value">Active</span>
+        </a>
+        <div class="bp-row">
+          <span class="bp-node"></span>
+          <span class="bp-row-label">Market 02</span>
+          <span class="bp-row-value">In research</span>
+        </div>
+        <div class="bp-row">
+          <span class="bp-node"></span>
+          <span class="bp-row-label">Market 03</span>
+          <span class="bp-row-value">In research</span>
+        </div>
+        <div class="bp-row">
+          <span class="bp-node"></span>
+          <span class="bp-row-label">Market 04</span>
+          <span class="bp-row-value">Planned</span>
+        </div>
+        <div class="bp-row">
+          <span class="bp-node"></span>
+          <span class="bp-row-label">Market 05</span>
+          <span class="bp-row-value">Planned</span>
+        </div>
+        <div class="mkt-summary">
+          <span>Coverage &middot; 01 / 54</span>
+          <span>Engine &middot; Ready</span>
+        </div>
+      </div>
     </div>
   </div>
 </section>
 
 
-<!-- ═══ 7. CLOSING CTA ═══ -->
-<div class="wrap" id="contact">
-  <div class="cta-band rv">
-    <div class="cta-inner">
-      <span class="ey">Investor updates</span>
+<!-- ═══ 7. CTA ═══ -->
+<section class="cta-section" id="contact">
+  <div class="wrap">
+    <div class="cta-inner rv">
+      <span class="ey">Investor Updates</span>
       <h2>Investor updates and direct contact.</h2>
-      <p>If you're tracking AREI, planning a launch conversation, or want to reach us directly, send a note and we'll follow up.</p>
+      <p>If you're tracking AREI, planning a launch conversation, or want to reach us directly — send a note and we'll follow up.</p>
       <form class="cta-form" id="investor-form" action="https://formspree.io/f/mvzbknjb" method="POST">
         <div class="cta-row">
           <input type="text" name="name" placeholder="Your name" required>
@@ -619,49 +821,52 @@ footer{padding:60px 0 40px}
         <input type="hidden" name="_source" value="AREI landing page">
         <input type="hidden" name="_next" id="investor-form-next" value="https://www.africarealestateindex.com/?submitted=investor#contact">
         <div class="cta-actions">
-          <button type="submit" class="btn-cta" id="investor-submit">Send enquiry</button>
+          <button type="submit" class="btn-outline" id="investor-submit">Send Enquiry [&rarr;]</button>
         </div>
         <div class="cta-feedback" id="investor-feedback" style="display:none;"></div>
       </form>
       <div class="cta-micro">No mailing-list spam. Every message goes to a real inbox.</div>
     </div>
   </div>
-</div>
+</section>
 
 
 <footer>
-  <div class="wrap footer-grid">
-    <div class="footer-brand">
-      <span class="f-logo">AREI</span>
-      <p>Data acquisition and intelligence infrastructure for African property markets.</p>
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <span class="f-logo">Africa Real Estate Index</span>
+        <p>Data acquisition and intelligence infrastructure for African property markets.</p>
+        <div class="footer-status"><span class="sd"></span> Systems operational</div>
+      </div>
+      <div class="footer-col">
+        <h4>Explore</h4>
+        <a href="https://kazaverde.com" target="_blank" rel="noopener noreferrer">KazaVerde</a>
+        <a href="#proof">Live</a>
+        <a href="#model">What's Next</a>
+        <a href="mailto:hello@africarealestateindex.com">Contact</a>
+      </div>
+      <div class="footer-col">
+        <h4>Socials</h4>
+        <a href="https://www.linkedin.com/company/africa-real-estate-index/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+        <a href="https://x.com/arei_data" target="_blank" rel="noopener noreferrer">X / Twitter</a>
+      </div>
     </div>
-    <div class="footer-col">
-      <h4>Explore</h4>
-      <a href="https://kazaverde.com" target="_blank" rel="noopener noreferrer">KazaVerde</a>
-      <a href="#proof">Live proof</a>
-      <a href="#model">Business model</a>
-      <a href="mailto:hello@africarealestateindex.com">Contact</a>
+    <div class="footer-bottom">
+      <span class="footer-copy">&copy; 2026 Africa Real Estate Index</span>
+      <span class="footer-idx">001</span>
     </div>
-    <div class="footer-col">
-      <h4>Socials</h4>
-      <a href="https://www.linkedin.com/company/africa-real-estate-index/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
-      <a href="https://x.com/AfricaREIndex" target="_blank" rel="noopener noreferrer">X / Twitter</a>
-    </div>
-  </div>
-  <div class="wrap" style="margin-top:40px;padding-top:24px;border-top:1px solid rgba(0,0,0,.06)">
-    <span style="font-size:12px;color:#bbb;letter-spacing:.5px">&copy; 2026 AFRICA REAL ESTATE INDEX</span>
   </div>
 </footer>
 
 <script>
-/* ═══ EDIT THESE NUMBERS ═══ */
+/* ═══ STATS CONFIG ═══ */
 const STATS = {
   listings: '1 200+',
   sources:  '24',
   coverage: '~91%',
   markets_live: '1'
 };
-/* ═══════════════════════════ */
 
 document.querySelectorAll('[data-stat]').forEach(el => {
   const key = el.dataset.stat;
@@ -779,7 +984,7 @@ function renderLiveListings(rows) {
   const selected = pickShowcaseListings(rows);
   if (!selected.length) return;
 
-  liveCardTrack.innerHTML = selected.map((row) => {
+  const cardHtml = selected.map((row) => {
     const image = escapeHtml(row.image_urls[0]);
     const title = escapeHtml(row.title);
     const location = escapeHtml([row.city, row.island].filter(Boolean).join(', '));
@@ -791,7 +996,7 @@ function renderLiveListings(rows) {
     return `
       <a class="lc-card" href="${href}" target="_blank" rel="noopener noreferrer">
         <div class="lc-img">
-          <img src="${image}" alt="${title}">
+          <img src="${image}" alt="${title}" loading="lazy">
         </div>
         <div class="lc-body">
           <div class="lc-topline">${tag}</div>
@@ -803,6 +1008,36 @@ function renderLiveListings(rows) {
       </a>
     `;
   }).join('');
+
+  // Duplicate the set for seamless infinite scroll
+  liveCardTrack.innerHTML = cardHtml + cardHtml;
+  startCarouselAutoScroll();
+}
+
+/* ── Auto-scroll the Live carousel slowly ── */
+let carouselIntervalId = null;
+let carouselPaused = false;
+function startCarouselAutoScroll() {
+  if (reduced || !liveCardTrack) return;
+  if (carouselIntervalId) clearInterval(carouselIntervalId);
+
+  const STEP_PX = 1;     // pixels per tick
+  const TICK_MS = 40;    // ~25 ticks/sec => 25px/sec
+
+  carouselIntervalId = setInterval(() => {
+    if (carouselPaused) return;
+    liveCardTrack.scrollLeft += STEP_PX;
+    const half = liveCardTrack.scrollWidth / 2;
+    if (liveCardTrack.scrollLeft >= half) {
+      liveCardTrack.scrollLeft -= half;
+    }
+  }, TICK_MS);
+
+  // Pause on hover / touch
+  liveCardTrack.addEventListener('mouseenter', () => { carouselPaused = true; });
+  liveCardTrack.addEventListener('mouseleave', () => { carouselPaused = false; });
+  liveCardTrack.addEventListener('touchstart', () => { carouselPaused = true; }, { passive: true });
+  liveCardTrack.addEventListener('touchend', () => { setTimeout(() => { carouselPaused = false; }, 3000); }, { passive: true });
 }
 
 async function loadLiveStats() {
@@ -847,79 +1082,7 @@ if(!reduced){
   document.querySelectorAll('.rv').forEach(el=>el.classList.add('v'));
 }
 
-/* ─── API typing animation ─── */
-if(!reduced){
-  const codeLines=document.querySelectorAll('#api-code .aw-line');
-  const lnLines=document.querySelectorAll('.aw-ln .aw-line');
-  const resLines=document.querySelectorAll('#api-res .aw-res-line');
-  const cursor=document.querySelector('.aw-cursor');
-  if(cursor) cursor.style.display='none';
-  const apiObs=new IntersectionObserver(entries=>{
-    entries.forEach(entry=>{
-      if(entry.isIntersecting){
-        /* Phase 1: request lines type in */
-        codeLines.forEach((ln,i)=>{
-          setTimeout(()=>{
-            ln.classList.add('typed');
-            if(lnLines[i]) lnLines[i].classList.add('typed');
-            if(i===codeLines.length-1 && cursor) cursor.style.display='inline-block';
-          }, i*180);
-        });
-        /* Phase 2: response lines appear after request done */
-        const resStart=codeLines.length*180+400;
-        resLines.forEach((rl,i)=>{
-          setTimeout(()=>rl.classList.add('typed'), resStart+i*80);
-        });
-        apiObs.unobserve(entry.target);
-      }
-    });
-  },{threshold:.3});
-  const apiEl=document.getElementById('api-code');
-  if(apiEl) apiObs.observe(apiEl);
-}else{
-  document.querySelectorAll('.aw-line').forEach(l=>l.classList.add('typed'));
-  document.querySelectorAll('.aw-res-line').forEach(l=>l.classList.add('typed'));
-}
-
-/* ─── Data transform animation ─── */
-if(!reduced){
-  const dtv=document.getElementById('dtv');
-  if(dtv){
-    const srcLines=dtv.querySelectorAll('.dtv-raw .src');
-    const jsonLines=dtv.querySelectorAll('.dtv-out .jl');
-    const jlCursor=dtv.querySelector('.jl-cursor');
-    const dtvObs=new IntersectionObserver(entries=>{
-      entries.forEach(entry=>{
-        if(entry.isIntersecting){
-          /* Phase 1: raw sources slide in */
-          srcLines.forEach((s,i)=>{
-            s.style.transitionDelay=`${i*180}ms`;
-          });
-          dtv.classList.add('animated');
-          /* Phase 2: JSON lines type in after sources */
-          const jsonStart=srcLines.length*180+300;
-          jsonLines.forEach((j,i)=>{
-            j.style.transitionDelay=`${jsonStart+i*120}ms`;
-          });
-          /* Phase 3: cursor blinks after last line */
-          if(jlCursor){
-            setTimeout(()=>jlCursor.classList.add('on'), jsonStart+jsonLines.length*120+200);
-          }
-          dtvObs.unobserve(entry.target);
-        }
-      });
-    },{threshold:.25});
-    dtvObs.observe(dtv);
-  }
-}else{
-  const dtv=document.getElementById('dtv');
-  if(dtv){
-    dtv.classList.add('animated');
-    const jlCursor=dtv.querySelector('.jl-cursor');
-    if(jlCursor) jlCursor.classList.add('on');
-  }
-}
-
+/* Engine transformation — CSS-only infinite scroll, no JS needed */
 
 loadLiveStats().catch(() => {});
 
