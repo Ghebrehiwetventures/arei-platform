@@ -1,0 +1,47 @@
+.acta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  background: var(--bg2);
+  border: 1px solid var(--bd);
+  border-left: 3px solid var(--ac);
+  border-radius: 0 10px 10px 0;
+  padding: 20px 24px;
+  margin: 48px 0 0;
+}
+
+.acta-content {
+  min-width: 0;
+}
+
+.acta-heading {
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: var(--tx);
+  margin-bottom: 4px;
+}
+
+.acta-body {
+  font-size: 0.82rem;
+  color: var(--tx2);
+  line-height: 1.5;
+  margin: 0;
+}
+
+.acta-actions {
+  display: flex;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+@media (max-width: 600px) {
+  .acta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+  .acta-actions {
+    flex-wrap: wrap;
+  }
+}

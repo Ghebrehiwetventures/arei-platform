@@ -1,19 +1,21 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useLayoutEffect } from "react";
+import { Routes, Route, useLocation } from "react-router-dom";
+import { useLayoutEffect, lazy, Suspense } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import Home from "./pages/Home";
-import Listings from "./pages/Listings";
-import Detail from "./pages/Detail";
-import Market from "./pages/Market";
-import Saved from "./pages/Saved";
-import About from "./pages/About";
-import BlogList from "./pages/BlogList";
-import BlogPost from "./pages/BlogPost";
 import NotFound from "./pages/NotFound";
-import Privacy from "./pages/Privacy";
-import CookiePolicy from "./pages/CookiePolicy";
 import CookieBanner from "./components/CookieBanner";
+
+const Listings = lazy(() => import("./pages/Listings"));
+const IslandLanding = lazy(() => import("./pages/IslandLanding"));
+const Detail = lazy(() => import("./pages/Detail"));
+const Market = lazy(() => import("./pages/Market"));
+const Saved = lazy(() => import("./pages/Saved"));
+const About = lazy(() => import("./pages/About"));
+const BlogList = lazy(() => import("./pages/BlogList"));
+const BlogPost = lazy(() => import("./pages/BlogPost"));
+const Privacy = lazy(() => import("./pages/Privacy"));
+const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -50,21 +52,25 @@ export default function App() {
     <div className="ctn">
       <ScrollToTop />
       <Navbar />
-      <Routes>
-        <Route path="/" element={<Home />} />
-        <Route path="/listings" element={<Listings />} />
-        <Route path="/listings/sal" element={<Navigate to="/listings?island=Sal" replace />} />
-        <Route path="/listings/boa-vista" element={<Navigate to="/listings?island=Boa%20Vista" replace />} />
-        <Route path="/listing/:id" element={<Detail />} />
-        <Route path="/market" element={<Market />} />
-        <Route path="/saved" element={<Saved />} />
-        <Route path="/about" element={<About />} />
-        <Route path="/blog" element={<BlogList />} />
-        <Route path="/blog/:slug" element={<BlogPost />} />
-        <Route path="/privacy" element={<Privacy />} />
-        <Route path="/cookie-policy" element={<CookiePolicy />} />
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+      <Suspense fallback={null}>
+        <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/listings" element={<Listings />} />
+          <Route path="/listings/sal" element={<IslandLanding island="Sal" />} />
+          <Route path="/listings/boa-vista" element={<IslandLanding island="Boa Vista" />} />
+          <Route path="/listings/santiago" element={<IslandLanding island="Santiago" />} />
+          <Route path="/listings/sao-vicente" element={<IslandLanding island="São Vicente" />} />
+          <Route path="/listing/:id" element={<Detail />} />
+          <Route path="/market" element={<Market />} />
+          <Route path="/saved" element={<Saved />} />
+          <Route path="/about" element={<About />} />
+          <Route path="/blog" element={<BlogList />} />
+          <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/privacy" element={<Privacy />} />
+          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </Suspense>
       <CookieBanner />
       <Footer />
     </div>

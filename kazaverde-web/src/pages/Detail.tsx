@@ -302,6 +302,31 @@ export default function Detail() {
 
   const displayTitle = toTitleCase(listing.title);
   const saved = isSaved(listing.id);
+
+  const listingSchema: Record<string, unknown> = {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    "name": displayTitle,
+    "url": `https://kazaverde.com/listings/${listing.id}`,
+    "description": buildListingMetaDescription(listing, listingIsLand),
+    "address": {
+      "@type": "PostalAddress",
+      ...(listing.city ? { "addressLocality": listing.city } : {}),
+      "addressRegion": listing.island,
+      "addressCountry": "CV",
+    },
+    ...(listing.first_seen_at ? { "datePosted": listing.first_seen_at } : {}),
+    ...(images[0] ? { "image": images[0] } : {}),
+    ...(listing.price
+      ? {
+          "offers": {
+            "@type": "Offer",
+            "price": listing.price,
+            "priceCurrency": listing.currency || "EUR",
+          },
+        }
+      : {}),
+  };
   const mobileDisplayPrice = formatPrice(listing.price, listing.currency);
   const showMobileCvePrice = Boolean(listing.price && listing.currency === "EUR");
   const isLongMobilePrice = mobileDisplayPrice.length >= 10;
@@ -346,6 +371,10 @@ export default function Detail() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(listingSchema) }}
+      />
       <a className="db" onClick={() => navigate("/listings")}>
         <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
           <line x1="19" y1="12" x2="5" y2="12" />

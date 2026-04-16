@@ -27,6 +27,15 @@ const ISLAND_BG: Record<string, string> = {
 };
 const DEFAULT_BG = "linear-gradient(145deg,#5B8A72,#1A4A32)";
 
+const ISLAND_SLUG: Record<string, string> = {
+  Sal: "/listings/sal",
+  "Boa Vista": "/listings/boa-vista",
+};
+
+function islandHref(name: string): string {
+  return ISLAND_SLUG[name] ?? `/listings?island=${encodeURIComponent(name)}`;
+}
+
 interface HomeData {
   featured: DemoListing[];
   islands: { name: string; count: number; bg: string }[];
@@ -41,8 +50,31 @@ interface HomeData {
 
 // Production homepage for `/`. Keep temporary experiments and draft flows off
 // this component so they cannot accidentally override the live product home.
+const HOME_META_DESCRIPTION =
+  "An independent index of Cape Verde real estate. Browse verified property listings across Sal, Boa Vista, Santiago and more — source-linked, updated daily.";
+
+const HOMEPAGE_SCHEMA = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Organization",
+      "@id": "https://kazaverde.com/#organization",
+      "name": "KazaVerde",
+      "url": "https://kazaverde.com",
+      "description": "Independent property index for Cape Verde real estate",
+    },
+    {
+      "@type": "WebSite",
+      "@id": "https://kazaverde.com/#website",
+      "name": "KazaVerde",
+      "url": "https://kazaverde.com",
+      "publisher": { "@id": "https://kazaverde.com/#organization" },
+    },
+  ],
+};
+
 export default function Home() {
-  useDocumentMeta("KazaVerde — Cape Verde Real Estate");
+  useDocumentMeta("KazaVerde — Cape Verde Real Estate", HOME_META_DESCRIPTION);
   const navigate = useNavigate();
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -116,9 +148,9 @@ export default function Home() {
     return (
       <section className="hero anim-fu delay-1">
         <h1>
-          Discover<br />
-          <span className="ac">Island</span><br />
-          Living
+          Cape Verde<br />
+          <span className="ac">Real Estate</span><br />
+          Index
         </h1>
         <p className="hero-sub">Loading Cape Verde property data...</p>
       </section>
@@ -129,9 +161,9 @@ export default function Home() {
     return (
       <section className="hero anim-fu delay-1">
         <h1>
-          Discover<br />
-          <span className="ac">Island</span><br />
-          Living
+          Cape Verde<br />
+          <span className="ac">Real Estate</span><br />
+          Index
         </h1>
         <p className="hero-sub">
           {error ? "Live property data could not be loaded." : "Cape Verde's read-only property index."}
@@ -163,12 +195,16 @@ export default function Home() {
 
   return (
     <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(HOMEPAGE_SCHEMA) }}
+      />
       {/* Hero */}
       <section className="hero anim-fu delay-1">
         <h1>
-          Discover<br />
-          <span className="ac">Island</span><br />
-          Living
+          Cape Verde<br />
+          <span className="ac">Real Estate</span><br />
+          Index
         </h1>
         <p className="hero-sub">
           A read-only Cape Verde property index with {stats.total} tracked listings across {stats.islandCount} islands.
@@ -206,7 +242,7 @@ export default function Home() {
           <a
             key={island.name}
             className="ic"
-            href={`/listings?island=${encodeURIComponent(island.name)}`}
+            href={islandHref(island.name)}
             style={{ background: island.bg }}
           >
             <div className="ov" />

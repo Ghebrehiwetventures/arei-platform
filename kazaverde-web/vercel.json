@@ -2,6 +2,14 @@
   "buildCommand": "cd ../packages/arei-sdk && npm install && npm run build && cd ../../kazaverde-web && npm install && npm run build",
   "outputDirectory": "dist",
   "framework": null,
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [{ "type": "host", "value": "www.kazaverde.com" }],
+      "destination": "https://kazaverde.com/:path*",
+      "permanent": true
+    }
+  ],
   "rewrites": [
     { "source": "/market", "destination": "/market/index.html" },
     { "source": "/blog", "destination": "/blog/index.html" },
@@ -18,6 +26,8 @@
     { "source": "/listing/cv_gabetticasecapoverde:CV-AP387", "destination": "/listing/cv_gabetticasecapoverde:CV-AP387/index.html" },
     { "source": "/listing/cv_gabetticasecapoverde:CV-AP208", "destination": "/listing/cv_gabetticasecapoverde:CV-AP208/index.html" },
     { "source": "/listings", "destination": "/listings/index.html" },
+    { "source": "/listings/sal", "destination": "/listings/sal/index.html" },
+    { "source": "/listings/boa-vista", "destination": "/listings/boa-vista/index.html" },
     { "source": "/about", "destination": "/about/index.html" },
     { "source": "/privacy", "destination": "/privacy/index.html" },
     { "source": "/cookie-policy", "destination": "/cookie-policy/index.html" },

@@ -1,8 +1,66 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { getArticleBySlug } from "../lib/blog-data";
+import ArticleCta from "../components/ArticleCta";
 import NewsletterCta from "../components/NewsletterCta";
 import "./BlogPost.css";
+
+interface ArticleCtaConfig {
+  heading: string;
+  body?: string;
+  primaryHref: string;
+  primaryLabel: string;
+  secondaryHref?: string;
+  secondaryLabel?: string;
+}
+
+const ARTICLE_CTAS: Record<string, ArticleCtaConfig> = {
+  "buying-property-cape-verde-guide": {
+    heading: "Ready to explore what's available?",
+    body: "Browse source-linked listings across all Cape Verde islands.",
+    primaryHref: "/listings",
+    primaryLabel: "Browse Properties",
+  },
+  "which-cape-verde-island-property": {
+    heading: "Compare listings by island",
+    body: "See what's currently tracked in Sal and Boa Vista.",
+    primaryHref: "/listings/sal",
+    primaryLabel: "Properties in Sal",
+    secondaryHref: "/listings/boa-vista",
+    secondaryLabel: "Boa Vista",
+  },
+  "cape-verde-property-tax-reform-2026": {
+    heading: "See current listings in the index",
+    body: "Browse tracked properties across Cape Verde with source links and price data.",
+    primaryHref: "/listings",
+    primaryLabel: "Browse Listings",
+    secondaryHref: "/market",
+    secondaryLabel: "Market Data",
+  },
+  "cape-verde-rental-yields-realistic": {
+    heading: "Explore the two main investment islands",
+    body: "Sal and Boa Vista have the strongest rental demand and the most active property markets.",
+    primaryHref: "/listings/sal",
+    primaryLabel: "Properties in Sal",
+    secondaryHref: "/listings/boa-vista",
+    secondaryLabel: "Boa Vista",
+  },
+  "cape-verde-green-card-residency": {
+    heading: "Find qualifying properties",
+    body: "Browse tracked listings across Cape Verde, all source-linked for verification.",
+    primaryHref: "/listings",
+    primaryLabel: "Browse Properties",
+    secondaryHref: "/market",
+    secondaryLabel: "Market Data",
+  },
+  "mistakes-buying-property-cape-verde": {
+    heading: "Start with the step-by-step buying guide",
+    primaryHref: "/blog/buying-property-cape-verde-guide",
+    primaryLabel: "Read the Guide",
+    secondaryHref: "/listings",
+    secondaryLabel: "Browse Listings",
+  },
+};
 
 export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
@@ -54,6 +112,10 @@ export default function BlogPost() {
           dangerouslySetInnerHTML={{ __html: article.content }}
         />
       </article>
+
+      {article.slug in ARTICLE_CTAS && (
+        <ArticleCta {...ARTICLE_CTAS[article.slug]} />
+      )}
 
       <NewsletterCta
         heading={<>Stay informed on <em>Cape Verde property</em></>}

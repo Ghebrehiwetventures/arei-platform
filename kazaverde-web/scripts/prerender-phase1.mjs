@@ -9,7 +9,7 @@ const baseHtmlPath = path.join(distDir, "index.html");
 const spaFallbackPath = path.join(distDir, "spa-fallback", "index.html");
 const blogDataPath = path.resolve(__dirname, "../src/lib/blog-data.ts");
 const prerenderListingsPath = path.resolve(__dirname, "../src/lib/prerender-listings.ts");
-const siteUrl = "https://www.kazaverde.com";
+const siteUrl = "https://kazaverde.com";
 const ogImage = `${siteUrl}/favicon.svg`;
 const publicSupabaseUrl = "https://bhqjdzjtiwckfuteycfl.supabase.co";
 const publicSupabaseAnonKey = "sb_publishable_fFm5NsC3cWLYr_Wnx9OLWQ_Ytmnn-Wd";
@@ -24,12 +24,12 @@ function getStaticRoutes(blogArticles, listingRoutes = []) {
       route: "/",
       ...page(
       "KazaVerde — Cape Verde Real Estate",
-      "A read-only index of Cape Verde property listings with source-linked market coverage.",
+      "An independent index of Cape Verde real estate. Browse verified property listings across Sal, Boa Vista, Santiago and more — source-linked, updated daily.",
       `
         <main>
           <section>
             <p>KazaVerde</p>
-            <h1>Discover Island Living</h1>
+            <h1>Cape Verde Real Estate Index</h1>
             <p>
               A read-only Cape Verde property index with source-linked listings, island-level market context,
               and practical guides for buyers and investors.

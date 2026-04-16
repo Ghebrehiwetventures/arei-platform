@@ -33,7 +33,7 @@ export default function NewsletterCta({
         setStatus("success");
       } else {
         setStatus("error");
-        setErrorMsg(result.error ?? "Something went wrong. Please try again.");
+        setErrorMsg("Something went wrong. Please try again.");
       }
     } catch {
       setStatus("error");
