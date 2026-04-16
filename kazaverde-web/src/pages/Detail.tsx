@@ -307,7 +307,7 @@ export default function Detail() {
     "@context": "https://schema.org",
     "@type": "RealEstateListing",
     "name": displayTitle,
-    "url": `https://kazaverde.com/listings/${listing.id}`,
+    "url": `https://kazaverde.com/listing/${listing.id}`,
     "description": buildListingMetaDescription(listing, listingIsLand),
     "address": {
       "@type": "PostalAddress",

@@ -58,8 +58,6 @@ export default function App() {
           <Route path="/listings" element={<Listings />} />
           <Route path="/listings/sal" element={<IslandLanding island="Sal" />} />
           <Route path="/listings/boa-vista" element={<IslandLanding island="Boa Vista" />} />
-          <Route path="/listings/santiago" element={<IslandLanding island="Santiago" />} />
-          <Route path="/listings/sao-vicente" element={<IslandLanding island="São Vicente" />} />
           <Route path="/listing/:id" element={<Detail />} />
           <Route path="/market" element={<Market />} />
           <Route path="/saved" element={<Saved />} />
