@@ -81,7 +81,7 @@ nav{
 /* ─── HERO ─── */
 .hero-section{
   background:var(--green);
-  padding:120px 0 120px;
+  padding:120px 0 0;
 }
 .hero h1{
   font-size:clamp(32px,5.5vw,56px);font-weight:400;line-height:1.15;
@@ -118,14 +118,40 @@ nav{
 }
 .btn-secondary:hover{color:var(--black);border-color:var(--black)}
 .sources-strip{
-  padding:20px 0 24px;
+  padding:20px 0 60px;
   font-size:11px;color:rgba(0,0,0,.4);
   display:flex;align-items:center;gap:8px;flex-wrap:wrap;
 }
-.sources-strip strong{font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.55)}
-.sources-list{display:flex;gap:4px;flex-wrap:wrap}
-.sources-list span::after{content:" /";color:rgba(0,0,0,.2)}
-.sources-list span:last-child::after{content:none}
+.sources-strip strong{
+  font-weight:600;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.55);
+  display:inline-flex;align-items:center;gap:7px;white-space:nowrap;
+}
+.sources-strip strong::before{
+  content:'';display:inline-block;flex-shrink:0;
+  width:9px;height:9px;border-radius:50%;
+  border:1.5px solid rgba(0,0,0,.1);
+  border-top-color:rgba(0,0,0,.52);border-right-color:rgba(0,0,0,.28);
+  animation:eng-spin .65s linear infinite;
+}
+@keyframes eng-spin{to{transform:rotate(360deg)}}
+.src-ticker-wrap{
+  overflow:hidden;height:1.5em;
+  display:flex;align-items:center;
+}
+.src-ticker{
+  display:block;font-size:11px;
+  color:rgba(0,0,0,.52);letter-spacing:.01em;
+}
+.src-ticker.t-enter{animation:t-in .32s cubic-bezier(.4,0,.2,1) both}
+.src-ticker.t-exit{animation:t-out .28s cubic-bezier(.4,0,.2,1) forwards}
+@keyframes t-in{from{transform:translateY(110%);opacity:0}to{transform:translateY(0);opacity:1}}
+@keyframes t-out{from{transform:translateY(0);opacity:1}to{transform:translateY(-110%);opacity:0}}
+
+/* ─── ENGINE ROW ─── */
+.engine-row{margin-top:32px;font-size:11px;line-height:1.9}
+.er-raw{color:var(--bp-muted);font-style:italic;transition:opacity .3s ease;min-height:1.9em}
+.er-clean{color:var(--bp-text);transition:opacity .3s ease;min-height:1.9em}
+.er-fade{opacity:0}
 
 /* ─── SPLIT PANEL ─── */
 .split-panel{
@@ -667,9 +693,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       </div>
       <div class="sources-strip">
         <strong>Aggregating</strong>
-        <div class="sources-list">
-          <span>RE/MAX</span><span>OLX</span><span>Casa.cv</span><span>Facebook Marketplace</span><span>iMoverde</span>
-        </div>
+        <div class="src-ticker-wrap"><span class="src-ticker">NhaKaza</span></div>
       </div>
     </div>
   </div>
@@ -704,8 +728,12 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       <div class="section-head-left">
         <span class="ey">The Engine</span>
         <h2>We don't sell properties. We structure the data behind them.</h2>
-        <p>Listings arrive messy — across languages, currencies, and formats. Our engine extracts, normalizes, and deduplicates every one into a single clean schema.</p>
+        <p>Listings arrive messy — across languages, currencies, and formats. Our engine extracts, normalizes, and deduplicates every one into a single clean schema. When everything shares one structure, the market becomes readable — benchmarks, trends, and coverage that don't exist today.</p>
       </div>
+    </div>
+    <div class="engine-row rv">
+      <div class="er-raw"></div>
+      <div class="er-clean"></div>
     </div>
   </div>
 </section>
@@ -1116,6 +1144,67 @@ if (investorForm && investorFeedback && investorSubmit) {
     investorFeedback.textContent = '';
   });
 }
+</script>
+
+<script>
+(function(){
+  var sources=['NhaKaza','Estate CV','Simply Cape Verde','Terra Cabo Verde','Cape Verde Property 24'];
+  var el=document.querySelector('.src-ticker');
+  var i=0;
+  el.classList.add('t-enter');
+  setInterval(function(){
+    el.classList.remove('t-enter');
+    el.classList.add('t-exit');
+    setTimeout(function(){
+      el.classList.remove('t-exit');
+      i=(i+1)%sources.length;
+      el.textContent=sources[i];
+      void el.offsetWidth;
+      el.classList.add('t-enter');
+    },280);
+  },2200);
+})();
+</script>
+
+<script>
+(function(){
+  var raws=['3bdrm aprt mindelo gd vw neg','2bed SAL URGENT!! sale','house w garden fogo t4','vila luxo palmeira 4bed','apt cntr praia neg','T3 santiago boa area'];
+  var cleansText=['3 BR \u00B7 Mindelo, SV \u00B7 \u20AC145,000','2 BR \u00B7 Sal \u00B7 \u20AC89,500','4 BR \u00B7 Fogo \u00B7 \u20AC220,000','4 BR \u00B7 Palmeira \u00B7 \u20AC195,000','2 BR \u00B7 Praia \u00B7 \u20AC112,000','3 BR \u00B7 Santiago \u00B7 \u20AC135,000'];
+  var cleansHTML=['3 BR &middot; Mindelo, SV &middot; <span class="xfm-price">&euro;145,000</span>','2 BR &middot; Sal &middot; <span class="xfm-price">&euro;89,500</span>','4 BR &middot; Fogo &middot; <span class="xfm-price">&euro;220,000</span>','4 BR &middot; Palmeira &middot; <span class="xfm-price">&euro;195,000</span>','2 BR &middot; Praia &middot; <span class="xfm-price">&euro;112,000</span>','3 BR &middot; Santiago &middot; <span class="xfm-price">&euro;135,000</span>'];
+  var rawEl=document.querySelector('.er-raw');
+  var cleanEl=document.querySelector('.er-clean');
+  if(!rawEl||!cleanEl)return;
+  var i=0;
+
+  function type(el,text,speed,done){
+    el.textContent='';var idx=0;
+    var t=setInterval(function(){
+      el.textContent+=text[idx++];
+      if(idx>=text.length){clearInterval(t);if(done)done();}
+    },speed);
+  }
+
+  function run(){
+    rawEl.classList.remove('er-fade');
+    cleanEl.classList.remove('er-fade');
+    cleanEl.textContent='';
+    type(rawEl,raws[i],34,function(){
+      type(cleanEl,cleansText[i],34,function(){
+        cleanEl.innerHTML=cleansHTML[i];
+        setTimeout(function(){
+          rawEl.classList.add('er-fade');
+          cleanEl.classList.add('er-fade');
+          setTimeout(function(){
+            i=(i+1)%raws.length;
+            rawEl.textContent='';
+            run();
+          },320);
+        },2400);
+      });
+    });
+  }
+  run();
+})();
 </script>
 
 </body>
