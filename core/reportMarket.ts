@@ -3,19 +3,19 @@ import * as path from "path";
 import { PreflightReport, LifecycleState } from "./preflightTypes";
 import { IngestReport } from "./reportTypes";
 
-function runReport(): void {
-  const reportPath = path.resolve(__dirname, "../artifacts/cv_ingest_report.json");
+function runReport(marketId: string): void {
+  const reportPath = path.resolve(__dirname, `../artifacts/${marketId}_ingest_report.json`);
 
   if (!fs.existsSync(reportPath)) {
     console.error("Report not found:", reportPath);
-    console.error("Run 'npm run ingest:cv' first.");
+    console.error(`Run 'MARKET_ID=${marketId} npx ts-node core/ingestMarket.ts' first.`);
     process.exit(1);
   }
 
   const report: IngestReport = JSON.parse(fs.readFileSync(reportPath, "utf-8"));
 
   // Summary
-  console.log("\n=== Cape Verde Market Report ===\n");
+  console.log(`\n=== ${report.marketName} Market Report ===\n`);
   const runPhaseLabel =
     report.runPhase === "post_fetch_snapshot"
       ? "In progress snapshot"
@@ -125,17 +125,17 @@ function runReport(): void {
   console.log("");
 
   // Preflight Lifecycle Report
-  displayPreflightReport();
+  displayPreflightReport(marketId);
 }
 
-function findLatestPreflightReport(): string | null {
+function findLatestPreflightReport(marketId: string): string | null {
   const reportsDir = path.resolve(__dirname, "../reports");
 
   if (!fs.existsSync(reportsDir)) {
     return null;
   }
 
-  const pattern = /^cv_preflight_(\d{8})_(\d{6})(?:_\d{2})?\.json$/;
+  const pattern = new RegExp(`^${marketId}_preflight_(\\d{8})_(\\d{6})(?:_\\d{2})?\\.json$`);
   const files = fs.readdirSync(reportsDir);
 
   const matches: { filename: string; timestamp: string }[] = [];
@@ -157,14 +157,14 @@ function findLatestPreflightReport(): string | null {
   return path.join(reportsDir, matches[0].filename);
 }
 
-function displayPreflightReport(): void {
+function displayPreflightReport(marketId: string): void {
   console.log("\n=== Preflight Lifecycle Report ===\n");
 
-  const reportPath = findLatestPreflightReport();
+  const reportPath = findLatestPreflightReport(marketId);
 
   if (!reportPath) {
     console.log("No preflight report found in reports/ directory.");
-    console.log("Run 'npm run preflight:cv' to generate one.");
+    console.log(`Run 'MARKET_ID=${marketId} npx ts-node core/preflightMarket.ts' to generate one.`);
     return;
   }
 
@@ -173,21 +173,18 @@ function displayPreflightReport(): void {
   console.log(`Report: ${path.basename(reportPath)}`);
   console.log(`Generated: ${report.generatedAt}`);
 
-  // Counts per lifecycle state
   console.log("\n--- Lifecycle State Summary ---");
   console.log(`  IN:      ${report.summary.inCount}`);
   console.log(`  OBSERVE: ${report.summary.observeCount}`);
   console.log(`  DROP:    ${report.summary.dropCount}`);
   console.log(`  Total:   ${report.summary.total}`);
 
-  // Per-source lifecycle state
   console.log("\n--- Per-Source Lifecycle ---");
   for (const result of report.results) {
     const reasonStr = result.reasons.length > 0 ? ` (${result.reasons.join(", ")})` : "";
     console.log(`  ${result.sourceName}: ${result.lifecycleState}${reasonStr}`);
   }
 
-  // OBSERVE → IN promotions
   const promotions = report.results.filter((r) => r.promotedToIn === true);
   console.log("\n--- OBSERVE → IN Promotions ---");
   if (promotions.length === 0) {
@@ -198,7 +195,6 @@ function displayPreflightReport(): void {
     }
   }
 
-  // Global Image Quality
   if (report.globalImageQuality) {
     const giq = report.globalImageQuality;
     console.log("\n--- Global Image Quality (IQS v1) ---");
@@ -217,7 +213,6 @@ function displayPreflightReport(): void {
     }
   }
 
-  // Per-Source Image Quality
   const sourcesWithIQ = report.results.filter((r) => r.metrics.imageQuality !== undefined);
   if (sourcesWithIQ.length > 0) {
     console.log("\n--- Per-Source Image Quality ---");
@@ -234,13 +229,11 @@ function displayPreflightReport(): void {
     }
   }
 
-  // Source-Level IQS Breakdown (Ranked)
   if (report.sourceImageQualityBreakdown && report.sourceImageQualityBreakdown.length > 0) {
     const breakdown = report.sourceImageQualityBreakdown;
-    
+
     console.log("\n=== Source-Level Image Quality Breakdown ===\n");
-    
-    // Top 3 worst sources (lowest avg IQS)
+
     console.log("--- Top 3 Worst Sources (by avg IQS) ---");
     const worst = breakdown.slice(0, 3);
     for (const source of worst) {
@@ -253,8 +246,7 @@ function displayPreflightReport(): void {
         console.log(`    Top Issues: ${reasonsStr}`);
       }
     }
-    
-    // Top 3 best sources (highest avg IQS)
+
     console.log("\n--- Top 3 Best Sources (by avg IQS) ---");
     const best = breakdown.slice(-3).reverse();
     for (const source of best) {
@@ -267,8 +259,7 @@ function displayPreflightReport(): void {
         console.log(`    Top Issues: ${reasonsStr}`);
       }
     }
-    
-    // Full ranked list
+
     console.log("\n--- All Sources (Ranked by IQS) ---");
     for (let i = 0; i < breakdown.length; i++) {
       const source = breakdown[i];
@@ -279,4 +270,14 @@ function displayPreflightReport(): void {
   console.log("");
 }
 
-runReport();
+if (require.main === module) {
+  const marketId = process.env.MARKET_ID;
+
+  if (!marketId) {
+    console.error("ERROR: MARKET_ID environment variable is required");
+    console.error("Usage: MARKET_ID=cv npx ts-node --transpile-only core/reportMarket.ts");
+    process.exit(1);
+  }
+
+  runReport(marketId);
+}

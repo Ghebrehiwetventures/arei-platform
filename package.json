@@ -8,7 +8,10 @@
     "dev:kaza": "npm run dev --prefix kazaverde-web",
     "pipeline:cv": "npx ts-node --transpile-only core/preflightCv.ts && npm run ingest:cv && npm run report:cv",
     "ingest:cv": "DETAIL_ENRICH=1 DETAIL_ENRICH_LIMIT=50 npx ts-node --transpile-only core/ingestCv.ts",
-    "report:cv": "npx ts-node --transpile-only core/reportCv.ts"
+    "report:cv": "npx ts-node --transpile-only core/reportCv.ts",
+    "pipeline": "MARKET_ID=${MARKET_ID:?MARKET_ID required} npx ts-node --transpile-only core/preflightMarket.ts && npm run ingest && npm run report",
+    "ingest": "MARKET_ID=${MARKET_ID:?MARKET_ID required} npx ts-node --transpile-only core/ingestMarket.ts",
+    "report": "MARKET_ID=${MARKET_ID:?MARKET_ID required} npx ts-node --transpile-only core/reportMarket.ts"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.91.0",

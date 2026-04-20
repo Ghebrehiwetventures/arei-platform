@@ -8,8 +8,10 @@
  * This script:
  * - Reads MARKET_ID from env
  * - Loads config from markets/{marketId}/
+ * - Loads optional market-specific plugins from markets/{marketId}/plugins/
+ * - Loads optional market-specific location hooks from markets/{marketId}/locationHooks.ts
  * - Runs the same generic pipeline for ANY market
- * - NO market-specific code
+ * - NO market-specific code in this file
  */
 
 import { fetchHeadless } from "./fetchHeadless";
@@ -31,6 +33,7 @@ import {
 import { genericDetailExtract, DetailExtractionConfig } from "./genericDetailExtractor";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
 import { parseLocation, getCurrency, getCountry } from "./locationMapper";
+import { deriveProjectMetadata } from "./projectMetadata";
 import {
   genericPaginatedFetcher,
   GenericParsedListing,
@@ -44,6 +47,10 @@ import {
   persistSourceHealth,
   shouldAutoPauseSource,
 } from "./sourceHealth";
+import { DetailPlugin } from "./detail/types";
+import { getStrategyFactory, resetStrategyFactory } from "./detail/strategyFactory";
+import { createGenericDetailPlugin } from "./detail/plugins/genericDetail";
+import { runPreflightMarket } from "./preflightMarket";
 
 // ============================================
 // LISTING TYPES
@@ -72,6 +79,9 @@ interface IngestListing {
   terraceArea?: number | null;
   amenities?: string[];
   property_type?: string;
+  detail_enriched?: boolean;
+  detail_error?: string | null;
+  detail_skipped_reason?: string | null;
 }
 
 // ============================================
@@ -84,7 +94,6 @@ const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain
 function extractPropertyType(title?: string, url?: string): string {
   const text = `${title || ""} ${url || ""}`.toLowerCase();
 
-  // Check for specific property types
   if (/\b(villa|villas)\b/.test(text)) return "villa";
   if (/\b(apartment|apartments|flat|flats|apt)\b/.test(text)) return "apartment";
   if (/\b(house|houses|home|homes)\b/.test(text)) return "house";
@@ -97,10 +106,9 @@ function extractPropertyType(title?: string, url?: string): string {
   if (/\b(land|plot|plots|acre|acres)\b/.test(text)) return "land";
   if (/\b(commercial|office|shop|warehouse)\b/.test(text)) return "commercial";
 
-  // Default to "house" if "for-sale" or "bedroom" mentioned
   if (/\b(for.?sale|bedroom|bed)\b/.test(text)) return "house";
 
-  return "property"; // Generic fallback
+  return "property";
 }
 
 // ============================================
@@ -138,6 +146,77 @@ function generateStubListings(sources: SourceConfig[], marketId: string): Ingest
 
 function sleep(ms: number): Promise<void> {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+// ============================================
+// DYNAMIC PLUGIN LOADING
+// ============================================
+
+interface LocationHookModule {
+  resolveLocation(input: {
+    id: string;
+    sourceId: string;
+    title?: string | null;
+    description?: string | null;
+    sourceUrl?: string | null;
+    rawIsland?: string | null;
+    rawCity?: string | null;
+  }): { island?: string; city?: string } | null;
+}
+
+/**
+ * Try to load market-specific detail plugins from markets/{marketId}/plugins/.
+ * Returns an array of DetailPlugin instances found.
+ */
+function loadMarketPlugins(marketId: string): DetailPlugin[] {
+  const pluginsDir = path.resolve(__dirname, `../markets/${marketId}/plugins`);
+
+  if (!fs.existsSync(pluginsDir)) {
+    return [];
+  }
+
+  const plugins: DetailPlugin[] = [];
+  const files = fs.readdirSync(pluginsDir).filter((f) => f.endsWith(".ts") || f.endsWith(".js"));
+
+  for (const file of files) {
+    try {
+      const modulePath = path.join(pluginsDir, file);
+      const mod = require(modulePath);
+
+      // Find the exported DetailPlugin (look for an object with sourceId and extract)
+      for (const key of Object.keys(mod)) {
+        const value = mod[key];
+        if (value && typeof value === "object" && typeof value.sourceId === "string" && typeof value.extract === "function") {
+          plugins.push(value as DetailPlugin);
+          console.log(`[Plugins] Loaded market plugin: ${value.sourceId} from ${file}`);
+        }
+      }
+    } catch (err) {
+      console.warn(`[Plugins] Failed to load ${file}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  return plugins;
+}
+
+/**
+ * Try to load market-specific location hooks from markets/{marketId}/locationHooks.
+ * Returns the module if found, null otherwise.
+ */
+function loadLocationHooks(marketId: string): LocationHookModule | null {
+  const hookPath = path.resolve(__dirname, `../markets/${marketId}/locationHooks`);
+
+  try {
+    const mod = require(hookPath);
+    if (typeof mod.resolveLocation === "function") {
+      console.log(`[Hooks] Loaded location hooks for market: ${marketId}`);
+      return mod as LocationHookModule;
+    }
+  } catch {
+    // No location hooks for this market — that's fine
+  }
+
+  return null;
 }
 
 // ============================================
@@ -210,19 +289,41 @@ async function genericFetchSource(
 }
 
 // ============================================
-// GENERIC DETAIL ENRICHMENT
+// PLUGIN-BASED DETAIL ENRICHMENT
 // ============================================
 
-async function genericDetailEnrichment(
+async function pluginDetailEnrichment(
   listings: IngestListing[],
-  sources: SourceConfig[]
+  sources: SourceConfig[],
+  marketId: string
 ): Promise<void> {
+  // Reset and rebuild the strategy factory for this run
+  resetStrategyFactory();
+  const factory = getStrategyFactory();
+
+  // 1. Load market-specific plugins (e.g. markets/cv/plugins/)
+  const marketPlugins = loadMarketPlugins(marketId);
+  for (const plugin of marketPlugins) {
+    factory.register(plugin);
+  }
+
+  // 2. Register generic detail plugins for sources without a custom plugin
+  for (const source of sources) {
+    if (!source.detail?.enabled) continue;
+    if (factory.hasPlugin(source.id)) continue;
+    factory.register(createGenericDetailPlugin(source.id, source.detail, source.price_format));
+    console.log(`[Detail] Registered generic detail plugin for ${source.id}`);
+  }
+
+  // Build a map of source configs for quick lookup
   const sourceMap = new Map(sources.map((s) => [s.id, s]));
 
+  // Filter listings that need enrichment based on source config
   const enrichableListings = listings.filter((l) => {
     const source = sourceMap.get(l.sourceId);
     if (!source?.detail?.enabled) return false;
     if (!l.detailUrl) return false;
+    if (!factory.hasPlugin(l.sourceId)) return false;
 
     const policy = source.detail.policy || "on_violation";
 
@@ -238,11 +339,11 @@ async function genericDetailEnrichment(
   });
 
   if (enrichableListings.length === 0) {
-    console.log(`[GenericEnrich] No listings need enrichment`);
+    console.log(`[DetailEnrich] No listings need enrichment`);
     return;
   }
 
-  console.log(`[GenericEnrich] Enriching ${enrichableListings.length} listings...`);
+  console.log(`[DetailEnrich] Enriching ${enrichableListings.length} listings...`);
 
   let enrichedCount = 0;
   let failedCount = 0;
@@ -253,6 +354,9 @@ async function genericDetailEnrichment(
     const source = sourceMap.get(listing.sourceId);
     if (!source) continue;
 
+    const plugin = factory.getPlugin(listing.sourceId);
+    if (!plugin) continue;
+
     const delayMs = source.detail?.delay_ms ?? 2500;
     await sleep(delayMs + Math.floor(Math.random() * 500));
 
@@ -262,38 +366,39 @@ async function genericDetailEnrichment(
 
       if (!fetchResult.success || !fetchResult.html) {
         failedCount++;
-        console.log(`[GenericEnrich] ✗ ${listing.id} fetch failed`);
+        listing.detail_error = fetchResult.error || "fetch failed";
+        console.log(`[DetailEnrich] ✗ ${listing.id} fetch failed`);
         continue;
       }
 
-      const detailConfig: DetailExtractionConfig = {
-        enabled: source.detail?.enabled ?? false,
-        policy: source.detail?.policy || "on_violation",
-        cms_type: source.cms_type as any,
-        selectors: {
-          description: source.detail?.selectors?.description,
-          images: source.detail?.selectors?.images,
-        },
-        spec_patterns: source.detail?.spec_patterns,
-        amenity_keywords: source.detail?.amenity_keywords,
-        delay_ms: source.detail?.delay_ms ?? 2500,
-      };
-
-      const extractResult = genericDetailExtract(fetchResult.html, listing.detailUrl, detailConfig);
+      const extractResult = plugin.extract(fetchResult.html, listing.detailUrl);
 
       if (!extractResult.success) {
         failedCount++;
+        listing.detail_error = "extraction failed";
+        console.log(`[DetailEnrich] ✗ ${listing.id} extraction failed`);
         continue;
       }
+
+      // Derive project metadata from detail page
+      const projectMetadata = deriveProjectMetadata({
+        title: extractResult.title || listing.title,
+        description: extractResult.description || listing.description,
+        price: extractResult.price || listing.price,
+        html: fetchResult.html,
+        existing: {
+          source_ref: listing.source_ref,
+          project_flag: listing.project_flag,
+          project_start_price: listing.project_start_price,
+        },
+      });
 
       let wasEnriched = false;
 
       // Prefer explicit plain-text description; fall back to stripping description_html
-      // when description is absent or too short. Fixes sources (e.g. cv_simplycapeverde,
-      // cv_homescasaverde) that store rich content only in description_html.
       let plainDescription = extractResult.description;
-      if ((!plainDescription || plainDescription.length < 50) && extractResult.description_html) {
-        const stripped = extractResult.description_html
+      if ((!plainDescription || plainDescription.length < 50) && listing.description_html) {
+        const stripped = listing.description_html
           .replace(/<[^>]+>/g, " ")
           .replace(/\s+/g, " ")
           .trim();
@@ -303,19 +408,37 @@ async function genericDetailEnrichment(
       }
 
       if (plainDescription && plainDescription.length >= 50) {
-        listing.description = plainDescription;
-        if (extractResult.description_html) {
-          listing.description_html = extractResult.description_html;
+        if (!listing.description || plainDescription.length > listing.description.length) {
+          listing.description = plainDescription;
+          wasEnriched = true;
         }
-        wasEnriched = true;
       }
 
+      // Merge structured data
       if (extractResult.bedrooms !== undefined) listing.bedrooms = extractResult.bedrooms;
       if (extractResult.bathrooms !== undefined) listing.bathrooms = extractResult.bathrooms;
       if (extractResult.parkingSpaces !== undefined) listing.parkingSpaces = extractResult.parkingSpaces;
-      if (extractResult.area !== undefined) listing.area_sqm = extractResult.area;
+      if (extractResult.areaSqm !== undefined) listing.area_sqm = extractResult.areaSqm;
       if (extractResult.amenities?.length) listing.amenities = extractResult.amenities;
 
+      // Update price if listing has no price but detail page does (min threshold to reject placeholders)
+      if (extractResult.price && extractResult.price >= 500 && !listing.price) {
+        listing.price = extractResult.price;
+        wasEnriched = true;
+      }
+
+      // Update title if we got a better one
+      if (extractResult.title && extractResult.title.length > (listing.title?.length || 0)) {
+        listing.title = extractResult.title;
+      }
+
+      // Update location from detail page if listing has none
+      if (extractResult.location && !listing.location) {
+        listing.location = extractResult.location;
+        wasEnriched = true;
+      }
+
+      // Merge images
       if (extractResult.imageUrls?.length) {
         const merged = [...(listing.imageUrls || []), ...extractResult.imageUrls];
         const deduped = dedupeImageUrls(merged);
@@ -325,16 +448,76 @@ async function genericDetailEnrichment(
         listing.imageUrls = deduped;
       }
 
+      // Apply project metadata
+      if (projectMetadata.source_ref) listing.source_ref = projectMetadata.source_ref;
+      if (projectMetadata.project_flag != null) listing.project_flag = projectMetadata.project_flag;
+      if (projectMetadata.project_start_price != null) {
+        listing.project_start_price = projectMetadata.project_start_price;
+      }
+
+      listing.detail_enriched = wasEnriched;
       if (wasEnriched) {
         enrichedCount++;
-        console.log(`[GenericEnrich] ✓ ${listing.id} enriched`);
+        console.log(`[DetailEnrich] ✓ ${listing.id} enriched`);
       }
     } catch (err) {
       failedCount++;
+      listing.detail_error = err instanceof Error ? err.message : String(err);
+      console.log(`[DetailEnrich] ✗ ${listing.id} error: ${listing.detail_error}`);
     }
   }
 
-  console.log(`[GenericEnrich] Complete: ${enrichedCount} enriched, ${failedCount} failed`);
+  console.log(`[DetailEnrich] Complete: ${enrichedCount} enriched, ${failedCount} failed`);
+}
+
+// ============================================
+// LOCATION RESOLUTION WITH FALLBACK CHAIN
+// ============================================
+
+function resolveListingLocation(
+  listing: { id: string; sourceId: string; title?: string; description?: string; detailUrl?: string; externalUrl?: string; location?: string; imageUrls?: string[] },
+  marketId: string,
+  locationHooks: LocationHookModule | null
+): { island?: string; city?: string } {
+  // 1. Try location field
+  const locResult = parseLocation(listing.location, marketId);
+  if (locResult.island) {
+    return { island: locResult.island, city: locResult.city };
+  }
+
+  // 2. Try title
+  if (listing.title) {
+    const titleResult = parseLocation(listing.title, marketId);
+    if (titleResult.island) {
+      return { island: titleResult.island, city: titleResult.city };
+    }
+  }
+
+  // 3. Try description (first 500 chars)
+  if (listing.description) {
+    const descResult = parseLocation(listing.description.substring(0, 500), marketId);
+    if (descResult.island) {
+      return { island: descResult.island, city: descResult.city };
+    }
+  }
+
+  // 4. Try market-specific location hooks (e.g., CV island recovery)
+  if (locationHooks) {
+    const hookResult = locationHooks.resolveLocation({
+      id: listing.id,
+      sourceId: listing.sourceId,
+      title: listing.title,
+      description: listing.description,
+      sourceUrl: listing.detailUrl || listing.externalUrl || null,
+      rawIsland: listing.location,
+      rawCity: undefined,
+    });
+    if (hookResult) {
+      return hookResult;
+    }
+  }
+
+  return {};
 }
 
 // ============================================
@@ -401,6 +584,17 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
 
   console.log(`\n=== Starting GENERIC ingest for market: ${marketId} ===\n`);
 
+  // Run preflight
+  console.log(`[Preflight] Running preflight check...`);
+  const preflightReport = await runPreflightMarket(marketId);
+
+  const lifecycleMap: Map<string, LifecycleState> = new Map();
+  for (const result of preflightReport.results) {
+    lifecycleMap.set(result.sourceId, result.lifecycleState);
+  }
+
+  console.log(`[Preflight] Complete: IN=${preflightReport.summary.inCount}, OBSERVE=${preflightReport.summary.observeCount}, DROP=${preflightReport.summary.dropCount}`);
+
   // Load config
   const sourcesResult = loadSourcesConfig(marketId);
 
@@ -420,6 +614,9 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
   const sources = sourcesResult.data.sources;
   console.log(`Found ${sources.length} sources in config\n`);
 
+  // Load optional market-specific location hooks
+  const locationHooks = loadLocationHooks(marketId);
+
   const sourceStates: Map<string, SourceState> = new Map();
   const sourceReports: SourceReport[] = [];
   const sourceDebugErrors: Map<string, string[] | undefined> = new Map();
@@ -433,23 +630,30 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
 
   // Process each source
   for (const source of sources) {
-    // Check lifecycle override
-    if (source.lifecycleOverride === "DROP") {
+    const lifecycle = lifecycleMap.get(source.id);
+
+    // DROP: skip
+    if (lifecycle === LifecycleState.DROP || source.lifecycleOverride === "DROP") {
       console.log(`[${source.id}] Skipped (DROP)`);
       const state = sourceStates.get(source.id)!;
       state.status = SourceStatus.BROKEN_SOURCE;
-      state.lastError = "Dropped by config";
+      state.lastError = "Dropped by preflight/config";
       sourceStates.set(source.id, state);
       continue;
     }
 
-    if (source.lifecycleOverride === "OBSERVE" && process.env.DEBUG_GENERIC !== "1") {
-      console.log(`[${source.id}] Skipped (OBSERVE)`);
-      const state = sourceStates.get(source.id)!;
-      state.status = SourceStatus.PARTIAL_OK;
-      state.lastError = "Under observation";
-      sourceStates.set(source.id, state);
-      continue;
+    // OBSERVE: skip unless DEBUG override
+    if (lifecycle === LifecycleState.OBSERVE || (source.lifecycleOverride === "OBSERVE" && !lifecycle)) {
+      if (process.env.DEBUG_GENERIC === "1") {
+        console.log(`[${source.id}] DEBUG_GENERIC override (OBSERVE -> fetch)`);
+      } else {
+        console.log(`[${source.id}] Skipped (OBSERVE)`);
+        const state = sourceStates.get(source.id)!;
+        state.status = SourceStatus.PARTIAL_OK;
+        state.lastError = "Under observation";
+        sourceStates.set(source.id, state);
+        continue;
+      }
     }
 
     const persistedHealth = getSourceHealthEntry(sourceHealth, marketId, source.id);
@@ -511,10 +715,10 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
     dropReport.sources.push(stats);
   }
 
-  // Generic detail enrichment
-  await genericDetailEnrichment(allListings, sources);
+  // Plugin-based detail enrichment
+  await pluginDetailEnrichment(allListings, sources, marketId);
 
-  // Convert to MarketListingInput
+  // Convert to MarketListingInput for evaluation
   const marketListings: MarketListingInput[] = allListings.map((l) => ({
     id: l.id,
     sourceId: l.sourceId,
@@ -640,21 +844,45 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
   console.log(`Report written to: ${outputPath}`);
   console.log(`Summary: ${report.summary.visibleCount} visible, ${report.summary.hiddenCount} hidden\n`);
 
-  // Write to Supabase
+  // Write to Supabase — with data regression guard
   const allReportListings = [...visibleListings, ...hiddenListings];
-  console.log(`\n[Supabase] Writing ${allReportListings.length} listings...`);
 
-  const supabaseListings: SupabaseListing[] = allReportListings.map((listing) => {
+  // Data regression guard: skip upsert for listings where detail enrichment failed.
+  // This prevents overwriting a previously good DB record with degraded data.
+  const detailFailedIds = new Set(
+    allListings.filter((l) => l.detail_error).map((l) => l.id)
+  );
+  const safeReportListings = allReportListings.filter((l) => !detailFailedIds.has(l.id));
+  if (detailFailedIds.size > 0) {
+    console.log(`[Supabase] Skipping ${detailFailedIds.size} listings with failed detail enrichment to prevent data regression`);
+  }
+
+  console.log(`\n[Supabase] Writing ${safeReportListings.length} listings...`);
+
+  const supabaseListings: SupabaseListing[] = safeReportListings.map((listing) => {
     const fullListing = allListings.find((l) => l.id === listing.id);
     const classification = evalResult.classifications.find((c) => c.listingId === listing.id);
     const violations = classification?.violations || [];
 
-    // CONFIG-DRIVEN location parsing
-    const locationResult = parseLocation(listing.location, marketId);
+    // CONFIG-DRIVEN location parsing with fallback chain
+    const locationResult = resolveListingLocation(
+      {
+        id: listing.id,
+        sourceId: listing.sourceId,
+        title: listing.title,
+        description: fullListing?.description,
+        detailUrl: fullListing?.detailUrl,
+        externalUrl: fullListing?.externalUrl,
+        location: listing.location,
+      },
+      marketId,
+      locationHooks
+    );
     const currency = getCurrency(marketId);
     const country = getCountry(marketId);
 
-    const isLand = LAND_TYPES.test(fullListing?.property_type || "");
+    const propertyType = fullListing?.property_type || extractPropertyType(listing.title, fullListing?.detailUrl);
+    const isLand = LAND_TYPES.test(propertyType);
 
     return {
       id: listing.id,
@@ -669,7 +897,7 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       project_start_price: fullListing?.project_start_price ?? null,
       currency,
       country,
-      island: locationResult.island,  // Works for both islands and regions
+      island: locationResult.island,
       city: locationResult.city,
       bedrooms: isLand ? null : (listing.bedrooms ?? null),
       bathrooms: isLand ? null : (listing.bathrooms ?? null),
@@ -679,14 +907,19 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
       status: "observe",
       violations: violations,
       // INVALID_PRICE is non-blocking: "price on request" listings are valid
+      // Other violations (MISSING_TITLE, INSUFFICIENT_IMAGES, etc.) still block
       approved: violations.filter(v => v !== "INVALID_PRICE").length === 0,
-      property_type: fullListing?.property_type ?? null,
+      property_type: propertyType,
       amenities: fullListing?.amenities || [],
       price_period: "sale",
     };
   });
 
-  await upsertListings(supabaseListings);
+  if (process.env.DRY_RUN === "1") {
+    console.log(`\n[Supabase] DRY_RUN=1 — skipping upsert`);
+  } else {
+    await upsertListings(supabaseListings);
+  }
 
   // Write drop report
   const dropPath = path.join(artifactsDir, `${marketId}_drop_report.json`);

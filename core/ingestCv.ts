@@ -1376,7 +1376,11 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
     };
   });
 
-  await upsertListings(supabaseListings);
+  if (process.env.DRY_RUN === "1") {
+    console.log(`\n[Supabase] DRY_RUN=1 — skipping upsert`);
+  } else {
+    await upsertListings(supabaseListings);
+  }
 
   // Verification: Compare 3 listing IDs between upsert payload and report
   console.log(`\n[Verification] Comparing description lengths between Supabase payload and report...`);
