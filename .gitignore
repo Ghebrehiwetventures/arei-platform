@@ -8,5 +8,6 @@ reports/
 dist/
 web/prototypes/
 .env
+.claude
 arei-admin/.env.local
 AGENTS.md
