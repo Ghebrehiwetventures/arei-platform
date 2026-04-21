@@ -49,6 +49,27 @@ jobs:
       - name: Report CV
         run: npx ts-node --transpile-only core/reportCv.ts
 
+      - name: Shadow Preflight (generic pipeline)
+        continue-on-error: true
+        env:
+          MARKET_ID: cv
+        run: npx ts-node --transpile-only core/preflightMarket.ts
+
+      - name: Shadow Ingest (generic pipeline)
+        continue-on-error: true
+        env:
+          MARKET_ID: cv
+          DRY_RUN: "1"
+          DETAIL_ENRICH: "1"
+          DETAIL_ENRICH_LIMIT: "10"
+        run: npx ts-node --transpile-only core/ingestMarket.ts
+
+      - name: Shadow Report (generic pipeline)
+        continue-on-error: true
+        env:
+          MARKET_ID: cv
+        run: npx ts-node --transpile-only core/reportMarket.ts
+
       - name: Action summary
         run: |
           node <<'NODE'
