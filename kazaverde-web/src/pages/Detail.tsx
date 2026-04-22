@@ -333,6 +333,22 @@ export default function Detail() {
   const isVeryLongMobilePrice = mobileDisplayPrice.length >= 11;
 
   const isLand = LAND_TYPES.test(listing.property_type ?? "") || LAND_TITLE.test(listing.title ?? "");
+  const sourceLabel = formatSourceLabel(listing.source_id);
+  let sourceHost: string | null = null;
+  if (listing.source_url) {
+    try {
+      sourceHost = new URL(listing.source_url).hostname.replace(/^www\./, "");
+    } catch {
+      sourceHost = null;
+    }
+  }
+  const indexedOn = listing.first_seen_at
+    ? new Date(listing.first_seen_at).toLocaleDateString("en-GB", {
+        day: "numeric",
+        month: "long",
+        year: "numeric",
+      })
+    : null;
   const sourceText = listing.description_html ? stripHtml(listing.description_html) : (listing.description ?? "");
   const parsedAreaFromText = parseAreaSqmFromText(sourceText);
   const effectiveLandAreaSqm =
@@ -485,22 +501,23 @@ export default function Detail() {
                 {effectiveLandAreaSqm ? ` Land area: ${effectiveLandAreaSqm.toLocaleString()} m².` : ""}
               </p>
             )}
-            <p className="dd-source">
-              Sourced from <strong>{formatSourceLabel(listing.source_id)}</strong>. Information is extracted from
-              the public listing and may not reflect the current state.
-            </p>
-            {listing.last_seen_at && (
-              <p className="last-checked">
-                Last checked: {new Date(listing.last_seen_at).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}
-              </p>
-            )}
+          </div>
+
+          <div className="index-note">
+            <strong>
+              Indexed from {sourceLabel}
+              {indexedOn ? ` on ${indexedOn}` : ""}.
+            </strong>{" "}
+            All data above is reproduced verbatim from the source agent&rsquo;s public
+            listing. For legal questions, see our{" "}
+            <a href="/blog/buying-property-cape-verde-guide">buying guide</a>.
           </div>
         </div>
 
         <aside className="ds">
           <div className="cc">
             <h4>Interested in this property?</h4>
-            <div className="src">Listed by {formatSourceLabel(listing.source_id)}</div>
+            <div className="src">Listed by {sourceLabel}</div>
             <div className="dp">{formatPrice(listing.price, listing.currency)}</div>
             {listing.price && listing.currency === "EUR" && (
               <div className="dpn">
@@ -526,6 +543,26 @@ export default function Detail() {
                 <span>{saved ? "Saved" : "Save property"}</span>
               </button>
             </div>
+          </div>
+
+          <div className="s-source">
+            <div className="s-source-lbl">Original source</div>
+            <div className="s-source-name">{sourceLabel}</div>
+            {listing.source_url && (
+              <a
+                className="s-source-link"
+                href={listing.source_url}
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                View on {sourceHost ?? sourceLabel} &rarr;
+              </a>
+            )}
+            <p className="s-source-disc">
+              This index reproduces public listing data only. We have no
+              affiliation with {sourceLabel} or the seller. Contact the agent
+              directly for viewings, offers, and legal advice.
+            </p>
           </div>
         </aside>
       </div>
