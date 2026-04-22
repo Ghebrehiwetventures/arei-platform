@@ -24,7 +24,6 @@ import { SourceStatus, SourceState, createInitialState } from "./status";
 import { loadSourcesConfig, loadRulesConfig, SourceConfig, sourceConfigToFetchConfig } from "./configLoader";
 import { RuleViolation } from "./goldenRules";
 import { ListingVisibility } from "./classifyListing";
-import { LifecycleState } from "./preflightTypes";
 import {
   batchEvaluateMarket,
   MarketListingInput,
@@ -50,7 +49,6 @@ import {
 import { DetailPlugin } from "./detail/types";
 import { getStrategyFactory, resetStrategyFactory } from "./detail/strategyFactory";
 import { createGenericDetailPlugin } from "./detail/plugins/genericDetail";
-import { runPreflightMarket } from "./preflightMarket";
 
 // ============================================
 // LISTING TYPES
@@ -599,17 +597,6 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
 
   console.log(`\n=== Starting GENERIC ingest for market: ${marketId} ===\n`);
 
-  // Run preflight
-  console.log(`[Preflight] Running preflight check...`);
-  const preflightReport = await runPreflightMarket(marketId);
-
-  const lifecycleMap: Map<string, LifecycleState> = new Map();
-  for (const result of preflightReport.results) {
-    lifecycleMap.set(result.sourceId, result.lifecycleState);
-  }
-
-  console.log(`[Preflight] Complete: IN=${preflightReport.summary.inCount}, OBSERVE=${preflightReport.summary.observeCount}, DROP=${preflightReport.summary.dropCount}`);
-
   // Load config
   const sourcesResult = loadSourcesConfig(marketId);
 
@@ -643,32 +630,35 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
 
   const allListings: IngestListing[] = [];
 
-  // Process each source
+  // Process each source. Lifecycle is determined purely from sources.yml
+  // (source.lifecycleOverride). Sources without an override default to IN.
   for (const source of sources) {
-    const lifecycle = lifecycleMap.get(source.id);
+    const override = source.lifecycleOverride;
 
-    // DROP: skip
-    if (lifecycle === LifecycleState.DROP || source.lifecycleOverride === "DROP") {
-      console.log(`[${source.id}] Skipped (DROP)`);
+    if (override === "DROP") {
+      console.log(`[${source.id}] Skipped (DROP per config)`);
       const state = sourceStates.get(source.id)!;
       state.status = SourceStatus.BROKEN_SOURCE;
-      state.lastError = "Dropped by preflight/config";
+      state.lastError = "Dropped by config";
       sourceStates.set(source.id, state);
       continue;
     }
 
-    // OBSERVE: skip unless DEBUG override
-    if (lifecycle === LifecycleState.OBSERVE || (source.lifecycleOverride === "OBSERVE" && !lifecycle)) {
+    if (override === "OBSERVE") {
       if (process.env.DEBUG_GENERIC === "1") {
         console.log(`[${source.id}] DEBUG_GENERIC override (OBSERVE -> fetch)`);
       } else {
-        console.log(`[${source.id}] Skipped (OBSERVE)`);
+        console.log(`[${source.id}] Skipped (OBSERVE per config)`);
         const state = sourceStates.get(source.id)!;
         state.status = SourceStatus.PARTIAL_OK;
         state.lastError = "Under observation";
         sourceStates.set(source.id, state);
         continue;
       }
+    }
+
+    if (!override) {
+      console.log(`[${source.id}] No lifecycleOverride set — defaulting to IN`);
     }
 
     const persistedHealth = getSourceHealthEntry(sourceHealth, marketId, source.id);
