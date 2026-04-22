@@ -263,6 +263,13 @@ async function genericFetchSource(
   } else {
     state.status = SourceStatus.OK;
     console.log(`[${source.id}] Parsed ${result.listings.length} listings from ${result.debug.pagesSuccessful} pages`);
+
+    if (process.env.DEBUG_GENERIC === "1") {
+      const first = result.listings[0];
+      console.log(
+        `[${source.id}] Sample card: title="${(first.title || "").slice(0, 60)}", desc=${first.description?.length ?? 0} chars, imgs=${first.imageUrls?.length ?? 0}, price=${first.price ?? "null"}`
+      );
+    }
   }
 
   const listings: IngestListing[] = result.listings.map((l: GenericParsedListing) => ({
@@ -373,6 +380,12 @@ async function pluginDetailEnrichment(
 
       const extractResult = plugin.extract(fetchResult.html, listing.detailUrl);
 
+      if (process.env.DEBUG_GENERIC === "1") {
+        console.log(
+          `[DetailEnrich] ${listing.id} extract: success=${extractResult.success}, desc=${extractResult.description?.length ?? "null"} chars, imgs=${extractResult.imageUrls?.length ?? 0}, price=${extractResult.price ?? "null"}, bedrooms=${extractResult.bedrooms ?? "null"}`
+        );
+      }
+
       if (!extractResult.success) {
         failedCount++;
         listing.detail_error = "extraction failed";
@@ -458,7 +471,9 @@ async function pluginDetailEnrichment(
       listing.detail_enriched = wasEnriched;
       if (wasEnriched) {
         enrichedCount++;
-        console.log(`[DetailEnrich] ✓ ${listing.id} enriched`);
+        console.log(
+          `[DetailEnrich] ✓ ${listing.id} enriched (desc: ${listing.description?.length || 0} chars, imgs: ${listing.imageUrls?.length || 0})`
+        );
       }
     } catch (err) {
       failedCount++;
@@ -671,7 +686,7 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
     }
 
     try {
-      if (source.type === "html") {
+      if (source.type !== "stub") {
         const result = await genericFetchSource(source, sourceStates.get(source.id)!);
         sourceStates.set(source.id, result.state);
         sourceDebugErrors.set(source.id, result.debugErrors);
