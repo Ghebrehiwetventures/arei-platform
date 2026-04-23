@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1600" height="900" viewBox="0 0 1600 900" fill="none">
+  <defs>
+    <linearGradient id="bg" x1="176" y1="92" x2="1429" y2="835" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#7A614C"/>
+      <stop offset="1" stop-color="#4A3428"/>
+    </linearGradient>
+    <linearGradient id="panel" x1="476" y1="252" x2="1118" y2="668" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#8F755E" stop-opacity="0.92"/>
+      <stop offset="1" stop-color="#644B3B" stop-opacity="0.96"/>
+    </linearGradient>
+  </defs>
+  <rect width="1600" height="900" fill="url(#bg)"/>
+  <rect x="320" y="170" width="960" height="560" rx="40" fill="url(#panel)"/>
+  <path d="M612 552V425L800 286L988 425V552" stroke="#F2D59B" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M738 552V456H862V552" stroke="#F2D59B" stroke-width="34" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M566 592H1034" stroke="#F2D59B" stroke-width="34" stroke-linecap="round"/>
+  <circle cx="1186" cy="250" r="58" fill="#F2D59B" fill-opacity="0.18"/>
+  <text x="800" y="658" fill="#F7E6C2" font-family="Georgia, serif" font-size="54" font-style="italic" text-anchor="middle">Image unavailable</text>
+  <text x="800" y="716" fill="#E0CDA8" font-family="Arial, sans-serif" font-size="24" letter-spacing="3" text-anchor="middle">KAZAVERDE</text>
+</svg>

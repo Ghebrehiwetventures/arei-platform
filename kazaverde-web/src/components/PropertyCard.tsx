@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { useSaved } from "../hooks/useSaved";
+import { buildCoverImageStyle, useResolvedImageUrl } from "../hooks/useResolvedImageUrl";
 import type { DemoListing } from "../lib/demo-data";
 import { formatPrice, formatLocation, formatBedrooms, formatBathrooms, isNewListing } from "../lib/format";
 import "./PropertyCard.css";
@@ -59,10 +60,8 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid", di
   }, [listing.image_urls]);
 
   const hasMultipleImages = listing.image_urls.length > 1;
-
-  const heroStyle: React.CSSProperties = listing.image_urls.length > 0
-    ? { backgroundImage: `url(${listing.image_urls[imageIndex]})`, backgroundSize: "cover", backgroundPosition: "center" }
-    : { background: listing._bg };
+  const displayImageUrl = useResolvedImageUrl(listing.image_urls, imageIndex);
+  const heroStyle = buildCoverImageStyle(displayImageUrl);
 
   const isList = viewMode === "list";
 

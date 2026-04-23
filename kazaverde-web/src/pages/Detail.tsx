@@ -2,6 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useParams, useNavigate } from "react-router-dom";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
+import { buildCoverImageStyle, useResolvedImageUrl } from "../hooks/useResolvedImageUrl";
 import { useSaved } from "../hooks/useSaved";
 import PropertyCard from "../components/PropertyCard";
 import { arei } from "../lib/arei";
@@ -352,10 +353,8 @@ export default function Detail() {
     specs.push({ value: `${effectiveLandAreaSqm.toLocaleString()}`, label: "m² Land" });
   }
 
-  const mainImageStyle: React.CSSProperties =
-    images.length > 0
-      ? { backgroundImage: `url(${images[galleryIndex]})`, backgroundSize: "cover", backgroundPosition: "center" }
-      : { background: listing._bg };
+  const displayImageUrl = useResolvedImageUrl(images, galleryIndex);
+  const mainImageStyle = buildCoverImageStyle(displayImageUrl);
 
   const goPrev = () => setGalleryIndex((i) => (i <= 0 ? images.length - 1 : i - 1));
   const goNext = () => setGalleryIndex((i) => (i >= images.length - 1 ? 0 : i + 1));
