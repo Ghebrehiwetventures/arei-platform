@@ -1,21 +1,14 @@
-import { Routes, Route, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { useLayoutEffect, lazy, Suspense } from "react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
-import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
+import Listings from "./pages/Listings";
 
-const Listings = lazy(() => import("./pages/Listings"));
-const IslandLanding = lazy(() => import("./pages/IslandLanding"));
+// v1: only / (Listings) and /listing/:id (Detail) are user-facing.
+// All other routes redirect to / until they're rebuilt in the KV design.
 const Detail = lazy(() => import("./pages/Detail"));
-const Market = lazy(() => import("./pages/Market"));
-const Saved = lazy(() => import("./pages/Saved"));
-const About = lazy(() => import("./pages/About"));
-const BlogList = lazy(() => import("./pages/BlogList"));
-const BlogPost = lazy(() => import("./pages/BlogPost"));
-const Privacy = lazy(() => import("./pages/Privacy"));
-const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -54,18 +47,19 @@ export default function App() {
       <Navbar />
       <Suspense fallback={null}>
         <Routes>
-          <Route path="/" element={<Home />} />
+          <Route path="/" element={<Listings />} />
           <Route path="/listings" element={<Listings />} />
-          <Route path="/listings/sal" element={<IslandLanding island="Sal" />} />
-          <Route path="/listings/boa-vista" element={<IslandLanding island="Boa Vista" />} />
           <Route path="/listing/:id" element={<Detail />} />
-          <Route path="/market" element={<Market />} />
-          <Route path="/saved" element={<Saved />} />
-          <Route path="/about" element={<About />} />
-          <Route path="/blog" element={<BlogList />} />
-          <Route path="/blog/:slug" element={<BlogPost />} />
-          <Route path="/privacy" element={<Privacy />} />
-          <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/saved" element={<Navigate to="/" replace />} />
+          {/* v1 redirects — pages not yet rebuilt in KV design */}
+          <Route path="/listings/sal" element={<Navigate to="/?island=Sal" replace />} />
+          <Route path="/listings/boa-vista" element={<Navigate to="/?island=Boa+Vista" replace />} />
+          <Route path="/market" element={<Navigate to="/" replace />} />
+          <Route path="/about" element={<Navigate to="/" replace />} />
+          <Route path="/blog" element={<Navigate to="/" replace />} />
+          <Route path="/blog/:slug" element={<Navigate to="/" replace />} />
+          <Route path="/privacy" element={<Navigate to="/" replace />} />
+          <Route path="/cookie-policy" element={<Navigate to="/" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

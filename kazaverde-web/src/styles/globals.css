@@ -47,9 +47,9 @@
 html { overflow-x: hidden; }
 
 body {
-  background: var(--bg);
-  color: var(--tx);
-  font-family: var(--fb);
+  background: #fafafa;
+  color: #0a0a0a;
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   -webkit-font-smoothing: antialiased;
   line-height: 1.5;
   min-height: 100vh;

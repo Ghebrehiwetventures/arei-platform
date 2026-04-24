@@ -1,134 +1,136 @@
+/* Navbar — KV handoff design (full-bleed green sticky 52px bar, mono) */
 .nav {
-  padding: 28px 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  position: relative;
+  position: sticky;
+  top: 0;
   z-index: 201;
+  background: #8ecf8e;
+  /* Break out of .ctn to full viewport width */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  color: #0a0a0a;
+}
+
+.nav-inner {
+  max-width: 1200px;
+  margin: 0 auto;
+  height: 52px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
 }
 
 .logo {
-  font-weight: 800;
-  font-size: 1.05rem;
-  letter-spacing: 0.1em;
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
+  color: #0a0a0a;
   line-height: 1.2;
   cursor: pointer;
   position: relative;
   z-index: 2;
 }
-.logo span { color: var(--ac); }
+.logo span { color: #0a0a0a; }
 
 .nc {
   display: flex;
+  align-items: center;
   gap: 28px;
 }
 .nc a {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--tx3);
-  transition: color 0.2s;
+  color: rgba(0, 0, 0, 0.5);
   padding: 4px 0;
+  transition: color 0.2s;
 }
 .nc a:hover,
 .nc a.on,
-.nc a.active { color: var(--tx); }
-.nc-soon {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--tx3);
-  opacity: 0.4;
-  cursor: default;
-  padding: 4px 0;
-}
+.nc a.active { color: #0a0a0a; }
 
-.nr {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  position: relative;
-  z-index: 2;
-}
-
-.nl {
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--tx2);
-  transition: color 0.2s;
-}
-.nl:hover { color: var(--tx); }
-
+/* "Alerts"-style CTA pill — matches .nav-btn in the design file */
 .nav-saved {
-  position: relative;
-  display: flex;
+  display: inline-flex !important;
   align-items: center;
   gap: 6px;
+  padding: 6px 16px !important;
+  border: 1px solid #0a0a0a;
+  color: #0a0a0a !important;
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  background: transparent;
+  transition: background 0.2s, color 0.2s;
+}
+.nav-saved:hover {
+  background: #0a0a0a;
+  color: #8ecf8e !important;
 }
 .nav-saved svg {
-  width: 16px;
-  height: 16px;
+  width: 12px;
+  height: 12px;
   stroke: currentColor;
   fill: none;
   stroke-width: 2;
 }
 
+/* Count badge — uses currentColor so it inverts naturally with the button */
 .saved-badge {
-  min-width: 18px;
-  height: 18px;
-  border-radius: 9px;
-  background: var(--ac);
-  color: var(--bg);
-  font-size: 0.65rem;
-  font-weight: 800;
-  display: flex;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  border: 1px solid currentColor;
+  color: inherit;
+  background: transparent;
+  font-size: 9px;
+  font-weight: 700;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 0 5px;
-  transition: all 0.25s;
+  padding: 0 4px;
+  transition: opacity 0.25s, transform 0.25s;
 }
-.saved-badge.hide {
-  opacity: 0;
-  transform: scale(0);
-}
+.saved-badge.hide { opacity: 0; transform: scale(0); }
 
 .nav-hamburger {
   display: none;
-  width: 44px;
-  height: 44px;
+  width: 36px;
+  height: 36px;
   align-items: center;
   justify-content: center;
   border: none;
   background: transparent;
-  color: var(--tx2);
+  color: #0a0a0a;
   cursor: pointer;
-  border-radius: 8px;
-  transition: color 0.2s;
+  transition: opacity 0.2s;
   position: relative;
   z-index: 2;
 }
-.nav-hamburger:hover { color: var(--tx); }
-.nav-hamburger svg { width: 24px; height: 24px; }
+.nav-hamburger:hover { opacity: 0.7; }
+.nav-hamburger svg { width: 20px; height: 20px; }
 
 .nc-mobile {
   display: none;
   position: fixed;
-  top: 0;
+  top: 52px;
   left: 0;
   right: 0;
   bottom: 0;
-  background: var(--bg);
-  z-index: 1;
+  background: #fafafa;
+  z-index: 200;
   flex-direction: column;
   align-items: center;
   justify-content: center;
   gap: 24px;
-  padding: 80px 24px 24px;
+  padding: 40px 24px;
   opacity: 0;
   visibility: hidden;
   transition: opacity 0.25s, visibility 0.25s;
@@ -137,51 +139,46 @@
   display: flex;
   opacity: 1;
   visibility: visible;
-  height: 100vh;
-  height: 100dvh;
 }
 .nc-mobile a {
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 14px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--tx2);
+  color: rgba(0, 0, 0, 0.55);
   transition: color 0.2s;
 }
 .nc-mobile a:hover,
-.nc-mobile a.on { color: var(--tx); }
+.nc-mobile a.on { color: #0a0a0a; }
 
 .nav-saved-mobile {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   gap: 8px;
-  font-size: 1.1rem;
-  font-weight: 600;
-  letter-spacing: 0.07em;
-  text-transform: uppercase;
-  color: var(--tx2);
-  transition: color 0.2s;
+  padding: 8px 18px;
+  border: 1px solid #0a0a0a;
+  color: #0a0a0a;
   margin-top: 12px;
-  padding-top: 16px;
-  border-top: 1px solid var(--bd);
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
 }
-.nav-saved-mobile:hover,
-.nav-saved-mobile.on { color: var(--tx); }
+.nav-saved-mobile svg {
+  width: 14px;
+  height: 14px;
+  stroke: currentColor;
+  fill: none;
+  stroke-width: 2;
+}
 
 @media (max-width: 768px) {
-  .nav {
-    position: sticky;
-    top: 0;
-    background: var(--bg);
-    z-index: 201;
-    padding-top: 16px;
-    padding-bottom: 16px;
-  }
   .nc { display: none; }
   .hide-desktop { display: flex !important; }
   .hide-mobile { display: none !important; }
-  .nr { display: none !important; }
-  .nav-hamburger { order: 2; }
+  .nav-hamburger { display: flex; order: 2; }
 }
 @media (min-width: 769px) {
   .hide-desktop { display: none !important; }

@@ -1,101 +1,127 @@
+/* NewsletterCta — KV design (green band, mono, inline form) */
 .nl-cta {
-  background: var(--bg2);
-  border: 1px solid var(--bd);
-  border-radius: 16px;
-  padding: 48px;
+  /* Full-bleed green band */
+  width: 100vw;
+  margin-left: calc(50% - 50vw);
+  background: #8ecf8e;
+  color: #0a0a0a;
+  padding: 72px 24px;
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
   text-align: center;
-  margin: 64px 0 0;
 }
+
 .nl-overline {
-  font-size: 0.68rem;
-  font-weight: 700;
-  letter-spacing: 0.14em;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.2em;
   text-transform: uppercase;
-  color: var(--oc);
-  margin-bottom: 14px;
+  color: rgba(0, 0, 0, 0.55);
+  margin-bottom: 18px;
 }
+
 .nl-cta h2 {
-  font-family: var(--fd);
-  font-size: 2rem;
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: clamp(26px, 3.4vw, 36px);
   font-weight: 400;
-  margin-bottom: 8px;
+  line-height: 1.2;
+  letter-spacing: -0.02em;
+  color: #0a0a0a;
+  max-width: 720px;
+  margin: 0 auto 14px;
 }
 .nl-cta h2 em {
-  color: var(--ac);
   font-style: italic;
   font-weight: 500;
 }
+
 .nl-cta p {
-  font-size: 0.9rem;
-  color: var(--tx2);
-  max-width: 460px;
+  font-size: 13px;
+  color: rgba(0, 0, 0, 0.65);
+  line-height: 1.6;
+  max-width: 540px;
   margin: 0 auto 28px;
-  line-height: 1.7;
 }
+
 .nl-form {
   display: flex;
-  gap: 10px;
-  max-width: 440px;
+  gap: 0;
+  max-width: 480px;
   margin: 0 auto;
+  border: 1px solid #0a0a0a;
+  background: #fafafa;
 }
+
 .nl-input {
   flex: 1;
-  padding: 13px 20px;
-  border-radius: 8px;
-  border: 1px solid var(--bd);
-  background: var(--bg);
-  color: var(--tx);
-  font-family: var(--fb);
-  font-size: 0.88rem;
-  outline: none;
-  transition: border 0.2s;
-}
-.nl-input::placeholder { color: var(--tx3); }
-.nl-input:focus { border-color: var(--ac); }
-.nl-submit {
-  padding: 13px 24px;
-  border-radius: 8px;
-  background: var(--ac);
-  color: var(--bg);
-  font-family: var(--fb);
-  font-size: 0.78rem;
-  font-weight: 700;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
+  padding: 12px 16px;
   border: none;
-  cursor: pointer;
-  transition: all 0.2s;
-  white-space: nowrap;
+  background: transparent;
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 13px;
+  color: #0a0a0a;
+  outline: none;
 }
-.nl-submit:hover { background: var(--ac2); }
-.nl-fine {
-  font-size: 0.72rem;
-  color: var(--tx3);
-  margin-top: 12px;
+.nl-input::placeholder {
+  color: rgba(0, 0, 0, 0.4);
+}
+.nl-input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
-/* Success state */
-.nl-success {
-  font-size: 0.92rem;
+.nl-submit {
+  padding: 12px 22px;
+  border: none;
+  border-left: 1px solid #0a0a0a;
+  background: #0a0a0a;
+  color: #8ecf8e;
+  font-family: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  font-size: 11px;
   font-weight: 600;
-  color: var(--ac);
-  padding: 16px 0;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s;
+}
+.nl-submit:hover:not(:disabled) {
+  background: #fafafa;
+  color: #0a0a0a;
+}
+.nl-submit:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
 }
 
-/* Error state */
+.nl-success {
+  display: inline-block;
+  padding: 12px 22px;
+  border: 1px solid #0a0a0a;
+  background: rgba(255, 255, 255, 0.5);
+  font-size: 12px;
+  font-weight: 500;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #0a0a0a;
+}
+
 .nl-error {
-  font-size: 0.78rem;
-  color: hsl(0 50% 55%);
-  margin-top: 8px;
+  margin-top: 14px;
+  font-size: 11px;
+  color: #b1221f;
+  letter-spacing: 0.06em;
 }
 
-@media (max-width: 768px) {
-  .nl-cta { padding: 28px 20px; }
-  .nl-cta h2 { font-size: 1.5rem; }
-  .nl-cta h2 em {
-    display: block;
-    margin-top: 2px;
-  }
-  .nl-form { flex-direction: column; }
-  .nl-submit { width: 100%; }
+.nl-fine {
+  margin-top: 22px;
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 520px) {
+  .nl-cta { padding: 56px 24px; }
+  .nl-form { flex-direction: column; border: none; background: transparent; }
+  .nl-input { border: 1px solid #0a0a0a; background: #fafafa; }
+  .nl-submit { border: 1px solid #0a0a0a; border-top: none; }
 }
