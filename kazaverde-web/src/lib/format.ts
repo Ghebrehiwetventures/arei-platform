@@ -21,7 +21,10 @@ const SOURCE_LABELS: Record<string, string> = {
   cv_greenacres: "Green Acres",
 };
 
-export function formatPrice(price: number | null, currency = "EUR"): string {
+export function formatPrice(
+  price: number | null,
+  currency: string | null | undefined = "EUR",
+): string {
   if (!price || price <= 0) return "Price on request";
   const symbol = currency === "CVE" ? "CVE " : "€";
   return symbol + price.toLocaleString("en-US");
