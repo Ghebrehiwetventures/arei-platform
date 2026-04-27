@@ -238,6 +238,13 @@ export interface GenericParsedListing {
 // FETCH RESULT WITH DEBUG INFO
 // ============================================
 
+export interface ContainerDrops {
+  no_link: number;
+  reject_pattern: number;
+  duplicate_url: number;
+  min_path_segments: number;
+}
+
 export interface GenericFetchResult {
   listings: GenericParsedListing[];
   debug: {
@@ -248,6 +255,7 @@ export interface GenericFetchResult {
     errors: string[];
     warnings?: string[];
     htmlLengths: number[];
+    containerDrops?: ContainerDrops;
   };
 }
 
@@ -723,7 +731,8 @@ function parseListingsFromHtml(
   processedUrls: Set<string>,
   now: Date,
   debugErrors?: string[],
-  pageUrl?: string
+  pageUrl?: string,
+  containerDrops?: ContainerDrops
 ): GenericParsedListing[] {
   const listings: GenericParsedListing[] = [];
   try {
@@ -748,24 +757,25 @@ function parseListingsFromHtml(
         href = $link.attr("href");
       }
 
-      if (!href) return;
+      if (!href) { if (containerDrops) containerDrops.no_link++; return; }
 
       // Reject patterns check
       for (const pattern of rejectPatterns) {
-        if (pattern.test(href)) return;
+        if (pattern.test(href)) { if (containerDrops) containerDrops.reject_pattern++; return; }
       }
 
       // Skip already processed
       const absoluteUrl = makeAbsoluteUrl(href, config.base_url);
-      if (processedUrls.has(absoluteUrl)) return;
+      if (processedUrls.has(absoluteUrl)) { if (containerDrops) containerDrops.duplicate_url++; return; }
 
       // Validate URL structure if min_path_segments specified
       if (config.min_path_segments) {
         try {
           const parsed = new URL(absoluteUrl);
           const segments = parsed.pathname.split("/").filter((s) => s);
-          if (segments.length < config.min_path_segments) return;
+          if (segments.length < config.min_path_segments) { if (containerDrops) containerDrops.min_path_segments++; return; }
         } catch {
+          if (containerDrops) containerDrops.min_path_segments++;
           return;
         }
       }
@@ -1345,6 +1355,7 @@ export async function genericPaginatedFetcher(
     stopReason: "",
     errors: [],
     htmlLengths: [],
+    containerDrops: { no_link: 0, reject_pattern: 0, duplicate_url: 0, min_path_segments: 0 },
   };
 
   // Config defaults
@@ -1523,7 +1534,7 @@ export async function genericPaginatedFetcher(
       debug.pagesSuccessful++;
       debug.htmlLengths.push(html.length);
 
-      const pageListings = parseListingsFromHtml(html, config, processedUrls, now, debug.errors);
+      const pageListings = parseListingsFromHtml(html, config, processedUrls, now, debug.errors, undefined, debug.containerDrops);
       debug.listingsPerPage.push(pageListings.length);
 
       if (process.env.DEBUG_GENERIC === "1") {
@@ -1644,7 +1655,7 @@ export async function genericPaginatedFetcher(
         debug.pagesSuccessful++;
 
         // Parse listings from HTML fragment
-        const pageListings = parseListingsFromHtml(htmlContent, config, processedUrls, now, debug.errors, ajaxUrl);
+        const pageListings = parseListingsFromHtml(htmlContent, config, processedUrls, now, debug.errors, ajaxUrl, debug.containerDrops);
         debug.listingsPerPage.push(pageListings.length);
 
         if (process.env.DEBUG_GENERIC === "1") {
@@ -1899,7 +1910,7 @@ export async function genericPaginatedFetcher(
     debug.pagesSuccessful++;
 
     // Parse listings from this page
-    const pageListings = parseListingsFromHtml(result.html, config, processedUrls, now, debug.errors, url);
+    const pageListings = parseListingsFromHtml(result.html, config, processedUrls, now, debug.errors, url, debug.containerDrops);
     debug.listingsPerPage.push(pageListings.length);
 
     if (process.env.DEBUG_GENERIC === "1") {
@@ -1945,6 +1956,13 @@ export async function genericPaginatedFetcher(
     console.log(`[GenericFetcher] Total listings: ${allListings.length}`);
     console.log(`[GenericFetcher] Stop reason: ${debug.stopReason}`);
     console.log(`[GenericFetcher] HTML lengths: ${debug.htmlLengths.join(", ")}`);
+    const drops = debug.containerDrops;
+    if (drops) {
+      const total = drops.no_link + drops.reject_pattern + drops.duplicate_url + drops.min_path_segments;
+      if (total > 0) {
+        console.log(`[GenericFetcher] Container drops: no_link=${drops.no_link}, reject_pattern=${drops.reject_pattern}, duplicate_url=${drops.duplicate_url}, min_path_segments=${drops.min_path_segments}`);
+      }
+    }
   }
 
   return {

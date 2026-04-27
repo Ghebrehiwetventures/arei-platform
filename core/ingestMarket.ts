@@ -267,6 +267,13 @@ async function genericFetchSource(
       console.log(
         `[${source.id}] Sample card: title="${(first.title || "").slice(0, 60)}", desc=${first.description?.length ?? 0} chars, imgs=${first.imageUrls?.length ?? 0}, price=${first.price ?? "null"}`
       );
+      const drops = result.debug.containerDrops;
+      if (drops) {
+        const total = drops.no_link + drops.reject_pattern + drops.duplicate_url + drops.min_path_segments;
+        if (total > 0) {
+          console.log(`[${source.id}] Containers dropped before evaluation: no_link=${drops.no_link}, reject_pattern=${drops.reject_pattern}, duplicate_url=${drops.duplicate_url}, min_path_segments=${drops.min_path_segments}`);
+        }
+      }
     }
   }
 
