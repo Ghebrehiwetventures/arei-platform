@@ -324,4 +324,24 @@
   .kv-m-bar-label { font-size: 11px; }
   .kv-m-acc-q { padding: 14px 18px; font-size: 12px; }
   .kv-m-acc.is-open .kv-m-acc-a { padding: 0 18px 14px; }
+
+  /* Island table — fixed-width numeric columns so headers sit
+     directly above their values (no auto-sizing dead space) and the
+     two right-aligned numbers can't visually merge. Listings count
+     centers under its header; median right-aligns like a price. */
+  .kv-m-island-h,
+  .kv-m-island-row {
+    grid-template-columns: 1fr 64px 80px;
+    column-gap: 16px;
+    row-gap: 0;
+    padding: 12px 14px;
+  }
+  .kv-m-island-h > span:nth-child(2),
+  .kv-m-island-count {
+    text-align: center;
+  }
+  .kv-m-island-name { font-size: 12.5px; white-space: nowrap; }
+  .kv-m-island-count,
+  .kv-m-island-median { font-size: 12.5px; }
+  .kv-m-island-h { font-size: 10px; letter-spacing: 0.12em; }
 }
