@@ -324,4 +324,18 @@
   .kv-m-bar-label { font-size: 11px; }
   .kv-m-acc-q { padding: 14px 18px; font-size: 12px; }
   .kv-m-acc.is-open .kv-m-acc-a { padding: 0 18px 14px; }
+
+  /* Island table — tighten columns so two-word names ("Boa Vista",
+     "São Nicolau") stay on one line. Name column gets the slack;
+     count + median sized to their content with right alignment. */
+  .kv-m-island-h,
+  .kv-m-island-row {
+    grid-template-columns: 1fr auto auto;
+    gap: 14px;
+    padding: 12px 14px;
+  }
+  .kv-m-island-name { font-size: 12.5px; white-space: nowrap; }
+  .kv-m-island-count,
+  .kv-m-island-median { font-size: 12.5px; }
+  .kv-m-island-h { font-size: 10px; letter-spacing: 0.12em; }
 }
