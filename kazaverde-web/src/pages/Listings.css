@@ -285,18 +285,7 @@
   position: relative;
   height: 220px;
   overflow: hidden;
-  background: linear-gradient(135deg, #c9d4c8 0%, #a8bea4 100%);
-}
-.kv-lc-img::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: repeating-linear-gradient(
-    135deg,
-    transparent 0 14px,
-    rgba(0, 0, 0, 0.03) 14px 15px
-  );
-  pointer-events: none;
+  background: var(--kv-off-white);
 }
 
 .kv-lc-flag {
