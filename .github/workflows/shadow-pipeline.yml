@@ -5,6 +5,11 @@ name: Shadow Pipeline (generic)
 # DRY_RUN=1 by default — no Supabase upsert. Flip the input to write.
 
 on:
+  push:
+    branches:
+      - fix/pipeline-source-issue
+    paths:
+      - ".github/workflows/shadow-pipeline.yml"
   workflow_dispatch:
     inputs:
       market_id:
@@ -30,9 +35,9 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      MARKET_ID: ${{ inputs.market_id }}
-      DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
-      DEBUG_GENERIC: ${{ inputs.debug_generic && '1' || '0' }}
+      MARKET_ID: ${{ inputs.market_id || 'cv' }}
+      DRY_RUN: ${{ inputs.dry_run == false && '0' || '1' }}
+      DEBUG_GENERIC: ${{ inputs.debug_generic == false && '0' || '1' }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
