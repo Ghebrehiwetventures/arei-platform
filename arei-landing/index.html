@@ -466,6 +466,13 @@ nav{
   color:var(--bp-text);font-variant-numeric:tabular-nums;
 }
 .xfm-price{color:var(--bp-active);font-weight:500}
+.xfm-delta{
+  margin-left:6px;font-size:10.5px;letter-spacing:.04em;
+  color:var(--bp-muted);font-variant-numeric:tabular-nums;
+}
+.xfm-delta-down{color:#c75c5c}
+.xfm-delta-up{color:var(--bp-active);opacity:.8}
+.xfm-delta-flat{color:var(--bp-muted)}
 
 .transform-engine{
   display:flex;align-items:center;justify-content:center;
@@ -490,6 +497,80 @@ nav{
 @media(prefers-reduced-motion:reduce){
   .bp-node-active::after,.engine-node-dot{animation:none;opacity:.5}
   .transform-stream{animation:none}
+}
+
+/* ─── OPPORTUNITY CHART ─── */
+.bench-panel{
+  border:1px solid var(--rule);background:var(--white);
+  padding:36px 36px 30px;
+}
+.bench-head{
+  display:flex;justify-content:space-between;align-items:baseline;
+  padding-bottom:14px;margin-bottom:28px;
+  border-bottom:1px solid var(--rule);
+  gap:16px;flex-wrap:wrap;
+}
+.bench-head-title{
+  font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  color:var(--bp-label);
+}
+.bench-head-meta{
+  font-size:10px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--bp-muted);
+}
+.bench-row{
+  display:grid;grid-template-columns:190px 1fr 90px;
+  align-items:center;gap:20px;
+  padding:14px 0;
+  border-bottom:1px dashed var(--bp-line-soft);
+  font-size:12px;
+}
+.bench-row:last-of-type{border-bottom:none}
+.bench-row.bench-row-hero .bench-label{color:var(--bp-text);font-weight:500}
+.bench-row.bench-row-hero .bench-value{color:var(--bp-active);font-weight:600}
+.bench-label{letter-spacing:.04em;color:var(--bp-text);line-height:1.3}
+.bench-label-sub{
+  display:block;margin-top:2px;
+  font-size:9px;color:var(--bp-muted);letter-spacing:.1em;
+  text-transform:uppercase;font-weight:500;
+}
+.bench-track{
+  position:relative;height:10px;background:transparent;
+  border-left:1px solid var(--bp-line-soft);
+}
+.bench-bar{
+  position:absolute;left:0;top:0;height:100%;
+  background:var(--bp-active);
+  width:0;
+  animation:bench-grow 1.4s cubic-bezier(.4,0,.2,1) forwards;
+  opacity:.55;
+}
+.bench-row-hero .bench-bar{opacity:1}
+@keyframes bench-grow{to{width:var(--bw,50%)}}
+.bench-value{
+  font-size:13px;font-variant-numeric:tabular-nums;
+  color:var(--bp-text);text-align:right;letter-spacing:.02em;
+}
+.bench-scale{
+  display:grid;grid-template-columns:190px 1fr 90px;
+  gap:20px;margin-top:10px;
+}
+.bench-scale-inner{
+  grid-column:2;
+  display:flex;justify-content:space-between;
+  font-size:9px;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--bp-muted);
+}
+.bench-foot{
+  margin-top:24px;padding-top:16px;
+  border-top:1px solid var(--bp-line-soft);
+  font-size:10px;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--bp-muted);line-height:1.6;
+}
+.bench-bridge{
+  margin:20px 0 0;
+  font-size:13px;color:var(--gray);line-height:1.7;
+  max-width:640px;font-style:italic;
 }
 
 /* ─── CAROUSEL ─── */
@@ -635,6 +716,10 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   .transform-mask{height:170px}
   .engine-transform{padding:0}
   .list-row{grid-template-columns:64px 1fr auto}
+  .bench-panel{padding:24px 20px}
+  .bench-row,.bench-scale{grid-template-columns:130px 1fr 70px;gap:12px}
+  .bench-foot{flex-direction:column;gap:8px}
+  .bench-foot-short{display:none}
   .section{padding:80px 0}
   .cta-section{padding:64px 0}
   .cta-row{grid-template-columns:1fr}
@@ -652,6 +737,35 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   .sr-idx{display:none}
   .list-row{grid-template-columns:1fr;gap:8px}
   .lr-label{margin-bottom:-4px}
+  /* Mobile simplification: stacked rows, no axis, shorter source */
+  #benchmarks .section-head{margin-bottom:28px}
+  #benchmarks .section-head p{margin-top:10px}
+  .bench-panel{padding:20px 18px}
+  .bench-head{margin-bottom:18px;padding-bottom:10px}
+  .bench-row{
+    display:block;padding:12px 0;border-bottom:none;
+  }
+  .bench-row + .bench-row{border-top:1px dashed var(--bp-line-soft)}
+  .bench-row .bench-label{
+    display:flex;justify-content:space-between;align-items:baseline;
+    font-size:13px;margin-bottom:8px;gap:12px;
+  }
+  .bench-row .bench-label-sub{display:none}
+  .bench-row .bench-value{
+    font-size:13px;color:var(--bp-text);text-align:right;
+  }
+  .bench-row-hero .bench-value{color:var(--bp-active);font-weight:600}
+  .bench-row .bench-track{
+    height:8px;border-left:none;
+    background:var(--bp-line-soft);
+  }
+  .bench-row .bench-bar{opacity:.6}
+  .bench-row-hero .bench-bar{opacity:1}
+  .bench-scale{display:none}
+  .bench-foot{margin-top:18px;padding-top:12px;font-size:10px}
+  .bench-foot-long{display:none}
+  .bench-foot-short{display:inline}
+  .bench-bridge{margin-top:18px;font-size:12.5px}
   .lr-idx{display:none}
   .hero-section{padding:60px 0 0}
   .hero-top{flex-direction:column;gap:8px}
@@ -674,6 +788,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
     <a class="logo" href="#top">Africa Real Estate Index</a>
     <div class="nav-links">
       <a class="nav-a" href="#opportunity">Gap</a>
+      <a class="nav-a" href="#benchmarks">Markets</a>
       <a class="nav-a" href="#proof">Live</a>
       <a class="nav-a" href="#model">Next</a>
       <a class="nav-btn" href="#contact">Investor Enquiry</a>
@@ -717,6 +832,64 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       <div class="stat-row"><div class="sr-num">#1</div><div class="sr-desc">Fastest-urbanizing continent on earth.</div><div class="sr-idx">003</div></div>
       <div class="stat-row"><div class="sr-num">54</div><div class="sr-desc">Countries, each with its own market.</div><div class="sr-idx">004</div></div>
     </div>
+  </div>
+</section>
+
+
+<!-- ═══ 2. OPPORTUNITY SCALE ═══ -->
+<section class="section section-off" id="benchmarks">
+  <div class="wrap">
+    <div class="section-head rv">
+      <div class="section-head-left">
+        <span class="ey">The Opportunity</span>
+        <h2>Property demand is rising fast. Market visibility is not.</h2>
+        <p>Between 2020 and 2050, Africa is projected to add more urban residents than any other region — and far more than North America, Europe, and Latin America combined.</p>
+      </div>
+    </div>
+    <div class="bench-panel rv">
+      <div class="bench-head">
+        <span class="bench-head-title">Net Urban Population Added, 2020 &ndash; 2050</span>
+        <span class="bench-head-meta">UN DESA</span>
+      </div>
+
+      <div class="bench-row bench-row-hero">
+        <span class="bench-label">Africa <span class="bench-label-sub">Where AREI is building</span></span>
+        <div class="bench-track"><div class="bench-bar" style="--bw:100%"></div></div>
+        <span class="bench-value">+900M</span>
+      </div>
+      <div class="bench-row">
+        <span class="bench-label">Asia <span class="bench-label-sub">ex-China</span></span>
+        <div class="bench-track"><div class="bench-bar" style="--bw:67%"></div></div>
+        <span class="bench-value">+600M</span>
+      </div>
+      <div class="bench-row">
+        <span class="bench-label">Latin America</span>
+        <div class="bench-track"><div class="bench-bar" style="--bw:17%"></div></div>
+        <span class="bench-value">+150M</span>
+      </div>
+      <div class="bench-row">
+        <span class="bench-label">North America</span>
+        <div class="bench-track"><div class="bench-bar" style="--bw:9%"></div></div>
+        <span class="bench-value">+80M</span>
+      </div>
+      <div class="bench-row">
+        <span class="bench-label">Europe</span>
+        <div class="bench-track"><div class="bench-bar" style="--bw:2%"></div></div>
+        <span class="bench-value">+15M</span>
+      </div>
+
+      <div class="bench-scale">
+        <div class="bench-scale-inner">
+          <span>0</span><span>250M</span><span>500M</span><span>750M</span><span>900M+</span>
+        </div>
+      </div>
+
+      <div class="bench-foot">
+        <span class="bench-foot-long">Source: UN DESA, World Urbanization Prospects (2018) &middot; Net urban population change 2020&ndash;2050, rounded</span>
+        <span class="bench-foot-short">Source: UN DESA, World Urbanization Prospects (rounded)</span>
+      </div>
+    </div>
+    <p class="bench-bridge rv">Demand is growing at scale. Comparable real estate data is not.</p>
   </div>
 </section>
 
@@ -1168,9 +1341,36 @@ if (investorForm && investorFeedback && investorSubmit) {
 
 <script>
 (function(){
-  var raws=['3bdrm aprt mindelo gd vw neg','2bed SAL URGENT!! sale','house w garden fogo t4','vila luxo palmeira 4bed','apt cntr praia neg','T3 santiago boa area'];
-  var cleansText=['3 BR \u00B7 Mindelo, SV \u00B7 \u20AC145,000','2 BR \u00B7 Sal \u00B7 \u20AC89,500','4 BR \u00B7 Fogo \u00B7 \u20AC220,000','4 BR \u00B7 Palmeira \u00B7 \u20AC195,000','2 BR \u00B7 Praia \u00B7 \u20AC112,000','3 BR \u00B7 Santiago \u00B7 \u20AC135,000'];
-  var cleansHTML=['3 BR &middot; Mindelo, SV &middot; <span class="xfm-price">&euro;145,000</span>','2 BR &middot; Sal &middot; <span class="xfm-price">&euro;89,500</span>','4 BR &middot; Fogo &middot; <span class="xfm-price">&euro;220,000</span>','4 BR &middot; Palmeira &middot; <span class="xfm-price">&euro;195,000</span>','2 BR &middot; Praia &middot; <span class="xfm-price">&euro;112,000</span>','3 BR &middot; Santiago &middot; <span class="xfm-price">&euro;135,000</span>'];
+  var raws=[
+    '*URGENT* 3bdrm apt mindelo 95m2 sea vw 16.000.000cve neg',
+    '3-bedrm apt KILIMANI 150sqm pool/gym Ksh 22M neg',
+    '4BR terrace duplex LEKKI PH1 + BQ \u20A6 180,000,000 slightly neg',
+    'T2 SAL sta maria 68 sqm beachfront 89500EUR price reduced!!',
+    'villa Marrakech palmeraie 4ch piscine 3.500.000 DH',
+    'East Legon 5bed det house c-of-o GHS 2,400,000',
+    '2 bed apt Sandton 95sqm sec. complex R 2,850,000 neg',
+    'house for sale KIYOVU kgl 4BR 280 m2 RWF 420,000,000'
+  ];
+  var cleansText=[
+    'Apt \u00B7 3 BR \u00B7 95 m\u00B2 \u00B7 Mindelo, Cape Verde \u00B7 \u20AC145,000  -3.3% / 90d',
+    'Apt \u00B7 3 BR \u00B7 150 m\u00B2 \u00B7 Kilimani, Nairobi \u00B7 \u20AC152,000  +4.1% / 120d',
+    'House \u00B7 4 BR \u00B7 280 m\u00B2 \u00B7 Lekki, Lagos \u00B7 \u20AC108,000  -8.2% / 180d',
+    'Apt \u00B7 2 BR \u00B7 68 m\u00B2 \u00B7 Santa Maria, Cape Verde \u00B7 \u20AC89,500  +5.3% / 180d',
+    'Villa \u00B7 4 BR \u00B7 240 m\u00B2 \u00B7 Palmeraie, Marrakech \u00B7 \u20AC325,000  flat / 150d',
+    'House \u00B7 5 BR \u00B7 350 m\u00B2 \u00B7 East Legon, Accra \u00B7 \u20AC160,000  +2.0% / 90d',
+    'Apt \u00B7 2 BR \u00B7 95 m\u00B2 \u00B7 Sandton, Johannesburg \u00B7 \u20AC140,000  -1.5% / 120d',
+    'House \u00B7 4 BR \u00B7 280 m\u00B2 \u00B7 Kiyovu, Kigali \u00B7 \u20AC275,000  +3.7% / 150d'
+  ];
+  var cleansHTML=[
+    'Apt &middot; 3 BR &middot; 95 m&sup2; &middot; Mindelo, Cape Verde &middot; <span class="xfm-price">&euro;145,000</span><span class="xfm-delta xfm-delta-down">&darr; 3.3% / 90d</span>',
+    'Apt &middot; 3 BR &middot; 150 m&sup2; &middot; Kilimani, Nairobi &middot; <span class="xfm-price">&euro;152,000</span><span class="xfm-delta xfm-delta-up">&uarr; 4.1% / 120d</span>',
+    'House &middot; 4 BR &middot; 280 m&sup2; &middot; Lekki, Lagos &middot; <span class="xfm-price">&euro;108,000</span><span class="xfm-delta xfm-delta-down">&darr; 8.2% / 180d</span>',
+    'Apt &middot; 2 BR &middot; 68 m&sup2; &middot; Santa Maria, Cape Verde &middot; <span class="xfm-price">&euro;89,500</span><span class="xfm-delta xfm-delta-up">&uarr; 5.3% / 180d</span>',
+    'Villa &middot; 4 BR &middot; 240 m&sup2; &middot; Palmeraie, Marrakech &middot; <span class="xfm-price">&euro;325,000</span><span class="xfm-delta xfm-delta-flat">&rarr; flat / 150d</span>',
+    'House &middot; 5 BR &middot; 350 m&sup2; &middot; East Legon, Accra &middot; <span class="xfm-price">&euro;160,000</span><span class="xfm-delta xfm-delta-up">&uarr; 2.0% / 90d</span>',
+    'Apt &middot; 2 BR &middot; 95 m&sup2; &middot; Sandton, Johannesburg &middot; <span class="xfm-price">&euro;140,000</span><span class="xfm-delta xfm-delta-down">&darr; 1.5% / 120d</span>',
+    'House &middot; 4 BR &middot; 280 m&sup2; &middot; Kiyovu, Kigali &middot; <span class="xfm-price">&euro;275,000</span><span class="xfm-delta xfm-delta-up">&uarr; 3.7% / 150d</span>'
+  ];
   var rawEl=document.querySelector('.er-raw');
   var cleanEl=document.querySelector('.er-clean');
   if(!rawEl||!cleanEl)return;
