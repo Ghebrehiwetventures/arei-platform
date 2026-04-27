@@ -118,6 +118,10 @@
   color: var(--kv-black);
   cursor: pointer;
   background: var(--kv-paper);
+  /* Removes Safari iOS 300ms tap delay and double-tap zoom on the chip.
+     Without this, taps inside the horizontal-scroll filter group are
+     sometimes swallowed as the start of a scroll gesture. */
+  touch-action: manipulation;
   transition: border-color var(--kv-dur-fast) var(--kv-ease),
               background var(--kv-dur-fast) var(--kv-ease);
 }

@@ -150,9 +150,15 @@ export default function Listings() {
     };
   }, [page, island, priceBucket, retryCount]);
 
-  // Close any open popover on outside click
+  // Close any open popover on outside click.
+  // Target-aware: clicks inside a filter chip wrap, the sort wrap, or
+  // the popover itself are ignored. Safari iOS occasionally bubbles a
+  // synthetic click to document even when React's stopPropagation runs,
+  // which would close the sheet in the same tick it opened.
   useEffect(() => {
-    function onDocClick() {
+    function onDocClick(e: MouseEvent) {
+      const target = e.target as Element | null;
+      if (target?.closest(".kv-field-wrap, .kv-sort-wrap, .kv-pop")) return;
       setOpenPop("");
     }
     document.addEventListener("click", onDocClick);

@@ -72,13 +72,20 @@ function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
      against current data; relax if too few candidates pass. */
   const MAX_TITLE_LEN = 32;
   const isShort = (c: ListingCard) => (c.title?.length ?? 99) <= MAX_TITLE_LEN;
+  const hasImage = (c: ListingCard) => !!(c.image_urls?.[0] || c.image_url);
+
+  /* Hard requirement: featured cards must have an image. Empty
+     placeholder gradients on the homepage hero are worse than
+     showing fewer cards. Pipeline should ultimately filter
+     image-less listings out of the index entirely. */
+  const candidates = cards.filter(hasImage);
 
   const picked: ListingCard[] = [];
   const seenIslands = new Set<string>();
   const seenSources = new Set<string>();
 
   // Pass 1: short title + unique island + unique source
-  for (const c of cards) {
+  for (const c of candidates) {
     if (picked.length >= n) break;
     if (!isShort(c)) continue;
     if (c.island && !seenIslands.has(c.island) && c.source_id && !seenSources.has(c.source_id)) {
@@ -88,7 +95,7 @@ function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
     }
   }
   // Pass 2: short title + unique island
-  for (const c of cards) {
+  for (const c of candidates) {
     if (picked.length >= n) break;
     if (picked.includes(c) || !isShort(c)) continue;
     if (c.island && !seenIslands.has(c.island)) {
@@ -97,13 +104,13 @@ function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
     }
   }
   // Pass 3: any short title
-  for (const c of cards) {
+  for (const c of candidates) {
     if (picked.length >= n) break;
     if (picked.includes(c)) continue;
     if (isShort(c)) picked.push(c);
   }
   // Pass 4: anything remaining (rare fallback when few short titles)
-  for (const c of cards) {
+  for (const c of candidates) {
     if (picked.length >= n) break;
     if (!picked.includes(c)) picked.push(c);
   }
