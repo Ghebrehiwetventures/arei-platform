@@ -1,0 +1,137 @@
+name: Shadow Pipeline (generic)
+
+# Runs the generic pipeline (ingestMarket + reportMarket) only.
+# Skips the legacy preflightCv / ingestCv / reportCv steps to save time.
+# DRY_RUN=1 by default — no Supabase upsert. Flip the input to write.
+
+on:
+  workflow_dispatch:
+    inputs:
+      market_id:
+        description: "Market ID (e.g. cv, ke, ng)"
+        required: true
+        default: "cv"
+        type: string
+      dry_run:
+        description: "Skip Supabase upsert"
+        required: true
+        default: true
+        type: boolean
+      debug_generic:
+        description: "Enable DEBUG_GENERIC logs (per-source/per-listing)"
+        required: true
+        default: true
+        type: boolean
+
+jobs:
+  shadow:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_ANON_KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      MARKET_ID: ${{ inputs.market_id }}
+      DRY_RUN: ${{ inputs.dry_run && '1' || '0' }}
+      DEBUG_GENERIC: ${{ inputs.debug_generic && '1' || '0' }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Shadow Ingest
+        run: npx ts-node --transpile-only core/ingestMarket.ts
+
+      - name: Shadow Report
+        if: always()
+        run: npx ts-node --transpile-only core/reportMarket.ts
+
+      - name: Step summary
+        if: always()
+        run: |
+          node <<'NODE'
+          const fs = require("fs");
+          const path = require("path");
+
+          const marketId = process.env.MARKET_ID || "cv";
+          const summary = process.env.GITHUB_STEP_SUMMARY;
+          const reportPath = path.resolve("artifacts", `${marketId}_ingest_report.json`);
+
+          if (!fs.existsSync(reportPath)) {
+            fs.appendFileSync(summary, `## Shadow Pipeline: ${marketId.toUpperCase()}\n\nNo report found — ingest may have failed.\n`);
+            process.exit(0);
+          }
+
+          const report = JSON.parse(fs.readFileSync(reportPath, "utf8"));
+          const s = report.summary;
+          const dryRun = process.env.DRY_RUN === "1";
+
+          let out = `## Shadow Pipeline: ${report.marketName} — ${report.generatedAt.slice(0, 10)}\n\n`;
+          out += `${dryRun ? "🔍 DRY RUN" : "✅ WRITTEN TO DB"}\n\n`;
+          out += `| Total | Visible | Hidden | Duplicates removed | Sources |\n`;
+          out += `| --- | --- | --- | --- | --- |\n`;
+          out += `| ${s.totalListings} | ${s.visibleCount} | ${s.hiddenCount} | ${s.duplicatesRemoved} | ${s.sourceCount} |\n\n`;
+
+          // Visible per source
+          const visibleBySource = {};
+          for (const l of report.visibleListings) {
+            visibleBySource[l.sourceName] = (visibleBySource[l.sourceName] || 0) + 1;
+          }
+          const visibleEntries = Object.entries(visibleBySource).sort((a, b) => b[1] - a[1]);
+          if (visibleEntries.length > 0) {
+            out += `### Visible per source\n\n`;
+            out += `| Source | Visible |\n| --- | --- |\n`;
+            for (const [src, count] of visibleEntries) out += `| ${src} | ${count} |\n`;
+            out += "\n";
+          }
+
+          // Hidden per source with top 3 violation reasons
+          const hiddenBySource = {};
+          for (const l of report.hiddenListings) {
+            if (!hiddenBySource[l.sourceName]) hiddenBySource[l.sourceName] = { count: 0, reasons: {} };
+            hiddenBySource[l.sourceName].count++;
+            for (const v of (l.violations || [])) {
+              hiddenBySource[l.sourceName].reasons[v] = (hiddenBySource[l.sourceName].reasons[v] || 0) + 1;
+            }
+          }
+          const hiddenEntries = Object.entries(hiddenBySource).sort((a, b) => b[1].count - a[1].count);
+          if (hiddenEntries.length > 0) {
+            out += `### Hidden per source (top 3 reasons)\n\n`;
+            out += `| Source | Hidden | Top reasons |\n| --- | --- | --- |\n`;
+            for (const [src, data] of hiddenEntries) {
+              const top = Object.entries(data.reasons).sort((a, b) => b[1] - a[1]).slice(0, 3)
+                .map(([r, n]) => `${r}(${n})`).join(", ");
+              out += `| ${src} | ${data.count} | ${top} |\n`;
+            }
+            out += "\n";
+          }
+
+          // Problem sources
+          const problems = report.sources.filter(s => s.status === "BROKEN_SOURCE" || s.status === "PAUSED_BY_SYSTEM");
+          if (problems.length > 0) {
+            out += `### Problem sources\n\n`;
+            out += `| Source | Status | Error |\n| --- | --- | --- |\n`;
+            for (const s of problems) out += `| ${s.name} | ${s.status} | ${s.lastError || ""} |\n`;
+            out += "\n";
+          }
+
+          fs.appendFileSync(summary, out);
+          NODE
+
+      - name: Upload artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: shadow-${{ inputs.market_id }}-${{ github.run_id }}
+          path: |
+            artifacts/*.json
+            reports/*.json
+          if-no-files-found: warn
+          retention-days: 14
