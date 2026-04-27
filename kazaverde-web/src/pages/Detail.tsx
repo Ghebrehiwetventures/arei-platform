@@ -415,11 +415,13 @@ export default function Detail() {
   return (
     <div className="kv-d">
       {/* Breadcrumb: Listings / Island / City — no internal id, the page
-          title carries the listing identity. */}
+          title carries the listing identity. Listings + Island both link
+          back into the index; city stays plain text since the index does
+          not yet support a city-level filter. */}
       <div className="kv-d-crumb">
-        <Link to="/">Listings</Link>
+        <Link to="/listings">Listings</Link>
         <span className="kv-d-crumb-sep">/</span>
-        <Link to={`/?island=${encodeURIComponent(detail.island)}`}>{detail.island}</Link>
+        <Link to={`/listings?island=${encodeURIComponent(detail.island)}`}>{detail.island}</Link>
         {detail.city && (
           <>
             <span className="kv-d-crumb-sep">/</span>

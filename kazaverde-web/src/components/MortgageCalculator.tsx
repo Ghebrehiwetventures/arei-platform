@@ -161,9 +161,15 @@ export default function MortgageCalculator({ price }: Props) {
                 inputMode="decimal"
                 value={rawInterestRate}
                 onChange={(e) => {
-                  const raw = e.target.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+                  // Accept both . and , as decimal separator (Swedish/EU
+                  // users type "0,5"; we preserve what they typed in the
+                  // displayed value and only normalise for parsing).
+                  const raw = e.target.value
+                    .replace(/[^0-9.,]/g, "")
+                    .replace(/([.,].*)[.,]/g, "$1");
                   setRawInterestRate(raw);
-                  const n = raw === "" || raw === "." ? 0 : Number(raw);
+                  const numeric = raw.replace(",", ".");
+                  const n = numeric === "" || numeric === "." ? 0 : Number(numeric);
                   if (!isNaN(n)) set("interestRate", Math.min(15, n));
                 }}
               />
@@ -219,9 +225,12 @@ export default function MortgageCalculator({ price }: Props) {
                 inputMode="decimal"
                 value={rawPropertyTaxPct}
                 onChange={(e) => {
-                  const raw = e.target.value.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1");
+                  const raw = e.target.value
+                    .replace(/[^0-9.,]/g, "")
+                    .replace(/([.,].*)[.,]/g, "$1");
                   setRawPropertyTaxPct(raw);
-                  const n = raw === "" || raw === "." ? 0 : Number(raw);
+                  const numeric = raw.replace(",", ".");
+                  const n = numeric === "" || numeric === "." ? 0 : Number(numeric);
                   if (!isNaN(n)) set("propertyTaxPct", n);
                 }}
               />
