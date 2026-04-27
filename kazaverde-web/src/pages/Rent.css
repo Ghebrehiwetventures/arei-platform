@@ -331,10 +331,20 @@
   }
   .kv-rent-form-sub { font-size: 12.5px; }
 
-  /* Stack input + submit on phones — full-width tap targets */
-  .kv-rent-form { flex-direction: column; align-items: stretch; }
+  /* Stack input + submit on phones — full-width tap targets.
+     On the off-white hero band the default 1px hairline border
+     against white bg is nearly invisible, which made the input read
+     as floating placeholder text. Give the form a stronger black
+     border + paper bg so it clearly reads as an input field. */
+  .kv-rent-form {
+    flex-direction: column;
+    align-items: stretch;
+    border-color: var(--kv-black);
+    background: var(--kv-paper);
+  }
   .kv-rent-form-input {
     border-bottom: 1px solid var(--kv-rule);
+    background: var(--kv-paper);
   }
   .kv-rent-form-submit {
     height: 48px;

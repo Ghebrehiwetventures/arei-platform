@@ -220,7 +220,7 @@ export default function Listings() {
           <div className="kv-hero-meta">
             <div><b>{(indexTotal || total).toLocaleString("en")}</b>&nbsp; listings indexed</div>
             <div><b>{Math.max(islands.length, 1)}</b>&nbsp; islands covered</div>
-            <div>Last updated <b>{lastUpdated}</b></div>
+            <div className="kv-hero-meta-updated">Last updated <b>{lastUpdated}</b></div>
           </div>
         </div>
       </section>
