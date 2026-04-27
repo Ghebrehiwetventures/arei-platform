@@ -1,5 +1,6 @@
 import { useState, type FormEvent } from "react";
 import { arei } from "../lib/arei";
+import { notifyFormspree } from "../lib/formspree";
 import "./NewsletterCta.css";
 
 interface Props {
@@ -28,8 +29,11 @@ export default function NewsletterCta({
     setStatus("submitting");
     setErrorMsg("");
     try {
-      const result = await arei.subscribeNewsletter(trimmed);
-      if (result.ok) {
+      const [supaResult] = await Promise.all([
+        arei.subscribeNewsletter(trimmed),
+        notifyFormspree({ email: trimmed, source: "newsletter" }),
+      ]);
+      if (supaResult.ok) {
         setStatus("success");
       } else {
         setStatus("error");

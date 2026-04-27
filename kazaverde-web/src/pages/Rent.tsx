@@ -2,6 +2,7 @@ import { useState, type FormEvent } from "react";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
+import { notifyFormspree } from "../lib/formspree";
 import "./Rent.css";
 
 /* /rent — two-sided marketplace waitlist.
@@ -77,8 +78,11 @@ export default function Rent() {
     setStatus("submitting");
     setErrorMsg("");
     try {
-      const result = await arei.subscribeNewsletter(trimmed);
-      if (result.ok) {
+      const [supaResult] = await Promise.all([
+        arei.subscribeNewsletter(trimmed),
+        notifyFormspree({ email: trimmed, source: `rent-${intent}` }),
+      ]);
+      if (supaResult.ok) {
         setSubmittedAs(intent);
         setSubmittedEmail(trimmed);
         setStatus("success");
