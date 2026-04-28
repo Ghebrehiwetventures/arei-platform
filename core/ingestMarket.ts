@@ -4,6 +4,8 @@
  * Usage:
  *   MARKET_ID=ke ts-node core/ingestMarket.ts
  *   MARKET_ID=cv ts-node core/ingestMarket.ts
+ *   MARKET_ID=cv SOURCES=cv_ccoreinvestments ts-node core/ingestMarket.ts   # single source
+ *   MARKET_ID=cv SOURCES=cv_ccore,cv_terra ts-node core/ingestMarket.ts     # comma list, prefix-match
  *
  * This script:
  * - Reads MARKET_ID from env
@@ -379,7 +381,8 @@ async function pluginDetailEnrichment(
       if (!fetchResult.success || !fetchResult.html) {
         failedCount++;
         listing.detail_error = fetchResult.error || "fetch failed";
-        console.log(`[DetailEnrich] ✗ ${listing.id} fetch failed`);
+        const status = fetchResult.statusCode ? ` [HTTP ${fetchResult.statusCode}]` : "";
+        console.log(`[DetailEnrich] ✗ ${listing.id} fetch failed${status}: ${listing.detail_error} (${listing.detailUrl})`);
         continue;
       }
 
@@ -620,8 +623,31 @@ export async function runMarketIngest(marketId: string): Promise<IngestReport> {
     };
   }
 
-  const sources = sourcesResult.data.sources;
-  console.log(`Found ${sources.length} sources in config\n`);
+  let sources = sourcesResult.data.sources;
+  console.log(`Found ${sources.length} sources in config`);
+
+  // Optional source filter for debugging: SOURCES=cv_ccoreinvestments,cv_terra
+  // Matches source.id exactly OR by prefix (so SOURCES=cv_ccore matches cv_ccoreinvestments).
+  const sourcesFilter = process.env.SOURCES?.trim();
+  if (sourcesFilter) {
+    const wanted = sourcesFilter.split(",").map(s => s.trim()).filter(Boolean);
+    const before = sources.length;
+    sources = sources.filter(s => wanted.some(w => s.id === w || s.id.startsWith(w)));
+    console.log(`[SOURCES filter] "${sourcesFilter}" → ${sources.length}/${before} sources: ${sources.map(s => s.id).join(", ") || "(none)"}`);
+    if (sources.length === 0) {
+      console.error(`No sources matched filter "${sourcesFilter}". Available: ${sourcesResult.data.sources.map(s => s.id).join(", ")}`);
+      return {
+        marketId,
+        marketName,
+        generatedAt: new Date().toISOString(),
+        summary: { totalListings: 0, visibleCount: 0, hiddenCount: 0, duplicatesRemoved: 0, sourceCount: 0 },
+        sources: [],
+        visibleListings: [],
+        hiddenListings: [],
+      };
+    }
+  }
+  console.log("");
 
   // Load optional market-specific location hooks
   const locationHooks = loadLocationHooks(marketId);

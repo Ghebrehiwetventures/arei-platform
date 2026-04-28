@@ -269,7 +269,9 @@ sources:
       policy: always
       delay_ms: 2500
       selectors:
-        description: ".description, [class*='description'] p, .observations p, p"
+        # CasafariCRM (Proppy) renders description in <div class="contentText js-cmsContent">
+        # — detail pages have zero <p> tags, so .description / p selectors miss everything.
+        description: ".contentText, .js-cmsContent, .contentSection .contentText, [class*='contentText']"
         images: "img[src*='cdn.proppy.app'], img[src*='propertyphotos'], .gallery img, .slider img"
       spec_patterns:
         bedrooms:
