@@ -1,0 +1,23 @@
+{
+  "run_id": "2026-04-27T09-13-06Z",
+  "prompt_version": "v1.2",
+  "primary_model": "claude-sonnet-4-6",
+  "fallback_model": "gpt-4o",
+  "started_at": "2026-04-27T09:13:06.633Z",
+  "elapsed_sec": 539,
+  "args": {
+    "limit": null,
+    "force": false,
+    "dryRun": false,
+    "noWrite": false
+  },
+  "scope_total": 380,
+  "processed": 380,
+  "counts": {
+    "skipped": 5,
+    "ok_primary": 249,
+    "ok_fallback": 126,
+    "failed": 0,
+    "dry_run": 0
+  }
+}

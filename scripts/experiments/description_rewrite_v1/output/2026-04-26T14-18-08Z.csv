@@ -1,0 +1,15 @@
+run_id,prompt_version,id,pool,source_lang,property_type,original_words,rendered_words,claude_words,gpt_words,original_text,rendered_description_en,claude_text,gpt_text,claude_error,gpt_error,facts_preserved_claude,facts_preserved_gpt,facts_invented_claude,facts_invented_gpt,tone_quality_claude,tone_quality_gpt,readability_claude,readability_gpt,vs_original_claude,vs_original_gpt,notes
+2026-04-26T14-18-08Z,v1,cv_gabetticasecapoverde:CV-AP173,rendered,it,apartment,56,63,0,89,"Vendesi, vicino alla spiaggia principale e a 200 metri dal centro paese e 500 metri dal porto, comodo e arioso appartamento posto al piano terra e dotato di esterno privado su due lati. L’immobile e’ composto da sala con zona cucina, camera matrimoniale, camera singola, bagno, ingresso, veranda ed esterno privato. Viene venduto completo di arredamento.","For sale, near the main beach and 200 meters from the town center and 500 meters from the port, comfortable and airy apartment on the ground floor and equipped with a private exterior on two sides. The property consists of a living room with kitchen area, double bedroom, single bedroom, bathroom, entrance, veranda and private outdoor area. It is sold complete with furniture.",,"This ground-floor apartment is located in Vila Do Maio on the island of Maio, Cape Verde. It is conveniently situated near the main beach, just 200 meters from the town center and 500 meters from the port. The property features a private outdoor area on two sides.
+
+The apartment includes a living room with a kitchen area, a double bedroom, a single bedroom, a bathroom, an entrance, and a veranda. It is sold fully furnished, providing a ready-to-use living space.
+
+The source notes that the sale price is 46,000.","400 {""type"":""error"",""error"":{""type"":""invalid_request_error"",""message"":""Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.""},""request_id"":""req_011CaSXWyTg9WWT5pAQz2QWA""}",,,,,,,,,,,,
+2026-04-26T14-18-08Z,v1,amicv_914e11851a94,null,unknown,property,27,0,0,90,"Land, 125.7m2 in São Pedro – São Vicente, close to the sea and the main road, perfect for investment.
+
+
+
+Architecture project already approved by the City Council.",,,"This property in São Pedro, São Vicente, Cape Verde, spans 125.7 square meters and is positioned near the sea and the main road. The area is noted for its proximity to key transportation routes, enhancing accessibility.
+
+The property includes two bedrooms and two bathrooms, with an approved architectural project from the City Council. Its layout offers potential for various configurations, catering to different needs.
+
+The source mentions that it is suitable for investment, and it provides a sea view. Legal approvals are already in place, facilitating a smoother development process.","400 {""type"":""error"",""error"":{""type"":""invalid_request_error"",""message"":""Your credit balance is too low to access the Anthropic API. Please go to Plans & Billing to upgrade or purchase credits.""},""request_id"":""req_011CaSXWyKk1JvMXjTpYsovM""}",,,,,,,,,,,,

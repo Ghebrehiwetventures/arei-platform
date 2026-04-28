@@ -1,0 +1,637 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>AREI description rewrite — manual rating</title>
+<style>
+  :root {
+    --bg: #fafaf7;
+    --card: #fff;
+    --border: #e5e2dc;
+    --border-strong: #b8b3aa;
+    --text: #1a1a1a;
+    --muted: #6b6b6b;
+    --accent: #2563eb;
+    --accent-light: #dbeafe;
+    --warn: #b45309;
+    --good: #15803d;
+    --neg: #b91c1c;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font: 14px/1.5 -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+  }
+  header {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    background: var(--card);
+    border-bottom: 1px solid var(--border);
+    padding: 12px 20px;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+  header h1 {
+    font-size: 15px;
+    margin: 0;
+    font-weight: 600;
+  }
+  header .progress {
+    font-variant-numeric: tabular-nums;
+    color: var(--muted);
+  }
+  header .progress strong {
+    color: var(--text);
+  }
+  header .saved {
+    font-size: 12px;
+    color: var(--good);
+  }
+  button {
+    font: inherit;
+    padding: 6px 12px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    background: var(--card);
+    cursor: pointer;
+  }
+  button:hover { background: var(--accent-light); }
+  button.primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+  }
+  button.primary:hover { background: #1d4ed8; }
+  button:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+  main {
+    max-width: 1600px;
+    margin: 0 auto;
+    padding: 16px 20px 80px;
+  }
+  .empty {
+    text-align: center;
+    padding: 80px 20px;
+    color: var(--muted);
+  }
+  .empty p {
+    max-width: 540px;
+    margin: 12px auto;
+  }
+  .card {
+    background: var(--card);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    margin-bottom: 20px;
+    overflow: hidden;
+  }
+  .card.complete {
+    border-color: var(--good);
+  }
+  .card-header {
+    padding: 10px 14px;
+    background: #f4f1ec;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    align-items: center;
+    font-size: 13px;
+  }
+  .card-header .id {
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-weight: 600;
+  }
+  .card-header .badge {
+    display: inline-block;
+    padding: 2px 7px;
+    border-radius: 3px;
+    background: var(--bg);
+    border: 1px solid var(--border);
+    font-size: 12px;
+    color: var(--muted);
+  }
+  .card-header .badge.complete {
+    background: #dcfce7;
+    color: var(--good);
+    border-color: #86efac;
+  }
+  .card-header .num {
+    color: var(--muted);
+    margin-left: auto;
+  }
+  .texts {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: var(--border);
+  }
+  .text-col {
+    background: var(--card);
+    padding: 12px;
+    min-width: 0;
+  }
+  .text-col h3 {
+    margin: 0 0 8px;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--muted);
+    font-weight: 700;
+  }
+  .text-col .body {
+    white-space: pre-wrap;
+    font-size: 13px;
+    line-height: 1.55;
+    max-height: 360px;
+    overflow-y: auto;
+    word-break: break-word;
+  }
+  .text-col.empty .body {
+    color: var(--muted);
+    font-style: italic;
+  }
+  .ratings {
+    display: grid;
+    grid-template-columns: 220px 1fr 1fr;
+    gap: 0;
+    border-top: 1px solid var(--border);
+  }
+  .ratings > * {
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+  }
+  .ratings .row-label {
+    background: var(--bg);
+    font-size: 13px;
+    color: var(--muted);
+    border-right: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+  }
+  .ratings .row-head {
+    background: #f4f1ec;
+    font-weight: 600;
+    text-align: center;
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    color: var(--text);
+    border-right: 1px solid var(--border);
+  }
+  .ratings .row-head:last-child { border-right: 0; }
+  .ratings .cell {
+    border-right: 1px solid var(--border);
+  }
+  .ratings .cell:last-child { border-right: 0; }
+  .ratings > *:nth-last-child(-n+3) { border-bottom: 0; }
+  .seg {
+    display: inline-flex;
+    gap: 0;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    overflow: hidden;
+  }
+  .seg button {
+    border: 0;
+    border-right: 1px solid var(--border-strong);
+    border-radius: 0;
+    padding: 4px 10px;
+    background: var(--card);
+    min-width: 32px;
+    font-variant-numeric: tabular-nums;
+  }
+  .seg button:last-child { border-right: 0; }
+  .seg button.selected {
+    background: var(--accent);
+    color: #fff;
+  }
+  .notes {
+    padding: 10px 12px;
+    border-top: 1px solid var(--border);
+    background: var(--bg);
+  }
+  .notes label {
+    font-size: 12px;
+    color: var(--muted);
+    display: block;
+    margin-bottom: 4px;
+  }
+  .notes textarea {
+    width: 100%;
+    min-height: 50px;
+    font: inherit;
+    padding: 6px 8px;
+    border: 1px solid var(--border-strong);
+    border-radius: 4px;
+    resize: vertical;
+  }
+  .footer-actions {
+    position: fixed;
+    bottom: 16px;
+    right: 20px;
+    background: var(--card);
+    border: 1px solid var(--border-strong);
+    border-radius: 6px;
+    padding: 10px 14px;
+    display: flex;
+    gap: 10px;
+    align-items: center;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+  }
+  .help {
+    font-size: 12px;
+    color: var(--muted);
+    padding: 6px 0;
+  }
+  .help kbd {
+    display: inline-block;
+    padding: 1px 5px;
+    border: 1px solid var(--border-strong);
+    border-radius: 3px;
+    background: var(--card);
+    font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+    font-size: 11px;
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>AREI description rewrite — manual rating</h1>
+  <input type="file" id="file-input" accept=".csv" style="display:none">
+  <button id="load-btn">Load CSV</button>
+  <span class="progress" id="progress"></span>
+  <span class="saved" id="saved"></span>
+  <span style="margin-left:auto"></span>
+  <button class="primary" id="export-btn" disabled>Export rated CSV</button>
+  <button id="reset-btn" style="display:none">Reset all ratings</button>
+</header>
+
+<main id="main">
+  <div class="empty" id="empty">
+    <h2>Load a study CSV to begin</h2>
+    <p>Click <strong>Load CSV</strong> and pick a file from <code>scripts/experiments/description_rewrite_v1/output/</code>.</p>
+    <p class="help">
+      Ratings auto-save to your browser as you go. Refreshing won't lose work.
+      Export downloads a new CSV with the manual columns filled in.
+    </p>
+  </div>
+</main>
+
+<script>
+"use strict";
+
+// ---------- CSV parser (handles quoted multi-line fields, "" escapes) ----------
+function parseCSV(text) {
+  const rows = [];
+  let row = [];
+  let field = "";
+  let inQuotes = false;
+  let i = 0;
+  while (i < text.length) {
+    const c = text[i];
+    if (inQuotes) {
+      if (c === '"' && text[i + 1] === '"') { field += '"'; i += 2; }
+      else if (c === '"') { inQuotes = false; i++; }
+      else { field += c; i++; }
+    } else {
+      if (c === '"') { inQuotes = true; i++; }
+      else if (c === ",") { row.push(field); field = ""; i++; }
+      else if (c === "\n") { row.push(field); rows.push(row); row = []; field = ""; i++; }
+      else if (c === "\r") { i++; }
+      else { field += c; i++; }
+    }
+  }
+  if (field.length > 0 || row.length > 0) { row.push(field); rows.push(row); }
+  // Drop trailing empty row from trailing newline
+  if (rows.length && rows[rows.length - 1].length === 1 && rows[rows.length - 1][0] === "") {
+    rows.pop();
+  }
+  return rows;
+}
+
+function csvEscape(v) {
+  if (v === null || v === undefined) return "";
+  const s = String(v);
+  if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
+}
+
+function rowsToCSV(headers, rows) {
+  const lines = [headers.map(csvEscape).join(",")];
+  for (const r of rows) {
+    lines.push(headers.map((h) => csvEscape(r[h])).join(","));
+  }
+  return lines.join("\n") + "\n";
+}
+
+// ---------- Rating definitions ----------
+const SCALES = {
+  facts_preserved:        { values: [1, 2, 3, 4, 5], label: "facts_preserved (1=major omissions, 5=all key facts)" },
+  facts_invented:         { values: [0, 1], label: "facts_invented (0=none, 1=invented at least one fact)" },
+  tone_quality:           { values: [1, 2, 3, 4, 5], label: "tone_quality (1=salesy/off, 5=AREI voice nailed)" },
+  readability:            { values: [1, 2, 3, 4, 5], label: "readability (1=clunky, 5=flows well)" },
+  vs_original:            { values: [-2, -1, 0, 1, 2], label: "vs_original (−2 worse, 0 same, +2 better)" },
+  formatting_improvement: { values: ["N/A", 1, 3, 5], label: "formatting_improvement (N/A=source already clean, 1=kept/worsened, 3=partial, 5=clean from messy)" },
+};
+
+const RATING_FIELDS = Object.keys(SCALES);
+const MODELS = ["claude", "gpt"];
+
+// All output columns, in the order they appear in the input CSV.
+// `source_id` was added in v1.1; older v1 CSVs lack it (the rate UI passes
+// through whatever's in the listing object, so empty for v1).
+const OUTPUT_HEADERS = [
+  "run_id", "prompt_version", "id", "source_id", "pool", "source_lang", "property_type",
+  "original_words", "rendered_words", "claude_words", "gpt_words",
+  "original_text", "rendered_description_en", "claude_text", "gpt_text",
+  "claude_error", "gpt_error",
+  "facts_preserved_claude", "facts_preserved_gpt",
+  "facts_invented_claude", "facts_invented_gpt",
+  "tone_quality_claude", "tone_quality_gpt",
+  "readability_claude", "readability_gpt",
+  "vs_original_claude", "vs_original_gpt",
+  "formatting_improvement_claude", "formatting_improvement_gpt",
+  "notes",
+];
+
+// ---------- State ----------
+let listings = [];     // array of row objects from CSV
+let runId = null;      // taken from first row
+let storageKey = null; // localStorage key tied to runId
+
+function ratingsKey() { return storageKey + ":ratings"; }
+
+function loadRatings() {
+  if (!storageKey) return {};
+  try { return JSON.parse(localStorage.getItem(ratingsKey()) || "{}"); }
+  catch (_) { return {}; }
+}
+
+function saveRatings(r) {
+  localStorage.setItem(ratingsKey(), JSON.stringify(r));
+  flashSaved();
+}
+
+let savedFlashTimer = null;
+function flashSaved() {
+  const el = document.getElementById("saved");
+  el.textContent = "auto-saved ✓";
+  clearTimeout(savedFlashTimer);
+  savedFlashTimer = setTimeout(() => { el.textContent = ""; }, 1500);
+}
+
+// ---------- Rendering ----------
+function isComplete(r) {
+  for (const m of MODELS) {
+    for (const f of RATING_FIELDS) {
+      const v = r[f + "_" + m];
+      if (v === undefined || v === null || v === "") return false;
+    }
+  }
+  return true;
+}
+
+function updateProgress() {
+  const ratings = loadRatings();
+  let done = 0;
+  for (const l of listings) {
+    if (isComplete(ratings[l.id] || {})) done++;
+  }
+  const total = listings.length;
+  document.getElementById("progress").innerHTML =
+    `<strong>${done}/${total}</strong> rated` +
+    (runId ? ` &middot; run <code>${runId}</code>` : "");
+  document.getElementById("export-btn").disabled = total === 0;
+}
+
+function makeSeg(scaleName, currentValue, onPick) {
+  const wrap = document.createElement("div");
+  wrap.className = "seg";
+  wrap.title = SCALES[scaleName].label;
+  const cur = currentValue;
+  for (const v of SCALES[scaleName].values) {
+    const b = document.createElement("button");
+    b.type = "button";
+    b.textContent = String(v);
+    // Match either by string equality (handles "N/A") or by numeric value.
+    const matches =
+      cur !== undefined &&
+      cur !== null &&
+      cur !== "" &&
+      (String(cur) === String(v) ||
+        (typeof v === "number" && Number(cur) === v));
+    if (matches) b.classList.add("selected");
+    b.addEventListener("click", () => onPick(v));
+    wrap.appendChild(b);
+  }
+  return wrap;
+}
+
+function renderCard(listing, idx, ratings) {
+  const card = document.createElement("div");
+  card.className = "card";
+
+  const r = ratings[listing.id] || {};
+  const complete = isComplete(r);
+  if (complete) card.classList.add("complete");
+
+  // Header
+  const header = document.createElement("div");
+  header.className = "card-header";
+  header.innerHTML = `
+    <span class="id">${listing.id}</span>
+    <span class="badge">${listing.pool}</span>
+    <span class="badge">src: ${listing.source_lang || "?"}</span>
+    <span class="badge">${listing.property_type || "—"}</span>
+    <span class="badge">orig ${listing.original_words}w · rend ${listing.rendered_words || 0}w · claude ${listing.claude_words}w · gpt ${listing.gpt_words}w</span>
+    ${complete ? '<span class="badge complete">complete</span>' : ""}
+    <span class="num">${idx + 1} / ${listings.length}</span>
+  `;
+  card.appendChild(header);
+
+  // Texts
+  const texts = document.createElement("div");
+  texts.className = "texts";
+  const cols = [
+    { title: "Original (" + (listing.source_lang || "?") + ")", body: listing.original_text },
+    { title: "rendered_description_en", body: listing.rendered_description_en },
+    { title: "Claude", body: listing.claude_text || (listing.claude_error ? "[ERROR] " + listing.claude_error : "") },
+    { title: "GPT-4o", body: listing.gpt_text || (listing.gpt_error ? "[ERROR] " + listing.gpt_error : "") },
+  ];
+  for (const c of cols) {
+    const col = document.createElement("div");
+    col.className = "text-col" + (c.body ? "" : " empty");
+    col.innerHTML = `<h3>${c.title}</h3><div class="body"></div>`;
+    col.querySelector(".body").textContent = c.body || "(empty)";
+    texts.appendChild(col);
+  }
+  card.appendChild(texts);
+
+  // Ratings grid (label / claude / gpt rows)
+  const grid = document.createElement("div");
+  grid.className = "ratings";
+
+  // Header row
+  const blank = document.createElement("div");
+  blank.className = "row-label";
+  blank.textContent = "";
+  const hClaude = document.createElement("div");
+  hClaude.className = "row-head";
+  hClaude.textContent = "Claude";
+  const hGpt = document.createElement("div");
+  hGpt.className = "row-head";
+  hGpt.textContent = "GPT-4o";
+  grid.appendChild(blank);
+  grid.appendChild(hClaude);
+  grid.appendChild(hGpt);
+
+  for (const f of RATING_FIELDS) {
+    const lbl = document.createElement("div");
+    lbl.className = "row-label";
+    lbl.textContent = f;
+    lbl.title = SCALES[f].label;
+    grid.appendChild(lbl);
+
+    for (const m of MODELS) {
+      const cell = document.createElement("div");
+      cell.className = "cell";
+      const key = f + "_" + m;
+      const seg = makeSeg(f, r[key], (v) => {
+        const all = loadRatings();
+        if (!all[listing.id]) all[listing.id] = {};
+        all[listing.id][key] = v;
+        saveRatings(all);
+        // re-render just this card to update selected state + complete badge
+        const newCard = renderCard(listing, idx, all);
+        card.replaceWith(newCard);
+        updateProgress();
+      });
+      cell.appendChild(seg);
+      grid.appendChild(cell);
+    }
+  }
+  card.appendChild(grid);
+
+  // Notes
+  const notesWrap = document.createElement("div");
+  notesWrap.className = "notes";
+  notesWrap.innerHTML = `<label>notes (optional)</label><textarea></textarea>`;
+  const ta = notesWrap.querySelector("textarea");
+  ta.value = r.notes || "";
+  ta.addEventListener("input", () => {
+    const all = loadRatings();
+    if (!all[listing.id]) all[listing.id] = {};
+    all[listing.id].notes = ta.value;
+    saveRatings(all);
+  });
+  card.appendChild(notesWrap);
+
+  return card;
+}
+
+function renderAll() {
+  const main = document.getElementById("main");
+  main.innerHTML = "";
+  if (listings.length === 0) {
+    const empty = document.createElement("div");
+    empty.className = "empty";
+    empty.textContent = "No listings.";
+    main.appendChild(empty);
+    return;
+  }
+  const ratings = loadRatings();
+  for (let i = 0; i < listings.length; i++) {
+    main.appendChild(renderCard(listings[i], i, ratings));
+  }
+  updateProgress();
+}
+
+// ---------- CSV load ----------
+function ingestCSV(text) {
+  const rows = parseCSV(text);
+  if (rows.length < 2) {
+    alert("CSV looks empty.");
+    return;
+  }
+  const headers = rows[0];
+  const data = rows.slice(1).map((r) => {
+    const o = {};
+    for (let j = 0; j < headers.length; j++) o[headers[j]] = r[j] ?? "";
+    return o;
+  });
+  if (!data[0].id) {
+    alert("CSV is missing an 'id' column. Are you sure this is a study output file?");
+    return;
+  }
+  listings = data;
+  runId = data[0].run_id || "unknown";
+  storageKey = "arei-rate:" + runId;
+  document.getElementById("reset-btn").style.display = "";
+  renderAll();
+}
+
+document.getElementById("load-btn").addEventListener("click", () => {
+  document.getElementById("file-input").click();
+});
+document.getElementById("file-input").addEventListener("change", (e) => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = (ev) => ingestCSV(ev.target.result);
+  reader.readAsText(file);
+});
+
+// ---------- Export ----------
+function buildExportRows() {
+  const ratings = loadRatings();
+  return listings.map((l) => {
+    const r = ratings[l.id] || {};
+    const out = {};
+    for (const h of OUTPUT_HEADERS) {
+      if (h in l) out[h] = l[h];
+      else if (h === "notes") out[h] = r.notes ?? "";
+      else if (h.endsWith("_claude") || h.endsWith("_gpt")) {
+        const v = r[h];
+        out[h] = (v === undefined || v === null) ? "" : String(v);
+      } else {
+        out[h] = "";
+      }
+    }
+    return out;
+  });
+}
+
+document.getElementById("export-btn").addEventListener("click", () => {
+  const rows = buildExportRows();
+  const csv = rowsToCSV(OUTPUT_HEADERS, rows);
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  const stamp = new Date().toISOString().replace(/[:.]/g, "-").replace(/-\d{3}Z$/, "Z");
+  a.download = (runId || "ratings") + ".rated-" + stamp + ".csv";
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+});
+
+document.getElementById("reset-btn").addEventListener("click", () => {
+  if (!storageKey) return;
+  if (!confirm("Clear all ratings for run " + runId + "? This cannot be undone.")) return;
+  localStorage.removeItem(ratingsKey());
+  renderAll();
+});
+</script>
+</body>
+</html>

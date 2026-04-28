@@ -1,0 +1,113 @@
+{
+  "run_id": "2026-04-27T08-42-18Z",
+  "study_iteration": "v1.1",
+  "prompt_version": "v1.2",
+  "started_at": "2026-04-27T08:42:19.117Z",
+  "elapsed_sec": 8,
+  "models": {
+    "claude": "claude-sonnet-4-6",
+    "gpt": "gpt-4o"
+  },
+  "filters": {
+    "description_not_null": true,
+    "min_description_length": 500
+  },
+  "source_quotas": {
+    "cv_estatecv": 8,
+    "cv_terracaboverde": 5,
+    "cv_simplycapeverde": 4,
+    "cv_homescasaverde": 4,
+    "cv_capeverdeproperty24": 3,
+    "cv_cabohouseproperty": 3,
+    "cv_oceanproperty24": 3
+  },
+  "source_stats": [
+    {
+      "source": "cv_estatecv",
+      "eligible": 275,
+      "picked": 1,
+      "quota": 1
+    },
+    {
+      "source": "cv_terracaboverde",
+      "eligible": 147,
+      "picked": 1,
+      "quota": 1
+    },
+    {
+      "source": "cv_simplycapeverde",
+      "eligible": 38,
+      "picked": 1,
+      "quota": 1
+    },
+    {
+      "source": "cv_homescasaverde",
+      "eligible": 57,
+      "picked": 1,
+      "quota": 1
+    },
+    {
+      "source": "cv_capeverdeproperty24",
+      "eligible": 45,
+      "picked": 1,
+      "quota": 1
+    },
+    {
+      "source": "cv_cabohouseproperty",
+      "eligible": 22,
+      "picked": 1,
+      "quota": 1
+    },
+    {
+      "source": "cv_oceanproperty24",
+      "eligible": 20,
+      "picked": 1,
+      "quota": 1
+    }
+  ],
+  "counts": {
+    "total_picked": 7,
+    "claude_errors": 0,
+    "gpt_errors": 0
+  },
+  "listing_ids": [
+    {
+      "id": "ecv_0198f6f53b7a",
+      "source_id": "cv_estatecv",
+      "pool": "null"
+    },
+    {
+      "id": "cv_terracaboverde:https://terracaboverde.com/properties/2-bedroom-apartment-duplex-for-sale-in-the-ilha-de-lux-complex/",
+      "source_id": "cv_terracaboverde",
+      "pool": "null"
+    },
+    {
+      "id": "cv_simplycapeverde:https://terracaboverde.com/properties/2-bedroom-apartment-duplex-for-sale-in-the-ilha-de-lux-complex/",
+      "source_id": "cv_simplycapeverde",
+      "pool": "null"
+    },
+    {
+      "id": "hcv_0145bf0e9552",
+      "source_id": "cv_homescasaverde",
+      "pool": "null"
+    },
+    {
+      "id": "cvp24_079f28315dc6",
+      "source_id": "cv_capeverdeproperty24",
+      "pool": "null"
+    },
+    {
+      "id": "chp_0120a80e1d2e",
+      "source_id": "cv_cabohouseproperty",
+      "pool": "null"
+    },
+    {
+      "id": "op24_0113f7deb708",
+      "source_id": "cv_oceanproperty24",
+      "pool": "null"
+    }
+  ],
+  "prompt": "Du skriver om fastighets-descriptions för AREI, en data-infrastrukturprodukt för afrikansk fastighetsmarknad. Givet källtext (vilket språk som helst) och strukturerad data, producera 2-3 stycken välskriven engelsk prosa i AREI-röst.\n\nAREI-röst:\n- Faktabaserad och neutral\n- Specifik före generell (\"five minutes from the main beach\" hellre än \"great location\")\n- Komprimerad — varje mening bär information\n- Ingen säljterminologi: \"ideal\", \"perfect\", \"rare opportunity\", \"splendid\", \"unique\", \"stunning\"\n- Inga emojis\n- Inga bedömningar om avkastning eller värdering\n- Behåll egennamn på källspråket (Cá Almeida, São Paulo district, Conservatória do Registo Predial)\n- När källan gör en bedömning (motivated sale, undervalued), attribuera till källan: \"the source notes a motivated sale\" — gör inte påståendet i AREI:s egen text\n\nStruktur (mjuk riktlinje, inte tvång):\n- Stycke 1: vad det är, var det ligger, viktigaste särdrag (~50 ord)\n- Stycke 2: layout, skick, features (~40-60 ord)\n- Stycke 3 (om relevant): status, services, juridiska noter (~30-50 ord)\n\nHitta inte på fakta. Om källan inte nämner skick — skriv inte om skick. Om källan inte nämner sea view — skriv inte om sea view.\n\nKonflikthantering och informationsluckor hanteras tyst. Om structured data och källan är i konflikt, välj det troliga värdet utan att kommentera valet. Om en uppgift saknas i källan, utelämna fältet helt. Skriv aldrig meta-kommentarer om själva skrivprocessen — undvik fraser som \"there is a conflict between...\", \"no information is provided in the source\", \"I will use the figure...\". (Detta gäller inte attribuering av källans bedömningar — \"the source notes a motivated sale\" är fortsatt rätt. Skillnaden: attribuera källans åsikter, men kommentera aldrig din egen skrivprocess.)\n\nGeografisk kontext: Varje description ska innehålla \"Cape Verde\" (eller \"Cabo Verde\" om källan är på portugisiska och redan använder den formen) minst en gång, även om källtexten bara nämner ö-namn eller stadsdelar. För internationella köpare är landet kärnan i värdesatsen — ö-namn ensamt räcker inte.\n\nOutput: ren text, inga JSON-strukturer, inga rubriker, inga listor. Bara 2-3 stycken prosa separerade med dubbel radbrytning.",
+  "smoke": true,
+  "dry_run": false
+}

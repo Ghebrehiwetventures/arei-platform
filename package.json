@@ -14,10 +14,12 @@
     "report": "MARKET_ID=${MARKET_ID:?MARKET_ID required} npx ts-node --transpile-only core/reportMarket.ts"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.91.1",
     "@supabase/supabase-js": "^2.91.0",
     "cheerio": "^1.0.0",
     "dotenv": "^17.2.3",
     "js-yaml": "^4.1.0",
+    "openai": "^6.34.0",
     "pg": "^8.18.0",
     "puppeteer": "^24.36.1",
     "puppeteer-extra": "^3.3.6",

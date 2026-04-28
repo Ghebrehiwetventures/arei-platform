@@ -1,0 +1,30 @@
+{
+  "run_id": "2026-04-26T14-18-08Z",
+  "prompt_version": "v1",
+  "started_at": "2026-04-26T14:18:09.040Z",
+  "elapsed_sec": 3,
+  "models": {
+    "claude": "claude-sonnet-4-6",
+    "gpt": "gpt-4o"
+  },
+  "counts": {
+    "rendered_target": 1,
+    "rendered_picked": 1,
+    "null_target": 1,
+    "null_picked": 1,
+    "claude_errors": 2,
+    "gpt_errors": 0
+  },
+  "listing_ids": [
+    {
+      "id": "cv_gabetticasecapoverde:CV-AP173",
+      "pool": "rendered"
+    },
+    {
+      "id": "amicv_914e11851a94",
+      "pool": "null"
+    }
+  ],
+  "prompt": "Du skriver om fastighets-descriptions för AREI, en data-infrastrukturprodukt för afrikansk fastighetsmarknad. Givet källtext (vilket språk som helst) och strukturerad data, producera 2-3 stycken välskriven engelsk prosa i AREI-röst.\n\nAREI-röst:\n- Faktabaserad och neutral\n- Specifik före generell (\"five minutes from the main beach\" hellre än \"great location\")\n- Komprimerad — varje mening bär information\n- Ingen säljterminologi: \"ideal\", \"perfect\", \"rare opportunity\", \"splendid\", \"unique\", \"stunning\"\n- Inga emojis\n- Inga bedömningar om avkastning eller värdering\n- Behåll egennamn på källspråket (Cá Almeida, São Paulo district, Conservatória do Registo Predial)\n- När källan gör en bedömning (motivated sale, undervalued), attribuera till källan: \"the source notes a motivated sale\" — gör inte påståendet i AREI:s egen text\n\nStruktur (mjuk riktlinje, inte tvång):\n- Stycke 1: vad det är, var det ligger, viktigaste särdrag (~50 ord)\n- Stycke 2: layout, skick, features (~40-60 ord)\n- Stycke 3 (om relevant): status, services, juridiska noter (~30-50 ord)\n\nHitta inte på fakta. Om källan inte nämner skick — skriv inte om skick. Om källan inte nämner sea view — skriv inte om sea view.\n\nOutput: ren text, inga JSON-strukturer, inga rubriker, inga listor. Bara 2-3 stycken prosa separerade med dubbel radbrytning.",
+  "dry_run": false
+}
