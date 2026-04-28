@@ -81,7 +81,7 @@ nav{
 /* ─── HERO ─── */
 .hero-section{
   background:var(--green);
-  padding:120px 0 0;
+  padding:96px 0 80px;
 }
 .hero h1{
   font-size:clamp(32px,5.5vw,56px);font-weight:400;line-height:1.15;
@@ -226,6 +226,50 @@ nav{
 .section-head p{font-size:14px;color:var(--gray);line-height:1.7;margin-top:16px;max-width:560px}
 .section-head p + p{margin-top:14px}
 .section-dark .section-head p{color:rgba(255,255,255,.4)}
+
+/* ─── FOUNDER ─── */
+.founder{max-width:760px}
+.founder .ey{
+  font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(0,0,0,.55);margin-bottom:32px;display:block;
+}
+.founder-quote{
+  font-size:clamp(19px,2.2vw,26px);font-weight:400;line-height:1.5;
+  letter-spacing:-.01em;color:var(--black);
+  margin-bottom:44px;
+}
+.founder-quote p + p{margin-top:18px}
+.founder-byline{
+  display:flex;align-items:center;gap:18px;
+  padding-top:28px;border-top:1px solid rgba(0,0,0,.18);
+}
+.founder-photo{
+  width:60px;height:60px;border-radius:50%;
+  background:var(--deep-green);
+  flex-shrink:0;overflow:hidden;position:relative;
+  display:flex;align-items:center;justify-content:center;
+}
+.founder-photo::before{
+  content:'MG';
+  color:var(--green);font-size:15px;font-weight:600;letter-spacing:.06em;
+}
+.founder-photo img{
+  position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
+}
+.founder-meta{display:flex;flex-direction:column;line-height:1.4}
+.founder-name{font-size:13px;font-weight:600;color:var(--black)}
+.founder-role{font-size:12px;color:rgba(0,0,0,.55)}
+.founder-linkedin{
+  font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
+  color:rgba(0,0,0,.75);margin-top:6px;align-self:flex-start;
+  border-bottom:1px solid rgba(0,0,0,.25);padding-bottom:1px;
+  transition:opacity .2s;
+}
+.founder-linkedin:hover{opacity:.6}
+@media(max-width:640px){
+  .founder-byline{gap:14px}
+  .founder-photo{width:52px;height:52px}
+}
 
 /* ─── GAP SECTION: 2-column (text + stats sidebar) ─── */
 .gap-grid{
@@ -767,7 +811,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   .bench-foot-short{display:inline}
   .bench-bridge{margin-top:18px;font-size:12.5px}
   .lr-idx{display:none}
-  .hero-section{padding:60px 0 0}
+  .hero-section{padding:56px 0 48px}
   .hero-top{flex-direction:column;gap:8px}
   .hero-meta{gap:16px}
   .section{padding:56px 0}
@@ -805,10 +849,6 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       <div class="hero-ctas">
         <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-primary">Visit KazaVerde [&rarr;]</a>
         <a href="#contact" class="btn-secondary">Investor enquiry &rarr;</a>
-      </div>
-      <div class="sources-strip">
-        <strong>Aggregating</strong>
-        <div class="src-ticker-wrap"><span class="src-ticker">NhaKaza</span></div>
       </div>
     </div>
   </div>
@@ -998,6 +1038,31 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
         <div class="mkt-summary">
           <span>Coverage &middot; 01 / 54</span>
           <span>Engine &middot; Ready</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
+<!-- ═══ FROM THE FOUNDER ═══ -->
+<section class="section section-off section-compact" id="founder">
+  <div class="wrap">
+    <div class="founder rv">
+      <span class="ey">From the founder</span>
+      <blockquote class="founder-quote">
+        <p>&ldquo;I came to this market as an investor. Cape Verde was where I started, and even after repeated trips, the market remained difficult to read.</p>
+        <p>The opportunity was visible. The structure was not. Inventory was spread across brokers and local sites, with no consistent data layer to compare opportunities or evaluate them with confidence.</p>
+        <p>That is the gap Africa Real Estate Index exists to close.&rdquo;</p>
+      </blockquote>
+      <div class="founder-byline">
+        <div class="founder-photo">
+          <img src="founder.jpg" alt="Michael Ghebrehiwet" onerror="this.remove()">
+        </div>
+        <div class="founder-meta">
+          <span class="founder-name">Michael Ghebrehiwet</span>
+          <span class="founder-role">Founder, AREI</span>
+          <a href="https://www.linkedin.com/in/ghebrehiwet" target="_blank" rel="noopener noreferrer" class="founder-linkedin">LinkedIn &rarr;</a>
         </div>
       </div>
     </div>
@@ -1317,26 +1382,6 @@ if (investorForm && investorFeedback && investorSubmit) {
     investorFeedback.textContent = '';
   });
 }
-</script>
-
-<script>
-(function(){
-  var sources=['NhaKaza','Estate CV','Simply Cape Verde','Terra Cabo Verde','Cape Verde Property 24'];
-  var el=document.querySelector('.src-ticker');
-  var i=0;
-  el.classList.add('t-enter');
-  setInterval(function(){
-    el.classList.remove('t-enter');
-    el.classList.add('t-exit');
-    setTimeout(function(){
-      el.classList.remove('t-exit');
-      i=(i+1)%sources.length;
-      el.textContent=sources[i];
-      void el.offsetWidth;
-      el.classList.add('t-enter');
-    },280);
-  },2200);
-})();
 </script>
 
 <script>
