@@ -16,7 +16,11 @@ import {
   formatMedian,
   formatPricePerSqm,
 } from "../lib/format";
-import { looksItalian, stripHtml, translateItalianToEnglish } from "../lib/translation";
+// Italian-runtime-translation helper removed: descriptions are now
+// pre-translated and rewritten in AREI voice via the backend backfill
+// (Claude Sonnet 4.6, see scripts/backfill_ai_descriptions.ts) and
+// stored in listings.ai_descriptions.en. The frontend just reads that
+// field instead of translating client-side.
 import { calcMortgage, type MortgageInput } from "../lib/calcMortgage";
 import NotFound from "./NotFound";
 import "./Detail.css";
@@ -172,7 +176,6 @@ export default function Detail() {
   const [error, setError] = useState<string | null>(null);
   const [galleryIndex, setGalleryIndex] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
-  const [translatedDescription, setTranslatedDescription] = useState<string | null>(null);
   const [similar, setSimilar] = useState<ListingCard[]>([]);
   const [marketCtx, setMarketCtx] = useState<IslandContext | null>(null);
 
@@ -274,24 +277,10 @@ export default function Detail() {
     };
   }, [id]);
 
-  useEffect(() => {
-    let cancelled = false;
-    const source = detail?.description_html
-      ? stripHtml(detail.description_html)
-      : detail?.description ?? "";
-    if (!source || !looksItalian(source)) {
-      setTranslatedDescription(null);
-      return () => {
-        cancelled = true;
-      };
-    }
-    translateItalianToEnglish(source).then((t) => {
-      if (!cancelled) setTranslatedDescription(t);
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, [detail?.description, detail?.description_html]);
+  // (Removed: client-side Italian → English runtime translation. The
+  // backend now generates English AREI-voice prose via the v1.2 backfill
+  // and stores it in listings.ai_descriptions.en. The description block
+  // below reads that field directly.)
 
   // Similar properties — fetch up to 9 so user can scroll through.
   // minResults: 3 so the SDK keeps broadening its fallback chain (price
@@ -595,24 +584,29 @@ export default function Detail() {
       {/* Main 2-col: description + INDEX RECORD sidebar */}
       <div className="kv-d-main">
         <div>
-          {/* Description — descriptions are rewritten with AI before
-              publish to normalize tone and strip sales language.
-              The badge in the heading is the primary tell; a small
-              footnote after the body catches readers who scrolled past
-              the heading. Source agent stays credited in the sidebar. */}
+          {/* Description block.
+              Primary source: listings.ai_descriptions.en.text (Sonnet 4.6,
+              prompt v1.2 — see scripts/backfill_ai_descriptions.ts).
+              Fallback: description_html / description from the source feed
+              (only ~12% of listings — those excluded from backfill scope by
+              the LENGTH > 500 filter). The AI badge + caption are gated on
+              actual AI text being present so we never claim AI-rewrite over
+              raw scraped source. Source agent stays credited in the sidebar. */}
           <div className="kv-d-block">
             <div className="kv-d-block-head">
               <h2 className="kv-d-block-h">Description</h2>
-              <span
-                className="kv-d-ai-badge"
-                title="Rewritten with AI to normalize tone and remove sales language. Source attribution unchanged — see Original source panel."
-              >
-                <span className="kv-d-ai-dot" aria-hidden="true" />
-                AI · Rewritten
-              </span>
+              {detail.ai_descriptions?.en?.text && (
+                <span
+                  className="kv-d-ai-badge"
+                  title="Rewritten with AI to normalize tone and remove sales language. Source attribution unchanged — see Original source panel."
+                >
+                  <span className="kv-d-ai-dot" aria-hidden="true" />
+                  AI · Rewritten
+                </span>
+              )}
             </div>
-            {translatedDescription ? (
-              <p>{translatedDescription}</p>
+            {detail.ai_descriptions?.en?.text ? (
+              <p>{detail.ai_descriptions.en.text}</p>
             ) : detail.description_html ? (
               <div className="kv-d-html" dangerouslySetInnerHTML={{ __html: detail.description_html }} />
             ) : detail.description ? (
@@ -622,9 +616,11 @@ export default function Detail() {
                 This property is located in {formatLocation(detail.city, detail.island)}, Cape Verde.
               </p>
             )}
-            <p className="kv-d-ai-caption">
-              Description rewritten with AI for clarity — original source attribution unchanged.
-            </p>
+            {detail.ai_descriptions?.en?.text && (
+              <p className="kv-d-ai-caption">
+                Description rewritten with AI for clarity — original source attribution unchanged.
+              </p>
+            )}
           </div>
 
           {/* Property details — vertical k/v table mirroring cv-listing

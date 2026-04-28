@@ -63,6 +63,7 @@ export function toListingDetail(row: ListingRow): ListingDetail {
     property_size_sqm: row.property_size_sqm,
     description: row.description,
     description_html: row.description_html,
+    ai_descriptions: row.ai_descriptions ?? null,
     image_urls: row.image_urls ?? [],
     source_id: row.source_id,
     source_url: row.source_url,

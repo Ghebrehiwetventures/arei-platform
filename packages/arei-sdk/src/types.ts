@@ -3,6 +3,18 @@
 // Types for Africa Real Estate Index consumer sites
 // =============================================================================
 
+/** Per-language entry inside listings.ai_descriptions JSONB */
+export interface AiDescriptionEntry {
+  text: string;
+  generated_at: string;
+  prompt_version: string;
+  model: string;
+  validated: boolean;
+}
+
+/** JSONB shape: { en: {...}, it: {...}, pt: {...}, ... } */
+export type AiDescriptions = Partial<Record<string, AiDescriptionEntry>>;
+
 /** Raw row from v1_feed_cv (or any v1_feed_* view) */
 export interface ListingRow {
   id: string;
@@ -20,6 +32,9 @@ export interface ListingRow {
   land_area_sqm: number | null;
   description: string | null;
   description_html: string | null;
+  /** AI-generated descriptions per language. May be missing if the view
+   *  hasn't yet been updated to expose the column — the SDK falls back. */
+  ai_descriptions?: AiDescriptions | null;
   image_urls: string[] | null;
   source_id: string;
   source_url: string;
@@ -63,6 +78,7 @@ export interface ListingDetail {
   property_size_sqm: number | null;
   description: string | null;
   description_html: string | null;
+  ai_descriptions: AiDescriptions | null;
   image_urls: string[];
   source_id: string;
   source_url: string;

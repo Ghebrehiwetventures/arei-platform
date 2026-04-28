@@ -73,8 +73,11 @@ const DETAIL_COLUMNS_BASE = [
   "last_seen_at",
 ];
 
-// Optional columns that may not exist yet (added by later migrations)
-const DETAIL_COLUMNS_OPTIONAL = ["description_html"];
+// Optional columns that may not exist yet (added by later migrations).
+// `ai_descriptions` is added to `listings` in migration 025 and exposed
+// through v1_feed_cv in migration 026 — the graceful fallback means the
+// SDK still works against environments where 026 hasn't been applied.
+const DETAIL_COLUMNS_OPTIONAL = ["description_html", "ai_descriptions"];
 
 const DETAIL_COLUMNS = [...DETAIL_COLUMNS_BASE, ...DETAIL_COLUMNS_OPTIONAL].join(",");
 const DETAIL_COLUMNS_FALLBACK = DETAIL_COLUMNS_BASE.join(",");
