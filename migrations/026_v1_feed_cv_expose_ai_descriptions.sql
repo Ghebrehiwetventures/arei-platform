@@ -6,16 +6,14 @@
 -- The chain is two views deep:
 --   v1_feed_cv  →  v1_feed_cv_pre_terra_cohort_rollback_20260401  →  listings
 --
--- Both views project columns explicitly, so both need ai_descriptions
--- added to their SELECT lists. The base view goes first (CREATE OR
--- REPLACE on a view only succeeds when no dependent view drops a
--- column; adding a column is fine for dependents).
+-- Both views project columns explicitly. ai_descriptions is appended
+-- to the END of each column list because CREATE OR REPLACE VIEW
+-- forbids renaming or reordering existing columns; it only allows
+-- adding new ones at the tail. (PG error 42P16 if violated.)
 --
--- Both view definitions below are reproduced from pg_get_viewdef on
--- live Supabase (2026-04-27) — neither matches earlier in-repo
--- migrations (010 / 004 / 009) any longer due to schema drift accrued
--- via direct SQL-editor edits. This migration captures both current
--- definitions in repo + adds ai_descriptions.
+-- Both view definitions below are reproduced verbatim from
+-- pg_get_viewdef on live Supabase (2026-04-27); only ai_descriptions
+-- is appended.
 
 -- ===========================================================================
 -- 1. Base view — selects from listings with trust + freshness filters
@@ -39,7 +37,6 @@ SELECT l.id,
   l.rendered_description_en,
   l.description_html,
   l.rendered_description_html_en,
-  l.ai_descriptions,
   l.rendered_translation_source,
   l.rendered_translation_source_language,
   l.rendered_translation_target_language,
@@ -90,7 +87,8 @@ SELECT l.id,
   l.multi_domain_gallery,
   l.is_stale,
   l.stale_at,
-  l.stale_reason
+  l.stale_reason,
+  l.ai_descriptions
 FROM listings l
 CROSS JOIN latest_run r
 WHERE l.source_id ~~* 'cv_%'::text
@@ -127,7 +125,6 @@ SELECT id,
   rendered_description_en,
   description_html,
   rendered_description_html_en,
-  ai_descriptions,
   rendered_translation_source,
   rendered_translation_source_language,
   rendered_translation_target_language,
@@ -178,7 +175,8 @@ SELECT id,
   multi_domain_gallery,
   is_stale,
   stale_at,
-  stale_reason
+  stale_reason,
+  ai_descriptions
 FROM v1_feed_cv_pre_terra_cohort_rollback_20260401
 WHERE source_id <> 'cv_terracaboverde'::text
    OR updated_at >= '2026-04-01 19:15:00+00'::timestamp with time zone;
