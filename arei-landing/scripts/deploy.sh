@@ -45,9 +45,9 @@ if [ "$mode" = "prod" ]; then
     echo "  Then: cd ~/arei-deploy/arei-landing && npm run deploy:prod" >&2
     exit 1
   fi
-  echo "→ Production deploy from main @ $sha…"
+  echo "→ Production deploy from main @ ${sha}…"
   npx -y vercel@latest --prod --yes
 else
-  echo "→ Preview deploy from $branch @ $sha…"
+  echo "→ Preview deploy from ${branch} @ ${sha}…"
   npx -y vercel@latest --yes
 fi
