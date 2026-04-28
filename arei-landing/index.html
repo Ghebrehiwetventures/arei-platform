@@ -19,17 +19,24 @@
 <meta name="twitter:title" content="AREI — Africa Real Estate Index">
 <meta name="twitter:description" content="Africa's property data is everywhere. We bring it together. Starting with Cape Verde.">
 <meta name="twitter:image" content="https://www.africarealestateindex.com/arei-og.png?v=2">
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238ecf8e'/%3E%3C/svg%3E">
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238ecfbf'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════
-   AREI DESIGN SYSTEM — Brutalist / Swiss
+   AREI LANDING — Brutalist / Swiss
+   ───────────────────────────────────────────
+   Sage values mirror KazaVerde. Source of truth:
+     kazaverde-web/src/styles/globals.css (--kv-green / --kv-green-deep)
+   Cross-product visual rules:
+     docs/04-platform/visual-identity.md
+   Do not drift these colors. If KazaVerde's sage moves,
+   update here in lockstep — never the other way.
    ═══════════════════════════════════════════ */
 :root{
-  --green:#8ecf8e;
-  --deep-green:#2d4a3e;
+  --green:#8ecfbf;        /* mirrors --kv-green */
+  --deep-green:#2d4a42;   /* mirrors --kv-green-deep */
   --black:#0a0a0a;
   --white:#fafafa;
   --off-white:#f2f0ec;
@@ -374,7 +381,7 @@ nav{
   --bp-label:rgba(255,255,255,.4);
   --bp-text:rgba(255,255,255,.78);
   --bp-muted:rgba(255,255,255,.32);
-  --bp-active:#8ecf8e;
+  --bp-active:#8ecfbf;
 }
 
 /* ── Panel — the base container ── */
