@@ -493,11 +493,32 @@
      SORT BY chip so users can still re-sort. */
   .kv-section-head {
     flex-direction: row;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    margin-bottom: 16px;
+    padding-top: 4px;
   }
   .kv-section-head > div:first-child { display: none; }
+  /* On mobile, surface the listings count next to "Sort by" so the
+     two pieces of result-context sit on the same row instead of
+     stacking with a divider between them. The desktop chip in
+     .kv-filters is hidden below since the pager already states the
+     count further down the page. */
+  .kv-section-head::before {
+    content: attr(data-count);
+    font-family: var(--kv-mono);
+    font-size: 11px;
+    color: var(--kv-gray-500);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
   .kv-section { padding-top: 16px; }
+  /* Count is moved into .kv-section-head on mobile (see ::before).
+     Hide the inline chip in the sticky filter bar so it doesn't
+     duplicate. */
+  .kv-filter-spacer { display: none; }
+  .kv-filter-result { display: none; }
   .kv-filters { top: 52px; }
   /* Horizontal scroll for filter chips — mobile-native pattern.
      Chips keep natural width; user swipes right to reveal extras.
@@ -576,19 +597,21 @@
      primary action, then the meta line ("Showing X · Page Y") below as
      a single row of subtle context. */
   .kv-pager {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 16px;
+    flex-direction: row;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
   }
   .kv-pager-btn {
     order: -1;
-    width: 100%;
+    flex-basis: 100%;
     padding: 14px 20px;
     text-align: center;
   }
-  .kv-pager > div {
-    text-align: center;
-  }
+  .kv-pager > div { flex: 0 0 auto; }
+  .kv-pager > div:first-of-type { text-align: left; }
+  .kv-pager > div:last-of-type { text-align: right; }
 }
 
 /* Filter popover backdrop — only rendered when a popover is open

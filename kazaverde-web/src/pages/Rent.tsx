@@ -98,17 +98,17 @@ export default function Rent() {
   };
 
   const renterPromises = [
-    "Long-stay leases, monthly stays, and seasonal rentals — all in one index.",
-    "Source-attributed listings with clear contract terms before you commit.",
-    "Median rent benchmarks by island and segment so you can spot fair pricing.",
-    "Direct messaging with owners — no middlemen taking cuts.",
+    "One index for long-stay, monthly, and seasonal stays.",
+    "Source-attributed listings, not anonymous reposts.",
+    "Clear contract terms before you commit.",
+    "Direct messaging with owners.",
   ];
 
   const ownerPromises = [
-    "Reach renters who arrive ready to sign — pre-screened intent, not just clicks.",
-    "Pricing benchmarks per island and segment so you can list at the market.",
-    "Contracts and payment rails handled inside the platform at launch.",
-    "Optional management add-on for absentee owners — vetted local partners.",
+    "Pre-screened renter demand, not just clicks.",
+    "Island-level pricing benchmarks per segment.",
+    "Contracts and payments handled in-platform.",
+    "Optional management add-on for absentee owners.",
   ];
 
   const promises = intent === "rent" ? renterPromises : ownerPromises;
@@ -219,14 +219,14 @@ export default function Rent() {
               </h2>
               <p className="kv-rent-col-sub">
                 {intent === "rent"
-                  ? "Today the rental market in Cape Verde lives in WhatsApp groups, Facebook Marketplace threads, and a handful of fragmented listing sites. We're pulling supply, contracts, and benchmarks into one source-attributed view."
-                  : "Most Cape Verde owners advertise across three or four platforms with no shared standard. We're building a single channel with verified contract templates, transparent pricing, and pre-qualified renter demand."}
+                  ? "One source-attributed view of supply, contracts, and benchmarks across the islands."
+                  : "One channel with verified contracts and pre-qualified demand."}
               </p>
             </div>
 
             <div className="kv-rent-promise">
               <div className="kv-rent-promise-head">
-                {intent === "rent" ? "What you'll get on day one" : "What we're building for owners"}
+                {intent === "rent" ? "What we're building" : "What owners get"}
               </div>
               <ul className="kv-rent-promise-list">
                 {promises.map((p) => (

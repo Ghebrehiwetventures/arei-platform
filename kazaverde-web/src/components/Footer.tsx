@@ -1,9 +1,10 @@
 import { Link } from "react-router-dom";
 import "./Footer.css";
 
-/* Footer — four columns at desktop (brand + Index + Resources + Connect),
-   matched to the nav surface so every page in the site is reachable
-   from the footer. Mobile collapses to a 2-col grid with brand
+/* Footer — brand + three link columns (Index, Resources, Connect for
+   social handles). Contact lives on a dedicated /contact page (form,
+   not exposed mailto) and is reached via the footer-legal row alongside
+   Privacy and Cookies. Mobile collapses to a 2-col grid with brand
    spanning both. */
 export default function Footer() {
   return (
@@ -41,11 +42,9 @@ export default function Footer() {
 
           <div className="footer-col">
             <h4>Connect</h4>
-            <a href="mailto:info@kazaverde.com">Contact</a>
+            <Link to="/contact">Contact</Link>
             <a href="https://instagram.com/kazaverde.cv" target="_blank" rel="noopener noreferrer">Instagram</a>
             <a href="https://x.com/kazaverdecv" target="_blank" rel="noopener noreferrer">X / Twitter</a>
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/cookie-policy">Cookies</Link>
           </div>
         </div>
 
@@ -60,6 +59,11 @@ export default function Footer() {
             >
               Powered by Africa Real Estate Index ↗
             </a>
+          </div>
+          <div className="footer-legal">
+            <Link to="/privacy">Privacy</Link>
+            <span aria-hidden="true">·</span>
+            <Link to="/cookie-policy">Cookies</Link>
           </div>
           <div className="footer-idx">CV·01</div>
         </div>
