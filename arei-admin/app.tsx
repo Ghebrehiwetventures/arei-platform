@@ -1989,7 +1989,7 @@ function SourcesView() {
                         <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.with_beds_pct}%</td>
                         <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.with_baths_pct}%</td>
                         <td
-                          className={`py-2.5 px-3 text-sm tabular-nums font-mono ${freshClass}`}
+                          className={`py-2.5 px-3 text-sm tabular-nums font-mono whitespace-nowrap ${freshClass}`}
                           title={r.last_updated_at ?? "No timestamp from RPC"}
                         >
                           {fresh.label}
