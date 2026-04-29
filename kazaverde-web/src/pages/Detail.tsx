@@ -112,6 +112,18 @@ function fmtDaysAgo(iso: string | null | undefined): string {
   return `${days} days ago`;
 }
 
+/** Format square metres as hectares. Cape Verde plot sizes range from
+ *  ~14 m² (urban infill) up to multi-hectare rural land, so a fixed
+ *  decimal count either rounds tiny plots to "0.00" (reads as empty)
+ *  or wastes precision on large ones. Pick the format from the value. */
+function fmtHectares(sqm: number): string {
+  const ha = sqm / 10_000;
+  if (ha >= 10) return ha.toLocaleString("en", { maximumFractionDigits: 0 });
+  if (ha >= 1) return ha.toLocaleString("en", { maximumFractionDigits: 1 });
+  if (ha >= 0.01) return ha.toLocaleString("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  return "<0.01";
+}
+
 /** Number of whole days since `iso` (clamped to 0). Used for "Days on index". */
 function daysSince(iso: string | null | undefined): number {
   if (!iso) return 0;
@@ -568,10 +580,7 @@ export default function Detail() {
               <div className="kv-d-fact-v">
                 {landArea != null ? (
                   <>
-                    {(landArea / 10_000).toLocaleString("en", {
-                      minimumFractionDigits: landArea < 10_000 ? 2 : 1,
-                      maximumFractionDigits: 2,
-                    })}
+                    {fmtHectares(landArea)}
                     <small>ha</small>
                   </>
                 ) : (
