@@ -1423,6 +1423,11 @@ function ListingsTabView() {
               <option value="yes">Yes</option>
               <option value="no">No</option>
             </select>
+            {filters.approved === false && (
+              <p className="text-[11px] text-amber mt-1 leading-snug">
+                Unapproved listings are currently hidden by admin permissions, so this filter may return 0 results.
+              </p>
+            )}
           </div>
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Updated from</label>
