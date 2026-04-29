@@ -738,10 +738,7 @@ function DashboardView() {
     );
   }
 
-  const worst = stats.sourceRows.filter((r) => r.grade === "D" || r.grade === "C").slice(0, 5);
-  const best = stats.sourceRows.filter((r) => r.grade === "A" || r.grade === "B").slice(-5).reverse();
   const approvedPct = stats.totalListings > 0 ? Math.round((100 * stats.approvedCount) / stats.totalListings) : 0;
-  const healthLabel = approvedPct >= 70 ? "Good" : approvedPct >= 40 ? "Acceptable" : "Needs attention";
 
   // ── Source Health (active market only) ─────────────────────────────────────
   // Only Cape Verde is in production. Counting non-active markets here would
@@ -756,7 +753,23 @@ function DashboardView() {
   const missingSqmSources = healthRows.filter((r) => Number(r.listing_count) > 0 && Number(r.with_sqm_count ?? 0) === 0).length;
   const approvedNoFeedSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0).length;
   const approvedNoTrustSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0).length;
+  const approvedNoIndexableSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0).length;
   const lowFeedConvSources = healthRows.filter((r) => Number(r.approved_count) >= 20 && r.public_feed_count_n > 0 && r.feed_conversion_pct < 25).length;
+
+  // CV-only worst/best for the top "Needs attention" / "Performing well" cards.
+  // Non-CV sources stay visible in the Sources tab and the all-markets table
+  // below, but must not appear in the operator's first-screen attention cards.
+  const cvWorst = healthRows.filter((r) => r.grade === "D" || r.grade === "C").slice(0, 5);
+  const cvBest = healthRows.filter((r) => r.grade === "A" || r.grade === "B").slice(0, 5);
+
+  // Active-market status pill — bound to operational issues, not the legacy
+  // approved% composite. "Good" only if no critical CV issue exists.
+  const cvHasCriticalIssue =
+    approvedNoFeedSources > 0 ||
+    approvedNoTrustSources > 0 ||
+    approvedNoIndexableSources > 0 ||
+    staleSourcesCount > 0;
+  const cvStatusLabel = cvHasCriticalIssue ? "Needs attention" : "Good";
 
   // Top 3 issues to highlight, in priority order
   type HealthIssue = { label: string; count: number; tone: "bad" | "warn" };
@@ -824,76 +837,26 @@ function DashboardView() {
         </p>
       </div>
 
-      {/* ── KPI cards ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Total listings</div>
-          <div className="text-3xl font-bold tabular-nums tracking-tight">
-            {stats.totalListings.toLocaleString()}
-          </div>
-        </div>
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Approved</div>
-          <div className="text-3xl font-bold text-green tabular-nums tracking-tight">
-            {stats.approvedCount.toLocaleString()}
-          </div>
-          <div className="text-xs text-foreground-subtle mt-1.5 tabular-nums">{approvedPct}% rate</div>
-        </div>
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Sources</div>
-          <div className="text-3xl font-bold tabular-nums tracking-tight">{stats.sourceCount}</div>
-        </div>
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Markets</div>
-          <div className="text-3xl font-bold tabular-nums tracking-tight">{stats.marketCount}</div>
-        </div>
+      {/* ── Cape Verde health pill ──────────────────────────────── */}
+      <div className="flex flex-wrap items-center gap-2.5">
+        <span className="text-xs text-foreground-muted">{ACTIVE_MARKET_LABEL} health:</span>
+        <span
+          className={
+            "text-xs font-medium px-2.5 py-1 rounded-md " +
+            (cvHasCriticalIssue ? "bg-amber-muted text-amber" : "bg-green-muted text-green")
+          }
+        >
+          {cvStatusLabel}
+        </span>
+        <span className="text-xs text-foreground-subtle">
+          other markets are test pipeline · see Sources tab
+        </span>
       </div>
 
-      {/* ── Health + alerts ─────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-3">
-        <div className="flex items-center gap-2.5">
-          <span className="text-xs text-foreground-muted">Health:</span>
-          <span
-            className={
-              "text-xs font-medium px-2.5 py-1 rounded-md " +
-              (approvedPct >= 70
-                ? "bg-green-muted text-green"
-                : approvedPct >= 40
-                  ? "bg-amber-muted text-amber"
-                  : "bg-red-muted text-red")
-            }
-          >
-            {healthLabel}
-          </span>
-        </div>
-      </div>
-
-      {(worst.length > 0 || best.length > 0) && (
-        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-          {worst.length > 0 && (
-            <div className="rounded-lg p-4 border border-border bg-amber-muted">
-              <div className="text-xs font-medium text-amber mb-2">Needs attention</div>
-              <p className="text-sm text-foreground">
-                {worst.map((r) => r.sourceName).join(", ")}
-              </p>
-            </div>
-          )}
-          {best.length > 0 && (
-            <div className="rounded-lg p-4 border border-border bg-green-muted">
-              <div className="text-xs font-medium text-green mb-2">Performing well</div>
-              <p className="text-sm text-foreground">
-                {best.map((r) => r.sourceName).join(", ")}
-              </p>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* ── Source Health (active market only) ──────────────────── */}
+      {/* ── Cape Verde source health (PRIMARY) ──────────────────── */}
       <section className="surface-1 rounded-xl border border-border p-5">
         <div className="flex items-baseline justify-between mb-4 gap-3">
           <h2 className="text-base font-semibold text-foreground">{ACTIVE_MARKET_LABEL} source health</h2>
-          <span className="text-xs text-foreground-subtle">other markets are test pipeline · see Sources tab</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <SourceHealthStat label={`${ACTIVE_MARKET_LABEL} sources`} value={totalSources} />
@@ -920,6 +883,27 @@ function DashboardView() {
           </div>
         )}
       </section>
+
+      {(cvWorst.length > 0 || cvBest.length > 0) && (
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {cvWorst.length > 0 && (
+            <div className="rounded-lg p-4 border border-border bg-amber-muted">
+              <div className="text-xs font-medium text-amber mb-2">Needs attention · {ACTIVE_MARKET_LABEL}</div>
+              <p className="text-sm text-foreground">
+                {cvWorst.map((r) => r.sourceName).join(", ")}
+              </p>
+            </div>
+          )}
+          {cvBest.length > 0 && (
+            <div className="rounded-lg p-4 border border-border bg-green-muted">
+              <div className="text-xs font-medium text-green mb-2">Performing well · {ACTIVE_MARKET_LABEL}</div>
+              <p className="text-sm text-foreground">
+                {cvBest.map((r) => r.sourceName).join(", ")}
+              </p>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── Latest sync ─────────────────────────────────────────── */}
       {(() => {
@@ -996,9 +980,32 @@ function DashboardView() {
         );
       })()}
 
-      {/* ── Source quality table ─────────────────────────────────── */}
+      {/* ── All markets · including test pipeline ───────────────── */}
       <section>
-        <h2 className="text-base font-semibold text-foreground mb-4">Source quality</h2>
+        <div className="flex items-baseline justify-between mb-4 gap-3">
+          <h2 className="text-base font-semibold text-foreground">All markets</h2>
+          <span className="text-xs text-foreground-subtle">including test pipeline</span>
+        </div>
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
+          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Total listings</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.totalListings.toLocaleString()}</div>
+          </div>
+          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Approved</div>
+            <div className="text-2xl font-bold text-green tabular-nums tracking-tight">{stats.approvedCount.toLocaleString()}</div>
+            <div className="text-xs text-foreground-subtle mt-1 tabular-nums">{approvedPct}% rate</div>
+          </div>
+          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Sources</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.sourceCount}</div>
+          </div>
+          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Markets</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.marketCount}</div>
+          </div>
+        </div>
+        <h2 className="text-base font-semibold text-foreground mb-4">Source quality · all markets</h2>
         <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] data-table data-table-id-narrow">
