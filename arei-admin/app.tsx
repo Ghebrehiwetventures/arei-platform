@@ -35,6 +35,29 @@ function formatSourceList(names: string[], cap = 5): string {
   return `${names.slice(0, cap).join(", ")} +${names.length - cap} more`;
 }
 
+/** RFC-4180-ish CSV value escape: quote fields containing comma, quote, or
+ *  newline; double up internal quotes. */
+function csvEscape(value: string | number | null | undefined): string {
+  if (value == null) return "";
+  const s = String(value);
+  if (/[",\r\n]/.test(s)) return `"${s.replace(/"/g, '""')}"`;
+  return s;
+}
+
+/** Trigger a client-side download of `text` as `filename`. */
+function downloadTextFile(filename: string, text: string, mime = "text/csv;charset=utf-8") {
+  const blob = new Blob([text], { type: mime });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = filename;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  // Defer revoke so Safari has time to start the download.
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
 function formatFreshness(ts: string | null | undefined): { label: string; days: number | null; stale: boolean; missing: boolean } {
   if (!ts) return { label: "No updates", days: null, stale: true, missing: true };
   const t = new Date(ts).getTime();
@@ -1687,10 +1710,96 @@ function ListingsTabView() {
 // SOURCES — All sources per country / market
 // ============================================
 
+function SourceSortHeader({
+  label,
+  sortKey,
+  currentKey,
+  currentDir,
+  onSort,
+  align = "left",
+}: {
+  label: string;
+  sortKey: SourcesSortKey;
+  currentKey: SourcesSortKey;
+  currentDir: SortDir;
+  onSort: (k: SourcesSortKey) => void;
+  align?: "left" | "right";
+}) {
+  const active = currentKey === sortKey;
+  return (
+    <th className={`py-2.5 px-3 ${align === "right" ? "text-right" : "text-left"}`}>
+      <button
+        type="button"
+        onClick={() => onSort(sortKey)}
+        className={`text-[11px] uppercase tracking-wider text-foreground-subtle font-medium w-full flex items-center gap-1 hover:text-foreground transition-colors ${align === "right" ? "justify-end" : ""}`}
+      >
+        {label}
+        <span className={active ? "text-foreground" : "invisible"} aria-hidden>
+          {active && currentDir === "asc" ? "↑" : "↓"}
+        </span>
+      </button>
+    </th>
+  );
+}
+
+type SourcesSortKey =
+  | "listing_count"
+  | "public_feed_count_n"
+  | "approved_count"
+  | "indexable_count_n"
+  | "trust_passed_count_n"
+  | "with_sqm_pct"
+  | "with_beds_pct"
+  | "with_baths_pct"
+  | "last_updated_at"
+  | "grade";
+
+type SortDir = "asc" | "desc";
+
+const GRADE_RANK: Record<"A" | "B" | "C" | "D", number> = { A: 1, B: 2, C: 3, D: 4 };
+
+/** Extract a sortable scalar for a row + key. Null/undefined for missing. */
+function sourceSortValue(r: SourceQualityRow, key: SourcesSortKey): number | null {
+  switch (key) {
+    case "last_updated_at":
+      if (!r.last_updated_at) return null;
+      const t = new Date(r.last_updated_at).getTime();
+      return Number.isFinite(t) ? t : null;
+    case "grade":
+      return r.grade ? GRADE_RANK[r.grade] : null;
+    default: {
+      const v = (r as unknown as Record<SourcesSortKey, unknown>)[key];
+      const n = typeof v === "number" ? v : Number(v);
+      return Number.isFinite(n) ? n : null;
+    }
+  }
+}
+
+/** Compare two values; missing always last regardless of direction. */
+function compareSortValues(a: number | null, b: number | null, dir: SortDir): number {
+  if (a == null && b == null) return 0;
+  if (a == null) return 1;
+  if (b == null) return -1;
+  return dir === "asc" ? a - b : b - a;
+}
+
 function SourcesView() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [markets, setMarkets] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
+  const [sortKey, setSortKey] = useState<SourcesSortKey>("listing_count");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
+
+  const onSort = (key: SourcesSortKey) => {
+    if (key === sortKey) {
+      setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    } else {
+      setSortKey(key);
+      // Numeric/date columns default to desc on first click; grade defaults
+      // to asc so A appears first.
+      setSortDir(key === "grade" ? "asc" : "desc");
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -1731,15 +1840,79 @@ function SourcesView() {
     return nameA.localeCompare(nameB);
   });
 
+  const handleExportCsv = () => {
+    const header = [
+      "market_id",
+      "market_name",
+      "source_id",
+      "source_name",
+      "listing_count",
+      "public_feed_count",
+      "approved_count",
+      "indexable_count",
+      "trust_passed_count",
+      "sqm_pct",
+      "beds_pct",
+      "baths_pct",
+      "freshness_label",
+      "last_updated_at",
+      "grade",
+    ];
+    const lines: string[] = [header.join(",")];
+    // Iterate market groups in display order (CV first, then test pipeline)
+    // and apply the active sort within each group so the CSV matches what
+    // the operator sees on screen.
+    for (const marketId of marketIds) {
+      const groupRows = [...byMarket.get(marketId)!].sort((a, b) =>
+        compareSortValues(sourceSortValue(a, sortKey), sourceSortValue(b, sortKey), sortDir)
+      );
+      const marketName = marketNameById.get(marketId) ?? marketId;
+      for (const r of groupRows) {
+        const fresh = formatFreshness(r.last_updated_at);
+        lines.push(
+          [
+            csvEscape(marketId),
+            csvEscape(marketName),
+            csvEscape(r.source_id),
+            csvEscape(r.sourceName),
+            csvEscape(Number(r.listing_count)),
+            csvEscape(r.public_feed_count_n),
+            csvEscape(Number(r.approved_count)),
+            csvEscape(r.indexable_count_n),
+            csvEscape(r.trust_passed_count_n),
+            csvEscape(r.with_sqm_pct),
+            csvEscape(r.with_beds_pct),
+            csvEscape(r.with_baths_pct),
+            csvEscape(fresh.label),
+            csvEscape(r.last_updated_at ?? ""),
+            csvEscape(r.grade),
+          ].join(",")
+        );
+      }
+    }
+    const date = new Date().toISOString().slice(0, 10);
+    downloadTextFile(`arei-source-health-${date}.csv`, lines.join("\r\n") + "\r\n");
+  };
+
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
-          Sources
-        </h1>
-        <p className="text-sm text-foreground-muted mt-1">
-          All sources grouped by market
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+            Sources
+          </h1>
+          <p className="text-sm text-foreground-muted mt-1">
+            All sources grouped by market
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleExportCsv}
+          disabled={stats.sourceRows.length === 0}
+          className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+        >
+          Export CSV
+        </button>
       </div>
 
       {marketIds.map((marketId) => {
@@ -1769,21 +1942,21 @@ function SourcesView() {
                 <thead>
                   <tr className="border-b border-border bg-surface-2">
                     <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Source</th>
-                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Listings</th>
-                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Public feed</th>
-                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Approved</th>
-                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Indexable</th>
-                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Trust passed</th>
-                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Sqm %</th>
-                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Beds %</th>
-                    <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Baths %</th>
-                    <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Freshness</th>
-                    <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Grade</th>
+                    <SourceSortHeader label="Listings" sortKey="listing_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Public feed" sortKey="public_feed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Approved" sortKey="approved_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Indexable" sortKey="indexable_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Trust passed" sortKey="trust_passed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Sqm %" sortKey="with_sqm_pct" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Beds %" sortKey="with_beds_pct" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Baths %" sortKey="with_baths_pct" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Freshness" sortKey="last_updated_at" currentKey={sortKey} currentDir={sortDir} onSort={onSort} />
+                    <SourceSortHeader label="Grade" sortKey="grade" currentKey={sortKey} currentDir={sortDir} onSort={onSort} />
                   </tr>
                 </thead>
                 <tbody>
-                  {rows
-                    .sort((a, b) => Number(b.listing_count) - Number(a.listing_count))
+                  {[...rows]
+                    .sort((a, b) => compareSortValues(sourceSortValue(a, sortKey), sourceSortValue(b, sortKey), sortDir))
                     .map((r) => {
                       const fresh = formatFreshness(r.last_updated_at);
                       const freshClass = fresh.missing
