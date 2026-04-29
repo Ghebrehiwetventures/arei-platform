@@ -2226,6 +2226,7 @@ function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
         Pan-African Real Estate Index
       </p>
       <hr className="border-border" />
+      <div className="overflow-x-auto">
       <table className="border-collapse w-full max-w-[700px]">
         <thead>
           <tr className="border-b border-border">
@@ -2266,6 +2267,7 @@ function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -2278,6 +2280,7 @@ function SourceTable({ sources }: { sources: Source[] }) {
   return (
     <div>
       <h3 className="text-foreground">Sources ({sources.length})</h3>
+      <div className="overflow-x-auto">
       <table className="border-collapse w-full">
         <thead>
           <tr className="border-b border-border">
@@ -2343,6 +2346,7 @@ function SourceTable({ sources }: { sources: Source[] }) {
           ))}
         </tbody>
       </table>
+      </div>
     </div>
   );
 }
@@ -2834,7 +2838,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
   };
 
   return (
-    <div className="flex h-screen w-screen overflow-hidden">
+    <div className="flex h-screen w-full overflow-hidden">
       {/* ── Mobile backdrop ──────────────────────── */}
       {sidebarOpen && (
         <div
