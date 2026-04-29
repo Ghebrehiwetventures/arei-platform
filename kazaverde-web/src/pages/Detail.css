@@ -1470,7 +1470,7 @@
      (was 4/6) so they don't create implicit narrow tracks. */
   .kv-d-main {
     grid-template-columns: 1fr;
-    gap: 40px;
+    gap: 24px;
     padding-left: 0;
     padding-right: 0;
     margin-left: 24px;
@@ -1483,6 +1483,11 @@
     grid-column: 1;
     padding-right: 0;
   }
+  /* Property details (last block in left column) shouldn't add its
+     desktop 44px margin on top of the grid gap — on mobile the two
+     columns become one stack and the gap alone is enough. */
+  .kv-d-main > :first-child > .kv-d-table-block:last-child { margin-bottom: 0; }
+  .kv-d-main > :first-child > .kv-d-block:last-child { margin-bottom: 0; }
   .kv-d-main > .kv-d-aside {
     grid-column: 1;
     position: static;

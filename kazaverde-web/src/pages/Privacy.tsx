@@ -157,8 +157,7 @@ export default function Privacy() {
           </div>
           <p className="kv-pol-prose">
             You can request deletion of your newsletter subscription at any
-            time by emailing{" "}
-            <a href="mailto:info@kazaverde.com">info@kazaverde.com</a>. Since
+            time via our <Link to="/contact?topic=unsubscribe">contact form</Link>. Since
             we don't collect personal data beyond newsletter emails, there is
             no additional data to access or delete.
           </p>
@@ -174,8 +173,7 @@ export default function Privacy() {
           <p className="kv-pol-prose">
             We may update this policy as the product evolves. Material
             changes are noted with a fresh date at the top of this page.
-            Questions? Email{" "}
-            <a href="mailto:info@kazaverde.com">info@kazaverde.com</a>.
+            Questions? Reach us via the <Link to="/contact">contact form</Link>.
           </p>
         </div>
       </section>

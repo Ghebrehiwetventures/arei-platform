@@ -107,6 +107,22 @@
 }
 .footer-poweredby:hover { color: var(--kv-black); }
 
+.footer-legal {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.footer-legal a {
+  color: rgba(0, 0, 0, 0.55);
+  transition: color var(--kv-dur) var(--kv-ease);
+}
+.footer-legal a:hover { color: var(--kv-black); }
+.footer-legal span { color: rgba(0, 0, 0, 0.25); }
+
 .footer-idx {
   font-family: var(--kv-mono);
   font-size: clamp(40px, 6vw, 64px);

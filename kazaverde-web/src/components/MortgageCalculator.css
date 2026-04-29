@@ -237,6 +237,12 @@
   .mc-field input[type="text"] { padding: 9px 10px; font-size: 0.85rem; }
   .mc-field label { font-size: 0.68rem; margin-bottom: 3px; }
 
+  /* Bigger touch targets for sliders on mobile — 16px thumb is too
+     small for thumb-dragging on a phone, drags often miss. */
+  .mc-range { height: 6px; margin-top: 10px; touch-action: pan-y; }
+  .mc-range::-webkit-slider-thumb { width: 26px; height: 26px; }
+  .mc-range::-moz-range-thumb { width: 26px; height: 26px; }
+
   /* Hide extra cost fields on mobile by default */
   .mc-field-extra {
     display: none;

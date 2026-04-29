@@ -391,7 +391,10 @@ export default function Listings() {
 
       {/* RESULTS */}
       <section className="kv-section">
-        <div className="kv-section-head">
+        <div
+          className="kv-section-head"
+          data-count={`${shownCount} ${shownCount === 1 ? "listing" : "listings"}`}
+        >
           <div>
             <span className="kv-ey">Results</span>
             <h2>Browse every listing, cleaned and indexed.</h2>

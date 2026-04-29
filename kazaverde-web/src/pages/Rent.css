@@ -232,7 +232,7 @@
 /* ─── Body band — white surface, intent-aware content ─── */
 .kv-rent-body {
   background: var(--kv-white);
-  padding: 72px 0 80px;
+  padding: 56px 0 64px;
 }
 .kv-rent-body-inner {
   max-width: var(--kv-content-w);
@@ -332,22 +332,27 @@
   .kv-rent-form-sub { font-size: 12.5px; }
 
   /* Stack input + submit on phones — full-width tap targets.
-     On the off-white hero band the default 1px hairline border
-     against white bg is nearly invisible, which made the input read
-     as floating placeholder text. Give the form a stronger black
-     border + paper bg so it clearly reads as an input field. */
+     The form itself drops its outer wrapper border on mobile: the
+     input and submit are visually distinct enough on their own
+     (white bg input + solid-black submit button), and the wrapper
+     border on top read as one extra heavy frame around them, which
+     the founder consistently flagged as "complicated". */
   .kv-rent-form {
     flex-direction: column;
     align-items: stretch;
-    border-color: var(--kv-black);
-    background: var(--kv-paper);
+    border: 0;
+    background: transparent;
+    gap: 10px;
   }
   .kv-rent-form-input {
-    border-bottom: 1px solid var(--kv-rule);
-    background: var(--kv-paper);
+    border: 1px solid var(--kv-black);
+    background: var(--kv-white);
+    height: 56px;
+    padding: 0 18px;
+    font-size: 15px;
   }
   .kv-rent-form-submit {
-    height: 48px;
+    height: 56px;
     padding: 0 18px;
     justify-content: space-between;
   }

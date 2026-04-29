@@ -135,8 +135,8 @@ export default function CookiePolicy() {
           </div>
           <p className="kv-pol-prose">
             For broader data-handling details, see the{" "}
-            <Link to="/privacy">Privacy Policy</Link>. Questions? Email{" "}
-            <a href="mailto:info@kazaverde.com">info@kazaverde.com</a>.
+            <Link to="/privacy">Privacy Policy</Link>. Questions? Reach us via
+            the <Link to="/contact">contact form</Link>.
           </p>
         </div>
       </section>
