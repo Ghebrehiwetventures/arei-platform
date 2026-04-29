@@ -899,25 +899,52 @@ function DashboardView() {
       </section>
 
       {/* ── Latest sync ─────────────────────────────────────────── */}
+      {(() => {
+        // Fallback to source-row timestamps when the ingest report file is
+        // not served. Active-market rows are preferred so the operator sees
+        // Cape Verde freshness even when other markets have older runs.
+        const tsValues = (rows: SourceQualityRow[]): number[] =>
+          rows
+            .map((r) => (r.last_updated_at ? new Date(r.last_updated_at).getTime() : NaN))
+            .filter((t) => Number.isFinite(t));
+        const activeTs = tsValues(stats.sourceRows.filter((r) => isActiveMarket(r.marketId)));
+        const allTs = tsValues(stats.sourceRows);
+        const fallbackMs = activeTs.length > 0 ? Math.max(...activeTs) : allTs.length > 0 ? Math.max(...allTs) : null;
+        const fallbackSourceLabel = activeTs.length > 0 ? ACTIVE_MARKET_LABEL : "all sources";
+        const fallbackIso = fallbackMs != null ? new Date(fallbackMs).toISOString() : null;
+        const fallbackFresh = fallbackIso ? formatFreshness(fallbackIso) : null;
+        const hasAnySync = !!latestSync?.at || fallbackMs != null;
+        return (
       <section className="surface-1 rounded-xl border border-border p-5">
         <div className="flex items-center justify-between mb-3">
           <h2 className="text-base font-semibold text-foreground">Latest sync</h2>
           {latestSync && <RunPhaseBadge latestSync={latestSync} />}
         </div>
         <div className="text-sm text-foreground-muted mb-3">
-          {latestSync?.at
-            ? new Date(latestSync.at).toLocaleString(undefined, {
-                dateStyle: "medium",
-                timeStyle: "short",
-              })
-            : "No sync data"}
-          {latestSync && (
-            <span className="text-foreground-subtle ml-2">
-              {latestSync.marketName}: {latestSync.totalListings} total, {latestSync.visibleCount} visible
-            </span>
+          {latestSync?.at ? (
+            <>
+              {new Date(latestSync.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+              <span className="text-foreground-subtle ml-2">
+                {latestSync.marketName}: {latestSync.totalListings} total, {latestSync.visibleCount} visible
+              </span>
+            </>
+          ) : fallbackMs != null ? (
+            <>
+              <span className="text-foreground">{fallbackFresh!.label}</span>
+              <span className="text-foreground-subtle ml-2">
+                {new Date(fallbackMs).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
+              </span>
+            </>
+          ) : (
+            "No sync data"
           )}
         </div>
-        {!latestSync && (
+        {!latestSync?.at && fallbackMs != null && (
+          <p className="text-xs text-foreground-subtle mb-3">
+            Based on latest {fallbackSourceLabel} source update.
+          </p>
+        )}
+        {!hasAnySync && (
           <p className="text-xs text-foreground-subtle mb-3">
             Serve <code className="font-mono text-foreground-muted">cv_ingest_report.json</code> to see sync timestamps.
           </p>
@@ -943,6 +970,8 @@ function DashboardView() {
           )}
         </div>
       </section>
+        );
+      })()}
 
       {/* ── Source quality table ─────────────────────────────────── */}
       <section>
