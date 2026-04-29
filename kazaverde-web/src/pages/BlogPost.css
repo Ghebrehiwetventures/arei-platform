@@ -520,6 +520,62 @@
   margin-bottom: 22px;
 }
 
+/* ─── Island stat cards ───
+   Used inside article body when an island-by-island data block reads
+   better as cards than as a wide table (e.g. the price-by-island
+   guide). Scoped under .kv-bp-body so it cannot leak. */
+.kv-bp-body .kv-island-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 24px 0 32px;
+}
+.kv-bp-body .kv-island-stat {
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-paper);
+  padding: 18px 20px 20px;
+  border-left: 3px solid var(--kv-green);
+}
+.kv-bp-body .kv-island-stat-name {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  margin-bottom: 12px;
+}
+.kv-bp-body .kv-island-stat-figs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  margin-bottom: 12px;
+}
+.kv-bp-body .kv-island-stat-figs > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kv-bp-body .kv-island-stat-figs span {
+  font-family: var(--kv-sans);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+}
+.kv-bp-body .kv-island-stat-figs strong {
+  font-family: var(--kv-sans);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--kv-black);
+  letter-spacing: -0.01em;
+}
+.kv-bp-body .kv-island-stat p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--kv-ink-700);
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 900px) {
   .kv-bp-grid { grid-template-columns: 1fr; gap: 48px; padding: 40px 0 72px; }

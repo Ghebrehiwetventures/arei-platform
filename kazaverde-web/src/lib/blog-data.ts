@@ -19,79 +19,64 @@ export const BLOG_ARTICLES: BlogArticle[] = [
     readTime: "6 min read",
     tags: ["Market", "Islands", "Data"],
     content: `<p><em>Last updated: April 2026</em></p>
-<p>Cape Verde is not one property market. It is an archipelago of distinct island markets, each with different levels of foreign demand, tourism infrastructure, and listing activity. A single archipelago-wide average tells you almost nothing.</p>
-<p>This article breaks down what the <a href="/listings">KazaVerde index</a> currently shows island by island — listing counts and asking-price medians for the islands where the tracked sample is large enough to be meaningful.</p>
-<blockquote><p><strong>This is not a complete market report.</strong> It is a snapshot of the publicly listed properties KazaVerde currently tracks. Coverage is still expanding as new sources are added.</p></blockquote>
-<blockquote><p>All figures here are <strong>asking prices from publicly listed properties tracked by KazaVerde</strong> — not closing prices, not the full market, and not legally verified. The live counts on <a href="/listings">/listings</a> and <a href="/market">/market</a> are always the authoritative version.</p></blockquote>
+<p>Cape Verde is not one property market. It is an archipelago of distinct island markets, each shaped by different levels of foreign demand, tourism infrastructure, and listing activity. A single archipelago-wide average tells you almost nothing.</p>
+<p>This piece looks at what the <a href="/listings">KazaVerde index</a> currently shows island by island — where the tracked sample is large enough to be meaningful, and where it isn't.</p>
+<blockquote><p>The figures below are <strong>asking prices from publicly listed properties KazaVerde currently tracks</strong> — not closing prices, not the full market, and not legally verified. Source coverage is still expanding. The live numbers on <a href="/listings">/listings</a> and <a href="/market">/market</a> are always the authoritative version.</p></blockquote>
 <hr>
-<h2>What the index is, and is not</h2>
-<p>KazaVerde aggregates publicly visible property listings from a set of tracked sources — local agencies, international portals, and individual property websites. Every listing links back to its original source.</p>
-<p>A few things to keep in mind before reading any number below:</p>
-<ul>
-<li><strong>Asking prices, not transactions.</strong> Cape Verde does not have a public transaction registry comparable to most European markets. The most consistent data point available is the listed price — what a seller is asking, not what the property eventually sells for.</li>
-<li><strong>Tracked sources, not the full market.</strong> KazaVerde covers publicly listed properties from sources we currently ingest. Off-market deals, private listings, and sources we have not yet onboarded are not represented. Source coverage is still expanding.</li>
-<li><strong>Snapshot, not closing balance.</strong> The numbers below are a point-in-time read from late April 2026. Inventory turns over week to week, so the live figures on <a href="/market">/market</a> may already differ.</li>
-<li><strong>No legal verification.</strong> KazaVerde does not perform title, ownership, or compliance checks on any listing. We surface what is publicly listed and link to the source.</li>
-</ul>
-<p>For background on how the index is built, see <a href="/about">/about</a>.</p>
-<hr>
-<h2>Snapshot: KazaVerde tracked listings and asking-price medians by island</h2>
-<p>As of late April 2026, the KazaVerde index tracks roughly four hundred publicly listed properties across the archipelago, drawn from the sources currently ingested. The distribution is heavily concentrated:</p>
-<table>
-<thead>
-<tr><th>Island</th><th>Tracked listings</th><th>Median asking price</th><th>Sample notes</th></tr>
-</thead>
-<tbody>
-<tr><td><strong>Sal</strong></td><td>~145</td><td>~€99,000</td><td>Largest tracked sample</td></tr>
-<tr><td><strong>Santiago</strong></td><td>~130</td><td>~€238,000</td><td>Second largest tracked sample; Praia-weighted</td></tr>
-<tr><td><strong>Boa Vista</strong></td><td>~85</td><td>~€110,000</td><td>Third largest tracked sample; resort-weighted mix</td></tr>
-<tr><td><strong>Maio</strong></td><td>~20</td><td>Insufficient signal</td><td>Priced rows cluster at a floor — treat with caution</td></tr>
-<tr><td><strong>São Nicolau</strong></td><td>&lt;10</td><td>Insufficient signal</td><td>Sample too thin for a meaningful median</td></tr>
-<tr><td><strong>Fogo</strong></td><td>&lt;10</td><td>Insufficient signal</td><td>Sample too thin for a meaningful median</td></tr>
-<tr><td><strong>São Vicente</strong></td><td>&lt;5</td><td>Not computed</td><td>Too thin for KazaVerde to publish a meaningful median</td></tr>
-<tr><td><strong>Santo Antão</strong></td><td>&lt;5</td><td>Not computed</td><td>Too thin for KazaVerde to publish a meaningful median</td></tr>
-<tr><td><strong>Brava</strong></td><td>0</td><td>—</td><td>No tracked listings in the index right now</td></tr>
-</tbody>
-</table>
-<p>"Tracked listings" here means listings KazaVerde currently ingests from the sources it covers. It does not represent every property for sale on each island. For the live, always-current version of this table, see <a href="/market">/market</a>.</p>
-<hr>
-<h2>The three islands with enough tracked data to talk about</h2>
-<h3>Sal — the largest tracked sample</h3>
-<p>Among currently tracked sources, Sal carries the most listings in the KazaVerde index by a wide margin. It is the most liquid market <em>in the index</em> for foreign buyers, helped by its international airport and the resort cluster around Santa Maria.</p>
-<p>The asking-price median on Sal sits around the €99,000 mark in this snapshot. That figure is a median across all property types tracked on the island — apartments, villas, plots — and is not a per-m² or like-for-like figure. Individual asking prices on Sal range widely; the live grid on <a href="/listings?island=Sal">/listings?island=Sal</a> is the authoritative view.</p>
-<h3>Santiago — second largest tracked sample, highest tracked median</h3>
-<p>Santiago is the most populous island and home to the capital, Praia. Among currently tracked sources, Santiago is the second-largest sample by count, and it shows the highest asking-price median of the three larger samples — around €238,000.</p>
-<p>That headline can be misleading on its own. Santiago's mix in the tracked sample appears weighted toward Praia city properties — apartments, townhouses, and city-edge villas — rather than resort or holiday stock. The story here is mix, not "Santiago is more expensive than Sal." Different inventory composition, different median.</p>
-<p>For diaspora buyers researching family or long-stay use cases, Santiago has more depth in the tracked sample than any island other than Sal.</p>
-<h3>Boa Vista — third largest tracked sample</h3>
-<p>Among currently tracked sources, Boa Vista is the third-most-tracked island in the current index, behind Sal and Santiago. Its median asking price in this snapshot is roughly €110,000 — broadly in the same range as Sal, with a mix that appears weighted toward resort apartments and off-plan stock around Sal Rei.</p>
-<p>Off-plan and new-build asking prices can sit above realistic resale benchmarks, so the Boa Vista median should be read alongside the underlying mix on <a href="/listings?island=Boa+Vista">/listings?island=Boa+Vista</a> rather than as a single number.</p>
+<h2>What the current index shows by island</h2>
+<p>As of late April 2026, the KazaVerde index tracks roughly four hundred publicly listed properties across the archipelago. The distribution is heavily concentrated in the three islands with the most direct foreign-buyer activity. Three islands carry enough tracked listings to support a useful median:</p>
+<div class="kv-island-grid">
+  <div class="kv-island-stat">
+    <div class="kv-island-stat-name">Sal</div>
+    <div class="kv-island-stat-figs">
+      <div><span>Tracked listings</span><strong>~145</strong></div>
+      <div><span>Median asking</span><strong>~€99,000</strong></div>
+    </div>
+    <p>The deepest tracked sample by a wide margin. Direct international flights and the Santa Maria resort cluster anchor most of the foreign-buyer activity visible on the index.</p>
+  </div>
+  <div class="kv-island-stat">
+    <div class="kv-island-stat-name">Santiago</div>
+    <div class="kv-island-stat-figs">
+      <div><span>Tracked listings</span><strong>~130</strong></div>
+      <div><span>Median asking</span><strong>~€238,000</strong></div>
+    </div>
+    <p>Second-largest sample, and the highest median of the three. The mix appears weighted toward Praia city stock rather than resort apartments — different inventory, different median, not a "more expensive island."</p>
+  </div>
+  <div class="kv-island-stat">
+    <div class="kv-island-stat-name">Boa Vista</div>
+    <div class="kv-island-stat-figs">
+      <div><span>Tracked listings</span><strong>~85</strong></div>
+      <div><span>Median asking</span><strong>~€110,000</strong></div>
+    </div>
+    <p>Third-largest sample. Mix appears weighted toward resort apartments and off-plan stock around Sal Rei, where new-build asking prices can sit above realistic resale benchmarks.</p>
+  </div>
+</div>
+<p>For the live version of these figures, with the underlying listings, see <a href="/market">/market</a> and the per-island grids: <a href="/listings?island=Sal">Sal</a>, <a href="/listings?island=Santiago">Santiago</a>, <a href="/listings?island=Boa+Vista">Boa Vista</a>.</p>
 <hr>
 <h2>The islands with too little tracked data to price</h2>
-<p>Several islands appear in the index but have too few tracked listings to support a reliable median in this snapshot. This may reflect genuinely thin local activity, or simply that KazaVerde has not yet onboarded the sources where listings on those islands tend to appear:</p>
+<p>The remaining islands appear in the index but have samples too thin to support a reliable median. That may reflect genuinely thin local activity, or simply that KazaVerde has not yet onboarded the sources where listings on those islands tend to surface.</p>
 <ul>
-<li><strong>Maio</strong> — modest count, but the priced sample clusters around a single low value, which may reflect source or normalization effects rather than a clean market distribution. Use with caution.</li>
-<li><strong>São Nicolau</strong> and <strong>Fogo</strong> — under ten tracked listings each. Counts are real, but no median we'd publish.</li>
-<li><strong>São Vicente</strong> and <strong>Santo Antão</strong> — only a handful of tracked listings. Too thin for KazaVerde to publish a meaningful median.</li>
-<li><strong>Brava</strong> — no tracked listings in the index at this snapshot. Nothing to say from KazaVerde data alone.</li>
+<li><strong>Maio</strong> — around twenty tracked listings, but the priced rows cluster at a single low value, which may reflect source or normalization effects rather than a clean market distribution.</li>
+<li><strong>São Nicolau</strong> and <strong>Fogo</strong> — under ten tracked listings each. Counts are real; medians are not yet meaningful.</li>
+<li><strong>São Vicente</strong> and <strong>Santo Antão</strong> — only a handful of tracked listings each. Too thin for KazaVerde to publish a meaningful median.</li>
+<li><strong>Brava</strong> — no tracked listings in the index at this snapshot.</li>
 </ul>
-<p>If you are specifically researching one of these islands, the most useful step is to look at the individual tracked listings on <a href="/listings">/listings</a> and follow the source links, rather than rely on an aggregate. Coverage on these islands may improve as new sources are added.</p>
+<p>If you are specifically researching one of these islands, the most useful step is to look at the individual tracked listings on <a href="/listings">/listings</a> and follow the source links rather than rely on an aggregate. Coverage on these islands may deepen as new sources are added.</p>
 <hr>
-<h2>What appears to drive the gap between islands</h2>
-<p>The variation between islands in the tracked sample reflects a few structural factors that pre-date any individual listing:</p>
+<h2>What appears to drive the gap</h2>
+<p>The variation between islands reflects a few structural factors that pre-date any individual listing:</p>
 <ul>
-<li><strong>Direct flight access.</strong> Sal and Boa Vista have international airports with direct European routes. That alone underwrites most of the foreign-buyer demand visible on the tracked sample.</li>
-<li><strong>Sample depth.</strong> More tracked listings mean better price discovery within the index. With ~145 tracked listings on Sal, like-for-like comparisons inside the sample are realistic. With single-digit counts on São Vicente or Santo Antão, they are not.</li>
-<li><strong>Inventory mix.</strong> Santiago's higher tracked median appears driven by Praia city stock rather than by Santiago being a "premium" island. Boa Vista's tracked median appears pulled by resort and off-plan inventory. Mix shapes the headline number more than location alone.</li>
-<li><strong>Connectivity gaps.</strong> Santo Antão has no airport (ferry from São Vicente only). Brava has no airport. These constraints sit upstream of any pricing question and limit foreign-buyer activity, which is one reason coverage on those islands tends to be thinner.</li>
+<li><strong>Direct flight access.</strong> Sal and Boa Vista have international airports with direct European routes. That underwrites most of the foreign-buyer demand visible in the index.</li>
+<li><strong>Sample depth.</strong> Sal's ~145 tracked listings allow rough like-for-like comparison inside the sample. Single-digit counts on São Vicente or Santo Antão do not.</li>
+<li><strong>Inventory mix.</strong> Santiago's higher median appears driven by Praia city stock; Boa Vista's by resort and off-plan inventory. Mix shapes the headline number more than location alone.</li>
+<li><strong>Connectivity gaps.</strong> Santo Antão (ferry only, from São Vicente) and Brava (no airport) sit upstream of any pricing question. Foreign-buyer activity is thinner there, and so is source coverage.</li>
 </ul>
 <hr>
 <h2>How to use this</h2>
-<p>The numbers above are a snapshot of the KazaVerde index, not a forecast and not a valuation. Treat them as a starting point for narrowing your shortlist, not a substitute for going through individual listings, talking to an independent local lawyer, and checking the source page for each property you take seriously.</p>
-<p>For the legal and tax mechanics of buying once you have shortlisted, see our <a href="/blog/buying-property-cape-verde-guide">step-by-step buying guide</a>. For an island-by-island comparison framed around lifestyle and use case rather than asking-price medians, see <a href="/blog/which-cape-verde-island-property">Which Cape Verde island</a>. For yield context on Sal and Boa Vista, see <a href="/blog/cape-verde-rental-yields-realistic">Cape Verde rental yields</a>.</p>
+<p>These numbers are a snapshot, not a forecast and not a valuation. They are useful for narrowing a shortlist — not for replacing the work of going through individual listings, talking to an independent local lawyer, and checking the source page for any property you take seriously.</p>
+<p>For the legal and tax mechanics of buying once you have shortlisted, see the <a href="/blog/buying-property-cape-verde-guide">step-by-step buying guide</a>. For an island-by-island comparison framed around lifestyle and use case, see <a href="/blog/which-cape-verde-island-property">Which Cape Verde island</a>. For yield context on Sal and Boa Vista, see <a href="/blog/cape-verde-rental-yields-realistic">Cape Verde rental yields</a>. For methodology and source coverage, see <a href="/about">/about</a>.</p>
 <hr>
-<h2>Disclaimer</h2>
-<p>KazaVerde is an independent property search and data platform. It is not a broker, agency, or marketplace. Listings on the index are aggregated from a set of publicly accessible sources we currently track, and are <strong>not legally verified</strong> — KazaVerde does not perform title, ownership, or compliance checks. Source coverage is not complete and is still expanding. Always confirm a property's details with the original agent or seller and your own lawyer before acting on any number quoted in this article.</p>`,
+<p><em>KazaVerde is an independent property search and data platform — not a broker, agency, or marketplace. Listings are aggregated from publicly accessible sources we currently track and are not legally verified. Always confirm a property's details with the original agent or seller and your own lawyer before acting on any number quoted here.</em></p>`,
   },
   {
     slug: "buying-property-cape-verde-guide",
