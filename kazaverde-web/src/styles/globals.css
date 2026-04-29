@@ -1,11 +1,16 @@
 /* ══════════════════════════════════════════════════════════
    KAZAVERDE — Master design system
    ──────────────────────────────────────────────────────────
-   IBM Plex Mono · #fafafa surface · #0a0a0a ink · #8ecf8e accent
+   IBM Plex Mono · #fafafa surface · #0a0a0a ink · #8ecfbf accent
    Editorial / data-first / mono-typographic.
-   This file is the single source of truth for tokens and
-   shared primitives. Page CSS should consume these — avoid
-   redeclaring tokens locally and avoid hard-coded hex.
+
+   This file is the single source of truth for the KazaVerde
+   sage palette across all AREI products. Page CSS should
+   consume these tokens — avoid redeclaring locally and avoid
+   hard-coded hex. arei-landing mirrors --kv-green / --kv-green-deep
+   here; arei-admin mirrors only the neutral/typographic core.
+
+   Cross-product visual rules: docs/04-platform/visual-identity.md
    ══════════════════════════════════════════════════════════ */
 
 :root {

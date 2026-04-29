@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-03-18
+Last updated: 2026-04-28
 
 ## Purpose
 
@@ -215,3 +215,16 @@ These are not resolved decisions yet. They are logged here so they stay visible.
   Existing explanations mention broader source categories and dedup behavior than current governance supports.
 - Consequence:
   Public-facing explanations remain a trust-sensitive cleanup area.
+
+### 2026-04-28 — Cross-product visual alignment: shared core tokens, per-app accents
+
+- Status: `active`
+- Decision:
+  AREI products (KazaVerde, arei-admin, arei-landing) will share *core/structural* design tokens (typography stack, spacing scale, radius, neutrals, surfaces, shadows, semantic success/warning/error). Each app keeps a *product-appropriate accent* in the same family. KazaVerde's identity (muted teal-sage `#8ecfbf` / `#2d4a42`) is not changed; arei-admin and arei-landing accents may move toward the same family but admin must remain functional and dashboard-readable, and landing must feel institutional, data-first, and premium.
+- Reason:
+  Visual alignment across products without flattening identity. KazaVerde's brand is specific (muted teal-sage, not generic teal) and load-bearing for market credibility; uniform accent-replacement would dilute it. Three apps currently drift on tokens that should be shared (typography, neutrals) while differing on accents that *should* differ.
+- Consequence:
+  - No `packages/ui` build yet.
+  - No big-bang migration; KazaVerde stability remains top priority.
+  - Discovery + a minimal migration plan precede any code change.
+  - When unifying anything, the rule is "visuell släktskap, inte uniformitet" — share neutrals/structure, keep brand accents per-app.

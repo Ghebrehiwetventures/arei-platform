@@ -1,5 +1,19 @@
 @import "tailwindcss";
 
+/* ══════════════════════════════════════════════════════════
+   AREI ADMIN — Theme tokens
+   ──────────────────────────────────────────────────────────
+   Neutrals, typography, surfaces, and semantic colors mirror
+   the AREI core (KazaVerde sets the canonical baseline). The
+   amber accent is product-specific to admin — it is NOT the
+   AREI brand sage and should not be propagated elsewhere.
+
+   Cross-product visual rules:
+     docs/04-platform/visual-identity.md
+   KazaVerde sage source of truth (do not redeclare here):
+     kazaverde-web/src/styles/globals.css
+   ══════════════════════════════════════════════════════════ */
+
 /* ── Theme — Light minimal SaaS ───────────────────────────────────── */
 @theme {
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
