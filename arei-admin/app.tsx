@@ -1012,7 +1012,7 @@ function DashboardView() {
                       { key: "approved_pct" as const, label: "Approved %" },
                       { key: "with_image_pct" as const, label: "Image %" },
                       { key: "with_price_pct" as const, label: "Price %" },
-                      { key: "grade" as const, label: "Grade" },
+                      { key: "grade" as const, label: "Health" },
                     ] as const
                   ).map(({ key, label }) => (
                     <th key={key} className="text-left py-2.5 px-3">
@@ -1196,7 +1196,7 @@ const LISTINGS_COLUMNS: { key: ListingsSortKey | "photo" | "grade" | "action"; l
   { key: "bathrooms", label: "Baths" },
   { key: "property_size_sqm", label: "Area" },
   { key: "source_id", label: "Source" },
-  { key: "grade", label: "Grade" },
+  { key: "grade", label: "Health" },
   { key: "action", label: "" },
 ];
 
@@ -1951,7 +1951,7 @@ function SourcesView() {
                     <SourceSortHeader label="Beds %" sortKey="with_beds_pct" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Baths %" sortKey="with_baths_pct" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Freshness" sortKey="last_updated_at" currentKey={sortKey} currentDir={sortDir} onSort={onSort} />
-                    <SourceSortHeader label="Grade" sortKey="grade" currentKey={sortKey} currentDir={sortDir} onSort={onSort} />
+                    <SourceSortHeader label="Health" sortKey="grade" currentKey={sortKey} currentDir={sortDir} onSort={onSort} />
                   </tr>
                 </thead>
                 <tbody>
@@ -2267,14 +2267,14 @@ function StatsView() {
         </div>
         {(gradeD.length > 0 || gradeC.length > 0 || noImages.length > 0 || noPrice.length > 0) && (
           <div className="mt-4 pt-3 border-t border-border text-xs text-foreground-subtle">
-            Quality grades across all markets: {gradeD.length} D, {gradeC.length} C; {noImages.length} sources &lt;10% images, {noPrice.length} sources &lt;10% prices.
+            Health across all markets: {gradeD.length} D, {gradeC.length} C; {noImages.length} sources &lt;10% images, {noPrice.length} sources &lt;10% prices.
           </div>
         )}
       </section>
 
-      {/* Grade distribution */}
+      {/* Health distribution */}
       <section className="surface-1 rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-foreground mb-4">Grade distribution</h2>
+        <h2 className="text-base font-semibold text-foreground mb-4">Health distribution</h2>
         <div className="flex flex-wrap gap-6 items-end">
           {(["A", "B", "C", "D"] as const).map((g) => (
             <div key={g} className="flex flex-col items-center gap-1.5">
