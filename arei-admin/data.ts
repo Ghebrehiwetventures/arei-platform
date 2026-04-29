@@ -11,7 +11,7 @@ import {
   ContentDraftStatus,
 } from "./types";
 import { supabase } from "./supabase";
-import { computeHealthGrade } from "../core/sourceHealthGrade";
+import { computeHealthGrade } from "./sourceHealthGrade";
 
 // ============================================
 // ARTIFACT LOADING
