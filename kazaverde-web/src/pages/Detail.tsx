@@ -540,45 +540,91 @@ export default function Detail() {
         </div>
       )}
 
-      {/* Facts strip — editorial 5-col between black rules */}
+      {/* Facts strip — editorial grid between black rules. For land we
+          drop bed/bath (always blank) and show plot-relevant data points
+          instead, so the row never reads as half-empty. */}
       <div className="kv-d-facts">
         <div className="kv-d-fact">
           <div className="kv-d-fact-k">Type</div>
           <div className="kv-d-fact-v">{typeLabel}</div>
         </div>
-        <div className="kv-d-fact">
-          <div className="kv-d-fact-k">Bedrooms</div>
-          <div className="kv-d-fact-v">
-            {isLand || detail.bedrooms == null
-              ? "—"
-              : detail.bedrooms === 0
-                ? "Studio"
-                : detail.bedrooms}
-          </div>
-        </div>
-        <div className="kv-d-fact">
-          <div className="kv-d-fact-k">Bathrooms</div>
-          <div className="kv-d-fact-v">
-            {isLand || detail.bathrooms == null || detail.bathrooms === 0 ? "—" : detail.bathrooms}
-          </div>
-        </div>
-        <div className="kv-d-fact">
-          <div className="kv-d-fact-k">{isLand ? "Land" : "Interior"}</div>
-          <div className="kv-d-fact-v">
-            {effectiveArea != null ? (
-              <>
-                {effectiveArea.toLocaleString()}
-                <small>m²</small>
-              </>
-            ) : (
-              "—"
-            )}
-          </div>
-        </div>
-        <div className="kv-d-fact">
-          <div className="kv-d-fact-k">Price / m²</div>
-          <div className="kv-d-fact-v">{pricePerSqm ? `€${pricePerSqm.toLocaleString()}` : "—"}</div>
-        </div>
+        {isLand ? (
+          <>
+            <div className="kv-d-fact">
+              <div className="kv-d-fact-k">Plot area</div>
+              <div className="kv-d-fact-v">
+                {landArea != null ? (
+                  <>
+                    {landArea.toLocaleString()}
+                    <small>m²</small>
+                  </>
+                ) : (
+                  "—"
+                )}
+              </div>
+            </div>
+            <div className="kv-d-fact">
+              <div className="kv-d-fact-k">In hectares</div>
+              <div className="kv-d-fact-v">
+                {landArea != null ? (
+                  <>
+                    {(landArea / 10_000).toLocaleString("en", {
+                      minimumFractionDigits: landArea < 10_000 ? 2 : 1,
+                      maximumFractionDigits: 2,
+                    })}
+                    <small>ha</small>
+                  </>
+                ) : (
+                  "—"
+                )}
+              </div>
+            </div>
+            <div className="kv-d-fact">
+              <div className="kv-d-fact-k">Price / m²</div>
+              <div className="kv-d-fact-v">{pricePerSqm ? `€${pricePerSqm.toLocaleString()}` : "—"}</div>
+            </div>
+            <div className="kv-d-fact">
+              <div className="kv-d-fact-k">Location</div>
+              <div className="kv-d-fact-v">{detail.city || detail.island}</div>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="kv-d-fact">
+              <div className="kv-d-fact-k">Bedrooms</div>
+              <div className="kv-d-fact-v">
+                {detail.bedrooms == null
+                  ? "—"
+                  : detail.bedrooms === 0
+                    ? "Studio"
+                    : detail.bedrooms}
+              </div>
+            </div>
+            <div className="kv-d-fact">
+              <div className="kv-d-fact-k">Bathrooms</div>
+              <div className="kv-d-fact-v">
+                {detail.bathrooms == null || detail.bathrooms === 0 ? "—" : detail.bathrooms}
+              </div>
+            </div>
+            <div className="kv-d-fact">
+              <div className="kv-d-fact-k">Interior</div>
+              <div className="kv-d-fact-v">
+                {effectiveArea != null ? (
+                  <>
+                    {effectiveArea.toLocaleString()}
+                    <small>m²</small>
+                  </>
+                ) : (
+                  "—"
+                )}
+              </div>
+            </div>
+            <div className="kv-d-fact">
+              <div className="kv-d-fact-k">Price / m²</div>
+              <div className="kv-d-fact-v">{pricePerSqm ? `€${pricePerSqm.toLocaleString()}` : "—"}</div>
+            </div>
+          </>
+        )}
       </div>
 
       {/* Main 2-col: description + INDEX RECORD sidebar */}
@@ -704,14 +750,16 @@ export default function Detail() {
                 </div>
               )}
 
-              {(detail.bedrooms != null || detail.bathrooms != null || detail.property_size_sqm != null || detail.land_area_sqm != null) && (
+              {((!isLand && (detail.bedrooms != null || detail.bathrooms != null)) ||
+                detail.property_size_sqm != null ||
+                detail.land_area_sqm != null) && (
                 <div className="kv-d-spec-row">
-                  {detail.bedrooms != null && (
+                  {!isLand && detail.bedrooms != null && (
                     <span className="kv-d-spec-token">
                       <b>{detail.bedrooms === 0 ? "Studio" : detail.bedrooms}</b> {detail.bedrooms === 1 ? "bed" : "beds"}
                     </span>
                   )}
-                  {detail.bathrooms != null && detail.bathrooms > 0 && (
+                  {!isLand && detail.bathrooms != null && detail.bathrooms > 0 && (
                     <span className="kv-d-spec-token">
                       <b>{detail.bathrooms}</b> {detail.bathrooms === 1 ? "bath" : "baths"}
                     </span>

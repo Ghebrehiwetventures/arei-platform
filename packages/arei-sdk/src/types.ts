@@ -128,6 +128,10 @@ export interface GetListingsParams {
   pageSize?: number;
   island?: string;
   priceBucket?: PriceBucket;
+  /** Match a single property_type (case-insensitive equality) */
+  propertyType?: string;
+  /** Minimum bedrooms (>=). 0 or undefined = no filter */
+  minBeds?: number;
 }
 
 /** Paginated response */

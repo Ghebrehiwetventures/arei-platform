@@ -89,6 +89,12 @@ function scoreListing(listing: DemoListing): number {
   return score;
 }
 
+/** Categories the home page wants represented, in order of preference.
+ *  Three featured slots → one apartment + one villa + one house. If a
+ *  category has zero eligible listings the slot is filled by the next
+ *  best representative listing of any preferred type. */
+const FEATURED_CATEGORIES = ["apartment", "villa", "house"] as const;
+
 export function selectFeaturedListings(listings: DemoListing[], limit = 3): DemoListing[] {
   const eligible = listings.filter(isRepresentativeFeaturedListing);
 
@@ -106,52 +112,42 @@ export function selectFeaturedListings(listings: DemoListing[], limit = 3): Demo
 
   const picked: typeof ranked = [];
   const usedIslands = new Set<string>();
-  const usedTypes = new Set<string>();
+  const usedIds = new Set<string>();
 
-  for (const candidate of ranked) {
+  // Pass 1 — one per featured category, in declared order. Within each
+  // category we also try to keep islands distinct, so the row reads as
+  // a spread of the market rather than three Sal villas.
+  for (const category of FEATURED_CATEGORIES) {
     if (picked.length >= limit) break;
-    if (candidate.score < 0) continue;
-
-    const islandTaken = usedIslands.has(candidate.listing.island);
-    const typeTaken = usedTypes.has(candidate.propertyType);
-    if (islandTaken || typeTaken) continue;
-
-    picked.push(candidate);
-    usedIslands.add(candidate.listing.island);
-    usedTypes.add(candidate.propertyType);
+    const pickForCategory =
+      ranked.find(
+        (c) =>
+          c.propertyType === category &&
+          c.score >= 0 &&
+          !usedIds.has(c.listing.id) &&
+          !usedIslands.has(c.listing.island),
+      ) ??
+      // Fall back to ignoring island diversity if every match is on the
+      // same island as an earlier pick.
+      ranked.find(
+        (c) => c.propertyType === category && c.score >= 0 && !usedIds.has(c.listing.id),
+      );
+    if (pickForCategory) {
+      picked.push(pickForCategory);
+      usedIds.add(pickForCategory.listing.id);
+      usedIslands.add(pickForCategory.listing.island);
+    }
   }
 
+  // Pass 2 — fill remaining slots if a category had no eligible listings.
   for (const candidate of ranked) {
     if (picked.length >= limit) break;
     if (candidate.score < 0) continue;
-    if (picked.some((entry) => entry.listing.id === candidate.listing.id)) continue;
+    if (usedIds.has(candidate.listing.id)) continue;
     picked.push(candidate);
+    usedIds.add(candidate.listing.id);
   }
 
   return picked.map((entry) => entry.listing);
 }
 
-export function mergeCuratedFeaturedListings(
-  curated: DemoListing[],
-  fallback: DemoListing[],
-  limit = 3
-): DemoListing[] {
-  const merged: DemoListing[] = [];
-  const seen = new Set<string>();
-
-  for (const listing of curated) {
-    if (merged.length >= limit) break;
-    if (seen.has(listing.id)) continue;
-    merged.push(listing);
-    seen.add(listing.id);
-  }
-
-  for (const listing of fallback) {
-    if (merged.length >= limit) break;
-    if (seen.has(listing.id)) continue;
-    merged.push(listing);
-    seen.add(listing.id);
-  }
-
-  return merged;
-}

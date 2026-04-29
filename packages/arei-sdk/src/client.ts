@@ -105,7 +105,7 @@ export class AREIClient {
   async getListings(
     params: GetListingsParams = {}
   ): Promise<PaginatedListings> {
-    const { page = 1, pageSize = 12, island, priceBucket } = params;
+    const { page = 1, pageSize = 12, island, priceBucket, propertyType, minBeds } = params;
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -116,6 +116,18 @@ export class AREIClient {
     // Island filter
     if (island) {
       query = query.eq("island", island);
+    }
+
+    // Property type filter — case-insensitive equality.
+    // DB values are normalized lowercase by the ingester (see core/ingestCv.ts
+    // extractPropertyType), but ilike keeps us safe against legacy rows.
+    if (propertyType) {
+      query = query.ilike("property_type", propertyType);
+    }
+
+    // Minimum bedrooms
+    if (minBeds && minBeds > 0) {
+      query = query.gte("bedrooms", minBeds);
     }
 
     // Price bucket filter

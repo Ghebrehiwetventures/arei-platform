@@ -106,7 +106,7 @@ export default function Listings() {
   useEffect(() => {
     setPage(1);
     setCards([]);
-  }, [island, priceBucket]);
+  }, [island, priceBucket, type, beds]);
 
   // Sync ?island= to URL
   useEffect(() => {
@@ -129,6 +129,8 @@ export default function Listings() {
           pageSize: PAGE_SIZE,
           island: island || undefined,
           priceBucket: priceBucket || undefined,
+          propertyType: type || undefined,
+          minBeds: beds || undefined,
         });
         if (cancelled) return;
         setCards((prev) => (page === 1 ? result.data : [...prev, ...result.data]));
@@ -149,7 +151,7 @@ export default function Listings() {
     return () => {
       cancelled = true;
     };
-  }, [page, island, priceBucket, retryCount]);
+  }, [page, island, priceBucket, type, beds, retryCount]);
 
   // Close any open popover on outside click.
   // Target-aware: clicks inside a filter chip wrap, the sort wrap, or
@@ -166,8 +168,8 @@ export default function Listings() {
     return () => document.removeEventListener("click", onDocClick);
   }, []);
 
-  // Apply client-side filters (type, beds) and sort on the accumulated set
-  const visible = applyClientFilters(cards, { type, beds, sort });
+  // All filters are server-side now; only sort runs on the accumulated set.
+  const visible = applyClientSort(cards, sort);
 
   // Meta stats for the hero
   const lastUpdated = new Date().toLocaleDateString("en-GB", {
@@ -199,14 +201,7 @@ export default function Listings() {
   const islandLabel = island || "All islands";
   const sortLabel = SORT_OPTIONS.find((s) => s.value === sort)?.label || "Newest first";
 
-  // Filter-result count:
-  // - No client-side filters (type/beds): server-side `total` is accurate for the
-  //   current filter state (matches hero + pager — "392 LISTINGS INDEXED",
-  //   "Showing 1-27 of 392").
-  // - With client-side filters: server `total` is no longer accurate since we
-  //   can only know what matches among loaded cards → fall back to visible.length.
-  const hasClientFilter = !!type || beds > 0;
-  const shownCount = hasClientFilter ? visible.length : total;
+  const shownCount = total;
   const canLoadMore = page < totalPages;
 
   return (
@@ -490,33 +485,20 @@ export default function Listings() {
 
 /* ────────────────────────────────────────────────────── */
 
-function applyClientFilters(
-  cards: ListingCard[],
-  { type, beds, sort }: { type: string; beds: number; sort: SortKey }
-): ListingCard[] {
-  let out = cards.filter((l) => {
-    if (type && (l.property_type || "").toLowerCase() !== type) return false;
-    if (beds && (l.bedrooms || 0) < beds) return false;
-    return true;
-  });
-
+function applyClientSort(cards: ListingCard[], sort: SortKey): ListingCard[] {
   switch (sort) {
     case "price-asc":
-      out = [...out].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
-      break;
+      return [...cards].sort((a, b) => (a.price ?? Infinity) - (b.price ?? Infinity));
     case "price-desc":
-      out = [...out].sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
-      break;
+      return [...cards].sort((a, b) => (b.price ?? -Infinity) - (a.price ?? -Infinity));
     case "size-desc":
-      out = [...out].sort(
+      return [...cards].sort(
         (a, b) => (b.land_area_sqm ?? 0) - (a.land_area_sqm ?? 0)
       );
-      break;
     default:
       // newest — server default; leave order as-is
-      break;
+      return cards;
   }
-  return out;
 }
 
 /* ────────────────────────────────────────────────────── */

@@ -6,10 +6,9 @@ import SectionHeader from "../components/SectionHeader";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
 import type { DemoListing } from "../lib/demo-data";
-import { cardToDemoListing, detailToDemoListing } from "../lib/transforms";
-import { mergeCuratedFeaturedListings, selectFeaturedListings } from "../lib/featured";
+import { cardToDemoListing } from "../lib/transforms";
+import { selectFeaturedListings } from "../lib/featured";
 import { formatMedian } from "../lib/format";
-import { CURATED_FEATURED_IDS } from "../lib/prerender-listings";
 import "./Home.css";
 
 /* Number of actively configured scrape sources (lifecycleOverride: IN in markets/cv/sources.yml) */
@@ -84,26 +83,17 @@ export default function Home() {
     async function load() {
       try {
         setError(null);
-        const [listingsRes, statsRes, islandsRes, curatedRes] = await Promise.all([
-          arei.getListings({ page: 1, pageSize: 24 }),
+        const [listingsRes, statsRes, islandsRes] = await Promise.all([
+          // Pull the full index as the candidate pool. House listings with
+          // complete data are rare (3 of ~400 total), so a smaller window
+          // would leave the "house" slot empty and break category spread.
+          // The card column set is small; one request stays cheap.
+          arei.getListings({ page: 1, pageSize: 500 }),
           arei.getMarketStats(),
           arei.getIslandOptions(),
-          Promise.all(
-            CURATED_FEATURED_IDS.map(async (id) => {
-              try {
-                return await arei.getListing(id);
-              } catch {
-                return null;
-              }
-            })
-          ),
         ]);
 
-        const fallbackFeatured = selectFeaturedListings(listingsRes.data.map(cardToDemoListing), 3);
-        const curatedFeatured = curatedRes
-          .filter((listing): listing is NonNullable<typeof listing> => listing !== null)
-          .map(detailToDemoListing);
-        const featured = mergeCuratedFeaturedListings(curatedFeatured, fallbackFeatured, 3);
+        const featured = selectFeaturedListings(listingsRes.data.map(cardToDemoListing), 3);
 
         const islands = islandsRes.map((i) => ({
           name: i.island,
