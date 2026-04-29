@@ -1964,7 +1964,7 @@ function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
   const markets = getMarkets();
   return (
     <div>
-      <h1 className="text-foreground mb-1">AFRICA PROPERTY INDEX</h1>
+      <h1 className="text-foreground mb-1">AREI Admin</h1>
       <p className="text-foreground-subtle text-[13px] mt-0">
         Pan-African Real Estate Index
       </p>
@@ -2407,7 +2407,7 @@ function ListingDetail({
             <p className="m-1"><span className="text-foreground-muted">ID:</span> <span className="font-mono">{listing.id}</span></p>
           </div>
           <div className="surface-1 rounded-xl border border-border p-3 mt-4 text-foreground-subtle text-xs">
-            Aggregated from an external source. Africa Property Index does not verify accuracy or facilitate transactions.
+            Aggregated from an external source. AREI does not verify accuracy or facilitate transactions.
           </div>
         </div>
       </div>
@@ -2662,7 +2662,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             </button>
           )}
           <div className="rounded-lg px-3 py-3 border border-border">
-            <div className="text-[11px] text-foreground-subtle mb-0.5">Africa Property Index</div>
+            <div className="text-[11px] text-foreground-subtle mb-0.5">AREI Admin</div>
             <div className="text-[11px] text-foreground-muted">Pan-African Real Estate</div>
           </div>
         </div>
