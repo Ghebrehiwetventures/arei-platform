@@ -1,0 +1,36 @@
+name: Source health snapshot
+
+# Daily writer for source_health_snapshots. Each run upserts one row per
+# source per UTC day (PK on snapshot_date,source_id makes it idempotent).
+# Manual workflow_dispatch is enabled so we can backfill or test on demand
+# without waiting for the cron.
+
+on:
+  schedule:
+    - cron: "30 2 * * *" # 02:30 UTC daily
+  workflow_dispatch: {}
+
+jobs:
+  snapshot:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify health-grade module copies are in sync
+        run: diff arei-admin/sourceHealthGrade.ts scripts/sourceHealthGrade.ts
+
+      - name: Run snapshot writer
+        run: npx ts-node --transpile-only scripts/snapshot_source_health.ts
