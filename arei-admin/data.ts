@@ -500,7 +500,51 @@ getMarketsAsync().then((markets) => {
 // DASHBOARD (RPC + grades)
 // ============================================
 
+/**
+ * Canonical display names for known sources.
+ *
+ * Source IDs in the database are flat slugs (e.g. "cv_terracaboverde") with no
+ * word boundaries, so the algorithmic title-case fallback collapses them into
+ * one ugly blob ("Terracaboverde"). The canonical names live in each market's
+ * sources.yml; this map mirrors them so the admin UI displays them correctly.
+ *
+ * Keep in sync with markets/<market>/sources.yml. New sources without an
+ * override fall back to the algorithmic name; not pretty, but never blocking.
+ */
+const SOURCE_NAME_OVERRIDES: Record<string, string> = {
+  // Cape Verde — production
+  cv_amicv: "AMICV",
+  cv_cabohouseproperty: "Cabo House Property",
+  cv_capeverdeproperty24: "Cape Verde Property 24",
+  cv_capeverdepropertyuk: "Cape Verde Property UK",
+  cv_ccoreinvestments: "CCore Investments",
+  cv_estatecv: "Estate CV",
+  cv_globallistings: "Global Listings",
+  cv_greenacres: "Green Acres",
+  cv_homescasaverde: "Homes Casa Verde",
+  cv_nhakaza: "NhaKaza",
+  cv_oceanproperty24: "Ocean Property 24",
+  cv_properstar: "Properstar",
+  cv_remax: "REMAX Cape Verde",
+  cv_rightmove: "Rightmove Overseas",
+  cv_simplycapeverde: "Simply Cape Verde",
+  cv_terracaboverde: "Terra Cabo Verde",
+  // Test pipeline markets
+  bw_property24: "Property24 Botswana",
+  gh_meqasa: "Meqasa Ghana",
+  gh_propertycentre: "Ghana Property Centre",
+  ke_buyrentkenya: "BuyRentKenya",
+  ke_property24: "Property24 Kenya",
+  ke_propertycentre: "Kenya Property Centre",
+  ng_propertycentre: "Nigeria Property Centre",
+  ng_propertypro: "PropertyPro Nigeria",
+  ug_propertycentre: "Uganda Property Centre",
+  zm_property24: "Property24 Zambia",
+};
+
 function sourceIdToName(sourceId: string): string {
+  const override = SOURCE_NAME_OVERRIDES[sourceId];
+  if (override) return override;
   return sourceId
     .replace(/^[a-z]{2}_/, "")
     .split(/[_-]/)
