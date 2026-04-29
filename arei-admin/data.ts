@@ -554,6 +554,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       const { score, grade } = computeGrade(approvedPct, imagePct, pricePct);
       return {
         ...r,
+        last_updated_at: r.last_updated_at ?? null,
         approved_pct: Math.round(approvedPct * 10) / 10,
         with_image_pct: Math.round(imagePct * 10) / 10,
         with_price_pct: Math.round(pricePct * 10) / 10,

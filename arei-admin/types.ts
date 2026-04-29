@@ -69,6 +69,9 @@ export interface SourceQualityRowRaw {
   approved_count: number;
   with_image_count: number;
   with_price_count: number;
+  /** Max(listings.updated_at) per source. Null when source has no rows or
+   *  the RPC has not yet been migrated to expose this column. */
+  last_updated_at?: string | null;
 }
 
 // Dashboard: with computed ratios and grade

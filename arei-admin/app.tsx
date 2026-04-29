@@ -17,6 +17,21 @@ import {
 } from "./data";
 
 const SYNC_STALE_MINUTES = 24 * 60 * 3; // 3 days
+const SOURCE_STALE_DAYS = 30;
+
+function formatFreshness(ts: string | null | undefined): { label: string; days: number | null; stale: boolean; missing: boolean } {
+  if (!ts) return { label: "No updates", days: null, stale: true, missing: true };
+  const t = new Date(ts).getTime();
+  if (!Number.isFinite(t)) return { label: "No updates", days: null, stale: true, missing: true };
+  const days = Math.floor((Date.now() - t) / (24 * 60 * 60 * 1000));
+  const stale = days >= SOURCE_STALE_DAYS;
+  let label: string;
+  if (days <= 0) label = "Today";
+  else if (days === 1) label = "1d ago";
+  else if (days < SOURCE_STALE_DAYS) label = `${days}d ago`;
+  else label = `Stale (${days}d)`;
+  return { label, days, stale, missing: false };
+}
 
 // ============================================
 // THEME TOGGLE — respects system preference, persists to localStorage
@@ -1609,13 +1624,23 @@ function SourcesView() {
                     <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Approved</th>
                     <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Images</th>
                     <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Prices</th>
+                    <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Freshness</th>
                     <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Grade</th>
                   </tr>
                 </thead>
                 <tbody>
                   {rows
                     .sort((a, b) => Number(b.listing_count) - Number(a.listing_count))
-                    .map((r) => (
+                    .map((r) => {
+                      const fresh = formatFreshness(r.last_updated_at);
+                      const freshClass = fresh.missing
+                        ? "text-foreground-subtle"
+                        : fresh.stale
+                          ? "text-red"
+                          : fresh.days != null && fresh.days >= 14
+                            ? "text-amber"
+                            : "text-foreground-muted";
+                      return (
                       <tr key={r.source_id} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
                         <td className="py-2.5 px-3 text-sm font-medium text-foreground">{r.sourceName}</td>
                         <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">
@@ -1624,11 +1649,18 @@ function SourcesView() {
                         <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.approved_pct}%</td>
                         <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.with_image_pct}%</td>
                         <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.with_price_pct}%</td>
+                        <td
+                          className={`py-2.5 px-3 text-sm tabular-nums font-mono ${freshClass}`}
+                          title={r.last_updated_at ?? "No timestamp from RPC"}
+                        >
+                          {fresh.label}
+                        </td>
                         <td className="py-2.5 px-3">
                           <GradeBadge grade={r.grade} />
                         </td>
                       </tr>
-                    ))}
+                      );
+                    })}
                 </tbody>
               </table>
             </div>
@@ -1699,6 +1731,8 @@ function StatsView() {
   const lowApproved = rows.filter((r) => r.approved_pct < 50);
   const gradeD = rows.filter((r) => r.grade === "D");
   const gradeC = rows.filter((r) => r.grade === "C");
+  const staleSources = rows.filter((r) => formatFreshness(r.last_updated_at).stale && !formatFreshness(r.last_updated_at).missing);
+  const missingFreshness = rows.filter((r) => formatFreshness(r.last_updated_at).missing);
   const byMarket = new Map<string, { listings: number; sources: number; approvedSum: number; worstGrade: number }>();
   rows.forEach((r) => {
     const m = r.marketId;
@@ -1727,7 +1761,9 @@ function StatsView() {
     gradeD.length +
     (noImages.length ? 1 : 0) +
     (noPrice.length ? 1 : 0) +
-    (singleSourceMarkets.length ? 1 : 0);
+    (singleSourceMarkets.length ? 1 : 0) +
+    (staleSources.length ? 1 : 0) +
+    (missingFreshness.length ? 1 : 0);
 
   return (
     <div className="space-y-6">
@@ -1832,6 +1868,24 @@ function StatsView() {
             <div className="rounded-lg p-3 bg-amber-muted text-sm flex gap-2 items-start">
               <span className="text-amber font-medium shrink-0">Single source</span>
               <span className="text-foreground-muted">{singleSourceMarkets.join(", ")}</span>
+            </div>
+          )}
+          {staleSources.length > 0 && (
+            <div className="rounded-lg p-3 bg-red-muted text-sm flex gap-2 items-start">
+              <span className="text-red font-medium shrink-0">Stale sources</span>
+              <span className="text-foreground-muted">
+                {staleSources.length} source(s) with no updates in {SOURCE_STALE_DAYS}d:{" "}
+                {staleSources.slice(0, 5).map((r) => r.sourceName).join(", ")}
+                {staleSources.length > 5 && ` +${staleSources.length - 5} more`}
+              </span>
+            </div>
+          )}
+          {missingFreshness.length > 0 && (
+            <div className="rounded-lg p-3 bg-amber-muted text-sm flex gap-2 items-start">
+              <span className="text-amber font-medium shrink-0">No timestamp</span>
+              <span className="text-foreground-muted">
+                {missingFreshness.length} source(s) missing last_updated_at — RPC may need to be re-run with the latest schema
+              </span>
             </div>
           )}
           {flagCount === 0 && (
