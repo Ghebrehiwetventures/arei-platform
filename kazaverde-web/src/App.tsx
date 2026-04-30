@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
+import GoogleAnalytics from "./components/GoogleAnalytics";
 import Landing from "./pages/Landing";
 
 // Phase A live: / (landing), /listings (grid), /listing/:id, /saved,
@@ -77,6 +78,7 @@ export default function App() {
       </Suspense>
       <CookieBanner />
       <Footer />
+      <GoogleAnalytics />
       <Analytics />
     </div>
   );
