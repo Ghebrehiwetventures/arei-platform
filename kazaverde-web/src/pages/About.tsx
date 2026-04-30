@@ -224,9 +224,6 @@ export default function About() {
               </p>
             </blockquote>
             <div className="kv-pol-founder-byline">
-              <div className="kv-pol-founder-mark" aria-hidden="true">
-                MG
-              </div>
               <div className="kv-pol-founder-meta">
                 <span className="kv-pol-founder-name">
                   Michael Ghebrehiwet
