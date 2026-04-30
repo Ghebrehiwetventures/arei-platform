@@ -34,6 +34,16 @@ Bygg körs från **repo root** så att `packages/arei-sdk` finns under build.
 - **Environment Variables** (Production): `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
 - **Install Command**: default (`npm install`)
 
+### Analytics environment variable
+
+GA4 tracking is optional and only loads in production when this Vercel environment variable exists:
+
+| Variable | Environment | Notes |
+|----------|-------------|-------|
+| `VITE_GA4_MEASUREMENT_ID` | Production | GA4 measurement ID for `kazaverde.com`, usually formatted like `G-XXXXXXXXXX`. Leave unset to disable GA4. |
+
+Vercel Web Analytics remains enabled separately in the React app. Do not remove it when adding GA4.
+
 ### Lokal deploy från repo root
 
 ```bash
