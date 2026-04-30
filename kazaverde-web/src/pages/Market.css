@@ -225,54 +225,64 @@
    collected" surface can reuse the same blur+overlay pattern. */
 
 /* ─────────────────────────────────────────────────────────────
-   Methodology accordion — reuses card hairlines + mono caps.
+   Market FAQ / methodology — adapts the editorial FAQ pattern
+   from BlogList while keeping the page-local class namespace.
    ───────────────────────────────────────────────────────────── */
-.kv-m-acc-list {
-  border: 1px solid var(--kv-rule);
-  background: var(--kv-paper);
+.kv-m-faq {
+  border-top: 1px solid var(--kv-rule);
 }
-.kv-m-acc + .kv-m-acc { border-top: 1px solid var(--kv-rule); }
-.kv-m-acc-q {
-  display: flex;
-  width: 100%;
+.kv-m-faq-row {
+  border-bottom: 1px solid var(--kv-rule);
+}
+.kv-m-faq-q {
+  display: grid;
+  grid-template-columns: 116px 1fr 24px;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 22px;
+  gap: 20px;
+  width: 100%;
+  padding: 22px 4px;
   background: transparent;
   border: none;
   cursor: pointer;
   font-family: var(--kv-mono);
-  font-size: 13px;
-  font-weight: var(--kv-fw-medium);
-  letter-spacing: 0.02em;
   color: var(--kv-black);
   text-align: left;
   transition: background var(--kv-dur-fast) var(--kv-ease);
 }
-.kv-m-acc-q:hover { background: var(--kv-hover); }
-.kv-m-acc-icon {
-  font-family: var(--kv-mono);
+.kv-m-faq-q:hover { background: var(--kv-off-white); }
+.kv-m-faq-topic {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--kv-gray-500);
-  transition: transform var(--kv-dur) var(--kv-ease);
 }
-.kv-m-acc.is-open .kv-m-acc-icon { transform: rotate(180deg); }
-.kv-m-acc-a {
-  max-height: 0;
-  overflow: hidden;
-  padding: 0 22px;
-  transition: max-height var(--kv-dur) var(--kv-ease), padding var(--kv-dur) var(--kv-ease);
+.kv-m-faq-text {
+  font-size: 15px;
+  font-weight: var(--kv-fw-regular);
+  line-height: 1.4;
+  color: var(--kv-black);
+  letter-spacing: -0.005em;
 }
-.kv-m-acc.is-open .kv-m-acc-a {
-  max-height: 480px;
-  padding: 0 22px 18px;
+.kv-m-faq-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--kv-gray-500);
+  font-weight: 400;
 }
-.kv-m-acc-a p {
+.kv-m-faq-row.is-open .kv-m-faq-icon { color: var(--kv-black); }
+.kv-m-faq-a {
+  padding: 0 24px 24px calc(116px + 20px + 4px);
   font-family: var(--kv-sans);
   font-size: 14px;
   line-height: 1.7;
-  color: var(--kv-ink-700);
-  margin: 0;
+  color: rgba(0, 0, 0, 0.78);
+  max-width: 760px;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -322,8 +332,21 @@
   .kv-m-bars { padding: 14px 16px; }
   .kv-m-bar-row { grid-template-columns: 88px 1fr 44px; gap: 12px; }
   .kv-m-bar-label { font-size: 11px; }
-  .kv-m-acc-q { padding: 14px 18px; font-size: 12px; }
-  .kv-m-acc.is-open .kv-m-acc-a { padding: 0 18px 14px; }
+  .kv-m-faq-q {
+    grid-template-columns: 1fr 24px;
+    gap: 6px;
+    padding: 18px 4px;
+  }
+  .kv-m-faq-topic {
+    grid-column: 1 / -1;
+    font-size: 9px;
+    margin-bottom: 2px;
+  }
+  .kv-m-faq-text { font-size: 14px; }
+  .kv-m-faq-a {
+    padding: 0 4px 18px;
+    font-size: 13px;
+  }
 
   /* Island table — fixed-width numeric columns so headers sit
      directly above their values (no auto-sizing dead space) and the

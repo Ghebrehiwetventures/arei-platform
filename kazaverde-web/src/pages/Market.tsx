@@ -23,18 +23,53 @@ const BUCKET_ORDER: PriceBucket[] = ["under_100k", "100k_250k", "250k_500k", "ov
    continuation of the index, not a separate visual idiom.
    ───────────────────────────────────────────────────────────────── */
 
-const METHODOLOGY = [
+const MARKET_FAQ_SCRIPT_ID = "kv-jsonld-market-faq";
+
+const MARKET_FAQ = [
   {
-    q: "How we calculate median price",
-    a: "Median asking price is calculated from all listings with a publicly visible, extractable price. We take the middle value of sorted prices per island and overall. Outliers (prices below €10,000 or above €5,000,000) are excluded to avoid data entry errors skewing the median. Price is always the asking price — not transaction price.",
+    topic: "Coverage",
+    q: "What does KazaVerde’s market data measure?",
+    a: "It measures public Cape Verde property listings from tracked sources. The page summarizes asking prices, inventory, island distribution, and price visibility across the listings KazaVerde can verify.",
   },
   {
-    q: "How we handle 'Price on request'",
-    a: "Listings without a publicly visible price are included in the index with the label 'Price on request'. They count toward total inventory numbers but are excluded from all price-based calculations (median price, price per m², price trends).",
+    topic: "Prices",
+    q: "Are these asking prices or completed sales?",
+    a: "They are asking prices from public listings, not completed sale prices. KazaVerde does not claim to represent transaction values, bank valuations, or official registry data.",
   },
   {
-    q: "How often the data is updated",
-    a: "Our crawlers run daily across all tracked sources. New listings typically appear within 24 hours of being published. Price changes are detected on the next crawl cycle. Removed listings are flagged as inactive after 48 hours of consecutive absence.",
+    topic: "Method",
+    q: "How do you calculate median property price?",
+    a: "Median price is calculated from listings with a public, extractable price. Price-on-request listings and clear data-entry outliers are excluded from price calculations so the benchmark reflects the priced sample.",
+  },
+  {
+    topic: "Method",
+    q: "Why are “Price on request” listings excluded?",
+    a: "They count toward total inventory, but they do not contain a usable asking price. Including them in price calculations would make medians and price bands misleading.",
+  },
+  {
+    topic: "Trust",
+    q: "What does verified-price coverage mean?",
+    a: "Verified-price coverage is the share of tracked listings with a public price KazaVerde can read and normalize. A lower coverage rate means more of the market is visible as inventory than as price data.",
+  },
+  {
+    topic: "Freshness",
+    q: "How often is the market data updated?",
+    a: "Tracked sources are checked daily. New listings, price changes, and removals appear as the crawler refreshes each source and the listing can be matched back to public data.",
+  },
+  {
+    topic: "Samples",
+    q: "Why do some islands show inventory but no median price?",
+    a: "Some islands have too few priced listings for a useful median. In those cases KazaVerde shows inventory, but withholds the median rather than publishing a weak benchmark.",
+  },
+  {
+    topic: "Limits",
+    q: "Can I use this data to value a specific property?",
+    a: "No. The page is a market benchmark, not a valuation tool. A specific property still depends on location, condition, title, view, building quality, management costs, and local due diligence.",
+  },
+  {
+    topic: "Quality",
+    q: "Does KazaVerde remove duplicate listings?",
+    a: "KazaVerde removes or groups duplicate records where source data gives enough matching signals. Some duplicates can remain when agents publish the same property with different descriptions, prices, or photos.",
   },
 ];
 
@@ -106,6 +141,37 @@ export default function Market() {
   const [data, setData] = useState<MarketData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (loading || error || !data) return;
+
+    const schema = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "@id": "https://www.kazaverde.com/market#faq",
+      mainEntity: MARKET_FAQ.map((item) => ({
+        "@type": "Question",
+        name: item.q,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: item.a,
+        },
+      })),
+    };
+
+    let script = document.getElementById(MARKET_FAQ_SCRIPT_ID) as HTMLScriptElement | null;
+    if (!script) {
+      script = document.createElement("script");
+      script.id = MARKET_FAQ_SCRIPT_ID;
+      script.type = "application/ld+json";
+      document.head.appendChild(script);
+    }
+    script.text = JSON.stringify(schema);
+
+    return () => {
+      script?.remove();
+    };
+  }, [loading, error, data]);
 
   useEffect(() => {
     let cancelled = false;
@@ -446,35 +512,44 @@ export default function Market() {
         </div>
       </section>
 
-      {/* Methodology accordion */}
+      {/* Market FAQ / methodology */}
       <section className="kv-m-section" id="methodology">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
             <span className="kv-l-eyebrow">Methodology</span>
-            <h2>How we calculate.</h2>
+            <h2>How to read this market data.</h2>
+            <p>
+              Short answers on what the index measures, where the limits are,
+              and how to interpret the numbers without treating them as
+              transaction prices or valuation advice.
+            </p>
           </div>
 
-          <div className="kv-m-acc-list">
-            {METHODOLOGY.map((item, i) => (
-              <div className={`kv-m-acc${openIdx === i ? " is-open" : ""}`} key={item.q}>
-                <button
-                  type="button"
-                  className="kv-m-acc-q"
-                  onClick={() => setOpenIdx(openIdx === i ? -1 : i)}
-                  aria-expanded={openIdx === i}
-                >
-                  <span>{item.q}</span>
-                  <span className="kv-m-acc-icon" aria-hidden="true">↓</span>
-                </button>
-                <div className="kv-m-acc-a">
-                  <p>{item.a}</p>
+          <div className="kv-m-faq" id="faq">
+            {MARKET_FAQ.map((item, i) => {
+              const isOpen = openIdx === i;
+              return (
+                <div className={`kv-m-faq-row${isOpen ? " is-open" : ""}`} key={item.q}>
+                  <button
+                    type="button"
+                    className="kv-m-faq-q"
+                    onClick={() => setOpenIdx(isOpen ? -1 : i)}
+                    aria-expanded={isOpen}
+                  >
+                    <span className="kv-m-faq-topic">{item.topic}</span>
+                    <span className="kv-m-faq-text">{item.q}</span>
+                    <span className="kv-m-faq-icon" aria-hidden="true">
+                      {isOpen ? "−" : "+"}
+                    </span>
+                  </button>
+                  {isOpen && <div className="kv-m-faq-a">{item.a}</div>}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
 
           <p className="kv-m-disclaimer">
-            All market data is based on tracked public listings. This is not financial advice.
+            All market data is based on tracked public listings. This is not legal, financial, or valuation advice.
           </p>
           <p className="kv-m-disclaimer">
             <Link to="/about">
