@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
@@ -474,6 +475,11 @@ export default function Market() {
 
           <p className="kv-m-disclaimer">
             All market data is based on tracked public listings. This is not financial advice.
+          </p>
+          <p className="kv-m-disclaimer">
+            <Link to="/about">
+              Read more about how KazaVerde fits into the Africa Real Estate Index.
+            </Link>
           </p>
         </div>
       </section>
