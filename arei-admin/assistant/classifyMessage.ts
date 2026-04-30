@@ -39,9 +39,10 @@ export function classifyMessage(
   if (parsed.supportIntent) return "buyer_support";
   if (parsed.areaGuidance) return "area_guidance";
 
-  // Pure action: link request with no new criteria.
+  // Pure action: link or pagination request with no new criteria.
   if (
-    parsed.actions.includes("send_links") &&
+    (parsed.actions.includes("send_links") ||
+      parsed.actions.includes("show_more")) &&
     !hasIntentSignal(parsed)
   ) {
     return "action";

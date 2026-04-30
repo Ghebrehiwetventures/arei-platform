@@ -188,6 +188,9 @@ function detectKeywords(text: string): string[] {
 function detectActions(text: string): ChatAction[] {
   const lc = text.toLowerCase();
   const actions: ChatAction[] = [];
+  if (/^\s*(show\s+me\s+more|show\s+more|more)\s*(please|pls)?\s*$/.test(lc)) {
+    actions.push("show_more");
+  }
   if (
     /\b(send|share|give)\b.*\b(link|links|url|urls)\b/.test(lc) ||
     /\b(link|links|urls?)\b\s*(please|pls)?$/.test(lc.trim())

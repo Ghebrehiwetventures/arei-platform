@@ -28,6 +28,9 @@ export interface RespondOutput {
   reply: ChatTurn;
 }
 
+const DEFAULT_MATCH_LIMIT = 3;
+const EXPANDED_MATCH_LIMIT = 6;
+
 const REQUIRED_FIELDS: Array<{
   key: keyof BuyerIntent;
   question: string;
@@ -40,12 +43,23 @@ const REQUIRED_FIELDS: Array<{
 function hasEnoughIntent(intent: BuyerIntent): boolean {
   if (intent.selector) return true;
   const hasLocation = !!(intent.island || intent.city);
-  const hasOther =
-    !!intent.propertyType ||
-    intent.maxPrice != null ||
+  const hasType = !!intent.propertyType;
+  const hasBudget = intent.maxPrice != null || intent.minPrice != null;
+  const hasQuantifier =
+    hasBudget ||
     intent.minBedrooms != null ||
-    intent.minSizeSqm != null;
-  return hasLocation && hasOther;
+    intent.minSizeSqm != null ||
+    intent.preferLowPrice === true;
+  const hasKeyword = intent.keywords.length > 0;
+
+  if (hasLocation && hasKeyword && !hasType) return true;
+  if (hasType && hasBudget && (hasLocation || hasKeyword || intent.minBedrooms != null || intent.minSizeSqm != null)) {
+    return true;
+  }
+  if (hasType && hasLocation && (hasQuantifier || intent.city != null || intent.propertyType === "land")) {
+    return true;
+  }
+  return false;
 }
 
 function nextClarifyingQuestion(intent: BuyerIntent): string {
@@ -77,6 +91,56 @@ function formatPrice(n: number): string {
   return String(n);
 }
 
+function hasPriceOrSizeSelector(intent: BuyerIntent): boolean {
+  return (
+    intent.maxPrice != null ||
+    intent.minPrice != null ||
+    intent.minBedrooms != null ||
+    intent.minSizeSqm != null ||
+    intent.preferLowPrice === true ||
+    intent.selector != null
+  );
+}
+
+function qualificationQuestion(
+  message: string,
+  intent: BuyerIntent,
+  parsed: ParseResult
+): string | null {
+  if (parsed.actions.length > 0 || intent.selector) return null;
+
+  const lc = message.toLowerCase();
+  const hasLocation = !!(intent.island || intent.city);
+  const hasConcreteSignal =
+    hasLocation ||
+    intent.propertyType != null ||
+    intent.maxPrice != null ||
+    intent.minPrice != null ||
+    intent.minBedrooms != null ||
+    intent.minSizeSqm != null ||
+    intent.keywords.length > 0;
+
+  if (/\b(good stuff|best stuff|good ones|best ones)\b/.test(lc)) {
+    return "Do you mean best value, sea view, beachfront, lowest price, or investment potential?";
+  }
+
+  if (/\b(buy|purchase)\b.*\bproperty\b/.test(lc) && !hasConcreteSignal) {
+    return "Are you looking for a holiday home, investment, land, or somewhere to live?";
+  }
+
+  if (!hasLocation && intent.keywords.some((kw) => kw.includes("beach"))) {
+    return "Which island should I focus on for beach properties — Sal, Boa Vista, Santiago, or somewhere else?";
+  }
+
+  if (intent.propertyType && hasLocation && !hasPriceOrSizeSelector(intent)) {
+    const place = intent.city ?? intent.island;
+    const type = intent.propertyType === "studio" ? "studio" : intent.propertyType;
+    return `What budget range should I use for the ${type}${place ? ` in ${place}` : ""}?`;
+  }
+
+  return null;
+}
+
 function cheaperWeakOnlyReply(intent: BuyerIntent): string {
   const type = intent.propertyType ?? "property";
   return `I don't have good cheaper ${type} matches with the current data. Do you want to relax bedrooms, increase budget, or see possible matches with missing data?`;
@@ -87,6 +151,17 @@ function isWeakCheaperResult(parsed: ParseResult, matches: ListingMatch[]): bool
     parsed.modifiers.includes("cheaper") &&
     matches.every((m) => m.confidence !== "strong")
   );
+}
+
+function nextStepPrompt(intent: BuyerIntent, expanded = false): string {
+  if (expanded) return "Should I send the links or help you compare these?";
+  if (intent.propertyType === "land") {
+    return "Want me to narrow this by size, cheaper options, or the links?";
+  }
+  if (intent.maxPrice == null && intent.minPrice == null) {
+    return "Want me to narrow this by budget or show more?";
+  }
+  return "Do you want sea view only, cheaper options, or the links?";
 }
 
 /** Map applicable-field keys to user-facing words, for the data-quality note. */
@@ -114,7 +189,11 @@ function dataQualityNote(matches: ListingMatch[]): string | null {
   return `Some listings are missing ${fields} — those are shown as partial matches.`;
 }
 
-function buildMatchesReply(intent: BuyerIntent, matches: ListingMatch[]): string {
+function buildMatchesReply(
+  intent: BuyerIntent,
+  matches: ListingMatch[],
+  opts: { expanded?: boolean } = {}
+): string {
   const summary = summarizeIntent(intent) || "your criteria";
   const strong = matches.filter((m) => m.confidence === "strong").length;
   const total = matches.length;
@@ -134,8 +213,15 @@ function buildMatchesReply(intent: BuyerIntent, matches: ListingMatch[]): string
   } else {
     head = `Here are ${total} listings for ${summary} — ${strong} confirmed, ${total - strong} partial (some data missing).`;
   }
+  if (opts.expanded && total > DEFAULT_MATCH_LIMIT) {
+    head = `${head} This is a broader view of up to ${EXPANDED_MATCH_LIMIT} matches.`;
+  }
+
+  const parts = [head];
   const note = dataQualityNote(matches);
-  return note ? `${head}\n${note}` : head;
+  if (note) parts.push(note);
+  parts.push(nextStepPrompt(intent, opts.expanded === true));
+  return parts.join("\n");
 }
 
 function buildLinksReply(intent: BuyerIntent, matches: ListingMatch[]): string {
@@ -256,12 +342,69 @@ export function respondToPropertyChat(input: RespondInput): RespondOutput {
     }
   }
 
+  // ── Pure action: expand current result set ──────────────────────────
+  if (cls === "action" && parsed.actions.includes("show_more")) {
+    if (!hasEnoughIntent(newIntent)) {
+      const assistantTurn: ChatTurn = {
+        role: "assistant",
+        text: "I can show more once we have a search. Which island or property type should I focus on?",
+        intentSnapshot: newIntent,
+      };
+      return {
+        state: {
+          intent: newIntent,
+          lastMatches: state.lastMatches,
+          turns: [...state.turns, userTurn, assistantTurn],
+        },
+        reply: assistantTurn,
+      };
+    }
+
+    const matches = matchListings(listings, newIntent, { limit: EXPANDED_MATCH_LIMIT });
+    const text =
+      matches.length === 0
+        ? `Nothing matches ${summarizeIntent(newIntent)} right now. Want to broaden the search?`
+        : buildMatchesReply(newIntent, matches, { expanded: true });
+    const assistantTurn: ChatTurn = {
+      role: "assistant",
+      text,
+      matches,
+      intentSnapshot: newIntent,
+    };
+    return {
+      state: {
+        intent: newIntent,
+        lastMatches: matches.length > 0 ? matches : state.lastMatches,
+        turns: [...state.turns, userTurn, assistantTurn],
+      },
+      reply: assistantTurn,
+    };
+  }
+
   // ── Pure action: deliver links from the current result set ──────────
   if (cls === "action" && parsed.actions.includes("send_links")) {
     const text = buildLinksReply(newIntent, state.lastMatches);
     const assistantTurn: ChatTurn = {
       role: "assistant",
       text,
+      intentSnapshot: newIntent,
+    };
+    return {
+      state: {
+        intent: newIntent,
+        lastMatches: state.lastMatches,
+        turns: [...state.turns, userTurn, assistantTurn],
+      },
+      reply: assistantTurn,
+    };
+  }
+
+  // ── Qualification: ask one useful question before broad card dumps ──
+  const qualifyingQuestion = qualificationQuestion(message, newIntent, parsed);
+  if (qualifyingQuestion) {
+    const assistantTurn: ChatTurn = {
+      role: "assistant",
+      text: qualifyingQuestion,
       intentSnapshot: newIntent,
     };
     return {
@@ -293,7 +436,7 @@ export function respondToPropertyChat(input: RespondInput): RespondOutput {
   }
 
   // ── Run match ────────────────────────────────────────────────────────
-  const limit = newIntent.selector ? 1 : 5;
+  const limit = newIntent.selector ? 1 : DEFAULT_MATCH_LIMIT;
   const matches = matchListings(listings, newIntent, { limit });
 
   if (cls === "refinement" && newIntent.propertyType && isWeakCheaperResult(parsed, matches)) {

@@ -308,9 +308,12 @@ const SAMPLES = [
   "I want a 2 bedroom apartment in Sal under 200k",
   "beachfront villa in Boa Vista under 500000",
   "cheap land in Santiago",
+  "I want something near the beach",
+  "show me the good stuff",
   "apartment in Santa Maria with at least 80 sqm",
   "only sea view",
   "show cheaper ones",
+  "show more",
   "what about Boa Vista instead?",
   "send me the links",
 ];
@@ -525,7 +528,7 @@ function runRegressions() {
   {
     let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
     state = respondToPropertyChat({
-      message: "I want a holiday apartment in Sal",
+      message: "2 bedroom apartment in Sal under 200k",
       state, listings: FIXTURES,
     }).state;
     const beforeIntent = JSON.stringify(state.intent);
@@ -549,7 +552,7 @@ function runRegressions() {
   {
     let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
     state = respondToPropertyChat({
-      message: "I want a holiday apartment in Sal",
+      message: "2 bedroom apartment in Sal under 200k",
       state, listings: FIXTURES,
     }).state;
     const parsed = parseBuyerIntent("Can you help me contact the agent?");
@@ -567,7 +570,7 @@ function runRegressions() {
   {
     let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
     state = respondToPropertyChat({
-      message: "I want a holiday apartment in Sal",
+      message: "2 bedroom apartment in Sal under 200k",
       state, listings: FIXTURES,
     }).state;
     const parsed = parseBuyerIntent("I need a lawyer before buying");
@@ -585,7 +588,7 @@ function runRegressions() {
   {
     let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
     state = respondToPropertyChat({
-      message: "I want a holiday apartment in Sal",
+      message: "2 bedroom apartment in Sal under 200k",
       state, listings: FIXTURES,
     }).state;
     const firstLink = state.lastMatches[0]?.listing.sourceUrl;
@@ -607,7 +610,7 @@ function runRegressions() {
   {
     let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
     state = respondToPropertyChat({
-      message: "I want a holiday apartment in Sal",
+      message: "2 bedroom apartment in Sal under 200k",
       state, listings: FIXTURES,
     }).state;
     const beforeIntent = JSON.stringify(state.intent);
@@ -627,10 +630,10 @@ function runRegressions() {
       "R13: area guidance preserves lastMatches");
   }
 
-  // R14: broad holiday apartment search should not rank extreme outlier first.
+  // R14: priced holiday apartment search should not rank extreme outlier first.
   {
     const out = respondToPropertyChat({
-      message: "I want a holiday apartment in Sal",
+      message: "I want a holiday apartment in Sal under 4m",
       state: { intent: { keywords: [] }, lastMatches: [], turns: [] },
       listings: FIXTURES,
     });
@@ -638,9 +641,9 @@ function runRegressions() {
     assert(m.length > 0,
       "R14: holiday apartment search returns matches");
     assert(m[0]?.listing.id !== "10",
-      "R14: broad holiday apartment search does not rank the €3.12M outlier first");
+      "R14: priced holiday apartment search does not rank the €3.12M outlier first");
     assert(!m[0]?.reasons.includes("highest price among matches"),
-      "R14: broad holiday apartment search is not using most-expensive selector ranking");
+      "R14: priced holiday apartment search is not using most-expensive selector ranking");
   }
 
   // R15: missing property_type cannot make an obvious apartment a land partial.
@@ -734,6 +737,127 @@ function runRegressions() {
     });
     assert(links.reply.text.includes("https://example.com/listing/1"),
       "R19: send links still uses the last good cheaper-search matches");
+  }
+
+  // R20: broad holiday apartment search asks for budget before cards.
+  {
+    const out = respondToPropertyChat({
+      message: "I want a holiday apartment in Sal",
+      state: { intent: { keywords: [] }, lastMatches: [], turns: [] },
+      listings: FIXTURES,
+    });
+    assert(/budget range/i.test(out.reply.text),
+      "R20: broad holiday apartment search asks for budget");
+    assert(!out.reply.matches?.length,
+      "R20: broad holiday apartment search returns no cards");
+  }
+
+  // R21: beach-only intent asks which island first.
+  {
+    const out = respondToPropertyChat({
+      message: "I want something near the beach",
+      state: { intent: { keywords: [] }, lastMatches: [], turns: [] },
+      listings: FIXTURES,
+    });
+    assert(/which island/i.test(out.reply.text),
+      "R21: beach-only query asks which island to focus on");
+    assert(!out.reply.matches?.length,
+      "R21: beach-only query returns no cards");
+  }
+
+  // R22: vague buy-property intent asks for purpose.
+  {
+    const out = respondToPropertyChat({
+      message: "I want to buy property",
+      state: { intent: { keywords: [] }, lastMatches: [], turns: [] },
+      listings: FIXTURES,
+    });
+    assert(/holiday home|investment|somewhere to live/i.test(out.reply.text),
+      "R22: vague buy-property query asks for purpose");
+    assert(!out.reply.matches?.length,
+      "R22: vague buy-property query returns no cards");
+  }
+
+  // R23: "good stuff" asks what kind of good instead of dumping cards.
+  {
+    const out = respondToPropertyChat({
+      message: "show me the good stuff",
+      state: { intent: { keywords: [] }, lastMatches: [], turns: [] },
+      listings: FIXTURES,
+    });
+    assert(/best value|sea view|beachfront|lowest price|investment/i.test(out.reply.text),
+      "R23: good-stuff query asks a clarification");
+    assert(!out.reply.matches?.length,
+      "R23: good-stuff query returns no cards");
+  }
+
+  // R24: specific search still returns listing cards.
+  {
+    const out = respondToPropertyChat({
+      message: "2 bedroom apartment in Sal under 200k",
+      state: { intent: { keywords: [] }, lastMatches: [], turns: [] },
+      listings: FIXTURES,
+    });
+    assert((out.reply.matches ?? []).length > 0,
+      "R24: specific apartment search returns cards");
+  }
+
+  // R25: default card count is 3 and card replies include a next-step prompt.
+  {
+    const out = respondToPropertyChat({
+      message: "apartment in Santa Maria with at least 80 sqm",
+      state: { intent: { keywords: [] }, lastMatches: [], turns: [] },
+      listings: FIXTURES,
+    });
+    assert((out.reply.matches ?? []).length === 3,
+      "R25: default listing-card count is 3");
+    assert(/show more|links|cheaper options|budget/i.test(out.reply.text),
+      "R25: listing-card reply includes a short next-step prompt");
+  }
+
+  // R26: show more expands the current intent without resetting search.
+  {
+    let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
+    const first = respondToPropertyChat({
+      message: "apartment in Santa Maria with at least 80 sqm",
+      state, listings: FIXTURES,
+    });
+    state = first.state;
+    const firstIntent = JSON.stringify(state.intent);
+    const out = respondToPropertyChat({
+      message: "show more",
+      state, listings: FIXTURES,
+    });
+    assert((out.reply.matches ?? []).length > (first.reply.matches ?? []).length,
+      "R26: show more returns additional matches from current intent");
+    assert((out.reply.matches ?? []).length <= 6,
+      "R26: show more is capped at the broader V0 view");
+    assert(/broader view/i.test(out.reply.text),
+      "R26: show more says this is a broader view");
+    assert(JSON.stringify(out.state.intent) === firstIntent,
+      "R26: show more does not reset the current intent");
+  }
+
+  // R27: send links still works after a qualification turn.
+  {
+    let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
+    state = respondToPropertyChat({
+      message: "2 bedroom apartment in Sal under 200k",
+      state, listings: FIXTURES,
+    }).state;
+    const firstLink = state.lastMatches[0]?.listing.sourceUrl;
+    const qualified = respondToPropertyChat({
+      message: "I want a holiday apartment in Sal",
+      state, listings: FIXTURES,
+    });
+    assert(!qualified.reply.matches?.length,
+      "R27: qualification turn after cards returns no cards");
+    const links = respondToPropertyChat({
+      message: "send me the links",
+      state: qualified.state, listings: FIXTURES,
+    });
+    assert(firstLink != null && links.reply.text.includes(firstLink),
+      "R27: send links still uses previous matches after qualification");
   }
 }
 

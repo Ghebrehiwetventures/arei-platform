@@ -65,7 +65,7 @@ export interface ParseResult {
   matchedTerms: string[];
 }
 
-export type ChatAction = "send_links";
+export type ChatAction = "send_links" | "show_more";
 export type ChatModifier = "cheaper" | "bigger";
 
 /** How well a listing matches the intent given the data we actually have.
