@@ -229,9 +229,7 @@ export default function BlogList() {
                           {isOpen ? "−" : "+"}
                         </span>
                       </button>
-                      {isOpen && (
-                        <div className="kv-faq-a">{f.answer}</div>
-                      )}
+                      <div className="kv-faq-a" aria-hidden={!isOpen}>{f.answer}</div>
                     </div>
                   );
                 })}

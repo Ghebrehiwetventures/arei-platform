@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
@@ -111,6 +111,110 @@ function InventoryChart({ points }: { points: { label: string; value: number }[]
         </g>
       ))}
     </svg>
+  );
+}
+
+/* ─── Where is Cape Verde? — interactive Mapbox GL JS map.
+   Bounds frame Cape Verde on the left and Senegal / Mauritania /
+   West Africa on the right. Token comes from VITE_MAPBOX_TOKEN.
+
+   Editorial fit:
+   - Flat Mercator (not globe).
+   - Pan + zoom only (no rotate, no pitch, no compass).
+   - Default Mapbox wordmark + compact AttributionControl kept
+     (Mapbox ToS require both on the map surface; compact mode
+     keeps them small and unobtrusive).
+   - mapbox-gl is dynamically imported so it only ships in the
+     Market route chunk, which is already lazy-loaded. */
+function CapeVerdeMap() {
+  const token = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!token || !containerRef.current) return;
+
+    let cancelled = false;
+    let map: { remove: () => void } | null = null;
+
+    (async () => {
+      const [{ default: mapboxgl }] = await Promise.all([
+        import("mapbox-gl"),
+        import("mapbox-gl/dist/mapbox-gl.css"),
+      ]);
+      if (cancelled || !containerRef.current) return;
+
+      mapboxgl.accessToken = token;
+      const instance = new mapboxgl.Map({
+        container: containerRef.current,
+        style: "mapbox://styles/mapbox/light-v11",
+        projection: { name: "mercator" },
+        bounds: [
+          [-28, 12], // SW — Atlantic, south of Cape Verde
+          [-10, 22], // NE — Mauritania interior
+        ],
+        fitBoundsOptions: { padding: 12, animate: false },
+        dragRotate: false,
+        pitchWithRotate: false,
+        touchPitch: false,
+        // Compact attribution chip (small (i) that expands on tap)
+        // — required by Mapbox ToS along with the wordmark.
+        attributionControl: false,
+        // One-finger drag scrolls the page on mobile; two fingers
+        // pan the map. Desktop scroll-zoom requires Ctrl/Cmd.
+        cooperativeGestures: true,
+      });
+      instance.addControl(
+        new mapboxgl.AttributionControl({ compact: true }),
+        "bottom-right",
+      );
+      instance.addControl(
+        new mapboxgl.NavigationControl({
+          showCompass: false,
+          showZoom: true,
+          visualizePitch: false,
+        }),
+        "top-right",
+      );
+      map = instance;
+    })().catch((err) => {
+      console.error("[CapeVerdeMap] failed to initialise", err);
+    });
+
+    return () => {
+      cancelled = true;
+      map?.remove();
+    };
+  }, [token]);
+
+  if (!token) {
+    return (
+      <div className="kv-m-geo-wrap">
+        <div className="kv-m-geo-map">
+          <div
+            className="kv-m-geo-fallback"
+            role="img"
+            aria-label="Map preview unavailable — Cape Verde, west of Senegal"
+          >
+            <div className="kv-m-geo-fallback-pin" aria-hidden="true">⊙</div>
+            <div className="kv-m-geo-fallback-label">Map preview unavailable</div>
+            <div className="kv-m-geo-fallback-sub">Cape Verde · West Africa · Atlantic Ocean</div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="kv-m-geo-wrap">
+      <div className="kv-m-geo-map">
+        <div
+          ref={containerRef}
+          className="kv-m-geo-mapbox"
+          role="region"
+          aria-label="Interactive map showing Cape Verde in the Atlantic Ocean approximately 570 km west of Senegal, with Mauritania and the West African coast visible on the right"
+        />
+      </div>
+    </div>
   );
 }
 
@@ -304,6 +408,56 @@ export default function Market() {
           </p>
         </div>
       </header>
+
+      {/* Geographic context — orientation block for first-time visitors.
+          Lightweight, factual, editorial. No external map API. */}
+      <section className="kv-m-geo">
+        <div className="kv-m-inner">
+          <div className="kv-m-section-head" style={{ marginBottom: 20 }}>
+            <span className="kv-l-eyebrow">Where is Cape Verde?</span>
+            <h2>An archipelago off West Africa.</h2>
+          </div>
+          <div className="kv-m-geo-grid">
+            <CapeVerdeMap />
+            <div className="kv-m-geo-facts">
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Population</span>
+                <span className="kv-m-geo-fact-v">~600,000</span>
+              </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Independence</span>
+                <span className="kv-m-geo-fact-v">1975 (from Portugal)</span>
+              </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Capital</span>
+                <span className="kv-m-geo-fact-v">Praia, Santiago</span>
+              </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Islands</span>
+                <span className="kv-m-geo-fact-v">10 (9 inhabited)</span>
+              </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Key investment islands</span>
+                <span className="kv-m-geo-fact-v">Sal · Boa Vista · Santiago</span>
+              </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Official language</span>
+                <span className="kv-m-geo-fact-v">Portuguese</span>
+              </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Spoken language</span>
+                <span className="kv-m-geo-fact-v">Kriolu</span>
+              </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Currency</span>
+                <span className="kv-m-geo-fact-v">
+                  CVE; property prices often quoted in EUR
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Intro — gives the page a real opening before the KPI strip.
           Frames what the data is, where it comes from, and how to read it.

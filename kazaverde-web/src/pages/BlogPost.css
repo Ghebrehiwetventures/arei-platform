@@ -586,4 +586,48 @@
   .kv-bp-head-inner { padding: 32px 24px 28px; }
   .kv-bp-related-grid { grid-template-columns: 1fr; }
   .kv-bp-byline { font-size: 10px; }
+
+  /* Prevent grid item from blowing out past viewport. Without min-width:0
+     a child with intrinsic min-content (long URLs, wide tables) forces
+     the grid track wider than its 1fr share. */
+  .kv-bp-grid > * { min-width: 0; max-width: 100%; }
+  .kv-bp-body {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .kv-bp-body p,
+  .kv-bp-body li,
+  .kv-bp-body blockquote { overflow-wrap: anywhere; }
+
+  /* Tables can't always be made narrower than the sum of their columns'
+     min content widths. Allow the table itself to scroll horizontally
+     within its own block while the page stays at viewport width. */
+  .kv-bp-body table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 12px;
+  }
+  .kv-bp-body th,
+  .kv-bp-body td {
+    padding: 9px 10px;
+    overflow-wrap: anywhere;
+  }
+  .kv-bp-body th {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Island-stat cards (added by PR #120) — guarantee they fit. */
+  .kv-bp-body .kv-island-grid { max-width: 100%; }
+  .kv-bp-body .kv-island-stat { min-width: 0; max-width: 100%; }
+
+  /* Long inline code / URLs. */
+  .kv-bp-body code,
+  .kv-bp-body a { overflow-wrap: anywhere; }
 }

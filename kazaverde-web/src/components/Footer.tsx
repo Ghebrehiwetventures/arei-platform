@@ -28,7 +28,6 @@ export default function Footer() {
             <Link to="/listings">All listings</Link>
             <Link to="/market">Market data</Link>
             <Link to="/saved">Shortlist</Link>
-            <Link to="/rent">Rentals · Coming soon</Link>
           </div>
 
           <div className="footer-col">

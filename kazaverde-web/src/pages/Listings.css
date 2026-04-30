@@ -260,6 +260,15 @@
 }
 .kv-sort b { color: var(--kv-black); font-weight: 500; }
 
+/* Mobile-only count chip rendered inside .kv-section-head, paired with
+   the sort control on the same row. Hidden on desktop. */
+.kv-section-head-count { display: none; }
+.kv-section-head-count b {
+  color: var(--kv-black);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
 /* ═══════════ CARDS ═══════════ */
 .kv-grid {
   display: grid;
@@ -457,6 +466,12 @@
   margin-bottom: 8px;
 }
 
+.kv-empty-clear {
+  display: block;
+  margin: 20px auto 0;
+  min-width: 200px;
+}
+
 /* ═══════════ PAGER ═══════════
    Top divider uses .kv-bleed-rule so the line spans 100vw (consistent
    with hero band and footer band edges). */
@@ -548,15 +563,28 @@
      to listings/islands counts and pushes the strip to a second row. */
   .kv-hero-meta-updated { display: none; }
   /* RESULTS section header is redundant with hero on mobile (same
-     "browse the index" message). Hide eyebrow + h2; keep only the
-     SORT BY chip so users can still re-sort. */
+     "browse the index" message). Hide eyebrow + h2; keep just one
+     compact row: count on the left, sort on the right. */
   .kv-section-head {
     flex-direction: row;
-    justify-content: flex-end;
+    justify-content: space-between;
     align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
   }
   .kv-section-head > div:first-child { display: none; }
-  .kv-section { padding-top: 16px; }
+  .kv-section-head-count {
+    display: block;
+    font-family: var(--kv-mono);
+    font-size: 11px;
+    color: var(--kv-gray-500);
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    min-width: 0;
+  }
+  /* Trim sort chip slightly so the row stays comfortable at 360px. */
+  .kv-sort { font-size: 10.5px; letter-spacing: 0.06em; padding: 6px 0; }
+  .kv-section { padding-top: 24px; }
   .kv-filters { top: 52px; }
   /* Horizontal scroll for filter chips — mobile-native pattern.
      Chips keep natural width; user swipes right to reveal extras.
@@ -584,6 +612,13 @@
        inside the flex item to "ALL\nISLANDS". */
     white-space: nowrap;
   }
+
+  /* Filter-bar count is moved into .kv-section-head on mobile so it
+     pairs with the sort chip on a single compact row. The standalone
+     row below the chips was eating vertical space for no extra info. */
+  .kv-filters-inner { flex-wrap: nowrap; row-gap: 0; }
+  .kv-filter-spacer { display: none; }
+  .kv-filter-result { display: none; }
 
   /* Filter popover on mobile — bottom sheet.
      Without this rule the popover stays absolute inside .kv-field-wrap,
@@ -665,16 +700,14 @@
    and the bottom-sheet popover inside it both paint above. */
 .kv-pop-backdrop { display: none; }
 @media (max-width: 640px) {
+  /* Tap-to-close target only — no dim overlay. The previous rgba 0.35
+     fill made the page feel modal/heavy when opening a sort or filter
+     popover; remove the visual weight, keep the click target. */
   .kv-pop-backdrop {
     display: block;
     position: fixed;
     inset: 0;
-    background: rgba(0, 0, 0, 0.35);
+    background: transparent;
     z-index: 50;
-    animation: kv-pop-backdrop-in 0.15s ease-out;
-  }
-  @keyframes kv-pop-backdrop-in {
-    from { opacity: 0; }
-    to { opacity: 1; }
   }
 }

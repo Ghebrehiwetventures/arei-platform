@@ -762,6 +762,19 @@ export default function Detail() {
             );
           })()}
 
+          {/* Map placeholder — location context without geocoding.
+              Matches the cv-listing.html Location section pattern. */}
+          <div className="kv-d-map-block">
+            <div className="kv-d-table-eyebrow">Location</div>
+            <div className="kv-d-map-placeholder">
+              <div className="kv-d-map-pin" aria-hidden="true">⊙</div>
+              <div className="kv-d-map-location">
+                {[detail.city, detail.island].filter(Boolean).join(", ")}
+              </div>
+              <span className="kv-pill">Map coming soon</span>
+            </div>
+          </div>
+
         </div>
 
         {/* Buyer-facing sidebar — three stacked panels mirroring the

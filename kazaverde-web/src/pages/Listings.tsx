@@ -397,6 +397,12 @@ export default function Listings() {
             <h2>Browse every listing, cleaned and indexed.</h2>
           </div>
 
+          {/* Mobile-only count — paired with sort on a single row.
+              Hidden on desktop (count lives in the filter bar instead). */}
+          <div className="kv-section-head-count" aria-hidden="true">
+            <b>{shownCount}</b> {shownCount === 1 ? "listing" : "listings"}
+          </div>
+
           <div className="kv-sort-wrap">
             <button
               type="button"
@@ -444,6 +450,15 @@ export default function Listings() {
           <div className="kv-empty">
             <strong>No listings match.</strong>
             Try widening the filters.
+            {hasAnyFilter && (
+              <button
+                type="button"
+                className="kv-pager-btn kv-empty-clear"
+                onClick={clearAll}
+              >
+                Clear all filters ×
+              </button>
+            )}
           </div>
         ) : (
           <div className="kv-grid">

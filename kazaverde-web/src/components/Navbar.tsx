@@ -27,7 +27,6 @@ export default function Navbar() {
 
   const links = [
     { to: "/listings", label: "Listings" },
-    { to: "/rent", label: "Rent" },
     { to: "/market", label: "Market" },
     { to: "/blog", label: "Guides" },
     { to: "/saved", label: count > 0 ? `Shortlist · ${count}` : "Shortlist" },

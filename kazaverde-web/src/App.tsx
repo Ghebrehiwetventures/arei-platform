@@ -67,7 +67,8 @@ export default function App() {
           <Route path="/listings/sal" element={<Navigate to="/?island=Sal" replace />} />
           <Route path="/listings/boa-vista" element={<Navigate to="/?island=Boa+Vista" replace />} />
           <Route path="/market" element={<Market />} />
-          <Route path="/rent" element={<Rent />} />
+          {/* Rent surface offline — redirect to listings. Rent page and data model preserved. */}
+          <Route path="/rent" element={<Navigate to="/listings" replace />} />
           <Route path="/about" element={<About />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:slug" element={<BlogPost />} />

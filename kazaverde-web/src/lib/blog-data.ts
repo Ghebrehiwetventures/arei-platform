@@ -9,7 +9,7 @@ export interface BlogArticle {
   tags: string[];
 }
 
-export const BLOG_ARTICLES: BlogArticle[] = [
+const _ALL_BLOG_ARTICLES = [
   {
     slug: "cape-verde-property-prices-by-island",
     title: "Cape Verde property prices by island: what the KazaVerde index currently shows",
@@ -74,7 +74,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <hr>
 <h2>How to use this</h2>
 <p>These numbers are a snapshot, not a forecast and not a valuation. They are useful for narrowing a shortlist — not for replacing the work of going through individual listings, talking to an independent local lawyer, and checking the source page for any property you take seriously.</p>
-<p>For the legal and tax mechanics of buying once you have shortlisted, see the <a href="/blog/buying-property-cape-verde-guide">step-by-step buying guide</a>. For an island-by-island comparison framed around lifestyle and use case, see <a href="/blog/which-cape-verde-island-property">Which Cape Verde island</a>. For yield context on Sal and Boa Vista, see <a href="/blog/cape-verde-rental-yields-realistic">Cape Verde rental yields</a>. For methodology and source coverage, see <a href="/about">/about</a>.</p>
+<p>For the legal and tax mechanics of buying once you have shortlisted, see the <a href="/blog/buying-property-cape-verde-guide">step-by-step buying guide</a>. For an island-by-island comparison framed around lifestyle and use case, see <a href="/blog/which-cape-verde-island-property">Which Cape Verde island</a>. For methodology and source coverage, see <a href="/about">/about</a>.</p>
 <hr>
 <p><em>KazaVerde is an independent property search and data platform — not a broker, agency, or marketplace. Listings are aggregated from publicly accessible sources we currently track and are not legally verified. Always confirm a property's details with the original agent or seller and your own lawyer before acting on any number quoted here.</em></p>`,
   },
@@ -221,7 +221,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <ul>
 <li><a href="/blog/which-cape-verde-island-property">Which Cape Verde Island Should You Buy On?</a> — Data-driven comparison of all islands</li>
 <li><a href="/blog/cape-verde-property-tax-reform-2026">2026 Property Tax Reform</a> — What changed and what it means for buyers</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield analysis and cost breakdown</li>
 <li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — How to get permanent residency through property investment</li>
 </ul>
 <hr>
@@ -354,12 +353,11 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h3>Which island has the cheapest property?</h3>
 <p>Maio and Fogo have the lowest property prices, but they also have the thinnest markets and most limited infrastructure. For more accessible investment with some price advantage over Sal, Boa Vista and Santiago offer better value with reasonable infrastructure and rental potential.</p>
 <h3>Can I get rental income from property on any island?</h3>
-<p>Realistically, strong rental demand exists primarily on Sal and (increasingly) Boa Vista, where international tourism drives short-term holiday lets. Santiago has a local rental market. Other islands have very limited rental demand. Read our <a href="/blog/cape-verde-rental-yields-realistic">rental yield analysis</a> for detailed numbers.</p>
+<p>Realistically, strong rental demand exists primarily on Sal and (increasingly) Boa Vista, where international tourism drives short-term holiday lets. Santiago has a local rental market. Other islands have very limited rental demand.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Step-by-step buying process for foreign buyers</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield analysis by island and rental model</li>
 <li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — Investment thresholds vary by island GDP classification</li>
 </ul>
 <hr>
@@ -441,7 +439,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full cost breakdown and buying process</li>
 <li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — Tax benefits for property investors</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields</a> — How the new IPI affects your net yield calculations</li>
 </ul>
 <hr>
 <p><em>This article is for informational purposes only. Tax legislation is subject to change and interpretation. Always consult a qualified Cape Verdean tax advisor or lawyer for advice specific to your situation.</em></p>
@@ -809,7 +806,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — The complete buying process to follow</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Avoid overpaying based on inflated yield projections</li>
 <li><a href="/blog/which-cape-verde-island-property">Which Island Should You Buy On?</a> — Compare islands before committing</li>
 </ul>
 <hr>
@@ -839,7 +835,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <p>Prices have tracked upward in recent years — 10–15% annual appreciation has been reported for well-located properties — driven by steady tourism growth and limited new supply in established zones.</p>
 <h3>Rental market</h3>
 <p>Sal has the strongest short-term rental market in Cape Verde. International tourist volume provides a large pool of potential guests, and the infrastructure to serve them (tour operators, online booking platforms, airport transfers) is mature.</p>
-<p>Gross rental yields quoted by developers and agents typically fall in the 5–8% range. Net yields — after management fees (25–35% of gross), annual service charges, maintenance, and the new IPI annual property tax — are meaningfully lower. IPI is generally described as 0.1% for urban property and 0.15% for land, with possible surcharges for vacant, ruined/degraded, or unfinished-facade properties. A realistic net yield for a well-managed property in a good resort complex is 3–5%. Read the <a href="/blog/cape-verde-rental-yields-realistic">rental yield analysis</a> for a full cost breakdown.</p>
+<p>Gross rental yields quoted by developers and agents typically fall in the 5–8% range. Net yields — after management fees (25–35% of gross), annual service charges, maintenance, and the new IPI annual property tax — are meaningfully lower. IPI is generally described as 0.1% for urban property and 0.15% for land, with possible surcharges for vacant, ruined/degraded, or unfinished-facade properties. A realistic net yield for a well-managed property in a good resort complex is 3–5%.</p>
 <p>Seasonality is moderate on Sal relative to other islands — European winter sun demand helps smooth the calendar — but July and August can be slower as European tourists gravitate toward Mediterranean destinations.</p>
 <h3>Liquidity</h3>
 <p>Sal is the most liquid property market in Cape Verde. There is an established resale market, international buyer interest is ongoing, and real estate agents with marketing reach to European buyers are well-represented. If you need to exit, Sal gives you the best chance of finding a buyer in a reasonable timeframe.</p>
@@ -943,7 +939,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/which-cape-verde-island-property">Which Cape Verde Island Should You Buy On?</a> — Full six-island comparison</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield analysis by rental model</li>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full buying process for foreign buyers</li>
 <li><a href="/blog/boa-vista-property-guide">Boa Vista Property Guide</a> — The third option between Sal's prices and Santiago's profile</li>
 </ul>
@@ -1063,7 +1058,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full process for resale and new-build purchases</li>
 <li><a href="/blog/mistakes-buying-property-cape-verde">7 Mistakes Buyers Make in Cape Verde</a> — Common errors and how to avoid them</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Stress-testing developer yield projections</li>
 </ul>
 <hr>
 <p><em>This article is for informational purposes only and does not constitute legal or financial advice. Always consult a qualified Cape Verdean lawyer before entering any property contract.</em></p>
@@ -1143,7 +1137,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 </tr>
 </tbody>
 </table>
-<p>Many rental yield calculations provided by developers or agents omit several of these cost lines, which inflates the apparent net yield. Build all of them into your model before assessing whether the investment makes sense. The <a href="/blog/cape-verde-rental-yields-realistic">rental yield guide</a> covers this in detail.</p>
+<p>Many rental yield calculations provided by developers or agents omit several of these cost lines, which inflates the apparent net yield. Build all of them into your model before assessing whether the investment makes sense.</p>
 <p>Confirm the IPI position for your property with a qualified local lawyer or municipality, especially if the property is land, vacant, ruined/degraded, or has an unfinished facade.</p>
 <hr>
 <h2>Selecting a Management Company</h2>
@@ -1175,7 +1169,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <hr>
 <h2>Related Guides</h2>
 <ul>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Full cost model for investment properties</li>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — End-to-end buying process</li>
 <li><a href="/blog/mistakes-buying-property-cape-verde">7 Mistakes Buyers Make in Cape Verde</a> — Including management-related errors</li>
 </ul>
@@ -1274,7 +1267,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full buying process including cost breakdown</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield analysis for investment properties</li>
 <li><a href="/blog/cape-verde-property-tax-reform-2026">2026 Property Tax Reform</a> — Transaction and annual tax costs under the new system</li>
 </ul>
 <hr>
@@ -1345,7 +1337,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <p><strong>Flight access:</strong> The number of direct European routes to Boa Vista is growing but remains smaller than Sal's. More routes mean more potential guests; fewer routes mean more dependence on the routes that exist. Any significant reduction in a major airline's Boa Vista operations would meaningfully affect occupancy rates.</p>
 <p><strong>Seasonality:</strong> European winter sun demand runs October to April, which is strong. Summer occupancy (June–September) is lower than on Sal, as Boa Vista has less established tourism infrastructure to attract non-package visitors. The seasonal gap is more pronounced than on Sal.</p>
 <p><strong>Management quality variance:</strong> Because the market is smaller and newer, the range in management company quality is wide. A well-run resort with active European tour operator relationships can achieve solid occupancy; a poorly managed one in the same development cluster will significantly underperform.</p>
-<p>Gross yields quoted by developers and agents on Boa Vista follow a similar pattern to Sal: headline figures of 5–8% gross, with realistic net yields after management fees, service charges, maintenance, and taxes in the 3–5% range for well-managed properties. The <a href="/blog/cape-verde-rental-yields-realistic">rental yield guide</a> covers the full cost model.</p>
+<p>Gross yields quoted by developers and agents on Boa Vista follow a similar pattern to Sal: headline figures of 5–8% gross, with realistic net yields after management fees, service charges, maintenance, and taxes in the 3–5% range for well-managed properties.</p>
 <hr>
 <h2>Infrastructure Reality Check</h2>
 <p>The infrastructure gap between Boa Vista and Sal is relevant to both lifestyle buyers and investors:</p>
@@ -1387,7 +1379,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <ul>
 <li><a href="/blog/which-cape-verde-island-property">Which Cape Verde Island Should You Buy On?</a> — Full six-island comparison including Boa Vista</li>
 <li><a href="/blog/sal-vs-santiago-property">Sal vs Santiago</a> — The two alternative major markets compared</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield model for resort investments</li>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full buying process for foreign buyers</li>
 </ul>
 <hr>
@@ -1395,6 +1386,14 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 `,
   },
 ];
+
+// Offline articles — content preserved, hidden from public product.
+// To re-enable: remove slug from this set.
+const OFFLINE_SLUGS = new Set(["cape-verde-rental-yields-realistic"]);
+
+export const BLOG_ARTICLES: BlogArticle[] = _ALL_BLOG_ARTICLES.filter(
+  (a) => !OFFLINE_SLUGS.has(a.slug)
+);
 
 export function getArticleBySlug(slug: string): BlogArticle | undefined {
   return BLOG_ARTICLES.find((a) => a.slug === slug);
