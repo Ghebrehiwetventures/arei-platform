@@ -157,8 +157,88 @@
   font-style: italic;
 }
 
+/* About founder note — scoped to /about markup, secondary to methodology. */
+.kv-about-founder {
+  max-width: 760px;
+}
+.kv-about-founder-quote {
+  margin: 22px 0 0;
+  padding: 0;
+  border: none;
+  font-family: var(--kv-sans);
+  font-size: 17px;
+  line-height: 1.7;
+  color: var(--kv-black);
+}
+.kv-about-founder-quote p {
+  margin: 0;
+}
+.kv-about-founder-quote p + p {
+  margin-top: 14px;
+}
+.kv-about-founder-byline {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  margin-top: 28px;
+  padding-top: 20px;
+  border-top: 1px solid var(--kv-rule);
+}
+.kv-about-founder-mark {
+  width: 44px;
+  height: 44px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--kv-green-deep, var(--kv-green));
+  color: var(--kv-green);
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.kv-about-founder-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kv-about-founder-name {
+  font-family: var(--kv-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kv-black);
+}
+.kv-about-founder-role {
+  font-family: var(--kv-sans);
+  font-size: 13px;
+  color: var(--kv-gray-500);
+}
+.kv-about-founder-link {
+  align-self: flex-start;
+  margin-top: 6px;
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kv-black);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.28);
+  transition: border-color var(--kv-dur-fast) var(--kv-ease), color var(--kv-dur-fast) var(--kv-ease);
+}
+.kv-about-founder-link:hover {
+  color: var(--kv-gray-500);
+  border-bottom-color: var(--kv-gray-500);
+}
+
 /* Responsive */
 @media (max-width: 720px) {
   .kv-pol-prose, .kv-pol-list, .kv-pol-pull { font-size: 14.5px; }
   .kv-pol-cards { grid-template-columns: 1fr; }
+  .kv-about-founder-quote { font-size: 15.5px; }
+  .kv-about-founder-byline { align-items: flex-start; }
+  .kv-about-founder-mark {
+    width: 40px;
+    height: 40px;
+  }
 }
