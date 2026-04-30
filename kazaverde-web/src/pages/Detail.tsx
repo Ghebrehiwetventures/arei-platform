@@ -25,6 +25,10 @@ import { calcMortgage, type MortgageInput } from "../lib/calcMortgage";
 import NotFound from "./NotFound";
 import "./Detail.css";
 
+const SITE_URL =
+  (typeof import.meta !== "undefined" && (import.meta as { env?: { VITE_SITE_URL?: string } }).env?.VITE_SITE_URL) ||
+  (typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com");
+
 /** Collapse WP size variants (-1024x768.jpg) into one image per base filename, keeping the largest. */
 function dedupeWpImages(urls: string[]): string[] {
   const unique = [...new Set(urls)];
@@ -156,6 +160,38 @@ function hostFromUrl(url: string | null | undefined): string {
   }
 }
 
+function truncateSeoText(value: string, maxLength = 155): string {
+  const compact = value.replace(/\s+/g, " ").trim();
+  if (compact.length <= maxLength) return compact;
+  const suffix = "...";
+  const limit = maxLength - suffix.length;
+  const slice = compact.slice(0, limit + 1);
+  const lastSpace = slice.lastIndexOf(" ");
+  const cutAt = lastSpace >= 90 ? lastSpace : limit;
+  return `${compact.slice(0, cutAt).trim()}${suffix}`;
+}
+
+function buildListingCanonicalUrl(id: string): string {
+  return new URL(`/listing/${id}`, SITE_URL).toString();
+}
+
+function buildListingMetaDescription(detail: ListingDetailType, title: string): string {
+  const location = `${detail.city ? `${detail.city}, ` : ""}${detail.island}, Cape Verde`;
+  const parts = [`${title} in ${location}.`];
+
+  if (detail.price) {
+    parts.push(`Asking price ${formatPrice(detail.price, detail.currency)}.`);
+  }
+
+  if (detail.property_type) {
+    parts.push(`Source-linked ${detail.property_type.toLowerCase()} listing on KazaVerde.`);
+  } else {
+    parts.push("Source-linked property listing on KazaVerde.");
+  }
+
+  return truncateSeoText(parts.join(" "));
+}
+
 /** Extract a short slug from source_id (e.g. "cv_gabetticasecapoverde:CV-TER339" → "TCV") */
 /* Map our free-form property_type onto schema.org Residence subtypes.
    Falls back to "Residence" when nothing matches — still valid per the
@@ -192,13 +228,18 @@ export default function Detail() {
   const [marketCtx, setMarketCtx] = useState<IslandContext | null>(null);
 
   const displayTitle = detail ? toTitleCase(detail.title) : "Property";
+  const listingCanonicalUrl = detail ? buildListingCanonicalUrl(detail.id) : undefined;
 
   useDocumentMeta(
     detail ? displayTitle : error ? "Property not found" : "Property",
     detail
-      ? `${displayTitle} in ${detail.city ? `${detail.city}, ` : ""}${detail.island}, Cape Verde.`
+      ? buildListingMetaDescription(detail, displayTitle)
       : "Property listing in Cape Verde",
-    images[0] ? { image: images[0] } : undefined
+    detail
+      ? { image: images[0], url: listingCanonicalUrl }
+      : images[0]
+        ? { image: images[0] }
+        : undefined
   );
 
   /* JSON-LD RealEstateListing — gives Google the structured data needed for
@@ -210,7 +251,7 @@ export default function Detail() {
     if (!detail) return;
     const SCRIPT_ID = "kv-jsonld-listing";
     document.getElementById(SCRIPT_ID)?.remove();
-    const url = `https://kazaverde.com/listing/${detail.id}`;
+    const url = buildListingCanonicalUrl(detail.id);
     const residenceType = mapResidenceType(detail.property_type);
     const ld: Record<string, unknown> = {
       "@context": "https://schema.org",
@@ -866,6 +907,14 @@ export default function Detail() {
               source agent or the seller. Contact the agent directly for viewings, offers, and
               legal advice — or see our <Link to="/blog">buying guide</Link> for the basics.
             </p>
+            <p className="kv-d-source-disc">
+              Explore more: <Link to="/listings">all Cape Verde listings</Link>,{" "}
+              <Link to={`/listings?island=${encodeURIComponent(detail.island)}`}>
+                {detail.island} listings
+              </Link>,{" "}
+              <Link to="/market">market data</Link>, or{" "}
+              <Link to="/about">how KazaVerde works</Link>.
+            </p>
           </div>
         </aside>
       </div>
@@ -1304,7 +1353,10 @@ function KvMarketContext({ ctx, island }: { ctx: IslandContext; island: string }
         ))}
       </div>
 
-      <p className="kv-d-disclaimer">Asking price data from public listings. Not financial advice.</p>
+      <p className="kv-d-disclaimer">
+        Asking price data from public listings. Not financial advice.{" "}
+        <Link to="/market">View Cape Verde market data</Link>.
+      </p>
     </section>
   );
 }

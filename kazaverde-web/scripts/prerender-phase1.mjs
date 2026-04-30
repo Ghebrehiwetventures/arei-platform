@@ -685,6 +685,7 @@ async function getListingDetailRoutes() {
           {
             ogType: "website",
             image: detail.image_urls[0] || ogImage,
+            jsonLd: buildListingJsonLd(detail),
           },
         ),
       }));
@@ -699,24 +700,81 @@ function buildListingSeoTitle(detail) {
 }
 
 function buildListingSeoDescription(detail) {
+  const title = buildListingSeoTitle(detail);
   const parts = [
-    buildListingSeoTitle(detail),
-    `in ${detail.city ? `${detail.city}, ` : ""}${detail.island}, Cape Verde`,
+    `${title} in ${detail.city ? `${detail.city}, ` : ""}${detail.island}, Cape Verde.`,
   ];
 
   if (detail.price) {
-    parts.push(formatPrice(detail.price, detail.currency));
+    parts.push(`Asking price ${formatPrice(detail.price, detail.currency)}.`);
   }
 
   if (detail.property_type) {
-    parts.push(isLandListing(detail) ? `${detail.property_type} listing` : detail.property_type);
+    parts.push(`Source-linked ${String(detail.property_type).toLowerCase()} listing on KazaVerde.`);
+  } else {
+    parts.push("Source-linked property listing on KazaVerde.");
   }
 
-  if (!isLandListing(detail) && detail.bedrooms != null) {
-    parts.push(detail.bedrooms === 0 ? "studio" : `${detail.bedrooms}-bedroom`);
-  }
+  return truncateSeoText(parts.join(" "));
+}
 
-  return parts.join(" · ");
+function truncateSeoText(value, maxLength = 155) {
+  const compact = String(value).replace(/\s+/g, " ").trim();
+  if (compact.length <= maxLength) return compact;
+  const suffix = "...";
+  const limit = maxLength - suffix.length;
+  const slice = compact.slice(0, limit + 1);
+  const lastSpace = slice.lastIndexOf(" ");
+  const cutAt = lastSpace >= 90 ? lastSpace : limit;
+  return `${compact.slice(0, cutAt).trim()}${suffix}`;
+}
+
+function buildListingJsonLd(detail) {
+  const route = `/listing/${detail.id}`;
+  const url = new URL(route, `${siteUrl}/`).toString();
+  const residenceType = mapResidenceType(detail.property_type);
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "RealEstateListing",
+    name: buildListingSeoTitle(detail),
+    url,
+    description: (detail.description || buildListingSeoDescription(detail)).slice(0, 500),
+    datePosted: detail.first_seen_at ?? detail.last_seen_at ?? undefined,
+    image: detail.image_urls.length > 0 ? detail.image_urls.slice(0, 6) : undefined,
+    mainEntity: {
+      "@type": residenceType,
+      address: {
+        "@type": "PostalAddress",
+        addressLocality: detail.city || undefined,
+        addressRegion: detail.island,
+        addressCountry: "CV",
+      },
+      numberOfRooms: detail.bedrooms ?? undefined,
+      numberOfBathroomsTotal: detail.bathrooms ?? undefined,
+      floorSize: detail.property_size_sqm
+        ? { "@type": "QuantitativeValue", value: detail.property_size_sqm, unitCode: "MTK" }
+        : undefined,
+    },
+    offers: detail.price
+      ? {
+          "@type": "Offer",
+          price: detail.price,
+          priceCurrency: detail.currency || "EUR",
+          availability: "https://schema.org/InStock",
+          url,
+        }
+      : undefined,
+  };
+}
+
+function mapResidenceType(propertyType) {
+  const t = String(propertyType || "").toLowerCase();
+  if (/apart|flat|condo/.test(t)) return "Apartment";
+  if (/villa|house|moradia|casa|chalet/.test(t)) return "House";
+  if (/single.?family/.test(t)) return "SingleFamilyResidence";
+  if (/land|plot|terreno|parcela|terrain|lot/.test(t)) return "Place";
+  return "Residence";
 }
 
 function renderListingDetailBody(detail) {
@@ -756,6 +814,12 @@ function renderListingDetailBody(detail) {
         <p>${escapeHtml(formatLocation(detail.city, detail.island))}, Cape Verde</p>
         <h1>${escapeHtml(buildListingSeoTitle(detail))}</h1>
         <p>${escapeHtml(formatPrice(detail.price, detail.currency))}</p>
+        <p>
+          <a href="/listings">All Cape Verde listings</a> ·
+          <a href="/listings?island=${encodeURIComponent(detail.island)}">${escapeHtml(detail.island)} listings</a> ·
+          <a href="/market">Market data</a> ·
+          <a href="/about">How KazaVerde works</a>
+        </p>
         ${firstImage ? `<p><img src="${escapeHtml(firstImage)}" alt="${escapeHtml(buildListingSeoTitle(detail))}" loading="eager" /></p>` : ""}
         ${specs.length > 0 ? `<ul>\n${specs.map((spec) => `          <li><strong>${escapeHtml(spec.label)}:</strong> ${escapeHtml(spec.value)}</li>`).join("\n")}\n        </ul>` : ""}
         <div>
@@ -763,6 +827,10 @@ ${indent(descriptionHtml.trim() || "<p>Property details available on the source 
         </div>
         <p>Source: <a href="${escapeHtml(detail.source_url)}">${escapeHtml(formatSourceLabel(detail.source_id))}</a></p>
         ${lastChecked ? `<p>Last checked: ${escapeHtml(lastChecked)}</p>` : ""}
+        <p>
+          Browse more <a href="/listings?island=${encodeURIComponent(detail.island)}">${escapeHtml(detail.island)} property listings</a>
+          or compare asking-price context on the <a href="/market">Cape Verde market data</a> page.
+        </p>
       </article>
     </main>
   `;
