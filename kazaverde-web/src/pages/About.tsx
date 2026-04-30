@@ -74,6 +74,10 @@ const QUALITY_NOTES = [
     name: "Not legally verified",
     desc: "KazaVerde does not verify title, ownership, debts, permits, taxes, or transaction readiness. Legal due diligence belongs with an independent local lawyer.",
   },
+  {
+    name: "Market sample, not market truth",
+    desc: "The index reflects the public listings KazaVerde currently tracks. It should be read as a structured market sample, not a complete record of all property activity in Cape Verde.",
+  },
 ];
 
 function CheckIcon() {
