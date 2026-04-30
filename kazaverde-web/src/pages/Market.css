@@ -63,7 +63,6 @@
 .kv-m-geo-mapbox {
   width: 100%;
   flex: 1;
-  min-height: 320px;
   background: var(--kv-paper);
 }
 
@@ -93,10 +92,8 @@
   gap: 8px;
   width: 100%;
   /* Fills the parent card height (which is grid-stretched to match
-     the facts panel). Min-height keeps the fallback usable on mobile
-     where the grid collapses to a single column. */
+     the facts panel on desktop). */
   flex: 1;
-  min-height: 320px;
   background: var(--kv-paper);
   background-image:
     linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
@@ -157,8 +154,10 @@
 @media (max-width: 640px) {
   .kv-m-geo { padding: 28px 0; }
   .kv-m-geo-grid { grid-template-columns: 1fr; gap: 16px; }
-  /* Card height now derives from intrinsic 2:1 aspect on both the
-     live image and the fallback — no override needed. */
+  /* On mobile each grid item lives in its own row, so stretch is a
+     no-op — give the map/fallback an explicit 2:1 height instead. */
+  .kv-m-geo-mapbox,
+  .kv-m-geo-fallback { aspect-ratio: 2 / 1; }
 }
 
 /* ─── Intro band — sits between hero and KPI strip ─── */
