@@ -6,6 +6,10 @@
 //                island, "show cheaper", etc.). Merges into prior intent.
 //   action     — pure side-effect like "send me the links" with no new
 //                criteria. Does not mutate intent.
+//   buyer_support — legal, financing, viewing, agent/source, or process
+//                questions. Does not mutate intent or last matches.
+//   area_guidance — high-level area questions. Does not show listing cards
+//                unless the user explicitly asks for listings later.
 //
 // The rules are deliberately simple and deterministic; no LLM.
 
@@ -32,6 +36,9 @@ export function classifyMessage(
   parsed: ParseResult,
   _prior: BuyerIntent
 ): MessageClass {
+  if (parsed.supportIntent) return "buyer_support";
+  if (parsed.areaGuidance) return "area_guidance";
+
   // Pure action: link request with no new criteria.
   if (
     parsed.actions.includes("send_links") &&

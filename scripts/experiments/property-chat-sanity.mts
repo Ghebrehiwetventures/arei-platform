@@ -8,6 +8,7 @@
 import {
   respondToPropertyChat,
   parseBuyerIntent,
+  classifyMessage,
   type ChatState,
 } from "../../arei-admin/assistant/index.ts";
 import type { Listing } from "../../arei-admin/types.ts";
@@ -175,6 +176,25 @@ const FIXTURES: Listing[] = [
     property_type: "house",
     approved: true,
   },
+  // Extreme apartment outlier — should not lead broad holiday apartment search.
+  {
+    id: "10",
+    title: "Ultra luxury apartment in Sal",
+    price: 3_120_000,
+    currency: "EUR",
+    images: ["https://example.com/lux.jpg"],
+    sourceId: "cv_luxury",
+    sourceName: "Luxury CV",
+    sourceUrl: "https://example.com/listing/10",
+    island: "Sal",
+    city: "Santa Maria",
+    bedrooms: 4,
+    bathrooms: 4,
+    area_sqm: 280,
+    property_type: "apartment",
+    approved: true,
+    description: "Large premium apartment.",
+  },
 ];
 
 const SAMPLES = [
@@ -238,6 +258,10 @@ function assert(cond: boolean, msg: string) {
   } else {
     console.log(`OK   ${msg}`);
   }
+}
+
+function matchIds(state: ChatState): string {
+  return state.lastMatches.map((m) => m.listing.id).join(",");
 }
 
 function runRegressions() {
@@ -388,6 +412,128 @@ function runRegressions() {
       "R8: refinement replaced island");
     assert(state.intent.city == null,
       "R8: refinement dropped prior incompatible city Santa Maria");
+  }
+
+  // R9: foreign-buyer support does not trigger listing cards or mutate state.
+  {
+    let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
+    state = respondToPropertyChat({
+      message: "I want a holiday apartment in Sal",
+      state, listings: FIXTURES,
+    }).state;
+    const beforeIntent = JSON.stringify(state.intent);
+    const beforeMatches = matchIds(state);
+    const parsed = parseBuyerIntent("Can foreigners buy property in Cape Verde?");
+    assert(classifyMessage(parsed, state.intent) === "buyer_support",
+      "R9: foreign-buyer question classifies as buyer_support");
+    const out = respondToPropertyChat({
+      message: "Can foreigners buy property in Cape Verde?",
+      state, listings: FIXTURES,
+    });
+    assert(!out.reply.matches?.length,
+      "R9: foreign-buyer support returns no listing cards");
+    assert(JSON.stringify(out.state.intent) === beforeIntent,
+      "R9: foreign-buyer support does not mutate intent");
+    assert(matchIds(out.state) === beforeMatches,
+      "R9: foreign-buyer support preserves lastMatches");
+  }
+
+  // R10: agent-contact support does not trigger listing cards.
+  {
+    let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
+    state = respondToPropertyChat({
+      message: "I want a holiday apartment in Sal",
+      state, listings: FIXTURES,
+    }).state;
+    const parsed = parseBuyerIntent("Can you help me contact the agent?");
+    assert(classifyMessage(parsed, state.intent) === "buyer_support",
+      "R10: agent-contact question classifies as buyer_support");
+    const out = respondToPropertyChat({
+      message: "Can you help me contact the agent?",
+      state, listings: FIXTURES,
+    });
+    assert(!out.reply.matches?.length,
+      "R10: agent-contact support returns no listing cards");
+  }
+
+  // R11: legal support does not trigger listing cards.
+  {
+    let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
+    state = respondToPropertyChat({
+      message: "I want a holiday apartment in Sal",
+      state, listings: FIXTURES,
+    }).state;
+    const parsed = parseBuyerIntent("I need a lawyer before buying");
+    assert(classifyMessage(parsed, state.intent) === "buyer_support",
+      "R11: lawyer question classifies as buyer_support");
+    const out = respondToPropertyChat({
+      message: "I need a lawyer before buying",
+      state, listings: FIXTURES,
+    });
+    assert(!out.reply.matches?.length,
+      "R11: lawyer support returns no listing cards");
+  }
+
+  // R12: links still use previous matches after a buyer-support turn.
+  {
+    let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
+    state = respondToPropertyChat({
+      message: "I want a holiday apartment in Sal",
+      state, listings: FIXTURES,
+    }).state;
+    const firstLink = state.lastMatches[0]?.listing.sourceUrl;
+    state = respondToPropertyChat({
+      message: "Can foreigners buy property in Cape Verde?",
+      state, listings: FIXTURES,
+    }).state;
+    const out = respondToPropertyChat({
+      message: "send me the links",
+      state, listings: FIXTURES,
+    });
+    assert(firstLink != null && out.reply.text.includes(firstLink),
+      "R12: send links still returns previous listing links after support");
+    assert(!out.reply.matches?.length,
+      "R12: send links action does not render listing cards");
+  }
+
+  // R13: area guidance does not trigger listing cards by default.
+  {
+    let state: ChatState = { intent: { keywords: [] }, lastMatches: [], turns: [] };
+    state = respondToPropertyChat({
+      message: "I want a holiday apartment in Sal",
+      state, listings: FIXTURES,
+    }).state;
+    const beforeIntent = JSON.stringify(state.intent);
+    const beforeMatches = matchIds(state);
+    const parsed = parseBuyerIntent("What are the best areas in Boa Vista?");
+    assert(classifyMessage(parsed, state.intent) === "area_guidance",
+      "R13: best areas question classifies as area_guidance");
+    const out = respondToPropertyChat({
+      message: "What are the best areas in Boa Vista?",
+      state, listings: FIXTURES,
+    });
+    assert(!out.reply.matches?.length,
+      "R13: area guidance returns no listing cards");
+    assert(JSON.stringify(out.state.intent) === beforeIntent,
+      "R13: area guidance does not mutate intent");
+    assert(matchIds(out.state) === beforeMatches,
+      "R13: area guidance preserves lastMatches");
+  }
+
+  // R14: broad holiday apartment search should not rank extreme outlier first.
+  {
+    const out = respondToPropertyChat({
+      message: "I want a holiday apartment in Sal",
+      state: { intent: { keywords: [] }, lastMatches: [], turns: [] },
+      listings: FIXTURES,
+    });
+    const m = out.reply.matches ?? [];
+    assert(m.length > 0,
+      "R14: holiday apartment search returns matches");
+    assert(m[0]?.listing.id !== "10",
+      "R14: broad holiday apartment search does not rank the €3.12M outlier first");
+    assert(!m[0]?.reasons.includes("highest price among matches"),
+      "R14: broad holiday apartment search is not using most-expensive selector ranking");
   }
 }
 

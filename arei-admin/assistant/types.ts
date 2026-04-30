@@ -14,6 +14,21 @@ export type PropertyTypeIntent =
 /** Sort/select directives like "most expensive house" / "cheapest land". */
 export type Selector = "most_expensive" | "cheapest";
 
+export type BuyerSupportIntent =
+  | "foreign_buyers"
+  | "mortgage"
+  | "lawyer"
+  | "agent_contact"
+  | "taxes_costs"
+  | "viewing"
+  | "buying_process"
+  | "safety";
+
+export interface AreaGuidanceIntent {
+  island?: string;
+  city?: string;
+}
+
 export interface BuyerIntent {
   island?: string;
   city?: string;
@@ -42,6 +57,10 @@ export interface ParseResult {
   modifiers: ChatModifier[];
   /** Selector — separate from intent so the classifier can see it. */
   selector?: Selector;
+  /** Non-listing buyer support intent. Does not mutate listing search. */
+  supportIntent?: BuyerSupportIntent;
+  /** Area guidance request. Does not render listing cards by default. */
+  areaGuidance?: AreaGuidanceIntent;
   /** What the parser actually matched, for the debug panel. */
   matchedTerms: string[];
 }
@@ -58,7 +77,12 @@ export type ChatModifier = "cheaper" | "bigger";
 export type MatchConfidence = "strong" | "partial" | "possible";
 
 /** Classification of a user message in the conversation lifecycle. */
-export type MessageClass = "new_search" | "refinement" | "action";
+export type MessageClass =
+  | "new_search"
+  | "refinement"
+  | "action"
+  | "buyer_support"
+  | "area_guidance";
 
 export interface ListingMatch {
   listing: Listing;

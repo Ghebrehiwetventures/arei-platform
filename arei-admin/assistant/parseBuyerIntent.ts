@@ -2,7 +2,9 @@
 // No LLM calls. Cape Verde geography is hard-coded for V0.
 
 import type {
+  AreaGuidanceIntent,
   BuyerIntent,
+  BuyerSupportIntent,
   ChatAction,
   ChatModifier,
   ParseResult,
@@ -50,6 +52,8 @@ const PROPERTY_TYPE_ALIASES: Array<{ type: PropertyTypeIntent; aliases: string[]
 
 const KEYWORD_VOCAB = [
   "beachfront",
+  "beach",
+  "holiday",
   "sea view",
   "ocean view",
   "sea-view",
@@ -58,6 +62,9 @@ const KEYWORD_VOCAB = [
   "renovated",
   "new build",
   "furnished",
+  "resort",
+  "porto antigo",
+  "leme bedje",
 ];
 
 function findCityAlias(text: string): (Alias & { island: string }) | undefined {
@@ -165,7 +172,11 @@ function detectKeywords(text: string): string[] {
   const lc = text.toLowerCase();
   const out: string[] = [];
   for (const kw of KEYWORD_VOCAB) {
-    if (lc.includes(kw)) out.push(kw);
+    if (kw === "beach") {
+      if (/\bbeach\b/.test(lc)) out.push(kw);
+    } else if (lc.includes(kw)) {
+      out.push(kw);
+    }
   }
   // normalize sea-view variants
   if (out.includes("sea-view") && !out.includes("sea view")) {
@@ -195,6 +206,53 @@ function detectSelector(text: string): Selector | undefined {
     return "cheapest";
   }
   return undefined;
+}
+
+function detectBuyerSupportIntent(text: string): BuyerSupportIntent | undefined {
+  const lc = text.toLowerCase();
+  if (/\b(foreign|foreigner|foreigners|international buyer|diaspora)\b.*\b(buy|purchase|own|property)\b/.test(lc)) {
+    return "foreign_buyers";
+  }
+  if (/\b(mortgage|finance|financing|loan|bank loan|home loan)\b/.test(lc)) {
+    return "mortgage";
+  }
+  if (/\b(lawyer|legal|solicitor|attorney|notary|notario|notário)\b/.test(lc)) {
+    return "lawyer";
+  }
+  if (/\b(contact|message|reach)\b.*\b(agent|source|seller|owner)\b/.test(lc)) {
+    return "agent_contact";
+  }
+  if (/\b(book|schedule|arrange)\b.*\b(viewing|visit|tour|appointment)\b/.test(lc) || /\bviewing\b/.test(lc)) {
+    return "viewing";
+  }
+  if (/\b(tax|taxes|fee|fees|cost|costs|stamp duty|registration)\b/.test(lc)) {
+    return "taxes_costs";
+  }
+  if (/\b(buying process|purchase process|buying steps|how (?:do|does|to) .*buy|how to buy)\b/.test(lc)) {
+    return "buying_process";
+  }
+  if (/\b(safe|safety|scam|fraud|trust|verify|due diligence)\b/.test(lc)) {
+    return "safety";
+  }
+  return undefined;
+}
+
+function detectAreaGuidance(text: string, intent: Partial<BuyerIntent>): AreaGuidanceIntent | undefined {
+  const lc = text.toLowerCase();
+  const explicitAreaQuestion =
+    /\b(best areas?|where should (?:i|we) buy|where to buy|which areas?|neighbou?rhood|areas in)\b/.test(lc);
+  const hasAreaSignal =
+    explicitAreaQuestion ||
+    /\b(area for|good for rentals?)\b/.test(lc) ||
+    /^is\s+.+\s+good\b/.test(lc.trim());
+  if (!hasAreaSignal) return undefined;
+  if (!intent.island && !intent.city) {
+    return explicitAreaQuestion ? {} : undefined;
+  }
+  return {
+    island: intent.island,
+    city: intent.city,
+  };
 }
 
 function detectModifiers(text: string): ChatModifier[] {
@@ -290,7 +348,20 @@ export function parseBuyerIntent(message: string): ParseResult {
   const replacements = detectReplacements(text);
   const modifiers = detectModifiers(text);
   const selector = detectSelector(text);
+  const supportIntent = detectBuyerSupportIntent(text);
+  const areaGuidance = detectAreaGuidance(text, intent);
   if (selector) matchedTerms.push(`selector=${selector}`);
+  if (supportIntent) matchedTerms.push(`support=${supportIntent}`);
+  if (areaGuidance) matchedTerms.push("area_guidance");
 
-  return { intent, actions, replacements, modifiers, selector, matchedTerms };
+  return {
+    intent,
+    actions,
+    replacements,
+    modifiers,
+    selector,
+    supportIntent,
+    areaGuidance,
+    matchedTerms,
+  };
 }

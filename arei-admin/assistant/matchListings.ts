@@ -20,7 +20,25 @@ const TYPE_KEYWORDS: Record<PropertyTypeIntent, string[]> = {
   studio: ["studio"],
 };
 
+const HOLIDAY_TERMS = [
+  "holiday",
+  "beach",
+  "beachfront",
+  "sea view",
+  "ocean view",
+  "resort",
+  "porto antigo",
+  "leme bedje",
+];
+
 type ConstraintState = "verified" | "violated" | "unknown";
+
+function listingText(listing: Listing): string {
+  return [listing.title, listing.description, listing.city, listing.island]
+    .filter(Boolean)
+    .join(" ")
+    .toLowerCase();
+}
 
 function listingTypeState(
   listing: Listing,
@@ -40,11 +58,7 @@ function listingTypeState(
 }
 
 function listingMatchesKeyword(listing: Listing, kw: string): boolean {
-  const haystack = [listing.title, listing.description]
-    .filter(Boolean)
-    .join(" ")
-    .toLowerCase();
-  return haystack.includes(kw.toLowerCase());
+  return listingText(listing).includes(kw.toLowerCase());
 }
 
 function eq(a: string, b: string): boolean {
@@ -68,6 +82,39 @@ interface Evaluated {
   match: ListingMatch;
   /** Number of constraints actively verified (used for ranking). */
   verifiedCount: number;
+}
+
+function hasHolidayIntent(intent: BuyerIntent): boolean {
+  return intent.keywords.some((kw) =>
+    ["holiday", "beach", "beachfront", "sea view", "ocean view", "resort"].includes(kw)
+  );
+}
+
+function holidayRelevanceScore(listing: Listing, intent: BuyerIntent): number {
+  if (!hasHolidayIntent(intent)) return 0;
+  const haystack = listingText(listing);
+  let bonus = 0;
+  for (const term of HOLIDAY_TERMS) {
+    if (haystack.includes(term)) bonus += 0.45;
+  }
+  if (intent.island === "Sal" && listing.city && eq(listing.city, "Santa Maria")) {
+    bonus += 0.8;
+  }
+  if (intent.island === "Boa Vista" && listing.city && eq(listing.city, "Sal Rei")) {
+    bonus += 0.6;
+  }
+  return Math.min(bonus, 2.2);
+}
+
+function broadSearchPriceScore(listing: Listing, intent: BuyerIntent): number {
+  if (intent.selector || intent.maxPrice != null || intent.minPrice != null || intent.preferLowPrice) {
+    return 0;
+  }
+  if (listing.price == null) return -0.2;
+  if (listing.price > 1_500_000) return -1.6;
+  if (listing.price > 900_000) return -0.8;
+  if (listing.price >= 75_000 && listing.price <= 450_000) return 0.45;
+  return 0.1;
 }
 
 function evaluateListing(listing: Listing, intent: BuyerIntent): Evaluated | null {
@@ -190,6 +237,9 @@ function evaluateListing(listing: Listing, intent: BuyerIntent): Evaluated | nul
   if (listing.images && listing.images.length > 0) completeness += 0.2;
   if (listing.sourceUrl) completeness += 0.1;
   score += completeness;
+
+  score += holidayRelevanceScore(listing, intent);
+  score += broadSearchPriceScore(listing, intent);
 
   // Penalize each unknown applicable constraint.
   score -= unknownFields.length * 0.4;

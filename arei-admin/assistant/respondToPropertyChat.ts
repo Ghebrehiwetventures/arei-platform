@@ -6,6 +6,8 @@ import type { Listing } from "../types";
 import { classifyMessage } from "./classifyMessage";
 import { matchListings, diagnoseEmpty } from "./matchListings";
 import { parseBuyerIntent } from "./parseBuyerIntent";
+import { respondToAreaGuidance } from "./respondToAreaGuidance";
+import { respondToBuyerSupport } from "./respondToBuyerSupport";
 import { updateConversationIntent } from "./updateConversationIntent";
 import type {
   BuyerIntent,
@@ -184,6 +186,38 @@ export function respondToPropertyChat(input: RespondInput): RespondOutput {
   const userTurn: ChatTurn = { role: "user", text: message };
   const parsed = parseBuyerIntent(message);
   const cls = classifyMessage(parsed, state.intent);
+
+  if (cls === "buyer_support" && parsed.supportIntent) {
+    const assistantTurn: ChatTurn = {
+      role: "assistant",
+      text: respondToBuyerSupport(parsed.supportIntent),
+      intentSnapshot: state.intent,
+    };
+    return {
+      state: {
+        intent: state.intent,
+        lastMatches: state.lastMatches,
+        turns: [...state.turns, userTurn, assistantTurn],
+      },
+      reply: assistantTurn,
+    };
+  }
+
+  if (cls === "area_guidance" && parsed.areaGuidance) {
+    const assistantTurn: ChatTurn = {
+      role: "assistant",
+      text: respondToAreaGuidance(parsed.areaGuidance, state.intent),
+      intentSnapshot: state.intent,
+    };
+    return {
+      state: {
+        intent: state.intent,
+        lastMatches: state.lastMatches,
+        turns: [...state.turns, userTurn, assistantTurn],
+      },
+      reply: assistantTurn,
+    };
+  }
 
   // ── Decide the next intent based on classification ──────────────────
   let newIntent: BuyerIntent;
