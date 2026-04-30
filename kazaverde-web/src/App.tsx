@@ -17,7 +17,6 @@ const Saved = lazy(() => import("./pages/Saved"));
 const BlogList = lazy(() => import("./pages/BlogList"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Market = lazy(() => import("./pages/Market"));
-const Rent = lazy(() => import("./pages/Rent"));
 const About = lazy(() => import("./pages/About"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
@@ -67,7 +66,7 @@ export default function App() {
           <Route path="/listings/sal" element={<Navigate to="/?island=Sal" replace />} />
           <Route path="/listings/boa-vista" element={<Navigate to="/?island=Boa+Vista" replace />} />
           <Route path="/market" element={<Market />} />
-          <Route path="/rent" element={<Rent />} />
+          <Route path="/rent" element={<Navigate to="/listings" replace />} />
           <Route path="/about" element={<About />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/blog/:slug" element={<BlogPost />} />

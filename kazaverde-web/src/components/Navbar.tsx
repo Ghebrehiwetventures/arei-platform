@@ -4,7 +4,7 @@ import { NavLink, useNavigate } from "react-router-dom";
 import { useSaved } from "../hooks/useSaved";
 import "./Navbar.css";
 
-/* Five-link nav — Listings · Rent · Market · Guides · Shortlist.
+/* Main nav — Listings · Market · Guides · Shortlist.
    Mobile menu is the cv-listing.html drawer pattern: 3-span burger
    that morphs to X on open, full-screen black panel that slides in
    from the right (translateX 100% → 0). Body scroll lock via the
@@ -27,7 +27,6 @@ export default function Navbar() {
 
   const links = [
     { to: "/listings", label: "Listings" },
-    { to: "/rent", label: "Rent" },
     { to: "/market", label: "Market" },
     { to: "/blog", label: "Guides" },
     { to: "/saved", label: count > 0 ? `Shortlist · ${count}` : "Shortlist" },
