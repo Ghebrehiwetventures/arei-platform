@@ -92,6 +92,7 @@ function useTheme() {
 }
 import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
 import { supabaseAuth } from "./supabase";
+import { PropertyChatLabView } from "./PropertyChatLab";
 
 // ============================================
 // IMAGE GALLERY — arrows on hover, dot navigation
@@ -2994,7 +2995,7 @@ function MarketDetail({
 // APP (Dashboard | Listings)
 // ============================================
 
-type Tab = "dashboard" | "listings" | "sources" | "stats" | "agents";
+type Tab = "dashboard" | "listings" | "sources" | "stats" | "agents" | "chatlab";
 
 const NAV_ITEMS: { key: Tab; label: string; icon: string }[] = [
   { key: "dashboard", label: "Dashboard", icon: "◈" },
@@ -3002,6 +3003,7 @@ const NAV_ITEMS: { key: Tab; label: string; icon: string }[] = [
   { key: "sources", label: "Sources", icon: "⬡" },
   { key: "stats", label: "Stats", icon: "◫" },
   { key: "agents", label: "Agents", icon: "◉" },
+  { key: "chatlab", label: "Chat Lab", icon: "◐" },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
@@ -3135,6 +3137,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
           {tab === "sources" && <SourcesView />}
           {tab === "stats" && <StatsView />}
           {tab === "agents" && <AgentsApprovalsView />}
+          {tab === "chatlab" && <PropertyChatLabView />}
         </div>
       </main>
     </div>
