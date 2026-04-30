@@ -29,17 +29,17 @@ const MARKET_FAQ = [
   {
     topic: "Coverage",
     q: "What does KazaVerde’s market data measure?",
-    a: "It measures public Cape Verde property listings from tracked sources. The page summarizes asking prices, inventory, island distribution, and price visibility across the listings KazaVerde can verify.",
+    a: "It measures public Cape Verde property listings from tracked sources. The page summarizes asking prices, inventory, island distribution, and price visibility where KazaVerde can verify the listing data.",
   },
   {
     topic: "Prices",
     q: "Are these asking prices or completed sales?",
-    a: "They are asking prices from public listings, not completed sale prices. KazaVerde does not claim to represent transaction values, bank valuations, or official registry data.",
+    a: "They are asking prices from public listings, not completed sale prices. KazaVerde does not claim transaction values, bank valuations, or official registry data.",
   },
   {
     topic: "Method",
     q: "How do you calculate median property price?",
-    a: "Median price is calculated from listings with a public, extractable price. Price-on-request listings and clear data-entry outliers are excluded from price calculations so the benchmark reflects the priced sample.",
+    a: "Median price is calculated from listings with a public, extractable asking price. Price-on-request listings and clear data-entry outliers are excluded so the benchmark reflects the priced sample.",
   },
   {
     topic: "Method",
@@ -54,7 +54,7 @@ const MARKET_FAQ = [
   {
     topic: "Freshness",
     q: "How often is the market data updated?",
-    a: "Tracked sources are checked daily. New listings, price changes, and removals appear as the crawler refreshes each source and the listing can be matched back to public data.",
+    a: "Tracked sources are checked daily. New listings, price changes, and removals appear as each source refreshes and the listing can be matched back to public data.",
   },
   {
     topic: "Samples",
@@ -64,7 +64,7 @@ const MARKET_FAQ = [
   {
     topic: "Limits",
     q: "Can I use this data to value a specific property?",
-    a: "No. The page is a market benchmark, not a valuation tool. A specific property still depends on location, condition, title, view, building quality, management costs, and local due diligence.",
+    a: "No. This is a market benchmark, not valuation advice. A specific property still depends on location, condition, title, view, building quality, costs, and local due diligence.",
   },
   {
     topic: "Quality",
@@ -706,7 +706,7 @@ export default function Market() {
                       {isOpen ? "−" : "+"}
                     </span>
                   </button>
-                  {isOpen && <div className="kv-m-faq-a">{item.a}</div>}
+                  <div className="kv-m-faq-a" aria-hidden={!isOpen}>{item.a}</div>
                 </div>
               );
             })}
