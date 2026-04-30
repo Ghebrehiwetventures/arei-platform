@@ -421,12 +421,21 @@
 }
 .kv-m-faq-row.is-open .kv-m-faq-icon { color: var(--kv-black); }
 .kv-m-faq-a {
-  padding: 0 24px 24px calc(116px + 20px + 4px);
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+  padding: 0 24px 0 calc(116px + 20px + 4px);
   font-family: var(--kv-sans);
   font-size: 14px;
   line-height: 1.7;
   color: rgba(0, 0, 0, 0.78);
   max-width: 760px;
+  box-sizing: border-box;
+  width: 100%;
+}
+.kv-m-faq-row.is-open .kv-m-faq-a {
+  max-height: 600px;
+  padding-bottom: 24px;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -493,8 +502,6 @@
     text-overflow: ellipsis;
   }
   .kv-m-bar-val { font-size: 11px; }
-  .kv-m-acc-q { padding: 14px 18px; font-size: 12px; }
-  .kv-m-acc.is-open .kv-m-acc-a { padding: 0 18px 14px; }
   /* Market FAQ accordion mobile (from PR #137). */
   .kv-m-faq-q {
     grid-template-columns: 1fr 24px;
@@ -508,8 +515,11 @@
   }
   .kv-m-faq-text { font-size: 14px; }
   .kv-m-faq-a {
-    padding: 0 4px 18px;
+    padding: 0 4px;
     font-size: 13px;
+  }
+  .kv-m-faq-row.is-open .kv-m-faq-a {
+    padding-bottom: 18px;
   }
 
   /* Island table — fixed-width numeric columns so headers sit
