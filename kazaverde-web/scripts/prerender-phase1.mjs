@@ -539,8 +539,9 @@ function renderRouteHtml(baseHtml, route) {
   if (route.jsonLd) {
     const payload = Array.isArray(route.jsonLd) ? route.jsonLd : [route.jsonLd];
     for (const entry of payload) {
+      const scriptId = entry?.["@type"] === "RealEstateListing" ? ' id="kv-jsonld-listing"' : "";
       headExtras.push(
-        `<script type="application/ld+json">${JSON.stringify(entry).replace(/</g, "\\u003c")}</script>`,
+        `<script${scriptId} type="application/ld+json">${JSON.stringify(entry).replace(/</g, "\\u003c")}</script>`,
       );
     }
   }
