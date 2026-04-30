@@ -186,7 +186,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
             jsonLd: {
               "@context": "https://schema.org",
               "@type": "FAQPage",
-              "@id": "https://kazaverde.com/blog#faq",
+              "@id": "https://www.kazaverde.com/blog#faq",
               mainEntity: faqEntries.map((f) => ({
                 "@type": "Question",
                 name: f.question,
@@ -539,7 +539,12 @@ function renderRouteHtml(baseHtml, route) {
   if (route.jsonLd) {
     const payload = Array.isArray(route.jsonLd) ? route.jsonLd : [route.jsonLd];
     for (const entry of payload) {
-      const scriptId = entry?.["@type"] === "RealEstateListing" ? ' id="kv-jsonld-listing"' : "";
+      const scriptId =
+        entry?.["@type"] === "RealEstateListing"
+          ? ' id="kv-jsonld-listing"'
+          : entry?.["@type"] === "FAQPage"
+            ? ' id="kv-jsonld-faq"'
+            : "";
       headExtras.push(
         `<script${scriptId} type="application/ld+json">${JSON.stringify(entry).replace(/</g, "\\u003c")}</script>`,
       );

@@ -45,12 +45,11 @@ export default function BlogList() {
   /* Inject FAQPage JSON-LD built from the same FAQ_ENTRIES rendered on
      this page, so the structured data matches visible content. */
   useEffect(() => {
-    const origin =
-      typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com";
+    const SCRIPT_ID = "kv-jsonld-faq";
     const data = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "@id": `${origin}/blog#faq`,
+      "@id": "https://www.kazaverde.com/blog#faq",
       mainEntity: FAQ_ENTRIES.map((f) => ({
         "@type": "Question",
         name: f.question,
@@ -58,13 +57,20 @@ export default function BlogList() {
       })),
     };
 
-    const script = document.createElement("script");
+    document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]').forEach((node) => {
+      if (node.id !== SCRIPT_ID && node.textContent?.includes('"FAQPage"') && node.textContent.includes("/blog#faq")) {
+        node.remove();
+      }
+    });
+
+    const script = (document.getElementById(SCRIPT_ID) as HTMLScriptElement | null) ?? document.createElement("script");
+    script.id = SCRIPT_ID;
     script.type = "application/ld+json";
     script.dataset.kvJsonld = "blog-faq";
-    script.text = JSON.stringify(data);
-    document.head.appendChild(script);
+    script.textContent = JSON.stringify(data);
+    if (!script.parentNode) document.head.appendChild(script);
     return () => {
-      script.remove();
+      document.getElementById(SCRIPT_ID)?.remove();
     };
   }, []);
 
