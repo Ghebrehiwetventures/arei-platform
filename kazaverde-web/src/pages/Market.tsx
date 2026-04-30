@@ -460,9 +460,7 @@ export default function Market() {
               </div>
               <div className="kv-m-geo-fact">
                 <span className="kv-m-geo-fact-k">Currency</span>
-                <span className="kv-m-geo-fact-v">
-                  CVE; property prices often quoted in EUR
-                </span>
+                <span className="kv-m-geo-fact-v">CVE · prices in EUR</span>
               </div>
             </div>
           </div>
