@@ -203,6 +203,49 @@ export default function About() {
         </div>
       </section>
 
+      <section className="kv-m-section">
+        <div className="kv-m-inner">
+          <div className="kv-pol-founder">
+            <span className="kv-l-eyebrow">From the founder</span>
+            <blockquote className="kv-pol-founder-quote">
+              <p>
+                "I came to this market as an investor. Cape Verde was where I
+                started, and even after repeated trips, the market remained
+                difficult to read.
+              </p>
+              <p>
+                The opportunity was visible. The structure was not. Inventory
+                was spread across brokers and local sites, with no consistent
+                data layer to compare opportunities or evaluate them with
+                confidence.
+              </p>
+              <p>
+                That is the gap Africa Real Estate Index exists to close."
+              </p>
+            </blockquote>
+            <div className="kv-pol-founder-byline">
+              <div className="kv-pol-founder-mark" aria-hidden="true">
+                MG
+              </div>
+              <div className="kv-pol-founder-meta">
+                <span className="kv-pol-founder-name">
+                  Michael Ghebrehiwet
+                </span>
+                <span className="kv-pol-founder-role">Founder, AREI</span>
+                <a
+                  className="kv-pol-founder-link"
+                  href="https://www.linkedin.com/in/ghebrehiwet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  LinkedIn →
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <NewsletterCta />
     </div>
   );

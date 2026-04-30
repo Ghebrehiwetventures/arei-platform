@@ -157,8 +157,84 @@
   font-style: italic;
 }
 
+/* About founder note — scoped and intentionally secondary. */
+.kv-pol-founder {
+  max-width: 760px;
+}
+.kv-pol-founder-quote {
+  margin: 22px 0 0;
+  padding: 0;
+  border: none;
+  font-family: var(--kv-sans);
+  font-size: 16px;
+  line-height: 1.7;
+  color: var(--kv-ink-700);
+}
+.kv-pol-founder-quote p {
+  margin: 0;
+}
+.kv-pol-founder-quote p + p {
+  margin-top: 14px;
+}
+.kv-pol-founder-byline {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-top: 26px;
+  padding-top: 18px;
+  border-top: 1px solid var(--kv-rule);
+}
+.kv-pol-founder-mark {
+  width: 42px;
+  height: 42px;
+  display: grid;
+  place-items: center;
+  flex-shrink: 0;
+  background: var(--kv-green-deep, var(--kv-green));
+  color: var(--kv-green);
+  font-family: var(--kv-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+}
+.kv-pol-founder-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kv-pol-founder-name {
+  font-family: var(--kv-mono);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--kv-black);
+}
+.kv-pol-founder-role {
+  font-family: var(--kv-sans);
+  font-size: 13px;
+  color: var(--kv-gray-500);
+}
+.kv-pol-founder-link {
+  align-self: flex-start;
+  margin-top: 6px;
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kv-black);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.28);
+  transition: color var(--kv-dur-fast) var(--kv-ease), border-color var(--kv-dur-fast) var(--kv-ease);
+}
+.kv-pol-founder-link:hover {
+  color: var(--kv-gray-500);
+  border-bottom-color: var(--kv-gray-500);
+}
+
 /* Responsive */
 @media (max-width: 720px) {
   .kv-pol-prose, .kv-pol-list, .kv-pol-pull { font-size: 14.5px; }
   .kv-pol-cards { grid-template-columns: 1fr; }
+  .kv-pol-founder-quote { font-size: 15px; }
+  .kv-pol-founder-byline { align-items: flex-start; }
 }
