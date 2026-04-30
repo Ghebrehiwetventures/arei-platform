@@ -32,10 +32,11 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   gap: 40px;
-  /* start, not stretch — the map card derives its height from the
-     image's 2:1 aspect, so it's typically shorter than the fact
-     table; stretching it would re-introduce empty bands. */
-  align-items: start;
+  /* center, not stretch — stretch on the map card would re-introduce
+     empty bands above/below its 2:1 surface. center keeps the fact
+     table (which has more rows than the map has height) optically
+     balanced against the map instead of top-anchored. */
+  align-items: center;
 }
 .kv-m-geo-map {
   position: relative;
@@ -132,7 +133,7 @@
   display: grid;
   grid-template-columns: 1fr 1fr;
   border-bottom: 1px solid var(--kv-rule-soft);
-  padding: 10px 14px;
+  padding: 9px 14px;
   align-items: baseline;
   gap: 8px;
 }

@@ -445,13 +445,13 @@ export default function Market() {
                 <span className="kv-m-geo-fact-v">Portuguese</span>
               </div>
               <div className="kv-m-geo-fact">
-                <span className="kv-m-geo-fact-k">Common spoken language</span>
-                <span className="kv-m-geo-fact-v">Cape Verdean Creole / Kriolu</span>
+                <span className="kv-m-geo-fact-k">Spoken language</span>
+                <span className="kv-m-geo-fact-v">Kriolu</span>
               </div>
               <div className="kv-m-geo-fact">
                 <span className="kv-m-geo-fact-k">Currency</span>
                 <span className="kv-m-geo-fact-v">
-                  Cape Verdean escudo (CVE);<br />many property prices quoted in EUR
+                  CVE; property prices often quoted in EUR
                 </span>
               </div>
             </div>
