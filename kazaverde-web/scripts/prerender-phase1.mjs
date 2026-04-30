@@ -26,7 +26,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
       route: "/",
       ...page(
       "KazaVerde — Cape Verde Real Estate",
-      "Search Cape Verde real estate listings from local agencies, portals and property websites. Compare homes for sale across Sal, Boa Vista and other Cape Verde islands with KazaVerde.",
+      "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with KazaVerde.",
       `
         <main>
           <section>
