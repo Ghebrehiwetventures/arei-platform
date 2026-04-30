@@ -440,6 +440,20 @@ export default function Market() {
                 <span className="kv-m-geo-fact-k">Key investment islands</span>
                 <span className="kv-m-geo-fact-v">Sal · Boa Vista · Santiago</span>
               </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Official language</span>
+                <span className="kv-m-geo-fact-v">Portuguese</span>
+              </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Common spoken language</span>
+                <span className="kv-m-geo-fact-v">Cape Verdean Creole / Kriolu</span>
+              </div>
+              <div className="kv-m-geo-fact">
+                <span className="kv-m-geo-fact-k">Currency</span>
+                <span className="kv-m-geo-fact-v">
+                  Cape Verdean escudo (CVE);<br />many property prices quoted in EUR
+                </span>
+              </div>
             </div>
           </div>
         </div>
