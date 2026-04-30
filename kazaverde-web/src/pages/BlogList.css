@@ -208,12 +208,23 @@
 }
 .kv-faq-row.is-open .kv-faq-q-icon { color: var(--kv-black); }
 .kv-faq-a {
-  padding: 0 24px 24px calc(110px + 20px + 4px);
+  max-height: 0;
+  overflow: hidden;
+  /* Only animate height — no transform-x, no width change. */
+  transition: max-height 0.25s ease;
+  padding: 0 24px 0 calc(110px + 20px + 4px);
   font-family: var(--kv-sans);
   font-size: 14px;
   line-height: 1.7;
   color: rgba(0, 0, 0, 0.78);
   max-width: 720px;
+  /* Prevent width from contributing to horizontal layout shifts. */
+  box-sizing: border-box;
+  width: 100%;
+}
+.kv-faq-row.is-open .kv-faq-a {
+  max-height: 600px;
+  padding-bottom: 24px;
 }
 
 .kv-blog-grid {
@@ -314,7 +325,10 @@
   }
   .kv-faq-q-text { font-size: 14px; }
   .kv-faq-a {
-    padding: 0 4px 18px;
+    padding: 0 4px 0;
     font-size: 13px;
+  }
+  .kv-faq-row.is-open .kv-faq-a {
+    padding-bottom: 18px;
   }
 }

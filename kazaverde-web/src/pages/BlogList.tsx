@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { BLOG_ARTICLES } from "../lib/blog-data";
@@ -41,6 +41,38 @@ export default function BlogList() {
 
   const [query, setQuery] = useState("");
   const [openFaq, setOpenFaq] = useState<number | null>(null);
+
+  /* Inject FAQPage JSON-LD built from the same FAQ_ENTRIES rendered on
+     this page, so the structured data matches visible content. */
+  useEffect(() => {
+    const SCRIPT_ID = "kv-jsonld-faq";
+    const data = {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "@id": "https://www.kazaverde.com/blog#faq",
+      mainEntity: FAQ_ENTRIES.map((f) => ({
+        "@type": "Question",
+        name: f.question,
+        acceptedAnswer: { "@type": "Answer", text: f.answer },
+      })),
+    };
+
+    document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]').forEach((node) => {
+      if (node.id !== SCRIPT_ID && node.textContent?.includes('"FAQPage"') && node.textContent.includes("/blog#faq")) {
+        node.remove();
+      }
+    });
+
+    const script = (document.getElementById(SCRIPT_ID) as HTMLScriptElement | null) ?? document.createElement("script");
+    script.id = SCRIPT_ID;
+    script.type = "application/ld+json";
+    script.dataset.kvJsonld = "blog-faq";
+    script.textContent = JSON.stringify(data);
+    if (!script.parentNode) document.head.appendChild(script);
+    return () => {
+      document.getElementById(SCRIPT_ID)?.remove();
+    };
+  }, []);
 
   const filteredArticles = useMemo(
     () =>
@@ -197,9 +229,7 @@ export default function BlogList() {
                           {isOpen ? "−" : "+"}
                         </span>
                       </button>
-                      {isOpen && (
-                        <div className="kv-faq-a">{f.answer}</div>
-                      )}
+                      <div className="kv-faq-a" aria-hidden={!isOpen}>{f.answer}</div>
                     </div>
                   );
                 })}

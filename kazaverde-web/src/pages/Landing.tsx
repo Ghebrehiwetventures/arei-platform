@@ -64,6 +64,31 @@ function formatWeekStart(): string {
   return monday.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 }
 
+function FeaturedCardSkeleton() {
+  return (
+    <div className="kv-lcard kv-lcard-skeleton" aria-hidden="true">
+      <div className="kv-lc-img" />
+      <div className="kv-lc-body">
+        <div className="kv-lc-topline">
+          <span className="kv-skel-line kv-skel-xs" />
+          <span className="kv-skel-line kv-skel-xs kv-skel-short" />
+        </div>
+        <div className="kv-skel-line kv-skel-price" />
+        <div className="kv-skel-line" />
+        <div className="kv-skel-line kv-skel-wide" />
+        <div className="kv-lc-specs">
+          <span className="kv-skel-line kv-skel-xs" />
+          <span className="kv-skel-line kv-skel-xs" />
+        </div>
+        <div className="kv-lc-provenance">
+          <span className="kv-skel-line kv-skel-xs" />
+          <span className="kv-skel-line kv-skel-xs kv-skel-short" />
+        </div>
+      </div>
+    </div>
+  );
+}
+
 /* Pick a small editorial set: prefer single-line titles (so the row
    reads tidy with no orphan two-liners), then diversity across island
    and source. Falls back gracefully when data is thin. */
@@ -131,9 +156,57 @@ function categoryLabel(cat: string): string {
 
 export default function Landing() {
   useDocumentMeta(
-    "KazaVerde — Cape Verde Real Estate Index",
-    "An independent, source-linked index of every property listed for sale across Cape Verde. No sign-up, no broker fees, no hidden inventory.",
+    "KazaVerde — Cape Verde Real Estate",
+    "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with KazaVerde.",
   );
+
+  /* Inject homepage JSON-LD: Organization + WebSite. FAQPage lives on
+     /blog where the Q&A is actually rendered — schema must match
+     visible page content. */
+  useEffect(() => {
+    const origin =
+      typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com";
+    const data = {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Organization",
+          "@id": `${origin}/#organization`,
+          name: "KazaVerde",
+          url: origin,
+          logo: `${origin}/og-default.png`,
+          description:
+            "KazaVerde is an independent property search and data platform for Cape Verde real estate. It is not a broker or agency.",
+        },
+        {
+          "@type": "WebSite",
+          "@id": `${origin}/#website`,
+          url: origin,
+          name: "KazaVerde",
+          description:
+            "Search Cape Verde real estate listings aggregated from local agencies, portals and property websites.",
+          publisher: { "@id": `${origin}/#organization` },
+          potentialAction: {
+            "@type": "SearchAction",
+            target: {
+              "@type": "EntryPoint",
+              urlTemplate: `${origin}/listings?q={search_term_string}`,
+            },
+            "query-input": "required name=search_term_string",
+          },
+        },
+      ],
+    };
+
+    const script = document.createElement("script");
+    script.type = "application/ld+json";
+    script.dataset.kvJsonld = "home";
+    script.text = JSON.stringify(data);
+    document.head.appendChild(script);
+    return () => {
+      script.remove();
+    };
+  }, []);
 
   // Top 3 newest articles for guides preview
   const guides = BLOG_ARTICLES.slice(0, 3);
@@ -276,12 +349,21 @@ export default function Landing() {
         });
       })
       .catch(() => {
-        /* Silent: section hides itself when no data. */
+        /* Silent: reserved shells remain if live data is unavailable. */
       });
     return () => {
       cancelled = true;
     };
   }, []);
+
+  const hasMmiNotes = Boolean(
+    mmi &&
+      (mmi.topIslandByInflow ||
+        mmi.topSourcesByInflow.length > 0 ||
+        mmi.topType ||
+        mmi.topBedroom ||
+        mmi.topPriceBand),
+  );
 
   return (
     <div className="kv-landing">
@@ -290,11 +372,11 @@ export default function Landing() {
       <header className="kv-l-hero">
         <div className="kv-l-hero-inner">
           <h1 className="kv-l-hero-title">
-            Every home for sale in Cape&nbsp;Verde, in one place.
+            Cape&nbsp;Verde real estate, aggregated in one place
           </h1>
           <p className="kv-l-hero-sub">
-            An independent, source-linked index of every property listed for sale
-            across the archipelago.
+            An independent property search and data platform — listings aggregated
+            from local agencies, portals and property websites across the archipelago.
           </p>
           <div className="kv-l-hero-cta">
             <Link to="/listings" className="kv-btn kv-btn-solid">Browse all listings →</Link>
@@ -305,37 +387,35 @@ export default function Landing() {
 
       {/* ═══ FEATURED PROPERTIES — sits directly under the hero so
            visitors land on actual inventory before metrics. ═══ */}
-      {featured.length > 0 && (
-        <section className="kv-l-feat">
-          <div className="kv-l-feat-inner">
-            <div className="kv-l-mmi-head">
-              <div>
-                <span className="kv-l-eyebrow">Featured this week · Week of {formatWeekStart()}</span>
-                <h2>Three listings worth a closer look.</h2>
-                <p>
-                  Hand-picked from this week's listings — across the archipelago.
-                  Every card links back to the original source.
-                </p>
-              </div>
-              <Link to="/listings" className="kv-l-section-link">
-                See all {totalListings ?? ""} listings →
-              </Link>
+      <section className="kv-l-feat" aria-busy={featured.length === 0}>
+        <div className="kv-l-feat-inner">
+          <div className="kv-l-mmi-head">
+            <div>
+              <span className="kv-l-eyebrow">Featured this week · Week of {formatWeekStart()}</span>
+              <h2>Three listings worth a closer look.</h2>
+              <p>
+                Hand-picked from this week's listings — across the archipelago.
+                Every card links back to the original source.
+              </p>
             </div>
-
-            <div className="kv-l-feat-grid">
-              {featured.map((l) => (
-                <Card key={l.id} l={l} />
-              ))}
-            </div>
-
-            <div className="kv-l-feat-foot">
-              <Link to="/listings" className="kv-btn">
-                Browse all {totalListings ?? ""} listings →
-              </Link>
-            </div>
+            <Link to="/listings" className="kv-l-section-link">
+              {totalListings ? `See all ${totalListings} listings →` : "See all listings →"}
+            </Link>
           </div>
-        </section>
-      )}
+
+          <div className="kv-l-feat-grid">
+            {featured.length > 0
+              ? featured.map((l) => <Card key={l.id} l={l} />)
+              : [0, 1, 2].map((i) => <FeaturedCardSkeleton key={i} />)}
+          </div>
+
+          <div className="kv-l-feat-foot">
+            <Link to="/listings" className="kv-btn">
+              {totalListings ? `Browse all ${totalListings} listings →` : "Browse all listings →"}
+            </Link>
+          </div>
+        </div>
+      </section>
 
       {/* ═══ INDEX STATUS — live snapshot from the DB. Period-over-
            period deltas (and the per-island movements list below) are
@@ -350,7 +430,7 @@ export default function Landing() {
               </span>
               <h2>Where the Cape Verde index stands today.</h2>
               <p>
-                Live counts and medians across every verified listing on the index.
+                Live counts and medians across every tracked listing on the index.
                 Period-over-period movements begin once a full month of snapshots
                 accumulates.
               </p>
@@ -358,84 +438,126 @@ export default function Landing() {
             <Link to="/market" className="kv-l-section-link">Full market data →</Link>
           </div>
 
-          {mmi && (
-            <div className="kv-l-mmi-strip">
-              <div className="kv-l-mmi-cell">
-                <div className="kv-l-mmi-lbl">Median asking price</div>
-                <div className="kv-l-mmi-num">{formatMedian(mmi.medianPrice)}</div>
-                <div className="kv-l-mmi-delta">Across {mmi.pricedCount.toLocaleString("en")} priced listings</div>
-              </div>
-              <div className="kv-l-mmi-cell">
-                <div className="kv-l-mmi-lbl">Total inventory</div>
-                <div className="kv-l-mmi-num">{mmi.total.toLocaleString("en")}</div>
-                <div className="kv-l-mmi-delta">Tracked across the archipelago</div>
-              </div>
-              <div className="kv-l-mmi-cell">
-                <div className="kv-l-mmi-lbl">Added this month</div>
-                <div className="kv-l-mmi-num">{mmi.addedThisMonth.toLocaleString("en")}</div>
-                <div className="kv-l-mmi-delta">First seen since the 1st</div>
-              </div>
-              <div className="kv-l-mmi-cell">
-                <div className="kv-l-mmi-lbl">Verified-price coverage</div>
-                <div className="kv-l-mmi-num">{mmi.pricedPct}%</div>
-                <div className="kv-l-mmi-delta">Have a public asking price</div>
-              </div>
-            </div>
-          )}
+          <div className="kv-l-mmi-strip" aria-busy={!mmi}>
+            {mmi ? (
+              <>
+                <div className="kv-l-mmi-cell">
+                  <div className="kv-l-mmi-lbl">Median asking price</div>
+                  <div className="kv-l-mmi-num">{formatMedian(mmi.medianPrice)}</div>
+                  <div className="kv-l-mmi-delta">Across {mmi.pricedCount.toLocaleString("en")} priced listings</div>
+                </div>
+                <div className="kv-l-mmi-cell">
+                  <div className="kv-l-mmi-lbl">Total inventory</div>
+                  <div className="kv-l-mmi-num">{mmi.total.toLocaleString("en")}</div>
+                  <div className="kv-l-mmi-delta">Tracked across the archipelago</div>
+                </div>
+                <div className="kv-l-mmi-cell">
+                  <div className="kv-l-mmi-lbl">Added this month</div>
+                  <div className="kv-l-mmi-num">{mmi.addedThisMonth.toLocaleString("en")}</div>
+                  <div className="kv-l-mmi-delta">First seen since the 1st</div>
+                </div>
+                <div className="kv-l-mmi-cell">
+                  <div className="kv-l-mmi-lbl">Verified-price coverage</div>
+                  <div className="kv-l-mmi-num">{mmi.pricedPct}%</div>
+                  <div className="kv-l-mmi-delta">Have a public asking price</div>
+                </div>
+              </>
+            ) : (
+              [0, 1, 2, 3].map((i) => (
+                <div className="kv-l-mmi-cell is-loading" key={i} aria-hidden="true">
+                  <div className="kv-l-mmi-lbl"><span className="kv-skel-line kv-skel-xs" /></div>
+                  <div className="kv-l-mmi-num"><span className="kv-skel-line kv-skel-number" /></div>
+                  <div className="kv-l-mmi-delta"><span className="kv-skel-line kv-skel-wide" /></div>
+                </div>
+              ))
+            )}
+          </div>
 
-          {mmi && (mmi.topIslandByInflow || mmi.topSourcesByInflow.length > 0 || mmi.topType || mmi.topBedroom || mmi.topPriceBand) && (
-            <div className="kv-l-mmi-notes">
-              <div className="kv-l-mmi-notes-head">This month's index activity</div>
-              <ul>
-                {mmi.topIslandByInflow && (
+          <div className="kv-l-mmi-notes" aria-busy={!mmi}>
+            {hasMmiNotes ? (
+              <>
+                <div className="kv-l-mmi-notes-head">This month's index activity</div>
+                <ul>
+                  {mmi?.topIslandByInflow && (
+                    <li>
+                      <span className="kv-l-mmi-tag">{mmi.topIslandByInflow.name}</span>
+                      <span className="kv-l-mmi-body">
+                        Largest inflow this month — {mmi.topIslandByInflow.count} new {mmi.topIslandByInflow.count === 1 ? "listing" : "listings"} since the 1st.
+                      </span>
+                    </li>
+                  )}
+                  {mmi && mmi.topSourcesByInflow.length > 0 && (
+                    <li>
+                      <span className="kv-l-mmi-tag">Sources</span>
+                      <span className="kv-l-mmi-body">
+                        {mmi.topSourcesByInflow
+                          .map((s) => `${s.label} added ${s.count}`)
+                          .join(" · ")}{" "}
+                        since the 1st.
+                      </span>
+                    </li>
+                  )}
+                  {mmi?.topPriceBand && (
+                    <li>
+                      <span className="kv-l-mmi-tag">Price band</span>
+                      <span className="kv-l-mmi-body">
+                        Most priced inventory sits in <b>{mmi.topPriceBand.label}</b> — {mmi.topPriceBand.pct}% of priced listings ({mmi.topPriceBand.count.toLocaleString("en")} of them).
+                      </span>
+                    </li>
+                  )}
+                  {mmi?.topType && (
+                    <li>
+                      <span className="kv-l-mmi-tag">Mix</span>
+                      <span className="kv-l-mmi-body">
+                        {mmi.topType.name} dominate at {mmi.topType.pct}% of typed inventory ({mmi.topType.count.toLocaleString("en")} listings).
+                      </span>
+                    </li>
+                  )}
+                  {mmi?.topBedroom && (
+                    <li>
+                      <span className="kv-l-mmi-tag">Layout</span>
+                      <span className="kv-l-mmi-body">
+                        Most common layout is <b>{mmi.topBedroom.count}-bedroom</b> — {mmi.topBedroom.pct}% of bedroom-tagged listings ({mmi.topBedroom.n.toLocaleString("en")}).
+                      </span>
+                    </li>
+                  )}
+                </ul>
+                <div className="kv-l-mmi-foot">
+                  Live counts from the index · Updated daily as crawlers complete
+                </div>
+              </>
+            ) : !mmi ? (
+              <>
+                <div className="kv-l-mmi-notes-head">
+                  <span className="kv-skel-line kv-skel-notes-head" />
+                </div>
+                <ul className="kv-l-mmi-notes-skeleton" aria-hidden="true">
+                  {[0, 1, 2].map((i) => (
+                    <li key={i}>
+                      <span className="kv-l-mmi-tag"><span className="kv-skel-line kv-skel-xs" /></span>
+                      <span className="kv-l-mmi-body"><span className="kv-skel-line kv-skel-wide" /></span>
+                    </li>
+                  ))}
+                </ul>
+                <div className="kv-l-mmi-foot"><span className="kv-skel-line kv-skel-wide" /></div>
+              </>
+            ) : (
+              <>
+                <div className="kv-l-mmi-notes-head">This month's index activity</div>
+                <ul>
                   <li>
-                    <span className="kv-l-mmi-tag">{mmi.topIslandByInflow.name}</span>
+                    <span className="kv-l-mmi-tag">Live data</span>
                     <span className="kv-l-mmi-body">
-                      Largest inflow this month — {mmi.topIslandByInflow.count} new {mmi.topIslandByInflow.count === 1 ? "listing" : "listings"} since the 1st.
+                      Activity notes appear here once there is enough monthly movement to summarize.
                     </span>
                   </li>
-                )}
-                {mmi.topSourcesByInflow.length > 0 && (
-                  <li>
-                    <span className="kv-l-mmi-tag">Sources</span>
-                    <span className="kv-l-mmi-body">
-                      {mmi.topSourcesByInflow
-                        .map((s) => `${s.label} added ${s.count}`)
-                        .join(" · ")}{" "}
-                      since the 1st.
-                    </span>
-                  </li>
-                )}
-                {mmi.topPriceBand && (
-                  <li>
-                    <span className="kv-l-mmi-tag">Price band</span>
-                    <span className="kv-l-mmi-body">
-                      Most priced inventory sits in <b>{mmi.topPriceBand.label}</b> — {mmi.topPriceBand.pct}% of priced listings ({mmi.topPriceBand.count.toLocaleString("en")} of them).
-                    </span>
-                  </li>
-                )}
-                {mmi.topType && (
-                  <li>
-                    <span className="kv-l-mmi-tag">Mix</span>
-                    <span className="kv-l-mmi-body">
-                      {mmi.topType.name} dominate at {mmi.topType.pct}% of typed inventory ({mmi.topType.count.toLocaleString("en")} listings).
-                    </span>
-                  </li>
-                )}
-                {mmi.topBedroom && (
-                  <li>
-                    <span className="kv-l-mmi-tag">Layout</span>
-                    <span className="kv-l-mmi-body">
-                      Most common layout is <b>{mmi.topBedroom.count}-bedroom</b> — {mmi.topBedroom.pct}% of bedroom-tagged listings ({mmi.topBedroom.n.toLocaleString("en")}).
-                    </span>
-                  </li>
-                )}
-              </ul>
-              <div className="kv-l-mmi-foot">
-                Live counts from the index · Updated daily as crawlers complete
-              </div>
-            </div>
-          )}
+                </ul>
+                <div className="kv-l-mmi-foot">
+                  Live counts from the index · Updated daily as crawlers complete
+                </div>
+              </>
+            )}
+          </div>
 
           {/* Period-over-period moves need stored monthly snapshots
               before we can compute them. Heading + intro live OUTSIDE

@@ -9,7 +9,75 @@ export interface BlogArticle {
   tags: string[];
 }
 
-export const BLOG_ARTICLES: BlogArticle[] = [
+const _ALL_BLOG_ARTICLES = [
+  {
+    slug: "cape-verde-property-prices-by-island",
+    title: "Cape Verde property prices by island: what the KazaVerde index currently shows",
+    description:
+      "Asking-price medians and listing counts by island, drawn from the KazaVerde index. A snapshot of publicly listed Cape Verde inventory, not the full market.",
+    date: "2026-04-29",
+    readTime: "6 min read",
+    tags: ["Market", "Islands", "Data"],
+    content: `<p><em>Last updated: April 2026</em></p>
+<p>Cape Verde is not one property market. It is an archipelago of distinct island markets, each shaped by different levels of foreign demand, tourism infrastructure, and listing activity. A single archipelago-wide average tells you almost nothing.</p>
+<p>This piece looks at what the <a href="/listings">KazaVerde index</a> currently shows island by island — where the tracked sample is large enough to be meaningful, and where it isn't.</p>
+<blockquote><p>The figures below are <strong>asking prices from publicly listed properties KazaVerde currently tracks</strong> — not closing prices, not the full market, and not legally verified. Source coverage is still expanding. The live numbers on <a href="/listings">/listings</a> and <a href="/market">/market</a> are always the authoritative version.</p></blockquote>
+<hr>
+<h2>What the current index shows by island</h2>
+<p>As of late April 2026, the KazaVerde index tracks roughly four hundred publicly listed properties across the archipelago. The distribution is heavily concentrated in the three islands with the most direct foreign-buyer activity. Three islands carry enough tracked listings to support a useful median:</p>
+<div class="kv-island-grid">
+  <div class="kv-island-stat">
+    <div class="kv-island-stat-name">Sal</div>
+    <div class="kv-island-stat-figs">
+      <div><span>Tracked listings</span><strong>~145</strong></div>
+      <div><span>Median asking</span><strong>~€99,000</strong></div>
+    </div>
+    <p>The deepest tracked sample by a wide margin. Direct international flights and the Santa Maria resort cluster anchor most of the foreign-buyer activity visible on the index.</p>
+  </div>
+  <div class="kv-island-stat">
+    <div class="kv-island-stat-name">Santiago</div>
+    <div class="kv-island-stat-figs">
+      <div><span>Tracked listings</span><strong>~130</strong></div>
+      <div><span>Median asking</span><strong>~€238,000</strong></div>
+    </div>
+    <p>Second-largest sample, and the highest median of the three. The mix appears weighted toward Praia city stock rather than resort apartments — different inventory, different median, not a "more expensive island."</p>
+  </div>
+  <div class="kv-island-stat">
+    <div class="kv-island-stat-name">Boa Vista</div>
+    <div class="kv-island-stat-figs">
+      <div><span>Tracked listings</span><strong>~85</strong></div>
+      <div><span>Median asking</span><strong>~€110,000</strong></div>
+    </div>
+    <p>Third-largest sample. Mix appears weighted toward resort apartments and off-plan stock around Sal Rei, where new-build asking prices can sit above realistic resale benchmarks.</p>
+  </div>
+</div>
+<p>For the live version of these figures, with the underlying listings, see <a href="/market">/market</a> and the per-island grids: <a href="/listings?island=Sal">Sal</a>, <a href="/listings?island=Santiago">Santiago</a>, <a href="/listings?island=Boa+Vista">Boa Vista</a>.</p>
+<hr>
+<h2>The islands with too little tracked data to price</h2>
+<p>The remaining islands appear in the index but have samples too thin to support a reliable median. That may reflect genuinely thin local activity, or simply that KazaVerde has not yet onboarded the sources where listings on those islands tend to surface.</p>
+<ul>
+<li><strong>Maio</strong> — around twenty tracked listings, but the priced rows cluster at a single low value, which may reflect source or normalization effects rather than a clean market distribution.</li>
+<li><strong>São Nicolau</strong> and <strong>Fogo</strong> — under ten tracked listings each. Counts are real; medians are not yet meaningful.</li>
+<li><strong>São Vicente</strong> and <strong>Santo Antão</strong> — only a handful of tracked listings each. Too thin for KazaVerde to publish a meaningful median.</li>
+<li><strong>Brava</strong> — no tracked listings in the index at this snapshot.</li>
+</ul>
+<p>If you are specifically researching one of these islands, the most useful step is to look at the individual tracked listings on <a href="/listings">/listings</a> and follow the source links rather than rely on an aggregate. Coverage on these islands may deepen as new sources are added.</p>
+<hr>
+<h2>What appears to drive the gap</h2>
+<p>The variation between islands reflects a few structural factors that pre-date any individual listing:</p>
+<ul>
+<li><strong>Direct flight access.</strong> Sal and Boa Vista have international airports with direct European routes. That underwrites most of the foreign-buyer demand visible in the index.</li>
+<li><strong>Sample depth.</strong> Sal's ~145 tracked listings allow rough like-for-like comparison inside the sample. Single-digit counts on São Vicente or Santo Antão do not.</li>
+<li><strong>Inventory mix.</strong> Santiago's higher median appears driven by Praia city stock; Boa Vista's by resort and off-plan inventory. Mix shapes the headline number more than location alone.</li>
+<li><strong>Connectivity gaps.</strong> Santo Antão (ferry only, from São Vicente) and Brava (no airport) sit upstream of any pricing question. Foreign-buyer activity is thinner there, and so is source coverage.</li>
+</ul>
+<hr>
+<h2>How to use this</h2>
+<p>These numbers are a snapshot, not a forecast and not a valuation. They are useful for narrowing a shortlist — not for replacing the work of going through individual listings, talking to an independent local lawyer, and checking the source page for any property you take seriously.</p>
+<p>For the legal and tax mechanics of buying once you have shortlisted, see the <a href="/blog/buying-property-cape-verde-guide">step-by-step buying guide</a>. For an island-by-island comparison framed around lifestyle and use case, see <a href="/blog/which-cape-verde-island-property">Which Cape Verde island</a>. For methodology and source coverage, see <a href="/about">/about</a>.</p>
+<hr>
+<p><em>KazaVerde is an independent property search and data platform — not a broker, agency, or marketplace. Listings are aggregated from publicly accessible sources we currently track and are not legally verified. Always confirm a property's details with the original agent or seller and your own lawyer before acting on any number quoted here.</em></p>`,
+  },
   {
     slug: "buying-property-cape-verde-guide",
     title: "How to Buy Property in Cape Verde: A Step-by-Step Guide for Foreign Buyers",
@@ -67,7 +135,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 </thead>
 <tbody><tr>
 <td><strong>ITI (Property Transfer Tax)</strong></td>
-<td>3% of property value (new from Jan 2026, previously ~1.5% under IUP)</td>
+<td>Generally described as 1% of taxable value; 3% may apply in privileged-tax-regime cases</td>
 </tr>
 <tr>
 <td><strong>Notary fees</strong></td>
@@ -78,15 +146,15 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <td>€200–300</td>
 </tr>
 <tr>
-<td><strong>Stamp duty</strong></td>
-<td>0.8%</td>
+<td><strong>Applicable duties or municipal charges</strong></td>
+<td>Verify for the specific transaction</td>
 </tr>
 <tr>
 <td><strong>Lawyer fees</strong></td>
 <td>€500–1,500</td>
 </tr>
 </tbody></table>
-<p><strong>Important:</strong> The ITI is calculated on the commercial value or officially assessed value, whichever is higher. This is a significant change from the previous regime and roughly doubles the transfer tax for most transactions.</p>
+<p><strong>Important:</strong> The applicable ITI amount depends on the taxable value and the specific transaction. Before signing, ask a qualified local lawyer to verify the Matriz, Registo Predial, taxable value, tax settlement status, and any surcharge exposure with the municipality.</p>
 <h3>Ongoing Annual Costs</h3>
 <table>
 <thead>
@@ -97,7 +165,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 </thead>
 <tbody><tr>
 <td><strong>IPI (Annual Property Tax)</strong></td>
-<td>Base rate of 0.1% of assessed value (new from Jan 2026)</td>
+<td>Generally 0.1% for urban property and 0.15% for land</td>
 </tr>
 <tr>
 <td><strong>Condominium/community fees</strong></td>
@@ -108,7 +176,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <td>Varies by usage</td>
 </tr>
 </tbody></table>
-<p>The new IPI system introduces objective valuation criteria and will generally result in lower annual property tax bills than the old IUP system for most owners. However, penalties apply for neglected or abandoned properties.</p>
+<p>The new IPI system introduces objective valuation criteria. Surcharges may apply for vacant, ruined/degraded, or unfinished-facade properties, so owners should verify their position locally.</p>
 <h3>If You Sell</h3>
 <p>Capital gains tax of 10–15% applies on resale. Plan this with your lawyer, especially regarding any double taxation implications with your home country.</p>
 <hr>
@@ -121,7 +189,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <li><strong>€80,000</strong> in areas with below-average GDP per capita</li>
 <li><strong>€120,000</strong> in areas with above-average GDP per capita (including tourist hubs like Sal)</li>
 </ul>
-<p>The Green Card provides permanent residency for an indefinite period, potential IPI exemptions on the property transfer, and a 50% reduction in annual property tax for up to ten years. After five years of habitual residency, Green Card holders can apply for Cape Verdean citizenship.</p>
+<p>The Green Card provides permanent residency for an indefinite period, potential transfer-tax benefits, and a possible reduction in annual property tax for up to ten years. The treatment under the ITI/IPI framework should be verified with a qualified local lawyer. After five years of habitual residency, Green Card holders can apply for Cape Verdean citizenship.</p>
 <hr>
 <h2>Common Pitfalls to Avoid</h2>
 <ul>
@@ -141,7 +209,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h3>Can foreigners buy property in Cape Verde?</h3>
 <p>Yes. Cape Verde allows foreign nationals to purchase property with full freehold ownership and no restrictions on nationality. You&#39;ll need a Cape Verdean NIF (tax number) and a local bank account before completing a purchase.</p>
 <h3>How much does it cost to buy property in Cape Verde?</h3>
-<p>Total transaction costs typically amount to 5–7% of the property value. This includes the 3% ITI transfer tax (new from January 2026), notary fees (~€420), land registry registration (€200–300), stamp duty (0.8%), and lawyer fees (€500–1,500).</p>
+<p>Total transaction costs vary by property, municipality, and transaction structure. Budget separately for ITI, notary and registration costs, legal fees, and any applicable duties or charges, and have your lawyer confirm the settlement before completion.</p>
 <h3>Do I need a lawyer to buy property in Cape Verde?</h3>
 <p>While not legally mandatory, hiring an independent Cape Verdean lawyer is strongly advised and considered essential for foreign buyers. Your lawyer verifies ownership, checks for debts, reviews contracts, and handles registration. Read more about <a href="/blog/mistakes-buying-property-cape-verde">common mistakes to avoid</a>.</p>
 <h3>How long does the buying process take?</h3>
@@ -153,7 +221,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <ul>
 <li><a href="/blog/which-cape-verde-island-property">Which Cape Verde Island Should You Buy On?</a> — Data-driven comparison of all islands</li>
 <li><a href="/blog/cape-verde-property-tax-reform-2026">2026 Property Tax Reform</a> — What changed and what it means for buyers</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield analysis and cost breakdown</li>
 <li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — How to get permanent residency through property investment</li>
 </ul>
 <hr>
@@ -286,12 +353,11 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h3>Which island has the cheapest property?</h3>
 <p>Maio and Fogo have the lowest property prices, but they also have the thinnest markets and most limited infrastructure. For more accessible investment with some price advantage over Sal, Boa Vista and Santiago offer better value with reasonable infrastructure and rental potential.</p>
 <h3>Can I get rental income from property on any island?</h3>
-<p>Realistically, strong rental demand exists primarily on Sal and (increasingly) Boa Vista, where international tourism drives short-term holiday lets. Santiago has a local rental market. Other islands have very limited rental demand. Read our <a href="/blog/cape-verde-rental-yields-realistic">rental yield analysis</a> for detailed numbers.</p>
+<p>Realistically, strong rental demand exists primarily on Sal and (increasingly) Boa Vista, where international tourism drives short-term holiday lets. Santiago has a local rental market. Other islands have very limited rental demand.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Step-by-step buying process for foreign buyers</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield analysis by island and rental model</li>
 <li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — Investment thresholds vary by island GDP classification</li>
 </ul>
 <hr>
@@ -310,7 +376,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <p>If you&#39;re buying, selling, or holding property in Cape Verde, here&#39;s what you need to know.</p>
 <hr>
 <h2>What Changed</h2>
-<p>The reform, enacted through Laws No. 54/X/2025 and No. 55/X/2025 (both published June 6, 2025), splits the old IUP into two distinct taxes:</p>
+<p>The reform, enacted through Law No. 54/X/2025 and Law No. 55/X/2025, replaced the old IUP with two distinct taxes:</p>
 <p><strong>ITI (Imposto sobre a Transmissão de Imóveis)</strong> — a transfer tax paid when property changes hands.</p>
 <p><strong>IPI (Imposto sobre a Propriedade de Imóveis)</strong> — an annual property tax paid by owners.</p>
 <p>This separation brings Cape Verde in line with how most European countries structure property taxation and represents a deliberate modernization of the system to match the country&#39;s evolving real estate and tourism sectors.</p>
@@ -319,25 +385,25 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <p>The ITI is a municipal tax levied on the transfer of real estate, whether the transfer is for payment or free of charge. Revenue goes directly to the municipality where the property is located.</p>
 <h3>Key Details</h3>
 <ul>
-<li><strong>Rate:</strong> The standard ITI rate is approximately 3% of the property value. This is a notable increase from the previous IUP transfer component, which was approximately 1.5%.</li>
-<li><strong>Basis:</strong> The tax is calculated on the commercial value or the officially assessed value of the property, whichever is higher.</li>
+<li><strong>Rate:</strong> Current tax summaries generally describe ITI as 1% of taxable value, with a 3% rate in cases where the seller or buyer benefits from a privileged tax regime.</li>
+<li><strong>Basis:</strong> The tax is applied to taxable value, which should be verified for the specific property and transaction.</li>
 <li><strong>Scope:</strong> The ITI applies to rural, urban, and mixed-use properties. It covers not just full ownership transfers (purchase and sale) but also partial forms of property rights.</li>
 <li><strong>Expanded coverage:</strong> Unlike the old IUP, the ITI now captures a broader range of transactions that have the economic effect of a property transfer. This includes successive assignments of contractual positions in promissory purchase agreements and the use of irrevocable powers of attorney — practices that were previously used to transfer effective control of property without triggering transfer tax. This is a significant anti-avoidance measure.</li>
 </ul>
 <h3>What This Means for Buyers</h3>
-<p>For a €150,000 apartment, the ITI comes to approximately €4,500 — compared to roughly €2,250 under the old regime. When budgeting total transaction costs (including notary fees, registration, stamp duty, and legal fees), expect total acquisition costs in the range of 5–7% of the property value.</p>
-<p><strong>Timing matters:</strong> The ITI must be paid before the transfer is legally completed. Payment must occur within three business days of assessment, and proof of payment is required for property registration. Ensure your lawyer has this timeline factored into the transaction schedule.</p>
+<p>For a €150,000 taxable value, a general 1% ITI rate would imply about €1,500 in ITI; a 3% rate may apply in privileged-tax-regime cases. Total acquisition costs also depend on notary, registration, legal fees, and any applicable duties or municipal charges, so buyers should confirm the full settlement for the specific property.</p>
+<p><strong>Timing matters:</strong> Tax settlement is part of completing and registering the transfer. Ensure your lawyer confirms the current payment process and timing with the municipality before completion.</p>
 <hr>
 <h2>IPI: The New Annual Property Tax</h2>
 <p>The IPI replaces the annual ownership component of the old IUP with a more transparent and objectively grounded system.</p>
 <h3>Key Details</h3>
 <ul>
-<li><strong>Base rate:</strong> 0.1% of the property&#39;s assessed patrimonial value annually.</li>
+<li><strong>Base rate:</strong> Current summaries generally describe IPI as 0.1% for urban property and 0.15% for land.</li>
 <li><strong>Valuation method:</strong> Properties will be assessed based on objective criteria by Municipal Assessment Committees (<em>Comissões Municipais de Avaliação</em>), using a uniform methodology. This is a departure from the old system, where many property valuations hadn&#39;t been updated in years (or decades) and often bore little relationship to actual market values.</li>
-<li><strong>Anti-speculation surcharges:</strong> The IPI introduces penalties for neglected properties. Derelict or abandoned buildings face a 25% surcharge, increasing by 20% annually. Buildings with unfinished main facades face a 10% surcharge. These measures aim to discourage urban blight and land-banking.</li>
+<li><strong>Surcharges:</strong> Surcharges may apply for vacant, ruined/degraded, or unfinished-facade properties. Buyers and owners should verify any exposure with the municipality.</li>
 </ul>
 <h3>What This Means for Owners</h3>
-<p>For most property owners, the new IPI will result in lower annual tax bills than the old IUP. To illustrate: under the old system, an apartment with an assessed value of roughly 5 million CVE (about €46,000) might have paid around 26,000 CVE annually. Under the new IPI at 0.1%, the same property would owe approximately 4,300 CVE — a substantial reduction.</p>
+<p>For many urban property owners, the 0.1% IPI rate may be lower than historic IUP bills. The actual amount depends on the taxable value, property type, municipal assessment, and any surcharge exposure.</p>
 <p>However, as Municipal Assessment Committees complete new property valuations, assessed values may change. Properties that were significantly undervalued may see their assessments — and therefore their tax obligations — increase.</p>
 <hr>
 <h2>Why the Reform Happened</h2>
@@ -347,12 +413,12 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <hr>
 <h2>Impact on the Green Card Program</h2>
 <p>Cape Verde&#39;s Green Card residency-by-investment program grants permanent residency to foreign property investors meeting certain thresholds (€80,000 in lower-GDP areas, €120,000 in higher-GDP areas like Sal). The program historically offered IUP exemptions and reductions.</p>
-<p>With the transition to the new ITI/IPI framework, investors should verify with a qualified lawyer how the Green Card tax benefits translate under the new codes. The underlying incentive structure is expected to continue, but the specific mechanisms are changing.</p>
+<p>With the transition to the new ITI/IPI framework, investors should verify with a qualified lawyer how the Green Card tax benefits translate under the new codes.</p>
 <hr>
 <h2>What You Should Do</h2>
 <ul>
-<li><strong>If you&#39;re buying in 2026:</strong> Budget for the 3% ITI rate in your acquisition cost calculations. This is roughly double what buyers paid under the old regime and should be factored into your total investment analysis.</li>
-<li><strong>If you already own property:</strong> Monitor whether your municipality conducts a new property valuation under the IPI framework. Your annual tax bill may change — in most cases downward, but this depends on whether your property&#39;s assessed value is adjusted.</li>
+<li><strong>If you&#39;re buying in 2026:</strong> Budget for ITI using the rate confirmed for your transaction. Current summaries generally describe ITI as 1% of taxable value, with 3% in privileged-tax-regime cases.</li>
+<li><strong>If you already own property:</strong> Monitor whether your municipality conducts a new property valuation under the IPI framework. Your annual tax bill may change depending on property type, taxable value, and any surcharge exposure.</li>
 <li><strong>If you&#39;re selling:</strong> Be aware that the expanded ITI scope covers more types of transactions. Discuss with your lawyer how the new rules apply to your specific situation, particularly if the transaction involves promissory contracts or contractual position assignments.</li>
 <li><strong>In all cases:</strong> Work with a Cape Verdean lawyer who is up to date on the new legislation. The reform is substantial, and the interaction between the two new codes and other elements of the tax system (capital gains, inheritance, Green Card benefits) requires professional guidance.</li>
 </ul>
@@ -363,17 +429,16 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>What is the property transfer tax in Cape Verde?</h3>
-<p>Since January 2026, the transfer tax is called ITI (Imposto sobre a Transmissão de Imóveis) and is set at approximately 3% of the property value. This replaced the old IUP system which charged roughly 1.5%. The tax is calculated on the commercial value or officially assessed value, whichever is higher.</p>
+<p>Since January 2026, the transfer tax is called ITI (Imposto sobre a Transmissão de Imóveis). Current tax summaries generally describe ITI as 1% of taxable value, with a 3% rate in privileged-tax-regime cases. Ask a qualified local lawyer to verify the taxable value and applicable rate before completion.</p>
 <h3>What is the annual property tax in Cape Verde?</h3>
-<p>The new annual property tax is called IPI (Imposto sobre a Propriedade de Imóveis), with a base rate of 0.1% of the assessed value. For most owners, this results in lower annual bills than the previous IUP system. Neglected or abandoned properties face surcharges.</p>
+<p>The new annual property tax is called IPI (Imposto sobre a Propriedade de Imóveis). Current summaries generally describe IPI as 0.1% for urban property and 0.15% for land. Surcharges may apply for vacant, ruined/degraded, or unfinished-facade properties.</p>
 <h3>Do Green Card holders get tax benefits?</h3>
-<p>Yes. <a href="/blog/cape-verde-green-card-residency">Green Card holders</a> may receive exemption from the ITI transfer tax and a 50% reduction in annual IPI for up to ten years. Verify the specific application with your lawyer, as the transition to the new tax codes may affect implementation.</p>
+<p>Yes. <a href="/blog/cape-verde-green-card-residency">Green Card holders</a> may receive transfer-tax and annual property-tax benefits. Verify the specific application with your lawyer, as the transition to the new tax codes may affect implementation.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full cost breakdown and buying process</li>
 <li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — Tax benefits for property investors</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields</a> — How the new IPI affects your net yield calculations</li>
 </ul>
 <hr>
 <p><em>This article is for informational purposes only. Tax legislation is subject to change and interpretation. Always consult a qualified Cape Verdean tax advisor or lawyer for advice specific to your situation.</em></p>
@@ -436,7 +501,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 </tr>
 <tr>
 <td>IPI (annual property tax)</td>
-<td>0.1% of assessed value</td>
+<td>Generally 0.1% for urban property and 0.15% for land</td>
 <td>New from Jan 2026</td>
 </tr>
 <tr>
@@ -504,7 +569,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h3>Is Cape Verde good for Airbnb?</h3>
 <p>Sal and Boa Vista have strong short-term rental markets driven by European tourism. Properties in Santa Maria (Sal) with beach access and modern amenities perform best. Self-managed Airbnb lets can outperform hotel rental schemes in terms of net yield, but require local support for cleaning, maintenance, and guest management.</p>
 <h3>What are the ongoing costs of owning property in Cape Verde?</h3>
-<p>Expect annual costs of €2,000–5,000+ depending on the property, including community charges (€600–2,000+), maintenance reserve (€500–1,000+), the new IPI property tax (0.1% of assessed value), utilities, and insurance. See our <a href="/blog/cape-verde-property-tax-reform-2026">2026 tax reform guide</a> for updated tax details.</p>
+<p>Expect annual costs of €2,000–5,000+ depending on the property, including community charges (€600–2,000+), maintenance reserve (€500–1,000+), the new IPI property tax, utilities, and insurance. IPI is generally described as 0.1% for urban property and 0.15% for land, with possible surcharges for vacant, ruined/degraded, or unfinished-facade properties. See our <a href="/blog/cape-verde-property-tax-reform-2026">2026 tax reform guide</a> for updated tax details.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
@@ -557,8 +622,8 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h2>Tax Benefits</h2>
 <p>The Green Card comes with meaningful tax advantages for property owners:</p>
 <ul>
-<li><strong>Transfer tax benefits:</strong> Potential exemption from the property transfer tax at the time of purchase. Under the new 2026 tax framework (ITI replacing the old IUP), this could represent a saving of up to 3% of the property value. Verify the specific application with your lawyer, as the transition to the new tax codes may affect how this benefit is implemented.</li>
-<li><strong>Reduced annual property tax:</strong> A 50% reduction in annual property tax for up to ten years, subject to approval by the Municipal Assembly where the property is located. Under the new IPI system (effective January 2026), this applies to the 0.1% base rate.</li>
+<li><strong>Transfer tax benefits:</strong> Potential exemption from property transfer tax at the time of purchase. Under the new 2026 tax framework, ITI replaced the old IUP transfer component. Current summaries generally describe ITI as 1% of taxable value, with 3% in privileged-tax-regime cases. Verify the specific application with your lawyer, as the transition to the new tax codes may affect how this benefit is implemented.</li>
+<li><strong>Reduced annual property tax:</strong> A possible reduction in annual property tax for up to ten years, subject to approval by the Municipal Assembly where the property is located. Under the new IPI system (effective January 2026), IPI is generally described as 0.1% for urban property and 0.15% for land.</li>
 <li><strong>Inheritance:</strong> Potential exemptions from property transfer tax on inheritance (<em>mortis causa</em>) succession.</li>
 </ul>
 <hr>
@@ -643,7 +708,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h3>Can I get Cape Verde citizenship through property investment?</h3>
 <p>Yes. After five years of habitual residency as a Green Card holder, you can apply for Cape Verdean citizenship. &quot;Habitual residency&quot; means actually spending time in Cape Verde, not just owning property.</p>
 <h3>What tax benefits does the Green Card provide?</h3>
-<p>Green Card holders may receive exemption from the ITI transfer tax (3% of property value) and a 50% reduction in annual IPI property tax for up to ten years. See our <a href="/blog/cape-verde-property-tax-reform-2026">2026 tax reform guide</a> for how the new tax codes interact with these benefits.</p>
+<p>Green Card holders may receive transfer-tax and annual property-tax benefits, but the exact treatment under ITI and IPI should be verified with a qualified local lawyer. See our <a href="/blog/cape-verde-property-tax-reform-2026">2026 tax reform guide</a> for how the new tax codes interact with these benefits.</p>
 <h3>How does Cape Verde compare to Portugal&#39;s Golden Visa?</h3>
 <p>Cape Verde&#39;s entry point is significantly lower (€80,000–€120,000 vs €500,000 for Portugal&#39;s fund route). Cape Verde grants permanent residency directly (vs temporary for Portugal), and both offer citizenship after 5 years of residency.</p>
 <hr>
@@ -675,7 +740,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <ul>
 <li>Verify ownership through the CIP (property identification certificate)</li>
 <li>Check for outstanding debts and mortgages</li>
-<li>Review the IUP/IPI tax history</li>
+<li>Review the ITI/IPI position, municipal tax settlement status, and any historic IUP issues before 2026</li>
 <li>Verify that community charges are paid</li>
 <li>Review all contracts before you sign</li>
 <li>Ensure the title transfer is properly registered</li>
@@ -683,9 +748,9 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <p>Cost: €500–1,500. The cost of the problems they prevent: potentially the entire value of your investment.</p>
 <hr>
 <h2>2. Ignoring the Valor Patrimonial</h2>
-<p>The <em>Valor Patrimonial</em> is the officially assessed value of a property, set by the local municipality. It&#39;s used to calculate property taxes and transfer taxes. Here&#39;s the problem: many properties in Cape Verde — particularly those in developments built during the pre-2008 construction boom — were assessed at values that are significantly higher than their current market price.</p>
-<p>Why this matters: taxes (both the transfer tax ITI and annual property tax IPI) are calculated on the higher of the commercial value or the Valor Patrimonial. If a property sells for €80,000 but has a Valor Patrimonial of €130,000, you&#39;re paying taxes on €130,000.</p>
-<p>Before agreeing to a purchase price, ask your lawyer to check the Valor Patrimonial. Factor this into your total cost calculation, and understand that under the new 2026 IPI system, municipal reassessments may change these values over time.</p>
+<p>The <em>Valor Patrimonial</em> is the officially assessed value of a property, set by the local municipality. It can affect property taxes and transfer taxes. Here&#39;s the problem: many properties in Cape Verde — particularly those in developments built during the pre-2008 construction boom — may have municipal values that do not match their current market price.</p>
+<p>Why this matters: the taxable value used for ITI and IPI can materially affect your buying and ownership costs. If a property sells for €80,000 but has a higher municipal taxable value, your tax exposure may be higher than expected.</p>
+<p>Before agreeing to a purchase price, ask your lawyer to verify the Matriz, Registo Predial, taxable value, tax settlement status, and any surcharge exposure with the municipality. Factor the confirmed position into your total cost calculation, and understand that under the new 2026 IPI system, municipal reassessments may change these values over time.</p>
 <hr>
 <h2>3. Paying Deposits on Unfinished Developments Without Protection</h2>
 <p>Off-plan purchases — buying a property that hasn&#39;t been built yet — can offer lower prices and the ability to choose finishes. They also carry significantly more risk than buying an existing property.</p>
@@ -741,7 +806,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — The complete buying process to follow</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Avoid overpaying based on inflated yield projections</li>
 <li><a href="/blog/which-cape-verde-island-property">Which Island Should You Buy On?</a> — Compare islands before committing</li>
 </ul>
 <hr>
@@ -771,7 +835,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <p>Prices have tracked upward in recent years — 10–15% annual appreciation has been reported for well-located properties — driven by steady tourism growth and limited new supply in established zones.</p>
 <h3>Rental market</h3>
 <p>Sal has the strongest short-term rental market in Cape Verde. International tourist volume provides a large pool of potential guests, and the infrastructure to serve them (tour operators, online booking platforms, airport transfers) is mature.</p>
-<p>Gross rental yields quoted by developers and agents typically fall in the 5–8% range. Net yields — after management fees (25–35% of gross), annual service charges, maintenance, and the new IPI annual property tax — are meaningfully lower. A realistic net yield for a well-managed property in a good resort complex is 3–5%. Read the <a href="/blog/cape-verde-rental-yields-realistic">rental yield analysis</a> for a full cost breakdown.</p>
+<p>Gross rental yields quoted by developers and agents typically fall in the 5–8% range. Net yields — after management fees (25–35% of gross), annual service charges, maintenance, and the new IPI annual property tax — are meaningfully lower. IPI is generally described as 0.1% for urban property and 0.15% for land, with possible surcharges for vacant, ruined/degraded, or unfinished-facade properties. A realistic net yield for a well-managed property in a good resort complex is 3–5%.</p>
 <p>Seasonality is moderate on Sal relative to other islands — European winter sun demand helps smooth the calendar — but July and August can be slower as European tourists gravitate toward Mediterranean destinations.</p>
 <h3>Liquidity</h3>
 <p>Sal is the most liquid property market in Cape Verde. There is an established resale market, international buyer interest is ongoing, and real estate agents with marketing reach to European buyers are well-represented. If you need to exit, Sal gives you the best chance of finding a buyer in a reasonable timeframe.</p>
@@ -875,7 +939,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/which-cape-verde-island-property">Which Cape Verde Island Should You Buy On?</a> — Full six-island comparison</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield analysis by rental model</li>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full buying process for foreign buyers</li>
 <li><a href="/blog/boa-vista-property-guide">Boa Vista Property Guide</a> — The third option between Sal's prices and Santiago's profile</li>
 </ul>
@@ -995,7 +1058,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full process for resale and new-build purchases</li>
 <li><a href="/blog/mistakes-buying-property-cape-verde">7 Mistakes Buyers Make in Cape Verde</a> — Common errors and how to avoid them</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Stress-testing developer yield projections</li>
 </ul>
 <hr>
 <p><em>This article is for informational purposes only and does not constitute legal or financial advice. Always consult a qualified Cape Verdean lawyer before entering any property contract.</em></p>
@@ -1055,7 +1117,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 </tr>
 <tr>
 <td>Annual IPI property tax (from Jan 2026)</td>
-<td>0.1% of assessed value</td>
+<td>Generally 0.1% for urban property and 0.15% for land</td>
 </tr>
 <tr>
 <td>Building insurance (owner's portion)</td>
@@ -1075,7 +1137,8 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 </tr>
 </tbody>
 </table>
-<p>Many rental yield calculations provided by developers or agents omit several of these cost lines, which inflates the apparent net yield. Build all of them into your model before assessing whether the investment makes sense. The <a href="/blog/cape-verde-rental-yields-realistic">rental yield guide</a> covers this in detail.</p>
+<p>Many rental yield calculations provided by developers or agents omit several of these cost lines, which inflates the apparent net yield. Build all of them into your model before assessing whether the investment makes sense.</p>
+<p>Confirm the IPI position for your property with a qualified local lawyer or municipality, especially if the property is land, vacant, ruined/degraded, or has an unfinished facade.</p>
 <hr>
 <h2>Selecting a Management Company</h2>
 <p>Whether you're evaluating a resort scheme operator or an independent property manager, the due diligence questions are similar:</p>
@@ -1106,7 +1169,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <hr>
 <h2>Related Guides</h2>
 <ul>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Full cost model for investment properties</li>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — End-to-end buying process</li>
 <li><a href="/blog/mistakes-buying-property-cape-verde">7 Mistakes Buyers Make in Cape Verde</a> — Including management-related errors</li>
 </ul>
@@ -1167,7 +1229,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 </table>
 <h3>Key considerations</h3>
 <p><strong>Interest rate premium.</strong> At 6–9%, local borrowing costs are significantly higher than mortgage rates available in most European countries for comparable properties. For a €150,000 mortgage at 7% over 20 years, the total interest cost approaches €125,000 — more than 80% of the original loan principal. The cost of local debt materially changes the investment math.</p>
-<p><strong>Loan-to-value limits.</strong> A maximum LTV of 60–70% means you need 30–40% as a deposit, on top of the 5–7% transaction costs (ITI transfer tax, notary, registration, legal fees). For a €150,000 property, total capital required before financing could be €65,000–€75,000 in cash (deposit + transaction costs), with the remaining €90,000–€105,000 financed.</p>
+<p><strong>Loan-to-value limits.</strong> A maximum LTV of 60–70% means you need 30–40% as a deposit, on top of transaction costs such as ITI, notary and registration costs, and legal fees. For a €150,000 property, the deposit alone could be €45,000–€60,000 before transaction costs, with the remaining €90,000–€105,000 financed.</p>
 <p><strong>Non-resident complexity.</strong> Cape Verdean banks vary in their willingness to lend to non-residents. Some require proof of an established financial relationship with a Cape Verdean bank before processing a mortgage application. Documentation requirements are more extensive for non-residents and the process can be slow.</p>
 <p><strong>Currency peg stability.</strong> The CVE has been pegged to the euro since 1998, maintained through a support agreement with Portugal, which gives it more stability than most small-island currencies. This reduces currency risk for European buyers, but the peg is a policy commitment, not a fixed mechanism, and should be factored into any long-term planning.</p>
 <h3>Which banks offer mortgages to foreigners</h3>
@@ -1194,7 +1256,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <li><strong>Proof of funds or financing commitment.</strong> Know where the full purchase price is coming from. If you're releasing equity from home, have that process underway and a clear timeline for funds availability. Don't make an offer contingent on financing you haven't yet secured.</li>
 <li><strong>Cape Verdean bank account open.</strong> You need this for the transaction regardless of financing source. Open it early. BCA and CECV are the standard options for foreign buyers.</li>
 <li><strong>NIF (tax number) obtained.</strong> You cannot complete a purchase without it. Get it as early as possible. See the <a href="/blog/buying-property-cape-verde-guide">buying guide</a> for the process.</li>
-<li><strong>Transaction cost budget confirmed.</strong> Budget 5–7% of the property value for transaction costs: ITI transfer tax (3%), notary fees (~€420), land registry registration (€200–300), stamp duty (0.8%), lawyer fees (€500–1,500). These are cash costs at completion that cannot be financed.</li>
+<li><strong>Transaction cost budget confirmed.</strong> Budget separately for ITI, notary and registration costs, legal fees, and any applicable duties or municipal charges. Current summaries generally describe ITI as 1% of taxable value, with 3% in privileged-tax-regime cases. These are cash costs at completion that cannot be financed.</li>
 <li><strong>Foreign exchange plan.</strong> If you are converting from a non-euro currency, account for exchange rate exposure. The CVE is pegged to the euro, so the relevant rate is your home currency against the euro. Consider whether to transfer funds progressively or all at once.</li>
 </ul>
 <hr>
@@ -1205,7 +1267,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full buying process including cost breakdown</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield analysis for investment properties</li>
 <li><a href="/blog/cape-verde-property-tax-reform-2026">2026 Property Tax Reform</a> — Transaction and annual tax costs under the new system</li>
 </ul>
 <hr>
@@ -1276,7 +1337,7 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <p><strong>Flight access:</strong> The number of direct European routes to Boa Vista is growing but remains smaller than Sal's. More routes mean more potential guests; fewer routes mean more dependence on the routes that exist. Any significant reduction in a major airline's Boa Vista operations would meaningfully affect occupancy rates.</p>
 <p><strong>Seasonality:</strong> European winter sun demand runs October to April, which is strong. Summer occupancy (June–September) is lower than on Sal, as Boa Vista has less established tourism infrastructure to attract non-package visitors. The seasonal gap is more pronounced than on Sal.</p>
 <p><strong>Management quality variance:</strong> Because the market is smaller and newer, the range in management company quality is wide. A well-run resort with active European tour operator relationships can achieve solid occupancy; a poorly managed one in the same development cluster will significantly underperform.</p>
-<p>Gross yields quoted by developers and agents on Boa Vista follow a similar pattern to Sal: headline figures of 5–8% gross, with realistic net yields after management fees, service charges, maintenance, and taxes in the 3–5% range for well-managed properties. The <a href="/blog/cape-verde-rental-yields-realistic">rental yield guide</a> covers the full cost model.</p>
+<p>Gross yields quoted by developers and agents on Boa Vista follow a similar pattern to Sal: headline figures of 5–8% gross, with realistic net yields after management fees, service charges, maintenance, and taxes in the 3–5% range for well-managed properties.</p>
 <hr>
 <h2>Infrastructure Reality Check</h2>
 <p>The infrastructure gap between Boa Vista and Sal is relevant to both lifestyle buyers and investors:</p>
@@ -1318,7 +1379,6 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 <ul>
 <li><a href="/blog/which-cape-verde-island-property">Which Cape Verde Island Should You Buy On?</a> — Full six-island comparison including Boa Vista</li>
 <li><a href="/blog/sal-vs-santiago-property">Sal vs Santiago</a> — The two alternative major markets compared</li>
-<li><a href="/blog/cape-verde-rental-yields-realistic">Rental Yields: What to Realistically Expect</a> — Net yield model for resort investments</li>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full buying process for foreign buyers</li>
 </ul>
 <hr>
@@ -1326,6 +1386,14 @@ export const BLOG_ARTICLES: BlogArticle[] = [
 `,
   },
 ];
+
+// Offline articles — content preserved, hidden from public product.
+// To re-enable: remove slug from this set.
+const OFFLINE_SLUGS = new Set(["cape-verde-rental-yields-realistic"]);
+
+export const BLOG_ARTICLES: BlogArticle[] = _ALL_BLOG_ARTICLES.filter(
+  (a) => !OFFLINE_SLUGS.has(a.slug)
+);
 
 export function getArticleBySlug(slug: string): BlogArticle | undefined {
   return BLOG_ARTICLES.find((a) => a.slug === slug);

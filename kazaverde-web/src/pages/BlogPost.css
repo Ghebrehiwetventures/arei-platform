@@ -520,6 +520,62 @@
   margin-bottom: 22px;
 }
 
+/* ─── Island stat cards ───
+   Used inside article body when an island-by-island data block reads
+   better as cards than as a wide table (e.g. the price-by-island
+   guide). Scoped under .kv-bp-body so it cannot leak. */
+.kv-bp-body .kv-island-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  gap: 16px;
+  margin: 24px 0 32px;
+}
+.kv-bp-body .kv-island-stat {
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-paper);
+  padding: 18px 20px 20px;
+  border-left: 3px solid var(--kv-green);
+}
+.kv-bp-body .kv-island-stat-name {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  margin-bottom: 12px;
+}
+.kv-bp-body .kv-island-stat-figs {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 4px 16px;
+  margin-bottom: 12px;
+}
+.kv-bp-body .kv-island-stat-figs > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kv-bp-body .kv-island-stat-figs span {
+  font-family: var(--kv-sans);
+  font-size: 11px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+}
+.kv-bp-body .kv-island-stat-figs strong {
+  font-family: var(--kv-sans);
+  font-size: 22px;
+  font-weight: 500;
+  color: var(--kv-black);
+  letter-spacing: -0.01em;
+}
+.kv-bp-body .kv-island-stat p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.55;
+  color: var(--kv-ink-700);
+}
+
 /* ─── Responsive ─── */
 @media (max-width: 900px) {
   .kv-bp-grid { grid-template-columns: 1fr; gap: 48px; padding: 40px 0 72px; }
@@ -530,4 +586,48 @@
   .kv-bp-head-inner { padding: 32px 24px 28px; }
   .kv-bp-related-grid { grid-template-columns: 1fr; }
   .kv-bp-byline { font-size: 10px; }
+
+  /* Prevent grid item from blowing out past viewport. Without min-width:0
+     a child with intrinsic min-content (long URLs, wide tables) forces
+     the grid track wider than its 1fr share. */
+  .kv-bp-grid > * { min-width: 0; max-width: 100%; }
+  .kv-bp-body {
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+    overflow-wrap: anywhere;
+    word-break: normal;
+  }
+  .kv-bp-body p,
+  .kv-bp-body li,
+  .kv-bp-body blockquote { overflow-wrap: anywhere; }
+
+  /* Tables can't always be made narrower than the sum of their columns'
+     min content widths. Allow the table itself to scroll horizontally
+     within its own block while the page stays at viewport width. */
+  .kv-bp-body table {
+    display: block;
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    font-size: 12px;
+  }
+  .kv-bp-body th,
+  .kv-bp-body td {
+    padding: 9px 10px;
+    overflow-wrap: anywhere;
+  }
+  .kv-bp-body th {
+    font-size: 10px;
+    letter-spacing: 0.1em;
+  }
+
+  /* Island-stat cards (added by PR #120) — guarantee they fit. */
+  .kv-bp-body .kv-island-grid { max-width: 100%; }
+  .kv-bp-body .kv-island-stat { min-width: 0; max-width: 100%; }
+
+  /* Long inline code / URLs. */
+  .kv-bp-body code,
+  .kv-bp-body a { overflow-wrap: anywhere; }
 }

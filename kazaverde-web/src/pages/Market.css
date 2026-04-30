@@ -22,6 +22,144 @@
 }
 .kv-m-section:nth-of-type(even) { background: var(--kv-off-white); }
 
+/* ─── Geographic context band ─── */
+.kv-m-geo {
+  background: var(--kv-off-white);
+  border-top: 1px solid var(--kv-rule);
+  padding: 40px 0;
+}
+.kv-m-geo-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 40px;
+  /* center, not stretch — stretch on the map card would re-introduce
+     empty bands above/below its 2:1 surface. center keeps the fact
+     table (which has more rows than the map has height) optically
+     balanced against the map instead of top-anchored. */
+  align-items: center;
+}
+.kv-m-geo-map {
+  position: relative;
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-paper);
+  padding: 0;
+  overflow: hidden;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
+}
+/* Wrapper sits as the left grid item on desktop and stacks above
+   the fact table on mobile (kv-m-geo-grid behaviour). Holds the
+   bordered map card; required Mapbox attribution lives inside
+   the map surface itself. */
+.kv-m-geo-wrap {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  max-width: 100%;
+}
+/* GL JS map container. 2:1 aspect ratio drives the height so the
+   card matches the bbox proportions and shrinks gracefully on
+   mobile — no fixed pixel height. */
+.kv-m-geo-mapbox {
+  width: 100%;
+  aspect-ratio: 2 / 1;
+  background: var(--kv-paper);
+}
+
+/* Mapbox chrome — re-skin only. Wordmark (.mapboxgl-ctrl-logo) and
+   compact AttributionControl stay visible — both are required by
+   Mapbox ToS, and compact mode keeps them small and editorial. */
+.kv-m-geo-map .mapboxgl-ctrl-group {
+  background: var(--kv-white);
+  border: 1px solid var(--kv-rule);
+  box-shadow: none;
+  border-radius: 0;
+}
+.kv-m-geo-map .mapboxgl-ctrl-group button {
+  background-color: var(--kv-white);
+}
+.kv-m-geo-map .mapboxgl-ctrl-group button:hover {
+  background-color: var(--kv-hover);
+}
+.kv-m-geo-map .mapboxgl-ctrl-top-right { top: 8px; right: 8px; }
+/* Fallback shown when VITE_MAPBOX_TOKEN is missing. Editorial card,
+   same dimensions as the live map so the page rhythm is preserved. */
+.kv-m-geo-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  width: 100%;
+  /* Match the live map's 2:1 aspect so the card is the same height
+     either way and the grid rhythm doesn't shift when the token is
+     missing locally. */
+  aspect-ratio: 2 / 1;
+  background: var(--kv-paper);
+  background-image:
+    linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  text-align: center;
+  padding: 20px;
+  box-sizing: border-box;
+}
+.kv-m-geo-fallback-pin {
+  font-size: 22px;
+  line-height: 1;
+  color: var(--kv-green-deep);
+}
+.kv-m-geo-fallback-label {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kv-black);
+}
+.kv-m-geo-fallback-sub {
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+}
+.kv-m-geo-facts {
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-paper);
+}
+.kv-m-geo-fact {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  border-bottom: 1px solid var(--kv-rule-soft);
+  padding: 9px 14px;
+  align-items: baseline;
+  gap: 8px;
+}
+.kv-m-geo-fact:last-child { border-bottom: none; }
+.kv-m-geo-fact-k {
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+}
+.kv-m-geo-fact-v {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  color: var(--kv-black);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+@media (max-width: 640px) {
+  .kv-m-geo { padding: 28px 0; }
+  .kv-m-geo-grid { grid-template-columns: 1fr; gap: 16px; }
+  /* Card height now derives from intrinsic 2:1 aspect on both the
+     live image and the fallback — no override needed. */
+}
+
 /* ─── Intro band — sits between hero and KPI strip ─── */
 .kv-m-intro {
   background: var(--kv-white);
@@ -176,12 +314,16 @@
   border: 1px solid var(--kv-rule);
   background: var(--kv-paper);
   padding: 20px 24px;
+  min-width: 0;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 .kv-m-bar-row {
   display: grid;
   grid-template-columns: 120px 1fr 56px;
   align-items: center;
   gap: 16px;
+  min-width: 0;
 }
 .kv-m-bar-label {
   font-family: var(--kv-mono);
@@ -189,7 +331,9 @@
   font-weight: var(--kv-fw-medium);
   letter-spacing: 0.04em;
   color: var(--kv-black);
+  min-width: 0;
 }
+.kv-m-bar-track { min-width: 0; }
 .kv-m-bar-track {
   position: relative;
   height: 10px;
@@ -225,54 +369,64 @@
    collected" surface can reuse the same blur+overlay pattern. */
 
 /* ─────────────────────────────────────────────────────────────
-   Methodology accordion — reuses card hairlines + mono caps.
+   Market FAQ / methodology — adapts the editorial FAQ pattern
+   from BlogList while keeping the page-local class namespace.
    ───────────────────────────────────────────────────────────── */
-.kv-m-acc-list {
-  border: 1px solid var(--kv-rule);
-  background: var(--kv-paper);
+.kv-m-faq {
+  border-top: 1px solid var(--kv-rule);
 }
-.kv-m-acc + .kv-m-acc { border-top: 1px solid var(--kv-rule); }
-.kv-m-acc-q {
-  display: flex;
-  width: 100%;
+.kv-m-faq-row {
+  border-bottom: 1px solid var(--kv-rule);
+}
+.kv-m-faq-q {
+  display: grid;
+  grid-template-columns: 116px 1fr 24px;
   align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 22px;
+  gap: 20px;
+  width: 100%;
+  padding: 22px 4px;
   background: transparent;
   border: none;
   cursor: pointer;
   font-family: var(--kv-mono);
-  font-size: 13px;
-  font-weight: var(--kv-fw-medium);
-  letter-spacing: 0.02em;
   color: var(--kv-black);
   text-align: left;
   transition: background var(--kv-dur-fast) var(--kv-ease);
 }
-.kv-m-acc-q:hover { background: var(--kv-hover); }
-.kv-m-acc-icon {
-  font-family: var(--kv-mono);
+.kv-m-faq-q:hover { background: var(--kv-off-white); }
+.kv-m-faq-topic {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
   color: var(--kv-gray-500);
-  transition: transform var(--kv-dur) var(--kv-ease);
 }
-.kv-m-acc.is-open .kv-m-acc-icon { transform: rotate(180deg); }
-.kv-m-acc-a {
-  max-height: 0;
-  overflow: hidden;
-  padding: 0 22px;
-  transition: max-height var(--kv-dur) var(--kv-ease), padding var(--kv-dur) var(--kv-ease);
+.kv-m-faq-text {
+  font-size: 15px;
+  font-weight: var(--kv-fw-regular);
+  line-height: 1.4;
+  color: var(--kv-black);
+  letter-spacing: -0.005em;
 }
-.kv-m-acc.is-open .kv-m-acc-a {
-  max-height: 480px;
-  padding: 0 22px 18px;
+.kv-m-faq-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--kv-gray-500);
+  font-weight: 400;
 }
-.kv-m-acc-a p {
+.kv-m-faq-row.is-open .kv-m-faq-icon { color: var(--kv-black); }
+.kv-m-faq-a {
+  padding: 0 24px 24px calc(116px + 20px + 4px);
   font-family: var(--kv-sans);
   font-size: 14px;
   line-height: 1.7;
-  color: var(--kv-ink-700);
-  margin: 0;
+  color: rgba(0, 0, 0, 0.78);
+  max-width: 760px;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -319,11 +473,44 @@
 @media (max-width: 640px) {
   .kv-m-section { padding: 36px 0; }
   .kv-m-intro { padding: 32px 0 24px; }
-  .kv-m-bars { padding: 14px 16px; }
-  .kv-m-bar-row { grid-template-columns: 88px 1fr 44px; gap: 12px; }
-  .kv-m-bar-label { font-size: 11px; }
+  /* Bar charts — fixed label column so every row in every chart anchors
+     the bar at the same x position. .kv-m-bar-row is its own grid (the
+     parent .kv-m-bars is flex), so minmax(72px, auto) would size each
+     row independently — the price chart's bars would start ~110px in
+     (widest label "€100K – €250K") while the islands chart's would
+     start ~80px in ("Santo Antão"). A fixed pixel column makes all
+     bars line up across both charts. */
+  .kv-m-bars { padding: 14px 14px; }
+  .kv-m-bar-row {
+    grid-template-columns: 104px 1fr 32px;
+    gap: 10px;
+  }
+  .kv-m-bar-label {
+    font-size: 11px;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  .kv-m-bar-val { font-size: 11px; }
   .kv-m-acc-q { padding: 14px 18px; font-size: 12px; }
   .kv-m-acc.is-open .kv-m-acc-a { padding: 0 18px 14px; }
+  /* Market FAQ accordion mobile (from PR #137). */
+  .kv-m-faq-q {
+    grid-template-columns: 1fr 24px;
+    gap: 6px;
+    padding: 18px 4px;
+  }
+  .kv-m-faq-topic {
+    grid-column: 1 / -1;
+    font-size: 9px;
+    margin-bottom: 2px;
+  }
+  .kv-m-faq-text { font-size: 14px; }
+  .kv-m-faq-a {
+    padding: 0 4px 18px;
+    font-size: 13px;
+  }
 
   /* Island table — fixed-width numeric columns so headers sit
      directly above their values (no auto-sizing dead space) and the

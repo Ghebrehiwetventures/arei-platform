@@ -176,11 +176,30 @@
   letter-spacing: 0.04em;
   font-variant-numeric: tabular-nums;
 }
+.kv-l-mmi-cell.is-loading .kv-l-mmi-lbl,
+.kv-l-mmi-cell.is-loading .kv-l-mmi-num,
+.kv-l-mmi-cell.is-loading .kv-l-mmi-delta {
+  display: block;
+}
+.kv-l-mmi-cell.is-loading .kv-l-mmi-num {
+  min-height: 28px;
+}
+.kv-skel-number {
+  width: 96px;
+  height: 28px;
+}
 
 .kv-l-mmi-notes {
   border: 1px solid var(--kv-rule);
   background: var(--kv-paper);
   padding: 28px;
+}
+.kv-l-mmi-notes-skeleton {
+  min-height: 105px;
+}
+.kv-skel-notes-head {
+  width: 210px;
+  height: 13px;
 }
 /* Slim modifier for the coming-soon block under live notes — shorter
    min-height since the placeholder content is just three lines. */

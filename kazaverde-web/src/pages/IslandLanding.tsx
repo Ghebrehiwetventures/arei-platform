@@ -30,7 +30,6 @@ const ISLAND_CONFIG: Record<string, IslandConfig> = {
       "Gross rental yields of 5–8% are reported in well-managed resort complexes. One-bedroom apartments in Santa Maria typically start around €95,000; resort units range from €120,000 to €200,000.",
     relatedGuides: [
       { slug: "which-cape-verde-island-property", title: "Which Cape Verde island should you buy on?" },
-      { slug: "cape-verde-rental-yields-realistic", title: "Cape Verde rental yields: what to realistically expect" },
       { slug: "buying-property-cape-verde-guide", title: "How to buy property in Cape Verde" },
     ],
     seoTitle: "Property for Sale in Sal, Cape Verde",
@@ -49,7 +48,6 @@ const ISLAND_CONFIG: Record<string, IslandConfig> = {
       "Often described as where Sal was 5–10 years ago: lower entry prices, a growing rental market, and an active development pipeline. The most accessible beach-island alternative to Sal.",
     relatedGuides: [
       { slug: "which-cape-verde-island-property", title: "Which Cape Verde island should you buy on?" },
-      { slug: "cape-verde-rental-yields-realistic", title: "Cape Verde rental yields: what to realistically expect" },
       { slug: "buying-property-cape-verde-guide", title: "How to buy property in Cape Verde" },
     ],
     seoTitle: "Property for Sale in Boa Vista, Cape Verde",

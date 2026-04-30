@@ -819,6 +819,41 @@
 }
 
 /* ──────────────────────────────────────────────────────────
+   Map placeholder — sits after property details in main column.
+   Grid background gives the "map card" feel without any real map. */
+.kv-d-map-block { margin-bottom: 44px; }
+.kv-d-map-placeholder {
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-paper);
+  /* subtle grid background to read as a map surface */
+  background-image:
+    linear-gradient(rgba(0,0,0,.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 140px;
+  padding: 28px 20px;
+}
+.kv-d-map-pin {
+  font-size: 24px;
+  line-height: 1;
+  color: var(--kv-green-deep);
+}
+.kv-d-map-location {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--kv-black);
+  text-align: center;
+}
+
+/* ──────────────────────────────────────────────────────────
    Sidebar Panel 2 — Status meta-table.
    cv-listing.html .s-meta pattern: bordered grid where each row
    is a 2-column cell pair (label | value) with internal hairlines.

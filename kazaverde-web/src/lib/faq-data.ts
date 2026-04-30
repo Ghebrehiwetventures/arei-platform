@@ -26,13 +26,13 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   {
     question: "Do I need a local bank account?",
     answer:
-      "Yes. You need a Cape Verdean account to pay the seller, the IUP property tax, and the notary fees. Banco Comercial do Atlântico and Caixa Económica are the most commonly used. The escudo is pegged to the euro at a fixed 110.265 CVE per €1.",
+      "Yes. You need a Cape Verdean account to pay the seller, property-related taxes and charges, and notary fees. Banco Comercial do Atlântico and Caixa Económica are the most commonly used. The escudo is pegged to the euro at a fixed 110.265 CVE per €1.",
     topic: "Money",
   },
   {
     question: "What taxes apply when buying property?",
     answer:
-      "The main one is IUP (Imposto Único sobre o Património), the property transfer tax — typically 1.5% of the purchase price, paid before the deed is signed. Stamp duty (Imposto de Selo) of 0.5–1% and notary fees of around 1–2% also apply.",
+      "Since January 1, 2026, the old IUP framework has been replaced by ITI, the Property Transfer Tax, and IPI, the Property Ownership Tax. Current summaries generally describe ITI as 1% of taxable value, with 3% in privileged-tax-regime cases. Ask a qualified local lawyer to verify the Matriz, Registo Predial, taxable value, tax settlement status, and any surcharge exposure before completion.",
     topic: "Tax",
   },
   {
@@ -62,7 +62,7 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   {
     question: "Are there annual property taxes?",
     answer:
-      "Yes. Owners pay an annual IUP municipal tax of roughly 0.1–0.4% of the property's rateable value, depending on the municipality and property type. It's modest compared to most European jurisdictions but not zero.",
+      "Yes. Since January 1, 2026, annual property ownership tax is IPI. Current summaries generally describe IPI as 0.1% for urban property and 0.15% for land. Surcharges may apply for vacant, ruined/degraded, or unfinished-facade properties, so confirm the position with a qualified local lawyer or municipality.",
     topic: "Tax",
   },
   {

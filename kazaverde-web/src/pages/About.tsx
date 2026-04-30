@@ -11,9 +11,25 @@ const SECTIONS: {
   note?: string;
 }[] = [
   {
-    eyebrow: "What it is",
-    heading: "A read-only Cape Verde property index.",
-    body: "KazaVerde collects publicly accessible listing data from tracked source pages, normalises it into a consistent format, and presents it in a searchable interface. Every listing links back to its original source page. KazaVerde is not a broker, marketplace, or transaction platform.",
+    eyebrow: "Why this exists",
+    heading: "A growing market with fragmented public information.",
+    body: "Cape Verde has international buyer demand, diaspora interest, and a property market where information is spread across local agents, portals, developer pages, private networks, and incomplete public records. That makes comparison difficult. KazaVerde exists to make the public listing layer easier to read without pretending it is the full market.",
+  },
+  {
+    eyebrow: "What KazaVerde does",
+    heading: "Public listings, normalised into one searchable index.",
+    body: "KazaVerde collects publicly accessible listings from tracked source pages, normalises them into a consistent format, links back to the original source, and presents the result in one searchable interface. It is the first live market in the Africa Real Estate Index, an independent real estate data layer for African markets.",
+  },
+  {
+    eyebrow: "What we are not",
+    heading: "Not a broker, agency, marketplace, or transaction platform.",
+    list: [
+      "KazaVerde does not broker property transactions.",
+      "KazaVerde is not an estate agency and does not represent buyers or sellers.",
+      "KazaVerde is not a transaction platform and does not handle offers, deposits, contracts, or completion.",
+      "KazaVerde is not commission-led. The index is built around source-linked public records, not sales mandates.",
+    ],
+    note: "Any decision to act on a property should be verified with the original publisher, an independent local lawyer, and any other qualified professional relevant to the transaction.",
   },
   {
     eyebrow: "Where the data comes from",
@@ -50,6 +66,18 @@ const QUALITY_NOTES = [
     name: "Source-first links",
     desc: "If you want to verify the latest public version of a listing, use the source link on the detail page. KazaVerde is a read-only index, not the original publisher.",
   },
+  {
+    name: "Asking prices only",
+    desc: "Prices shown in the index are public asking prices where available. They are not closing prices, valuations, or proof of what a property will transact for.",
+  },
+  {
+    name: "Not legally verified",
+    desc: "KazaVerde does not verify title, ownership, debts, permits, taxes, or transaction readiness. Legal due diligence belongs with an independent local lawyer.",
+  },
+  {
+    name: "Market sample, not market truth",
+    desc: "The index reflects the public listings KazaVerde currently tracks. It should be read as a structured market sample, not a complete record of all property activity in Cape Verde.",
+  },
 ];
 
 function CheckIcon() {
@@ -73,19 +101,21 @@ function CheckIcon() {
 
 export default function About() {
   useDocumentMeta(
-    "About — KazaVerde",
-    "How KazaVerde works. Data sources, update cadence, deduplication, and transparency.",
+    "About AREI / KazaVerde — KazaVerde",
+    "KazaVerde is the first live market in the Africa Real Estate Index: a read-only, source-linked property index for Cape Verde.",
   );
 
   return (
     <div className="kv-pol kv-m">
       <header className="kv-hero kv-hero-slim">
         <div className="kv-hero-inner">
-          <div className="kv-hero-eyebrow">About KazaVerde</div>
-          <h1>How the index works.</h1>
+          <div className="kv-hero-eyebrow">About AREI / KazaVerde</div>
+          <h1>Building the real estate data layer for Africa, starting with Cape Verde.</h1>
           <p className="kv-hero-sub">
-            Where the data comes from, what we do with it, and why
-            transparency matters more than volume.
+            KazaVerde is the first live market in the Africa Real Estate Index:
+            a read-only, source-linked property index built to make fragmented
+            real estate markets more transparent, comparable and easier to
+            understand.
           </p>
         </div>
       </header>
@@ -151,6 +181,63 @@ export default function About() {
             <div className="kv-pol-coverage-note">
               We avoid static coverage numbers here to prevent stale
               reporting.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="kv-m-section">
+        <div className="kv-m-inner">
+          <div className="kv-m-section-head">
+            <span className="kv-l-eyebrow">Long-term AREI vision</span>
+            <h2>Market 01, with broader market intelligence still to build.</h2>
+          </div>
+          <p className="kv-pol-prose">
+            Cape Verde is Market 01 for the Africa Real Estate Index. The
+            broader ambition is to build trusted real estate market intelligence
+            across African markets, starting with source-linked listings and
+            moving over time toward stronger pricing signals, historical data,
+            and more reliable transaction benchmarks where the underlying
+            evidence supports them.
+          </p>
+        </div>
+      </section>
+
+      <section className="kv-m-section">
+        <div className="kv-m-inner">
+          <div className="kv-pol-founder">
+            <span className="kv-l-eyebrow">From the founder</span>
+            <blockquote className="kv-pol-founder-quote">
+              <p>
+                "I came to this market as an investor. Cape Verde was where I
+                started, and even after repeated trips, the market remained
+                difficult to read.
+              </p>
+              <p>
+                The opportunity was visible. The structure was not. Inventory
+                was spread across brokers and local sites, with no consistent
+                data layer to compare opportunities or evaluate them with
+                confidence.
+              </p>
+              <p>
+                That is the gap Africa Real Estate Index exists to close."
+              </p>
+            </blockquote>
+            <div className="kv-pol-founder-byline">
+              <div className="kv-pol-founder-meta">
+                <span className="kv-pol-founder-name">
+                  Michael Ghebrehiwet
+                </span>
+                <span className="kv-pol-founder-role">Founder, AREI</span>
+                <a
+                  className="kv-pol-founder-link"
+                  href="https://www.linkedin.com/in/ghebrehiwet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  LinkedIn →
+                </a>
+              </div>
             </div>
           </div>
         </div>
