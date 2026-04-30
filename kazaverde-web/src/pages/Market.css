@@ -44,11 +44,19 @@
   min-width: 0;
   max-width: 100%;
   box-sizing: border-box;
+  /* Grow inside the stretched .kv-m-geo-wrap so the bordered card
+     reaches the full row height that the grid stretch produces.
+     Without this the card collapses to its content height (0) and
+     the map disappears on desktop. */
+  flex: 1;
 }
 /* Wrapper sits as the left grid item on desktop and stacks above
    the fact table on mobile (kv-m-geo-grid behaviour). Holds the
    bordered map card; required Mapbox attribution lives inside
-   the map surface itself. */
+   the map surface itself. The wrapper is the actual grid item, so
+   align-items: stretch on the grid stretches THIS — not the inner
+   .kv-m-geo-map card. We're a flex column so the map card can
+   grow to fill the stretched height (see flex: 1 below). */
 .kv-m-geo-wrap {
   display: flex;
   flex-direction: column;
