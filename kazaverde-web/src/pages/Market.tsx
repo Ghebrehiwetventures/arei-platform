@@ -263,17 +263,27 @@ export default function Market() {
       })),
     };
 
-    let script = document.getElementById(MARKET_FAQ_SCRIPT_ID) as HTMLScriptElement | null;
-    if (!script) {
-      script = document.createElement("script");
-      script.id = MARKET_FAQ_SCRIPT_ID;
-      script.type = "application/ld+json";
-      document.head.appendChild(script);
-    }
-    script.text = JSON.stringify(schema);
+    document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]').forEach((node) => {
+      if (
+        node.id !== MARKET_FAQ_SCRIPT_ID &&
+        node.textContent?.includes('"FAQPage"') &&
+        node.textContent.includes("/market#faq")
+      ) {
+        node.remove();
+      }
+    });
+
+    const script =
+      (document.getElementById(MARKET_FAQ_SCRIPT_ID) as HTMLScriptElement | null) ??
+      document.createElement("script");
+    script.id = MARKET_FAQ_SCRIPT_ID;
+    script.type = "application/ld+json";
+    script.dataset.kvJsonld = "market-faq";
+    script.textContent = JSON.stringify(schema);
+    if (!script.parentNode) document.head.appendChild(script);
 
     return () => {
-      script?.remove();
+      document.getElementById(MARKET_FAQ_SCRIPT_ID)?.remove();
     };
   }, [loading, error, data]);
 
