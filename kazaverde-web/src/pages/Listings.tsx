@@ -536,7 +536,7 @@ export default function Listings() {
             <div>
               Showing <b>{visible.length ? `1–${visible.length}` : "0"}</b> of <b>{total.toLocaleString("en")}</b>
             </div>
-            {canLoadMore ? (
+            {canLoadMore && (
               <button
                 type="button"
                 className="kv-pager-btn"
@@ -545,12 +545,7 @@ export default function Listings() {
               >
                 {loading ? "Loading…" : "Load more [↓]"}
               </button>
-            ) : (
-              <div />
             )}
-            <div>
-              Page <b>{page}</b> / <b>{Math.max(1, totalPages)}</b>
-            </div>
           </div>
         )}
       </section>
