@@ -187,10 +187,21 @@
   font-variant-numeric: tabular-nums;
   letter-spacing: 0.02em;
 }
+.kv-bp-table-scroll {
+  margin: 20px 0;
+}
+.kv-bp-table-scroll.is-wide {
+  position: relative;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+.kv-bp-table-hint {
+  display: none;
+}
 .kv-bp-body table {
   width: 100%;
   border-collapse: collapse;
-  margin: 20px 0;
+  margin: 0;
   font-size: 13px;
   border: 1px solid var(--kv-rule);
 }
@@ -205,6 +216,8 @@
   text-align: left;
   border-right: 1px solid var(--kv-rule);
   border-bottom: 1px solid var(--kv-black);
+  overflow-wrap: normal;
+  word-break: normal;
 }
 .kv-bp-body th:last-child { border-right: none; }
 .kv-bp-body td {
@@ -213,6 +226,8 @@
   border-bottom: 1px solid var(--kv-rule-soft);
   border-right: 1px solid var(--kv-rule-soft);
   vertical-align: top;
+  overflow-wrap: normal;
+  word-break: normal;
 }
 .kv-bp-body td:last-child { border-right: none; }
 .kv-bp-body tr:last-child td { border-bottom: none; }
@@ -602,21 +617,39 @@
   .kv-bp-body li,
   .kv-bp-body blockquote { overflow-wrap: anywhere; }
 
-  /* Tables can't always be made narrower than the sum of their columns'
-     min content widths. Allow the table itself to scroll horizontally
-     within its own block while the page stays at viewport width. */
-  .kv-bp-body table {
-    display: block;
-    width: 100%;
+  .kv-bp-table-scroll.is-wide {
     max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
+  }
+  .kv-bp-table-scroll.is-wide::after {
+    content: "";
+    position: absolute;
+    top: 28px;
+    right: 0;
+    bottom: 0;
+    width: 34px;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(250, 250, 250, 0), var(--kv-white));
+  }
+  .kv-bp-table-scroll.is-wide table {
+    min-width: 760px;
+  }
+  .kv-bp-table-hint {
+    display: block;
+    margin: 0 0 8px;
+    font-family: var(--kv-mono);
+    font-size: 10.5px;
+    line-height: 1.55;
+    color: var(--kv-gray-500);
+    font-style: italic;
+  }
+  .kv-bp-body table {
     font-size: 12px;
   }
   .kv-bp-body th,
   .kv-bp-body td {
     padding: 9px 10px;
-    overflow-wrap: anywhere;
+    overflow-wrap: normal;
+    word-break: normal;
   }
   .kv-bp-body th {
     font-size: 10px;
