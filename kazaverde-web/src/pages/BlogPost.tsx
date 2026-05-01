@@ -50,7 +50,7 @@ function categoryLabel(cat: string): string {
  *  TOC can scroll to them. Slug = lowercase, hyphenated text content. */
 function decorateHtml(html: string): { html: string; toc: { id: string; label: string }[] } {
   const toc: { id: string; label: string }[] = [];
-  const out = html.replace(/<h2(?:\s+[^>]*)?>([\s\S]*?)<\/h2>/gi, (_m, inner) => {
+  const withHeadingIds = html.replace(/<h2(?:\s+[^>]*)?>([\s\S]*?)<\/h2>/gi, (_m, inner) => {
     const text = inner.replace(/<[^>]+>/g, "").trim();
     const id = text
       .toLowerCase()
@@ -59,6 +59,15 @@ function decorateHtml(html: string): { html: string; toc: { id: string; label: s
       .slice(0, 60);
     toc.push({ id, label: text });
     return `<h2 id="${id}">${inner}</h2>`;
+  });
+  const out = withHeadingIds.replace(/<table(?:\s+[^>]*)?>[\s\S]*?<\/table>/gi, (tableHtml) => {
+    const columnCount = (tableHtml.match(/<th(?:\s+[^>]*)?>/gi) ?? []).length;
+    const isWide = columnCount >= 4;
+    const className = `kv-bp-table-scroll${isWide ? " is-wide" : ""}`;
+    const hint = isWide
+      ? '<div class="kv-bp-table-hint">Scroll sideways to view all columns.</div>'
+      : "";
+    return `<div class="${className}">${hint}${tableHtml}</div>`;
   });
   return { html: out, toc };
 }
