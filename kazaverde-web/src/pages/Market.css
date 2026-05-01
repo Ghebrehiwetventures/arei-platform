@@ -278,7 +278,7 @@
 .kv-m-island-table {
   width: 100%;
   border-collapse: collapse;
-  min-width: 760px;
+  min-width: 640px;
 }
 .kv-m-island-table caption {
   position: absolute;
@@ -581,7 +581,7 @@
   }
 
   .kv-m-island-table {
-    min-width: 720px;
+    min-width: 620px;
   }
   .kv-m-island-table th,
   .kv-m-island-table td {

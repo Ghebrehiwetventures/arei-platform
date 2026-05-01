@@ -604,13 +604,14 @@ export default function Market() {
                   <th scope="col">Tracked listings</th>
                   <th scope="col">Median asking price</th>
                   <th scope="col">Sample note</th>
-                  <th scope="col">Listings</th>
                 </tr>
               </thead>
               <tbody>
                 {data.islands.map((island) => (
                   <tr key={island.name}>
-                    <th scope="row">{island.name}</th>
+                    <th scope="row">
+                      <Link to={islandListingsPath(island.name)}>{island.name}</Link>
+                    </th>
                     <td>{island.totalListings.toLocaleString("en")}</td>
                     <td>{island.median !== null ? formatMedian(island.median) : "—"}</td>
                     <td>
@@ -619,13 +620,6 @@ export default function Market() {
                         : island.totalListings > 0
                           ? "Inventory tracked; priced sample below median threshold."
                           : "No tracked inventory in this snapshot."}
-                    </td>
-                    <td>
-                      {island.totalListings > 0 ? (
-                        <Link to={islandListingsPath(island.name)}>View {island.name}</Link>
-                      ) : (
-                        "—"
-                      )}
                     </td>
                   </tr>
                 ))}
