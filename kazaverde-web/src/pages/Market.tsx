@@ -593,41 +593,46 @@ export default function Market() {
             </p>
           </div>
 
-          <div className="kv-m-table-wrap">
-            <table className="kv-m-island-table">
-              <caption>
-                Island-level Cape Verde real estate market snapshot based on tracked public listings.
-              </caption>
-              <thead>
-                <tr>
-                  <th scope="col">Island</th>
-                  <th scope="col">Tracked listings</th>
-                  <th scope="col">Median asking price</th>
-                  <th scope="col">Sample note</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.islands.map((island) => (
-                  <tr key={island.name}>
-                    <th scope="row">
-                      <Link to={islandListingsPath(island.name)}>{island.name}</Link>
-                    </th>
-                    <td>{island.totalListings.toLocaleString("en")}</td>
-                    <td>{island.median !== null ? formatMedian(island.median) : "—"}</td>
-                    <td>
-                      {island.median !== null
-                        ? `Median based on ${island.count.toLocaleString("en")} priced listings.`
-                        : island.totalListings > 0
-                          ? "Inventory tracked; priced sample below median threshold."
-                          : "No tracked inventory in this snapshot."}
-                    </td>
+          <p className="kv-m-table-scroll-hint">
+            Scroll sideways to view median price and sample notes.
+          </p>
+          <div className="kv-m-table-scroll">
+            <div className="kv-m-table-wrap">
+              <table className="kv-m-island-table">
+                <caption>
+                  Island-level Cape Verde real estate market snapshot based on tracked public listings.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Island</th>
+                    <th scope="col">Tracked listings</th>
+                    <th scope="col">Median asking price</th>
+                    <th scope="col">Sample note</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {data.islands.map((island) => (
+                    <tr key={island.name}>
+                      <th scope="row">
+                        <Link to={islandListingsPath(island.name)}>{island.name}</Link>
+                      </th>
+                      <td>{island.totalListings.toLocaleString("en")}</td>
+                      <td>{island.median !== null ? formatMedian(island.median) : "—"}</td>
+                      <td>
+                        {island.median !== null
+                          ? `Median based on ${island.count.toLocaleString("en")} priced listings.`
+                          : island.totalListings > 0
+                            ? "Inventory tracked; priced sample below median threshold."
+                            : "No tracked inventory in this snapshot."}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          <p className="kv-m-disclaimer">
+          <p className="kv-m-disclaimer kv-m-table-footnote">
             Based on listings with verified price. Minimum sample 5 listings per island.
             Figures are asking prices from observed public listings, not completed sales.
           </p>
