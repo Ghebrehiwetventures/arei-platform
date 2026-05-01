@@ -33,8 +33,24 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
 ];
 
 type SortKey = "newest" | "price-asc" | "price-desc" | "size-desc";
+type ViewMode = "grid" | "list";
 
 const PAGE_SIZE = 9;
+const VIEW_STORAGE_KEY = "kv:listings:view";
+
+function readInitialView(searchParams: URLSearchParams): ViewMode {
+  const fromUrl = searchParams.get("view");
+  if (fromUrl === "list" || fromUrl === "grid") return fromUrl;
+  if (typeof window !== "undefined") {
+    try {
+      const fromStorage = window.localStorage.getItem(VIEW_STORAGE_KEY);
+      if (fromStorage === "list" || fromStorage === "grid") return fromStorage;
+    } catch {
+      // localStorage may be unavailable (private mode); fall through.
+    }
+  }
+  return "grid";
+}
 
 function fmtPrice(n: number | null | undefined): string {
   if (n == null) return "Price on request";
@@ -66,6 +82,7 @@ export default function Listings() {
   const [beds, setBeds] = useState<number>(0);
   const [priceBucket, setPriceBucket] = useState<PriceBucket | "">("");
   const [sort, setSort] = useState<SortKey>("newest");
+  const [view, setView] = useState<ViewMode>(() => readInitialView(searchParams));
 
   // Popover state
   const [openPop, setOpenPop] = useState<"" | "island" | "type" | "price" | "beds" | "sort">("");
@@ -116,6 +133,23 @@ export default function Listings() {
     setSearchParams(next, { replace: true });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [island]);
+
+  // Sync ?view= to URL + localStorage. Default ("grid") drops the param
+  // so existing /listings links stay clean.
+  useEffect(() => {
+    const next = new URLSearchParams(searchParams);
+    if (view === "list") next.set("view", "list");
+    else next.delete("view");
+    setSearchParams(next, { replace: true });
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.setItem(VIEW_STORAGE_KEY, view);
+      } catch {
+        // ignore storage failures
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [view]);
 
   // Fetch data for current page
   useEffect(() => {
@@ -409,8 +443,28 @@ export default function Listings() {
               className="kv-sort"
               onClick={(e) => stopAndToggle(e, "sort")}
             >
-              Sort by <b>{sortLabel}</b> ▾
+              <span className="kv-sort-prefix">Sort by </span><b>{sortLabel}</b> ▾
             </button>
+            <div className="kv-view-toggle" role="group" aria-label="View mode">
+              <button
+                type="button"
+                className="kv-view-toggle-btn"
+                aria-label="Grid view"
+                aria-pressed={view === "grid"}
+                onClick={() => setView("grid")}
+              >
+                <GridIcon />
+              </button>
+              <button
+                type="button"
+                className="kv-view-toggle-btn"
+                aria-label="List view"
+                aria-pressed={view === "list"}
+                onClick={() => setView("list")}
+              >
+                <ListIcon />
+              </button>
+            </div>
             {openPop === "sort" && (
               <PopOver className="kv-pop-right" onClickInside={(e) => e.stopPropagation()}>
                 <div className="kv-pop-h">Sort</div>
@@ -461,11 +515,19 @@ export default function Listings() {
             )}
           </div>
         ) : (
-          <div className="kv-grid">
-            {visible.map((l) => (
-              <Card key={l.id} l={l} />
-            ))}
-          </div>
+          view === "list" ? (
+            <div className="kv-list">
+              {visible.map((l) => (
+                <ListingRow key={l.id} l={l} />
+              ))}
+            </div>
+          ) : (
+            <div className="kv-grid">
+              {visible.map((l) => (
+                <Card key={l.id} l={l} />
+              ))}
+            </div>
+          )
         )}
 
         {/* PAGER */}
@@ -474,7 +536,7 @@ export default function Listings() {
             <div>
               Showing <b>{visible.length ? `1–${visible.length}` : "0"}</b> of <b>{total.toLocaleString("en")}</b>
             </div>
-            {canLoadMore ? (
+            {canLoadMore && (
               <button
                 type="button"
                 className="kv-pager-btn"
@@ -483,12 +545,7 @@ export default function Listings() {
               >
                 {loading ? "Loading…" : "Load more [↓]"}
               </button>
-            ) : (
-              <div />
             )}
-            <div>
-              Page <b>{page}</b> / <b>{Math.max(1, totalPages)}</b>
-            </div>
           </div>
         )}
       </section>
@@ -670,5 +727,82 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
         </div>
       </div>
     </Link>
+  );
+}
+
+/* ────────────────────────────────────────────────────── */
+
+function ListingRow({ l }: { l: ListingCard }) {
+  const isNew = l.is_new || isNewListing(l.first_seen_at);
+  const typeLabel = l.property_type ? TYPES[l.property_type.toLowerCase()] || capitalize(l.property_type) : "";
+  const location = [l.city, l.island].filter(Boolean).join(", ");
+  const imgUrl = l.image_urls?.[0] || l.image_url;
+
+  const bgStyle: React.CSSProperties = imgUrl
+    ? {
+        backgroundImage: `url("${imgUrl}")`,
+        backgroundSize: "cover",
+        backgroundPosition: "center",
+      }
+    : { backgroundImage: "linear-gradient(135deg, #c9d4c8 0%, #a8bea4 100%)" };
+
+  const isLand = (l.property_type || "").toLowerCase() === "land";
+  const specs: { label: string; value: number | string }[] = [];
+  if (isLand) {
+    if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
+  } else {
+    if (l.bedrooms != null) specs.push({ label: "bed", value: l.bedrooms === 0 ? "Studio" : l.bedrooms });
+    if (l.bathrooms != null && l.bathrooms > 0) specs.push({ label: "bath", value: l.bathrooms });
+    if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
+  }
+
+  return (
+    <Link className="kv-list-row" to={`/listing/${l.id}`}>
+      <div className="kv-list-row-media" style={bgStyle}>
+        {isNew && <span className="kv-lc-flag">New</span>}
+      </div>
+      <div className="kv-list-row-body">
+        <div className="kv-list-row-head">
+          <div className="kv-list-row-price">{fmtPrice(l.price)}</div>
+          {typeLabel && <div className="kv-list-row-type">{typeLabel}</div>}
+        </div>
+        <div className="kv-list-row-title">{l.title}</div>
+        {location && <div className="kv-list-row-loc">{location}</div>}
+        {specs.length > 0 && (
+          <div className="kv-list-row-specs">
+            {specs.map((s) => (
+              <span key={s.label}>
+                <b>{s.value}</b> {s.label}
+              </span>
+            ))}
+          </div>
+        )}
+        <div className="kv-list-row-meta">
+          <span>via {formatSourceLabel(l.source_id)}</span>
+          <span>{relTime(l.first_seen_at)}</span>
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function GridIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <rect x="0.5" y="0.5" width="5" height="5" stroke="currentColor" />
+      <rect x="8.5" y="0.5" width="5" height="5" stroke="currentColor" />
+      <rect x="0.5" y="8.5" width="5" height="5" stroke="currentColor" />
+      <rect x="8.5" y="8.5" width="5" height="5" stroke="currentColor" />
+    </svg>
+  );
+}
+
+function ListIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none" aria-hidden="true">
+      <rect x="0.5" y="1.5" width="13" height="2.5" stroke="currentColor" />
+      <rect x="0.5" y="5.75" width="13" height="2.5" stroke="currentColor" />
+      <rect x="0.5" y="10" width="13" height="2.5" stroke="currentColor" />
+    </svg>
   );
 }

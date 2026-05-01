@@ -243,7 +243,48 @@
   color: var(--kv-black);
 }
 
-.kv-sort-wrap { position: relative; }
+.kv-sort-wrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+/* ── View toggle (grid / list) ──────────────────────────
+   Sits inline with the sort control. Two icon buttons; active
+   one fills with the brand sage tint to match the existing
+   accent language used in eyebrows and dot indicators. */
+.kv-view-toggle {
+  display: inline-flex;
+  align-items: center;
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-white);
+}
+.kv-view-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 28px;
+  padding: 0;
+  background: none;
+  border: 0;
+  color: var(--kv-gray-500);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+}
+.kv-view-toggle-btn + .kv-view-toggle-btn {
+  border-left: 1px solid var(--kv-rule);
+}
+.kv-view-toggle-btn:hover { color: var(--kv-black); background: var(--kv-hover); }
+.kv-view-toggle-btn:focus-visible {
+  outline: 2px solid var(--kv-black);
+  outline-offset: -2px;
+}
+.kv-view-toggle-btn[aria-pressed="true"] {
+  background: var(--kv-green-tint);
+  color: var(--kv-green-deep);
+}
 .kv-sort {
   font-family: var(--kv-mono);
   font-size: 11px;
@@ -583,7 +624,22 @@
     min-width: 0;
   }
   /* Trim sort chip slightly so the row stays comfortable at 360px. */
-  .kv-sort { font-size: 10.5px; letter-spacing: 0.06em; padding: 6px 0; }
+  .kv-sort {
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    padding: 6px 0;
+    white-space: nowrap;
+  }
+  /* Drop the "Sort by " prefix on phones — saves ~45px so longer labels
+     ("SIZE — LARGEST FIRST") stay on one line next to the count and
+     the view toggle. The bold value alone is unambiguous. */
+  .kv-sort-prefix { display: none; }
+  /* Tighter gap between view toggle and sort on phones — the row at
+     360px holds count + toggle + sort and overflows with longer sort
+     labels ("SIZE — LARGEST FIRST"). Shrink the toggle and the gap. */
+  .kv-sort-wrap { gap: 8px; }
+  .kv-view-toggle-btn { width: 26px; height: 24px; }
+  .kv-view-toggle-btn svg { width: 12px; height: 12px; }
   .kv-section { padding-top: 24px; }
   .kv-filters { top: 52px; }
   /* Horizontal scroll for filter chips — mobile-native pattern.
@@ -710,4 +766,140 @@
     background: transparent;
     z-index: 50;
   }
+}
+
+/* ═══════════ LIST VIEW ═══════════
+   Alternative to .kv-grid — denser horizontal rows. Desktop = full-width
+   row with image left, body centre, arrow right. Mobile = compact 96px
+   thumbnail with stacked text. Activated by the view toggle in the
+   results header; URL ?view=list and localStorage persist the choice. */
+.kv-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.kv-list-row {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 20px;
+  align-items: stretch;
+  min-height: 140px;
+  padding-right: 20px;
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-white);
+  color: var(--kv-black);
+  text-decoration: none;
+  transition: border-color 0.2s, background 0.2s;
+}
+.kv-list-row:hover {
+  border-color: rgba(0, 0, 0, 0.4);
+  background: var(--kv-green-tint);
+}
+
+.kv-list-row-media {
+  position: relative;
+  width: 200px;
+  height: 140px;
+  overflow: hidden;
+  background: var(--kv-off-white);
+}
+
+.kv-list-row-body {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 4px;
+  min-width: 0;
+  padding: 14px 0;
+}
+
+.kv-list-row-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.kv-list-row-price {
+  font-family: var(--kv-mono);
+  font-size: 20px;
+  font-weight: var(--kv-fw-medium);
+  letter-spacing: -0.01em;
+  color: var(--kv-black);
+  font-variant-numeric: tabular-nums;
+}
+
+.kv-list-row-type {
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-xs);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgba(0, 0, 0, 0.45);
+}
+
+.kv-list-row-title {
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-base);
+  color: rgba(0, 0, 0, 0.75);
+  line-height: 1.4;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.kv-list-row-loc {
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-sm);
+  color: var(--kv-gray-500);
+  letter-spacing: 0.04em;
+}
+
+.kv-list-row-specs {
+  display: flex;
+  gap: 14px;
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-sm);
+  color: var(--kv-gray-500);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-variant-numeric: tabular-nums;
+  margin-top: 2px;
+}
+.kv-list-row-specs b { color: var(--kv-black); font-weight: var(--kv-fw-medium); }
+
+.kv-list-row-meta {
+  display: flex;
+  gap: 14px;
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-xs);
+  color: rgba(0, 0, 0, 0.40);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+@media (max-width: 960px) {
+  .kv-list-row { grid-template-columns: 160px 1fr; min-height: 120px; }
+  .kv-list-row-media { width: 160px; height: 120px; }
+}
+
+@media (max-width: 640px) {
+  .kv-list-row {
+    grid-template-columns: 96px 1fr;
+    gap: 12px;
+    min-height: 96px;
+    padding-right: 12px;
+  }
+  .kv-list-row-media { width: 96px; height: 96px; }
+  .kv-list-row-body { padding: 10px 0; gap: 2px; }
+  .kv-list-row-price { font-size: 16px; }
+  .kv-list-row-type { font-size: 10px; letter-spacing: 0.1em; }
+  .kv-list-row-title { font-size: 13px; }
+  .kv-list-row-loc { font-size: 11px; }
+  .kv-list-row-specs { font-size: 10.5px; gap: 10px; }
+  /* Hide source/age line on phone — keeps row to ~96px so 5–6 fit on screen.
+     Indexed age is the higher-signal of the two; expose it via specs row
+     space if we want it back. For now keep mobile rows tight. */
+  .kv-list-row-meta { display: none; }
 }
