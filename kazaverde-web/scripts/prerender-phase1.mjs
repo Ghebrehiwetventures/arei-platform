@@ -12,6 +12,8 @@ const faqDataPath = path.resolve(__dirname, "../src/lib/faq-data.ts");
 const prerenderListingsPath = path.resolve(__dirname, "../src/lib/prerender-listings.ts");
 const siteUrl = "https://kazaverde.com";
 const ogImage = `${siteUrl}/og-default.png`;
+const blogAuthorName = "KazaVerde Editorial";
+const blogPublisherName = "KazaVerde";
 const sitemapPath = path.join(distDir, "sitemap.xml");
 const publicSupabaseUrl = "https://bhqjdzjtiwckfuteycfl.supabase.co";
 const publicSupabaseAnonKey = "sb_publishable_fFm5NsC3cWLYr_Wnx9OLWQ_Ytmnn-Wd";
@@ -536,6 +538,17 @@ function renderRouteHtml(baseHtml, route) {
     `<meta name="twitter:description" content="${escapeHtml(route.description)}" />`,
     `<meta name="twitter:image" content="${escapeHtml(route.image ?? ogImage)}" />`,
   ];
+  if (ogType === "article") {
+    if (route.publishedTime) {
+      headExtras.push(`<meta property="article:published_time" content="${escapeHtml(route.publishedTime)}" />`);
+    }
+    if (route.modifiedTime) {
+      headExtras.push(`<meta property="article:modified_time" content="${escapeHtml(route.modifiedTime)}" />`);
+    }
+    if (route.author) {
+      headExtras.push(`<meta property="article:author" content="${escapeHtml(route.author)}" />`);
+    }
+  }
   if (route.jsonLd) {
     const payload = Array.isArray(route.jsonLd) ? route.jsonLd : [route.jsonLd];
     for (const entry of payload) {
@@ -544,7 +557,9 @@ function renderRouteHtml(baseHtml, route) {
           ? ' id="kv-jsonld-listing"'
           : entry?.["@type"] === "FAQPage"
             ? ' id="kv-jsonld-faq"'
-            : "";
+            : entry?.["@type"] === "BlogPosting"
+              ? ' id="kv-jsonld-blogposting"'
+              : "";
       headExtras.push(
         `<script${scriptId} type="application/ld+json">${JSON.stringify(entry).replace(/</g, "\\u003c")}</script>`,
       );
@@ -632,9 +647,48 @@ function getBlogArticleRoutes(blogArticles) {
       article.title,
       article.description,
       renderBlogArticleBody(article),
-      { ogType: "article", image: article.heroImage || ogImage },
+      {
+        ogType: "article",
+        image: article.heroImage || ogImage,
+        publishedTime: article.date,
+        modifiedTime: article.date,
+        author: blogAuthorName,
+        jsonLd: buildBlogPostingJsonLd(article),
+      },
     ),
   }));
+}
+
+function buildBlogPostingJsonLd(article) {
+  const url = new URL(`/blog/${article.slug}`, `${siteUrl}/`).toString();
+  const image = article.heroImage ? new URL(article.heroImage, `${siteUrl}/`).toString() : ogImage;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    headline: article.title,
+    description: article.description,
+    datePublished: article.date,
+    dateModified: article.date,
+    author: {
+      "@type": "Organization",
+      name: blogAuthorName,
+      url: new URL("/about", `${siteUrl}/`).toString(),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: blogPublisherName,
+      url: siteUrl,
+      logo: ogImage,
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+    url,
+    image,
+  };
 }
 
 function renderBlogArticleBody(article) {
@@ -650,7 +704,14 @@ function renderBlogArticleBody(article) {
       <a href="/blog">Back to blog</a>
 
       <article>
-        <p>${escapeHtml(formattedDate)} · ${escapeHtml(article.readTime)}</p>
+        <p>
+          By ${escapeHtml(blogAuthorName)} ·
+          Publisher ${escapeHtml(blogPublisherName)} ·
+          Published ${escapeHtml(formattedDate)} ·
+          Updated ${escapeHtml(formattedDate)} ·
+          ${escapeHtml(article.readTime)} ·
+          <a href="/about">About KazaVerde</a>
+        </p>
         <h1>${escapeHtml(article.title)}</h1>
         <p>${article.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join(" ")}</p>
         <div>

@@ -8,6 +8,13 @@ import "./BlogPost.css";
 
 /* Active scrape sources count — keep in sync with markets/cv/sources.yml lifecycleOverride: IN */
 const ACTIVE_SOURCE_COUNT = 9;
+const BLOG_AUTHOR_NAME = "KazaVerde Editorial";
+const BLOG_PUBLISHER_NAME = "KazaVerde";
+const BLOGPOSTING_SCRIPT_ID = "kv-jsonld-blogposting";
+const SITE_URL =
+  (typeof import.meta !== "undefined" && (import.meta as { env?: { VITE_SITE_URL?: string } }).env?.VITE_SITE_URL) ||
+  (typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com");
+const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.png`;
 
 interface InlineCtaStats {
   total: number;
@@ -46,6 +53,46 @@ function categoryLabel(cat: string): string {
   return cat.charAt(0).toUpperCase() + cat.slice(1);
 }
 
+function getArticleUrl(slug: string): string {
+  return new URL(`/blog/${slug}`, `${SITE_URL}/`).toString();
+}
+
+function getArticleImage(image?: string): string {
+  return image ? new URL(image, `${SITE_URL}/`).toString() : DEFAULT_OG_IMAGE;
+}
+
+function buildBlogPostingJsonLd(article: NonNullable<ReturnType<typeof getArticleBySlug>>) {
+  const url = getArticleUrl(article.slug);
+  const dateModified = article.date;
+
+  return {
+    "@context": "https://schema.org",
+    "@type": "BlogPosting",
+    "@id": `${url}#article`,
+    headline: article.title,
+    description: article.description,
+    datePublished: article.date,
+    dateModified,
+    author: {
+      "@type": "Organization",
+      name: BLOG_AUTHOR_NAME,
+      url: new URL("/about", `${SITE_URL}/`).toString(),
+    },
+    publisher: {
+      "@type": "Organization",
+      name: BLOG_PUBLISHER_NAME,
+      url: SITE_URL,
+      logo: DEFAULT_OG_IMAGE,
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": url,
+    },
+    url,
+    image: getArticleImage(article.heroImage),
+  };
+}
+
 /** Inject id="..." attributes onto h2 tags in the article HTML so the
  *  TOC can scroll to them. Slug = lowercase, hyphenated text content. */
 function decorateHtml(html: string): { html: string; toc: { id: string; label: string }[] } {
@@ -76,12 +123,54 @@ export default function BlogPost() {
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const article = slug ? getArticleBySlug(slug) : undefined;
+  const articleUrl = article ? getArticleUrl(article.slug) : undefined;
 
   useDocumentMeta(
     article ? `${article.title} — KazaVerde` : "Article not found",
     article?.description ?? "",
-    article?.heroImage ? { image: article.heroImage } : undefined,
+    article
+      ? {
+          image: article.heroImage,
+          url: articleUrl,
+          type: "article",
+          publishedTime: article.date,
+          modifiedTime: article.date,
+          author: BLOG_AUTHOR_NAME,
+        }
+      : undefined,
   );
+
+  const blogPostingJsonLd = useMemo(
+    () => (article ? buildBlogPostingJsonLd(article) : null),
+    [article],
+  );
+
+  useEffect(() => {
+    if (!blogPostingJsonLd || !article) return;
+
+    document.querySelectorAll<HTMLScriptElement>('script[type="application/ld+json"]').forEach((node) => {
+      if (
+        node.id !== BLOGPOSTING_SCRIPT_ID &&
+        node.textContent?.includes('"BlogPosting"') &&
+        node.textContent.includes(`${getArticleUrl(article.slug)}#article`)
+      ) {
+        node.remove();
+      }
+    });
+
+    const script =
+      (document.getElementById(BLOGPOSTING_SCRIPT_ID) as HTMLScriptElement | null) ??
+      document.createElement("script");
+    script.id = BLOGPOSTING_SCRIPT_ID;
+    script.type = "application/ld+json";
+    script.dataset.kvJsonld = "blogposting";
+    script.textContent = JSON.stringify(blogPostingJsonLd);
+    if (!script.parentNode) document.head.appendChild(script);
+
+    return () => {
+      document.getElementById(BLOGPOSTING_SCRIPT_ID)?.remove();
+    };
+  }, [article, blogPostingJsonLd]);
 
   const { html: decoratedHtml, toc } = useMemo(
     () => (article ? decorateHtml(article.content) : { html: "", toc: [] }),
@@ -175,9 +264,13 @@ export default function BlogPost() {
           <h1 className="kv-bp-title">{article.title}</h1>
           <p className="kv-bp-deck">{article.description}</p>
           <div className="kv-bp-byline">
-            <span>{fmtDate(article.date)}</span>
+            <span>By {BLOG_AUTHOR_NAME}</span>
+            <span>Publisher {BLOG_PUBLISHER_NAME}</span>
+            <span>Published {fmtDate(article.date)}</span>
+            <span>Updated {fmtDate(article.date)}</span>
             <span>{article.readTime}</span>
             {article.tags.length > 0 && <span>{article.tags.join(" · ")}</span>}
+            <Link to="/about" className="kv-bp-trust-link">About KazaVerde</Link>
           </div>
         </div>
       </header>
