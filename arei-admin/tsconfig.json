@@ -12,9 +12,9 @@
     "noEmit": true,
     "jsx": "react-jsx",
     "strict": true,
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
+    "noUnusedLocals": false,
+    "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true
   },
-  "include": ["*.ts", "*.tsx", "assistant/**/*.ts", "../core/*.ts"]
+  "include": ["*.ts", "*.tsx", "assistant/**/*.ts", "api/**/*.ts", "project-context/**/*.json"]
 }

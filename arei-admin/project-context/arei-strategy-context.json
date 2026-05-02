@@ -1,0 +1,27 @@
+{
+  "business_model": [
+    "AREI is a real estate data platform for fragmented African property markets, not a generic marketplace.",
+    "The first public proof surface is KazaVerde, a read-only Cape Verde property index and market data surface.",
+    "Long-term commercial options include market intelligence, partner-facing research tools, premium analytics, API/data licensing, and products built on normalized market structure."
+  ],
+  "positioning": [
+    "Use transparent Cape Verde property index / market data portal framing.",
+    "Avoid marketplace, broker, seller-flow, or lead-gen language unless the product model changes explicitly.",
+    "KazaVerde is a beachhead market surface, not the full company identity."
+  ],
+  "strategic_thesis": [
+    "The durable moat is normalized, trust-aware, market-by-market property data.",
+    "Cape Verde is Market 01 because it is small enough for quality to be visible and fragmented enough for normalization to matter.",
+    "Transaction and market data can become a long-term moat only if current data quality, provenance, and public-feed discipline stay credible."
+  ],
+  "operating_principles": [
+    "Prioritize index integrity over raw inventory inflation.",
+    "Keep public feed truth separate from raw visible inventory.",
+    "Treat broker neutrality, source transparency, and read-only source-linking as launch constraints.",
+    "Founder focus should stay on bottlenecks that improve trust, launch readiness, broker adoption, and the data moat."
+  ],
+  "current_notes": [
+    "ChatGPT history is not connected to AREI Pulse V1. Durable memory should be stored in arei_project_memory or canonical repo docs.",
+    "Naming and rebrand work should preserve AREI as the platform and KazaVerde as the Cape Verde beachhead."
+  ]
+}
