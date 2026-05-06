@@ -1,3 +1,9 @@
+/* ══════════════════════════════════════════════════════════
+   NotFound — editorial empty-state for missing pages and
+   removed listings. Mirrors the Detail / Listings visual
+   language: mono-typographic, sage accent, black solid CTA.
+   ══════════════════════════════════════════════════════════ */
+
 .nf {
   display: flex;
   flex-direction: column;
@@ -5,97 +11,106 @@
   justify-content: center;
   text-align: center;
   min-height: 60vh;
-  padding: 48px 24px;
+  padding: var(--kv-s-8) var(--kv-gutter);
+  color: var(--kv-black);
 }
 
 .nf-icon {
-  width: 100px;
-  height: 100px;
-  color: var(--tx3);
-  margin-bottom: 32px;
-  opacity: 0.5;
+  width: 88px;
+  height: 88px;
+  color: var(--kv-ink-300);
+  margin-bottom: var(--kv-s-7);
 }
-.nf-icon svg {
-  width: 100%;
-  height: 100%;
-}
+.nf-icon svg { width: 100%; height: 100%; }
 
 .nf-title {
-  font-family: var(--fd);
-  font-size: 2rem;
-  font-weight: 400;
-  margin-bottom: 12px;
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-h1);
+  font-weight: var(--kv-fw-regular);
+  letter-spacing: var(--kv-ls-display);
+  line-height: 1.15;
+  color: var(--kv-black);
+  margin-bottom: var(--kv-s-3);
 }
 
 .nf-body {
-  font-size: 0.95rem;
-  color: var(--tx2);
-  max-width: 420px;
+  font-family: var(--kv-sans);
+  font-size: var(--kv-t-lg);
+  color: var(--kv-ink-600);
+  max-width: 460px;
   line-height: 1.6;
-  margin-bottom: 36px;
+  margin-bottom: var(--kv-s-8);
 }
 
 .nf-actions {
   display: flex;
-  gap: 12px;
-  margin-bottom: 48px;
+  gap: var(--kv-s-3);
+  margin-bottom: var(--kv-s-10);
 }
 
 .nf-btn {
-  padding: 13px 28px;
-  border-radius: 10px;
-  font-size: 0.82rem;
-  font-weight: 700;
-  letter-spacing: 0.04em;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--kv-s-2);
+  padding: 13px 22px;
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-md);
+  font-weight: var(--kv-fw-medium);
+  letter-spacing: var(--kv-ls-meta);
   text-transform: uppercase;
   cursor: pointer;
-  transition: all 0.2s;
-  font-family: var(--fb);
-  border: none;
+  border: 1px solid transparent;
+  transition:
+    background var(--kv-dur) var(--kv-ease),
+    color var(--kv-dur) var(--kv-ease),
+    border-color var(--kv-dur) var(--kv-ease);
 }
 
 .nf-primary {
-  background: var(--ac);
-  color: var(--bg);
+  background: var(--kv-black);
+  color: var(--kv-white);
+  border-color: var(--kv-black);
 }
-.nf-primary:hover {
-  background: var(--ac2);
-}
+.nf-primary:hover { background: var(--kv-black-hover); border-color: var(--kv-black-hover); }
+.nf-primary:active { transform: translateY(1px); }
 
 .nf-secondary {
   background: transparent;
-  color: var(--tx);
-  border: 1.5px solid var(--bd2);
+  color: var(--kv-black);
+  border-color: var(--kv-rule-strong);
 }
-.nf-secondary:hover {
-  border-color: var(--tx);
-}
+.nf-secondary:hover { background: var(--kv-hover); border-color: var(--kv-black); }
+.nf-secondary:active { transform: translateY(1px); }
 
 .nf-links {
   display: flex;
   align-items: center;
-  gap: 16px;
-  font-size: 0.82rem;
+  gap: var(--kv-s-4);
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-sm);
+  letter-spacing: var(--kv-ls-meta);
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
 }
 .nf-links a {
-  color: var(--tx2);
+  color: var(--kv-ink-600);
   cursor: pointer;
-  transition: color 0.2s;
+  transition: color var(--kv-dur) var(--kv-ease);
 }
-.nf-links a:hover {
-  color: var(--ac);
-}
+.nf-links a:hover { color: var(--kv-green-deep); }
 .nf-dot {
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: var(--tx3);
+  background: var(--kv-ink-300);
 }
 
 @media (max-width: 768px) {
-  .nf { min-height: 50vh; padding: 32px 20px; }
-  .nf-icon { width: 80px; height: 80px; margin-bottom: 24px; }
-  .nf-title { font-size: 1.6rem; }
+  .nf { min-height: 50vh; padding: var(--kv-s-7) var(--kv-s-5); }
+  .nf-icon { width: 72px; height: 72px; margin-bottom: var(--kv-s-5); }
+  .nf-title { font-size: var(--kv-t-h2); }
+  .nf-body { font-size: var(--kv-t-base); margin-bottom: var(--kv-s-7); }
   .nf-actions { flex-direction: column; width: 100%; max-width: 280px; }
-  .nf-btn { width: 100%; text-align: center; }
+  .nf-btn { width: 100%; }
 }
