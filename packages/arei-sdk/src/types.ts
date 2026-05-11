@@ -147,6 +147,8 @@ export interface PaginatedListings {
 export interface AREIConfig {
   supabaseUrl: string;
   supabaseAnonKey: string;
+  /** Override the feed view name (e.g. "v1_feed_cv_dev" for local preview). */
+  feedView?: string;
 }
 
 /** Market context stats for a single island, relative to one listing */
