@@ -55,7 +55,6 @@ islands:
     cities:
       - name: Praia
         aliases:
-          - "Praia"
           - "Cidade da Praia"
         default: true
       - name: Assomada
@@ -150,7 +149,7 @@ location_patterns:
   - "Boa Vista"
   - "Sal\\b"
   - "Santa Maria"
-  - "Praia"
+  - "\\bPraia\\b(?!\\s+\\w)"
   - "Mindelo"
   - "Santiago"
   - "São Vicente"
