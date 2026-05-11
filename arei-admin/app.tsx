@@ -690,9 +690,9 @@ function FlagGroup({ tone, title, message }: { tone: "bad" | "warn" | "muted"; t
   const titleCls =
     tone === "bad" ? "text-red font-medium" : tone === "warn" ? "text-amber font-medium" : "text-foreground-subtle font-medium";
   return (
-    <div className={`rounded-lg p-3 text-sm ${cls}`}>
-      <div className={titleCls}>{title}</div>
-      <div className="text-foreground-muted mt-0.5">{message}</div>
+    <div className={`rounded-lg p-3 text-sm min-w-0 ${cls}`}>
+      <div className={`${titleCls} break-words`}>{title}</div>
+      <div className="text-foreground-muted mt-0.5 break-words leading-relaxed">{message}</div>
     </div>
   );
 }
@@ -770,7 +770,7 @@ function DashboardView() {
   // ── Source Health (selected market only) ───────────────────────────────────
   // Scoped to the operator's chosen market. Non-selected markets stay out of
   // every summary card, issue list, and attention pill on this view.
-  const healthRows = stats.sourceRows.filter((r) => r.marketId === selectedMarketId);
+  const healthRows = stats.sourceRows.filter((r) => r.marketId === selectedMarketId && !r.isStub);
   const totalSources = healthRows.length;
   const freshSources = healthRows.filter((r) => {
     const f = formatFreshness(r.last_updated_at);
@@ -892,7 +892,7 @@ function DashboardView() {
         <div className="flex items-baseline justify-between mb-4 gap-3">
           <h2 className="text-base font-semibold text-foreground font-mono">{selectedMarketLabel} source health</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           <SourceHealthStat label={`${selectedMarketLabel} sources`} value={totalSources} />
           <SourceHealthStat label="Fresh (≤30d)" value={freshSources} tone={totalSources > 0 && freshSources === totalSources ? "good" : undefined} />
           <SourceHealthStat label="Stale (>30d)" value={staleSourcesCount} tone={staleSourcesCount > 0 ? "warn" : "good"} />
@@ -905,12 +905,12 @@ function DashboardView() {
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Top issues to address</div>
             <ol className="space-y-1 text-sm">
               {topIssues.map((iss, i) => (
-                <li key={iss.label} className="flex gap-2 items-baseline">
-                  <span className="text-foreground-subtle tabular-nums">{i + 1}.</span>
-                  <span className={iss.tone === "bad" ? "text-red font-medium" : "text-amber font-medium"}>
+                <li key={iss.label} className="flex gap-2 items-baseline min-w-0">
+                  <span className="shrink-0 text-foreground-subtle tabular-nums">{i + 1}.</span>
+                  <span className={`shrink-0 ${iss.tone === "bad" ? "text-red font-medium" : "text-amber font-medium"}`}>
                     {iss.count}
                   </span>
-                  <span className="text-foreground-muted">{iss.label}</span>
+                  <span className="text-foreground-muted break-words min-w-0">{iss.label}</span>
                 </li>
               ))}
             </ol>
@@ -921,17 +921,17 @@ function DashboardView() {
       {(cvWorst.length > 0 || cvBest.length > 0) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {cvWorst.length > 0 && (
-            <div className="rounded p-4 border border-border border-l-2 border-l-amber bg-surface-1">
+            <div className="rounded p-4 border border-border border-l-2 border-l-amber bg-surface-1 min-w-0">
               <div className="text-[10px] font-mono font-medium text-amber uppercase tracking-wider mb-2">Needs attention · {selectedMarketLabel}</div>
-              <p className="text-sm text-foreground">
+              <p className="text-sm text-foreground break-words leading-relaxed">
                 {cvWorst.map((r) => r.sourceName).join(", ")}
               </p>
             </div>
           )}
           {cvBest.length > 0 && (
-            <div className="rounded p-4 border border-border border-l-2 border-l-green bg-surface-1">
+            <div className="rounded p-4 border border-border border-l-2 border-l-green bg-surface-1 min-w-0">
               <div className="text-[10px] font-mono font-medium text-green uppercase tracking-wider mb-2">Performing well · {selectedMarketLabel}</div>
-              <p className="text-sm text-foreground">
+              <p className="text-sm text-foreground break-words leading-relaxed">
                 {cvBest.map((r) => r.sourceName).join(", ")}
               </p>
             </div>
@@ -1972,32 +1972,34 @@ function SourcesView() {
             Source Health Report — visual overview, then detail tables · scoped to selected market
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <MarketSelector />
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            disabled={scopedRows.length === 0}
-            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-          >
-            Export CSV
-          </button>
-          <button
-            type="button"
-            onClick={handleExportHtmlReport}
-            disabled={reportRows.length === 0}
-            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-          >
-            Export HTML report
-          </button>
-          <button
-            type="button"
-            onClick={handlePrintReport}
-            disabled={reportRows.length === 0}
-            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-          >
-            Print / PDF
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={scopedRows.length === 0}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            >
+              Export CSV
+            </button>
+            <button
+              type="button"
+              onClick={handleExportHtmlReport}
+              disabled={reportRows.length === 0}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            >
+              Export HTML report
+            </button>
+            <button
+              type="button"
+              onClick={handlePrintReport}
+              disabled={reportRows.length === 0}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            >
+              Print / PDF
+            </button>
+          </div>
         </div>
       </div>
 
