@@ -52,7 +52,7 @@ interface IslandStat {
 
 export default function Saved() {
   useDocumentMeta(
-    "Shortlist — KazaVerde",
+    "Shortlist",
     "Properties you've saved on this device. A read-only index of public Cape Verde listings.",
   );
 

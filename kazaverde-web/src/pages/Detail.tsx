@@ -184,9 +184,9 @@ function buildListingMetaDescription(detail: ListingDetailType, title: string): 
   }
 
   if (detail.property_type) {
-    parts.push(`Source-linked ${detail.property_type.toLowerCase()} listing on KazaVerde.`);
+    parts.push(`Source-linked ${detail.property_type.toLowerCase()} listing on the Cape Verde Real Estate Index.`);
   } else {
-    parts.push("Source-linked property listing on KazaVerde.");
+    parts.push("Source-linked property listing on the Cape Verde Real Estate Index.");
   }
 
   return truncateSeoText(parts.join(" "));
@@ -926,7 +926,7 @@ export default function Detail() {
                 {detail.island} listings
               </Link>,{" "}
               <Link to="/market">market data</Link>, or{" "}
-              <Link to="/about">how KazaVerde works</Link>.
+              <Link to="/about">how the Cape Verde Real Estate Index works</Link>.
             </p>
           </div>
         </aside>

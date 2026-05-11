@@ -58,14 +58,14 @@ const HOMEPAGE_SCHEMA = {
     {
       "@type": "Organization",
       "@id": "https://kazaverde.com/#organization",
-      "name": "KazaVerde",
+      "name": "Cape Verde Real Estate Index",
       "url": "https://kazaverde.com",
-      "description": "Independent property index for Cape Verde real estate",
+      "description": "Cape Verde's independent real estate index, published by AREI.",
     },
     {
       "@type": "WebSite",
       "@id": "https://kazaverde.com/#website",
-      "name": "KazaVerde",
+      "name": "Cape Verde Real Estate Index",
       "url": "https://kazaverde.com",
       "publisher": { "@id": "https://kazaverde.com/#organization" },
     },
@@ -73,7 +73,7 @@ const HOMEPAGE_SCHEMA = {
 };
 
 export default function Home() {
-  useDocumentMeta("KazaVerde — Cape Verde Real Estate", HOME_META_DESCRIPTION);
+  useDocumentMeta("Cape Verde Real Estate Index", HOME_META_DESCRIPTION);
   const navigate = useNavigate();
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);

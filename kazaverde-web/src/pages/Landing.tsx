@@ -156,8 +156,8 @@ function categoryLabel(cat: string): string {
 
 export default function Landing() {
   useDocumentMeta(
-    "KazaVerde — Cape Verde Real Estate",
-    "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with KazaVerde.",
+    "Cape Verde Real Estate Index",
+    "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with the Cape Verde Real Estate Index, published by AREI.",
   );
 
   /* Inject homepage JSON-LD: Organization + WebSite. FAQPage lives on
@@ -172,17 +172,17 @@ export default function Landing() {
         {
           "@type": "Organization",
           "@id": `${origin}/#organization`,
-          name: "KazaVerde",
+          name: "Cape Verde Real Estate Index",
           url: origin,
           logo: `${origin}/og-default.png`,
           description:
-            "KazaVerde is an independent property search and data platform for Cape Verde real estate. It is not a broker or agency.",
+            "Cape Verde Real Estate Index is an independent property search and data platform for Cape Verde real estate, published by AREI. It is not a broker or agency.",
         },
         {
           "@type": "WebSite",
           "@id": `${origin}/#website`,
           url: origin,
-          name: "KazaVerde",
+          name: "Cape Verde Real Estate Index",
           description:
             "Search Cape Verde real estate listings aggregated from local agencies, portals and property websites.",
           publisher: { "@id": `${origin}/#organization` },

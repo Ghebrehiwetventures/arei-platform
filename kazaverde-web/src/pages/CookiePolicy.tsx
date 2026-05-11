@@ -47,8 +47,8 @@ function CheckIcon() {
 
 export default function CookiePolicy() {
   useDocumentMeta(
-    "Cookie Policy — KazaVerde",
-    "What cookies and local storage KazaVerde uses and why.",
+    "Cookie Policy",
+    "What cookies and local storage the Cape Verde Real Estate Index uses and why.",
   );
 
   return (
@@ -58,8 +58,9 @@ export default function CookiePolicy() {
           <div className="kv-hero-eyebrow">Cookie policy</div>
           <h1>Cookies &amp; local storage.</h1>
           <p className="kv-hero-sub">
-            KazaVerde is built to minimise data collection. No advertising
-            cookies, no marketing trackers, no third-party analytics cookies.
+            The Cape Verde Real Estate Index is built to minimise data
+            collection. No advertising cookies, no marketing trackers, no
+            third-party analytics cookies.
           </p>
           <span className="kv-pol-stamp">Last updated · 27 March 2026</span>
         </div>

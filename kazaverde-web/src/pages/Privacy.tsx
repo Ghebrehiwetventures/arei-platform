@@ -6,8 +6,8 @@ import "./Policy.css";
 
 export default function Privacy() {
   useDocumentMeta(
-    "Privacy Policy — KazaVerde",
-    "How KazaVerde handles your data, what we collect, and your rights.",
+    "Privacy Policy",
+    "How the Cape Verde Real Estate Index handles your data, what we collect, and your rights.",
   );
 
   return (
@@ -18,8 +18,8 @@ export default function Privacy() {
           <h1>How we handle your data.</h1>
           <p className="kv-hero-sub">
             What we collect, what we don't, and how to reach us if you want
-            something removed. KazaVerde is a read-only index — we collect
-            very little.
+            something removed. The Cape Verde Real Estate Index is a read-only
+            index — we collect very little.
           </p>
           <span className="kv-pol-stamp">Last updated · 27 March 2026</span>
         </div>
@@ -29,13 +29,13 @@ export default function Privacy() {
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
             <span className="kv-l-eyebrow">Who we are</span>
-            <h2>KazaVerde, operated under Africa Real Estate Index.</h2>
+            <h2>The Cape Verde Real Estate Index, published by AREI.</h2>
           </div>
           <p className="kv-pol-prose">
-            KazaVerde (<strong>kazaverde.com</strong>) is a read-only property
-            index for Cape Verde, operated as part of Africa Real Estate Index
-            (AREI). This policy explains what data we collect, why we collect
-            it, and how we protect it.
+            The Cape Verde Real Estate Index (<strong>kazaverde.com</strong>)
+            is a read-only property index for Cape Verde, published as part of
+            Africa Real Estate Index (AREI). This policy explains what data we
+            collect, why we collect it, and how we protect it.
           </p>
         </div>
       </section>
@@ -91,10 +91,10 @@ export default function Privacy() {
             <h2>Almost none.</h2>
           </div>
           <p className="kv-pol-prose">
-            KazaVerde uses minimal browser storage. Vercel Web Analytics is
-            cookieless. The only persistent storage is localStorage for your
-            saved properties and cookie-banner acknowledgement. For the full
-            breakdown, see the{" "}
+            The Cape Verde Real Estate Index uses minimal browser storage.
+            Vercel Web Analytics is cookieless. The only persistent storage is
+            localStorage for your saved properties and cookie-banner
+            acknowledgement. For the full breakdown, see the{" "}
             <Link to="/cookie-policy">Cookie Policy</Link>.
           </p>
         </div>
@@ -106,9 +106,9 @@ export default function Privacy() {
             <span className="kv-l-eyebrow">Third-party services</span>
             <h2>Who else touches your request.</h2>
             <p>
-              KazaVerde is a small read-only site, but a request to it
-              involves a handful of upstream providers. Each has its own
-              privacy policy — links below.
+              The Cape Verde Real Estate Index is a small read-only site, but
+              a request to it involves a handful of upstream providers. Each
+              has its own privacy policy — links below.
             </p>
           </div>
           <ul className="kv-pol-list">
