@@ -39,9 +39,11 @@ export default function Navbar() {
         <a className="logo" onClick={() => navigate("/")} role="button" tabIndex={0}>
           <DLayersMark size={20} />
           <span className="logo-text">
-            <span className="logo-w">Cape Verde</span>
-            <span className="logo-w">Real Estate</span>
-            <span className="logo-w">Index</span>
+            <span className="lockup-country">Cape Verde</span>
+            <span className="lockup-descriptor">
+              <span className="lockup-w">Real Estate</span>
+              <span className="lockup-w">Index</span>
+            </span>
           </span>
         </a>
 

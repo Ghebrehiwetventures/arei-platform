@@ -29,7 +29,6 @@
   gap: 10px;
   font-family: var(--kv-mono);
   font-size: 11px;
-  font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--kv-black);
@@ -38,6 +37,17 @@
 
 .footer-brand .f-logo svg {
   flex-shrink: 0;
+}
+
+/* Footer lockup hierarchy — country dominant, descriptor muted.
+   Same brand rule as the navbar lockup. */
+.footer-brand .f-logo .lockup-country {
+  font-weight: 600;
+}
+
+.footer-brand .f-logo .lockup-descriptor {
+  font-weight: 400;
+  opacity: 0.6;
 }
 .footer-brand p {
   font-size: 12px;
