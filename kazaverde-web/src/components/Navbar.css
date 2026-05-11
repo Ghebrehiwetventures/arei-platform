@@ -41,10 +41,30 @@
   flex-shrink: 0;
 }
 
-/* Tight product nav: collapse to "[mark] Cape Verde" on mobile,
-   matching the AREI lockup pattern. Full lockup on desktop. */
-@media (max-width: 768px) {
-  .logo-text-tail { display: none; }
+/* Wordmark lockup, matching AREI landing pattern.
+   Desktop: single line "[mark] Cape Verde Real Estate Index".
+   Narrow / tablet / mobile: "[mark] Cape Verde / Real Estate / Index"
+   stacked vertically. Switch at 1024px (before nav-links collapse at
+   768px) so the stack appears before nav-links would get cramped. */
+.logo-text {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 0.4em;
+}
+.logo-w {
+  white-space: nowrap;
+}
+
+@media (max-width: 1024px) {
+  .logo-text {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    line-height: 1.15;
+  }
+  .logo {
+    align-items: center;
+  }
 }
 
 /* ── Desktop links ── */
