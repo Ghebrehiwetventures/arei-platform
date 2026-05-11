@@ -100,6 +100,10 @@ export interface SourceQualityRow extends SourceQualityRowRaw {
   grade: "A" | "B" | "C" | "D";
   sourceName: string;
   marketId: string;
+  /** True when this row corresponds to a `type: stub` source declared in
+   *  markets/<m>/sources.yml. Stub rows are excluded from the public feed
+   *  upstream (migrations/010); we mirror that exclusion in admin aggregates. */
+  isStub: boolean;
 }
 
 export interface DashboardStats {

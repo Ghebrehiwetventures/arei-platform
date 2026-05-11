@@ -327,18 +327,24 @@ function GradePill({ grade }: { grade: "A" | "B" | "C" | "D" }) {
 
 export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityRow[]; marketLabel: string }) {
   if (rows.length === 0) return null;
-  const summary = summarize(rows);
+  // Stubs (cv_source_*) are real DB rows but represent test/placeholder
+  // sources, not production publishers. They are excluded from every primary
+  // aggregate so they cannot pollute the working report; they are surfaced
+  // in a small dedicated footer below.
+  const productionRows = rows.filter((r) => !r.isStub);
+  const stubRows = rows.filter((r) => r.isStub);
+  const summary = summarize(productionRows);
   const issueBuckets = {
-    noFeed: rows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0),
-    noTrust: rows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0),
-    noIndexable: rows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0),
-    stale: rows.filter((r) => daysSince(r.last_updated_at) >= STALE_DAYS),
-    lowSqm: rows.filter((r) => Number(r.listing_count) >= 10 && r.with_sqm_pct < 30),
-    lowBeds: rows.filter((r) => Number(r.listing_count) >= 10 && r.with_beds_pct < 30),
-    lowBaths: rows.filter((r) => Number(r.listing_count) >= 10 && r.with_baths_pct < 30),
-    lowConv: rows.filter((r) => Number(r.approved_count) >= 20 && r.feed_conversion_pct < 25),
+    noFeed: productionRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0),
+    noTrust: productionRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0),
+    noIndexable: productionRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0),
+    stale: productionRows.filter((r) => daysSince(r.last_updated_at) >= STALE_DAYS),
+    lowSqm: productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_sqm_pct < 30),
+    lowBeds: productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_beds_pct < 30),
+    lowBaths: productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_baths_pct < 30),
+    lowConv: productionRows.filter((r) => Number(r.approved_count) >= 20 && r.feed_conversion_pct < 25),
   };
-  const priorities = [...rows]
+  const priorities = [...productionRows]
     .map((r) => ({ r, score: priorityScore(r) }))
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
@@ -347,8 +353,8 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
     .map((p) => buildPriorityAction(p.r))
     .filter((a): a is PriorityAction => a !== null);
   // Top 6 sources needing action — sorted by priority score, then listings.
-  // Falls back to high-listing-count sources when fewer than 6 have issues.
-  const topSourcesNeedingAction = [...rows]
+  // Stubs excluded so a placeholder source cannot occupy a card slot.
+  const topSourcesNeedingAction = [...productionRows]
     .sort((a, b) => {
       const sa = priorityScore(a), sb = priorityScore(b);
       if (sa !== sb) return sb - sa;
@@ -498,6 +504,26 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
           })}
         </div>
       </section>
+
+      {stubRows.length > 0 && (
+        <section className="surface-1 border border-border border-dashed rounded-xl p-4">
+          <div className="flex items-baseline justify-between mb-2 gap-3">
+            <h2 className="text-sm font-semibold text-foreground-muted">Test / stub sources</h2>
+            <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface-3 text-foreground-subtle font-medium">excluded from aggregates</span>
+          </div>
+          <p className="text-xs text-foreground-subtle mb-3">
+            Declared as <code className="font-mono">type: stub</code> in <code className="font-mono">markets/{marketLabel.toLowerCase() === "cape verde" ? "cv" : "*"}/sources.yml</code> and excluded from the public feed by migration 010. Not counted in summary, funnel, priority actions, or top sources.
+          </p>
+          <ul className="space-y-1.5">
+            {stubRows.map((r) => (
+              <li key={r.source_id} className="flex items-baseline justify-between gap-3 text-xs">
+                <span className="text-foreground">{r.sourceName} <span className="text-foreground-subtle font-mono">· {r.source_id}</span></span>
+                <span className="text-foreground-muted tabular-nums font-mono">{Number(r.listing_count).toLocaleString()} listings · {r.public_feed_count_n.toLocaleString()} feed</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
     </div>
   );
 }
@@ -511,26 +537,29 @@ function esc(s: string | number | null | undefined): string {
 
 export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, marketNameById: Map<string, string>): string {
   const generated = new Date().toISOString();
-  const summary = summarize(rows);
-  const priorities = [...rows]
+  // Stubs excluded from aggregates (see SourceHealthReport for rationale).
+  const productionRows = rows.filter((r) => !r.isStub);
+  const stubRows = rows.filter((r) => r.isStub);
+  const summary = summarize(productionRows);
+  const priorities = [...productionRows]
     .map((r) => ({ r, score: priorityScore(r) }))
     .filter((x) => x.score > 0)
     .sort((a, b) => b.score - a.score)
     .slice(0, 10);
-  const allSorted = [...rows].sort((a, b) => priorityScore(b) - priorityScore(a) || Number(b.listing_count) - Number(a.listing_count));
+  const allSorted = [...productionRows].sort((a, b) => priorityScore(b) - priorityScore(a) || Number(b.listing_count) - Number(a.listing_count));
   const topSourcesNeedingAction = allSorted.slice(0, 6);
   const priorityActions = priorities
     .map((p) => buildPriorityAction(p.r))
     .filter((a): a is PriorityAction => a !== null);
   const buckets: Array<[string, SourceQualityRow[]]> = [
-    ["Approved but 0 public feed", rows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0)],
-    ["Approved but 0 trust passed", rows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0)],
-    ["Approved but 0 indexable", rows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0)],
-    [`Stale (≥ ${STALE_DAYS}d)`, rows.filter((r) => daysSince(r.last_updated_at) >= STALE_DAYS)],
-    ["Sqm coverage < 30%", rows.filter((r) => Number(r.listing_count) >= 10 && r.with_sqm_pct < 30)],
-    ["Beds coverage < 30%", rows.filter((r) => Number(r.listing_count) >= 10 && r.with_beds_pct < 30)],
-    ["Baths coverage < 30%", rows.filter((r) => Number(r.listing_count) >= 10 && r.with_baths_pct < 30)],
-    ["Feed conversion < 25%", rows.filter((r) => Number(r.approved_count) >= 20 && r.feed_conversion_pct < 25)],
+    ["Approved but 0 public feed", productionRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0)],
+    ["Approved but 0 trust passed", productionRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0)],
+    ["Approved but 0 indexable", productionRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0)],
+    [`Stale (≥ ${STALE_DAYS}d)`, productionRows.filter((r) => daysSince(r.last_updated_at) >= STALE_DAYS)],
+    ["Sqm coverage < 30%", productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_sqm_pct < 30)],
+    ["Beds coverage < 30%", productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_beds_pct < 30)],
+    ["Baths coverage < 30%", productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_baths_pct < 30)],
+    ["Feed conversion < 25%", productionRows.filter((r) => Number(r.approved_count) >= 20 && r.feed_conversion_pct < 25)],
   ];
 
   const styles = `
@@ -661,12 +690,13 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     })
     .join("");
 
-  const tableRows = allSorted
+  const tableRows = [...allSorted, ...stubRows]
     .map((r) => {
       const marketId = r.marketId;
       const marketName = marketNameById.get(marketId) ?? marketId;
-      return `<tr>
-        <td>${esc(r.sourceName)}</td>
+      const stubTag = r.isStub ? ` <span class="pill" style="background:#f5f5f7;color:#6b7280;margin-left:6px">Stub</span>` : "";
+      return `<tr${r.isStub ? ' style="opacity:0.6"' : ""}>
+        <td>${esc(r.sourceName)}${stubTag}</td>
         <td>${esc(marketName)}</td>
         <td class="n">${Number(r.listing_count).toLocaleString()}</td>
         <td class="n">${r.public_feed_count_n.toLocaleString()}</td>
@@ -757,6 +787,17 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     </div>
     <div class="src-cards">${sourceCards}</div>
   </section>
+
+  ${stubRows.length > 0 ? `<section style="border-style:dashed">
+    <div style="display:flex;justify-content:space-between;align-items:baseline;gap:12px;margin-bottom:6px">
+      <h2 style="margin:0;color:#6b7280">Test / stub sources</h2>
+      <span class="pill" style="background:#f5f5f7;color:#6b7280">excluded from aggregates</span>
+    </div>
+    <p class="muted" style="font-size:11px;margin:0 0 8px">Declared as <code>type: stub</code> in <code>markets/${esc(marketLabel.toLowerCase() === "cape verde" ? "cv" : "*")}/sources.yml</code>; not counted in summary, funnel, priority actions, or top sources.</p>
+    <ul style="margin:0;padding-left:18px;font-size:12px;color:#6b7280">
+      ${stubRows.map((r) => `<li><strong style="color:#111113">${esc(r.sourceName)}</strong> <span style="font-family:'JetBrains Mono',ui-monospace,monospace;color:#9ca3af">· ${esc(r.source_id)}</span> — ${Number(r.listing_count).toLocaleString()} listings · ${r.public_feed_count_n.toLocaleString()} feed</li>`).join("")}
+    </ul>
+  </section>` : ""}
 
   <section class="page-break">
     <h2>Source detail table</h2>
