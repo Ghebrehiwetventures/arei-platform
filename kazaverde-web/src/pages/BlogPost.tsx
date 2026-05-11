@@ -41,6 +41,13 @@ function fmtDate(iso: string): string {
   });
 }
 
+function fmtMonthYear(iso: string): string {
+  return new Date(iso).toLocaleDateString("en-GB", {
+    month: "long",
+    year: "numeric",
+  });
+}
+
 function categoryFor(tags: string[]): "buying" | "market" | "legal" | "tax" {
   const t = tags.map((s) => s.toLowerCase());
   if (t.some((x) => x.includes("legal"))) return "legal";
@@ -263,14 +270,16 @@ export default function BlogPost() {
           </div>
           <h1 className="kv-bp-title">{article.title}</h1>
           <p className="kv-bp-deck">{article.description}</p>
-          <div className="kv-bp-byline">
-            <span>By {BLOG_AUTHOR_NAME}</span>
-            <span>Publisher {BLOG_PUBLISHER_NAME}</span>
-            <span>Published {fmtDate(article.date)}</span>
-            <span>Updated {fmtDate(article.date)}</span>
-            <span>{article.readTime}</span>
-            {article.tags.length > 0 && <span>{article.tags.join(" · ")}</span>}
-            <Link to="/about" className="kv-bp-trust-link">About KazaVerde</Link>
+          <div className="kv-bp-meta">
+            <div className="kv-bp-byline">
+              <span>By {BLOG_AUTHOR_NAME}</span>
+              <span>Updated {fmtMonthYear(article.date)} · {article.readTime}</span>
+            </div>
+            <Link to="/about" className="kv-bp-trust-link">
+              <span className="kv-bp-trust-full">About KazaVerde's index and methodology</span>
+              <span className="kv-bp-trust-short">About KazaVerde</span>
+              <span aria-hidden="true">→</span>
+            </Link>
           </div>
         </div>
       </header>

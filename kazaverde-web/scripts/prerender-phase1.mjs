@@ -692,8 +692,7 @@ function buildBlogPostingJsonLd(article) {
 }
 
 function renderBlogArticleBody(article) {
-  const formattedDate = new Date(`${article.date}T00:00:00Z`).toLocaleDateString("en-GB", {
-    day: "numeric",
+  const formattedUpdated = new Date(`${article.date}T00:00:00Z`).toLocaleDateString("en-GB", {
     month: "long",
     year: "numeric",
     timeZone: "UTC",
@@ -704,14 +703,8 @@ function renderBlogArticleBody(article) {
       <a href="/blog">Back to blog</a>
 
       <article>
-        <p>
-          By ${escapeHtml(blogAuthorName)} ·
-          Publisher ${escapeHtml(blogPublisherName)} ·
-          Published ${escapeHtml(formattedDate)} ·
-          Updated ${escapeHtml(formattedDate)} ·
-          ${escapeHtml(article.readTime)} ·
-          <a href="/about">About KazaVerde</a>
-        </p>
+        <p>By ${escapeHtml(blogAuthorName)} · Updated ${escapeHtml(formattedUpdated)} · ${escapeHtml(article.readTime)}</p>
+        <p><a href="/about">About KazaVerde's index and methodology →</a></p>
         <h1>${escapeHtml(article.title)}</h1>
         <p>${article.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join(" ")}</p>
         <div>

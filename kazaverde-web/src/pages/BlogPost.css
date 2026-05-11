@@ -90,13 +90,15 @@
   margin-bottom: 32px;
   letter-spacing: -0.005em;
 }
+.kv-bp-meta {
+  padding-top: 24px;
+  border-top: 1px solid var(--kv-rule);
+}
 .kv-bp-byline {
   display: flex;
   align-items: center;
   flex-wrap: wrap;
   gap: 0;
-  padding-top: 24px;
-  border-top: 1px solid var(--kv-rule);
   font-family: var(--kv-mono);
   font-size: 11px;
   color: var(--kv-gray-500);
@@ -107,15 +109,25 @@
   margin: 0 10px;
   color: rgba(0, 0, 0, 0.2);
 }
-.kv-bp-byline a {
+.kv-bp-trust-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  font-family: var(--kv-mono);
+  font-size: 11px;
+  letter-spacing: 0.04em;
   color: var(--kv-black);
   text-decoration: none;
   border-bottom: 1px solid rgba(0, 0, 0, 0.22);
   padding-bottom: 2px;
   transition: border-color 0.15s;
 }
-.kv-bp-byline a:hover {
+.kv-bp-trust-link:hover {
   border-color: var(--kv-black);
+}
+.kv-bp-trust-short {
+  display: none;
 }
 
 /* ─── Body — 2-col with sticky TOC ─── */
@@ -610,7 +622,23 @@
 @media (max-width: 640px) {
   .kv-bp-head-inner { padding: 32px 24px 28px; }
   .kv-bp-related-grid { grid-template-columns: 1fr; }
-  .kv-bp-byline { font-size: 10px; }
+  .kv-bp-meta { padding-top: 20px; }
+  .kv-bp-byline {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+    font-size: 10px;
+    line-height: 1.5;
+  }
+  .kv-bp-byline > * + *::before {
+    display: none;
+  }
+  .kv-bp-trust-link {
+    margin-top: 10px;
+    font-size: 10px;
+  }
+  .kv-bp-trust-full { display: none; }
+  .kv-bp-trust-short { display: inline; }
 
   /* Prevent grid item from blowing out past viewport. Without min-width:0
      a child with intrinsic min-content (long URLs, wide tables) forces
