@@ -269,7 +269,7 @@ sources:
       policy: always
       delay_ms: 2500
       selectors:
-        description: ".description, [class*='description'] p, .observations p, p"
+        description: ".contentText, .js-cmsContent"
         images: "img[src*='cdn.proppy.app'], img[src*='propertyphotos'], .gallery img, .slider img"
       spec_patterns:
         bedrooms:
