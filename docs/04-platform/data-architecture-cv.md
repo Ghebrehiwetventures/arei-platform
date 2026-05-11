@@ -32,6 +32,13 @@ Current curated layer path:
 
 This layer exists because the old ingest/public-feed path contained stale or unsafe inventory. Curated rows with `publish_status = 'published'` can affect the live website through the public feed wrapper.
 
+Current operational status:
+- The curated/live layer is connected to KazaVerde through `public.v1_feed_cv`.
+- The curated layer is not yet fully automatically updated by the new generic pipeline.
+- The intended next step is to connect the new generic pipeline so validated source ingest can continuously feed the curated/live path.
+- CCore Investments is the first test source for reconnecting continuous ingest into the curated/live flow.
+- Until this is complete, do not describe `kv_curated.listings` or the curated live feed as fully automated.
+
 ### Published public feed
 
 The canonical live website feed is `public.v1_feed_cv`.
@@ -72,7 +79,7 @@ Snapshots are useful for tracking pipeline/source-health trends over time. They 
 | Object | Purpose | Writer | Reader | Live-facing? | Layer | Admin uses it? | Website uses it? |
 | --- | --- | --- | --- | --- | --- | --- | --- |
 | `public.listings` | Raw normalized ingest table for scraper output and pipeline analysis. | `core/supabaseWriter.ts` via `upsertListings()`; backfill/maintenance scripts also touch it. | Admin listing browser; `get_source_quality_stats()`; many ops scripts. | No, not directly for current KazaVerde public site. | raw ingest | Yes. `arei-admin/data.ts` reads it directly for listings and indirectly through RPC. | No direct website use in current SDK path. |
-| `kv_curated.listings` | Curated publish table for the temporary live KazaVerde feed model. | Manual/ops SQL and curated tooling, not Supabase REST/JS day-to-day. | `public.v1_feed_cv_curated_preview`. | Yes, upstream of live feed. | staging/middle layer | Not currently by Admin UI. | Indirectly through `v1_feed_cv`. |
+| `kv_curated.listings` | Curated publish table for the temporary live KazaVerde feed model. | Manual/ops SQL and curated tooling currently. New generic pipeline automation is planned but not yet the confirmed steady-state writer. | `public.v1_feed_cv_curated_preview`. | Yes, upstream of live feed. | staging/middle layer | Not currently by Admin UI. | Indirectly through `v1_feed_cv`. |
 | `public.v1_feed_cv_curated_preview` | Public-compatible preview/wrapper over published curated rows. | Defined by migrations `028` and `030`. | `public.v1_feed_cv`. | Yes, indirectly. | staging/middle layer | Not generally, except if queried manually. | Indirectly through `v1_feed_cv`. |
 | `public.v1_feed_cv` | Canonical public Cape Verde feed contract. | Defined historically by `009`/`026`; currently repointed by `029` to curated preview. | `packages/arei-sdk/src/client.ts`; prerender/sitemap; landing stats; feed counts in RPC. | Yes. | published/live | Partly: `get_source_quality_stats()` uses it for `public_feed_count`; content candidates can fall back to it. | Yes. This is the website feed. |
 | `get_source_quality_stats()` | Source quality RPC used for Admin dashboard/source health and snapshots. | SQL in `docs/supabase_rpc.sql`; security hardening in `migrations/028_supabase_security_advisor_cleanup.sql`. | `arei-admin/data.ts`; `scripts/snapshot_source_health.ts`; verification/setup scripts. | Partly. It includes `public_feed_count`, but base metrics are raw `listings`. | raw ingest / mixed | Yes. Primary source-health path. | No. |
@@ -101,6 +108,8 @@ Relevant files and paths:
 - AREI landing stats: `arei-landing/index.html` uses `LIVE_STATS_CONFIG.view = 'v1_feed_cv'`.
 
 Because `public.v1_feed_cv` now reads from `public.v1_feed_cv_curated_preview`, and that preview reads from `kv_curated.listings`, the live website currently uses curated published inventory through a compatibility wrapper.
+
+This does not mean the curated layer is already fully automated. The feed contract is connected to the website; the continuous generic pipeline writer into the curated/live flow is still being connected and tested.
 
 ## 4. What Admin Actually Measures
 
@@ -162,6 +171,7 @@ Snapshots are pipeline/source-health history. They are not pure live-feed histor
 | How many published listings are live? | `select count(*) from public.v1_feed_cv` | Raw approved count from `public.listings` |
 | Which listings power listing index/detail/island pages? | `public.v1_feed_cv` through `packages/arei-sdk/src/client.ts` | Admin listing browser results |
 | What curated table controls live KazaVerde inventory? | `kv_curated.listings` where rows flow through `public.v1_feed_cv_curated_preview` into `public.v1_feed_cv` | Raw `public.listings` |
+| Is the curated live layer fully automated? | Not yet. Confirm the new generic pipeline writer and scheduler before treating it as automated. | Assuming website connection means automated ingestion is complete. |
 | How many raw listings did we ingest? | `public.listings` | `public.v1_feed_cv` |
 | Which source has bad parser quality? | `public.listings` plus `get_source_quality_stats()` and ingest reports | `public.v1_feed_cv` alone |
 | Which source has low image coverage in the pipeline? | `get_source_quality_stats()` / `public.listings` | Live feed count alone |
@@ -178,6 +188,8 @@ Admin Source Health is useful, but it does not equal live website health.
 
 Snapshots are useful, but they track pipeline/source health, not pure live feed history.
 
+The live feed wrapper is connected to curated published inventory, but that should not be confused with a fully automated curated ingestion system. Until the new generic pipeline is confirmed as the steady-state writer into the curated/live flow, the automation status must stay explicit.
+
 Any AI briefing, trend report, dashboard metric, or operating memo must label live public feed separately from pipeline health.
 
 If these layers are not labeled correctly, AREI can make product decisions from the wrong data. For example:
@@ -185,6 +197,7 @@ If these layers are not labeled correctly, AREI can make product decisions from 
 - treating raw `public.listings` problems as visible website problems
 - assuming live curated inventory is stale because raw scraper rows are stale
 - assuming public feed coverage is healthy because raw approved count is high
+- assuming the curated live layer is fully automated because the website is already connected to `public.v1_feed_cv`
 - asking Pulse or any AI layer to summarize source health without distinguishing live feed truth from pipeline truth
 
 The current split is intentional and temporary, but it must be visible in product and ops language.
@@ -198,11 +211,16 @@ Recommended smallest next step:
 1. Add a Live Feed Health section/card in Admin based only on `public.v1_feed_cv`.
 2. Keep Source Health, but label it as Pipeline Health or Source Pipeline Health.
 3. Keep snapshots, but label them as pipeline/source-health snapshots.
-4. Add short comments in relevant data access files:
+4. Track the handoff from new generic pipeline to curated/live feed explicitly:
+   - first test source: CCore Investments
+   - target writer into curated/live flow
+   - scheduler or trigger for continuous updates
+   - validation gate before rows become `publish_status = 'published'`
+5. Add short comments in relevant data access files:
    - `packages/arei-sdk/src/client.ts`: live website reads `public.v1_feed_cv`.
    - `arei-admin/data.ts`: Admin listing browser reads raw `public.listings`.
    - `docs/supabase_rpc.sql`: `get_source_quality_stats()` is mixed and mostly raw pipeline health.
-5. For any future Pulse implementation, build separate context sections:
+6. For any future Pulse implementation, build separate context sections:
    - `live_public_feed_snapshot` from `public.v1_feed_cv`
    - `pipeline_source_health_snapshot` from `get_source_quality_stats()`
 
