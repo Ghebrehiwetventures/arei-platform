@@ -3044,13 +3044,13 @@ function MarketDetail({
 
 type Tab = "dashboard" | "listings" | "sources" | "diagnostics" | "agents" | "chatlab";
 
-const NAV_ITEMS: { key: Tab; label: string; icon: string }[] = [
-  { key: "dashboard", label: "Dashboard", icon: "◈" },
-  { key: "listings", label: "Listings", icon: "▤" },
-  { key: "sources", label: "Sources", icon: "⬡" },
-  { key: "diagnostics", label: "Diagnostics", icon: "◫" },
-  { key: "agents", label: "Agents", icon: "◉" },
-  { key: "chatlab", label: "Chat Lab", icon: "◐" },
+const NAV_ITEMS: { key: Tab; label: string }[] = [
+  { key: "dashboard",   label: "Dashboard"   },
+  { key: "listings",    label: "Listings"    },
+  { key: "sources",     label: "Sources"     },
+  { key: "diagnostics", label: "Diagnostics" },
+  { key: "agents",      label: "Agents"      },
+  { key: "chatlab",     label: "Chat Lab"    },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
@@ -3087,14 +3087,15 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
         "transition-transform duration-200 ease-out md:transition-none " +
         (sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0")
       }>
-        <div className="px-5 pt-6 pb-5 border-b border-border">
-          <div className="flex items-center gap-2.5">
-            <DLayersMark size={28} />
+        {/* ── Sidebar header ───────────────────────── */}
+        <div className="px-5 pt-5 pb-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <DLayersMark size={32} />
             <div>
-              <div className="text-[13px] font-semibold text-foreground tracking-tight leading-none font-mono">
+              <div className="text-[14px] font-semibold text-foreground leading-none font-mono tracking-tight">
                 AREI
               </div>
-              <div className="text-[10px] text-foreground-subtle mt-0.5 uppercase tracking-wider">
+              <div className="text-[10px] text-foreground-subtle mt-1 uppercase tracking-widest font-mono">
                 Admin Console
               </div>
             </div>
@@ -3108,22 +3109,22 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
           </div>
         </div>
 
-        <nav className="flex-1 px-3 space-y-0.5">
-          {NAV_ITEMS.map(({ key, label, icon }) => (
+        {/* ── Nav ──────────────────────────────────── */}
+        <nav className="flex-1 px-2 pt-3 pb-2 space-y-0.5">
+          {NAV_ITEMS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => selectTab(key)}
               className={
-                "w-full flex items-center gap-2.5 px-3 py-2 text-[12px] font-medium rounded transition-colors duration-150 " +
+                "w-full flex items-center justify-between px-3 py-2 text-[12px] font-mono font-medium rounded transition-colors duration-150 " +
                 (tab === key
                   ? "bg-accent-muted text-foreground"
                   : "text-foreground-muted hover:text-foreground hover:bg-surface-2")
               }
             >
-              <span className="text-[11px] leading-none opacity-40 font-mono">{icon}</span>
               {label}
               {key === "agents" && (
-                <span className="ml-auto text-[9px] font-mono font-medium bg-green-muted text-green px-1.5 py-0.5 rounded uppercase tracking-wider">
+                <span className="text-[9px] font-mono font-medium bg-green-muted text-green px-1.5 py-0.5 rounded uppercase tracking-wider">
                   NEW
                 </span>
               )}
@@ -3131,20 +3132,19 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
           ))}
         </nav>
 
-        <div className="px-3 pb-4 mt-auto space-y-2">
+        {/* ── Footer utilities ─────────────────────── */}
+        <div className="px-2 pt-2 pb-4 border-t border-border space-y-0.5">
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] font-medium rounded text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-all duration-150"
+            className="w-full px-3 py-2 text-left text-[12px] font-mono font-medium rounded text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors duration-150"
           >
-            <span className="text-[11px] leading-none opacity-40 font-mono">{dark ? "☀" : "☾"}</span>
             {dark ? "Light mode" : "Dark mode"}
           </button>
           {onSignOut && (
             <button
               onClick={onSignOut}
-              className="w-full flex items-center gap-2.5 px-3 py-2 text-[12px] font-medium rounded text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-all duration-150"
+              className="w-full px-3 py-2 text-left text-[12px] font-mono font-medium rounded text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors duration-150"
             >
-              <span className="text-[11px] leading-none opacity-40 font-mono">↩</span>
               Sign out
             </button>
           )}
