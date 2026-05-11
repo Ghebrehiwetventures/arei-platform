@@ -9,6 +9,9 @@
   background: var(--kv-green);
   font-family: var(--kv-mono);
   color: var(--kv-black);
+  /* Flat header — no fade-in animation, no shadow, no blur. A
+     single 1px hairline below separates header from page content. */
+  border-bottom: 1px solid rgba(0, 0, 0, 0.08);
 }
 
 .nav-inner {
