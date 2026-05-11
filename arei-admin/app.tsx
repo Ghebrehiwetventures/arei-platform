@@ -712,7 +712,7 @@ function SourceHealthStat({ label, value, tone }: { label: string; value: number
           : "text-foreground";
   return (
     <div>
-      <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1.5">{label}</div>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1.5 min-h-[2.5em] flex items-end">{label}</div>
       <div className={`text-2xl font-semibold tabular-nums font-mono ${toneClass}`}>{value}</div>
     </div>
   );
@@ -905,8 +905,8 @@ function DashboardView() {
           <SourceHealthStat label="Fresh (≤30d)" value={freshSources} tone={totalSources > 0 && freshSources === totalSources ? "good" : undefined} />
           <SourceHealthStat label="Stale (>30d)" value={staleSourcesCount} tone={staleSourcesCount > 0 ? "warn" : "good"} />
           <SourceHealthStat label="Missing sqm" value={missingSqmSources} tone={missingSqmSources > 0 ? "warn" : "good"} />
-          <SourceHealthStat label="Ingest-approved · 0 live feed" value={approvedNoFeedSources} tone={approvedNoFeedSources > 0 ? "bad" : "good"} />
-          <SourceHealthStat label="Low ingest→feed ratio" value={lowFeedConvSources} tone={lowFeedConvSources > 0 ? "warn" : "good"} />
+          <SourceHealthStat label="0 live feed" value={approvedNoFeedSources} tone={approvedNoFeedSources > 0 ? "bad" : "good"} />
+          <SourceHealthStat label="Ratio <25%" value={lowFeedConvSources} tone={lowFeedConvSources > 0 ? "warn" : "good"} />
         </div>
         {topIssues.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border">
