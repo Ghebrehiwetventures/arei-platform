@@ -15,6 +15,8 @@ import {
   type ListingsSortKey,
   type LatestSyncLog,
 } from "./data";
+import { generateAreiPulse, getLatestAreiPulse } from "./areiPulseClient";
+import type { AreiPulseApiResponse, AreiPulseBriefing, AreiPulseRecord } from "./areiPulseTypes";
 
 const SYNC_STALE_MINUTES = 24 * 60 * 3; // 3 days
 const SOURCE_STALE_DAYS = 30;
@@ -691,6 +693,214 @@ function SourceHealthStat({ label, value, tone }: { label: string; value: number
   );
 }
 
+function formatPulseDate(value: string | null | undefined): string {
+  if (!value) return "Not generated";
+  const date = new Date(value);
+  if (!Number.isFinite(date.getTime())) return "Not generated";
+  return date.toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" });
+}
+
+function PulsePriorityBadge({ priority }: { priority: string }) {
+  const className =
+    priority === "high"
+      ? "bg-red-muted text-red"
+      : priority === "medium"
+        ? "bg-amber-muted text-amber"
+        : "bg-green-muted text-green";
+  return (
+    <span className={`px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide ${className}`}>
+      {priority}
+    </span>
+  );
+}
+
+function AreiPulseMemo({
+  briefing,
+  pulse,
+  stale,
+}: {
+  briefing: AreiPulseBriefing;
+  pulse: AreiPulseRecord;
+  stale: boolean;
+}) {
+  const cards = briefing.priority_cards.slice(0, 3);
+  return (
+    <div className="space-y-5">
+      <div className="flex flex-wrap items-center gap-2 text-xs text-foreground-subtle">
+        <span>Generated {formatPulseDate(pulse.created_at || briefing.generated_at)}</span>
+        {stale && <span className="bg-amber-muted text-amber px-2 py-0.5 rounded-md font-medium">stale</span>}
+        <span className="font-mono">{pulse.model}</span>
+      </div>
+
+      <div>
+        <h3 className="text-xl font-semibold tracking-tight text-foreground mb-2">{briefing.headline}</h3>
+        <p className="text-sm leading-6 text-foreground-muted max-w-4xl">{briefing.executive_summary}</p>
+      </div>
+
+      <div className="border-y border-border py-4">
+        <div className="text-[11px] uppercase tracking-wide font-semibold text-foreground-subtle mb-2">Primary focus</div>
+        <div className="grid gap-4 lg:grid-cols-[minmax(0,1fr)_minmax(280px,0.6fr)]">
+          <div>
+            <h4 className="text-base font-semibold text-foreground mb-1">{briefing.primary_focus.title}</h4>
+            <p className="text-sm text-foreground-muted leading-6">{briefing.primary_focus.reason}</p>
+          </div>
+          <div className="surface-2 rounded-lg p-3">
+            <div className="text-[11px] uppercase tracking-wide text-foreground-subtle font-medium mb-2">Next actions</div>
+            <ul className="space-y-1.5 text-sm text-foreground">
+              {briefing.primary_focus.recommended_actions.slice(0, 4).map((action) => (
+                <li key={action} className="leading-5">• {action}</li>
+              ))}
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      {cards.length > 0 && (
+        <div className="grid gap-3 md:grid-cols-3">
+          {cards.map((card) => (
+            <div key={`${card.title}-${card.area}`} className="rounded-lg border border-border p-4 surface-1">
+              <div className="flex items-center justify-between gap-2 mb-3">
+                <PulsePriorityBadge priority={card.priority} />
+                <span className="text-[10px] uppercase tracking-wide text-foreground-subtle">{card.owner}</span>
+              </div>
+              <h4 className="text-sm font-semibold text-foreground mb-2 leading-5">{card.title}</h4>
+              <p className="text-xs text-foreground-muted leading-5 mb-3">{card.summary}</p>
+              <div className="text-[11px] text-foreground-subtle uppercase tracking-wide mb-1">Action</div>
+              <p className="text-xs text-foreground leading-5">{card.recommended_actions[0] || "No action provided."}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      <div className="grid gap-4 lg:grid-cols-2">
+        {briefing.strategic_risks.length > 0 && (
+          <div>
+            <div className="text-[11px] uppercase tracking-wide font-semibold text-foreground-subtle mb-2">Strategic risks</div>
+            <ul className="space-y-2">
+              {briefing.strategic_risks.slice(0, 3).map((risk) => (
+                <li key={risk.risk} className="text-sm text-foreground-muted leading-6">
+                  <span className="text-foreground font-medium">{risk.risk}</span> · {risk.mitigation}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+        {briefing.primary_focus.what_to_avoid.length > 0 && (
+          <div>
+            <div className="text-[11px] uppercase tracking-wide font-semibold text-foreground-subtle mb-2">Avoid</div>
+            <ul className="space-y-2">
+              {briefing.primary_focus.what_to_avoid.slice(0, 3).map((item) => (
+                <li key={item} className="text-sm text-foreground-muted leading-6">{item}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+      </div>
+
+      {briefing.source_notes.length > 0 && (
+        <div className="pt-3 border-t border-border">
+          <div className="text-[11px] uppercase tracking-wide font-semibold text-foreground-subtle mb-2">Source notes</div>
+          <p className="text-xs text-foreground-subtle leading-5">{briefing.source_notes.slice(0, 4).join(" · ")}</p>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AreiPulsePanel() {
+  const [pulse, setPulse] = useState<AreiPulseRecord | null>(null);
+  const [stale, setStale] = useState(false);
+  const [sourceNotes, setSourceNotes] = useState<string[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState("");
+
+  const applyResponse = (response: AreiPulseApiResponse) => {
+    setPulse(response.pulse);
+    setStale(response.stale);
+    setSourceNotes(response.source_notes || []);
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    getLatestAreiPulse()
+      .then((response) => {
+        if (!cancelled) applyResponse(response);
+      })
+      .catch((err) => {
+        if (!cancelled) setError(err instanceof Error ? err.message : "Failed to load AREI Pulse");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const handleGenerate = async () => {
+    setGenerating(true);
+    setError("");
+    try {
+      const response = await generateAreiPulse();
+      applyResponse(response);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "AREI Pulse generation failed");
+    } finally {
+      setGenerating(false);
+    }
+  };
+
+  return (
+    <section className="surface-1 rounded-xl border border-border p-5 shadow-sm">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between mb-5">
+        <div>
+          <div className="text-[11px] uppercase tracking-wide font-semibold text-accent mb-1">Executive operating memo</div>
+          <h2 className="text-lg font-semibold text-foreground">AREI Pulse</h2>
+          <p className="text-sm text-foreground-muted mt-1">
+            Daily strategy pulse across product, data quality, execution, and founder focus.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={handleGenerate}
+          disabled={generating}
+          className="px-3.5 py-2 text-xs font-semibold rounded-md bg-foreground text-primary-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+        >
+          {generating ? "Generating…" : "Generate new briefing"}
+        </button>
+      </div>
+
+      {loading && (
+        <div className="rounded-lg border border-border border-dashed p-8 text-sm text-foreground-muted">
+          Loading latest AREI Pulse…
+        </div>
+      )}
+
+      {!loading && error && (
+        <div className="rounded-lg border border-red/30 bg-red-muted p-4">
+          <p className="text-sm font-medium text-red mb-1">AREI Pulse is unavailable</p>
+          <p className="text-sm text-foreground-muted">{error}</p>
+        </div>
+      )}
+
+      {!loading && !error && !pulse && (
+        <div className="rounded-lg border border-border border-dashed p-8">
+          <p className="text-sm font-medium text-foreground mb-1">No pulse generated yet</p>
+          <p className="text-sm text-foreground-muted">
+            Generate the first read-only executive briefing from Supabase/admin data, project memory, and configured context sources.
+          </p>
+          {sourceNotes.length > 0 && <p className="text-xs text-foreground-subtle mt-3">{sourceNotes.join(" · ")}</p>}
+        </div>
+      )}
+
+      {!loading && !error && pulse?.briefing && (
+        <AreiPulseMemo briefing={pulse.briefing} pulse={pulse} stale={stale} />
+      )}
+    </section>
+  );
+}
+
 function DashboardView() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
@@ -837,6 +1047,8 @@ function DashboardView() {
           Data quality overview and source health
         </p>
       </div>
+
+      <AreiPulsePanel />
 
       {/* ── Cape Verde health pill ──────────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2.5">
