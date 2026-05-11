@@ -346,6 +346,42 @@ async function generateAiDescription(
   };
 }
 
+// ─── Verification summary ────────────────────────────────────────────────────
+
+function printSummary(
+  fetched: number,
+  rows: CuratedRow[],
+  skipped: Array<{ id: string; reason: string }>
+): void {
+  const byIsland: Record<string, number> = {};
+  let withPrice = 0, withBedrooms = 0, withBathrooms = 0, withImages = 0, withAi = 0;
+
+  for (const r of rows) {
+    byIsland[r.island] = (byIsland[r.island] ?? 0) + 1;
+    if (r.price)             withPrice++;
+    if (r.bedrooms)          withBedrooms++;
+    if (r.bathrooms)         withBathrooms++;
+    if (r.image_urls.length) withImages++;
+    if (r.ai_descriptions)   withAi++;
+  }
+
+  const n = rows.length;
+  const pct = (x: number) => n > 0 ? `${x}/${n} (${Math.round(x/n*100)}%)` : "0/0";
+
+  console.log(`\n=== kv_curated insert summary ===`);
+  console.log(`Total fetched:     ${fetched}`);
+  skipped.forEach(s => console.log(`  Skipped (${s.reason}): 1`));
+  console.log(`Inserted/updated:  ${n}`);
+  console.log(`\nBy island:`);
+  Object.entries(byIsland).sort().forEach(([isl, cnt]) => console.log(`  ${isl.padEnd(20)} ${cnt}`));
+  console.log(`\nField coverage:`);
+  console.log(`  price          ${pct(withPrice)}`);
+  console.log(`  bedrooms       ${pct(withBedrooms)}`);
+  console.log(`  bathrooms      ${pct(withBathrooms)}`);
+  console.log(`  images ≥1      ${pct(withImages)}`);
+  console.log(`  ai_description ${pct(withAi)}`);
+}
+
 // ─── kv_curated write ────────────────────────────────────────────────────────
 
 const INSERT_SQL = `
@@ -628,14 +664,14 @@ async function main(): Promise<void> {
   }
 
   if (dryRun) {
-    console.log(`\n[DRY_RUN] First 3 rows:`);
-    rows.slice(0, 3).forEach(r =>
-      console.log(`  ${r.id}  island=${r.island}  price=${r.price}  images=${r.image_urls.length}`)
-    );
+    printSummary(listings.length, rows, skipped);
+    console.log(`\n[DRY_RUN] No rows written.`);
     return;
   }
 
   await writeToKvCurated(rows);
+  printSummary(listings.length, rows, skipped);
+  console.log(`\nNext step: verify rows then run promotion SQL (see spec).`);
 }
 
 if (require.main === module) {
