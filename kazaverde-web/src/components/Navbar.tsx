@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useSaved } from "../hooks/useSaved";
+import DLayersMark from "./DLayersMark";
 import "./Navbar.css";
 
 /* Five-link nav — Listings · Rent · Market · Guides · Shortlist.
@@ -36,7 +37,10 @@ export default function Navbar() {
     <nav className="nav anim-fd">
       <div className="nav-inner">
         <a className="logo" onClick={() => navigate("/")} role="button" tabIndex={0}>
-          Cape Verde Real Estate Index
+          <DLayersMark size={20} />
+          <span className="logo-text">
+            Cape Verde<span className="logo-text-tail"> Real Estate Index</span>
+          </span>
         </a>
 
         <div className="nav-links hide-mobile">

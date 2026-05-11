@@ -32,6 +32,19 @@
   cursor: pointer;
   position: relative;
   z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo svg {
+  flex-shrink: 0;
+}
+
+/* Tight product nav: collapse to "[mark] Cape Verde" on mobile,
+   matching the AREI lockup pattern. Full lockup on desktop. */
+@media (max-width: 768px) {
+  .logo-text-tail { display: none; }
 }
 
 /* ── Desktop links ── */

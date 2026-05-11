@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import DLayersMark from "./DLayersMark";
 import "./Footer.css";
 
 /* Footer — four columns at desktop (brand + Index + Resources + Connect),
@@ -11,7 +12,10 @@ export default function Footer() {
       <div className="ft-inner">
         <div className="fg">
           <div className="footer-brand">
-            <Link className="f-logo" to="/">CAPE VERDE REAL ESTATE INDEX</Link>
+            <Link className="f-logo" to="/">
+              <DLayersMark size={28} />
+              <span className="f-logo-text">CAPE VERDE REAL ESTATE INDEX</span>
+            </Link>
             <p>
               An independent, read-only index of public property listings
               across Cape Verde. We aggregate from local agents, clean the

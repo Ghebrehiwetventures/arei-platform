@@ -24,7 +24,9 @@
 }
 
 .footer-brand .f-logo {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--kv-mono);
   font-size: 11px;
   font-weight: 600;
@@ -32,6 +34,10 @@
   text-transform: uppercase;
   color: var(--kv-black);
   margin-bottom: 16px;
+}
+
+.footer-brand .f-logo svg {
+  flex-shrink: 0;
 }
 .footer-brand p {
   font-size: 12px;
