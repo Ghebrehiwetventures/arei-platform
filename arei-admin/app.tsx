@@ -771,7 +771,7 @@ function DashboardView() {
 
   const approvedPct = stats.totalListings > 0 ? Math.round((100 * stats.approvedCount) / stats.totalListings) : 0;
 
-  // ── Source Health (selected market only) ───────────────────────────────────
+  // ── Pipeline Health (selected market only) ────────────────────────────────
   // Scoped to the operator's chosen market. Non-selected markets stay out of
   // every summary card, issue list, and attention pill on this view.
   const healthRows = stats.sourceRows.filter((r) => r.marketId === selectedMarketId && !r.isStub);
@@ -805,11 +805,11 @@ function DashboardView() {
   // Top 3 issues to highlight, in priority order
   type HealthIssue = { label: string; count: number; tone: "bad" | "warn" };
   const allIssues: HealthIssue[] = [
-    { label: "approved → 0 public feed", count: approvedNoFeedSources, tone: "bad" },
-    { label: "approved → 0 trust pass", count: approvedNoTrustSources, tone: "bad" },
+    { label: "ingest-approved → 0 live feed", count: approvedNoFeedSources, tone: "bad" },
+    { label: "ingest-approved → 0 trust pass", count: approvedNoTrustSources, tone: "bad" },
     { label: "stale (>30d)", count: staleSourcesCount, tone: "warn" },
     { label: "0% sqm coverage", count: missingSqmSources, tone: "warn" },
-    { label: "low feed conversion (<25%)", count: lowFeedConvSources, tone: "warn" },
+    { label: "low ingest→feed ratio (<25%)", count: lowFeedConvSources, tone: "warn" },
   ];
   const topIssues = allIssues.filter((i) => i.count > 0).slice(0, 3);
 
@@ -865,7 +865,10 @@ function DashboardView() {
             Dashboard
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
-            Data quality overview and source health
+            Pipeline health and ingest quality
+          </p>
+          <p className="text-xs text-foreground-subtle mt-0.5">
+            Measures scraper/source quality from raw ingest data. Not the same as live published inventory.
           </p>
         </div>
         <MarketSelector />
@@ -891,18 +894,19 @@ function DashboardView() {
         </span>
       </div>
 
-      {/* ── Selected-market source health (PRIMARY) ─────────────── */}
+      {/* ── Selected-market pipeline health (PRIMARY) ───────────── */}
       <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground font-mono">{selectedMarketLabel} source health</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">{selectedMarketLabel} pipeline health</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
           <SourceHealthStat label={`${selectedMarketLabel} sources`} value={totalSources} />
+          <SourceHealthStat label="Live feed" value={healthRows.reduce((acc: number, r: SourceQualityRow) => acc + r.public_feed_count_n, 0)} tone="good" />
           <SourceHealthStat label="Fresh (≤30d)" value={freshSources} tone={totalSources > 0 && freshSources === totalSources ? "good" : undefined} />
           <SourceHealthStat label="Stale (>30d)" value={staleSourcesCount} tone={staleSourcesCount > 0 ? "warn" : "good"} />
           <SourceHealthStat label="Missing sqm" value={missingSqmSources} tone={missingSqmSources > 0 ? "warn" : "good"} />
-          <SourceHealthStat label="Approved · 0 feed" value={approvedNoFeedSources} tone={approvedNoFeedSources > 0 ? "bad" : "good"} />
-          <SourceHealthStat label="Low feed conv" value={lowFeedConvSources} tone={lowFeedConvSources > 0 ? "warn" : "good"} />
+          <SourceHealthStat label="Ingest-approved · 0 live feed" value={approvedNoFeedSources} tone={approvedNoFeedSources > 0 ? "bad" : "good"} />
+          <SourceHealthStat label="Low ingest→feed ratio" value={lowFeedConvSources} tone={lowFeedConvSources > 0 ? "warn" : "good"} />
         </div>
         {topIssues.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border">
@@ -943,7 +947,7 @@ function DashboardView() {
         </div>
       )}
 
-      {/* ── Latest sync ─────────────────────────────────────────── */}
+      {/* ── Latest ingest run ───────────────────────────────────── */}
       {(() => {
         // Fallback to source-row timestamps when the ingest report file is
         // not served. Active-market rows are preferred so the operator sees
@@ -962,7 +966,7 @@ function DashboardView() {
         return (
       <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-foreground font-mono">Latest sync</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">Latest ingest run</h2>
           {latestSync && <RunPhaseBadge latestSync={latestSync} />}
         </div>
         <div className="text-sm text-foreground-muted mb-3">
@@ -1028,11 +1032,11 @@ function DashboardView() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
           <div className="surface-1 rounded p-4 border border-border shadow-sm">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Total listings</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Raw pipeline inventory</div>
             <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.totalListings.toLocaleString()}</div>
           </div>
           <div className="surface-1 rounded p-4 border border-border shadow-sm">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Approved</div>
+            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Pipeline-approved</div>
             <div className="text-2xl font-bold text-green tabular-nums tracking-tight">{stats.approvedCount.toLocaleString()}</div>
             <div className="text-xs text-foreground-subtle mt-1 tabular-nums">{approvedPct}% rate</div>
           </div>
@@ -1045,7 +1049,7 @@ function DashboardView() {
             <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.marketCount}</div>
           </div>
         </div>
-        <h2 className="text-base font-semibold text-foreground font-mono mb-4">Source quality · all markets</h2>
+        <h2 className="text-base font-semibold text-foreground font-mono mb-4">Pipeline quality · all markets</h2>
         <div className="surface-1 rounded border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] data-table data-table-id-narrow">
@@ -1056,7 +1060,7 @@ function DashboardView() {
                       { key: "sourceName" as const, label: "Source" },
                       { key: "marketId" as const, label: "Market" },
                       { key: "listing_count" as const, label: "Count" },
-                      { key: "approved_pct" as const, label: "Approved %" },
+                      { key: "approved_pct" as const, label: "Pipeline approved %" },
                       { key: "with_image_pct" as const, label: "Image %" },
                       { key: "with_price_pct" as const, label: "Price %" },
                       { key: "grade" as const, label: "Health" },
@@ -1456,7 +1460,7 @@ function ListingsTabView() {
             </select>
           </div>
           <div>
-            <label className="text-[11px] text-foreground-subtle block mb-1">Approved</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Pipeline-approved</label>
             <select
               value={filters.approved === undefined ? "" : filters.approved ? "yes" : "no"}
               onChange={(e) => {
@@ -1973,7 +1977,7 @@ function SourcesView() {
             Sources
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
-            Source Health Report — visual overview, then detail tables · scoped to selected market
+            Pipeline Source Health Report — visual overview, then detail tables · scoped to selected market
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -2033,7 +2037,7 @@ function SourcesView() {
                 )}
               </div>
               <span className="text-xs text-foreground-muted tabular-nums">
-                {rows.length} source{rows.length !== 1 ? "s" : ""} · {totalListings.toLocaleString()} listings
+                {rows.length} source{rows.length !== 1 ? "s" : ""} · {totalListings.toLocaleString()} ingest listings
               </span>
             </div>
             <div className="overflow-x-auto">
@@ -2042,8 +2046,8 @@ function SourcesView() {
                   <tr className="border-b border-border bg-surface-2">
                     <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Source</th>
                     <SourceSortHeader label="Listings" sortKey="listing_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
-                    <SourceSortHeader label="Public feed" sortKey="public_feed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
-                    <SourceSortHeader label="Approved" sortKey="approved_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Live feed" sortKey="public_feed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Pipeline-approved" sortKey="approved_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Indexable" sortKey="indexable_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Trust passed" sortKey="trust_passed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Sqm %" sortKey="with_sqm_pct" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
@@ -2247,14 +2251,14 @@ function DiagnosticsView() {
           {cvApprovedNoFeed.length > 0 && (
             <FlagGroup
               tone="bad"
-              title={`${cvApprovedNoFeed.length} ${selectedMarketLabel} source${cvApprovedNoFeed.length === 1 ? "" : "s"}: approved but none reach public feed`}
+              title={`${cvApprovedNoFeed.length} ${selectedMarketLabel} source${cvApprovedNoFeed.length === 1 ? "" : "s"}: ingest-approved but none in live feed`}
               message={formatSourceList(cvApprovedNoFeed.map((r) => r.sourceName))}
             />
           )}
           {cvApprovedNoTrust.length > 0 && (
             <FlagGroup
               tone="bad"
-              title={`${cvApprovedNoTrust.length} ${selectedMarketLabel} source${cvApprovedNoTrust.length === 1 ? "" : "s"}: approved but none pass trust gate`}
+              title={`${cvApprovedNoTrust.length} ${selectedMarketLabel} source${cvApprovedNoTrust.length === 1 ? "" : "s"}: ingest-approved but none pass trust gate`}
               message={formatSourceList(cvApprovedNoTrust.map((r) => r.sourceName))}
             />
           )}
@@ -2268,7 +2272,7 @@ function DiagnosticsView() {
           {cvListingsNoApproved.length > 0 && (
             <FlagGroup
               tone="bad"
-              title={`${cvListingsNoApproved.length} ${selectedMarketLabel} source${cvListingsNoApproved.length === 1 ? "" : "s"}: listings but 0 approved`}
+              title={`${cvListingsNoApproved.length} ${selectedMarketLabel} source${cvListingsNoApproved.length === 1 ? "" : "s"}: listings but 0 pipeline-approved`}
               message={cvListingsNoApproved
                 .slice(0, 5)
                 .map((r) => `${r.sourceName} (${Number(r.listing_count).toLocaleString()})`)
@@ -2301,7 +2305,7 @@ function DiagnosticsView() {
           {cvLowFeedConv.length > 0 && (
             <FlagGroup
               tone="warn"
-              title={`${cvLowFeedConv.length} ${selectedMarketLabel} source${cvLowFeedConv.length === 1 ? "" : "s"} with low feed conversion (<25%)`}
+              title={`${cvLowFeedConv.length} ${selectedMarketLabel} source${cvLowFeedConv.length === 1 ? "" : "s"} with low ingest→feed ratio (<25%)`}
               message={cvLowFeedConv
                 .slice(0, 5)
                 .map((r) => `${r.sourceName} (${r.public_feed_count_n}/${Number(r.approved_count)} = ${r.feed_conversion_pct}%)`)
@@ -2336,7 +2340,7 @@ function DiagnosticsView() {
       </section>
 
       {/* Legacy data quality — image/price coverage. Kept for deeper inspection;
-          the modern operational signals live in Sources (feed conversion, trust,
+          the modern operational signals live in Sources (ingest→feed ratio, trust,
           indexable, sqm/beds/baths). */}
       <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-baseline justify-between mb-4 gap-3">
@@ -2353,11 +2357,11 @@ function DiagnosticsView() {
             <div className="text-xl font-semibold tabular-nums font-mono">{globalPricePct.toFixed(1)}%</div>
           </div>
           <div>
-            <div className="text-xs text-foreground-muted mb-1">Approved</div>
+            <div className="text-xs text-foreground-muted mb-1">Pipeline-approved</div>
             <div className="text-xl font-semibold tabular-nums font-mono">{approvedPct.toFixed(1)}%</div>
           </div>
           <div>
-            <div className="text-xs text-foreground-muted mb-1">Total</div>
+            <div className="text-xs text-foreground-muted mb-1">Total (raw)</div>
             <div className="text-xl font-semibold tabular-nums font-mono">{stats.totalListings.toLocaleString()}</div>
           </div>
         </div>
@@ -2405,7 +2409,7 @@ function DiagnosticsView() {
                   <th className="text-left px-3 py-2 font-medium">Source</th>
                   <th className="text-left px-3 py-2 font-medium">Market</th>
                   <th className="text-right px-3 py-2 font-medium">Listings</th>
-                  <th className="text-right px-3 py-2 font-medium">Approved</th>
+                  <th className="text-right px-3 py-2 font-medium">Pipeline-approved</th>
                   <th className="text-left px-3 py-2 font-medium">Grade</th>
                 </tr>
               </thead>
@@ -2826,7 +2830,7 @@ function ListingDetail({
     { label: "Island", value: listing.island },
     { label: "City", value: listing.city },
     { label: "Status", value: listing.status },
-    { label: "Approved", value: listing.approved != null ? (listing.approved ? "Yes" : "No") : null },
+    { label: "Pipeline-approved", value: listing.approved != null ? (listing.approved ? "Yes" : "No") : null },
     { label: "Price period", value: listing.price_period },
     { label: "Project", value: listing.project_flag != null ? (listing.project_flag ? "Yes" : "No") : null },
     { label: "Project start price", value: listing.project_start_price },

@@ -40,7 +40,7 @@ export function deriveIssues(r: SourceQualityRow): SourceIssue[] {
   const listing = Number(r.listing_count);
   const d = daysSince(r.last_updated_at);
   if (approved > 0 && r.public_feed_count_n === 0)
-    issues.push({ code: "no_feed", label: "Approved but 0 public feed", severity: "blocker" });
+    issues.push({ code: "no_feed", label: "Ingest-approved, 0 live feed", severity: "blocker" });
   if (approved > 0 && r.trust_passed_count_n === 0)
     issues.push({ code: "no_trust", label: "0 trust passed", severity: "blocker" });
   if (approved > 0 && r.indexable_count_n === 0)
@@ -54,7 +54,7 @@ export function deriveIssues(r: SourceQualityRow): SourceIssue[] {
   if (listing >= 10 && r.with_baths_pct < 30)
     issues.push({ code: "low_baths", label: `Baths coverage ${r.with_baths_pct}%`, severity: "warn" });
   if (approved >= 20 && r.feed_conversion_pct < 25)
-    issues.push({ code: "low_conversion", label: `Feed conversion ${Math.round(r.feed_conversion_pct)}%`, severity: "warn" });
+    issues.push({ code: "low_conversion", label: `Ingest→feed ratio ${Math.round(r.feed_conversion_pct)}%`, severity: "warn" });
   return issues;
 }
 
@@ -119,17 +119,17 @@ export function buildPriorityAction(r: SourceQualityRow): PriorityAction | null 
   if (approved > 0 && r.public_feed_count_n === 0) {
     return {
       title: r.sourceName,
-      problem: `${approved.toLocaleString()} approved listings, but 0 are visible in the public feed.`,
+      problem: `${approved.toLocaleString()} pipeline-approved listings, but 0 are in the live feed.`,
       why: "We may have usable inventory that buyers cannot see.",
-      checkNext: "Trust gate, indexable flag, and public feed eligibility.",
+      checkNext: "Trust gate, indexable flag, and live feed eligibility.",
       impact: "High",
     };
   }
   if (approved > 0 && r.trust_passed_count_n === 0) {
     return {
       title: r.sourceName,
-      problem: `${approved.toLocaleString()} approved listings, but none pass the trust gate.`,
-      why: "Listings are being rejected by the trust checks before they can reach the public feed.",
+      problem: `${approved.toLocaleString()} pipeline-approved listings, but none pass the trust gate.`,
+      why: "Listings are being rejected by the trust checks before they can reach the live feed.",
       checkNext: "Trust-rule logs for this source; look for a systemic field-validation failure.",
       impact: "High",
     };
@@ -137,7 +137,7 @@ export function buildPriorityAction(r: SourceQualityRow): PriorityAction | null 
   if (approved > 0 && r.indexable_count_n === 0) {
     return {
       title: r.sourceName,
-      problem: `${approved.toLocaleString()} approved listings, but none are indexable.`,
+      problem: `${approved.toLocaleString()} pipeline-approved listings, but none are indexable.`,
       why: "Listings exist but are invisible to search and feeds, so they cannot be discovered.",
       checkNext: "Indexable rules and per-listing exclusions for this source.",
       impact: "High",
@@ -155,9 +155,9 @@ export function buildPriorityAction(r: SourceQualityRow): PriorityAction | null 
   if (approved >= 20 && r.feed_conversion_pct < 25) {
     return {
       title: r.sourceName,
-      problem: `${approved.toLocaleString()} approved listings, but only ${conv}% reach the public feed.`,
-      why: "Most approved inventory from this source is being filtered out before publication.",
-      checkNext: "Why approved listings are being dropped — indexable rules and trust thresholds.",
+      problem: `${approved.toLocaleString()} pipeline-approved listings, but only ${conv}% reach the live feed.`,
+      why: "Most pipeline-approved inventory from this source is being filtered out before the live feed.",
+      checkNext: "Why pipeline-approved listings are being dropped — indexable rules and trust thresholds.",
       impact: "Medium",
     };
   }
@@ -198,16 +198,16 @@ export function prioritySummary(r: SourceQualityRow): string {
   const listing = Number(r.listing_count);
   const d = daysSince(r.last_updated_at);
   const parts: string[] = [];
-  if (approved > 0) parts.push(`${approved} approved`);
+  if (approved > 0) parts.push(`${approved} pipeline-approved`);
   else parts.push(`${listing} listings`);
-  if (approved > 0 && r.public_feed_count_n === 0) parts.push("0 public feed");
+  if (approved > 0 && r.public_feed_count_n === 0) parts.push("0 live feed");
   if (approved > 0 && r.trust_passed_count_n === 0) parts.push("0 trust passed");
   if (approved > 0 && r.indexable_count_n === 0) parts.push("0 indexable");
   if (d >= STALE_DAYS && Number.isFinite(d)) parts.push(`stale ${d}d`);
   if (listing >= 10 && r.with_sqm_pct < 30) parts.push(`${r.with_sqm_pct}% sqm`);
   if (listing >= 10 && r.with_beds_pct < 30) parts.push(`${r.with_beds_pct}% beds`);
   if (listing >= 10 && r.with_baths_pct < 30) parts.push(`${r.with_baths_pct}% baths`);
-  if (approved >= 20 && r.feed_conversion_pct < 25) parts.push(`${Math.round(r.feed_conversion_pct)}% conv`);
+  if (approved >= 20 && r.feed_conversion_pct < 25) parts.push(`${Math.round(r.feed_conversion_pct)}% ingest→feed`);
   return parts.join(", ");
 }
 
@@ -377,12 +377,12 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
       <section>
         <h2 className="text-sm font-semibold text-foreground mb-3">Executive summary — {marketLabel}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="Total listings" value={summary.totalListings.toLocaleString()} />
-          <StatCard label="Public feed" value={summary.publicFeed.toLocaleString()} />
+          <StatCard label="Raw pipeline inventory" value={summary.totalListings.toLocaleString()} />
+          <StatCard label="Live feed" value={summary.publicFeed.toLocaleString()} />
           <StatCard
-            label="Feed conversion"
+            label="Ingest→feed ratio"
             value={`${summary.feedConversionPct}%`}
-            hint="public feed ÷ approved"
+            hint="live feed ÷ pipeline-approved"
             tone={summary.feedConversionPct < 25 ? "bad" : summary.feedConversionPct < 50 ? "warn" : "good"}
           />
           <StatCard label="Sources" value={summary.sourceCount} />
@@ -393,9 +393,9 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
             tone={summary.staleCount > 0 ? "warn" : "good"}
           />
           <StatCard
-            label="Approved, 0 feed"
+            label="Pipeline-approved, 0 live feed"
             value={summary.approvedNoFeedCount}
-            hint="approved but never public"
+            hint="pipeline-approved but not in live feed"
             tone={summary.approvedNoFeedCount > 0 ? "bad" : "good"}
           />
           <div className="surface-1 border border-border rounded p-4 shadow-sm col-span-2">
@@ -409,10 +409,10 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
         <h2 className="text-sm font-semibold text-foreground mb-1">Eligibility checks</h2>
         <p className="text-xs text-foreground-muted mb-3">Independent flags — each is a separate boolean on the listing, not a subset of the previous.</p>
         <div className="space-y-3">
-          <EligibilityCheck label="Approved" value={summary.checks.approved} total={summary.checks.discovered} />
+          <EligibilityCheck label="Pipeline-approved" value={summary.checks.approved} total={summary.checks.discovered} />
           <EligibilityCheck label="Indexable" value={summary.checks.indexable} total={summary.checks.discovered} />
           <EligibilityCheck label="Trust passed" value={summary.checks.trustPassed} total={summary.checks.discovered} />
-          <EligibilityCheck label="Public feed" value={summary.checks.publicFeed} total={summary.checks.discovered} />
+          <EligibilityCheck label="Live feed" value={summary.checks.publicFeed} total={summary.checks.discovered} />
         </div>
       </section>
 
@@ -453,14 +453,14 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
             Top issues to address — technical summary
           </summary>
           <div className="px-4 pb-3">
-            {issueRow("Approved but 0 public feed", issueBuckets.noFeed)}
-            {issueRow("Approved but 0 trust passed", issueBuckets.noTrust)}
-            {issueRow("Approved but 0 indexable", issueBuckets.noIndexable)}
+            {issueRow("Ingest-approved, 0 live feed", issueBuckets.noFeed)}
+            {issueRow("Ingest-approved, 0 trust passed", issueBuckets.noTrust)}
+            {issueRow("Ingest-approved, 0 indexable", issueBuckets.noIndexable)}
             {issueRow(`Stale (≥ ${STALE_DAYS}d)`, issueBuckets.stale)}
             {issueRow("Sqm coverage < 30%", issueBuckets.lowSqm)}
             {issueRow("Beds coverage < 30%", issueBuckets.lowBeds)}
             {issueRow("Baths coverage < 30%", issueBuckets.lowBaths)}
-            {issueRow("Feed conversion < 25%", issueBuckets.lowConv)}
+            {issueRow("Ingest→feed ratio < 25%", issueBuckets.lowConv)}
             {Object.values(issueBuckets).every((b) => b.length === 0) && (
               <div className="text-sm text-foreground-muted py-2">No issues detected.</div>
             )}
@@ -489,8 +489,8 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
                 </div>
                 <div className="mt-3 grid grid-cols-3 gap-2 text-xs">
                   <div><div className="text-foreground-subtle text-[10px] uppercase tracking-wider">Listings</div><div className="font-mono tabular-nums">{Number(r.listing_count).toLocaleString()}</div></div>
-                  <div><div className="text-foreground-subtle text-[10px] uppercase tracking-wider">Public feed</div><div className="font-mono tabular-nums">{r.public_feed_count_n.toLocaleString()}</div></div>
-                  <div><div className="text-foreground-subtle text-[10px] uppercase tracking-wider">Conversion</div><div className={`font-mono tabular-nums ${feedConv < 25 ? "text-red" : feedConv < 50 ? "text-amber" : "text-green"}`}>{feedConv}%</div></div>
+                  <div><div className="text-foreground-subtle text-[10px] uppercase tracking-wider">Live feed</div><div className="font-mono tabular-nums">{r.public_feed_count_n.toLocaleString()}</div></div>
+                  <div><div className="text-foreground-subtle text-[10px] uppercase tracking-wider">Pipeline→feed</div><div className={`font-mono tabular-nums ${feedConv < 25 ? "text-red" : feedConv < 50 ? "text-amber" : "text-green"}`}>{feedConv}%</div></div>
                 </div>
                 <div className="mt-2.5 text-[11px] text-foreground-subtle">
                   Coverage — sqm {r.with_sqm_pct}% · beds {r.with_beds_pct}% · baths {r.with_baths_pct}%
