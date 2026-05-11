@@ -1,6 +1,6 @@
 # Decision Log
 
-Last updated: 2026-04-28
+Last updated: 2026-05-08
 
 ## Purpose
 
@@ -21,6 +21,16 @@ Status values:
 - `revisited`
 
 ## Decisions
+
+### 2026-05-08 — KazaVerde public feed temporarily switched to curated publish layer while legacy pipeline stays in place
+
+- Status: `active`
+- Decision:
+  `public.v1_feed_cv` remains the canonical KazaVerde frontend contract, but it now reads from the curated publish layer (`kv_curated.listings` via `public.v1_feed_cv_curated_preview`) instead of serving the legacy snapshot directly.
+- Reason:
+  The legacy public-feed snapshot contained stale inventory, especially in `cv_homescasaverde`, while the curated layer had the reviewed 300-row set that was acceptable for live use.
+- Consequence:
+  The live public feed and the active CV ingest pipeline are temporarily decoupled. Operational docs must treat curated updates as production-sensitive, and future pipeline reconciliation is separate work rather than part of this feed cutover.
 
 ### 2026-03-18 — Canonical documentation structure adopted
 
