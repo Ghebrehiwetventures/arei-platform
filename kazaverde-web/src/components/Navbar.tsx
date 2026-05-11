@@ -36,14 +36,21 @@ export default function Navbar() {
   return (
     <nav className="nav anim-fd">
       <div className="nav-inner">
-        <a className="logo" onClick={() => navigate("/")} role="button" tabIndex={0}>
+        <a
+          className="logo lk-compact lk-nav"
+          onClick={() => navigate("/")}
+          role="button"
+          tabIndex={0}
+          aria-label="Cape Verde Real Estate Index — home"
+        >
           <DLayersMark size={20} />
-          <span className="logo-text">
-            <span className="lockup-country">Cape Verde</span>
-            <span className="lockup-descriptor">
-              <span className="lockup-w">Real Estate</span>
-              <span className="lockup-w">Index</span>
-            </span>
+          <span className="lk-text">
+            Cape Verde<span className="lk-desc">Real Estate Index</span>
+          </span>
+          <span className="lk-text-mobile" aria-hidden="true">
+            <span className="lk-m1">Cape Verde</span>
+            <span className="lk-m2">Real Estate</span>
+            <span className="lk-m3">Index</span>
           </span>
         </a>
 

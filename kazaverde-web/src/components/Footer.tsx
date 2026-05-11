@@ -12,12 +12,9 @@ export default function Footer() {
       <div className="ft-inner">
         <div className="fg">
           <div className="footer-brand">
-            <Link className="f-logo" to="/">
+            <Link className="f-logo lk-compact" to="/" aria-label="Cape Verde Real Estate Index">
               <DLayersMark size={28} />
-              <span className="f-logo-text">
-                <span className="lockup-country">Cape Verde</span>{" "}
-                <span className="lockup-descriptor">Real Estate Index</span>
-              </span>
+              <span>Cape Verde<span className="lk-desc">Real Estate Index</span></span>
             </Link>
             <p>
               An independent, read-only index of public property listings
