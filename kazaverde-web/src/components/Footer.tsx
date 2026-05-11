@@ -11,11 +11,11 @@ export default function Footer() {
       <div className="ft-inner">
         <div className="fg">
           <div className="footer-brand">
-            <Link className="f-logo" to="/">KAZAVERDE</Link>
+            <Link className="f-logo" to="/">CAPE VERDE REAL ESTATE INDEX</Link>
             <p>
-              A read-only index of public property listings across Cape Verde.
-              We aggregate from local agents, clean the data, and publish it
-              in one searchable place.
+              An independent, read-only index of public property listings
+              across Cape Verde. We aggregate from local agents, clean the
+              data, and publish it in one searchable place. Published by AREI.
             </p>
             <div className="footer-status">
               <span className="sd" aria-hidden="true" />

@@ -36,7 +36,7 @@ export default function Navbar() {
     <nav className="nav anim-fd">
       <div className="nav-inner">
         <a className="logo" onClick={() => navigate("/")} role="button" tabIndex={0}>
-          KazaVerde
+          Cape Verde Real Estate Index
         </a>
 
         <div className="nav-links hide-mobile">

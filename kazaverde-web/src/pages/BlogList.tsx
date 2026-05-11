@@ -35,7 +35,7 @@ function matches(query: string, ...fields: string[]): boolean {
 
 export default function BlogList() {
   useDocumentMeta(
-    "Guides — KazaVerde",
+    "Guides",
     "Independent explainers and a buyer's FAQ for Cape Verde property — legal process, island comparisons, tax changes, and residence options.",
   );
 

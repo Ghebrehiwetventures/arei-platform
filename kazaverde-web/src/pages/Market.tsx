@@ -28,13 +28,13 @@ const MARKET_FAQ_SCRIPT_ID = "kv-jsonld-market-faq";
 const MARKET_FAQ = [
   {
     topic: "Coverage",
-    q: "What does KazaVerde’s market data measure?",
-    a: "It measures public Cape Verde property listings from tracked sources. The page summarizes asking prices, inventory, island distribution, and price visibility where KazaVerde can verify the listing data.",
+    q: "What does the Cape Verde Real Estate Index measure?",
+    a: "It measures public Cape Verde property listings from tracked sources. The page summarizes asking prices, inventory, island distribution, and price visibility where the index can verify the listing data.",
   },
   {
     topic: "Prices",
     q: "Are these asking prices or completed sales?",
-    a: "They are asking prices from public listings, not completed sale prices. KazaVerde does not claim transaction values, bank valuations, or official registry data.",
+    a: "They are asking prices from public listings, not completed sale prices. The Cape Verde Real Estate Index does not claim transaction values, bank valuations, or official registry data.",
   },
   {
     topic: "Method",
@@ -49,7 +49,7 @@ const MARKET_FAQ = [
   {
     topic: "Trust",
     q: "What does verified-price coverage mean?",
-    a: "Verified-price coverage is the share of tracked listings with a public price KazaVerde can read and normalize. A lower coverage rate means more of the market is visible as inventory than as price data.",
+    a: "Verified-price coverage is the share of tracked listings with a public price the index can read and normalize. A lower coverage rate means more of the market is visible as inventory than as price data.",
   },
   {
     topic: "Freshness",
@@ -59,7 +59,7 @@ const MARKET_FAQ = [
   {
     topic: "Samples",
     q: "Why do some islands show inventory but no median price?",
-    a: "Some islands have too few priced listings for a useful median. In those cases KazaVerde shows inventory, but withholds the median rather than publishing a weak benchmark.",
+    a: "Some islands have too few priced listings for a useful median. In those cases the index shows inventory, but withholds the median rather than publishing a weak benchmark.",
   },
   {
     topic: "Limits",
@@ -68,8 +68,8 @@ const MARKET_FAQ = [
   },
   {
     topic: "Quality",
-    q: "Does KazaVerde remove duplicate listings?",
-    a: "KazaVerde removes or groups duplicate records where source data gives enough matching signals. Some duplicates can remain when agents publish the same property with different descriptions, prices, or photos.",
+    q: "Does the Cape Verde Real Estate Index remove duplicate listings?",
+    a: "The index removes or groups duplicate records where source data gives enough matching signals. Some duplicates can remain when agents publish the same property with different descriptions, prices, or photos.",
   },
 ];
 
@@ -238,7 +238,7 @@ interface MarketData {
 
 export default function Market() {
   useDocumentMeta(
-    "Market Data — KazaVerde",
+    "Market Data",
     "Median prices by island, inventory trends, and Cape Verde property market insights."
   );
   const [openIdx, setOpenIdx] = useState(0);
@@ -715,7 +715,7 @@ export default function Market() {
           </p>
           <p className="kv-m-disclaimer">
             <Link to="/about">
-              Read more about how KazaVerde fits into the Africa Real Estate Index.
+              Read more about how the Cape Verde Real Estate Index fits into AREI.
             </Link>
           </p>
         </div>
