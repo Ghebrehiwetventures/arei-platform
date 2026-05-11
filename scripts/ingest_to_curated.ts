@@ -207,6 +207,145 @@ async function enrichListings(
   console.log(`[Enrich] Complete: ${enriched} enriched, ${failed} failed`);
 }
 
+// ─── AI description ───────────────────────────────────────────────────────────
+
+const PROMPT_VERSION = "v1.2";
+const PRIMARY_MODEL  = "claude-sonnet-4-6";
+const FALLBACK_MODEL = "gpt-4o";
+const MIN_DESC_LENGTH = 500;
+const PRIMARY_MAX_RETRIES = 3;
+const PRIMARY_RETRY_BASE_DELAY_MS = 2000;
+
+const AREI_VOICE_PROMPT = `Du skriver om fastighets-descriptions för AREI, en data-infrastrukturprodukt för afrikansk fastighetsmarknad. Givet källtext (vilket språk som helst) och strukturerad data, producera 2-3 stycken välskriven engelsk prosa i AREI-röst.
+
+AREI-röst:
+- Faktabaserad och neutral
+- Specifik före generell ("five minutes from the main beach" hellre än "great location")
+- Komprimerad — varje mening bär information
+- Ingen säljterminologi: "ideal", "perfect", "rare opportunity", "splendid", "unique", "stunning"
+- Inga emojis
+- Inga bedömningar om avkastning eller värdering
+- Behåll egennamn på källspråket (Cá Almeida, São Paulo district, Conservatória do Registo Predial)
+- När källan gör en bedömning (motivated sale, undervalued), attribuera till källan: "the source notes a motivated sale" — gör inte påståendet i AREI:s egen text
+
+Struktur (mjuk riktlinje, inte tvång):
+- Stycke 1: vad det är, var det ligger, viktigaste särdrag (~50 ord)
+- Stycke 2: layout, skick, features (~40-60 ord)
+- Stycke 3 (om relevant): status, services, juridiska noter (~30-50 ord)
+
+Hitta inte på fakta. Om källan inte nämner skick — skriv inte om skick. Om källan inte nämner sea view — skriv inte om sea view.
+
+Konflikthantering och informationsluckor hanteras tyst. Om structured data och källan är i konflikt, välj det troliga värdet utan att kommentera valet. Om en uppgift saknas i källan, utelämna fältet helt. Skriv aldrig meta-kommentarer om själva skrivprocessen — undvik fraser som "there is a conflict between...", "no information is provided in the source", "I will use the figure...". (Detta gäller inte attribuering av källans bedömningar — "the source notes a motivated sale" är fortsatt rätt. Skillnaden: attribuera källans åsikter, men kommentera aldrig din egen skrivprocess.)
+
+Geografisk kontext: Varje description ska innehålla "Cape Verde" (eller "Cabo Verde" om källan är på portugisiska och redan använder den formen) minst en gång, även om källtexten bara nämner ö-namn eller stadsdelar. För internationella köpare är landet kärnan i värdesatsen — ö-namn ensamt räcker inte.
+
+Output: ren text, inga JSON-strukturer, inga rubriker, inga listor. Bara 2-3 stycken prosa separerade med dubbel radbrytning.`;
+
+function buildAiUserMessage(row: CuratedRow): string {
+  const fields = [
+    ["property_type", row.property_type],
+    ["city",          row.city],
+    ["island",        row.island],
+    ["country",       row.country],
+    ["bedrooms",      row.bedrooms],
+    ["bathrooms",     row.bathrooms],
+    ["property_size_sqm", row.property_size_sqm],
+    ["price",         row.price],
+  ]
+    .filter(([, v]) => v !== null && v !== undefined && v !== "")
+    .map(([k, v]) => `- ${k}: ${v}`)
+    .join("\n");
+
+  return [
+    `Source language: unknown (auto-detect from text)`,
+    `Target language: en`,
+    ``,
+    `Structured data:`,
+    fields || `- (no structured fields available)`,
+    ``,
+    `Source description:`,
+    "```",
+    row.description ?? "",
+    "```",
+    ``,
+    `Output the rewritten English description as plain prose only.`,
+  ].join("\n");
+}
+
+function isRetryable(e: unknown): boolean {
+  const err = e as { status?: number; message?: string };
+  const status = err?.status;
+  if (status === 429 || status === 529 || status === 503 || status === 500) return true;
+  return /rate.?limit|overloaded|too many requests/i.test(String(err?.message ?? ""));
+}
+
+async function generateAiDescription(
+  row: CuratedRow,
+  anthropic: Anthropic,
+  openai: OpenAI
+): Promise<Record<string, unknown> | null> {
+  if (!row.description || row.description.length < MIN_DESC_LENGTH) return null;
+
+  const userMessage = buildAiUserMessage(row);
+  let text = "";
+  let usedFallback = false;
+  let lastErr: unknown;
+
+  for (let attempt = 0; attempt < PRIMARY_MAX_RETRIES; attempt++) {
+    try {
+      const resp = await anthropic.messages.create({
+        model: PRIMARY_MODEL,
+        max_tokens: 1024,
+        system: AREI_VOICE_PROMPT,
+        messages: [{ role: "user", content: userMessage }],
+      });
+      const block = resp.content.find(c => c.type === "text");
+      if (block && block.type === "text" && block.text.trim()) {
+        text = block.text.trim();
+        break;
+      }
+    } catch (e) {
+      lastErr = e;
+      if (attempt < PRIMARY_MAX_RETRIES - 1 && isRetryable(e)) {
+        await sleep(PRIMARY_RETRY_BASE_DELAY_MS * Math.pow(2, attempt));
+        continue;
+      }
+      break;
+    }
+  }
+
+  if (!text) {
+    try {
+      const resp = await openai.chat.completions.create({
+        model: FALLBACK_MODEL,
+        max_tokens: 1024,
+        temperature: 0.5,
+        messages: [
+          { role: "system", content: AREI_VOICE_PROMPT },
+          { role: "user",   content: userMessage },
+        ],
+      });
+      const t = resp.choices[0]?.message?.content?.trim();
+      if (t) { text = t; usedFallback = true; }
+    } catch { /* generation failed entirely — non-blocking */ }
+  }
+
+  if (!text) {
+    console.warn(`[AI] ✗ ${row.id}: generation failed (${String(lastErr ?? "unknown")})`);
+    return null;
+  }
+
+  return {
+    en: {
+      text,
+      generated_at: new Date().toISOString(),
+      prompt_version: PROMPT_VERSION,
+      model: usedFallback ? FALLBACK_MODEL : PRIMARY_MODEL,
+      validated: false,
+    },
+  };
+}
+
 // ─── Location hooks ───────────────────────────────────────────────────────────
 
 interface LocationHookModule {
@@ -374,6 +513,31 @@ async function main(): Promise<void> {
     skipped.forEach(s => console.log(`  ${s.id}: ${s.reason}`));
   }
 
+  if (!dryRun) {
+    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+    const openai    = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+    console.log(`\n[AI] Generating descriptions for ${rows.length} rows...`);
+    let aiOk = 0;
+    let aiSkipped = 0;
+    let aiFailed = 0;
+
+    for (const row of rows) {
+      const ai = await generateAiDescription(row, anthropic, openai);
+      if (ai) {
+        row.ai_descriptions = ai;
+        aiOk++;
+        console.log(`[AI] ✓ ${row.id}`);
+      } else if (!row.description || row.description.length < MIN_DESC_LENGTH) {
+        aiSkipped++;
+      } else {
+        aiFailed++;
+      }
+    }
+
+    console.log(`[AI] Complete: ${aiOk} generated, ${aiSkipped} skipped (short desc), ${aiFailed} failed`);
+  }
+
   if (dryRun) {
     console.log(`\n[DRY_RUN] First 3 rows:`);
     rows.slice(0, 3).forEach(r =>
@@ -382,7 +546,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log(`(AI descriptions + write not yet wired)`);
+  console.log(`(write not yet wired)`);
 }
 
 if (require.main === module) {
