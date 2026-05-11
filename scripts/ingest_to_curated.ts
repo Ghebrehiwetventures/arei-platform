@@ -346,6 +346,95 @@ async function generateAiDescription(
   };
 }
 
+// ─── kv_curated write ────────────────────────────────────────────────────────
+
+const INSERT_SQL = `
+INSERT INTO kv_curated.listings (
+  id, title, description, description_html, ai_descriptions,
+  price, currency, price_period, country, island, city,
+  bedrooms, bathrooms, property_type, property_size_sqm, land_area_sqm,
+  image_urls, source_id_primary, source_url_primary, first_seen_at,
+  publish_status, seeded_from_raw_listing_id
+) VALUES (
+  $1,  $2,  $3,  $4,  $5,
+  $6,  $7,  $8,  $9,  $10, $11,
+  $12, $13, $14, $15, $16,
+  $17, $18, $19, $20,
+  $21, $22
+)
+ON CONFLICT (id) DO UPDATE SET
+  title                      = EXCLUDED.title,
+  description                = EXCLUDED.description,
+  description_html           = EXCLUDED.description_html,
+  ai_descriptions            = CASE
+                                 WHEN kv_curated.listings.ai_descriptions IS NOT NULL
+                                 THEN kv_curated.listings.ai_descriptions
+                                 ELSE EXCLUDED.ai_descriptions
+                               END,
+  price                      = EXCLUDED.price,
+  currency                   = EXCLUDED.currency,
+  island                     = EXCLUDED.island,
+  city                       = EXCLUDED.city,
+  bedrooms                   = EXCLUDED.bedrooms,
+  bathrooms                  = EXCLUDED.bathrooms,
+  property_type              = EXCLUDED.property_type,
+  property_size_sqm          = EXCLUDED.property_size_sqm,
+  land_area_sqm              = EXCLUDED.land_area_sqm,
+  image_urls                 = EXCLUDED.image_urls,
+  source_url_primary         = EXCLUDED.source_url_primary,
+  seeded_from_raw_listing_id = EXCLUDED.seeded_from_raw_listing_id,
+  updated_at                 = now()
+`;
+// publish_status, first_seen_at, first_published_at are NOT updated on conflict.
+
+async function writeToKvCurated(rows: CuratedRow[]): Promise<void> {
+  if (rows.length === 0) { console.log("[Write] Nothing to write."); return; }
+
+  const client = createPostgresClient();
+  await client.connect();
+
+  let inserted = 0;
+  let failed   = 0;
+
+  for (const row of rows) {
+    try {
+      await client.query(INSERT_SQL, [
+        row.id,                          // $1
+        row.title,                       // $2
+        row.description,                 // $3
+        row.description_html,            // $4  null
+        row.ai_descriptions              // $5  jsonb
+          ? JSON.stringify(row.ai_descriptions)
+          : null,
+        row.price,                       // $6
+        row.currency,                    // $7
+        row.price_period,                // $8
+        row.country,                     // $9
+        row.island,                      // $10
+        row.city,                        // $11
+        row.bedrooms,                    // $12
+        row.bathrooms,                   // $13
+        row.property_type,               // $14
+        row.property_size_sqm,           // $15
+        row.land_area_sqm,               // $16
+        row.image_urls,                  // $17  text[]
+        row.source_id_primary,           // $18
+        row.source_url_primary,          // $19
+        row.first_seen_at,               // $20
+        row.publish_status,              // $21
+        row.seeded_from_raw_listing_id,  // $22
+      ]);
+      inserted++;
+    } catch (err) {
+      failed++;
+      console.error(`[Write] ✗ ${row.id}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  await client.end();
+  console.log(`[Write] ${inserted} upserted, ${failed} failed`);
+}
+
 // ─── Location hooks ───────────────────────────────────────────────────────────
 
 interface LocationHookModule {
@@ -546,7 +635,7 @@ async function main(): Promise<void> {
     return;
   }
 
-  console.log(`(write not yet wired)`);
+  await writeToKvCurated(rows);
 }
 
 if (require.main === module) {
