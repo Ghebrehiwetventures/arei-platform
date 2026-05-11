@@ -936,7 +936,7 @@ export default function Detail() {
       {detail.price && !isLand && <KvMortgage price={detail.price} />}
 
       {/* Market Context */}
-      {marketCtx && <KvMarketContext ctx={marketCtx} island={detail.island} />}
+      {marketCtx && <KvMarketContext ctx={marketCtx} island={detail.island} firstSeenAt={detail.first_seen_at} />}
 
       {/* Similar Properties — minimum 3 cards or hide. A 1- or 2-card
           row breaks the editorial grid (last column reads as missing,
@@ -1296,7 +1296,17 @@ function ordinal(n: number): string {
   return `${n}${suffix}`;
 }
 
-function KvMarketContext({ ctx, island }: { ctx: IslandContext; island: string }) {
+function formatDaysIndexed(iso: string | undefined): string {
+  if (!iso) return "—";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "—";
+  const days = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000));
+  if (days === 0) return "Today";
+  if (days === 1) return "1 day";
+  return `${days} days`;
+}
+
+function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; island: string; firstSeenAt?: string }) {
   const cards: {
     value: string;
     label: string;
@@ -1326,13 +1336,11 @@ function KvMarketContext({ ctx, island }: { ctx: IslandContext; island: string }
       percentile: ctx.pricePercentile,
     });
   }
-  if (ctx.lastUpdated) {
-    cards.push({
-      value: new Date(ctx.lastUpdated).toLocaleDateString("en-GB", { day: "numeric", month: "short" }),
-      label: "Last seen",
-      note: "Latest tracked update",
-    });
-  }
+  cards.push({
+    value: formatDaysIndexed(firstSeenAt),
+    label: "Days indexed",
+    note: "Since first tracked",
+  });
 
   if (cards.length === 0) return null;
 
