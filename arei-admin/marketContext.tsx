@@ -129,7 +129,7 @@ export function MarketSelector() {
           id="arei-market-selector"
           value={selectedMarketId}
           onChange={(e) => setSelectedMarketId(e.target.value)}
-          className="appearance-none pl-3 pr-8 py-1.5 text-xs font-medium rounded-md border border-border-strong bg-surface-1 text-foreground hover:bg-surface-2 transition-colors"
+          className="appearance-none pl-3 pr-8 py-1.5 text-xs font-medium rounded border border-border-strong bg-surface-1 text-foreground hover:bg-surface-2 transition-colors font-mono"
         >
           {ranked.map((m) => (
             <option key={m.id} value={m.id}>
@@ -139,7 +139,7 @@ export function MarketSelector() {
         </select>
         <span aria-hidden className="pointer-events-none absolute right-2.5 top-1/2 -translate-y-1/2 text-foreground-muted text-[10px]">▼</span>
       </div>
-      <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-medium ${STATUS_TONE[selected.status]}`}>
+      <span className={`text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded font-mono font-medium ${STATUS_TONE[selected.status]}`}>
         {STATUS_LABEL[selected.status]}
       </span>
     </div>
@@ -149,7 +149,7 @@ export function MarketSelector() {
 /** Empty state for non-active markets with no source health rows yet. */
 export function PipelineEmptyState({ market }: { market: MarketInfo }) {
   return (
-    <div className="surface-1 rounded-xl border border-border border-dashed p-12 text-center">
+    <div className="surface-1 rounded border border-border border-dashed p-12 text-center">
       <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-3">
         <span className="text-foreground-subtle text-sm">⬡</span>
       </div>

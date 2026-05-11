@@ -96,6 +96,32 @@ import { SourceHealthReport, buildReportHtml } from "./sourceHealthReport";
 import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, STATUS_LABEL } from "./marketContext";
 
 // ============================================
+// D · LAYERS MARK — AREI brand mark (SVG)
+// ============================================
+
+function DLayersMark({ size = 32 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="AREI D·Layers mark"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="square"
+    >
+      {/* Canonical geometry: docs/brand/assets/d-layers-mark.svg
+          Source: AREI Brand Guidelines v1.0. Do not redraw from memory. */}
+      <rect x="3"   y="3"   width="14" height="14" />
+      <rect x="6.5" y="6.5" width="14" height="14" />
+      <rect x="10"  y="10"  width="9"  height="9"  fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
+
+// ============================================
 // IMAGE GALLERY — arrows on hover, dot navigation
 // ============================================
 
@@ -284,7 +310,7 @@ function StatusBadge({ status }: { status: SourceStatus }) {
     PAUSED_BY_SYSTEM: "bg-amber-muted text-amber",
   };
   return (
-    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded-md ${classes[status] ?? "bg-surface-3 text-foreground-muted"}`}>
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded ${classes[status] ?? "bg-surface-3 text-foreground-muted"}`}>
       {status}
     </span>
   );
@@ -297,7 +323,7 @@ function RunPhaseBadge({ latestSync }: { latestSync: LatestSyncLog }) {
     : "bg-amber-muted text-amber";
 
   return (
-    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded-md ${classes}`}>
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded ${classes}`}>
       {latestSync.phaseLabel}
     </span>
   );
@@ -361,7 +387,7 @@ function GradeBadge({ grade }: { grade: "A" | "B" | "C" | "D" }) {
     D: "bg-red-muted text-red",
   };
   return (
-    <span className={`inline-flex items-center justify-center w-7 h-6 text-xs font-semibold rounded-md ${classes[grade] ?? "bg-surface-3 text-foreground-muted"}`}>
+    <span className={`inline-flex items-center justify-center w-7 h-6 text-xs font-mono font-semibold rounded ${classes[grade] ?? "bg-surface-3 text-foreground-muted"}`}>
       {grade}
     </span>
   );
@@ -382,7 +408,7 @@ function DraftStatusBadge({ status }: { status: ContentDraftStatus }) {
   };
 
   return (
-    <span className={`inline-block px-2.5 py-1 text-[11px] font-medium rounded-md ${classes[status]}`}>
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded ${classes[status]}`}>
       {labels[status]}
     </span>
   );
@@ -448,7 +474,7 @@ function AgentsApprovalsView() {
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Content Drafts
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -459,7 +485,7 @@ function AgentsApprovalsView() {
           type="button"
           onClick={handleGenerate}
           disabled={generating}
-          className="px-5 py-2.5 text-sm font-medium rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
+          className="px-5 py-2.5 text-sm font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
         >
           {generating ? "Generating…" : "Generate drafts"}
         </button>
@@ -467,15 +493,15 @@ function AgentsApprovalsView() {
 
       {/* ── Stats row ───────────────────────────────────────────── */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+        <div className="surface-1 rounded p-5 border border-border shadow-sm">
           <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Total drafts</div>
-          <div className="text-3xl font-bold tabular-nums tracking-tight">{drafts.length}</div>
+          <div className="text-3xl font-bold tabular-nums tracking-tight font-mono">{drafts.length}</div>
         </div>
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+        <div className="surface-1 rounded p-5 border border-border shadow-sm">
           <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Pending</div>
-          <div className="text-3xl font-bold text-amber tabular-nums tracking-tight">{pendingCount}</div>
+          <div className="text-3xl font-bold text-amber tabular-nums tracking-tight font-mono">{pendingCount}</div>
         </div>
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
+        <div className="surface-1 rounded p-5 border border-border shadow-sm">
           <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Publishing</div>
           <div className="text-sm font-medium text-foreground-muted mt-1">Manual only</div>
         </div>
@@ -488,7 +514,7 @@ function AgentsApprovalsView() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as "all" | "content_draft")}
-            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded-lg"
+            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded"
           >
             <option value="content_draft">Content drafts</option>
             <option value="all">All items</option>
@@ -499,7 +525,7 @@ function AgentsApprovalsView() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as ContentDraftStatus | "all")}
-            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded-lg"
+            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded"
           >
             <option value="all">All</option>
             <option value="pending">Pending</option>
@@ -514,11 +540,11 @@ function AgentsApprovalsView() {
       {loading && <p className="text-foreground-muted text-sm py-8">Loading drafts…</p>}
 
       {!loading && filteredDrafts.length === 0 && (
-        <div className="surface-1 rounded-xl border border-border border-dashed p-14 text-center">
+        <div className="surface-1 rounded border border-border border-dashed p-14 text-center">
           <div className="w-12 h-12 rounded-full bg-accent-muted flex items-center justify-center mx-auto mb-4">
             <span className="text-accent text-lg">◉</span>
           </div>
-          <h3 className="text-base font-semibold text-foreground mb-1.5">No drafts yet</h3>
+          <h3 className="text-base font-semibold text-foreground font-mono mb-1.5">No drafts yet</h3>
           <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
             Generate drafts to pull candidates from live listings. Each draft goes through review before anything is published.
           </p>
@@ -526,14 +552,14 @@ function AgentsApprovalsView() {
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="mt-5 px-5 py-2.5 text-sm font-medium rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
+            className="mt-5 px-5 py-2.5 text-sm font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
           >
             {generating ? "Generating…" : "Generate drafts"}
           </button>
         </div>
       )}
 
-      <div className="surface-1 rounded-xl border border-border overflow-hidden divide-y divide-border">
+      <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
         {filteredDrafts.map((draft) => {
           const isExpanded = expandedIds.has(draft.id);
           return (
@@ -634,7 +660,7 @@ function AgentsApprovalsView() {
                     <button
                       type="button"
                       onClick={() => handleStatusUpdate(draft.id, "revision_requested")}
-                      className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
                     >
                       Request revision
                     </button>
@@ -668,9 +694,9 @@ function FlagGroup({ tone, title, message }: { tone: "bad" | "warn" | "muted"; t
   const titleCls =
     tone === "bad" ? "text-red font-medium" : tone === "warn" ? "text-amber font-medium" : "text-foreground-subtle font-medium";
   return (
-    <div className={`rounded-lg p-3 text-sm ${cls}`}>
-      <div className={titleCls}>{title}</div>
-      <div className="text-foreground-muted mt-0.5">{message}</div>
+    <div className={`rounded-lg p-3 text-sm min-w-0 ${cls}`}>
+      <div className={`${titleCls} break-words`}>{title}</div>
+      <div className="text-foreground-muted mt-0.5 break-words leading-relaxed">{message}</div>
     </div>
   );
 }
@@ -748,7 +774,7 @@ function DashboardView() {
   // ── Source Health (selected market only) ───────────────────────────────────
   // Scoped to the operator's chosen market. Non-selected markets stay out of
   // every summary card, issue list, and attention pill on this view.
-  const healthRows = stats.sourceRows.filter((r) => r.marketId === selectedMarketId);
+  const healthRows = stats.sourceRows.filter((r) => r.marketId === selectedMarketId && !r.isStub);
   const totalSources = healthRows.length;
   const freshSources = healthRows.filter((r) => {
     const f = formatFreshness(r.last_updated_at);
@@ -835,7 +861,7 @@ function DashboardView() {
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Dashboard
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -854,7 +880,7 @@ function DashboardView() {
         <span className="text-xs text-foreground-muted">{selectedMarketLabel} health:</span>
         <span
           className={
-            "text-xs font-medium px-2.5 py-1 rounded-md " +
+            "text-[10px] font-mono font-medium px-2 py-0.5 rounded uppercase tracking-wider " +
             (cvHasCriticalIssue ? "bg-amber-muted text-amber" : "bg-green-muted text-green")
           }
         >
@@ -866,11 +892,11 @@ function DashboardView() {
       </div>
 
       {/* ── Selected-market source health (PRIMARY) ─────────────── */}
-      <section className="surface-1 rounded-xl border border-border p-5">
+      <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground">{selectedMarketLabel} source health</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">{selectedMarketLabel} source health</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 sm:gap-4">
           <SourceHealthStat label={`${selectedMarketLabel} sources`} value={totalSources} />
           <SourceHealthStat label="Fresh (≤30d)" value={freshSources} tone={totalSources > 0 && freshSources === totalSources ? "good" : undefined} />
           <SourceHealthStat label="Stale (>30d)" value={staleSourcesCount} tone={staleSourcesCount > 0 ? "warn" : "good"} />
@@ -883,12 +909,12 @@ function DashboardView() {
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Top issues to address</div>
             <ol className="space-y-1 text-sm">
               {topIssues.map((iss, i) => (
-                <li key={iss.label} className="flex gap-2 items-baseline">
-                  <span className="text-foreground-subtle tabular-nums">{i + 1}.</span>
-                  <span className={iss.tone === "bad" ? "text-red font-medium" : "text-amber font-medium"}>
+                <li key={iss.label} className="flex gap-2 items-baseline min-w-0">
+                  <span className="shrink-0 text-foreground-subtle tabular-nums">{i + 1}.</span>
+                  <span className={`shrink-0 ${iss.tone === "bad" ? "text-red font-medium" : "text-amber font-medium"}`}>
                     {iss.count}
                   </span>
-                  <span className="text-foreground-muted">{iss.label}</span>
+                  <span className="text-foreground-muted break-words min-w-0">{iss.label}</span>
                 </li>
               ))}
             </ol>
@@ -899,17 +925,17 @@ function DashboardView() {
       {(cvWorst.length > 0 || cvBest.length > 0) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {cvWorst.length > 0 && (
-            <div className="rounded-lg p-4 border border-border bg-amber-muted">
-              <div className="text-xs font-medium text-amber mb-2">Needs attention · {selectedMarketLabel}</div>
-              <p className="text-sm text-foreground">
+            <div className="rounded p-4 border border-border border-l-2 border-l-amber bg-surface-1 min-w-0">
+              <div className="text-[10px] font-mono font-medium text-amber uppercase tracking-wider mb-2">Needs attention · {selectedMarketLabel}</div>
+              <p className="text-sm text-foreground break-words leading-relaxed">
                 {cvWorst.map((r) => r.sourceName).join(", ")}
               </p>
             </div>
           )}
           {cvBest.length > 0 && (
-            <div className="rounded-lg p-4 border border-border bg-green-muted">
-              <div className="text-xs font-medium text-green mb-2">Performing well · {selectedMarketLabel}</div>
-              <p className="text-sm text-foreground">
+            <div className="rounded p-4 border border-border border-l-2 border-l-green bg-surface-1 min-w-0">
+              <div className="text-[10px] font-mono font-medium text-green uppercase tracking-wider mb-2">Performing well · {selectedMarketLabel}</div>
+              <p className="text-sm text-foreground break-words leading-relaxed">
                 {cvBest.map((r) => r.sourceName).join(", ")}
               </p>
             </div>
@@ -934,9 +960,9 @@ function DashboardView() {
         const fallbackFresh = fallbackIso ? formatFreshness(fallbackIso) : null;
         const hasAnySync = !!latestSync?.at || fallbackMs != null;
         return (
-      <section className="surface-1 rounded-xl border border-border p-5">
+      <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-foreground">Latest sync</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">Latest sync</h2>
           {latestSync && <RunPhaseBadge latestSync={latestSync} />}
         </div>
         <div className="text-sm text-foreground-muted mb-3">
@@ -973,7 +999,7 @@ function DashboardView() {
             type="button"
             onClick={handleExportRunReport}
             disabled={exportingRunReport || !latestSync}
-            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
           >
             {exportingRunReport ? "Exporting…" : "Export report"}
           </button>
@@ -982,7 +1008,7 @@ function DashboardView() {
               href={GITHUB_ACTIONS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
             >
               GitHub Actions
             </a>
@@ -997,30 +1023,30 @@ function DashboardView() {
       {/* ── Portfolio overview · all markets (SECONDARY) ─────────── */}
       <section className="opacity-90">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-sm font-semibold text-foreground-muted">Portfolio overview</h2>
+          <h2 className="text-sm font-semibold text-foreground-muted font-mono">Portfolio overview</h2>
           <span className="text-xs text-foreground-subtle">secondary — all markets, including pipeline</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+          <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Total listings</div>
-            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.totalListings.toLocaleString()}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.totalListings.toLocaleString()}</div>
           </div>
-          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+          <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Approved</div>
             <div className="text-2xl font-bold text-green tabular-nums tracking-tight">{stats.approvedCount.toLocaleString()}</div>
             <div className="text-xs text-foreground-subtle mt-1 tabular-nums">{approvedPct}% rate</div>
           </div>
-          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+          <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Sources</div>
-            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.sourceCount}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.sourceCount}</div>
           </div>
-          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+          <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Markets</div>
-            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.marketCount}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.marketCount}</div>
           </div>
         </div>
-        <h2 className="text-base font-semibold text-foreground mb-4">Source quality · all markets</h2>
-        <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
+        <h2 className="text-base font-semibold text-foreground font-mono mb-4">Source quality · all markets</h2>
+        <div className="surface-1 rounded border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] data-table data-table-id-narrow">
               <thead>
@@ -1072,7 +1098,7 @@ function DashboardView() {
           </div>
         </div>
         {stats.sourceRows.length === 0 && (
-          <div className="surface-1 rounded-xl border border-border border-dashed p-12 text-center mt-4">
+          <div className="surface-1 rounded border border-border border-dashed p-12 text-center mt-4">
             <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-3">
               <span className="text-foreground-subtle text-sm">⬡</span>
             </div>
@@ -1104,7 +1130,7 @@ function ListingCard({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
-      className="surface-1 rounded-xl overflow-hidden w-[280px] border border-border cursor-pointer transition-all hover:border-border-strong hover:translate-y-[-1px]"
+      className="surface-1 rounded overflow-hidden w-[280px] border border-border cursor-pointer transition-all hover:border-border-strong hover:translate-y-[-1px]"
     >
       <ImageGallery images={listing.images} width={280} height={190} />
 
@@ -1317,13 +1343,13 @@ function ListingsTabView() {
     );
   }
 
-  const inputCls = "bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded-lg w-full";
+  const inputCls = "bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded w-full";
 
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Listings
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -1336,7 +1362,7 @@ function ListingsTabView() {
               setFilters({});
               setPage(1);
             }}
-            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
           >
             Clear filters
           </button>
@@ -1345,7 +1371,7 @@ function ListingsTabView() {
               type="button"
               onClick={() => setExportOpen((o) => !o)}
               disabled={exporting}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
             >
               {exporting ? "Exporting…" : "Export"}
             </button>
@@ -1356,18 +1382,18 @@ function ListingsTabView() {
                   aria-hidden
                   onClick={() => setExportOpen(false)}
                 />
-                <div className="absolute right-0 top-full z-20 mt-1 min-w-[200px] surface-1 border border-border rounded-xl py-1 shadow-lg">
+                <div className="absolute right-0 top-full z-20 mt-1 min-w-[200px] surface-1 border border-border rounded py-1 shadow-md">
                   <button
                     type="button"
                     onClick={handleExportPage}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors rounded-lg"
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors"
                   >
                     This page (CSV)
                   </button>
                   <button
                     type="button"
                     onClick={handleExportAll}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors rounded-lg"
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors"
                   >
                     All matching, max {EXPORT_ALL_MAX.toLocaleString()} (CSV)
                   </button>
@@ -1378,7 +1404,7 @@ function ListingsTabView() {
         </div>
       </div>
 
-      <div className="surface-1 rounded-xl border border-border p-4 mb-6">
+      <div className="surface-1 rounded border border-border p-4 mb-6">
         <div className="text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
           <div>
@@ -1602,7 +1628,7 @@ function ListingsTabView() {
 
       {!loading && (
         <>
-          <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
+          <div className="surface-1 rounded border border-border overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1000px] data-table">
                 <thead>
@@ -1703,7 +1729,7 @@ function ListingsTabView() {
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -1713,7 +1739,7 @@ function ListingsTabView() {
             <button
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Next
             </button>
@@ -1723,7 +1749,7 @@ function ListingsTabView() {
 
       {detailLoading && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="surface-1 rounded-xl p-6 border border-border text-sm text-foreground-muted">
+          <div className="surface-1 rounded p-6 border border-border text-sm text-foreground-muted">
             Loading listing…
           </div>
         </div>
@@ -1943,46 +1969,48 @@ function SourcesView() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Sources
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
             Source Health Report — visual overview, then detail tables · scoped to selected market
           </p>
         </div>
-        <div className="flex flex-wrap items-center gap-2">
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <MarketSelector />
-          <button
-            type="button"
-            onClick={handleExportCsv}
-            disabled={scopedRows.length === 0}
-            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-          >
-            Export CSV
-          </button>
-          <button
-            type="button"
-            onClick={handleExportHtmlReport}
-            disabled={reportRows.length === 0}
-            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-          >
-            Export HTML report
-          </button>
-          <button
-            type="button"
-            onClick={handlePrintReport}
-            disabled={reportRows.length === 0}
-            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-          >
-            Print / PDF
-          </button>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={scopedRows.length === 0}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            >
+              Export CSV
+            </button>
+            <button
+              type="button"
+              onClick={handleExportHtmlReport}
+              disabled={reportRows.length === 0}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            >
+              Export HTML report
+            </button>
+            <button
+              type="button"
+              onClick={handlePrintReport}
+              disabled={reportRows.length === 0}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            >
+              Print / PDF
+            </button>
+          </div>
         </div>
       </div>
 
       <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} />
 
       <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3 mt-2">Source detail tables</h2>
+        <h2 className="text-sm font-semibold text-foreground font-mono mb-3 mt-2">Source detail tables</h2>
         <p className="text-xs text-foreground-muted mb-3">Full data per market — secondary to the visual report above.</p>
       </div>
 
@@ -1992,10 +2020,10 @@ function SourcesView() {
         const totalListings = rows.reduce((acc, r) => acc + Number(r.listing_count), 0);
         const isActive = isActiveMarket(marketId);
         return (
-          <section key={marketId} className={`surface-1 rounded-xl border border-border overflow-hidden shadow-sm ${isActive ? "" : "opacity-80"}`}>
+          <section key={marketId} className={`surface-1 rounded border border-border overflow-hidden shadow-sm ${isActive ? "" : "opacity-80"}`}>
             <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface-2">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-foreground">
+                <h3 className="text-sm font-semibold text-foreground font-mono">
                   {marketName}
                 </h3>
                 {isActive ? (
@@ -2077,11 +2105,11 @@ function SourcesView() {
         selectedMarket.status !== "active" ? (
           <PipelineEmptyState market={selectedMarket} />
         ) : (
-          <div className="surface-1 rounded-xl border border-border border-dashed p-14 text-center">
+          <div className="surface-1 rounded border border-border border-dashed p-14 text-center">
             <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-4">
               <span className="text-foreground-subtle text-lg">⬡</span>
             </div>
-            <h3 className="text-base font-semibold text-foreground mb-1.5">No source data</h3>
+            <h3 className="text-base font-semibold text-foreground font-mono mb-1.5">No source data</h3>
             <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
               Run <code className="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded text-foreground-muted">get_source_quality_stats</code> RPC in Supabase to populate this view.
             </p>
@@ -2126,7 +2154,8 @@ function DiagnosticsView() {
     );
   }
 
-  const rows = stats.sourceRows;
+  const stubRows = stats.sourceRows.filter((r) => r.isStub);
+  const rows = stats.sourceRows.filter((r) => !r.isStub);
   const approvedPct = stats.totalListings > 0 ? (100 * stats.approvedCount) / stats.totalListings : 0;
 
   const syncAt = latestSync?.at ? new Date(latestSync.at).getTime() : null;
@@ -2185,7 +2214,7 @@ function DiagnosticsView() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Diagnostics
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -2205,7 +2234,7 @@ function DiagnosticsView() {
       {/* Verbose operational issues — source-name-level detail not shown on Dashboard */}
       <section>
         <div className="flex items-baseline justify-between mb-3 gap-3">
-          <h2 className="text-base font-semibold text-foreground">{selectedMarketLabel} operational issues · verbose</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">{selectedMarketLabel} operational issues · verbose</h2>
           <span className="text-xs text-foreground-subtle">grouped by issue type, with source names</span>
         </div>
         <div className="space-y-2">
@@ -2309,9 +2338,9 @@ function DiagnosticsView() {
       {/* Legacy data quality — image/price coverage. Kept for deeper inspection;
           the modern operational signals live in Sources (feed conversion, trust,
           indexable, sqm/beds/baths). */}
-      <section className="surface-1 rounded-xl border border-border p-5">
+      <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground">Legacy data quality</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">Legacy data quality</h2>
           <span className="text-xs text-foreground-subtle">all markets · image/price coverage</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -2336,24 +2365,24 @@ function DiagnosticsView() {
 
       {/* Outliers — source-level anomalies, useful when chasing a specific bad source. */}
       <section>
-        <h2 className="text-base font-semibold text-foreground mb-3">Source anomalies</h2>
+        <h2 className="text-base font-semibold text-foreground font-mono mb-3">Source anomalies</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {bestApproved && (
-            <div className="surface-1 rounded-xl border border-border p-4">
+            <div className="surface-1 rounded border border-border p-4">
               <div className="text-xs text-foreground-muted mb-1">Best approval</div>
               <div className="text-sm font-medium text-foreground">{bestApproved.sourceName}</div>
               <div className="text-green text-sm font-mono mt-0.5">{bestApproved.approved_pct.toFixed(1)}%</div>
             </div>
           )}
           {worstImage && (
-            <div className="surface-1 rounded-xl border border-border p-4">
+            <div className="surface-1 rounded border border-border p-4">
               <div className="text-xs text-foreground-muted mb-1">Lowest images</div>
               <div className="text-sm font-medium text-foreground">{worstImage.sourceName}</div>
               <div className="text-red text-sm font-mono mt-0.5">{worstImage.with_image_pct.toFixed(1)}%</div>
             </div>
           )}
           {worstPrice && (
-            <div className="surface-1 rounded-xl border border-border p-4">
+            <div className="surface-1 rounded border border-border p-4">
               <div className="text-xs text-foreground-muted mb-1">Lowest prices</div>
               <div className="text-sm font-medium text-foreground">{worstPrice.sourceName}</div>
               <div className="text-red text-sm font-mono mt-0.5">{worstPrice.with_price_pct.toFixed(1)}%</div>
@@ -2362,10 +2391,44 @@ function DiagnosticsView() {
         </div>
       </section>
 
+      {/* Stub / test sources — isolated from production health above */}
+      {stubRows.length > 0 && (
+        <section>
+          <div className="flex items-baseline justify-between mb-3 gap-3">
+            <h2 className="text-base font-semibold text-foreground font-mono">Test / stub sources</h2>
+            <span className="text-xs text-foreground-subtle">excluded from all production health checks above</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs data-table data-table-id-narrow">
+              <thead>
+                <tr className="bg-surface-2 text-foreground-muted">
+                  <th className="text-left px-3 py-2 font-medium">Source</th>
+                  <th className="text-left px-3 py-2 font-medium">Market</th>
+                  <th className="text-right px-3 py-2 font-medium">Listings</th>
+                  <th className="text-right px-3 py-2 font-medium">Approved</th>
+                  <th className="text-left px-3 py-2 font-medium">Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stubRows.map((r) => (
+                  <tr key={r.sourceId} className="border-t border-border hover:bg-surface-2">
+                    <td className="px-3 py-2 font-mono text-foreground-muted">{r.sourceName}</td>
+                    <td className="px-3 py-2 text-foreground-muted">{r.marketId.toUpperCase()}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-foreground-muted">{Number(r.listing_count).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-foreground-muted">{Number(r.approved_count).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-foreground-subtle font-mono">{r.grade ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
+
       {/* Future diagnostics — placeholders for upcoming deep-checks. Render-only,
           no data fetched yet. Build the underlying queries before wiring these. */}
       <section>
-        <h2 className="text-base font-semibold text-foreground mb-3">Coming soon</h2>
+        <h2 className="text-base font-semibold text-foreground font-mono mb-3">Coming soon</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             { title: "Parser / source conflicts", body: "Listings where two parsers disagree on title, price, or location." },
@@ -2375,7 +2438,7 @@ function DiagnosticsView() {
             { title: "Stale URL audit", body: "Listings whose source_url returns 404 / 410 / redirect since last ingest." },
             { title: "Price anomalies", body: "Listings whose price deviates >3σ from same-source same-property-type baseline." },
           ].map((d) => (
-            <div key={d.title} className="surface-1 rounded-xl border border-border border-dashed p-4">
+            <div key={d.title} className="surface-1 rounded border border-border border-dashed p-4">
               <div className="flex items-center justify-between mb-1.5">
                 <div className="text-sm font-medium text-foreground">{d.title}</div>
                 <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface-3 text-foreground-subtle font-medium">Planned</span>
@@ -2774,7 +2837,7 @@ function ListingDetail({
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <button
           onClick={onBack}
-          className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+          className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
         >
           ← Back
         </button>
@@ -2787,7 +2850,7 @@ function ListingDetail({
               href={listing.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
             >
               View original ↗
             </a>
@@ -2800,14 +2863,14 @@ function ListingDetail({
           <div className="w-full max-w-[560px] aspect-[560/360] overflow-hidden rounded-lg">
             <ImageGallery images={listing.images} width={560} height={360} responsive />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground mt-4">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground font-mono mt-4">
             {listing.title || "[No title]"}
           </h2>
           {listing.location && (
             <p className="text-foreground-muted text-sm mt-1">{listing.location}</p>
           )}
           {facts.length > 0 && (
-            <div className="surface-1 rounded-xl border border-border p-4 mt-4">
+            <div className="surface-1 rounded border border-border p-4 mt-4">
               <h4 className="text-xs text-foreground-subtle mb-3">Key facts</h4>
               <dl className="m-0 text-sm text-foreground">
                 {facts.map((f) => (
@@ -2833,7 +2896,7 @@ function ListingDetail({
           )}
         </div>
         <div>
-          <div className="surface-1 rounded-xl border border-border p-4">
+          <div className="surface-1 rounded border border-border p-4">
             <h4 className="text-xs text-foreground-subtle mb-2">Description</h4>
             <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
               {listing.description || "No description."}
@@ -2843,7 +2906,7 @@ function ListingDetail({
             <p className="m-1"><span className="text-foreground-muted">Source:</span> {listing.sourceName}</p>
             <p className="m-1"><span className="text-foreground-muted">ID:</span> <span className="font-mono">{listing.id}</span></p>
           </div>
-          <div className="surface-1 rounded-xl border border-border p-3 mt-4 text-foreground-subtle text-xs">
+          <div className="surface-1 rounded border border-border p-3 mt-4 text-foreground-subtle text-xs">
             Aggregated from an external source. AREI does not verify accuracy or facilitate transactions.
           </div>
         </div>
@@ -2987,13 +3050,13 @@ function MarketDetail({
 
 type Tab = "dashboard" | "listings" | "sources" | "diagnostics" | "agents" | "chatlab";
 
-const NAV_ITEMS: { key: Tab; label: string; icon: string }[] = [
-  { key: "dashboard", label: "Dashboard", icon: "◈" },
-  { key: "listings", label: "Listings", icon: "▤" },
-  { key: "sources", label: "Sources", icon: "⬡" },
-  { key: "diagnostics", label: "Diagnostics", icon: "◫" },
-  { key: "agents", label: "Agents", icon: "◉" },
-  { key: "chatlab", label: "Chat Lab", icon: "◐" },
+const NAV_ITEMS: { key: Tab; label: string }[] = [
+  { key: "dashboard",   label: "Dashboard"   },
+  { key: "listings",    label: "Listings"    },
+  { key: "sources",     label: "Sources"     },
+  { key: "diagnostics", label: "Diagnostics" },
+  { key: "agents",      label: "Agents"      },
+  { key: "chatlab",     label: "Chat Lab"    },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
@@ -3030,16 +3093,15 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
         "transition-transform duration-200 ease-out md:transition-none " +
         (sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0")
       }>
-        <div className="px-5 pt-6 pb-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center text-sm font-bold text-primary-foreground">
-              A
-            </div>
+        {/* ── Sidebar header ───────────────────────── */}
+        <div className="px-5 pt-5 pb-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <DLayersMark size={32} />
             <div>
-              <div className="text-[13px] font-semibold text-foreground tracking-tight leading-none">
+              <div className="text-[14px] font-semibold text-foreground leading-none font-mono tracking-tight">
                 AREI
               </div>
-              <div className="text-[11px] text-foreground-muted mt-0.5">
+              <div className="text-[10px] text-foreground-subtle mt-1 uppercase tracking-wider font-mono">
                 Admin Console
               </div>
             </div>
@@ -3053,56 +3115,52 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
           </div>
         </div>
 
-        <div className="px-3 mb-2">
-          <div className="text-[10px] uppercase tracking-wider text-foreground-subtle font-medium px-2 mb-1.5">
-            Main menu
-          </div>
-        </div>
-
-        <nav className="flex-1 px-3 space-y-0.5">
-          {NAV_ITEMS.map(({ key, label, icon }) => (
-            <button
-              key={key}
-              onClick={() => selectTab(key)}
-              className={
-                "w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 " +
-                (tab === key
-                  ? "bg-surface-2 text-foreground"
-                  : "text-foreground-muted hover:text-foreground hover:bg-surface-2")
-              }
-            >
-              <span className="text-base leading-none opacity-50">{icon}</span>
-              {label}
-              {key === "agents" && (
-                <span className="ml-auto text-[10px] font-medium bg-green-muted text-green px-1.5 py-0.5 rounded-md">
-                  NEW
-                </span>
+        {/* ── Nav ──────────────────────────────────── */}
+        <nav className="flex-1 pt-3 pb-2">
+          {NAV_ITEMS.map(({ key, label }) => (
+            <div key={key} className="relative">
+              {tab === key && (
+                <span
+                  className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent pointer-events-none"
+                  aria-hidden="true"
+                />
               )}
-            </button>
+              <button
+                onClick={() => selectTab(key)}
+                className={
+                  "w-full flex items-center justify-between pl-4 pr-3 py-2 text-[12px] font-mono font-medium transition-colors duration-150 " +
+                  (tab === key
+                    ? "text-foreground"
+                    : "text-foreground-muted hover:text-foreground hover:bg-surface-2")
+                }
+              >
+                {label}
+                {key === "agents" && (
+                  <span className="text-[9px] font-mono font-medium bg-green-muted text-green px-1.5 py-0.5 rounded uppercase tracking-wider">
+                    NEW
+                  </span>
+                )}
+              </button>
+            </div>
           ))}
         </nav>
 
-        <div className="px-3 pb-4 mt-auto space-y-2">
+        {/* ── Footer utilities ─────────────────────── */}
+        <div className="px-2 pt-2 pb-4 border-t border-border space-y-0.5">
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-all duration-150"
+            className="w-full px-3 py-2 text-left text-[12px] font-mono font-medium rounded text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors duration-150"
           >
-            <span className="text-base leading-none opacity-50">{dark ? "☀" : "☾"}</span>
             {dark ? "Light mode" : "Dark mode"}
           </button>
           {onSignOut && (
             <button
               onClick={onSignOut}
-              className="w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-all duration-150"
+              className="w-full px-3 py-2 text-left text-[12px] font-mono font-medium rounded text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors duration-150"
             >
-              <span className="text-base leading-none opacity-50">↩</span>
               Sign out
             </button>
           )}
-          <div className="rounded-lg px-3 py-3 border border-border">
-            <div className="text-[11px] text-foreground-subtle mb-0.5">AREI Admin</div>
-            <div className="text-[11px] text-foreground-muted">Pan-African Real Estate</div>
-          </div>
         </div>
       </aside>
 
@@ -3119,7 +3177,10 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
               <path d="M3 5h14M3 10h14M3 15h14" />
             </svg>
           </button>
-          <span className="text-[13px] font-semibold text-foreground tracking-tight">AREI</span>
+          <div className="flex items-center gap-2">
+            <DLayersMark size={20} />
+            <span className="text-[13px] font-semibold text-foreground tracking-tight font-mono">AREI</span>
+          </div>
         </div>
         <div className="max-w-[1200px] mx-auto px-4 py-5 md:px-8 md:py-8">
           <MarketProvider>
@@ -3191,13 +3252,11 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2.5 mb-8 justify-center">
-          <div className="w-9 h-9 rounded-lg bg-foreground flex items-center justify-center text-sm font-bold text-primary-foreground">
-            A
-          </div>
-          <span className="text-lg font-semibold tracking-tight">AREI</span>
+          <DLayersMark size={32} />
+          <span className="text-lg font-semibold tracking-tight font-mono">AREI</span>
         </div>
-        <div className="surface-1 rounded-xl p-7 border border-border">
-          <h1 className="text-lg font-semibold text-foreground mb-1 text-center">
+        <div className="surface-1 rounded p-7 border border-border">
+          <h1 className="text-lg font-semibold text-foreground font-mono mb-1 text-center">
             Sign in to Admin
           </h1>
           <p className="text-sm text-foreground-muted mb-6 text-center">
@@ -3209,7 +3268,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
-              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded-lg focus:border-foreground-subtle focus:outline-none transition-colors"
+              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded focus:border-foreground-subtle focus:outline-none transition-colors"
               autoFocus
               autoComplete="email"
             />
@@ -3218,7 +3277,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded-lg focus:border-foreground-subtle focus:outline-none transition-colors"
+              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded focus:border-foreground-subtle focus:outline-none transition-colors"
               autoComplete="current-password"
             />
             {error && (
@@ -3227,7 +3286,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-2.5 text-sm font-medium rounded-lg bg-foreground text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50"
+              className="w-full px-4 py-2.5 text-sm font-medium rounded bg-foreground text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50"
             >
               {loading ? "Signing in…" : "Sign in"}
             </button>
