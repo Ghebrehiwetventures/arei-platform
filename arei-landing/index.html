@@ -809,6 +809,75 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 .footer-copy{font-size:10px;color:rgba(0,0,0,.25);letter-spacing:.08em;text-transform:uppercase}
 .footer-idx{font-size:clamp(40px,6vw,64px);font-weight:300;color:rgba(0,0,0,.06);line-height:1}
 
+/* ─── SURFACES GRID ─── */
+.surfaces-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
+  border:1px solid var(--rule);
+}
+.surf-card{
+  background:var(--white);padding:32px 28px;
+  border-right:1px solid var(--rule);
+}
+.surf-card:last-child{border-right:none}
+.surf-card-paid{background:var(--deep-green);color:var(--white)}
+.surf-head{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:16px;
+}
+.surf-label{
+  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
+  color:rgba(0,0,0,.22);
+}
+.surf-card-paid .surf-label{color:rgba(255,255,255,.28)}
+.surf-tag{
+  font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  padding:3px 8px;border:1px solid;
+}
+.surf-tag-free{color:rgba(0,0,0,.38);border-color:rgba(0,0,0,.14)}
+.surf-tag-freemium{color:rgba(0,0,0,.5);border-color:rgba(0,0,0,.2)}
+.surf-tag-paid{color:var(--green);border-color:rgba(142,207,191,.35)}
+.surf-title{
+  font-size:clamp(14px,1.4vw,16px);font-weight:500;
+  line-height:1.35;margin-bottom:22px;letter-spacing:-.01em;
+}
+.surf-card-paid .surf-title{color:var(--white)}
+.surf-body{
+  display:flex;flex-direction:column;
+  border-top:1px solid var(--rule);
+}
+.surf-card-paid .surf-body{border-top-color:var(--rule-dark)}
+.surf-row{
+  display:grid;grid-template-columns:62px 1fr;gap:12px;
+  padding:11px 0;border-bottom:1px dashed var(--rule);font-size:12px;
+}
+.surf-card-paid .surf-row{border-bottom-color:rgba(255,255,255,.1)}
+.surf-row:last-child{border-bottom:none}
+.surf-key{
+  font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
+  color:var(--gray);padding-top:1px;
+}
+.surf-card-paid .surf-key{color:rgba(255,255,255,.28)}
+.surf-val{color:rgba(0,0,0,.62);line-height:1.55}
+.surf-card-paid .surf-val{color:rgba(255,255,255,.58)}
+
+/* ─── BROKER CTA ─── */
+.broker-cta{
+  margin-top:32px;padding:24px 28px;
+  border:1px solid var(--rule);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:24px;flex-wrap:wrap;
+}
+.broker-cta-text{font-size:13px;color:rgba(0,0,0,.58);line-height:1.6;max-width:460px}
+.broker-cta-text strong{font-weight:600;color:rgba(0,0,0,.72);display:block;margin-bottom:4px}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:860px){
+  .surfaces-grid{grid-template-columns:1fr}
+  .surf-card{border-right:none;border-bottom:1px solid var(--rule)}
+  .surf-card-paid{border-bottom:none}
+  .broker-cta{flex-direction:column;align-items:flex-start}
+}
+
 /* ─── RESPONSIVE ─── */
 @media(max-width:860px){
   .split-panel{grid-template-columns:1fr}
@@ -842,8 +911,10 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   .section-head{flex-direction:column}
   .next-grid{grid-template-columns:1fr;gap:48px}
 }
-@media(max-width:560px){
+@media(max-width:720px){
   .nav-a{display:none}
+}
+@media(max-width:560px){
   nav{padding:12px 0}
   .nav-inner{padding:0 16px}
   .wrap{padding:0 16px}
@@ -1037,6 +1108,85 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 </section>
 
 
+<!-- ═══ 3b. THREE SURFACES ═══ -->
+<section class="section section-off" id="surfaces">
+  <div class="wrap">
+    <div class="section-head rv">
+      <div class="section-head-left">
+        <span class="ey">The Model</span>
+        <h2>Three surfaces, one engine.</h2>
+        <p>The same structured data layer powers public transparency, data acquisition, and professional intelligence. Each surface serves a distinct role in the market ecosystem.</p>
+      </div>
+    </div>
+    <div class="surfaces-grid rv">
+      <div class="surf-card">
+        <div class="surf-head">
+          <span class="surf-label">01</span>
+          <span class="surf-tag surf-tag-free">Free</span>
+        </div>
+        <h3 class="surf-title">Public Index Surface</h3>
+        <div class="surf-body">
+          <div class="surf-row">
+            <span class="surf-key">Audience</span>
+            <span class="surf-val">Public, media, researchers, investors evaluating markets</span>
+          </div>
+          <div class="surf-row">
+            <span class="surf-key">Offer</span>
+            <span class="surf-val">Country index pages, public listings, monthly listing-based market signal, methodology disclosure</span>
+          </div>
+          <div class="surf-row">
+            <span class="surf-key">Role</span>
+            <span class="surf-val">SEO authority, top of funnel, market legitimacy</span>
+          </div>
+        </div>
+      </div>
+      <div class="surf-card">
+        <div class="surf-head">
+          <span class="surf-label">02</span>
+          <span class="surf-tag surf-tag-freemium">Free / Paid</span>
+        </div>
+        <h3 class="surf-title">Broker Tools</h3>
+        <div class="surf-body">
+          <div class="surf-row">
+            <span class="surf-key">Audience</span>
+            <span class="surf-val">Licensed brokers and agents active in covered markets</span>
+          </div>
+          <div class="surf-row">
+            <span class="surf-key">Offer</span>
+            <span class="surf-val">Listing submission, AI-assisted validation, leads, distribution, performance benchmark</span>
+          </div>
+          <div class="surf-row">
+            <span class="surf-key">Role</span>
+            <span class="surf-val">Data acquisition. Brokers get international reach. AREI gets cleaner market data.</span>
+          </div>
+        </div>
+      </div>
+      <div class="surf-card surf-card-paid">
+        <div class="surf-head">
+          <span class="surf-label">03</span>
+          <span class="surf-tag surf-tag-paid">Paid</span>
+        </div>
+        <h3 class="surf-title">Professional &amp; Institutional Intelligence</h3>
+        <div class="surf-body">
+          <div class="surf-row">
+            <span class="surf-key">Audience</span>
+            <span class="surf-val">Asset managers, developers, analysts, institutional investors</span>
+          </div>
+          <div class="surf-row">
+            <span class="surf-key">Offer</span>
+            <span class="surf-val">Market screener, confidence scoring, comparable listings, briefings, API, dashboards, historical series</span>
+          </div>
+          <div class="surf-row">
+            <span class="surf-key">Role</span>
+            <span class="surf-val">Revenue. Intelligence layer for decision-grade analysis.</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 <!-- ═══ 4. LIVE PROOF ═══ -->
 <section class="section section-off" id="proof">
   <div class="wrap">
@@ -1045,6 +1195,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
         <span class="ey"><span class="ey-dot"></span>Live</span>
         <h2>Cape Verde Real Estate Index is Market 01.</h2>
         <p>Listing-based market data — monitored asking-price listings, source coverage, verification status, published methodology. Aggregated, cleaned, and published automatically.</p>
+        <p style="font-size:11px;color:var(--gray);margin-top:10px;letter-spacing:.04em">Based on monitored asking-price listings. Not transaction prices or valuations.</p>
       </div>
     </div>
     <div class="lc-track rv" id="lc-track">
@@ -1076,6 +1227,15 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
     <div class="proof-cta rv">
       <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-outline">View Cape Verde Index [&rarr;]</a>
     </div>
+
+
+    <div class="broker-cta rv">
+      <div class="broker-cta-text">
+        <strong>Are you a broker in Cape Verde?</strong>
+        Join the index surface and receive international visibility for your listings.
+      </div>
+      <a href="#contact" class="btn-outline">Broker pilot enquiry [&rarr;]</a>
+    </div>
   </div>
 </section>
 
@@ -1097,28 +1257,28 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
         </div>
         <a class="bp-row bp-row-active bp-row-link" href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer">
           <span class="bp-node bp-node-active"></span>
-          <span class="bp-row-label">Market 01 <span class="bp-row-sub">&rarr; Cape Verde Real Estate Index</span></span>
+          <span class="bp-row-label">Market 01 <span class="bp-row-sub">&rarr; Cape Verde &middot; Live</span></span>
           <span class="bp-row-value">Active</span>
         </a>
         <div class="bp-row">
           <span class="bp-node"></span>
-          <span class="bp-row-label">Market 02</span>
-          <span class="bp-row-value">In research</span>
+          <span class="bp-row-label">Market 02 <span class="bp-row-sub">Ghana &middot; Selected &middot; 2027</span></span>
+          <span class="bp-row-value">Selected</span>
         </div>
         <div class="bp-row">
           <span class="bp-node"></span>
-          <span class="bp-row-label">Market 03</span>
-          <span class="bp-row-value">In research</span>
+          <span class="bp-row-label">Market 03 <span class="bp-row-sub">Nigeria</span></span>
+          <span class="bp-row-value">Research</span>
         </div>
         <div class="bp-row">
           <span class="bp-node"></span>
-          <span class="bp-row-label">Market 04</span>
-          <span class="bp-row-value">Planned</span>
+          <span class="bp-row-label">Market 04 <span class="bp-row-sub">Morocco</span></span>
+          <span class="bp-row-value">Research</span>
         </div>
         <div class="bp-row">
           <span class="bp-node"></span>
-          <span class="bp-row-label">Market 05</span>
-          <span class="bp-row-value">Planned</span>
+          <span class="bp-row-label">Market 05 <span class="bp-row-sub">Senegal &middot; Kenya</span></span>
+          <span class="bp-row-value">Research</span>
         </div>
         <div class="mkt-summary">
           <span>Coverage &middot; 01 / 54</span>
