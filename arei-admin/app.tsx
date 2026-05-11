@@ -99,21 +99,20 @@ import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, 
 // D · LAYERS MARK — AREI brand mark (SVG)
 // ============================================
 
-function DLayersMark({ size = 28 }: { size?: number }) {
+function DLayersMark({ size = 32 }: { size?: number }) {
   return (
     <svg
       width={size}
       height={size}
-      viewBox="0 0 28 28"
+      viewBox="0 0 32 32"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="AREI D·Layers mark"
     >
-      {/* Diamond layers — three stacked offset diamonds */}
-      <polygon points="14,3 24,10 14,17 4,10" fill="currentColor" opacity="0.15" />
-      <polygon points="14,6 22,12 14,18 6,12" fill="currentColor" opacity="0.35" />
-      <polygon points="14,9 20,14 14,19 8,14" fill="currentColor" opacity="0.80" />
-      <polygon points="14,12 18,15.5 14,19 10,15.5" fill="currentColor" opacity="1" />
+      {/* Three stacked diamond layers — D·Layers brand mark */}
+      <polygon points="16,4 28,12 16,20 4,12" fill="currentColor" opacity="0.18" />
+      <polygon points="16,9 26,16 16,23 6,16" fill="currentColor" opacity="0.50" />
+      <polygon points="16,14 24,20 16,26 8,20" fill="currentColor" opacity="1" />
     </svg>
   );
 }
@@ -2149,7 +2148,8 @@ function DiagnosticsView() {
     );
   }
 
-  const rows = stats.sourceRows;
+  const stubRows = stats.sourceRows.filter((r) => r.isStub);
+  const rows = stats.sourceRows.filter((r) => !r.isStub);
   const approvedPct = stats.totalListings > 0 ? (100 * stats.approvedCount) / stats.totalListings : 0;
 
   const syncAt = latestSync?.at ? new Date(latestSync.at).getTime() : null;
@@ -2384,6 +2384,40 @@ function DiagnosticsView() {
           )}
         </div>
       </section>
+
+      {/* Stub / test sources — isolated from production health above */}
+      {stubRows.length > 0 && (
+        <section>
+          <div className="flex items-baseline justify-between mb-3 gap-3">
+            <h2 className="text-base font-semibold text-foreground">Test / stub sources</h2>
+            <span className="text-xs text-foreground-subtle">excluded from all production health checks above</span>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-xs data-table data-table-id-narrow">
+              <thead>
+                <tr className="bg-surface-2 text-foreground-muted">
+                  <th className="text-left px-3 py-2 font-medium">Source</th>
+                  <th className="text-left px-3 py-2 font-medium">Market</th>
+                  <th className="text-right px-3 py-2 font-medium">Listings</th>
+                  <th className="text-right px-3 py-2 font-medium">Approved</th>
+                  <th className="text-left px-3 py-2 font-medium">Grade</th>
+                </tr>
+              </thead>
+              <tbody>
+                {stubRows.map((r) => (
+                  <tr key={r.sourceId} className="border-t border-border hover:bg-surface-2">
+                    <td className="px-3 py-2 font-mono text-foreground-muted">{r.sourceName}</td>
+                    <td className="px-3 py-2 text-foreground-muted">{r.marketId.toUpperCase()}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-foreground-muted">{Number(r.listing_count).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-right tabular-nums text-foreground-muted">{Number(r.approved_count).toLocaleString()}</td>
+                    <td className="px-3 py-2 text-foreground-subtle font-mono">{r.grade ?? "—"}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </section>
+      )}
 
       {/* Future diagnostics — placeholders for upcoming deep-checks. Render-only,
           no data fetched yet. Build the underlying queries before wiring these. */}
@@ -3080,10 +3114,10 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
               key={key}
               onClick={() => selectTab(key)}
               className={
-                "w-full flex items-center gap-2.5 px-3 py-2 text-[12px] font-medium rounded transition-all duration-150 " +
+                "w-full flex items-center gap-2.5 px-3 py-2 text-[12px] font-medium rounded transition-colors duration-150 " +
                 (tab === key
-                  ? "bg-surface-2 text-foreground border-l-2 border-accent pl-[10px]"
-                  : "text-foreground-muted hover:text-foreground hover:bg-surface-2 border-l-2 border-transparent pl-[10px]")
+                  ? "bg-accent-muted text-foreground"
+                  : "text-foreground-muted hover:text-foreground hover:bg-surface-2")
               }
             >
               <span className="text-[11px] leading-none opacity-40 font-mono">{icon}</span>

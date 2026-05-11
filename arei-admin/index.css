@@ -39,10 +39,15 @@
   --color-border: #dddbd5;
   --color-border-strong: #c8c6bf;
 
-  /* Accent — AREI sage green */
-  --color-accent: #4a6741;
-  --color-accent-foreground: #ffffff;
-  --color-accent-muted: rgba(74, 103, 65, 0.10);
+  /* Accent — AREI sage (KazaVerde canonical: #8ecfbf) */
+  --color-accent: #8ecfbf;
+  --color-accent-foreground: #0d1f1c;
+  --color-accent-muted: rgba(142, 207, 191, 0.15);
+
+  /* Deep green — structural headings, active states */
+  --color-deep-green: #2d4a42;
+  --color-deep-green-foreground: #ffffff;
+  --color-deep-green-muted: rgba(45, 74, 66, 0.12);
 
   /* Semantic — severity only */
   --color-green: #2e7d52;
@@ -52,9 +57,9 @@
   --color-red: #b91c1c;
   --color-red-muted: rgba(185, 28, 28, 0.07);
 
-  /* Sage — brand accent tone */
-  --color-sage: #4a6741;
-  --color-sage-muted: rgba(74, 103, 65, 0.10);
+  /* Sage — brand accent tone (same as accent) */
+  --color-sage: #8ecfbf;
+  --color-sage-muted: rgba(142, 207, 191, 0.15);
 }
 
 /* ── Dark mode overrides ─────────────────────────────────────────── */
@@ -77,9 +82,13 @@
   --color-border: #2e2e2b;
   --color-border-strong: #3e3e3a;
 
-  --color-accent: #6b8f61;
-  --color-accent-foreground: #0d0d0b;
-  --color-accent-muted: rgba(107, 143, 97, 0.14);
+  --color-accent: #6ebfaf;
+  --color-accent-foreground: #0d1f1c;
+  --color-accent-muted: rgba(110, 191, 175, 0.18);
+
+  --color-deep-green: #4a7a6e;
+  --color-deep-green-foreground: #ffffff;
+  --color-deep-green-muted: rgba(74, 122, 110, 0.18);
 
   --color-green: #4ade80;
   --color-green-muted: rgba(74, 222, 128, 0.12);
@@ -88,8 +97,8 @@
   --color-red: #f87171;
   --color-red-muted: rgba(248, 113, 113, 0.1);
 
-  --color-sage: #6b8f61;
-  --color-sage-muted: rgba(107, 143, 97, 0.14);
+  --color-sage: #6ebfaf;
+  --color-sage-muted: rgba(110, 191, 175, 0.18);
 }
 
 /* ── Base ─────────────────────────────────────────────────────────── */

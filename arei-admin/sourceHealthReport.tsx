@@ -657,7 +657,7 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     .map(([label, items]) => {
       const names = items.slice(0, 3).map((r) => esc(r.sourceName)).join(", ");
       const more = items.length > 3 ? `, +${items.length - 3}` : "";
-      return `<div class="row"><span>${esc(label)}</span><span class="muted" style="font-family:'JetBrains Mono',ui-monospace,monospace">${items.length} · ${names}${more}</span></div>`;
+      return `<div class="row"><span>${esc(label)}</span><span class="muted" style="font-family:'IBM Plex Mono',ui-monospace,monospace">${items.length} · ${names}${more}</span></div>`;
     })
     .join("") || `<div class="muted">No issues detected.</div>`;
 
@@ -741,11 +741,10 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
 <div class="wrap">
   <div class="header-actions">
     <div style="display:flex;align-items:center;gap:12px">
-      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-        <polygon points="14,3 24,10 14,17 4,10" fill="currentColor" opacity="0.15" />
-        <polygon points="14,6 22,12 14,18 6,12" fill="currentColor" opacity="0.35" />
-        <polygon points="14,9 20,14 14,19 8,14" fill="currentColor" opacity="0.80" />
-        <polygon points="14,12 18,15.5 14,19 10,15.5" fill="currentColor" opacity="1" />
+      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" color="#111110">
+        <polygon points="16,4 28,12 16,20 4,12" fill="currentColor" opacity="0.18" />
+        <polygon points="16,9 26,16 16,23 6,16" fill="currentColor" opacity="0.50" />
+        <polygon points="16,14 24,20 16,26 8,20" fill="currentColor" opacity="1" />
       </svg>
       <div>
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;font-family:'IBM Plex Mono',ui-monospace,monospace;margin-bottom:2px">AREI · Source Health Report</div>
@@ -805,7 +804,7 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     </div>
     <p class="muted" style="font-size:11px;margin:0 0 8px">Declared as <code>type: stub</code> in <code>markets/${esc(marketLabel.toLowerCase() === "cape verde" ? "cv" : "*")}/sources.yml</code>; not counted in summary, funnel, priority actions, or top sources.</p>
     <ul style="margin:0;padding-left:18px;font-size:12px;color:#6b7280">
-      ${stubRows.map((r) => `<li><strong style="color:#111113">${esc(r.sourceName)}</strong> <span style="font-family:'JetBrains Mono',ui-monospace,monospace;color:#9ca3af">· ${esc(r.source_id)}</span> — ${Number(r.listing_count).toLocaleString()} listings · ${r.public_feed_count_n.toLocaleString()} feed</li>`).join("")}
+      ${stubRows.map((r) => `<li><strong style="color:#111113">${esc(r.sourceName)}</strong> <span style="font-family:'IBM Plex Mono',ui-monospace,monospace;color:#9ca3af">· ${esc(r.source_id)}</span> — ${Number(r.listing_count).toLocaleString()} listings · ${r.public_feed_count_n.toLocaleString()} feed</li>`).join("")}
     </ul>
   </section>` : ""}
 
