@@ -111,6 +111,102 @@ function loadSourceConfig(marketId: string, sourceId: string): SourceConfig {
   return config;
 }
 
+// ─── Utilities ───────────────────────────────────────────────────────────────
+
+function sleep(ms: number): Promise<void> {
+  return new Promise(r => setTimeout(r, ms));
+}
+
+// ─── Detail enrichment ───────────────────────────────────────────────────────
+
+async function enrichListings(
+  listings: WorkingListing[],
+  sourceConfig: SourceConfig
+): Promise<void> {
+  if (!sourceConfig.detail?.enabled) {
+    console.log(`[Enrich] Detail extraction disabled for ${sourceConfig.id} — skipping`);
+    return;
+  }
+
+  resetStrategyFactory();
+  const factory = getStrategyFactory();
+  factory.register(createGenericDetailPlugin(sourceConfig.id, sourceConfig.detail, sourceConfig.price_format));
+
+  const plugin = factory.getPlugin(sourceConfig.id);
+  if (!plugin) return;
+
+  const policy = sourceConfig.detail.policy || "on_violation";
+  const toEnrich = listings.filter(l => {
+    if (!l.detailUrl) return false;
+    if (policy === "always") return true;
+    if (policy === "on_violation") {
+      return !l.description || l.description.length < 50 || !l.imageUrls || l.imageUrls.length < 3;
+    }
+    return false;
+  });
+
+  console.log(`[Enrich] Enriching ${toEnrich.length}/${listings.length} listings (policy: ${policy})...`);
+
+  let enriched = 0;
+  let failed = 0;
+
+  for (const listing of toEnrich) {
+    if (!listing.detailUrl) continue;
+
+    const delayMs = sourceConfig.detail.delay_ms ?? 2500;
+    await sleep(delayMs + Math.floor(Math.random() * 500));
+
+    try {
+      const fetchFn = sourceConfig.fetch_method === "headless" ? fetchHeadless : fetchHtml;
+      const fetchResult = await fetchFn(listing.detailUrl);
+
+      if (!fetchResult.success || !fetchResult.html) {
+        failed++;
+        console.log(`[Enrich] ✗ ${listing.id} fetch failed`);
+        continue;
+      }
+
+      const extractResult = plugin.extract(fetchResult.html, listing.detailUrl);
+      if (!extractResult.success) {
+        failed++;
+        console.log(`[Enrich] ✗ ${listing.id} extraction failed`);
+        continue;
+      }
+
+      if (extractResult.description && extractResult.description.length >= 50) {
+        if (!listing.description || extractResult.description.length > listing.description.length) {
+          listing.description = extractResult.description;
+        }
+      }
+
+      if (extractResult.bedrooms  !== undefined) listing.bedrooms  = extractResult.bedrooms;
+      if (extractResult.bathrooms !== undefined) listing.bathrooms = extractResult.bathrooms;
+      if (extractResult.areaSqm   !== undefined) listing.area_sqm  = extractResult.areaSqm;
+      if (extractResult.amenities?.length)       listing.amenities = extractResult.amenities;
+
+      if (extractResult.imageUrls?.length) {
+        listing.imageUrls = dedupeImageUrls([...listing.imageUrls, ...extractResult.imageUrls]);
+      }
+
+      if (extractResult.location && !listing.location) {
+        listing.location = extractResult.location;
+      }
+
+      if (extractResult.price && extractResult.price >= 500 && !listing.price) {
+        listing.price = extractResult.price;
+      }
+
+      enriched++;
+      console.log(`[Enrich] ✓ ${listing.id}`);
+    } catch (err) {
+      failed++;
+      console.log(`[Enrich] ✗ ${listing.id}: ${err instanceof Error ? err.message : String(err)}`);
+    }
+  }
+
+  console.log(`[Enrich] Complete: ${enriched} enriched, ${failed} failed`);
+}
+
 // ─── Fetch ──────────────────────────────────────────────────────────────────
 
 async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing[]> {
@@ -164,13 +260,17 @@ async function main(): Promise<void> {
   const listings = await fetchListings(sourceConfig);
   console.log(`\nFetched: ${listings.length} listings`);
 
+  await enrichListings(listings, sourceConfig);
+
   if (dryRun) {
     console.log(`\n[DRY_RUN] First 3 listing ids:`);
-    listings.slice(0, 3).forEach(l => console.log(`  ${l.id}  title="${l.title}"  price=${l.price}`));
+    listings.slice(0, 3).forEach(l =>
+      console.log(`  ${l.id}  title="${l.title}"  price=${l.price}  desc_len=${l.description?.length ?? 0}  images=${l.imageUrls.length}`)
+    );
     return;
   }
 
-  console.log(`(enrich/write not yet wired)`);
+  console.log(`(location/write not yet wired)`);
 }
 
 if (require.main === module) {
