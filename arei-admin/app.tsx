@@ -109,10 +109,10 @@ function DLayersMark({ size = 32 }: { size?: number }) {
       xmlns="http://www.w3.org/2000/svg"
       aria-label="AREI D·Layers mark"
     >
-      {/* Three stacked diamond layers — D·Layers brand mark */}
-      <polygon points="16,4 28,12 16,20 4,12" fill="currentColor" opacity="0.18" />
-      <polygon points="16,9 26,16 16,23 6,16" fill="currentColor" opacity="0.50" />
-      <polygon points="16,14 24,20 16,26 8,20" fill="currentColor" opacity="1" />
+      {/* Three stacked square/record layers — approved D·Layers brand mark */}
+      <rect x="4" y="6"  width="24" height="6" rx="1" fill="currentColor" opacity="0.18" />
+      <rect x="4" y="13" width="24" height="6" rx="1" fill="currentColor" opacity="0.50" />
+      <rect x="4" y="20" width="24" height="6" rx="1" fill="currentColor" opacity="1"    />
     </svg>
   );
 }

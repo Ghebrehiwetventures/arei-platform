@@ -742,9 +742,9 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
   <div class="header-actions">
     <div style="display:flex;align-items:center;gap:12px">
       <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" color="#111110">
-        <polygon points="16,4 28,12 16,20 4,12" fill="currentColor" opacity="0.18" />
-        <polygon points="16,9 26,16 16,23 6,16" fill="currentColor" opacity="0.50" />
-        <polygon points="16,14 24,20 16,26 8,20" fill="currentColor" opacity="1" />
+        <rect x="4" y="6"  width="24" height="6" rx="1" fill="currentColor" opacity="0.18" />
+        <rect x="4" y="13" width="24" height="6" rx="1" fill="currentColor" opacity="0.50" />
+        <rect x="4" y="20" width="24" height="6" rx="1" fill="currentColor" opacity="1"    />
       </svg>
       <div>
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;font-family:'IBM Plex Mono',ui-monospace,monospace;margin-bottom:2px">AREI · Source Health Report</div>
