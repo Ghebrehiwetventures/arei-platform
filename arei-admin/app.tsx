@@ -23,7 +23,6 @@ const SOURCE_STALE_DAYS = 30;
 // database (gh, ke, ng, zm, bw…) are test pipeline / legacy and must not
 // dominate operational health signals.
 const ACTIVE_MARKET_ID = "cv";
-const ACTIVE_MARKET_LABEL = "Cape Verde";
 
 function isActiveMarket(marketId: string): boolean {
   return marketId === ACTIVE_MARKET_ID;
@@ -93,6 +92,8 @@ function useTheme() {
 import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
 import { supabaseAuth } from "./supabase";
 import { PropertyChatLabView } from "./PropertyChatLab";
+import { SourceHealthReport, buildReportHtml } from "./sourceHealthReport";
+import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, STATUS_LABEL } from "./marketContext";
 
 // ============================================
 // IMAGE GALLERY — arrows on hover, dot navigation
@@ -692,6 +693,9 @@ function SourceHealthStat({ label, value, tone }: { label: string; value: number
 }
 
 function DashboardView() {
+  const { selected: selectedMarket } = useSelectedMarket();
+  const selectedMarketId = selectedMarket.id;
+  const selectedMarketLabel = selectedMarket.name;
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
@@ -741,10 +745,10 @@ function DashboardView() {
 
   const approvedPct = stats.totalListings > 0 ? Math.round((100 * stats.approvedCount) / stats.totalListings) : 0;
 
-  // ── Source Health (active market only) ─────────────────────────────────────
-  // Only Cape Verde is in production. Counting non-active markets here would
-  // swamp the operator with test-pipeline noise.
-  const healthRows = stats.sourceRows.filter((r) => isActiveMarket(r.marketId));
+  // ── Source Health (selected market only) ───────────────────────────────────
+  // Scoped to the operator's chosen market. Non-selected markets stay out of
+  // every summary card, issue list, and attention pill on this view.
+  const healthRows = stats.sourceRows.filter((r) => r.marketId === selectedMarketId);
   const totalSources = healthRows.length;
   const freshSources = healthRows.filter((r) => {
     const f = formatFreshness(r.last_updated_at);
@@ -829,18 +833,25 @@ function DashboardView() {
   return (
     <div className="space-y-8">
       {/* ── Page header ─────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
-          Dashboard
-        </h1>
-        <p className="text-sm text-foreground-muted mt-1">
-          Data quality overview and source health
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+            Dashboard
+          </h1>
+          <p className="text-sm text-foreground-muted mt-1">
+            Data quality overview and source health
+          </p>
+        </div>
+        <MarketSelector />
       </div>
 
-      {/* ── Cape Verde health pill ──────────────────────────────── */}
+      {selectedMarket.status !== "active" && healthRows.length === 0 ? (
+        <PipelineEmptyState market={selectedMarket} />
+      ) : (
+      <>
+      {/* ── Selected-market health pill ─────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2.5">
-        <span className="text-xs text-foreground-muted">{ACTIVE_MARKET_LABEL} health:</span>
+        <span className="text-xs text-foreground-muted">{selectedMarketLabel} health:</span>
         <span
           className={
             "text-xs font-medium px-2.5 py-1 rounded-md " +
@@ -850,17 +861,17 @@ function DashboardView() {
           {cvStatusLabel}
         </span>
         <span className="text-xs text-foreground-subtle">
-          other markets are test pipeline · see Sources tab
+          {STATUS_LABEL[selectedMarket.status]} market — change the dropdown above for portfolio context.
         </span>
       </div>
 
-      {/* ── Cape Verde source health (PRIMARY) ──────────────────── */}
+      {/* ── Selected-market source health (PRIMARY) ─────────────── */}
       <section className="surface-1 rounded-xl border border-border p-5">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground">{ACTIVE_MARKET_LABEL} source health</h2>
+          <h2 className="text-base font-semibold text-foreground">{selectedMarketLabel} source health</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <SourceHealthStat label={`${ACTIVE_MARKET_LABEL} sources`} value={totalSources} />
+          <SourceHealthStat label={`${selectedMarketLabel} sources`} value={totalSources} />
           <SourceHealthStat label="Fresh (≤30d)" value={freshSources} tone={totalSources > 0 && freshSources === totalSources ? "good" : undefined} />
           <SourceHealthStat label="Stale (>30d)" value={staleSourcesCount} tone={staleSourcesCount > 0 ? "warn" : "good"} />
           <SourceHealthStat label="Missing sqm" value={missingSqmSources} tone={missingSqmSources > 0 ? "warn" : "good"} />
@@ -889,7 +900,7 @@ function DashboardView() {
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {cvWorst.length > 0 && (
             <div className="rounded-lg p-4 border border-border bg-amber-muted">
-              <div className="text-xs font-medium text-amber mb-2">Needs attention · {ACTIVE_MARKET_LABEL}</div>
+              <div className="text-xs font-medium text-amber mb-2">Needs attention · {selectedMarketLabel}</div>
               <p className="text-sm text-foreground">
                 {cvWorst.map((r) => r.sourceName).join(", ")}
               </p>
@@ -897,7 +908,7 @@ function DashboardView() {
           )}
           {cvBest.length > 0 && (
             <div className="rounded-lg p-4 border border-border bg-green-muted">
-              <div className="text-xs font-medium text-green mb-2">Performing well · {ACTIVE_MARKET_LABEL}</div>
+              <div className="text-xs font-medium text-green mb-2">Performing well · {selectedMarketLabel}</div>
               <p className="text-sm text-foreground">
                 {cvBest.map((r) => r.sourceName).join(", ")}
               </p>
@@ -915,10 +926,10 @@ function DashboardView() {
           rows
             .map((r) => (r.last_updated_at ? new Date(r.last_updated_at).getTime() : NaN))
             .filter((t) => Number.isFinite(t));
-        const activeTs = tsValues(stats.sourceRows.filter((r) => isActiveMarket(r.marketId)));
+        const selectedTs = tsValues(healthRows);
         const allTs = tsValues(stats.sourceRows);
-        const fallbackMs = activeTs.length > 0 ? Math.max(...activeTs) : allTs.length > 0 ? Math.max(...allTs) : null;
-        const fallbackSourceLabel = activeTs.length > 0 ? ACTIVE_MARKET_LABEL : "all sources";
+        const fallbackMs = selectedTs.length > 0 ? Math.max(...selectedTs) : allTs.length > 0 ? Math.max(...allTs) : null;
+        const fallbackSourceLabel = selectedTs.length > 0 ? selectedMarketLabel : "all sources";
         const fallbackIso = fallbackMs != null ? new Date(fallbackMs).toISOString() : null;
         const fallbackFresh = fallbackIso ? formatFreshness(fallbackIso) : null;
         const hasAnySync = !!latestSync?.at || fallbackMs != null;
@@ -980,12 +991,14 @@ function DashboardView() {
       </section>
         );
       })()}
+      </>
+      )}
 
-      {/* ── All markets · including test pipeline ───────────────── */}
-      <section>
+      {/* ── Portfolio overview · all markets (SECONDARY) ─────────── */}
+      <section className="opacity-90">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground">All markets</h2>
-          <span className="text-xs text-foreground-subtle">including test pipeline</span>
+          <h2 className="text-sm font-semibold text-foreground-muted">Portfolio overview</h2>
+          <span className="text-xs text-foreground-subtle">secondary — all markets, including pipeline</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
           <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
@@ -1797,6 +1810,8 @@ function compareSortValues(a: number | null, b: number | null, dir: SortDir): nu
 }
 
 function SourcesView() {
+  const { selected: selectedMarket } = useSelectedMarket();
+  const selectedMarketId = selectedMarket.id;
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [markets, setMarkets] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
@@ -1837,21 +1852,13 @@ function SourcesView() {
   }
 
   const marketNameById = new Map(markets.map((m) => [m.id, m.name]));
+  // Scope everything on this tab to the selected market. The visual report,
+  // detail table, and CSV export all read from `scopedRows` so they stay in
+  // lockstep with the dropdown.
+  const scopedRows = stats.sourceRows.filter((r) => r.marketId === selectedMarketId);
   const byMarket = new Map<string, SourceQualityRow[]>();
-  for (const r of stats.sourceRows) {
-    const m = r.marketId;
-    if (!byMarket.has(m)) byMarket.set(m, []);
-    byMarket.get(m)!.push(r);
-  }
-  // Put the active market first; remaining markets sorted by name. Test
-  // pipeline markets stay visible but visually subordinate.
-  const marketIds = [...byMarket.keys()].sort((a, b) => {
-    if (isActiveMarket(a) && !isActiveMarket(b)) return -1;
-    if (!isActiveMarket(a) && isActiveMarket(b)) return 1;
-    const nameA = marketNameById.get(a) ?? a;
-    const nameB = marketNameById.get(b) ?? b;
-    return nameA.localeCompare(nameB);
-  });
+  if (scopedRows.length > 0) byMarket.set(selectedMarketId, scopedRows);
+  const marketIds = [...byMarket.keys()];
 
   const handleExportCsv = () => {
     const header = [
@@ -1907,6 +1914,31 @@ function SourcesView() {
     downloadTextFile(`arei-source-health-${date}.csv`, lines.join("\r\n") + "\r\n");
   };
 
+  const reportRows = scopedRows;
+  const reportMarketLabel = selectedMarket.name;
+
+  const handleExportHtmlReport = () => {
+    const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadTextFile(`arei-source-health-report-${date}.html`, html, "text/html;charset=utf-8");
+  };
+
+  const handlePrintReport = () => {
+    const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
+    const w = window.open("", "_blank", "noopener,noreferrer");
+    if (!w) {
+      alert("Pop-up blocked. Allow pop-ups for this site to print the report.");
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    // Defer print until the new document has parsed and rendered.
+    w.onload = () => {
+      try { w.focus(); w.print(); } catch { /* user dismissed */ }
+    };
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1915,17 +1947,43 @@ function SourcesView() {
             Sources
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
-            All sources grouped by market
+            Source Health Report — visual overview, then detail tables · scoped to selected market
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleExportCsv}
-          disabled={stats.sourceRows.length === 0}
-          className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-        >
-          Export CSV
-        </button>
+        <div className="flex flex-wrap items-center gap-2">
+          <MarketSelector />
+          <button
+            type="button"
+            onClick={handleExportCsv}
+            disabled={scopedRows.length === 0}
+            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+          >
+            Export CSV
+          </button>
+          <button
+            type="button"
+            onClick={handleExportHtmlReport}
+            disabled={reportRows.length === 0}
+            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+          >
+            Export HTML report
+          </button>
+          <button
+            type="button"
+            onClick={handlePrintReport}
+            disabled={reportRows.length === 0}
+            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+          >
+            Print / PDF
+          </button>
+        </div>
+      </div>
+
+      <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} />
+
+      <div>
+        <h2 className="text-sm font-semibold text-foreground mb-3 mt-2">Source detail tables</h2>
+        <p className="text-xs text-foreground-muted mb-3">Full data per market — secondary to the visual report above.</p>
       </div>
 
       {marketIds.map((marketId) => {
@@ -2015,16 +2073,20 @@ function SourcesView() {
         );
       })}
 
-      {marketIds.length === 0 && (
-        <div className="surface-1 rounded-xl border border-border border-dashed p-14 text-center">
-          <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-4">
-            <span className="text-foreground-subtle text-lg">⬡</span>
+      {scopedRows.length === 0 && (
+        selectedMarket.status !== "active" ? (
+          <PipelineEmptyState market={selectedMarket} />
+        ) : (
+          <div className="surface-1 rounded-xl border border-border border-dashed p-14 text-center">
+            <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-4">
+              <span className="text-foreground-subtle text-lg">⬡</span>
+            </div>
+            <h3 className="text-base font-semibold text-foreground mb-1.5">No source data</h3>
+            <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
+              Run <code className="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded text-foreground-muted">get_source_quality_stats</code> RPC in Supabase to populate this view.
+            </p>
           </div>
-          <h3 className="text-base font-semibold text-foreground mb-1.5">No source data</h3>
-          <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
-            Run <code className="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded text-foreground-muted">get_source_quality_stats</code> RPC in Supabase to populate this view.
-          </p>
-        </div>
+        )
       )}
     </div>
   );
@@ -2034,7 +2096,10 @@ function SourcesView() {
 // STATS — Developer-focused metrics & red flags
 // ============================================
 
-function StatsView() {
+function DiagnosticsView() {
+  const { selected: selectedMarket } = useSelectedMarket();
+  const selectedMarketId = selectedMarket.id;
+  const selectedMarketLabel = selectedMarket.name;
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
   const [loading, setLoading] = useState(true);
@@ -2063,10 +2128,6 @@ function StatsView() {
 
   const rows = stats.sourceRows;
   const approvedPct = stats.totalListings > 0 ? (100 * stats.approvedCount) / stats.totalListings : 0;
-  const gradeCounts = { A: 0, B: 0, C: 0, D: 0 } as Record<string, number>;
-  rows.forEach((r) => {
-    gradeCounts[r.grade]++;
-  });
 
   const syncAt = latestSync?.at ? new Date(latestSync.at).getTime() : null;
   const syncAgeMinutes = syncAt ? (Date.now() - syncAt) / (60 * 1000) : null;
@@ -2078,10 +2139,10 @@ function StatsView() {
   const gradeD = rows.filter((r) => r.grade === "D");
   const gradeC = rows.filter((r) => r.grade === "C");
 
-  // Operational red flags are scoped to the active market only. Issues from
-  // test-pipeline markets would otherwise drown out the real signal.
-  const activeRows = rows.filter((r) => isActiveMarket(r.marketId));
-  const inactiveRows = rows.filter((r) => !isActiveMarket(r.marketId));
+  // Operational red flags are scoped to the SELECTED market. Issues from
+  // other markets would otherwise drown out the real signal for the operator.
+  const activeRows = rows.filter((r) => r.marketId === selectedMarketId);
+  const inactiveRows = rows.filter((r) => r.marketId !== selectedMarketId);
   const cvStale = activeRows.filter((r) => formatFreshness(r.last_updated_at).stale && !formatFreshness(r.last_updated_at).missing);
   const cvMissingFreshness = activeRows.filter((r) => formatFreshness(r.last_updated_at).missing);
   const cvApprovedNoFeed = activeRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0);
@@ -2096,17 +2157,6 @@ function StatsView() {
     (r) =>
       Number(r.approved_count) > 0 && (r.public_feed_count_n === 0 || r.trust_passed_count_n === 0)
   ).length;
-  const byMarket = new Map<string, { listings: number; sources: number; approvedSum: number; worstGrade: number }>();
-  rows.forEach((r) => {
-    const m = r.marketId;
-    if (!byMarket.has(m)) byMarket.set(m, { listings: 0, sources: 0, approvedSum: 0, worstGrade: 4 });
-    const g = byMarket.get(m)!;
-    g.listings += Number(r.listing_count);
-    g.sources += 1;
-    g.approvedSum += (r.approved_pct / 100) * Number(r.listing_count);
-    const gradeNum = { A: 4, B: 3, C: 2, D: 1 }[r.grade];
-    if (gradeNum < g.worstGrade) g.worstGrade = gradeNum;
-  });
 
   const totalWithImage = rows.reduce((acc, r) => acc + (r.with_image_pct / 100) * Number(r.listing_count), 0);
   const totalWithPrice = rows.reduce((acc, r) => acc + (r.with_price_pct / 100) * Number(r.listing_count), 0);
@@ -2117,75 +2167,46 @@ function StatsView() {
   const worstPrice = rows.length ? rows.reduce((a, b) => (a.with_price_pct <= b.with_price_pct ? a : b)) : null;
   const bestApproved = rows.length ? rows.reduce((a, b) => (a.approved_pct >= b.approved_pct ? a : b)) : null;
 
-  // Red-flag count is an active-market operations signal. Each grouped issue
-  // counts once (not once per affected source) so the badge stays bounded
-  // and meaningful even when many sources share the same pathology.
-  const flagCount =
-    (syncStale ? 1 : 0) +
-    (syncMissing ? 1 : 0) +
-    (cvApprovedNoFeed.length > 0 ? 1 : 0) +
-    (cvApprovedNoTrust.length > 0 ? 1 : 0) +
-    (cvApprovedNoIndexable.length > 0 ? 1 : 0) +
-    (cvListingsNoApproved.length > 0 ? 1 : 0) +
-    (cvListingsNoSqm.length > 0 ? 1 : 0) +
-    (cvLowFeedConv.length > 0 ? 1 : 0) +
-    (cvStale.length > 0 ? 1 : 0) +
-    (cvMissingFreshness.length > 0 ? 1 : 0);
+  // Are there any verbose issue groups to render? Used to gate the
+  // "no operational issues" empty pill at the end of the issues section.
+  const anyIssue =
+    syncMissing ||
+    syncStale ||
+    cvApprovedNoFeed.length > 0 ||
+    cvApprovedNoTrust.length > 0 ||
+    cvApprovedNoIndexable.length > 0 ||
+    cvListingsNoApproved.length > 0 ||
+    cvListingsNoSqm.length > 0 ||
+    cvLowFeedConv.length > 0 ||
+    cvStale.length > 0 ||
+    cvMissingFreshness.length > 0;
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
-          Stats
-        </h1>
-        <p className="text-sm text-foreground-muted mt-1">
-          Metrics and red flags
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+            Diagnostics
+          </h1>
+          <p className="text-sm text-foreground-muted mt-1">
+            Deep checks, legacy metrics and source anomalies for the selected market.
+          </p>
+          <p className="text-xs text-foreground-subtle mt-1">
+            Daily working views live in <span className="text-foreground-muted">Dashboard</span> and <span className="text-foreground-muted">Sources</span>. This tab is for troubleshooting.
+          </p>
+        </div>
+        <MarketSelector />
       </div>
 
-      {/* Pulse */}
-      <section className="surface-1 rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-foreground mb-4">Pulse</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Last sync</div>
-            <div className="text-sm text-foreground font-mono">
-              {latestSync?.at
-                ? new Date(latestSync.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
-                : "—"}
-            </div>
-            {latestSync && (
-              <div className="mt-2"><RunPhaseBadge latestSync={latestSync} /></div>
-            )}
-            {syncMissing && (
-              <p className="text-amber text-xs mt-1">No sync report available</p>
-            )}
-            {syncStale && syncAt && (
-              <p className="text-amber text-xs mt-1">
-                Stale: {Math.round(syncAgeMinutes! / (60 * 24))} days ago
-              </p>
-            )}
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Approval rate</div>
-            <div className={`text-2xl font-semibold tabular-nums font-mono ${approvedPct >= 70 ? "text-green" : approvedPct >= 40 ? "text-amber" : "text-red"}`}>
-              {approvedPct.toFixed(1)}%
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Red flags</div>
-            <div className={`text-2xl font-semibold tabular-nums font-mono ${flagCount === 0 ? "text-green" : flagCount <= 3 ? "text-amber" : "text-red"}`}>
-              {flagCount}
-            </div>
-          </div>
-        </div>
-      </section>
+      {selectedMarket.status !== "active" && activeRows.length === 0 && (
+        <PipelineEmptyState market={selectedMarket} />
+      )}
 
-      {/* Red flags — active market only */}
+      {/* Verbose operational issues — source-name-level detail not shown on Dashboard */}
       <section>
         <div className="flex items-baseline justify-between mb-3 gap-3">
-          <h2 className="text-base font-semibold text-foreground">{ACTIVE_MARKET_LABEL} operational issues</h2>
-          <span className="text-xs text-foreground-subtle">grouped by issue type</span>
+          <h2 className="text-base font-semibold text-foreground">{selectedMarketLabel} operational issues · verbose</h2>
+          <span className="text-xs text-foreground-subtle">grouped by issue type, with source names</span>
         </div>
         <div className="space-y-2">
           {syncMissing && (
@@ -2197,28 +2218,28 @@ function StatsView() {
           {cvApprovedNoFeed.length > 0 && (
             <FlagGroup
               tone="bad"
-              title={`${cvApprovedNoFeed.length} ${ACTIVE_MARKET_LABEL} source${cvApprovedNoFeed.length === 1 ? "" : "s"}: approved but none reach public feed`}
+              title={`${cvApprovedNoFeed.length} ${selectedMarketLabel} source${cvApprovedNoFeed.length === 1 ? "" : "s"}: approved but none reach public feed`}
               message={formatSourceList(cvApprovedNoFeed.map((r) => r.sourceName))}
             />
           )}
           {cvApprovedNoTrust.length > 0 && (
             <FlagGroup
               tone="bad"
-              title={`${cvApprovedNoTrust.length} ${ACTIVE_MARKET_LABEL} source${cvApprovedNoTrust.length === 1 ? "" : "s"}: approved but none pass trust gate`}
+              title={`${cvApprovedNoTrust.length} ${selectedMarketLabel} source${cvApprovedNoTrust.length === 1 ? "" : "s"}: approved but none pass trust gate`}
               message={formatSourceList(cvApprovedNoTrust.map((r) => r.sourceName))}
             />
           )}
           {cvApprovedNoIndexable.length > 0 && (
             <FlagGroup
               tone="bad"
-              title={`${cvApprovedNoIndexable.length} ${ACTIVE_MARKET_LABEL} source${cvApprovedNoIndexable.length === 1 ? "" : "s"}: approved but none indexable`}
+              title={`${cvApprovedNoIndexable.length} ${selectedMarketLabel} source${cvApprovedNoIndexable.length === 1 ? "" : "s"}: approved but none indexable`}
               message={formatSourceList(cvApprovedNoIndexable.map((r) => r.sourceName))}
             />
           )}
           {cvListingsNoApproved.length > 0 && (
             <FlagGroup
               tone="bad"
-              title={`${cvListingsNoApproved.length} ${ACTIVE_MARKET_LABEL} source${cvListingsNoApproved.length === 1 ? "" : "s"}: listings but 0 approved`}
+              title={`${cvListingsNoApproved.length} ${selectedMarketLabel} source${cvListingsNoApproved.length === 1 ? "" : "s"}: listings but 0 approved`}
               message={cvListingsNoApproved
                 .slice(0, 5)
                 .map((r) => `${r.sourceName} (${Number(r.listing_count).toLocaleString()})`)
@@ -2228,7 +2249,7 @@ function StatsView() {
           {cvStale.length > 0 && (
             <FlagGroup
               tone="warn"
-              title={`${cvStale.length} ${ACTIVE_MARKET_LABEL} source${cvStale.length === 1 ? "" : "s"} stale (>${SOURCE_STALE_DAYS}d)`}
+              title={`${cvStale.length} ${selectedMarketLabel} source${cvStale.length === 1 ? "" : "s"} stale (>${SOURCE_STALE_DAYS}d)`}
               message={cvStale
                 .slice(0, 5)
                 .map((r) => {
@@ -2241,7 +2262,7 @@ function StatsView() {
           {cvListingsNoSqm.length > 0 && (
             <FlagGroup
               tone="warn"
-              title={`${cvListingsNoSqm.length} ${ACTIVE_MARKET_LABEL} source${cvListingsNoSqm.length === 1 ? "" : "s"} missing sqm coverage`}
+              title={`${cvListingsNoSqm.length} ${selectedMarketLabel} source${cvListingsNoSqm.length === 1 ? "" : "s"} missing sqm coverage`}
               message={cvListingsNoSqm
                 .slice(0, 5)
                 .map((r) => `${r.sourceName} (${Number(r.listing_count).toLocaleString()} listings, 0% sqm)`)
@@ -2251,7 +2272,7 @@ function StatsView() {
           {cvLowFeedConv.length > 0 && (
             <FlagGroup
               tone="warn"
-              title={`${cvLowFeedConv.length} ${ACTIVE_MARKET_LABEL} source${cvLowFeedConv.length === 1 ? "" : "s"} with low feed conversion (<25%)`}
+              title={`${cvLowFeedConv.length} ${selectedMarketLabel} source${cvLowFeedConv.length === 1 ? "" : "s"} with low feed conversion (<25%)`}
               message={cvLowFeedConv
                 .slice(0, 5)
                 .map((r) => `${r.sourceName} (${r.public_feed_count_n}/${Number(r.approved_count)} = ${r.feed_conversion_pct}%)`)
@@ -2261,7 +2282,7 @@ function StatsView() {
           {cvMissingFreshness.length > 0 && (
             <FlagGroup
               tone="muted"
-              title={`${cvMissingFreshness.length} ${ACTIVE_MARKET_LABEL} source${cvMissingFreshness.length === 1 ? "" : "s"} missing last_updated_at`}
+              title={`${cvMissingFreshness.length} ${selectedMarketLabel} source${cvMissingFreshness.length === 1 ? "" : "s"} missing last_updated_at`}
               message="RPC may need to be re-run"
             />
           )}
@@ -2272,9 +2293,9 @@ function StatsView() {
               message="Non-active markets (Ghana, Kenya, Nigeria, Zambia, Botswana) — see Sources tab for detail"
             />
           )}
-          {flagCount === 0 && (
+          {!anyIssue && (
             <div className="rounded-lg p-3 bg-green-muted text-sm text-green">
-              No active-market operational issues.
+              No operational issues for {selectedMarketLabel}.
             </div>
           )}
         </div>
@@ -2285,69 +2306,14 @@ function StatsView() {
         )}
       </section>
 
-      {/* Health distribution */}
+      {/* Legacy data quality — image/price coverage. Kept for deeper inspection;
+          the modern operational signals live in Sources (feed conversion, trust,
+          indexable, sqm/beds/baths). */}
       <section className="surface-1 rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-foreground mb-4">Health distribution</h2>
-        <div className="flex flex-wrap gap-6 items-end">
-          {(["A", "B", "C", "D"] as const).map((g) => (
-            <div key={g} className="flex flex-col items-center gap-1.5">
-              <div className="text-lg font-semibold tabular-nums font-mono">
-                {gradeCounts[g] ?? 0}
-              </div>
-              <div
-                className={`w-12 rounded ${
-                  g === "A" ? "bg-green" : g === "B" ? "bg-green/70" : g === "C" ? "bg-amber" : "bg-red"
-                }`}
-                style={{ height: `${Math.max(16, (gradeCounts[g] ?? 0) * 14)}px` }}
-              />
-              <span className="text-[11px] text-foreground-subtle">{g}</span>
-            </div>
-          ))}
+        <div className="flex items-baseline justify-between mb-4 gap-3">
+          <h2 className="text-base font-semibold text-foreground">Legacy data quality</h2>
+          <span className="text-xs text-foreground-subtle">all markets · image/price coverage</span>
         </div>
-      </section>
-
-      {/* By market */}
-      <section>
-        <h2 className="text-base font-semibold text-foreground mb-3">By market</h2>
-        <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[400px]">
-              <thead>
-                <tr className="border-b border-border bg-surface-2">
-                  <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Market</th>
-                  <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Listings</th>
-                  <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Sources</th>
-                  <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Approved</th>
-                  <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Worst</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...byMarket.entries()]
-                  .sort((a, b) => b[1].listings - a[1].listings)
-                  .map(([marketId, v]) => {
-                    const avgApproved = v.listings > 0 ? (100 * v.approvedSum) / v.listings : 0;
-                    const worstGrade = ["D", "C", "B", "A"][v.worstGrade - 1] as "A" | "B" | "C" | "D";
-                    return (
-                      <tr key={marketId} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
-                        <td className="py-2.5 px-3 text-sm font-medium">{marketId.toUpperCase()}</td>
-                        <td className="py-2.5 px-3 text-right text-sm tabular-nums font-mono">{v.listings.toLocaleString()}</td>
-                        <td className="py-2.5 px-3 text-right text-sm tabular-nums font-mono">{v.sources}</td>
-                        <td className="py-2.5 px-3 text-right text-sm tabular-nums font-mono">{avgApproved.toFixed(1)}%</td>
-                        <td className="py-2.5 px-3">
-                          <GradeBadge grade={worstGrade} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* Data quality snapshot */}
-      <section className="surface-1 rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-foreground mb-4">Data quality</h2>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
           <div>
             <div className="text-xs text-foreground-muted mb-1">With image</div>
@@ -2368,9 +2334,9 @@ function StatsView() {
         </div>
       </section>
 
-      {/* Outliers */}
+      {/* Outliers — source-level anomalies, useful when chasing a specific bad source. */}
       <section>
-        <h2 className="text-base font-semibold text-foreground mb-3">Outliers</h2>
+        <h2 className="text-base font-semibold text-foreground mb-3">Source anomalies</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {bestApproved && (
             <div className="surface-1 rounded-xl border border-border p-4">
@@ -2393,6 +2359,30 @@ function StatsView() {
               <div className="text-red text-sm font-mono mt-0.5">{worstPrice.with_price_pct.toFixed(1)}%</div>
             </div>
           )}
+        </div>
+      </section>
+
+      {/* Future diagnostics — placeholders for upcoming deep-checks. Render-only,
+          no data fetched yet. Build the underlying queries before wiring these. */}
+      <section>
+        <h2 className="text-base font-semibold text-foreground mb-3">Coming soon</h2>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+          {[
+            { title: "Parser / source conflicts", body: "Listings where two parsers disagree on title, price, or location." },
+            { title: "Needs review", body: "Approved listings flagged by trust gate for manual review." },
+            { title: "Missing-value categories", body: "Breakdown of which fields are missing across sources (sqm, beds, baths, currency, location)." },
+            { title: "Cross-source duplicates", body: "Same listing appearing under different sources — candidates for dedupe." },
+            { title: "Stale URL audit", body: "Listings whose source_url returns 404 / 410 / redirect since last ingest." },
+            { title: "Price anomalies", body: "Listings whose price deviates >3σ from same-source same-property-type baseline." },
+          ].map((d) => (
+            <div key={d.title} className="surface-1 rounded-xl border border-border border-dashed p-4">
+              <div className="flex items-center justify-between mb-1.5">
+                <div className="text-sm font-medium text-foreground">{d.title}</div>
+                <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface-3 text-foreground-subtle font-medium">Planned</span>
+              </div>
+              <p className="text-xs text-foreground-muted leading-relaxed">{d.body}</p>
+            </div>
+          ))}
         </div>
       </section>
     </div>
@@ -2995,13 +2985,13 @@ function MarketDetail({
 // APP (Dashboard | Listings)
 // ============================================
 
-type Tab = "dashboard" | "listings" | "sources" | "stats" | "agents" | "chatlab";
+type Tab = "dashboard" | "listings" | "sources" | "diagnostics" | "agents" | "chatlab";
 
 const NAV_ITEMS: { key: Tab; label: string; icon: string }[] = [
   { key: "dashboard", label: "Dashboard", icon: "◈" },
   { key: "listings", label: "Listings", icon: "▤" },
   { key: "sources", label: "Sources", icon: "⬡" },
-  { key: "stats", label: "Stats", icon: "◫" },
+  { key: "diagnostics", label: "Diagnostics", icon: "◫" },
   { key: "agents", label: "Agents", icon: "◉" },
   { key: "chatlab", label: "Chat Lab", icon: "◐" },
 ];
@@ -3132,12 +3122,14 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
           <span className="text-[13px] font-semibold text-foreground tracking-tight">AREI</span>
         </div>
         <div className="max-w-[1200px] mx-auto px-4 py-5 md:px-8 md:py-8">
-          {tab === "dashboard" && <DashboardView />}
-          {tab === "listings" && <ListingsTabView />}
-          {tab === "sources" && <SourcesView />}
-          {tab === "stats" && <StatsView />}
-          {tab === "agents" && <AgentsApprovalsView />}
-          {tab === "chatlab" && <PropertyChatLabView />}
+          <MarketProvider>
+            {tab === "dashboard" && <DashboardView />}
+            {tab === "listings" && <ListingsTabView />}
+            {tab === "sources" && <SourcesView />}
+            {tab === "diagnostics" && <DiagnosticsView />}
+            {tab === "agents" && <AgentsApprovalsView />}
+            {tab === "chatlab" && <PropertyChatLabView />}
+          </MarketProvider>
         </div>
       </main>
     </div>
