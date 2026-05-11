@@ -207,6 +207,59 @@ async function enrichListings(
   console.log(`[Enrich] Complete: ${enriched} enriched, ${failed} failed`);
 }
 
+// ─── Location hooks ───────────────────────────────────────────────────────────
+
+interface LocationHookModule {
+  resolveLocation(input: {
+    id: string; sourceId: string;
+    title?: string | null; description?: string | null;
+    sourceUrl?: string | null; rawIsland?: string | null; rawCity?: string | null;
+  }): { island?: string; city?: string } | null;
+}
+
+function loadLocationHooks(marketId: string): LocationHookModule | null {
+  const hookPath = path.resolve(__dirname, `../markets/${marketId}/locationHooks`);
+  try {
+    const mod = require(hookPath);
+    if (typeof mod.resolveLocation === "function") return mod as LocationHookModule;
+  } catch { /* no hooks for this market */ }
+  return null;
+}
+
+function resolveIsland(
+  listing: WorkingListing,
+  marketId: string,
+  hooks: LocationHookModule | null
+): { island?: string; city?: string } {
+  const fromLoc = parseLocation(listing.location, marketId);
+  if (fromLoc.island) return { island: fromLoc.island, city: fromLoc.city };
+
+  if (listing.title) {
+    const fromTitle = parseLocation(listing.title, marketId);
+    if (fromTitle.island) return { island: fromTitle.island, city: fromTitle.city };
+  }
+
+  if (listing.description) {
+    const fromDesc = parseLocation(listing.description.substring(0, 500), marketId);
+    if (fromDesc.island) return { island: fromDesc.island, city: fromDesc.city };
+  }
+
+  if (hooks) {
+    const hookResult = hooks.resolveLocation({
+      id: listing.id,
+      sourceId: listing.sourceId,
+      title: listing.title ?? null,
+      description: listing.description ?? null,
+      sourceUrl: listing.detailUrl ?? null,
+      rawIsland: listing.location ?? null,
+      rawCity: null,
+    });
+    if (hookResult?.island) return hookResult;
+  }
+
+  return {};
+}
+
 // ─── Fetch ──────────────────────────────────────────────────────────────────
 
 async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing[]> {
@@ -253,6 +306,7 @@ async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing
 async function main(): Promise<void> {
   const { marketId, sourceId, dryRun } = loadEnv();
   const sourceConfig = loadSourceConfig(marketId, sourceId);
+  const locationHooks = loadLocationHooks(marketId);
 
   console.log(`\n=== ingest_to_curated ===`);
   console.log(`market=${marketId}  source=${sourceId}  dry_run=${dryRun}\n`);
@@ -262,15 +316,73 @@ async function main(): Promise<void> {
 
   await enrichListings(listings, sourceConfig);
 
+  const currency = getCurrency(marketId);
+  const country  = getCountry(marketId);
+  const now      = new Date().toISOString();
+
+  const skipped: Array<{ id: string; reason: string }> = [];
+  const rows: CuratedRow[] = [];
+
+  for (const listing of listings) {
+    if (!listing.id) {
+      skipped.push({ id: "(no id)", reason: "missing id" });
+      continue;
+    }
+    if (!listing.title) {
+      skipped.push({ id: listing.id, reason: "null title" });
+      continue;
+    }
+
+    const { island, city } = resolveIsland(listing, marketId, locationHooks);
+    if (!island) {
+      skipped.push({ id: listing.id, reason: "island unresolved" });
+      continue;
+    }
+
+    const propertyType = listing.property_type ?? extractPropertyType(listing.title, listing.detailUrl);
+    const isLand = LAND_TYPES.test(propertyType);
+
+    rows.push({
+      id: listing.id,
+      title: listing.title,
+      description: listing.description ?? null,
+      description_html: null,
+      ai_descriptions: null,
+      price: listing.price ?? null,
+      currency,
+      price_period: "sale",
+      country,
+      island,
+      city: city ?? null,
+      bedrooms: isLand ? null : (listing.bedrooms ?? null),
+      bathrooms: isLand ? null : (listing.bathrooms ?? null),
+      property_type: propertyType,
+      property_size_sqm: isLand ? null : (listing.area_sqm ?? null),
+      land_area_sqm: isLand ? (listing.area_sqm ?? null) : null,
+      image_urls: listing.imageUrls,
+      source_id_primary: sourceId,
+      source_url_primary: listing.detailUrl ?? null,
+      first_seen_at: now,
+      publish_status: "needs_review",
+      seeded_from_raw_listing_id: listing.id,
+    });
+  }
+
+  console.log(`\nRows ready: ${rows.length}  Skipped: ${skipped.length}`);
+  if (skipped.length > 0) {
+    console.log(`Skipped details:`);
+    skipped.forEach(s => console.log(`  ${s.id}: ${s.reason}`));
+  }
+
   if (dryRun) {
-    console.log(`\n[DRY_RUN] First 3 listing ids:`);
-    listings.slice(0, 3).forEach(l =>
-      console.log(`  ${l.id}  title="${l.title}"  price=${l.price}  desc_len=${l.description?.length ?? 0}  images=${l.imageUrls.length}`)
+    console.log(`\n[DRY_RUN] First 3 rows:`);
+    rows.slice(0, 3).forEach(r =>
+      console.log(`  ${r.id}  island=${r.island}  price=${r.price}  images=${r.image_urls.length}`)
     );
     return;
   }
 
-  console.log(`(location/write not yet wired)`);
+  console.log(`(AI descriptions + write not yet wired)`);
 }
 
 if (require.main === module) {
