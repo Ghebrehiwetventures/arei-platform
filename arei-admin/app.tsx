@@ -470,7 +470,7 @@ function AgentsApprovalsView() {
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Content Drafts
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -540,7 +540,7 @@ function AgentsApprovalsView() {
           <div className="w-12 h-12 rounded-full bg-accent-muted flex items-center justify-center mx-auto mb-4">
             <span className="text-accent text-lg">◉</span>
           </div>
-          <h3 className="text-base font-semibold text-foreground mb-1.5">No drafts yet</h3>
+          <h3 className="text-base font-semibold text-foreground font-mono mb-1.5">No drafts yet</h3>
           <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
             Generate drafts to pull candidates from live listings. Each draft goes through review before anything is published.
           </p>
@@ -857,7 +857,7 @@ function DashboardView() {
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Dashboard
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -890,7 +890,7 @@ function DashboardView() {
       {/* ── Selected-market source health (PRIMARY) ─────────────── */}
       <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground">{selectedMarketLabel} source health</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">{selectedMarketLabel} source health</h2>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
           <SourceHealthStat label={`${selectedMarketLabel} sources`} value={totalSources} />
@@ -958,7 +958,7 @@ function DashboardView() {
         return (
       <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-foreground">Latest sync</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">Latest sync</h2>
           {latestSync && <RunPhaseBadge latestSync={latestSync} />}
         </div>
         <div className="text-sm text-foreground-muted mb-3">
@@ -1019,13 +1019,13 @@ function DashboardView() {
       {/* ── Portfolio overview · all markets (SECONDARY) ─────────── */}
       <section className="opacity-90">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-sm font-semibold text-foreground-muted">Portfolio overview</h2>
+          <h2 className="text-sm font-semibold text-foreground-muted font-mono">Portfolio overview</h2>
           <span className="text-xs text-foreground-subtle">secondary — all markets, including pipeline</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
           <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Total listings</div>
-            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.totalListings.toLocaleString()}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.totalListings.toLocaleString()}</div>
           </div>
           <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Approved</div>
@@ -1034,14 +1034,14 @@ function DashboardView() {
           </div>
           <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Sources</div>
-            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.sourceCount}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.sourceCount}</div>
           </div>
           <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Markets</div>
-            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.marketCount}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.marketCount}</div>
           </div>
         </div>
-        <h2 className="text-base font-semibold text-foreground mb-4">Source quality · all markets</h2>
+        <h2 className="text-base font-semibold text-foreground font-mono mb-4">Source quality · all markets</h2>
         <div className="surface-1 rounded border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] data-table data-table-id-narrow">
@@ -1345,7 +1345,7 @@ function ListingsTabView() {
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Listings
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -1965,7 +1965,7 @@ function SourcesView() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Sources
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -2004,7 +2004,7 @@ function SourcesView() {
       <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} />
 
       <div>
-        <h2 className="text-sm font-semibold text-foreground mb-3 mt-2">Source detail tables</h2>
+        <h2 className="text-sm font-semibold text-foreground font-mono mb-3 mt-2">Source detail tables</h2>
         <p className="text-xs text-foreground-muted mb-3">Full data per market — secondary to the visual report above.</p>
       </div>
 
@@ -2017,7 +2017,7 @@ function SourcesView() {
           <section key={marketId} className={`surface-1 rounded border border-border overflow-hidden shadow-sm ${isActive ? "" : "opacity-80"}`}>
             <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface-2">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-foreground">
+                <h3 className="text-sm font-semibold text-foreground font-mono">
                   {marketName}
                 </h3>
                 {isActive ? (
@@ -2103,7 +2103,7 @@ function SourcesView() {
             <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-4">
               <span className="text-foreground-subtle text-lg">⬡</span>
             </div>
-            <h3 className="text-base font-semibold text-foreground mb-1.5">No source data</h3>
+            <h3 className="text-base font-semibold text-foreground font-mono mb-1.5">No source data</h3>
             <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
               Run <code className="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded text-foreground-muted">get_source_quality_stats</code> RPC in Supabase to populate this view.
             </p>
@@ -2208,7 +2208,7 @@ function DiagnosticsView() {
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Diagnostics
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -2228,7 +2228,7 @@ function DiagnosticsView() {
       {/* Verbose operational issues — source-name-level detail not shown on Dashboard */}
       <section>
         <div className="flex items-baseline justify-between mb-3 gap-3">
-          <h2 className="text-base font-semibold text-foreground">{selectedMarketLabel} operational issues · verbose</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">{selectedMarketLabel} operational issues · verbose</h2>
           <span className="text-xs text-foreground-subtle">grouped by issue type, with source names</span>
         </div>
         <div className="space-y-2">
@@ -2334,7 +2334,7 @@ function DiagnosticsView() {
           indexable, sqm/beds/baths). */}
       <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground">Legacy data quality</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">Legacy data quality</h2>
           <span className="text-xs text-foreground-subtle">all markets · image/price coverage</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
@@ -2359,7 +2359,7 @@ function DiagnosticsView() {
 
       {/* Outliers — source-level anomalies, useful when chasing a specific bad source. */}
       <section>
-        <h2 className="text-base font-semibold text-foreground mb-3">Source anomalies</h2>
+        <h2 className="text-base font-semibold text-foreground font-mono mb-3">Source anomalies</h2>
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           {bestApproved && (
             <div className="surface-1 rounded border border-border p-4">
@@ -2389,7 +2389,7 @@ function DiagnosticsView() {
       {stubRows.length > 0 && (
         <section>
           <div className="flex items-baseline justify-between mb-3 gap-3">
-            <h2 className="text-base font-semibold text-foreground">Test / stub sources</h2>
+            <h2 className="text-base font-semibold text-foreground font-mono">Test / stub sources</h2>
             <span className="text-xs text-foreground-subtle">excluded from all production health checks above</span>
           </div>
           <div className="overflow-x-auto">
@@ -2422,7 +2422,7 @@ function DiagnosticsView() {
       {/* Future diagnostics — placeholders for upcoming deep-checks. Render-only,
           no data fetched yet. Build the underlying queries before wiring these. */}
       <section>
-        <h2 className="text-base font-semibold text-foreground mb-3">Coming soon</h2>
+        <h2 className="text-base font-semibold text-foreground font-mono mb-3">Coming soon</h2>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
           {[
             { title: "Parser / source conflicts", body: "Listings where two parsers disagree on title, price, or location." },
@@ -2857,7 +2857,7 @@ function ListingDetail({
           <div className="w-full max-w-[560px] aspect-[560/360] overflow-hidden rounded-lg">
             <ImageGallery images={listing.images} width={560} height={360} responsive />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground mt-4">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground font-mono mt-4">
             {listing.title || "[No title]"}
           </h2>
           {listing.location && (
@@ -3095,7 +3095,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
               <div className="text-[14px] font-semibold text-foreground leading-none font-mono tracking-tight">
                 AREI
               </div>
-              <div className="text-[10px] text-foreground-subtle mt-1 uppercase tracking-widest font-mono">
+              <div className="text-[10px] text-foreground-subtle mt-1 uppercase tracking-wider font-mono">
                 Admin Console
               </div>
             </div>
@@ -3110,16 +3110,19 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
         </div>
 
         {/* ── Nav ──────────────────────────────────── */}
-        <nav className="flex-1 px-2 pt-3 pb-2 space-y-0.5">
+        {/* Active state: hairline sage left-border on neutral bg — sage as accent line,
+            not as a fill. All items carry the border (transparent when inactive) so
+            horizontal text alignment stays locked regardless of state. */}
+        <nav className="flex-1 pt-3 pb-2 space-y-0.5">
           {NAV_ITEMS.map(({ key, label }) => (
             <button
               key={key}
               onClick={() => selectTab(key)}
               className={
-                "w-full flex items-center justify-between px-3 py-2 text-[12px] font-mono font-medium rounded transition-colors duration-150 " +
+                "w-full flex items-center justify-between pl-4 pr-3 py-2 text-[12px] font-mono font-medium transition-colors duration-150 border-l-2 " +
                 (tab === key
-                  ? "bg-accent-muted text-foreground"
-                  : "text-foreground-muted hover:text-foreground hover:bg-surface-2")
+                  ? "border-accent bg-surface-2 text-foreground"
+                  : "border-transparent text-foreground-muted hover:text-foreground hover:bg-surface-2")
               }
             >
               {label}
@@ -3243,7 +3246,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
           <span className="text-lg font-semibold tracking-tight font-mono">AREI</span>
         </div>
         <div className="surface-1 rounded p-7 border border-border">
-          <h1 className="text-lg font-semibold text-foreground mb-1 text-center">
+          <h1 className="text-lg font-semibold text-foreground font-mono mb-1 text-center">
             Sign in to Admin
           </h1>
           <p className="text-sm text-foreground-muted mb-6 text-center">
