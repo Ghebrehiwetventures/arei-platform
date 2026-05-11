@@ -219,7 +219,7 @@ export interface ReportSummary {
   gradeDist: Record<"A" | "B" | "C" | "D", number>;
   staleCount: number;
   approvedNoFeedCount: number;
-  funnel: { discovered: number; approved: number; indexable: number; trustPassed: number; publicFeed: number };
+  checks: { discovered: number; approved: number; indexable: number; trustPassed: number; publicFeed: number };
 }
 
 export function summarize(rows: SourceQualityRow[]): ReportSummary {
@@ -245,7 +245,7 @@ export function summarize(rows: SourceQualityRow[]): ReportSummary {
     gradeDist,
     staleCount,
     approvedNoFeedCount,
-    funnel: { discovered: totalListings, approved, indexable, trustPassed, publicFeed },
+    checks: { discovered: totalListings, approved, indexable, trustPassed, publicFeed },
   };
 }
 
@@ -266,14 +266,14 @@ function pct(n: number, of: number): number {
   return of > 0 ? Math.round((n / of) * 100) : 0;
 }
 
-function FunnelStage({ label, value, of, base }: { label: string; value: number; of: number; base: number }) {
-  const widthPct = base > 0 ? Math.max(2, Math.round((value / base) * 100)) : 0;
+function EligibilityCheck({ label, value, total }: { label: string; value: number; total: number }) {
+  const widthPct = total > 0 ? Math.max(2, Math.round((value / total) * 100)) : 0;
   return (
     <div>
       <div className="flex items-baseline justify-between gap-3 text-sm">
         <span className="text-foreground font-medium">{label}</span>
         <span className="tabular-nums font-mono text-xs text-foreground-muted">
-          {value.toLocaleString()} <span className="text-foreground-subtle">({pct(value, of)}% of prev)</span>
+          {value.toLocaleString()} <span className="text-foreground-subtle">({pct(value, total)}% of discovered)</span>
         </span>
       </div>
       <div className="mt-1.5 h-2 rounded bg-surface-2 overflow-hidden">
@@ -406,13 +406,13 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
       </section>
 
       <section className="surface-1 border border-border rounded p-4 shadow-sm">
-        <h2 className="text-sm font-semibold text-foreground mb-3">Coverage funnel</h2>
+        <h2 className="text-sm font-semibold text-foreground mb-1">Eligibility checks</h2>
+        <p className="text-xs text-foreground-muted mb-3">Independent flags — each is a separate boolean on the listing, not a subset of the previous.</p>
         <div className="space-y-3">
-          <FunnelStage label="Discovered" value={summary.funnel.discovered} of={summary.funnel.discovered} base={summary.funnel.discovered} />
-          <FunnelStage label="Approved" value={summary.funnel.approved} of={summary.funnel.discovered} base={summary.funnel.discovered} />
-          <FunnelStage label="Indexable" value={summary.funnel.indexable} of={summary.funnel.approved} base={summary.funnel.discovered} />
-          <FunnelStage label="Trust passed" value={summary.funnel.trustPassed} of={summary.funnel.indexable} base={summary.funnel.discovered} />
-          <FunnelStage label="Public feed" value={summary.funnel.publicFeed} of={summary.funnel.trustPassed} base={summary.funnel.discovered} />
+          <EligibilityCheck label="Approved" value={summary.checks.approved} total={summary.checks.discovered} />
+          <EligibilityCheck label="Indexable" value={summary.checks.indexable} total={summary.checks.discovered} />
+          <EligibilityCheck label="Trust passed" value={summary.checks.trustPassed} total={summary.checks.discovered} />
+          <EligibilityCheck label="Public feed" value={summary.checks.publicFeed} total={summary.checks.discovered} />
         </div>
       </section>
 
@@ -634,11 +634,12 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
   const fcv = summary.feedConversionPct;
   const fcvCls = fcv < 25 ? "bad" : fcv < 50 ? "warn" : "good";
 
-  const funnelStage = (label: string, v: number, prev: number) => {
-    const widthPct = summary.funnel.discovered > 0 ? Math.max(2, Math.round((v / summary.funnel.discovered) * 100)) : 0;
-    const ofPrev = prev > 0 ? Math.round((v / prev) * 100) : 0;
+  const eligibilityCheck = (label: string, v: number) => {
+    const total = summary.checks.discovered;
+    const widthPct = total > 0 ? Math.max(2, Math.round((v / total) * 100)) : 0;
+    const ofTotal = total > 0 ? Math.round((v / total) * 100) : 0;
     return `<div style="margin-top:10px">
-      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="font-weight:600">${esc(label)}</span><span class="muted">${v.toLocaleString()} <span style="color:#9ca3af">(${ofPrev}% of prev)</span></span></div>
+      <div style="display:flex;justify-content:space-between;font-size:12px"><span style="font-weight:600">${esc(label)}</span><span class="muted">${v.toLocaleString()} <span style="color:#9ca3af">(${ofTotal}% of discovered)</span></span></div>
       <div class="bar"><div style="width:${widthPct}%"></div></div>
     </div>`;
   };
@@ -741,10 +742,11 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
 <div class="wrap">
   <div class="header-actions">
     <div style="display:flex;align-items:center;gap:12px">
-      <svg width="32" height="32" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" color="#111110">
-        <rect x="4" y="6"  width="24" height="6" rx="1" fill="currentColor" opacity="0.18" />
-        <rect x="4" y="13" width="24" height="6" rx="1" fill="currentColor" opacity="0.50" />
-        <rect x="4" y="20" width="24" height="6" rx="1" fill="currentColor" opacity="1"    />
+      <!-- Inline copy of docs/brand/assets/d-layers-mark.svg — must stay in sync with canonical asset and arei-admin/app.tsx DLayersMark -->
+      <svg width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" stroke="#111110" stroke-width="1.4" stroke-linecap="square">
+        <rect x="3"   y="3"   width="14" height="14" />
+        <rect x="6.5" y="6.5" width="14" height="14" />
+        <rect x="10"  y="10"  width="9"  height="9"  fill="#111110" stroke="none" />
       </svg>
       <div>
         <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;font-family:'IBM Plex Mono',ui-monospace,monospace;margin-bottom:2px">AREI · Source Health Report</div>
@@ -769,12 +771,12 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
   </section>
 
   <section>
-    <h2>Coverage funnel</h2>
-    ${funnelStage("Discovered", summary.funnel.discovered, summary.funnel.discovered)}
-    ${funnelStage("Approved", summary.funnel.approved, summary.funnel.discovered)}
-    ${funnelStage("Indexable", summary.funnel.indexable, summary.funnel.approved)}
-    ${funnelStage("Trust passed", summary.funnel.trustPassed, summary.funnel.indexable)}
-    ${funnelStage("Public feed", summary.funnel.publicFeed, summary.funnel.trustPassed)}
+    <h2>Eligibility checks</h2>
+    <p class="muted" style="font-size:11px;margin:0 0 8px">Independent flags — each is a separate boolean on the listing, not a subset of the previous.</p>
+    ${eligibilityCheck("Approved", summary.checks.approved)}
+    ${eligibilityCheck("Indexable", summary.checks.indexable)}
+    ${eligibilityCheck("Trust passed", summary.checks.trustPassed)}
+    ${eligibilityCheck("Public feed", summary.checks.publicFeed)}
   </section>
 
   <section>
@@ -802,7 +804,7 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
       <h2 style="margin:0;color:#6b7280">Test / stub sources</h2>
       <span class="pill" style="background:#f5f5f7;color:#6b7280">excluded from aggregates</span>
     </div>
-    <p class="muted" style="font-size:11px;margin:0 0 8px">Declared as <code>type: stub</code> in <code>markets/${esc(marketLabel.toLowerCase() === "cape verde" ? "cv" : "*")}/sources.yml</code>; not counted in summary, funnel, priority actions, or top sources.</p>
+    <p class="muted" style="font-size:11px;margin:0 0 8px">Declared as <code>type: stub</code> in <code>markets/${esc(marketLabel.toLowerCase() === "cape verde" ? "cv" : "*")}/sources.yml</code>; not counted in summary, eligibility checks, priority actions, or top sources.</p>
     <ul style="margin:0;padding-left:18px;font-size:12px;color:#6b7280">
       ${stubRows.map((r) => `<li><strong style="color:#111113">${esc(r.sourceName)}</strong> <span style="font-family:'IBM Plex Mono',ui-monospace,monospace;color:#9ca3af">· ${esc(r.source_id)}</span> — ${Number(r.listing_count).toLocaleString()} listings · ${r.public_feed_count_n.toLocaleString()} feed</li>`).join("")}
     </ul>

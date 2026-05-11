@@ -104,15 +104,19 @@ function DLayersMark({ size = 32 }: { size?: number }) {
     <svg
       width={size}
       height={size}
-      viewBox="0 0 32 32"
+      viewBox="0 0 24 24"
       fill="none"
       xmlns="http://www.w3.org/2000/svg"
       aria-label="AREI D·Layers mark"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="square"
     >
-      {/* Three stacked square/record layers — approved D·Layers brand mark */}
-      <rect x="4" y="6"  width="24" height="6" rx="1" fill="currentColor" opacity="0.18" />
-      <rect x="4" y="13" width="24" height="6" rx="1" fill="currentColor" opacity="0.50" />
-      <rect x="4" y="20" width="24" height="6" rx="1" fill="currentColor" opacity="1"    />
+      {/* Canonical geometry: docs/brand/assets/d-layers-mark.svg
+          Source: AREI Brand Guidelines v1.0. Do not redraw from memory. */}
+      <rect x="3"   y="3"   width="14" height="14" />
+      <rect x="6.5" y="6.5" width="14" height="14" />
+      <rect x="10"  y="10"  width="9"  height="9"  fill="currentColor" stroke="none" />
     </svg>
   );
 }
@@ -3112,28 +3116,32 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
         </div>
 
         {/* ── Nav ──────────────────────────────────── */}
-        {/* Active state: hairline sage left-border on neutral bg — sage as accent line,
-            not as a fill. All items carry the border (transparent when inactive) so
-            horizontal text alignment stays locked regardless of state. */}
-        <nav className="flex-1 pt-3 pb-2 space-y-0.5">
+        <nav className="flex-1 pt-3 pb-2">
           {NAV_ITEMS.map(({ key, label }) => (
-            <button
-              key={key}
-              onClick={() => selectTab(key)}
-              className={
-                "w-full flex items-center justify-between pl-4 pr-3 py-2 text-[12px] font-mono font-medium transition-colors duration-150 border-l-2 " +
-                (tab === key
-                  ? "border-accent bg-surface-2 text-foreground"
-                  : "border-transparent text-foreground-muted hover:text-foreground hover:bg-surface-2")
-              }
-            >
-              {label}
-              {key === "agents" && (
-                <span className="text-[9px] font-mono font-medium bg-green-muted text-green px-1.5 py-0.5 rounded uppercase tracking-wider">
-                  NEW
-                </span>
+            <div key={key} className="relative">
+              {tab === key && (
+                <span
+                  className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent pointer-events-none"
+                  aria-hidden="true"
+                />
               )}
-            </button>
+              <button
+                onClick={() => selectTab(key)}
+                className={
+                  "w-full flex items-center justify-between pl-4 pr-3 py-2 text-[12px] font-mono font-medium transition-colors duration-150 " +
+                  (tab === key
+                    ? "text-foreground"
+                    : "text-foreground-muted hover:text-foreground hover:bg-surface-2")
+                }
+              >
+                {label}
+                {key === "agents" && (
+                  <span className="text-[9px] font-mono font-medium bg-green-muted text-green px-1.5 py-0.5 rounded uppercase tracking-wider">
+                    NEW
+                  </span>
+                )}
+              </button>
+            </div>
           ))}
         </nav>
 

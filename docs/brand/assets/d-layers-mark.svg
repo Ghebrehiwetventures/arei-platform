@@ -1,0 +1,19 @@
+<!--
+  D·Layers mark — canonical SVG asset
+  Source: AREI Brand Guidelines v1.0 (standalone HTML, thumbnail SVG, lines 23–27)
+  Do not redraw from memory. Do not reinterpret geometry.
+  If the brand guidelines are updated, update this file first, then all implementations.
+
+  Implementations that must stay in sync with this geometry:
+    arei-admin/app.tsx        → DLayersMark component
+    arei-admin/sourceHealthReport.tsx → inline HTML export SVG
+-->
+<svg viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg"
+     fill="none" stroke="#0a0a0a" stroke-width="1.4" stroke-linecap="square">
+  <!-- Back square — stroke only -->
+  <rect x="3"   y="3"   width="14" height="14" />
+  <!-- Middle square — stroke only -->
+  <rect x="6.5" y="6.5" width="14" height="14" />
+  <!-- Front square — solid fill, no stroke -->
+  <rect x="10"  y="10"  width="9"  height="9"  fill="#0a0a0a" stroke="none" />
+</svg>

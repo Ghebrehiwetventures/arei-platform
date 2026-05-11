@@ -1,7 +1,14 @@
 # Visual Identity — AREI
 
+> **Updated 2026-05:** The current AREI brand source of truth is `docs/brand/README.md`.
+> Older admin-specific guidance in this file (Inter/JetBrains Mono fonts, amber as primary accent) is superseded.
+> This document remains useful for cross-product visual principles and tonality rules.
+>
+> **D·Layers mark SVG:** `docs/brand/assets/d-layers-mark.svg` — canonical geometry.
+> Do not redraw from memory. Admin component: `arei-admin/app.tsx` `DLayersMark`.
+
 Status: `living document`
-Last updated: 2026-04-28
+Last updated: 2026-05-11
 Decision reference: `docs/09-decisions/decision-log.md` (2026-04-28 — Cross-product visual alignment)
 
 This is the brand & visual language reference for AREI products. It complements `docs/04-platform/design-tokens-discovery.md`, which catalogs the technical tokens. This doc describes the *intent* behind those tokens.
