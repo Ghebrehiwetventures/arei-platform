@@ -111,7 +111,48 @@ function loadSourceConfig(marketId: string, sourceId: string): SourceConfig {
   return config;
 }
 
-// ─── Entry point (stub for now) ────────────────────────────────────────────
+// ─── Fetch ──────────────────────────────────────────────────────────────────
+
+async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing[]> {
+  const fetchConfig = sourceConfigToFetchConfig(sourceConfig);
+
+  const fetchFn = async (url: string): Promise<FetchResult> => {
+    if (fetchConfig.fetch_method === "headless") return fetchHeadless(url);
+    return fetchHtml(url, {
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
+        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+        "Accept-Language": "en-US,en;q=0.5",
+        "Cache-Control": "no-cache",
+      },
+    });
+  };
+
+  console.log(`[Fetch] Starting ${sourceConfig.fetch_method || "http"} fetch for ${sourceConfig.id}...`);
+  const result = await genericPaginatedFetcher(fetchConfig, fetchFn);
+  console.log(`[Fetch] ${result.listings.length} listings from ${result.debug.pagesSuccessful} pages (stop: ${result.debug.stopReason})`);
+
+  if (result.debug.errors.length > 0) {
+    console.warn(`[Fetch] Errors: ${result.debug.errors.join(", ")}`);
+  }
+
+  return result.listings.map((l: GenericParsedListing) => ({
+    id: l.id,
+    sourceId: l.sourceId,
+    title: l.title,
+    price: l.price,
+    description: l.description,
+    imageUrls: l.imageUrls,
+    location: l.location,
+    detailUrl: l.detailUrl,
+    bedrooms: l.bedrooms ?? null,
+    bathrooms: l.bathrooms ?? null,
+    area_sqm: l.area_sqm ?? null,
+    property_type: extractPropertyType(l.title, l.detailUrl),
+  }));
+}
+
+// ─── Entry point ────────────────────────────────────────────────────────────
 
 async function main(): Promise<void> {
   const { marketId, sourceId, dryRun } = loadEnv();
@@ -119,8 +160,17 @@ async function main(): Promise<void> {
 
   console.log(`\n=== ingest_to_curated ===`);
   console.log(`market=${marketId}  source=${sourceId}  dry_run=${dryRun}\n`);
-  console.log(`Source config loaded: ${sourceConfig.name}`);
-  console.log(`(stub — fetch/enrich not yet wired)`);
+
+  const listings = await fetchListings(sourceConfig);
+  console.log(`\nFetched: ${listings.length} listings`);
+
+  if (dryRun) {
+    console.log(`\n[DRY_RUN] First 3 listing ids:`);
+    listings.slice(0, 3).forEach(l => console.log(`  ${l.id}  title="${l.title}"  price=${l.price}`));
+    return;
+  }
+
+  console.log(`(enrich/write not yet wired)`);
 }
 
 if (require.main === module) {
