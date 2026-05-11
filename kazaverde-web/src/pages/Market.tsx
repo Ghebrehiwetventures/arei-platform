@@ -25,6 +25,10 @@ const BUCKET_ORDER: PriceBucket[] = ["under_100k", "100k_250k", "250k_500k", "ov
 
 const MARKET_FAQ_SCRIPT_ID = "kv-jsonld-market-faq";
 
+function islandListingsPath(island: string): string {
+  return `/listings?island=${encodeURIComponent(island)}`;
+}
+
 const MARKET_FAQ = [
   {
     topic: "Coverage",
@@ -90,7 +94,7 @@ function InventoryChart({ points }: { points: { label: string; value: number }[]
   const area = `${line} L${xs[xs.length - 1]},${H - PY} L${xs[0]},${H - PY} Z`;
 
   return (
-    <svg viewBox={`0 0 ${W} ${H}`} className="kv-m-chart" role="img" aria-label="Inventory trend chart">
+    <svg viewBox={`0 0 ${W} ${H}`} className="kv-m-chart" role="img" aria-label="Inventory history chart">
       <defs>
         <linearGradient id="kv-m-chart-fill" x1="0" y1="0" x2="0" y2="1">
           <stop offset="0%" stopColor="var(--kv-green)" stopOpacity="0.35" />
@@ -239,7 +243,7 @@ interface MarketData {
 export default function Market() {
   useDocumentMeta(
     "Market Data — KazaVerde",
-    "Median prices by island, inventory trends, and Cape Verde property market insights."
+    "Median asking prices by island, tracked listing counts, and Cape Verde property market methodology."
   );
   const [openIdx, setOpenIdx] = useState(0);
   const [data, setData] = useState<MarketData | null>(null);
@@ -475,19 +479,18 @@ export default function Market() {
           <div className="kv-m-intro-grid">
             <div className="kv-m-intro-lead">
               <p>
-                Cape Verde's property market sits between Atlantic resort
-                economies and a domestic residential cycle that's growing
-                with the diaspora. There's no public land registry feed and
-                no single MLS — which makes a source-attributed index the
-                only way to see asking prices, supply concentration, and
-                month-over-month movement at a glance.
+                KazaVerde tracks publicly listed Cape Verde real estate from
+                selected agent and portal sources. The figures on this page are
+                asking prices from observed listings, not closing prices,
+                official valuations, or a complete view of every property for
+                sale in Cape Verde.
               </p>
               <p>
-                This page is the public read of that index. It's built from
-                tracked listings on agent and portal sources, refreshed
-                daily, and intentionally narrow on what it asserts: we
-                publish what we can verify, label what we can't, and never
-                represent ask as transaction.
+                Source coverage is expanding, so /market should be read as a
+                snapshot of the listings KazaVerde currently observes. Use it
+                to understand visible inventory, priced samples, and island
+                coverage before browsing <Link to="/listings">all tracked listings</Link> or reading
+                the <Link to="/about">source methodology</Link>.
               </p>
             </div>
             <div className="kv-m-intro-meta">
@@ -505,7 +508,7 @@ export default function Market() {
               </div>
               <div className="kv-m-intro-meta-row">
                 <span className="kv-m-intro-meta-k">Use it for</span>
-                <span className="kv-m-intro-meta-v">Pricing benchmarks, not transactions</span>
+                <span className="kv-m-intro-meta-v">Observed asking-price context</span>
               </div>
             </div>
           </div>
@@ -551,9 +554,9 @@ export default function Market() {
             <span className="kv-l-eyebrow">Price distribution</span>
             <h2>Where the inventory sits.</h2>
             <p>
-              Priced listings grouped into four asking-price bands. Helps anchor
-              expectations before browsing — most of Cape Verde's tracked supply
-              clusters in a narrower band than headline medians suggest.
+              Priced listings grouped into four asking-price bands. Use this as
+              asking-price context for the current tracked sample before
+              browsing individual listings.
             </p>
           </div>
 
@@ -590,32 +593,55 @@ export default function Market() {
             </p>
           </div>
 
-          {/* Three-column table — island name, listings count, median price.
-              Replaces the older 2-column flex layout where listings and
-              median were squeezed into one right-hand cell ("57 · €450,000")
-              which read as a single jumbled value rather than two distinct
-              data points. Now each metric has its own column with right-
-              aligned tabular numbers, headers aligned to data columns. */}
-          <div className="kv-m-island-table">
-            <div className="kv-m-island-h">
-              <span>Island</span>
-              <span>Listings</span>
-              <span>Median price</span>
+          <p className="kv-m-table-scroll-hint">
+            Scroll sideways to view median price and sample notes.
+          </p>
+          <div className="kv-m-table-scroll">
+            <div className="kv-m-table-wrap">
+              <table className="kv-m-island-table">
+                <caption>
+                  Island-level Cape Verde real estate market snapshot based on tracked public listings.
+                </caption>
+                <thead>
+                  <tr>
+                    <th scope="col">Island</th>
+                    <th scope="col">Tracked listings</th>
+                    <th scope="col">Median asking price</th>
+                    <th scope="col">Sample note</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {data.islands.map((island) => (
+                    <tr key={island.name}>
+                      <th scope="row">
+                        <Link to={islandListingsPath(island.name)}>{island.name}</Link>
+                      </th>
+                      <td>{island.totalListings.toLocaleString("en")}</td>
+                      <td>{island.median !== null ? formatMedian(island.median) : "—"}</td>
+                      <td>
+                        {island.median !== null
+                          ? `Median based on ${island.count.toLocaleString("en")} priced listings.`
+                          : island.totalListings > 0
+                            ? "Inventory tracked; priced sample below median threshold."
+                            : "No tracked inventory in this snapshot."}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
-            {data.islands.map((island) => (
-              <div className="kv-m-island-row" key={island.name}>
-                <span className="kv-m-island-name">{island.name}</span>
-                <span className="kv-m-island-count">{island.totalListings.toLocaleString("en")}</span>
-                <span className="kv-m-island-median">
-                  {island.median !== null ? formatMedian(island.median) : "—"}
-                </span>
-              </div>
-            ))}
           </div>
 
-          <p className="kv-m-disclaimer">
+          <p className="kv-m-disclaimer kv-m-table-footnote">
             Based on listings with verified price. Minimum sample 5 listings per island.
+            Figures are asking prices from observed public listings, not completed sales.
           </p>
+          <div className="kv-m-resource-links" aria-label="Related market and buyer resources">
+            <Link to="/listings">Browse all tracked listings</Link>
+            <Link to="/blog/cape-verde-property-prices-by-island">Read the island price guide</Link>
+            <Link to="/blog/buying-property-cape-verde-guide">Buying process guide</Link>
+            <Link to="/blog/cape-verde-property-tax-reform-2026">2026 property tax guide</Link>
+          </div>
         </div>
       </section>
 
@@ -626,7 +652,7 @@ export default function Market() {
             <span className="kv-l-eyebrow">Distribution</span>
             <h2>Listings by island.</h2>
             <p>
-              Share of tracked inventory per island — shows where supply concentrates.
+              Share of currently tracked public inventory per island.
             </p>
           </div>
 
@@ -650,11 +676,11 @@ export default function Market() {
         </div>
       </section>
 
-      {/* Inventory trend — coming soon (stub data, blurred) */}
+      {/* Historical inventory — coming soon (stub data, blurred) */}
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Trend · Coming soon</span>
+            <span className="kv-l-eyebrow">Historical data · Coming soon</span>
             <h2>Inventory over time.</h2>
             <p>
               Historical inventory tracking begins November 2025. The chart populates as monthly
@@ -723,8 +749,8 @@ export default function Market() {
 
       <NewsletterCta
         overline="Monthly market report"
-        heading={<>Median moves and notable shifts. Once a month.</>}
-        description="Per-island price movements, inventory trends, and the notable activity from the index — delivered the 1st of every month."
+        heading={<>Observed listings and pricing context. Once a month.</>}
+        description="Per-island asking-price context, inventory notes, and notable activity from the tracked index — delivered the 1st of every month."
       />
     </div>
   );

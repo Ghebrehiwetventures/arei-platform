@@ -189,6 +189,13 @@
   max-width: 680px;
 }
 .kv-m-intro-lead p:last-child { margin-bottom: 0; }
+.kv-m-intro-lead a {
+  color: var(--kv-black);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  transition: border-color var(--kv-dur-fast) var(--kv-ease);
+}
+.kv-m-intro-lead a:hover { border-color: var(--kv-black); }
 .kv-m-intro-meta {
   border: 1px solid var(--kv-rule);
   background: var(--kv-paper);
@@ -260,24 +267,43 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Island medians table — three-column grid (Island / Listings /
-   Median price). Replaces the older 2-col flex card where
-   listings count and median were jammed into one cell. Headers
-   align to data columns; numbers right-aligned, tabular nums.
+   Island market table — semantic HTML table for crawlable island
+   inventory, asking-price medians, sample notes, and listing links.
    ───────────────────────────────────────────────────────────── */
-.kv-m-island-table {
+.kv-m-table-scroll {
+  position: relative;
+}
+.kv-m-table-scroll-hint {
+  display: none;
+}
+.kv-m-table-wrap {
   border: 1px solid var(--kv-rule);
   background: var(--kv-white);
+  overflow-x: auto;
 }
-.kv-m-island-h,
-.kv-m-island-row {
-  display: grid;
-  grid-template-columns: 1fr minmax(80px, auto) minmax(140px, auto);
-  gap: 24px;
-  align-items: baseline;
+.kv-m-island-table {
+  width: 100%;
+  border-collapse: collapse;
+  min-width: 640px;
+}
+.kv-m-island-table caption {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+.kv-m-island-table th,
+.kv-m-island-table td {
   padding: 14px 18px;
+  border-bottom: 1px solid var(--kv-rule-soft);
+  vertical-align: top;
 }
-.kv-m-island-h {
+.kv-m-island-table thead th {
   font-family: var(--kv-mono);
   font-size: 11px;
   font-weight: 600;
@@ -285,31 +311,64 @@
   text-transform: uppercase;
   color: var(--kv-gray-500);
   border-bottom: 1px solid var(--kv-rule);
+  text-align: left;
 }
-.kv-m-island-h > span:nth-child(2),
-.kv-m-island-h > span:nth-child(3) {
+.kv-m-island-table tbody tr:last-child th,
+.kv-m-island-table tbody tr:last-child td {
+  border-bottom: none;
+}
+.kv-m-island-table tbody th {
+  font-family: var(--kv-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--kv-black);
+  text-align: left;
+  white-space: nowrap;
+}
+.kv-m-island-table td {
+  font-family: var(--kv-mono);
+  font-size: 13px;
+  line-height: 1.55;
+  color: var(--kv-black);
+}
+.kv-m-island-table th:nth-child(2),
+.kv-m-island-table th:nth-child(3),
+.kv-m-island-table td:nth-child(2),
+.kv-m-island-table td:nth-child(3) {
   text-align: right;
-}
-.kv-m-island-row {
-  border-bottom: 1px solid var(--kv-rule-soft);
-}
-.kv-m-island-row:last-child { border-bottom: none; }
-.kv-m-island-name {
-  font-family: var(--kv-mono);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--kv-black);
-}
-.kv-m-island-count,
-.kv-m-island-median {
-  font-family: var(--kv-mono);
-  font-size: 13px;
-  font-weight: 500;
-  color: var(--kv-black);
   font-variant-numeric: tabular-nums;
-  text-align: right;
-  letter-spacing: 0.02em;
+  white-space: nowrap;
 }
+.kv-m-island-table td:nth-child(4) {
+  color: rgba(0, 0, 0, 0.72);
+  min-width: 220px;
+}
+.kv-m-island-table a {
+  color: var(--kv-black);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  transition: border-color var(--kv-dur-fast) var(--kv-ease);
+  white-space: nowrap;
+}
+.kv-m-island-table a:hover { border-color: var(--kv-black); }
+.kv-m-table-footnote {
+  line-height: 1.6;
+}
+.kv-m-resource-links {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+  margin-top: 20px;
+  font-family: var(--kv-mono);
+  font-size: 12px;
+}
+.kv-m-resource-links a {
+  color: var(--kv-black);
+  text-decoration: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  transition: border-color var(--kv-dur-fast) var(--kv-ease);
+}
+.kv-m-resource-links a:hover { border-color: var(--kv-black); }
 
 /* ─────────────────────────────────────────────────────────────
    Distribution bars — single primitive used on Market only.
@@ -530,23 +589,46 @@
     padding-bottom: 18px;
   }
 
-  /* Island table — fixed-width numeric columns so headers sit
-     directly above their values (no auto-sizing dead space) and the
-     two right-aligned numbers can't visually merge. Listings count
-     centers under its header; median right-aligns like a price. */
-  .kv-m-island-h,
-  .kv-m-island-row {
-    grid-template-columns: 1fr 64px 80px;
-    column-gap: 16px;
-    row-gap: 0;
+  .kv-m-table-scroll-hint {
+    display: block;
+    margin: 0 0 10px;
+    font-family: var(--kv-mono);
+    font-size: 10.5px;
+    line-height: 1.55;
+    color: var(--kv-gray-500);
+    font-style: italic;
+  }
+  .kv-m-table-scroll::after {
+    content: "";
+    position: absolute;
+    top: 1px;
+    right: 1px;
+    bottom: 1px;
+    width: 34px;
+    pointer-events: none;
+    background: linear-gradient(90deg, rgba(250, 250, 250, 0), var(--kv-white));
+  }
+  .kv-m-island-table {
+    min-width: 620px;
+  }
+  .kv-m-island-table th,
+  .kv-m-island-table td {
     padding: 12px 14px;
   }
-  .kv-m-island-h > span:nth-child(2),
-  .kv-m-island-count {
-    text-align: center;
+  .kv-m-island-table thead th {
+    font-size: 10px;
+    letter-spacing: 0.12em;
   }
-  .kv-m-island-name { font-size: 12.5px; white-space: nowrap; }
-  .kv-m-island-count,
-  .kv-m-island-median { font-size: 12.5px; }
-  .kv-m-island-h { font-size: 10px; letter-spacing: 0.12em; }
+  .kv-m-island-table tbody th,
+  .kv-m-island-table td {
+    font-size: 12.5px;
+  }
+  .kv-m-table-footnote {
+    line-height: 1.7;
+  }
+  .kv-m-resource-links {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+  }
 }
