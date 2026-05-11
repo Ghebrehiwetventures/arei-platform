@@ -254,10 +254,10 @@ export function summarize(rows: SourceQualityRow[]): ReportSummary {
 function StatCard({ label, value, hint, tone }: { label: string; value: React.ReactNode; hint?: string; tone?: StatusTone }) {
   const toneText = tone === "bad" ? "text-red" : tone === "warn" ? "text-amber" : tone === "good" ? "text-green" : "text-foreground";
   return (
-    <div className="surface-1 border border-border rounded-xl p-4 shadow-sm">
-      <div className="text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">{label}</div>
-      <div className={`mt-2 text-2xl font-semibold tabular-nums ${toneText}`}>{value}</div>
-      {hint && <div className="mt-1 text-xs text-foreground-muted">{hint}</div>}
+    <div className="surface-1 border border-border rounded p-4 shadow-sm">
+      <div className="text-[10px] uppercase tracking-wider text-foreground-subtle font-mono font-medium">{label}</div>
+      <div className={`mt-2 text-2xl font-semibold tabular-nums font-mono ${toneText}`}>{value}</div>
+      {hint && <div className="mt-1 text-[11px] text-foreground-muted">{hint}</div>}
     </div>
   );
 }
@@ -293,7 +293,7 @@ function GradeBar({ dist }: { dist: Record<"A" | "B" | "C" | "D", number> }) {
     ) : null;
   return (
     <div>
-      <div className="flex h-6 w-full overflow-hidden rounded-md border border-border">
+      <div className="flex h-6 w-full overflow-hidden rounded border border-border">
         {seg(dist.A, "bg-green-muted text-green", "A")}
         {seg(dist.B, "bg-green-muted/60 text-green", "B")}
         {seg(dist.C, "bg-amber-muted text-amber", "C")}
@@ -309,7 +309,7 @@ function GradeBar({ dist }: { dist: Record<"A" | "B" | "C" | "D", number> }) {
 function CoveragePill({ label, value }: { label: string; value: number }) {
   const tone = value < 30 ? "bg-red-muted text-red" : value < 60 ? "bg-amber-muted text-amber" : "bg-green-muted text-green";
   return (
-    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-medium font-mono tabular-nums ${tone}`}>
+    <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium tabular-nums ${tone}`}>
       {label} {value}%
     </span>
   );
@@ -317,12 +317,12 @@ function CoveragePill({ label, value }: { label: string; value: number }) {
 
 function StatusChip({ s }: { s: { label: string; tone: StatusTone } }) {
   const cls = s.tone === "good" ? "bg-green-muted text-green" : s.tone === "warn" ? "bg-amber-muted text-amber" : "bg-red-muted text-red";
-  return <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wider ${cls}`}>{s.label}</span>;
+  return <span className={`inline-block px-2 py-0.5 rounded text-[10px] font-mono font-semibold uppercase tracking-wider ${cls}`}>{s.label}</span>;
 }
 
 function GradePill({ grade }: { grade: "A" | "B" | "C" | "D" }) {
   const cls = grade === "A" || grade === "B" ? "bg-green-muted text-green" : grade === "C" ? "bg-amber-muted text-amber" : "bg-red-muted text-red";
-  return <span className={`inline-flex items-center justify-center w-6 h-6 rounded text-[11px] font-bold ${cls}`}>{grade}</span>;
+  return <span className={`inline-flex items-center justify-center w-6 h-6 rounded text-[11px] font-mono font-bold ${cls}`}>{grade}</span>;
 }
 
 export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityRow[]; marketLabel: string }) {
@@ -398,14 +398,14 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
             hint="approved but never public"
             tone={summary.approvedNoFeedCount > 0 ? "bad" : "good"}
           />
-          <div className="surface-1 border border-border rounded-xl p-4 shadow-sm col-span-2">
+          <div className="surface-1 border border-border rounded p-4 shadow-sm col-span-2">
             <div className="text-[11px] uppercase tracking-wider text-foreground-subtle font-medium mb-2">Grade distribution</div>
             <GradeBar dist={summary.gradeDist} />
           </div>
         </div>
       </section>
 
-      <section className="surface-1 border border-border rounded-xl p-4 shadow-sm">
+      <section className="surface-1 border border-border rounded p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-foreground mb-3">Coverage funnel</h2>
         <div className="space-y-3">
           <FunnelStage label="Discovered" value={summary.funnel.discovered} of={summary.funnel.discovered} base={summary.funnel.discovered} />
@@ -418,14 +418,14 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
 
       {/* ── Priority actions — moved up so it's the first thing after the
           summary/funnel. Plain-language Problem/Why/Check/Impact for each. ── */}
-      <section className="surface-1 border border-border rounded-xl p-4 shadow-sm">
+      <section className="surface-1 border border-border rounded p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-foreground mb-3">Priority actions</h2>
         {priorityActions.length === 0 ? (
           <div className="text-sm text-foreground-muted">No high-priority issues for this market.</div>
         ) : (
           <ol className="space-y-3">
             {priorityActions.map((a, i) => (
-              <li key={priorities[i].r.source_id} className="border border-border rounded-lg p-3.5">
+              <li key={priorities[i].r.source_id} className="border border-border rounded p-3.5">
                 <div className="flex items-baseline justify-between gap-3 mb-1.5">
                   <div className="text-sm">
                     <span className="text-foreground-subtle font-mono mr-2">Priority {i + 1}</span>
@@ -448,7 +448,7 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
 
       {/* ── Top issues — secondary, technical summary kept for completeness. ── */}
       <section>
-        <details className="surface-1 border border-border rounded-xl shadow-sm">
+        <details className="surface-1 border border-border rounded shadow-sm">
           <summary className="cursor-pointer px-4 py-3 text-xs font-medium text-foreground-muted hover:text-foreground select-none">
             Top issues to address — technical summary
           </summary>
@@ -479,7 +479,7 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
             const s = statusFor(r);
             const feedConv = Math.round(r.feed_conversion_pct);
             return (
-              <div key={r.source_id} className="surface-1 border border-border rounded-xl p-3.5 shadow-sm">
+              <div key={r.source_id} className="surface-1 border border-border rounded p-3.5 shadow-sm">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <div className="text-sm font-semibold text-foreground truncate">{r.sourceName}</div>
@@ -506,7 +506,7 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
       </section>
 
       {stubRows.length > 0 && (
-        <section className="surface-1 border border-border border-dashed rounded-xl p-4">
+        <section className="surface-1 border border-border border-dashed rounded p-4">
           <div className="flex items-baseline justify-between mb-2 gap-3">
             <h2 className="text-sm font-semibold text-foreground-muted">Test / stub sources</h2>
             <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface-3 text-foreground-subtle font-medium">excluded from aggregates</span>
@@ -563,57 +563,58 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
   ];
 
   const styles = `
+    @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap');
     :root { color-scheme: light; }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: -apple-system, BlinkMacSystemFont, "Inter", system-ui, sans-serif; background: #fafafa; color: #111113; -webkit-font-smoothing: antialiased; font-size: 13px; line-height: 1.5; }
+    body { margin: 0; font-family: "IBM Plex Sans", -apple-system, system-ui, sans-serif; background: #f7f6f2; color: #111110; -webkit-font-smoothing: antialiased; font-size: 13px; line-height: 1.5; }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px 48px; }
-    h1 { font-size: 22px; margin: 0 0 4px; }
-    h2 { font-size: 14px; margin: 0 0 12px; }
+    h1 { font-size: 20px; margin: 0 0 4px; font-weight: 600; letter-spacing: -0.01em; }
+    h2 { font-size: 13px; margin: 0 0 12px; font-weight: 600; letter-spacing: 0.01em; }
     .muted { color: #6b7280; }
-    .sub { color: #9ca3af; font-size: 11px; text-transform: uppercase; letter-spacing: 0.04em; font-weight: 500; }
-    section { background: #fff; border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-top: 16px; }
+    .sub { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    section { background: #fff; border: 1px solid #dddbd5; border-radius: 4px; padding: 16px; margin-top: 16px; }
     .grid { display: grid; gap: 12px; }
     .grid-4 { grid-template-columns: repeat(4, 1fr); }
     .grid-3 { grid-template-columns: repeat(3, 1fr); }
     .grid-2 { grid-template-columns: repeat(2, 1fr); }
-    .card { background: #fff; border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; }
-    .num { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; }
-    .pill { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 600; font-family: "JetBrains Mono", ui-monospace, monospace; }
-    .good { background: rgba(5,150,105,0.1); color: #059669; }
-    .warn { background: rgba(217,119,6,0.1); color: #d97706; }
-    .bad { background: rgba(220,38,38,0.1); color: #dc2626; }
-    .bar { height: 8px; background: #f5f5f7; border-radius: 4px; overflow: hidden; margin-top: 6px; }
-    .bar > div { height: 100%; background: #111113; }
-    .grades { display: flex; height: 24px; border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; }
-    .grades > div { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; }
-    .gA, .gB { background: rgba(5,150,105,0.15); color: #059669; }
-    .gC { background: rgba(217,119,6,0.15); color: #d97706; }
-    .gD { background: rgba(220,38,38,0.15); color: #dc2626; }
-    .row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #e5e7eb; }
+    .card { background: #fff; border: 1px solid #dddbd5; border-radius: 4px; padding: 12px; }
+    .num { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .pill { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; font-family: "IBM Plex Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.04em; }
+    .good { background: rgba(46,125,82,0.09); color: #2e7d52; }
+    .warn { background: rgba(146,96,10,0.09); color: #92600a; }
+    .bad { background: rgba(185,28,28,0.07); color: #b91c1c; }
+    .bar { height: 6px; background: #f2f1ed; border-radius: 2px; overflow: hidden; margin-top: 6px; }
+    .bar > div { height: 100%; background: #111110; }
+    .grades { display: flex; height: 22px; border: 1px solid #dddbd5; border-radius: 3px; overflow: hidden; }
+    .grades > div { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .gA, .gB { background: rgba(46,125,82,0.12); color: #2e7d52; }
+    .gC { background: rgba(146,96,10,0.12); color: #92600a; }
+    .gD { background: rgba(185,28,28,0.09); color: #b91c1c; }
+    .row { display: flex; justify-content: space-between; align-items: baseline; padding: 6px 0; border-bottom: 1px solid #dddbd5; }
     .row:last-child { border-bottom: 0; }
     .src-cards { display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; }
-    .src-card { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px; background: #fff; }
+    .src-card { border: 1px solid #dddbd5; border-radius: 4px; padding: 12px; background: #fff; }
     .src-card .head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
     .src-card .name { font-weight: 600; font-size: 13px; }
-    .src-card .id { color: #9ca3af; font-size: 11px; font-family: "JetBrains Mono", ui-monospace, monospace; }
+    .src-card .id { color: #9ca3af; font-size: 11px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
     .src-card .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 10px; font-size: 12px; }
-    .src-card .stats .lbl { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; }
-    .src-card .stats .val { font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
-    .grade-pill { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 4px; font-size: 11px; font-weight: 700; }
+    .src-card .stats .lbl { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .src-card .stats .val { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    .grade-pill { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 3px; font-size: 11px; font-weight: 700; font-family: "IBM Plex Mono", ui-monospace, monospace; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
-    th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #e5e7eb; }
-    th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; color: #9ca3af; font-weight: 500; }
-    td.n { text-align: right; font-family: "JetBrains Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #dddbd5; }
+    th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; font-weight: 500; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    td.n { text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
     ol.actions { padding-left: 0; list-style: none; margin: 0; }
-    ol.actions li { border: 1px solid #e5e7eb; border-radius: 10px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
+    ol.actions li { border: 1px solid #dddbd5; border-radius: 4px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
     ol.actions .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
-    ol.actions .rank { color: #9ca3af; font-family: "JetBrains Mono", ui-monospace, monospace; font-size: 12px; margin-right: 8px; }
+    ol.actions .rank { color: #9ca3af; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; margin-right: 8px; }
     ol.actions .name { font-weight: 600; font-size: 14px; }
-    ol.actions .impact { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 4px; }
+    ol.actions .impact { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 3px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
     ol.actions .body { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px; }
-    ol.actions .body .lbl { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.04em; margin-bottom: 2px; }
+    ol.actions .body .lbl { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
     .topissues-toggle summary { cursor: pointer; padding: 10px 14px; color: #6b7280; font-size: 12px; font-weight: 500; user-select: none; }
-    .topissues-toggle[open] summary { border-bottom: 1px solid #e5e7eb; margin-bottom: 8px; }
+    .topissues-toggle[open] summary { border-bottom: 1px solid #dddbd5; margin-bottom: 8px; }
     .header-actions { display: flex; justify-content: space-between; align-items: baseline; }
 
     @media print {
@@ -694,7 +695,7 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     .map((r) => {
       const marketId = r.marketId;
       const marketName = marketNameById.get(marketId) ?? marketId;
-      const stubTag = r.isStub ? ` <span class="pill" style="background:#f5f5f7;color:#6b7280;margin-left:6px">Stub</span>` : "";
+      const stubTag = r.isStub ? ` <span class="pill" style="background:#eae9e4;color:#6b7280;margin-left:6px">Stub</span>` : "";
       return `<tr${r.isStub ? ' style="opacity:0.6"' : ""}>
         <td>${esc(r.sourceName)}${stubTag}</td>
         <td>${esc(marketName)}</td>
@@ -739,11 +740,20 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
 <body>
 <div class="wrap">
   <div class="header-actions">
-    <div>
-      <h1>Source Health Report</h1>
-      <div class="muted">${esc(marketLabel)} · generated ${esc(generated)}</div>
+    <div style="display:flex;align-items:center;gap:12px">
+      <svg width="28" height="28" viewBox="0 0 28 28" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <polygon points="14,3 24,10 14,17 4,10" fill="currentColor" opacity="0.15" />
+        <polygon points="14,6 22,12 14,18 6,12" fill="currentColor" opacity="0.35" />
+        <polygon points="14,9 20,14 14,19 8,14" fill="currentColor" opacity="0.80" />
+        <polygon points="14,12 18,15.5 14,19 10,15.5" fill="currentColor" opacity="1" />
+      </svg>
+      <div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;font-family:'IBM Plex Mono',ui-monospace,monospace;margin-bottom:2px">AREI · Source Health Report</div>
+        <h1>${esc(marketLabel)}</h1>
+        <div class="muted">Generated ${esc(generated)}</div>
+      </div>
     </div>
-    <button class="no-print" onclick="window.print()" style="padding:6px 12px;border:1px solid #d1d5db;background:#fff;border-radius:6px;cursor:pointer;font-size:12px">Print / Save as PDF</button>
+    <button class="no-print" onclick="window.print()" style="padding:6px 12px;border:1px solid #dddbd5;background:#fff;border-radius:3px;cursor:pointer;font-size:12px;font-family:'IBM Plex Mono',ui-monospace,monospace">Print / Save PDF</button>
   </div>
 
   <section>

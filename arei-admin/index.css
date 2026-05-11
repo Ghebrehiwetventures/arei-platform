@@ -14,75 +14,82 @@
      kazaverde-web/src/styles/globals.css
    ══════════════════════════════════════════════════════════ */
 
-/* ── Theme — Light minimal SaaS ───────────────────────────────────── */
+/* ── Theme — AREI brand ────────────────────────────────────────────── */
 @theme {
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-mono: "JetBrains Mono", ui-monospace, "Cascadia Code", monospace;
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", monospace;
 
-  /* Surface depth system — light */
-  --color-background: #fafafa;
+  /* Surface depth system — off-white / paper */
+  --color-background: #f7f6f2;
   --color-surface-1: #ffffff;
-  --color-surface-2: #f5f5f7;
-  --color-surface-3: #efefef;
+  --color-surface-2: #f2f1ed;
+  --color-surface-3: #eae9e4;
 
-  --color-foreground: #111113;
+  --color-foreground: #111110;
   --color-foreground-muted: #6b7280;
   --color-foreground-subtle: #9ca3af;
 
-  --color-primary: #111113;
+  --color-primary: #111110;
   --color-primary-foreground: #ffffff;
 
   /* Tailwind compat */
-  --color-muted: #f5f5f7;
+  --color-muted: #f2f1ed;
   --color-muted-foreground: #6b7280;
 
-  --color-border: #e5e7eb;
-  --color-border-strong: #d1d5db;
+  --color-border: #dddbd5;
+  --color-border-strong: #c8c6bf;
 
-  /* Accent — warm amber-gold for CTAs */
-  --color-accent: #d97706;
+  /* Accent — AREI sage green */
+  --color-accent: #4a6741;
   --color-accent-foreground: #ffffff;
-  --color-accent-muted: rgba(217, 119, 6, 0.08);
+  --color-accent-muted: rgba(74, 103, 65, 0.10);
 
-  /* Semantic */
-  --color-green: #059669;
-  --color-green-muted: rgba(5, 150, 105, 0.08);
-  --color-amber: #d97706;
-  --color-amber-muted: rgba(217, 119, 6, 0.08);
-  --color-red: #dc2626;
-  --color-red-muted: rgba(220, 38, 38, 0.06);
+  /* Semantic — severity only */
+  --color-green: #2e7d52;
+  --color-green-muted: rgba(46, 125, 82, 0.09);
+  --color-amber: #92600a;
+  --color-amber-muted: rgba(146, 96, 10, 0.09);
+  --color-red: #b91c1c;
+  --color-red-muted: rgba(185, 28, 28, 0.07);
+
+  /* Sage — brand accent tone */
+  --color-sage: #4a6741;
+  --color-sage-muted: rgba(74, 103, 65, 0.10);
 }
 
 /* ── Dark mode overrides ─────────────────────────────────────────── */
 .dark {
-  --color-background: #0b0b0d;
-  --color-surface-1: #141416;
-  --color-surface-2: #1c1c1f;
-  --color-surface-3: #242428;
+  --color-background: #0d0d0b;
+  --color-surface-1: #161614;
+  --color-surface-2: #1e1e1b;
+  --color-surface-3: #272724;
 
-  --color-foreground: #ededef;
+  --color-foreground: #edecea;
   --color-foreground-muted: #9ca3af;
   --color-foreground-subtle: #6b7280;
 
-  --color-primary: #ededef;
-  --color-primary-foreground: #0b0b0d;
+  --color-primary: #edecea;
+  --color-primary-foreground: #0d0d0b;
 
-  --color-muted: #1c1c1f;
+  --color-muted: #1e1e1b;
   --color-muted-foreground: #9ca3af;
 
-  --color-border: #2a2a2e;
-  --color-border-strong: #3a3a3f;
+  --color-border: #2e2e2b;
+  --color-border-strong: #3e3e3a;
 
-  --color-accent: #f59e0b;
-  --color-accent-foreground: #0b0b0d;
-  --color-accent-muted: rgba(245, 158, 11, 0.12);
+  --color-accent: #6b8f61;
+  --color-accent-foreground: #0d0d0b;
+  --color-accent-muted: rgba(107, 143, 97, 0.14);
 
-  --color-green: #34d399;
-  --color-green-muted: rgba(52, 211, 153, 0.12);
+  --color-green: #4ade80;
+  --color-green-muted: rgba(74, 222, 128, 0.12);
   --color-amber: #fbbf24;
   --color-amber-muted: rgba(251, 191, 36, 0.12);
   --color-red: #f87171;
   --color-red-muted: rgba(248, 113, 113, 0.1);
+
+  --color-sage: #6b8f61;
+  --color-sage-muted: rgba(107, 143, 97, 0.14);
 }
 
 /* ── Base ─────────────────────────────────────────────────────────── */
@@ -139,11 +146,11 @@ table {
 
 button {
   cursor: pointer;
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 input, select, textarea {
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 /* ── Scrollbar (subtle) ──────────────────────────────────────────── */
@@ -165,18 +172,18 @@ input, select, textarea {
   background: var(--color-foreground-subtle);
 }
 
-/* ── Section card elevation ──────────────────────────────────────── */
+/* ── Section card elevation — flat/hairline, no floating shadow ──── */
 .shadow-sm {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04), 0 1px 3px rgba(0, 0, 0, 0.02);
+  box-shadow: none;
 }
 
 .dark .shadow-sm {
-  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.3), 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: none;
 }
 
 /* ── Focus ring ──────────────────────────────────────────────────── */
 :focus-visible {
-  outline: 2px solid var(--color-accent);
+  outline: 1px solid var(--color-foreground-subtle);
   outline-offset: 2px;
 }
 
@@ -211,8 +218,7 @@ input, select, textarea {
   background: var(--color-surface-2);
 }
 
-/* Subtle right-edge separator on the sticky first column so the
-   transition into the scrollable area is legible. */
+/* Hairline right-edge separator on sticky first column. */
 .data-table thead th:first-child,
 .data-table tbody td:first-child {
   box-shadow: inset -1px 0 0 var(--color-border);
