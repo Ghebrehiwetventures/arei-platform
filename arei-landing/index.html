@@ -73,6 +73,60 @@ nav{
   padding:0 24px;
 }
 .logo{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase}
+
+/* ─── BRAND LOCKUPS ─── */
+/* Responsive lockup system per AREI brand guide:
+   - .lk-primary  three-line ceremonial (hero, report covers, large surfaces)
+   - .lk-compact  single-line (desktop nav, footer, email, report header)
+   - .lk-mobile   mark + COUNTRY only (mobile app bar, tight UI)
+   Choose the lockup that fits the available space. Never squeeze the
+   ceremonial three-line lockup into product navigation. */
+.brand-mark{display:block;flex-shrink:0}
+.lk-primary,.lk-compact,.lk-mobile{
+  display:inline-flex;align-items:center;color:var(--black);
+  font-family:var(--mono);text-transform:uppercase;white-space:nowrap;
+}
+.lk-primary{align-items:flex-start;gap:23px}
+.lk-primary .lk-stack{display:flex;flex-direction:column;gap:4px;line-height:1;padding-top:3px}
+.lk-primary .lk-line{font-size:22px;letter-spacing:.04em;font-weight:400;white-space:nowrap}
+.lk-primary .lk-line-1{font-weight:600}
+.lk-primary .lk-line-2,.lk-primary .lk-line-3{opacity:.85}
+.lk-compact{gap:9px;font-size:13px;letter-spacing:.12em;font-weight:600;line-height:1}
+.lk-compact .lk-desc{font-weight:400;opacity:.7;margin-left:.4em}
+.lk-mobile{gap:7px;font-size:11px;letter-spacing:.12em;font-weight:600;line-height:1}
+
+/* Nav surface: compact single-line on desktop, three-line stacked on mobile.
+   Desktop-only: hide the mobile stack. */
+.lk-nav .lk-desc{display:inline}
+.lk-nav .lk-text-mobile{display:none}
+@media(max-width:560px){
+  /* Mobile three-line lockup — scoped to MARKETING surfaces only:
+       - mobile landing header
+       - mobile hero context
+       - pages with enough header room
+     NOT a universal mobile app-bar rule. Tight product pages should
+     use [mark] AFRICA or mark-only instead. AFRICA is dominant;
+     REAL ESTATE + INDEX are lighter. Mark optically centred against
+     the three-line block. */
+  .lk-nav{gap:8px;align-items:center}
+  .lk-nav .lk-text{display:none}
+  .lk-nav .lk-text-mobile{
+    display:flex;flex-direction:column;
+    line-height:1.05;letter-spacing:.1em;
+    font-family:var(--mono);text-transform:uppercase;
+  }
+  .lk-nav .lk-text-mobile .lk-m1{font-size:11px;font-weight:600}
+  .lk-nav .lk-text-mobile .lk-m2,
+  .lk-nav .lk-text-mobile .lk-m3{font-size:9px;font-weight:400;opacity:.7;margin-top:1px}
+  .lk-nav .brand-mark{width:30px;height:30px}
+}
+
+/* Hero ceremonial lockup tightens on mobile (still 3-line, just smaller). */
+@media(max-width:640px){
+  .lk-primary{gap:14px}
+  .lk-primary .lk-line{font-size:16px}
+  .lk-primary .brand-mark{width:48px;height:48px}
+}
 .nav-links{display:flex;align-items:center;gap:28px}
 .nav-a{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.5);transition:color .2s}
 .nav-a:hover{color:var(--black)}
@@ -158,6 +212,11 @@ nav{
 .engine-row{margin-top:32px;font-size:11px;line-height:1.9}
 .er-raw{color:var(--bp-muted);font-style:italic;transition:opacity .3s ease;min-height:1.9em}
 .er-clean{color:var(--bp-text);transition:opacity .3s ease;min-height:1.9em}
+@media(max-width:640px){
+  /* Reserve two rows on mobile so the engine row doesn't jump as the
+     typed text wraps past one line. */
+  .er-raw,.er-clean{min-height:3.8em}
+}
 .er-fade{opacity:0}
 
 /* ─── SPLIT PANEL ─── */
@@ -427,25 +486,30 @@ nav{
 /* ── Row with leader dots ── */
 .bp-row{
   display:grid;grid-template-columns:20px 1fr auto;
-  align-items:center;gap:16px;
+  align-items:start;gap:16px;
   padding:12px 0;
   border-bottom:var(--bp-stroke) dashed var(--bp-line-soft);
   font-size:12px;color:var(--bp-text);
 }
 .bp-row:last-child,
 .bp-row:has(+ .mkt-summary){border-bottom:none}
-.bp-row-label{letter-spacing:.04em}
+.bp-row .bp-node{margin-top:3px}
+.bp-row-label{letter-spacing:.04em;line-height:1.5}
 .bp-row-value{
   font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--bp-muted);
+  color:var(--bp-muted);line-height:1.5;
 }
 .bp-row-active .bp-row-value{color:var(--bp-active)}
 .bp-row-active .bp-row-label{color:var(--bp-text)}
 .bp-row-link{cursor:pointer;transition:background .2s}
-.bp-row-link:hover{background:color-mix(in srgb,var(--bp-active) 6%,transparent)}
+.bp-row-link:hover{background:color-mix(in srgb,var(--bp-active) 4%,transparent)}
+/* Already-active row: hover is a no-op. The green dot + green ACTIVE
+   text already signal the selected state — no need for an extra cue. */
+.bp-row-active.bp-row-link:hover{background:transparent}
 .bp-row-sub{
+  display:block;
   font-size:10px;letter-spacing:.08em;color:var(--bp-muted);
-  margin-left:10px;font-weight:400;
+  margin-left:0;margin-top:2px;font-weight:400;
   transition:color .2s;
 }
 .bp-row-link:hover .bp-row-sub{color:var(--bp-active)}
@@ -723,7 +787,7 @@ nav{
 /* ─── FOOTER ─── */
 footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 .footer-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:40px;align-items:start}
-.footer-brand .f-logo{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px;display:block}
+.footer-brand .f-logo{margin-bottom:16px}
 .footer-brand p{font-size:12px;color:var(--gray);line-height:1.7;max-width:280px;margin-bottom:20px}
 .footer-status{
   display:inline-flex;align-items:center;gap:8px;
@@ -837,7 +901,20 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 <nav>
   <div class="nav-inner">
-    <a class="logo" href="#top">Africa Real Estate Index</a>
+    <a class="lk-compact lk-nav" href="#top" aria-label="Africa Real Estate Index — home">
+      <svg class="brand-mark" width="22" height="22" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true">
+        <rect x="3"   y="3"   width="14" height="14"/>
+        <rect x="6.5" y="6.5" width="14" height="14"/>
+        <rect x="10"  y="10"  width="9"  height="9" fill="currentColor" stroke="none"/>
+      </svg>
+      <span class="lk-text">Africa<span class="lk-desc">Real Estate Index</span></span>
+      <span class="lk-text-mobile" aria-hidden="true">
+        <span class="lk-m1">Africa</span>
+        <span class="lk-m2">Real Estate</span>
+        <span class="lk-m3">Index</span>
+      </span>
+    </a>
     <div class="nav-links">
       <a class="nav-a" href="#opportunity">Gap</a>
       <a class="nav-a" href="#benchmarks">Markets</a>
@@ -855,7 +932,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       <h1>Africa's property data is everywhere. We bring it together.</h1>
       <p class="hero-sub">We pull them together, clean them up, and make them searchable. Starting with Cape Verde.</p>
       <div class="hero-ctas">
-        <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-primary">Visit KazaVerde [&rarr;]</a>
+        <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-primary">View Cape Verde Index [&rarr;]</a>
         <a href="#contact" class="btn-secondary">Investor enquiry &rarr;</a>
       </div>
     </div>
@@ -966,8 +1043,8 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
     <div class="section-head rv">
       <div class="section-head-left">
         <span class="ey"><span class="ey-dot"></span>Live</span>
-        <h2>KazaVerde is the first product built on the engine.</h2>
-        <p>Every listing aggregated, cleaned, and published automatically.</p>
+        <h2>Cape Verde Real Estate Index is Market 01.</h2>
+        <p>Listing-based market data — monitored asking-price listings, source coverage, verification status, published methodology. Aggregated, cleaned, and published automatically.</p>
       </div>
     </div>
     <div class="lc-track rv" id="lc-track">
@@ -997,7 +1074,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       </div>
     </div>
     <div class="proof-cta rv">
-      <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-outline">Visit KazaVerde [&rarr;]</a>
+      <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-outline">View Cape Verde Index [&rarr;]</a>
     </div>
   </div>
 </section>
@@ -1020,7 +1097,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
         </div>
         <a class="bp-row bp-row-active bp-row-link" href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer">
           <span class="bp-node bp-node-active"></span>
-          <span class="bp-row-label">Cape Verde <span class="bp-row-sub">&rarr; KazaVerde</span></span>
+          <span class="bp-row-label">Market 01 <span class="bp-row-sub">&rarr; Cape Verde Real Estate Index</span></span>
           <span class="bp-row-value">Active</span>
         </a>
         <div class="bp-row">
@@ -1113,13 +1190,21 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   <div class="wrap">
     <div class="footer-grid">
       <div class="footer-brand">
-        <span class="f-logo">Africa Real Estate Index</span>
+        <span class="lk-compact f-logo" style="margin-bottom:16px" aria-label="Africa Real Estate Index">
+          <svg class="brand-mark" width="22" height="22" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true">
+            <rect x="3"   y="3"   width="14" height="14"/>
+            <rect x="6.5" y="6.5" width="14" height="14"/>
+            <rect x="10"  y="10"  width="9"  height="9" fill="currentColor" stroke="none"/>
+          </svg>
+          <span>Africa<span class="lk-desc">Real Estate Index</span></span>
+        </span>
         <p>Data acquisition and intelligence infrastructure for African property markets.</p>
         <div class="footer-status"><span class="sd"></span> Systems operational</div>
       </div>
       <div class="footer-col">
         <h4>Explore</h4>
-        <a href="https://kazaverde.com" target="_blank" rel="noopener noreferrer">KazaVerde</a>
+        <a href="https://kazaverde.com" target="_blank" rel="noopener noreferrer">Cape Verde Index</a>
         <a href="#proof">Live</a>
         <a href="#model">What's Next</a>
         <a href="mailto:hello@africarealestateindex.com">Contact</a>
