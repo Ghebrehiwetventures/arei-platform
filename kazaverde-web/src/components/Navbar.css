@@ -69,7 +69,13 @@
 .lk-nav .lk-text-mobile { display: none; }
 
 @media (max-width: 560px) {
+  /* Three-line lockup needs more vertical room than the desktop
+     52px nav can offer. Match arei-landing: pad the nav element
+     itself so the lockup breathes around the 52px nav-inner.
+     Effective nav height becomes ~76px on narrow viewports. */
+  .nav { padding: 12px 0; }
   .lk-nav { gap: 8px; align-items: center; }
+  .lk-nav .brand-mark { width: 30px; height: 30px; }
   .lk-nav .lk-text { display: none; }
   .lk-nav .lk-text-mobile {
     display: flex;

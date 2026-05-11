@@ -5,6 +5,7 @@
 export default function DLayersMark({ size = 24 }: { size?: number }) {
   return (
     <svg
+      className="brand-mark"
       width={size}
       height={size}
       viewBox="0 0 24 24"
