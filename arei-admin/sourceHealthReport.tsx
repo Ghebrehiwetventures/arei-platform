@@ -379,10 +379,10 @@ function TrendChart({
   );
 }
 
-type TrendRange = 30 | 60 | 90;
+type TrendRange = 7 | 30 | 60 | 90;
 
 function TrendsSection({ snapshots }: { snapshots: SourceSnapshot[] }) {
-  const [range, setRange] = React.useState<TrendRange>(30);
+  const [range, setRange] = React.useState<TrendRange>(7);
   const sorted = [...snapshots].sort((a, b) => a.date.localeCompare(b.date));
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - range);
@@ -397,7 +397,7 @@ function TrendsSection({ snapshots }: { snapshots: SourceSnapshot[] }) {
           <p className="text-xs text-foreground-muted mt-0.5">Pipeline quality over time — one snapshot per day this page is visited</p>
         </div>
         <div className="flex gap-1">
-          {([30, 60, 90] as TrendRange[]).map((r) => (
+          {([7, 30, 60, 90] as TrendRange[]).map((r) => (
             <button
               key={r}
               type="button"
