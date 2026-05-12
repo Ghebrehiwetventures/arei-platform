@@ -485,18 +485,18 @@ function AgentsApprovalsView() {
       </div>
 
       {/* ── Stats row ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="surface-1 rounded p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Total drafts</div>
-          <div className="text-3xl font-bold tabular-nums tracking-tight font-mono">{drafts.length}</div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Total drafts</div>
+          <div className="text-xl sm:text-3xl font-bold tabular-nums tracking-tight font-mono">{drafts.length}</div>
         </div>
-        <div className="surface-1 rounded p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Pending</div>
-          <div className="text-3xl font-bold text-amber tabular-nums tracking-tight font-mono">{pendingCount}</div>
+        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Pending</div>
+          <div className="text-xl sm:text-3xl font-bold text-amber tabular-nums tracking-tight font-mono">{pendingCount}</div>
         </div>
-        <div className="surface-1 rounded p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Publishing</div>
-          <div className="text-sm font-medium text-foreground-muted mt-1">Manual only</div>
+        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Publishing</div>
+          <div className="text-xs sm:text-sm font-medium text-foreground-muted mt-0.5 sm:mt-1">Manual only</div>
         </div>
       </div>
 
@@ -1243,6 +1243,7 @@ function ListingsTabView() {
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("original");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     getMarketIds().then(setMarkets);
@@ -1385,8 +1386,22 @@ function ListingsTabView() {
       </div>
 
       <div className="surface-1 rounded border border-border p-4 mb-6">
-        <div className="text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((o) => !o)}
+          className="sm:hidden w-full flex items-center justify-between mb-0"
+        >
+          <span className="text-[11px] text-foreground-subtle uppercase tracking-wider">Filters</span>
+          <span className="flex items-center gap-1.5">
+            {(() => {
+              const n = [marketId !== "all", filters.sourceId, filters.approved !== undefined, filters.importedAfter, filters.importedBefore, filters.titleSearch, filters.priceMin, filters.priceMax, filters.island, filters.city, filters.bedrooms, filters.bathrooms, filters.areaMin, filters.areaMax].filter(Boolean).length;
+              return n > 0 ? <span className="bg-accent text-accent-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full">{n}</span> : null;
+            })()}
+            <span className={"text-foreground-subtle text-[10px] transition-transform " + (filtersOpen ? "rotate-180" : "")}>▼</span>
+          </span>
+        </button>
+        <div className="hidden sm:block text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 ${filtersOpen ? "mt-3" : "hidden sm:grid sm:mt-0"}`}>
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
             <select
