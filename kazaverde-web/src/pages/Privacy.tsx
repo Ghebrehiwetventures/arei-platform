@@ -32,7 +32,7 @@ export default function Privacy() {
             <h2>The Cape Verde Real Estate Index, published by AREI.</h2>
           </div>
           <p className="kv-pol-prose">
-            The Cape Verde Real Estate Index (<strong>kazaverde.com</strong>)
+            The Cape Verde Real Estate Index (<strong>capeverderealestateindex.com</strong>)
             is a read-only property index for Cape Verde, published as part of
             Africa Real Estate Index (AREI). This policy explains what data we
             collect, why we collect it, and how we protect it.

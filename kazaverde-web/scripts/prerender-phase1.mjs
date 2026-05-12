@@ -10,7 +10,7 @@ const spaFallbackPath = path.join(distDir, "spa-fallback", "index.html");
 const blogDataPath = path.resolve(__dirname, "../src/lib/blog-data.ts");
 const faqDataPath = path.resolve(__dirname, "../src/lib/faq-data.ts");
 const prerenderListingsPath = path.resolve(__dirname, "../src/lib/prerender-listings.ts");
-const siteUrl = "https://kazaverde.com";
+const siteUrl = "https://capeverderealestateindex.com";
 const ogImage = `${siteUrl}/og-default.png`;
 const sitemapPath = path.join(distDir, "sitemap.xml");
 const publicSupabaseUrl = "https://bhqjdzjtiwckfuteycfl.supabase.co";
@@ -77,26 +77,26 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
           "@graph": [
             {
               "@type": "Organization",
-              "@id": "https://kazaverde.com/#organization",
-              name: "KazaVerde",
-              url: "https://kazaverde.com",
-              logo: "https://kazaverde.com/og-default.png",
+              "@id": `${siteUrl}/#organization`,
+              name: "Cape Verde Real Estate Index",
+              url: siteUrl,
+              logo: `${siteUrl}/og-default.png`,
               description:
-                "KazaVerde is an independent property search and data platform for Cape Verde real estate. It is not a broker or agency.",
+                "Cape Verde Real Estate Index is an independent property search and data platform for Cape Verde real estate, published by AREI. It is not a broker or agency.",
             },
             {
               "@type": "WebSite",
-              "@id": "https://kazaverde.com/#website",
-              url: "https://kazaverde.com",
-              name: "KazaVerde",
+              "@id": `${siteUrl}/#website`,
+              url: siteUrl,
+              name: "Cape Verde Real Estate Index",
               description:
                 "Search Cape Verde real estate listings aggregated from local agencies, portals and property websites.",
-              publisher: { "@id": "https://kazaverde.com/#organization" },
+              publisher: { "@id": `${siteUrl}/#organization` },
               potentialAction: {
                 "@type": "SearchAction",
                 target: {
                   "@type": "EntryPoint",
-                  urlTemplate: "https://kazaverde.com/listings?q={search_term_string}",
+                  urlTemplate: `${siteUrl}/listings?q={search_term_string}`,
                 },
                 "query-input": "required name=search_term_string",
               },
@@ -186,7 +186,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
             jsonLd: {
               "@context": "https://schema.org",
               "@type": "FAQPage",
-              "@id": "https://www.kazaverde.com/blog#faq",
+              "@id": `${siteUrl}/blog#faq`,
               mainEntity: faqEntries.map((f) => ({
                 "@type": "Question",
                 name: f.question,

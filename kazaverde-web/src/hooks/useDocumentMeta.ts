@@ -7,7 +7,7 @@ const SITE_NAME = "Cape Verde Real Estate Index";
 const SITE_TAGLINE = "Published by AREI";
 const SITE_URL =
   (typeof import.meta !== "undefined" && (import.meta as { env?: { VITE_SITE_URL?: string } }).env?.VITE_SITE_URL) ||
-  (typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com");
+  (typeof window !== "undefined" ? window.location.origin : "https://capeverderealestateindex.com");
 
 /* Default social preview image. Lives in /public so it's served from the
    site root. Swap the file (1200x630 PNG/JPG) without touching this code.

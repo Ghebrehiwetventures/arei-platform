@@ -49,7 +49,7 @@ export default function BlogList() {
     const data = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "@id": "https://www.kazaverde.com/blog#faq",
+      "@id": "https://capeverderealestateindex.com/blog#faq",
       mainEntity: FAQ_ENTRIES.map((f) => ({
         "@type": "Question",
         name: f.question,
