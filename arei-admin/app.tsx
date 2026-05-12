@@ -16,7 +16,6 @@ import {
   type LatestSyncLog,
 } from "./data";
 
-const SYNC_STALE_MINUTES = 24 * 60 * 3; // 3 days
 const SOURCE_STALE_DAYS = 30;
 
 // The only market currently in production. Other markets present in the
@@ -26,12 +25,6 @@ const ACTIVE_MARKET_ID = "cv";
 
 function isActiveMarket(marketId: string): boolean {
   return marketId === ACTIVE_MARKET_ID;
-}
-
-/** Cap a list of names for display, returning "A, B, C +N more". */
-function formatSourceList(names: string[], cap = 5): string {
-  if (names.length <= cap) return names.join(", ");
-  return `${names.slice(0, cap).join(", ")} +${names.length - cap} more`;
 }
 
 /** RFC-4180-ish CSV value escape: quote fields containing comma, quote, or
@@ -92,7 +85,7 @@ function useTheme() {
 import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
 import { supabaseAuth } from "./supabase";
 import { PropertyChatLabView } from "./PropertyChatLab";
-import { SourceHealthReport, buildReportHtml } from "./sourceHealthReport";
+import { SourceHealthReport, buildReportHtml, loadSnapshots, saveSnapshot, summarize, SourceSnapshot } from "./sourceHealthReport";
 import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, STATUS_LABEL } from "./marketContext";
 
 // ============================================
@@ -492,18 +485,18 @@ function AgentsApprovalsView() {
       </div>
 
       {/* ── Stats row ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="surface-1 rounded p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Total drafts</div>
-          <div className="text-3xl font-bold tabular-nums tracking-tight font-mono">{drafts.length}</div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Total drafts</div>
+          <div className="text-xl sm:text-3xl font-bold tabular-nums tracking-tight font-mono">{drafts.length}</div>
         </div>
-        <div className="surface-1 rounded p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Pending</div>
-          <div className="text-3xl font-bold text-amber tabular-nums tracking-tight font-mono">{pendingCount}</div>
+        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Pending</div>
+          <div className="text-xl sm:text-3xl font-bold text-amber tabular-nums tracking-tight font-mono">{pendingCount}</div>
         </div>
-        <div className="surface-1 rounded p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Publishing</div>
-          <div className="text-sm font-medium text-foreground-muted mt-1">Manual only</div>
+        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Publishing</div>
+          <div className="text-xs sm:text-sm font-medium text-foreground-muted mt-0.5 sm:mt-1">Manual only</div>
         </div>
       </div>
 
@@ -683,23 +676,6 @@ function AgentsApprovalsView() {
 const GITHUB_ACTIONS_URL = import.meta.env.VITE_GITHUB_ACTIONS_URL ?? "";
 
 type SourceQualitySortKey = "sourceName" | "marketId" | "listing_count" | "approved_pct" | "with_image_pct" | "with_price_pct" | "grade";
-
-function FlagGroup({ tone, title, message }: { tone: "bad" | "warn" | "muted"; title: string; message: string }) {
-  const cls =
-    tone === "bad"
-      ? "bg-red-muted"
-      : tone === "warn"
-        ? "bg-amber-muted"
-        : "bg-surface-2";
-  const titleCls =
-    tone === "bad" ? "text-red font-medium" : tone === "warn" ? "text-amber font-medium" : "text-foreground-subtle font-medium";
-  return (
-    <div className={`rounded-lg p-3 text-sm min-w-0 ${cls}`}>
-      <div className={`${titleCls} break-words`}>{title}</div>
-      <div className="text-foreground-muted mt-0.5 break-words leading-relaxed">{message}</div>
-    </div>
-  );
-}
 
 function SourceHealthStat({ label, value, tone }: { label: string; value: number; tone?: "good" | "warn" | "bad" }) {
   const toneClass =
@@ -1267,6 +1243,7 @@ function ListingsTabView() {
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("original");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     getMarketIds().then(setMarkets);
@@ -1409,8 +1386,22 @@ function ListingsTabView() {
       </div>
 
       <div className="surface-1 rounded border border-border p-4 mb-6">
-        <div className="text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((o) => !o)}
+          className="sm:hidden w-full flex items-center justify-between mb-0"
+        >
+          <span className="text-[11px] text-foreground-subtle uppercase tracking-wider">Filters</span>
+          <span className="flex items-center gap-1.5">
+            {(() => {
+              const n = [marketId !== "all", filters.sourceId, filters.approved !== undefined, filters.importedAfter, filters.importedBefore, filters.titleSearch, filters.priceMin, filters.priceMax, filters.island, filters.city, filters.bedrooms, filters.bathrooms, filters.areaMin, filters.areaMax].filter(Boolean).length;
+              return n > 0 ? <span className="bg-accent text-accent-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full">{n}</span> : null;
+            })()}
+            <span className={"text-foreground-subtle text-[10px] transition-transform " + (filtersOpen ? "rotate-180" : "")}>▼</span>
+          </span>
+        </button>
+        <div className="hidden sm:block text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 ${filtersOpen ? "mt-3" : "hidden sm:grid sm:mt-0"}`}>
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
             <select
@@ -1847,6 +1838,7 @@ function SourcesView() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SourcesSortKey>("listing_count");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [snapshots, setSnapshots] = useState<SourceSnapshot[]>([]);
 
   const onSort = (key: SourcesSortKey) => {
     if (key === sortKey) {
@@ -1859,6 +1851,11 @@ function SourcesView() {
     }
   };
 
+  // Reload snapshots from localStorage whenever the selected market changes.
+  useEffect(() => {
+    setSnapshots(loadSnapshots(selectedMarketId));
+  }, [selectedMarketId]);
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([getDashboardStats(), getMarketIds()]).then(([s, m]) => {
@@ -1866,6 +1863,25 @@ function SourcesView() {
         setStats(s);
         setMarkets(m);
         setLoading(false);
+        // Save today's snapshot for the selected market.
+        const scoped = s.sourceRows.filter((r) => r.marketId === selectedMarketId && !r.isStub);
+        if (scoped.length > 0) {
+          const sum = summarize(scoped);
+          const snap: SourceSnapshot = {
+            date: new Date().toISOString().slice(0, 10),
+            marketId: selectedMarketId,
+            totalListings: sum.totalListings,
+            publicFeed: sum.publicFeed,
+            feedConversionPct: sum.feedConversionPct,
+            sourceCount: sum.sourceCount,
+            staleCount: sum.staleCount,
+            approvedNoFeedCount: sum.approvedNoFeedCount,
+            gradeDist: sum.gradeDist,
+            abPct: sum.sourceCount > 0 ? Math.round(((sum.gradeDist.A + sum.gradeDist.B) / sum.sourceCount) * 100) : 0,
+          };
+          saveSnapshot(snap);
+          setSnapshots(loadSnapshots(selectedMarketId));
+        }
       }
     });
     return () => {
@@ -2011,7 +2027,7 @@ function SourcesView() {
         </div>
       </div>
 
-      <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} />
+      <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} snapshots={snapshots} />
 
       <div>
         <h2 className="text-sm font-semibold text-foreground font-mono mb-3 mt-2">Source detail tables</h2>
@@ -2124,337 +2140,6 @@ function SourcesView() {
   );
 }
 
-// ============================================
-// STATS — Developer-focused metrics & red flags
-// ============================================
-
-function DiagnosticsView() {
-  const { selected: selectedMarket } = useSelectedMarket();
-  const selectedMarketId = selectedMarket.id;
-  const selectedMarketLabel = selectedMarket.name;
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([getDashboardStats(), getLatestSyncLog()]).then(([s, log]) => {
-      if (!cancelled) {
-        setStats(s);
-        setLatestSync(log ?? null);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (loading || !stats) {
-    return (
-      <div className="py-12 text-foreground-muted text-sm">
-        Loading stats…
-      </div>
-    );
-  }
-
-  const stubRows = stats.sourceRows.filter((r) => r.isStub);
-  const rows = stats.sourceRows.filter((r) => !r.isStub);
-  const approvedPct = stats.totalListings > 0 ? (100 * stats.approvedCount) / stats.totalListings : 0;
-
-  const syncAt = latestSync?.at ? new Date(latestSync.at).getTime() : null;
-  const syncAgeMinutes = syncAt ? (Date.now() - syncAt) / (60 * 1000) : null;
-  const syncStale = syncAgeMinutes != null && syncAgeMinutes > SYNC_STALE_MINUTES;
-  const syncMissing = !latestSync?.at;
-
-  const noImages = rows.filter((r) => r.with_image_pct < 10);
-  const noPrice = rows.filter((r) => r.with_price_pct < 10);
-  const gradeD = rows.filter((r) => r.grade === "D");
-  const gradeC = rows.filter((r) => r.grade === "C");
-
-  // Operational red flags are scoped to the SELECTED market. Issues from
-  // other markets would otherwise drown out the real signal for the operator.
-  const activeRows = rows.filter((r) => r.marketId === selectedMarketId);
-  const inactiveRows = rows.filter((r) => r.marketId !== selectedMarketId);
-  const cvStale = activeRows.filter((r) => formatFreshness(r.last_updated_at).stale && !formatFreshness(r.last_updated_at).missing);
-  const cvMissingFreshness = activeRows.filter((r) => formatFreshness(r.last_updated_at).missing);
-  const cvApprovedNoFeed = activeRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0);
-  const cvApprovedNoTrust = activeRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0);
-  const cvApprovedNoIndexable = activeRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0);
-  const cvListingsNoApproved = activeRows.filter((r) => Number(r.listing_count) >= 10 && Number(r.approved_count) === 0);
-  const cvListingsNoSqm = activeRows.filter((r) => Number(r.listing_count) >= 10 && Number(r.with_sqm_count ?? 0) === 0);
-  const cvLowFeedConv = activeRows.filter((r) => Number(r.approved_count) >= 20 && r.public_feed_count_n > 0 && r.feed_conversion_pct < 25);
-
-  // Aggregate non-active markets into a single muted note rather than per-source rows.
-  const inactiveSourcesWithIssues = inactiveRows.filter(
-    (r) =>
-      Number(r.approved_count) > 0 && (r.public_feed_count_n === 0 || r.trust_passed_count_n === 0)
-  ).length;
-
-  const totalWithImage = rows.reduce((acc, r) => acc + (r.with_image_pct / 100) * Number(r.listing_count), 0);
-  const totalWithPrice = rows.reduce((acc, r) => acc + (r.with_price_pct / 100) * Number(r.listing_count), 0);
-  const globalImagePct = stats.totalListings > 0 ? (100 * totalWithImage) / stats.totalListings : 0;
-  const globalPricePct = stats.totalListings > 0 ? (100 * totalWithPrice) / stats.totalListings : 0;
-
-  const worstImage = rows.length ? rows.reduce((a, b) => (a.with_image_pct <= b.with_image_pct ? a : b)) : null;
-  const worstPrice = rows.length ? rows.reduce((a, b) => (a.with_price_pct <= b.with_price_pct ? a : b)) : null;
-  const bestApproved = rows.length ? rows.reduce((a, b) => (a.approved_pct >= b.approved_pct ? a : b)) : null;
-
-  // Are there any verbose issue groups to render? Used to gate the
-  // "no operational issues" empty pill at the end of the issues section.
-  const anyIssue =
-    syncMissing ||
-    syncStale ||
-    cvApprovedNoFeed.length > 0 ||
-    cvApprovedNoTrust.length > 0 ||
-    cvApprovedNoIndexable.length > 0 ||
-    cvListingsNoApproved.length > 0 ||
-    cvListingsNoSqm.length > 0 ||
-    cvLowFeedConv.length > 0 ||
-    cvStale.length > 0 ||
-    cvMissingFreshness.length > 0;
-
-  return (
-    <div className="space-y-6">
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Diagnostics
-          </h1>
-          <p className="text-sm text-foreground-muted mt-1">
-            Deep checks, legacy metrics and source anomalies for the selected market.
-          </p>
-          <p className="text-xs text-foreground-subtle mt-1">
-            Daily working views live in <span className="text-foreground-muted">Dashboard</span> and <span className="text-foreground-muted">Sources</span>. This tab is for troubleshooting.
-          </p>
-        </div>
-        <MarketSelector />
-      </div>
-
-      {selectedMarket.status !== "active" && activeRows.length === 0 && (
-        <PipelineEmptyState market={selectedMarket} />
-      )}
-
-      {/* Verbose operational issues — source-name-level detail not shown on Dashboard */}
-      <section>
-        <div className="flex items-baseline justify-between mb-3 gap-3">
-          <h2 className="text-base font-semibold text-foreground font-mono">{selectedMarketLabel} operational issues · verbose</h2>
-          <span className="text-xs text-foreground-subtle">grouped by issue type, with source names</span>
-        </div>
-        <div className="space-y-2">
-          {syncMissing && (
-            <FlagGroup tone="warn" title="Sync" message="No ingest report loaded" />
-          )}
-          {syncStale && !syncMissing && (
-            <FlagGroup tone="warn" title="Stale sync" message="Last sync > 3 days ago" />
-          )}
-          {cvApprovedNoFeed.length > 0 && (
-            <FlagGroup
-              tone="bad"
-              title={`${cvApprovedNoFeed.length} ${selectedMarketLabel} source${cvApprovedNoFeed.length === 1 ? "" : "s"}: ingest-approved but none in live feed`}
-              message={formatSourceList(cvApprovedNoFeed.map((r) => r.sourceName))}
-            />
-          )}
-          {cvApprovedNoTrust.length > 0 && (
-            <FlagGroup
-              tone="bad"
-              title={`${cvApprovedNoTrust.length} ${selectedMarketLabel} source${cvApprovedNoTrust.length === 1 ? "" : "s"}: ingest-approved but none pass trust gate`}
-              message={formatSourceList(cvApprovedNoTrust.map((r) => r.sourceName))}
-            />
-          )}
-          {cvApprovedNoIndexable.length > 0 && (
-            <FlagGroup
-              tone="bad"
-              title={`${cvApprovedNoIndexable.length} ${selectedMarketLabel} source${cvApprovedNoIndexable.length === 1 ? "" : "s"}: approved but none indexable`}
-              message={formatSourceList(cvApprovedNoIndexable.map((r) => r.sourceName))}
-            />
-          )}
-          {cvListingsNoApproved.length > 0 && (
-            <FlagGroup
-              tone="bad"
-              title={`${cvListingsNoApproved.length} ${selectedMarketLabel} source${cvListingsNoApproved.length === 1 ? "" : "s"}: listings but 0 pipeline-approved`}
-              message={cvListingsNoApproved
-                .slice(0, 5)
-                .map((r) => `${r.sourceName} (${Number(r.listing_count).toLocaleString()})`)
-                .join(", ") + (cvListingsNoApproved.length > 5 ? ` +${cvListingsNoApproved.length - 5} more` : "")}
-            />
-          )}
-          {cvStale.length > 0 && (
-            <FlagGroup
-              tone="warn"
-              title={`${cvStale.length} ${selectedMarketLabel} source${cvStale.length === 1 ? "" : "s"} stale (>${SOURCE_STALE_DAYS}d)`}
-              message={cvStale
-                .slice(0, 5)
-                .map((r) => {
-                  const days = formatFreshness(r.last_updated_at).days;
-                  return `${r.sourceName}${days != null ? ` (${days}d)` : ""}`;
-                })
-                .join(", ") + (cvStale.length > 5 ? ` +${cvStale.length - 5} more` : "")}
-            />
-          )}
-          {cvListingsNoSqm.length > 0 && (
-            <FlagGroup
-              tone="warn"
-              title={`${cvListingsNoSqm.length} ${selectedMarketLabel} source${cvListingsNoSqm.length === 1 ? "" : "s"} missing sqm coverage`}
-              message={cvListingsNoSqm
-                .slice(0, 5)
-                .map((r) => `${r.sourceName} (${Number(r.listing_count).toLocaleString()} listings, 0% sqm)`)
-                .join(", ") + (cvListingsNoSqm.length > 5 ? ` +${cvListingsNoSqm.length - 5} more` : "")}
-            />
-          )}
-          {cvLowFeedConv.length > 0 && (
-            <FlagGroup
-              tone="warn"
-              title={`${cvLowFeedConv.length} ${selectedMarketLabel} source${cvLowFeedConv.length === 1 ? "" : "s"} with low ingest→feed ratio (<25%)`}
-              message={cvLowFeedConv
-                .slice(0, 5)
-                .map((r) => `${r.sourceName} (${r.public_feed_count_n}/${Number(r.approved_count)} = ${r.feed_conversion_pct}%)`)
-                .join(", ") + (cvLowFeedConv.length > 5 ? ` +${cvLowFeedConv.length - 5} more` : "")}
-            />
-          )}
-          {cvMissingFreshness.length > 0 && (
-            <FlagGroup
-              tone="muted"
-              title={`${cvMissingFreshness.length} ${selectedMarketLabel} source${cvMissingFreshness.length === 1 ? "" : "s"} missing last_updated_at`}
-              message="RPC may need to be re-run"
-            />
-          )}
-          {inactiveSourcesWithIssues > 0 && (
-            <FlagGroup
-              tone="muted"
-              title={`Test pipeline markets: ${inactiveSourcesWithIssues} additional issue${inactiveSourcesWithIssues === 1 ? "" : "s"}`}
-              message="Non-active markets (Ghana, Kenya, Nigeria, Zambia, Botswana) — see Sources tab for detail"
-            />
-          )}
-          {!anyIssue && (
-            <div className="rounded-lg p-3 bg-green-muted text-sm text-green">
-              No operational issues for {selectedMarketLabel}.
-            </div>
-          )}
-        </div>
-        {(gradeD.length > 0 || gradeC.length > 0 || noImages.length > 0 || noPrice.length > 0) && (
-          <div className="mt-4 pt-3 border-t border-border text-xs text-foreground-subtle">
-            Health across all markets: {gradeD.length} D, {gradeC.length} C; {noImages.length} sources &lt;10% images, {noPrice.length} sources &lt;10% prices.
-          </div>
-        )}
-      </section>
-
-      {/* Legacy data quality — image/price coverage. Kept for deeper inspection;
-          the modern operational signals live in Sources (ingest→feed ratio, trust,
-          indexable, sqm/beds/baths). */}
-      <section className="surface-1 rounded border border-border p-5">
-        <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground font-mono">Legacy data quality</h2>
-          <span className="text-xs text-foreground-subtle">all markets · image/price coverage</span>
-        </div>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">With image</div>
-            <div className="text-xl font-semibold tabular-nums font-mono">{globalImagePct.toFixed(1)}%</div>
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">With price</div>
-            <div className="text-xl font-semibold tabular-nums font-mono">{globalPricePct.toFixed(1)}%</div>
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Pipeline-approved</div>
-            <div className="text-xl font-semibold tabular-nums font-mono">{approvedPct.toFixed(1)}%</div>
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Total (raw)</div>
-            <div className="text-xl font-semibold tabular-nums font-mono">{stats.totalListings.toLocaleString()}</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Outliers — source-level anomalies, useful when chasing a specific bad source. */}
-      <section>
-        <h2 className="text-base font-semibold text-foreground font-mono mb-3">Source anomalies</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {bestApproved && (
-            <div className="surface-1 rounded border border-border p-4">
-              <div className="text-xs text-foreground-muted mb-1">Best approval</div>
-              <div className="text-sm font-medium text-foreground">{bestApproved.sourceName}</div>
-              <div className="text-green text-sm font-mono mt-0.5">{bestApproved.approved_pct.toFixed(1)}%</div>
-            </div>
-          )}
-          {worstImage && (
-            <div className="surface-1 rounded border border-border p-4">
-              <div className="text-xs text-foreground-muted mb-1">Lowest images</div>
-              <div className="text-sm font-medium text-foreground">{worstImage.sourceName}</div>
-              <div className="text-red text-sm font-mono mt-0.5">{worstImage.with_image_pct.toFixed(1)}%</div>
-            </div>
-          )}
-          {worstPrice && (
-            <div className="surface-1 rounded border border-border p-4">
-              <div className="text-xs text-foreground-muted mb-1">Lowest prices</div>
-              <div className="text-sm font-medium text-foreground">{worstPrice.sourceName}</div>
-              <div className="text-red text-sm font-mono mt-0.5">{worstPrice.with_price_pct.toFixed(1)}%</div>
-            </div>
-          )}
-        </div>
-      </section>
-
-      {/* Stub / test sources — isolated from production health above */}
-      {stubRows.length > 0 && (
-        <section>
-          <div className="flex items-baseline justify-between mb-3 gap-3">
-            <h2 className="text-base font-semibold text-foreground font-mono">Test / stub sources</h2>
-            <span className="text-xs text-foreground-subtle">excluded from all production health checks above</span>
-          </div>
-          <div className="overflow-x-auto">
-            <table className="w-full text-xs data-table data-table-id-narrow">
-              <thead>
-                <tr className="bg-surface-2 text-foreground-muted">
-                  <th className="text-left px-3 py-2 font-medium">Source</th>
-                  <th className="text-left px-3 py-2 font-medium">Market</th>
-                  <th className="text-right px-3 py-2 font-medium">Listings</th>
-                  <th className="text-right px-3 py-2 font-medium">Pipeline-approved</th>
-                  <th className="text-left px-3 py-2 font-medium">Grade</th>
-                </tr>
-              </thead>
-              <tbody>
-                {stubRows.map((r) => (
-                  <tr key={r.sourceId} className="border-t border-border hover:bg-surface-2">
-                    <td className="px-3 py-2 font-mono text-foreground-muted">{r.sourceName}</td>
-                    <td className="px-3 py-2 text-foreground-muted">{r.marketId.toUpperCase()}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-foreground-muted">{Number(r.listing_count).toLocaleString()}</td>
-                    <td className="px-3 py-2 text-right tabular-nums text-foreground-muted">{Number(r.approved_count).toLocaleString()}</td>
-                    <td className="px-3 py-2 text-foreground-subtle font-mono">{r.grade ?? "—"}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </section>
-      )}
-
-      {/* Future diagnostics — placeholders for upcoming deep-checks. Render-only,
-          no data fetched yet. Build the underlying queries before wiring these. */}
-      <section>
-        <h2 className="text-base font-semibold text-foreground font-mono mb-3">Coming soon</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-          {[
-            { title: "Parser / source conflicts", body: "Listings where two parsers disagree on title, price, or location." },
-            { title: "Needs review", body: "Approved listings flagged by trust gate for manual review." },
-            { title: "Missing-value categories", body: "Breakdown of which fields are missing across sources (sqm, beds, baths, currency, location)." },
-            { title: "Cross-source duplicates", body: "Same listing appearing under different sources — candidates for dedupe." },
-            { title: "Stale URL audit", body: "Listings whose source_url returns 404 / 410 / redirect since last ingest." },
-            { title: "Price anomalies", body: "Listings whose price deviates >3σ from same-source same-property-type baseline." },
-          ].map((d) => (
-            <div key={d.title} className="surface-1 rounded border border-border border-dashed p-4">
-              <div className="flex items-center justify-between mb-1.5">
-                <div className="text-sm font-medium text-foreground">{d.title}</div>
-                <span className="text-[10px] uppercase tracking-wider px-1.5 py-0.5 rounded bg-surface-3 text-foreground-subtle font-medium">Planned</span>
-              </div>
-              <p className="text-xs text-foreground-muted leading-relaxed">{d.body}</p>
-            </div>
-          ))}
-        </div>
-      </section>
-    </div>
-  );
-}
 
 // ============================================
 // MARKET OVERVIEW (legacy – kept for optional use)
@@ -3052,13 +2737,12 @@ function MarketDetail({
 // APP (Dashboard | Listings)
 // ============================================
 
-type Tab = "dashboard" | "listings" | "sources" | "diagnostics" | "agents" | "chatlab";
+type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",   label: "Dashboard"   },
   { key: "listings",    label: "Listings"    },
   { key: "sources",     label: "Sources"     },
-  { key: "diagnostics", label: "Diagnostics" },
   { key: "agents",      label: "Agents"      },
   { key: "chatlab",     label: "Chat Lab"    },
 ];
@@ -3191,7 +2875,6 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "dashboard" && <DashboardView />}
             {tab === "listings" && <ListingsTabView />}
             {tab === "sources" && <SourcesView />}
-            {tab === "diagnostics" && <DiagnosticsView />}
             {tab === "agents" && <AgentsApprovalsView />}
             {tab === "chatlab" && <PropertyChatLabView />}
           </MarketProvider>
