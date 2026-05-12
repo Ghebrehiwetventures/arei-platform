@@ -22,7 +22,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238ecfbf'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════
    AREI LANDING — Brutalist / Swiss
@@ -40,10 +40,11 @@
   --black:#0a0a0a;
   --white:#fafafa;
   --off-white:#f2f0ec;
-  --gray:#888;
+  --gray:#666;
   --rule:rgba(0,0,0,.15);
   --rule-dark:rgba(255,255,255,.15);
   --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -54,6 +55,20 @@ body{
 }
 html{scroll-behavior:smooth}
 a{color:inherit;text-decoration:none}
+
+/* ─── TYPOGRAPHY ───
+   Mono is AREI's visual signature — kept on headings, nav, eyebrow labels, numbers,
+   buttons, and metadata. Sans is only on body prose, quotes, and form fields. */
+.hero-sub,
+.section-head p,
+.surf-tagline,
+.founder-quote,
+.cta-inner>p,
+.broker-cta-text,
+.broker-cta-text strong,
+.cta-form input,
+.cta-form textarea,
+blockquote{font-family:var(--sans)}
 
 /* ─── REVEAL ─── */
 .rv{opacity:0;transition:opacity .6s ease}
@@ -128,11 +143,11 @@ nav{
   .lk-primary .brand-mark{width:48px;height:48px}
 }
 .nav-links{display:flex;align-items:center;gap:28px}
-.nav-a{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.45);transition:color .2s}
+.nav-a{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);transition:color .2s}
 .nav-a:hover{color:var(--white)}
 .nav-btn{
   padding:6px 16px;
-  border:1px solid rgba(255,255,255,.35);
+  border:1px solid rgba(255,255,255,.3);
   font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
   font-family:var(--mono);color:var(--white);
   transition:background .2s,color .2s,border-color .2s;
@@ -154,9 +169,8 @@ nav .lk-compact{color:var(--white)}
   font-size:clamp(15px,1.4vw,17px);color:rgba(255,255,255,.62);line-height:1.6;
   max-width:620px;margin-bottom:40px;
 }
-/* Hero on deep-green: sage CTA button, light secondary link */
 .hero-section .btn-primary{
-  background:var(--green);border-color:var(--green);color:var(--black);
+  background:var(--white);border-color:var(--white);color:var(--black);
 }
 .hero-section .btn-primary:hover{opacity:.88}
 .hero-section .btn-secondary{
@@ -169,7 +183,7 @@ nav .lk-compact{color:var(--white)}
   padding:14px 26px;
   border:1px solid var(--black);background:var(--black);
   font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
-  font-family:var(--mono);color:var(--green);
+  font-family:var(--mono);color:var(--white);
   cursor:pointer;transition:opacity .2s;
 }
 .btn-primary:hover{opacity:.85}
@@ -201,7 +215,7 @@ nav .lk-compact{color:var(--white)}
   content:'';display:inline-block;flex-shrink:0;
   width:9px;height:9px;border-radius:50%;
   border:1.5px solid rgba(0,0,0,.1);
-  border-top-color:rgba(0,0,0,.52);border-right-color:rgba(0,0,0,.28);
+  border-top-color:rgba(0,0,0,.65);border-right-color:rgba(0,0,0,.28);
   animation:eng-spin .65s linear infinite;
 }
 @keyframes eng-spin{to{transform:rotate(360deg)}}
@@ -211,7 +225,7 @@ nav .lk-compact{color:var(--white)}
 }
 .src-ticker{
   display:block;font-size:11px;
-  color:rgba(0,0,0,.52);letter-spacing:.01em;
+  color:rgba(0,0,0,.65);letter-spacing:.01em;
 }
 .src-ticker.t-enter{animation:t-in .32s cubic-bezier(.4,0,.2,1) both}
 .src-ticker.t-exit{animation:t-out .28s cubic-bezier(.4,0,.2,1) forwards}
@@ -268,7 +282,7 @@ nav .lk-compact{color:var(--white)}
 .section{padding:120px 0}
 .section-compact{padding:80px 0}
 .section-compact .section-head{margin-bottom:32px}
-.section-dark{background:var(--deep-green);color:var(--white)}
+.section-dark{background:var(--black);color:var(--white)}
 .section-green{background:var(--green);color:var(--black)}
 .section-off{background:var(--off-white)}
 
@@ -287,7 +301,7 @@ nav .lk-compact{color:var(--white)}
   letter-spacing:-.02em;
 }
 .ey-dot{
-  display:inline-block;width:7px;height:7px;border-radius:50%;
+  display:inline-block;width:7px;height:7px;
   background:#22c55e;margin-right:8px;vertical-align:middle;
   box-shadow:0 0 0 0 rgba(34,197,94,.5);
   animation:ey-pulse 2s ease-in-out infinite;
@@ -310,24 +324,24 @@ nav .lk-compact{color:var(--white)}
   color:rgba(0,0,0,.55);margin-bottom:32px;display:block;
 }
 .founder-quote{
-  font-size:clamp(19px,2.2vw,26px);font-weight:400;line-height:1.5;
-  letter-spacing:-.01em;color:var(--black);
-  margin-bottom:44px;
+  font-size:15px;font-weight:400;line-height:1.7;
+  color:var(--black);
+  margin-bottom:36px;max-width:620px;
 }
-.founder-quote p + p{margin-top:18px}
+.founder-quote p + p{margin-top:14px}
 .founder-byline{
   display:flex;align-items:center;gap:18px;
   padding-top:28px;border-top:1px solid rgba(0,0,0,.18);
 }
 .founder-photo{
-  width:60px;height:60px;border-radius:50%;
-  background:var(--deep-green);
+  width:60px;height:60px;
+  background:var(--black);
   flex-shrink:0;overflow:hidden;position:relative;
   display:flex;align-items:center;justify-content:center;
 }
 .founder-photo::before{
   content:'MG';
-  color:var(--green);font-size:15px;font-weight:600;letter-spacing:.06em;
+  color:var(--white);font-size:15px;font-weight:600;letter-spacing:.06em;
 }
 .founder-photo img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
@@ -407,7 +421,7 @@ nav .lk-compact{color:var(--white)}
   font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
   margin-bottom:20px;padding-bottom:10px;display:block;
 }
-.dtv-raw .dtv-label{color:rgba(0,0,0,.45);border-bottom:1px solid rgba(0,0,0,.1)}
+.dtv-raw .dtv-label{color:rgba(0,0,0,.55);border-bottom:1px solid rgba(0,0,0,.1)}
 .dtv-out .dtv-label{color:rgba(255,255,255,.2);border-bottom:1px solid rgba(255,255,255,.08)}
 .dtv-raw .src{
   display:block;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06);color:rgba(0,0,0,.55);
@@ -438,10 +452,11 @@ nav .lk-compact{color:var(--white)}
 :root{
   --bp-line:rgba(0,0,0,.3);
   --bp-line-soft:rgba(0,0,0,.12);
-  --bp-label:rgba(0,0,0,.42);
-  --bp-text:rgba(0,0,0,.72);
-  --bp-muted:rgba(0,0,0,.35);
-  --bp-active:#2d6a4f;
+  --bp-label:rgba(0,0,0,.55);
+  --bp-text:rgba(0,0,0,.82);
+  --bp-muted:rgba(0,0,0,.55);
+  --bp-active:#0a0a0a;
+  --bp-status:#22c55e;
   --bp-stroke:1px;
 }
 .section-dark{
@@ -450,7 +465,8 @@ nav .lk-compact{color:var(--white)}
   --bp-label:rgba(255,255,255,.4);
   --bp-text:rgba(255,255,255,.78);
   --bp-muted:rgba(255,255,255,.32);
-  --bp-active:#8ecfbf;
+  --bp-active:#fafafa;
+  --bp-status:#22c55e;
 }
 
 /* ── Panel — the base container ── */
@@ -481,11 +497,11 @@ nav .lk-compact{color:var(--white)}
   display:inline-block;position:relative;
 }
 .bp-node-active{
-  background:var(--bp-active);border-color:var(--bp-active);
+  background:var(--bp-status);border-color:var(--bp-status);
 }
 .bp-node-active::after{
-  content:'';position:absolute;inset:-5px;border-radius:50%;
-  background:var(--bp-active);opacity:.18;
+  content:'';position:absolute;inset:-5px;
+  background:var(--bp-status);opacity:.22;
   animation:bp-pulse 2.4s ease-in-out infinite;
 }
 @keyframes bp-pulse{
@@ -714,7 +730,7 @@ nav .lk-compact{color:var(--white)}
 .lc-img{height:156px;overflow:hidden;background:#e8e8e8}
 .lc-img img{width:100%;height:100%;object-fit:cover;display:block}
 .lc-body{padding:14px 16px 16px}
-.lc-topline{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.35);margin-bottom:10px}
+.lc-topline{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.55);margin-bottom:10px}
 .lc-price{font-size:18px;font-weight:500;letter-spacing:-.01em;color:var(--black);margin-bottom:8px}
 .lc-title{
   font-size:12px;font-weight:400;color:rgba(0,0,0,.6);line-height:1.5;margin-bottom:6px;
@@ -766,36 +782,38 @@ nav .lk-compact{color:var(--white)}
 .section-dark .lr-idx{color:rgba(255,255,255,.08)}
 
 /* ─── CTA ─── */
-.cta-section{background:var(--green);padding:100px 0}
+.cta-section{background:var(--black);color:var(--white);padding:100px 0 60px}
 .cta-inner{max-width:600px}
 .cta-inner .ey{
   font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
-  color:rgba(0,0,0,.4);margin-bottom:16px;display:block;
+  color:rgba(255,255,255,.55);margin-bottom:16px;display:block;
 }
 .cta-inner h2{
   font-size:clamp(22px,3vw,36px);font-weight:400;line-height:1.15;
   letter-spacing:-.02em;margin-bottom:12px;
 }
-.cta-inner>p{font-size:14px;color:rgba(0,0,0,.5);line-height:1.7;margin-bottom:32px}
+.cta-inner>p{font-size:14px;color:rgba(255,255,255,.7);line-height:1.7;margin-bottom:32px}
 .cta-form{display:flex;flex-direction:column;gap:12px}
 .cta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .cta-form input,.cta-form textarea{
   width:100%;padding:12px 14px;
-  border:1px solid rgba(0,0,0,.15);background:transparent;
-  color:var(--black);font-family:var(--mono);font-size:13px;
+  border:1px solid rgba(255,255,255,.2);background:transparent;
+  color:var(--white);font-family:var(--sans);font-size:14px;
   outline:none;transition:border-color .15s;
 }
-.cta-form input::placeholder,.cta-form textarea::placeholder{color:rgba(0,0,0,.3)}
-.cta-form input:focus,.cta-form textarea:focus{border-color:rgba(0,0,0,.5)}
+.cta-form input::placeholder,.cta-form textarea::placeholder{color:rgba(255,255,255,.4)}
+.cta-form input:focus,.cta-form textarea:focus{border-color:rgba(255,255,255,.6)}
 .cta-form textarea{min-height:100px;resize:vertical}
 .cta-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+.cta-section .btn-outline{background:var(--white);border-color:var(--white);color:var(--black)}
+.cta-section .btn-outline:hover{opacity:.88;background:var(--white);color:var(--black)}
 .cta-feedback{font-size:13px;line-height:1.5}
-.cta-feedback.ok{color:rgba(0,0,0,.7)}
-.cta-feedback.err{color:#c44}
-.cta-micro{margin-top:20px;font-size:12px;color:rgba(0,0,0,.3)}
+.cta-feedback.ok{color:rgba(255,255,255,.75)}
+.cta-feedback.err{color:#ff8a8a}
+.cta-micro{margin-top:20px;font-size:12px;color:rgba(255,255,255,.5)}
 
 /* ─── FOOTER ─── */
-footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
+footer{padding:60px 0 40px;background:var(--white)}
 .footer-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:40px;align-items:start}
 .footer-brand .f-logo{margin-bottom:16px}
 .footer-brand p{font-size:12px;color:var(--gray);line-height:1.7;max-width:280px;margin-bottom:20px}
@@ -804,7 +822,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   font-size:11px;color:var(--gray);font-weight:500;
   padding:6px 14px;border:1px solid var(--rule);
 }
-.footer-status .sd{width:6px;height:6px;border-radius:50%;background:#22c55e}
+.footer-status .sd{width:6px;height:6px;background:#22c55e}
 .footer-col h4{
   font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
   color:var(--gray);margin-bottom:18px;padding-bottom:10px;
@@ -837,10 +855,10 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   flex-shrink:0;
 }
 .surf-icon-block svg{width:44px;height:44px;fill:none;stroke-linecap:square;stroke-linejoin:miter;}
-.surf-icon-01{background:var(--green)}
+.surf-icon-01{background:var(--off-white)}
 .surf-icon-02{background:var(--off-white)}
-.surf-icon-03{background:var(--deep-green)}
-.surf-icon-03 svg{stroke:var(--green)}
+.surf-icon-03{background:var(--off-white)}
+.surf-icon-03 svg{stroke:var(--black)}
 
 /* Content */
 .surf-content{padding:24px 26px 28px;display:flex;flex-direction:column;flex:1}
@@ -855,7 +873,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 }
 .surf-tag-free{color:rgba(0,0,0,.38);border-color:rgba(0,0,0,.14)}
 .surf-tag-freemium{color:rgba(0,0,0,.5);border-color:rgba(0,0,0,.2)}
-.surf-tag-paid{color:var(--green);border-color:rgba(142,207,191,.35)}
+.surf-tag-paid{background:var(--black);color:var(--white);border-color:var(--black)}
 .surf-name{
   font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
   margin-bottom:10px;color:var(--black);
@@ -866,20 +884,21 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 }
 
 /* Fact rows — label and value on same baseline */
-.surf-facts{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-direction:column;gap:0}
+.surf-facts{margin-top:auto;border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-direction:column;gap:0}
 .surf-fact{
   display:grid;grid-template-columns:64px 1fr;align-items:baseline;gap:12px;
-  padding:8px 0;border-bottom:1px dashed var(--rule);font-size:12px;
+  padding:10px 0;border-bottom:1px dashed var(--rule);font-size:12px;
+  min-height:56px;box-sizing:border-box;
 }
 .surf-fact:last-child{border-bottom:none}
 .surf-fact-key{
   font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
   color:var(--gray);
 }
-.surf-fact-val{color:rgba(0,0,0,.62);line-height:1.5}
+.surf-fact-val{color:rgba(0,0,0,.78);line-height:1.5}
 
 /* Card 03 — dark */
-.surf-card-dark{background:var(--deep-green)}
+.surf-card-dark{background:var(--black)}
 .surf-card-dark .surf-content{color:var(--white)}
 .surf-card-dark .surf-num{color:rgba(255,255,255,.25)}
 .surf-card-dark .surf-name{color:var(--white)}
@@ -897,7 +916,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   gap:24px;flex-wrap:wrap;
 }
 .broker-cta-text{font-size:13px;color:rgba(0,0,0,.58);line-height:1.6;max-width:460px}
-.broker-cta-text strong{font-weight:600;color:rgba(0,0,0,.72);display:block;margin-bottom:4px}
+.broker-cta-text strong{font-weight:600;color:rgba(0,0,0,.82);display:block;margin-bottom:4px}
 
 /* ─── RESPONSIVE ─── */
 @media(max-width:860px){
@@ -1043,7 +1062,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 1. THE GAP ═══ -->
-<section class="section" id="opportunity">
+<section class="section section-off" id="opportunity">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -1063,7 +1082,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 2. OPPORTUNITY SCALE ═══ -->
-<section class="section section-off" id="benchmarks">
+<section class="section" id="benchmarks">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -1121,7 +1140,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 3. THE ENGINE ═══ -->
-<section class="section section-dark section-compact">
+<section class="section section-off section-compact">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -1139,7 +1158,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 3b. THREE SURFACES ═══ -->
-<section class="section section-off" id="surfaces">
+<section class="section" id="surfaces">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -1190,7 +1209,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       <!-- 02 Broker Tools -->
       <div class="surf-card">
         <div class="surf-icon-block surf-icon-02">
-          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--deep-green)" stroke-width="1.4">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--black)" stroke-width="1.4">
             <!-- Listing submission: card + upload arrow -->
             <rect x="8" y="18" width="22" height="18"/>
             <rect x="14" y="12" width="22" height="18"/>
@@ -1223,14 +1242,14 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       </div>
 
       <!-- 03 Intelligence Layer -->
-      <div class="surf-card surf-card-dark">
+      <div class="surf-card">
         <div class="surf-icon-block surf-icon-03">
-          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--green)" stroke-width="1.4">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--black)" stroke-width="1.4">
             <!-- Trend chart: axes + rising line + terminal dot -->
             <line x1="8" y1="36" x2="38" y2="36"/>
             <line x1="8" y1="8"  x2="8"  y2="36"/>
             <polyline points="10,30 17,22 24,25 34,11"/>
-            <circle cx="34" cy="11" r="2.5" fill="var(--green)" stroke="none"/>
+            <circle cx="34" cy="11" r="2.5" fill="var(--black)" stroke="none"/>
           </svg>
         </div>
         <div class="surf-content">
@@ -1370,9 +1389,8 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
     <div class="founder rv">
       <span class="ey">From the founder</span>
       <blockquote class="founder-quote">
-        <p>&ldquo;I came to this market as an investor. Cape Verde was where I started, and even after repeated trips, the market remained difficult to read.</p>
-        <p>The opportunity was visible. The structure was not. Inventory was spread across brokers and local sites, with no consistent data layer to compare opportunities or evaluate them with confidence.</p>
-        <p>That is the gap Africa Real Estate Index exists to close.&rdquo;</p>
+        <p>&ldquo;Africa&rsquo;s real estate market isn&rsquo;t lacking value &mdash; it&rsquo;s lacking structure. The data exists, but no one has normalized it, scored it, or published it with a methodology you can cite.</p>
+        <p>AREI is the infrastructure layer that turns fragmented listings into investable market signal.&rdquo;</p>
       </blockquote>
       <div class="founder-byline">
         <div class="founder-photo">
@@ -1451,7 +1469,6 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
     </div>
     <div class="footer-bottom">
       <span class="footer-copy">&copy; 2026 Africa Real Estate Index</span>
-      <span class="footer-idx">001</span>
     </div>
   </div>
 </footer>
