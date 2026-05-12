@@ -530,6 +530,10 @@ const SOURCE_NAME_OVERRIDES: Record<string, string> = {
   cv_rightmove: "Rightmove Overseas",
   cv_simplycapeverde: "Simply Cape Verde",
   cv_terracaboverde: "Terra Cabo Verde",
+  // Cape Verde — stub / test sources (markets/cv/sources.yml `type: stub`).
+  // Excluded from the public feed by migrations/010 and from admin aggregates.
+  cv_source_1: "Imobiliaria Praia (stub)",
+  cv_source_2: "Mindelo Properties (stub)",
   // Test pipeline markets
   bw_property24: "Property24 Botswana",
   gh_meqasa: "Meqasa Ghana",
@@ -551,6 +555,14 @@ function sourceIdToName(sourceId: string): string {
     .split(/[_-]/)
     .map((w) => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase())
     .join(" ");
+}
+
+/** Stub / test source IDs declared with `type: stub` in markets/<m>/sources.yml.
+ *  Admin aggregates exclude these so they don't pollute the working report.
+ *  The `cv_source_\d+` regex catches future-numbered stubs without code edits. */
+const STUB_SOURCE_PATTERN = /^cv_source_\d+$/;
+function isStubSourceId(sourceId: string): boolean {
+  return STUB_SOURCE_PATTERN.test(sourceId);
 }
 
 export async function getDashboardStats(): Promise<DashboardStats> {
@@ -616,6 +628,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         grade,
         sourceName: sourceIdToName(r.source_id),
         marketId,
+        isStub: isStubSourceId(r.source_id),
       };
     });
     // Sort worst grade first (D, C, B, A), then by listing count desc

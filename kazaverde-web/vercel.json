@@ -5,8 +5,14 @@
   "redirects": [
     {
       "source": "/:path*",
+      "has": [{ "type": "host", "value": "kazaverde.com" }],
+      "destination": "https://capeverderealestateindex.com/:path*",
+      "permanent": true
+    },
+    {
+      "source": "/:path*",
       "has": [{ "type": "host", "value": "www.kazaverde.com" }],
-      "destination": "https://kazaverde.com/:path*",
+      "destination": "https://capeverderealestateindex.com/:path*",
       "permanent": true
     },
     {

@@ -35,7 +35,7 @@ function matches(query: string, ...fields: string[]): boolean {
 
 export default function BlogList() {
   useDocumentMeta(
-    "Guides — AREI",
+    "Guides",
     "Independent explainers and a buyer's FAQ for Cape Verde property — legal process, island comparisons, tax changes, and residence options.",
   );
 
@@ -49,7 +49,7 @@ export default function BlogList() {
     const data = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "@id": "https://www.africarealestateindex.com/blog#faq",
+      "@id": "https://capeverderealestateindex.com/blog#faq",
       mainEntity: FAQ_ENTRIES.map((f) => ({
         "@type": "Question",
         name: f.question,

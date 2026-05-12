@@ -3,7 +3,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import "./Rent.css";
 
 export default function Sell() {
-  useDocumentMeta("Sell", "Direct seller submissions are not part of the current AREI launch scope.");
+  useDocumentMeta("Sell", "Direct seller submissions are not part of the current Cape Verde Real Estate Index launch scope.");
   const navigate = useNavigate();
 
   return (
@@ -16,8 +16,9 @@ export default function Sell() {
       </div>
       <h1>Seller Submissions — <em>Not In Scope</em></h1>
       <p>
-        AREI currently operates as a read-only index of tracked public listings.
-        Direct owner submissions are not part of the current launch scope.
+        The Cape Verde Real Estate Index currently operates as a read-only
+        index of tracked public listings. Direct owner submissions are not
+        part of the current launch scope.
       </p>
       <button className="bp" onClick={() => navigate("/listings")}>BROWSE LISTINGS</button>
     </div>

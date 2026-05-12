@@ -32,7 +32,9 @@ For the live KazaVerde consumer app, the canonical read path today is:
 
 Practical truth:
 - `kazaverde-web/` reads through `packages/arei-sdk/`
-- `packages/arei-sdk/src/client.ts` is hardcoded to `v1_feed_cv`
+- `packages/arei-sdk/src/client.ts` defaults to `v1_feed_cv`
+- `public.v1_feed_cv` is still the canonical frontend contract
+- as of 2026-05-08, that contract now reads from the curated publish layer upstream
 - this is canonical for the current public consumer app
 - this is not yet a generic multi-market frontend contract
 
@@ -48,6 +50,27 @@ Practical truth:
 - implementation does not fully match them yet
 
 ## What exists but is not the main production path
+
+### Curated publish layer
+
+`kv_curated.listings` is now the live upstream source for the public KazaVerde feed.
+
+Treat it as:
+- real: yes
+- production-serving: yes, via `public.v1_feed_cv_curated_preview` and `public.v1_feed_cv`
+- private schema: yes
+- writable through Supabase REST/JS: no
+
+Check:
+- `migrations/028_kv_curated_preview_schema.sql`
+- `migrations/029_switch_v1_feed_cv_to_curated.sql`
+- `migrations/030_v1_feed_cv_curated_preview_contract_compat.sql`
+- `docs/02-data-engine/kazaverde-curated-feed-operations.md`
+
+Important truth:
+- the old CV ingest pipeline still writes the legacy `public.listings` path
+- the live public feed no longer serves that legacy path directly
+- this is a temporary operating split and should be treated as such in docs and ops
 
 ### Generic ingest path
 
@@ -140,5 +163,7 @@ Today’s repo truth is:
 
 - the real ingest path is still the CV-specific chain
 - the real frontend contract is still `v1_feed_cv`
+- the live `v1_feed_cv` contract now serves curated `kv_curated` inventory upstream, not the legacy snapshot directly
+- the ingest pipeline and the public feed are temporarily decoupled
 - the admin is useful, but it reconstructs truth from mixed sources
 - generic platform work exists, but it is not yet the repo’s single operational truth

@@ -12,19 +12,19 @@ export interface BlogArticle {
 const _ALL_BLOG_ARTICLES = [
   {
     slug: "cape-verde-property-prices-by-island",
-    title: "Cape Verde property prices by island: what the AREI index currently shows",
+    title: "Cape Verde property prices by island: what the Cape Verde Real Estate Index currently shows",
     description:
-      "Asking-price medians and listing counts by island, drawn from the AREI index. A snapshot of publicly listed Cape Verde inventory, not the full market.",
+      "Asking-price medians and listing counts by island, drawn from the Cape Verde Real Estate Index. A snapshot of publicly listed Cape Verde inventory, not the full market.",
     date: "2026-04-29",
     readTime: "6 min read",
     tags: ["Market", "Islands", "Data"],
     content: `<p><em>Last updated: April 2026</em></p>
 <p>Cape Verde is not one property market. It is an archipelago of distinct island markets, each shaped by different levels of foreign demand, tourism infrastructure, and listing activity. A single archipelago-wide average tells you almost nothing.</p>
-<p>This piece looks at what the <a href="/listings">AREI index</a> currently shows island by island — where the tracked sample is large enough to be meaningful, and where it isn't.</p>
-<blockquote><p>The figures below are <strong>asking prices from publicly listed properties AREI currently tracks</strong> — not closing prices, not the full market, and not legally verified. Source coverage is still expanding. The live numbers on <a href="/listings">/listings</a> and <a href="/market">/market</a> are always the authoritative version.</p></blockquote>
+<p>This piece looks at what the <a href="/listings">Cape Verde Real Estate Index</a> currently shows island by island — where the tracked sample is large enough to be meaningful, and where it isn't.</p>
+<blockquote><p>The figures below are <strong>asking prices from publicly listed properties the Cape Verde Real Estate Index currently tracks</strong> — not closing prices, not the full market, and not legally verified. Source coverage is still expanding. The live numbers on <a href="/listings">/listings</a> and <a href="/market">/market</a> are always the authoritative version.</p></blockquote>
 <hr>
 <h2>What the current index shows by island</h2>
-<p>As of late April 2026, the AREI index tracks roughly four hundred publicly listed properties across the archipelago. The distribution is heavily concentrated in the three islands with the most direct foreign-buyer activity. Three islands carry enough tracked listings to support a useful median:</p>
+<p>As of late April 2026, the Cape Verde Real Estate Index tracks roughly four hundred publicly listed properties across the archipelago. The distribution is heavily concentrated in the three islands with the most direct foreign-buyer activity. Three islands carry enough tracked listings to support a useful median:</p>
 <div class="kv-island-grid">
   <div class="kv-island-stat">
     <div class="kv-island-stat-name">Sal</div>
@@ -54,11 +54,11 @@ const _ALL_BLOG_ARTICLES = [
 <p>For the live version of these figures, with the underlying listings, see <a href="/market">/market</a> and the per-island grids: <a href="/listings?island=Sal">Sal</a>, <a href="/listings?island=Santiago">Santiago</a>, <a href="/listings?island=Boa+Vista">Boa Vista</a>.</p>
 <hr>
 <h2>The islands with too little tracked data to price</h2>
-<p>The remaining islands appear in the index but have samples too thin to support a reliable median. That may reflect genuinely thin local activity, or simply that AREI has not yet onboarded the sources where listings on those islands tend to surface.</p>
+<p>The remaining islands appear in the index but have samples too thin to support a reliable median. That may reflect genuinely thin local activity, or simply that the Cape Verde Real Estate Index has not yet onboarded the sources where listings on those islands tend to surface.</p>
 <ul>
 <li><strong>Maio</strong> — around twenty tracked listings, but the priced rows cluster at a single low value, which may reflect source or normalization effects rather than a clean market distribution.</li>
 <li><strong>São Nicolau</strong> and <strong>Fogo</strong> — under ten tracked listings each. Counts are real; medians are not yet meaningful.</li>
-<li><strong>São Vicente</strong> and <strong>Santo Antão</strong> — only a handful of tracked listings each. Too thin for AREI to publish a meaningful median.</li>
+<li><strong>São Vicente</strong> and <strong>Santo Antão</strong> — only a handful of tracked listings each. Too thin for the Cape Verde Real Estate Index to publish a meaningful median.</li>
 <li><strong>Brava</strong> — no tracked listings in the index at this snapshot.</li>
 </ul>
 <p>If you are specifically researching one of these islands, the most useful step is to look at the individual tracked listings on <a href="/listings">/listings</a> and follow the source links rather than rely on an aggregate. Coverage on these islands may deepen as new sources are added.</p>
@@ -76,7 +76,7 @@ const _ALL_BLOG_ARTICLES = [
 <p>These numbers are a snapshot, not a forecast and not a valuation. They are useful for narrowing a shortlist — not for replacing the work of going through individual listings, talking to an independent local lawyer, and checking the source page for any property you take seriously.</p>
 <p>For the legal and tax mechanics of buying once you have shortlisted, see the <a href="/blog/buying-property-cape-verde-guide">step-by-step buying guide</a>. For an island-by-island comparison framed around lifestyle and use case, see <a href="/blog/which-cape-verde-island-property">Which Cape Verde island</a>. For methodology and source coverage, see <a href="/about">/about</a>.</p>
 <hr>
-<p><em>AREI is an independent property search and data platform — not a broker, agency, or marketplace. Listings are aggregated from publicly accessible sources we currently track and are not legally verified. Always confirm a property's details with the original agent or seller and your own lawyer before acting on any number quoted here.</em></p>`,
+<p><em>The Cape Verde Real Estate Index is an independent property search and data platform, published by AREI — not a broker, agency, or marketplace. Listings are aggregated from publicly accessible sources we currently track and are not legally verified. Always confirm a property's details with the original agent or seller and your own lawyer before acting on any number quoted here.</em></p>`,
   },
   {
     slug: "buying-property-cape-verde-guide",
@@ -101,7 +101,7 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>The Buying Process: Seven Steps</h2>
 <h3>Step 1: Find a Property</h3>
-<p>You can search independently, work with a licensed estate agent, or use a source-linked property index like <a href="https://www.africarealestateindex.com">AREI</a> to compare publicly listed properties across multiple sources and islands. Agents on the ground are particularly useful for understanding local nuances — different areas of the same island can vary significantly in infrastructure, rental potential, and community fees.</p>
+<p>You can search independently, work with a licensed estate agent, or use a source-linked property index like <a href="https://kazaverde.com">Cape Verde Real Estate Index</a> to compare publicly listed properties across multiple sources and islands. Agents on the ground are particularly useful for understanding local nuances — different areas of the same island can vary significantly in infrastructure, rental potential, and community fees.</p>
 <h3>Step 2: Hire an Independent Lawyer</h3>
 <p>This is not optional. Hire a Cape Verdean <em>advogado</em> who is independent from the seller and the estate agent. Your lawyer will verify ownership, check for outstanding debts, review all contracts, and represent you at the notary. If you can&#39;t be physically present in Cape Verde for the transaction, your lawyer can act on your behalf through a Power of Attorney (<em>procuração</em>), which can be arranged at a notary or a Cape Verde embassy abroad.</p>
 <p>Typical lawyer fees: €500–1,500 depending on complexity.</p>
@@ -202,8 +202,8 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>Finding Properties</h2>
 <p>The Cape Verdean property market is relatively small and fragmented. Listings appear across local agency websites, international portals, developer pages, and classified sites — often with inconsistent formatting, pricing in different currencies, and varying levels of detail.</p>
-<p><a href="https://www.africarealestateindex.com">AREI</a> aggregates listings from multiple sources into a single, searchable index with normalized pricing (all in euros), standardized specifications, and verified data badges. Every listing links directly to its original source.</p>
-<p><em>Browse current listings at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
+<p><a href="https://kazaverde.com">Cape Verde Real Estate Index</a> aggregates listings from multiple sources into a single, searchable index with normalized pricing (all in euros), standardized specifications, and verified data badges. Every listing links directly to its original source.</p>
+<p><em>Browse current listings at <a href="https://kazaverde.com">kazaverde.com</a></em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>Can foreigners buy property in Cape Verde?</h3>
@@ -307,7 +307,7 @@ const _ALL_BLOG_ARTICLES = [
 <p><strong>What the market looks like:</strong> Apartments in Santa Maria typically start around €95,000 for a one-bedroom, with two-bedroom units in resort complexes ranging from €120,000 to €200,000. Luxury penthouses and ocean-view properties can reach €300,000+. Prices have been rising 10–15% annually in recent years, driven by steady tourism growth and limited new supply in prime locations.</p>
 <p><strong>Rental potential:</strong> Sal offers the strongest short-term rental market in Cape Verde. Properties in well-managed resort complexes with established rental schemes report gross yields in the range of 5–8%, though individual results vary significantly based on location, property quality, and management company effectiveness.</p>
 <p><strong>Things to consider:</strong> Sal is the most expensive island to buy on, and the market is the most mature — meaning there&#39;s less room for dramatic capital appreciation compared to less-developed islands. The island is also relatively flat and arid, which isn&#39;t everyone&#39;s aesthetic preference.</p>
-<p><a href="/listings/sal">Browse current Sal properties for sale</a> in AREI&#39;s index.</p>
+<p><a href="/listings/sal">Browse current Sal properties for sale</a> in the Cape Verde Real Estate Index.</p>
 <hr>
 <h2>Boa Vista: The Growth Story</h2>
 <p>Boa Vista is Cape Verde&#39;s second major tourism island, known for stunning, less-crowded beaches and a more laid-back atmosphere than Sal. It has its own international airport with growing flight connections, and the tourism infrastructure has expanded significantly in recent years.</p>
@@ -315,7 +315,7 @@ const _ALL_BLOG_ARTICLES = [
 <p><strong>What the market looks like:</strong> Property prices are generally 15–25% lower than equivalent properties on Sal, offering a potential entry point for buyers who want beach-island investment at a more accessible price. The development pipeline is active, with several new projects targeting both investors and lifestyle buyers.</p>
 <p><strong>Rental potential:</strong> Growing but more seasonal than Sal. As flight connections increase and tourism infrastructure matures, rental demand is trending upward. Boa Vista is often positioned as where Sal was 5–10 years ago in terms of market development.</p>
 <p><strong>Things to consider:</strong> Less developed infrastructure means fewer restaurants, shops, and services outside the resort zones. This is evolving, but buyers should visit and assess whether the current level of development meets their needs.</p>
-<p><a href="/listings/boa-vista">Browse current Boa Vista properties for sale</a> in AREI&#39;s index.</p>
+<p><a href="/listings/boa-vista">Browse current Boa Vista properties for sale</a> in the Cape Verde Real Estate Index.</p>
 <hr>
 <h2>Santiago: Beyond Tourism</h2>
 <p>Santiago is Cape Verde&#39;s largest and most populated island, home to the capital Praia. It&#39;s the economic, political, and cultural heart of the archipelago — and its property market reflects a broader economy, not just tourism.</p>
@@ -343,7 +343,7 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>How to Compare Properties Across Islands</h2>
 <p>One of the challenges of the Cape Verdean property market is that listings are scattered across dozens of agency websites, international portals, and developer pages. Prices may be listed in euros, dollars, or escudos. Specifications are often inconsistent. The same property may appear on multiple sites with different descriptions.</p>
-<p><a href="https://www.africarealestateindex.com">AREI</a> was built to solve this problem. We aggregate listings from multiple sources, normalize all prices to euros, standardize specifications, deduplicate properties that appear on multiple sites, and present everything in a single searchable interface. Every listing links to its original source — we&#39;re a read-only index, not a broker.</p>
+<p><a href="https://kazaverde.com">Cape Verde Real Estate Index</a> was built to solve this problem. We aggregate listings from multiple sources, normalize all prices to euros, standardize specifications, deduplicate properties that appear on multiple sites, and present everything in a single searchable interface. Every listing links to its original source — we&#39;re a read-only index, not a broker.</p>
 <p>Current coverage: listings across 9 sources on 6 islands.</p>
 <p><em>Start your search at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
 <hr>
@@ -424,8 +424,8 @@ const _ALL_BLOG_ARTICLES = [
 </ul>
 <hr>
 <h2>Monitoring the Market</h2>
-<p>Property tax changes affect pricing, yields, and transaction volumes. AREI tracks public listings across the Cape Verde market and publishes source-linked market context including median prices by island and tracked inventory levels.</p>
-<p><em>Stay informed at <a href="/market">Cape Verde Real Estate Index market data</a></em></p>
+<p>Property tax changes affect pricing, yields, and transaction volumes. The Cape Verde Real Estate Index tracks public listings across the Cape Verde market and publishes source-linked market context including median prices by island and tracked inventory levels.</p>
+<p><em>Stay informed at <a href="/market">kazaverde.com/market-data</a></em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>What is the property transfer tax in Cape Verde?</h3>
@@ -560,8 +560,8 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>Doing Your Research</h2>
 <p>Understanding what properties are actually listed for — and how prices compare across islands, locations, and property types — is essential before committing capital.</p>
-<p><a href="https://www.africarealestateindex.com">AREI</a> provides a searchable index of Cape Verde property listings with normalized pricing, source-linked detail pages, and market context. Use it to understand the market before you engage with agents or developers.</p>
-<p><em>Explore the current market at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
+<p><a href="https://kazaverde.com">Cape Verde Real Estate Index</a> provides a searchable index of Cape Verde property listings with normalized pricing, source-linked detail pages, and market context. Use it to understand the market before you engage with agents or developers.</p>
+<p><em>Explore the current market at <a href="https://kazaverde.com">kazaverde.com</a></em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>What rental yield can I expect in Cape Verde?</h3>
@@ -698,7 +698,7 @@ const _ALL_BLOG_ARTICLES = [
 <p>Cape Verde&#39;s lower entry point makes it accessible to a wider range of investors. The permanent residency (rather than renewable temporary permits) is also a distinguishing feature.</p>
 <hr>
 <h2>Finding Properties That Qualify</h2>
-<p>Not every listing on the market will meet the Green Card investment threshold — particularly at the €80,000 level, where options are more limited. Use <a href="https://www.africarealestateindex.com">AREI</a> to filter properties by price range and island to identify which listings fall within the qualifying investment bands.</p>
+<p>Not every listing on the market will meet the Green Card investment threshold — particularly at the €80,000 level, where options are more limited. Use <a href="https://kazaverde.com">Cape Verde Real Estate Index</a> to filter properties by price range and island to identify which listings fall within the qualifying investment bands.</p>
 <p>Keep in mind that the threshold applies to the property purchase value, and that the area classification (above or below average GDP per capita) determines which threshold applies. Your lawyer can confirm the classification for any specific property or area.</p>
 <p><em>Search properties at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
 <hr>
@@ -792,8 +792,8 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>The Common Thread</h2>
 <p>Most of these mistakes share a root cause: insufficient preparation and professional advice. Cape Verde property can be a rewarding investment, but the market is small, information is fragmented, and the legal and tax environment requires local expertise.</p>
-<p>Do your research. Use tools like <a href="https://www.africarealestateindex.com">AREI</a> to understand the market landscape — what&#39;s available, at what prices, on which islands. Then engage qualified local professionals before committing capital.</p>
-<p><em>Browse current listings at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
+<p>Do your research. Use tools like <a href="https://kazaverde.com">Cape Verde Real Estate Index</a> to understand the market landscape — what&#39;s available, at what prices, on which islands. Then engage qualified local professionals before committing capital.</p>
+<p><em>Browse current listings at <a href="https://kazaverde.com">kazaverde.com</a></em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>Is it safe to buy property in Cape Verde as a foreigner?</h3>
@@ -934,7 +934,7 @@ const _ALL_BLOG_ARTICLES = [
 </ul>
 <hr>
 <h2>Browsing Current Listings</h2>
-<p><a href="/listings/sal">Browse current Sal properties</a> and <a href="/listings/boa-vista">Boa Vista properties</a> on AREI. Santiago listings are included in the main search index at <a href="https://www.africarealestateindex.com">AREI</a>.</p>
+<p><a href="/listings/sal">Browse current Sal properties</a> and <a href="/listings/boa-vista">Boa Vista properties</a> on the Cape Verde Real Estate Index. Santiago listings are included in the main search index at <a href="https://kazaverde.com">kazaverde.com</a>.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
@@ -1373,7 +1373,7 @@ const _ALL_BLOG_ARTICLES = [
 </ul>
 <hr>
 <h2>Browsing Current Listings</h2>
-<p><a href="/listings/boa-vista">Browse current Boa Vista properties for sale</a> in AREI's index. All listings are source-linked with normalized euro pricing.</p>
+<p><a href="/listings/boa-vista">Browse current Boa Vista properties for sale</a> in the Cape Verde Real Estate Index. All listings are source-linked with normalized euro pricing.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>

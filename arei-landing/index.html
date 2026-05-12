@@ -22,7 +22,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238ecfbf'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════
    AREI LANDING — Brutalist / Swiss
@@ -40,10 +40,11 @@
   --black:#0a0a0a;
   --white:#fafafa;
   --off-white:#f2f0ec;
-  --gray:#888;
+  --gray:#666;
   --rule:rgba(0,0,0,.15);
   --rule-dark:rgba(255,255,255,.15);
   --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -55,6 +56,11 @@ body{
 html{scroll-behavior:smooth}
 a{color:inherit;text-decoration:none}
 
+/* ─── TYPOGRAPHY ───
+   AREI landing is mono-only — per visual-identity.md and per signature.
+   Plex Mono carries headings, body prose, quotes, form fields, data — everything.
+   The --sans token is kept available for admin / dense-data surfaces. */
+
 /* ─── REVEAL ─── */
 .rv{opacity:0;transition:opacity .6s ease}
 .rv.v{opacity:1}
@@ -65,7 +71,7 @@ a{color:inherit;text-decoration:none}
 /* ─── NAV ─── */
 nav{
   position:sticky;top:0;z-index:200;
-  background:var(--green);
+  background:var(--black);
 }
 .nav-inner{
   max-width:1120px;margin:0 auto;height:52px;
@@ -73,39 +79,102 @@ nav{
   padding:0 24px;
 }
 .logo{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase}
+
+/* ─── BRAND LOCKUPS ─── */
+/* Responsive lockup system per AREI brand guide:
+   - .lk-primary  three-line ceremonial (hero, report covers, large surfaces)
+   - .lk-compact  single-line (desktop nav, footer, email, report header)
+   - .lk-mobile   mark + COUNTRY only (mobile app bar, tight UI)
+   Choose the lockup that fits the available space. Never squeeze the
+   ceremonial three-line lockup into product navigation. */
+.brand-mark{display:block;flex-shrink:0}
+.lk-primary,.lk-compact,.lk-mobile{
+  display:inline-flex;align-items:center;color:var(--black);
+  font-family:var(--mono);text-transform:uppercase;white-space:nowrap;
+}
+.lk-primary{align-items:flex-start;gap:23px}
+.lk-primary .lk-stack{display:flex;flex-direction:column;gap:4px;line-height:1;padding-top:3px}
+.lk-primary .lk-line{font-size:22px;letter-spacing:.04em;font-weight:400;white-space:nowrap}
+.lk-primary .lk-line-1{font-weight:600}
+.lk-primary .lk-line-2,.lk-primary .lk-line-3{opacity:.85}
+.lk-compact{gap:9px;font-size:13px;letter-spacing:.12em;font-weight:600;line-height:1}
+.lk-compact .lk-desc{font-weight:400;opacity:.7;margin-left:.4em}
+.lk-mobile{gap:7px;font-size:11px;letter-spacing:.12em;font-weight:600;line-height:1}
+
+/* Nav surface: compact single-line on desktop, three-line stacked on mobile.
+   Desktop-only: hide the mobile stack. */
+.lk-nav .lk-desc{display:inline}
+.lk-nav .lk-text-mobile{display:none}
+@media(max-width:560px){
+  /* Mobile three-line lockup — scoped to MARKETING surfaces only:
+       - mobile landing header
+       - mobile hero context
+       - pages with enough header room
+     NOT a universal mobile app-bar rule. Tight product pages should
+     use [mark] AFRICA or mark-only instead. AFRICA is dominant;
+     REAL ESTATE + INDEX are lighter. Mark optically centred against
+     the three-line block. */
+  .lk-nav{gap:8px;align-items:center}
+  .lk-nav .lk-text{display:none}
+  .lk-nav .lk-text-mobile{
+    display:flex;flex-direction:column;
+    line-height:1.05;letter-spacing:.1em;
+    font-family:var(--mono);text-transform:uppercase;
+  }
+  .lk-nav .lk-text-mobile .lk-m1{font-size:11px;font-weight:600}
+  .lk-nav .lk-text-mobile .lk-m2,
+  .lk-nav .lk-text-mobile .lk-m3{font-size:9px;font-weight:400;opacity:.7;margin-top:1px}
+  .lk-nav .brand-mark{width:30px;height:30px}
+}
+
+/* Hero ceremonial lockup tightens on mobile (still 3-line, just smaller). */
+@media(max-width:640px){
+  .lk-primary{gap:14px}
+  .lk-primary .lk-line{font-size:16px}
+  .lk-primary .brand-mark{width:48px;height:48px}
+}
 .nav-links{display:flex;align-items:center;gap:28px}
-.nav-a{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.5);transition:color .2s}
-.nav-a:hover{color:var(--black)}
+.nav-a{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);transition:color .2s}
+.nav-a:hover{color:var(--white)}
 .nav-btn{
   padding:6px 16px;
-  border:1px solid var(--black);
+  border:1px solid rgba(255,255,255,.3);
   font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-  font-family:var(--mono);
-  transition:background .2s,color .2s;
+  font-family:var(--mono);color:var(--white);
+  transition:background .2s,color .2s,border-color .2s;
 }
-.nav-btn:hover{background:var(--black);color:var(--white)}
+.nav-btn:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+nav .lk-compact{color:var(--white)}
 
 /* ─── HERO ─── */
 .hero-section{
-  background:var(--green);
+  background:var(--black);
   padding:96px 0 80px;
 }
 .hero h1{
   font-size:clamp(32px,5.5vw,56px);font-weight:400;line-height:1.15;
-  letter-spacing:-.02em;color:var(--black);
+  letter-spacing:-.02em;color:var(--white);
   max-width:780px;margin-bottom:24px;
 }
 .hero-sub{
-  font-size:clamp(15px,1.4vw,17px);color:rgba(0,0,0,.65);line-height:1.6;
+  font-size:clamp(15px,1.4vw,17px);color:rgba(255,255,255,.62);line-height:1.6;
   max-width:620px;margin-bottom:40px;
 }
+.hero-section .btn-primary{
+  background:var(--white);border-color:var(--white);color:var(--black);
+}
+.hero-section .btn-primary:hover{opacity:.88}
+.hero-section .btn-secondary{
+  color:rgba(255,255,255,.55);border-color:rgba(255,255,255,.2);
+}
+.hero-section .btn-secondary:hover{color:var(--white);border-color:rgba(255,255,255,.5)}
 .hero-ctas{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
 .btn-primary{
   display:inline-flex;align-items:center;gap:8px;
   padding:14px 26px;
   border:1px solid var(--black);background:var(--black);
   font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
-  font-family:var(--mono);color:var(--green);
+  font-family:var(--mono);color:var(--white);
   cursor:pointer;transition:opacity .2s;
 }
 .btn-primary:hover{opacity:.85}
@@ -137,7 +206,7 @@ nav{
   content:'';display:inline-block;flex-shrink:0;
   width:9px;height:9px;border-radius:50%;
   border:1.5px solid rgba(0,0,0,.1);
-  border-top-color:rgba(0,0,0,.52);border-right-color:rgba(0,0,0,.28);
+  border-top-color:rgba(0,0,0,.65);border-right-color:rgba(0,0,0,.28);
   animation:eng-spin .65s linear infinite;
 }
 @keyframes eng-spin{to{transform:rotate(360deg)}}
@@ -147,7 +216,7 @@ nav{
 }
 .src-ticker{
   display:block;font-size:11px;
-  color:rgba(0,0,0,.52);letter-spacing:.01em;
+  color:rgba(0,0,0,.65);letter-spacing:.01em;
 }
 .src-ticker.t-enter{animation:t-in .32s cubic-bezier(.4,0,.2,1) both}
 .src-ticker.t-exit{animation:t-out .28s cubic-bezier(.4,0,.2,1) forwards}
@@ -158,6 +227,11 @@ nav{
 .engine-row{margin-top:32px;font-size:11px;line-height:1.9}
 .er-raw{color:var(--bp-muted);font-style:italic;transition:opacity .3s ease;min-height:1.9em}
 .er-clean{color:var(--bp-text);transition:opacity .3s ease;min-height:1.9em}
+@media(max-width:640px){
+  /* Reserve two rows on mobile so the engine row doesn't jump as the
+     typed text wraps past one line. */
+  .er-raw,.er-clean{min-height:3.8em}
+}
 .er-fade{opacity:0}
 
 /* ─── SPLIT PANEL ─── */
@@ -199,7 +273,7 @@ nav{
 .section{padding:120px 0}
 .section-compact{padding:80px 0}
 .section-compact .section-head{margin-bottom:32px}
-.section-dark{background:var(--deep-green);color:var(--white)}
+.section-dark{background:var(--black);color:var(--white)}
 .section-green{background:var(--green);color:var(--black)}
 .section-off{background:var(--off-white)}
 
@@ -218,7 +292,7 @@ nav{
   letter-spacing:-.02em;
 }
 .ey-dot{
-  display:inline-block;width:7px;height:7px;border-radius:50%;
+  display:inline-block;width:7px;height:7px;
   background:#22c55e;margin-right:8px;vertical-align:middle;
   box-shadow:0 0 0 0 rgba(34,197,94,.5);
   animation:ey-pulse 2s ease-in-out infinite;
@@ -241,24 +315,24 @@ nav{
   color:rgba(0,0,0,.55);margin-bottom:32px;display:block;
 }
 .founder-quote{
-  font-size:clamp(19px,2.2vw,26px);font-weight:400;line-height:1.5;
-  letter-spacing:-.01em;color:var(--black);
-  margin-bottom:44px;
+  font-size:15px;font-weight:400;line-height:1.7;
+  color:var(--black);
+  margin-bottom:36px;max-width:620px;
 }
-.founder-quote p + p{margin-top:18px}
+.founder-quote p + p{margin-top:14px}
 .founder-byline{
   display:flex;align-items:center;gap:18px;
   padding-top:28px;border-top:1px solid rgba(0,0,0,.18);
 }
 .founder-photo{
-  width:60px;height:60px;border-radius:50%;
-  background:var(--deep-green);
+  width:60px;height:60px;
+  background:var(--black);
   flex-shrink:0;overflow:hidden;position:relative;
   display:flex;align-items:center;justify-content:center;
 }
 .founder-photo::before{
   content:'MG';
-  color:var(--green);font-size:15px;font-weight:600;letter-spacing:.06em;
+  color:var(--white);font-size:15px;font-weight:600;letter-spacing:.06em;
 }
 .founder-photo img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
@@ -338,7 +412,7 @@ nav{
   font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
   margin-bottom:20px;padding-bottom:10px;display:block;
 }
-.dtv-raw .dtv-label{color:rgba(0,0,0,.45);border-bottom:1px solid rgba(0,0,0,.1)}
+.dtv-raw .dtv-label{color:rgba(0,0,0,.55);border-bottom:1px solid rgba(0,0,0,.1)}
 .dtv-out .dtv-label{color:rgba(255,255,255,.2);border-bottom:1px solid rgba(255,255,255,.08)}
 .dtv-raw .src{
   display:block;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06);color:rgba(0,0,0,.55);
@@ -369,10 +443,11 @@ nav{
 :root{
   --bp-line:rgba(0,0,0,.3);
   --bp-line-soft:rgba(0,0,0,.12);
-  --bp-label:rgba(0,0,0,.42);
-  --bp-text:rgba(0,0,0,.72);
-  --bp-muted:rgba(0,0,0,.35);
-  --bp-active:#2d6a4f;
+  --bp-label:rgba(0,0,0,.55);
+  --bp-text:rgba(0,0,0,.82);
+  --bp-muted:rgba(0,0,0,.55);
+  --bp-active:#0a0a0a;
+  --bp-status:#22c55e;
   --bp-stroke:1px;
 }
 .section-dark{
@@ -381,7 +456,8 @@ nav{
   --bp-label:rgba(255,255,255,.4);
   --bp-text:rgba(255,255,255,.78);
   --bp-muted:rgba(255,255,255,.32);
-  --bp-active:#8ecfbf;
+  --bp-active:#fafafa;
+  --bp-status:#22c55e;
 }
 
 /* ── Panel — the base container ── */
@@ -412,11 +488,11 @@ nav{
   display:inline-block;position:relative;
 }
 .bp-node-active{
-  background:var(--bp-active);border-color:var(--bp-active);
+  background:var(--bp-status);border-color:var(--bp-status);
 }
 .bp-node-active::after{
-  content:'';position:absolute;inset:-5px;border-radius:50%;
-  background:var(--bp-active);opacity:.18;
+  content:'';position:absolute;inset:-5px;
+  background:var(--bp-status);opacity:.22;
   animation:bp-pulse 2.4s ease-in-out infinite;
 }
 @keyframes bp-pulse{
@@ -427,25 +503,30 @@ nav{
 /* ── Row with leader dots ── */
 .bp-row{
   display:grid;grid-template-columns:20px 1fr auto;
-  align-items:center;gap:16px;
+  align-items:start;gap:16px;
   padding:12px 0;
   border-bottom:var(--bp-stroke) dashed var(--bp-line-soft);
   font-size:12px;color:var(--bp-text);
 }
 .bp-row:last-child,
 .bp-row:has(+ .mkt-summary){border-bottom:none}
-.bp-row-label{letter-spacing:.04em}
+.bp-row .bp-node{margin-top:3px}
+.bp-row-label{letter-spacing:.04em;line-height:1.5}
 .bp-row-value{
   font-size:10px;letter-spacing:.14em;text-transform:uppercase;
-  color:var(--bp-muted);
+  color:var(--bp-muted);line-height:1.5;
 }
 .bp-row-active .bp-row-value{color:var(--bp-active)}
 .bp-row-active .bp-row-label{color:var(--bp-text)}
 .bp-row-link{cursor:pointer;transition:background .2s}
-.bp-row-link:hover{background:color-mix(in srgb,var(--bp-active) 6%,transparent)}
+.bp-row-link:hover{background:color-mix(in srgb,var(--bp-active) 4%,transparent)}
+/* Already-active row: hover is a no-op. The green dot + green ACTIVE
+   text already signal the selected state — no need for an extra cue. */
+.bp-row-active.bp-row-link:hover{background:transparent}
 .bp-row-sub{
+  display:block;
   font-size:10px;letter-spacing:.08em;color:var(--bp-muted);
-  margin-left:10px;font-weight:400;
+  margin-left:0;margin-top:2px;font-weight:400;
   transition:color .2s;
 }
 .bp-row-link:hover .bp-row-sub{color:var(--bp-active)}
@@ -521,8 +602,8 @@ nav{
   margin-left:6px;font-size:10.5px;letter-spacing:.04em;
   color:var(--bp-muted);font-variant-numeric:tabular-nums;
 }
-.xfm-delta-down{color:#c75c5c}
-.xfm-delta-up{color:var(--bp-active);opacity:.8}
+.xfm-delta-down{color:#c44a3a}
+.xfm-delta-up{color:#2e7d52}
 .xfm-delta-flat{color:var(--bp-muted)}
 
 .transform-engine{
@@ -640,7 +721,7 @@ nav{
 .lc-img{height:156px;overflow:hidden;background:#e8e8e8}
 .lc-img img{width:100%;height:100%;object-fit:cover;display:block}
 .lc-body{padding:14px 16px 16px}
-.lc-topline{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.35);margin-bottom:10px}
+.lc-topline{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.55);margin-bottom:10px}
 .lc-price{font-size:18px;font-weight:500;letter-spacing:-.01em;color:var(--black);margin-bottom:8px}
 .lc-title{
   font-size:12px;font-weight:400;color:rgba(0,0,0,.6);line-height:1.5;margin-bottom:6px;
@@ -692,45 +773,47 @@ nav{
 .section-dark .lr-idx{color:rgba(255,255,255,.08)}
 
 /* ─── CTA ─── */
-.cta-section{background:var(--green);padding:100px 0}
+.cta-section{background:var(--black);color:var(--white);padding:100px 0 60px}
 .cta-inner{max-width:600px}
 .cta-inner .ey{
   font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
-  color:rgba(0,0,0,.4);margin-bottom:16px;display:block;
+  color:rgba(255,255,255,.55);margin-bottom:16px;display:block;
 }
 .cta-inner h2{
   font-size:clamp(22px,3vw,36px);font-weight:400;line-height:1.15;
   letter-spacing:-.02em;margin-bottom:12px;
 }
-.cta-inner>p{font-size:14px;color:rgba(0,0,0,.5);line-height:1.7;margin-bottom:32px}
+.cta-inner>p{font-size:14px;color:rgba(255,255,255,.7);line-height:1.7;margin-bottom:32px}
 .cta-form{display:flex;flex-direction:column;gap:12px}
 .cta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .cta-form input,.cta-form textarea{
   width:100%;padding:12px 14px;
-  border:1px solid rgba(0,0,0,.15);background:transparent;
-  color:var(--black);font-family:var(--mono);font-size:13px;
+  border:1px solid rgba(255,255,255,.2);background:transparent;
+  color:var(--white);font-family:var(--mono);font-size:13px;
   outline:none;transition:border-color .15s;
 }
-.cta-form input::placeholder,.cta-form textarea::placeholder{color:rgba(0,0,0,.3)}
-.cta-form input:focus,.cta-form textarea:focus{border-color:rgba(0,0,0,.5)}
+.cta-form input::placeholder,.cta-form textarea::placeholder{color:rgba(255,255,255,.4)}
+.cta-form input:focus,.cta-form textarea:focus{border-color:rgba(255,255,255,.6)}
 .cta-form textarea{min-height:100px;resize:vertical}
 .cta-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+.cta-section .btn-outline{background:var(--white);border-color:var(--white);color:var(--black)}
+.cta-section .btn-outline:hover{opacity:.88;background:var(--white);color:var(--black)}
 .cta-feedback{font-size:13px;line-height:1.5}
-.cta-feedback.ok{color:rgba(0,0,0,.7)}
-.cta-feedback.err{color:#c44}
-.cta-micro{margin-top:20px;font-size:12px;color:rgba(0,0,0,.3)}
+.cta-feedback.ok{color:rgba(255,255,255,.75)}
+.cta-feedback.err{color:#ff8a8a}
+.cta-micro{margin-top:20px;font-size:12px;color:rgba(255,255,255,.5)}
 
 /* ─── FOOTER ─── */
-footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
+footer{padding:60px 0 40px;background:var(--white)}
 .footer-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:40px;align-items:start}
-.footer-brand .f-logo{font-size:10px;font-weight:600;letter-spacing:.2em;text-transform:uppercase;margin-bottom:16px;display:block}
+.footer-brand .f-logo{margin-bottom:16px}
 .footer-brand p{font-size:12px;color:var(--gray);line-height:1.7;max-width:280px;margin-bottom:20px}
 .footer-status{
   display:inline-flex;align-items:center;gap:8px;
   font-size:11px;color:var(--gray);font-weight:500;
   padding:6px 14px;border:1px solid var(--rule);
 }
-.footer-status .sd{width:6px;height:6px;border-radius:50%;background:#22c55e}
+.footer-status .sd{width:6px;height:6px;background:#22c55e}
 .footer-col h4{
   font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
   color:var(--gray);margin-bottom:18px;padding-bottom:10px;
@@ -744,6 +827,96 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 }
 .footer-copy{font-size:10px;color:rgba(0,0,0,.25);letter-spacing:.08em;text-transform:uppercase}
 .footer-idx{font-size:clamp(40px,6vw,64px);font-weight:300;color:rgba(0,0,0,.06);line-height:1}
+
+/* ─── SURFACES GRID ─── */
+.surfaces-grid{
+  display:grid;grid-template-columns:1fr 1fr 1fr;gap:0;
+  border:1px solid var(--rule);
+}
+.surf-card{
+  background:var(--white);
+  border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;
+}
+.surf-card:last-child{border-right:none}
+
+/* Icon block */
+.surf-icon-block{
+  height:136px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.surf-icon-block svg{width:44px;height:44px;fill:none;stroke-linecap:square;stroke-linejoin:miter;}
+.surf-icon-01{background:var(--off-white)}
+.surf-icon-02{background:var(--off-white)}
+.surf-icon-03{background:var(--off-white)}
+.surf-icon-03 svg{stroke:var(--black)}
+
+/* Content */
+.surf-content{padding:24px 26px 28px;display:flex;flex-direction:column;flex:1}
+.surf-eyebrow{
+  display:flex;justify-content:space-between;align-items:center;
+  margin-bottom:14px;
+}
+.surf-num{font-size:10px;font-weight:600;letter-spacing:.18em;color:rgba(0,0,0,.22)}
+.surf-tag{
+  font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
+  padding:3px 8px;border:1px solid;
+}
+.surf-tag-free{color:rgba(0,0,0,.38);border-color:rgba(0,0,0,.14)}
+.surf-tag-freemium{color:rgba(0,0,0,.5);border-color:rgba(0,0,0,.2)}
+.surf-tag-paid{background:var(--black);color:var(--white);border-color:var(--black)}
+.surf-name{
+  font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:10px;color:var(--black);
+}
+.surf-tagline{
+  font-size:13px;font-weight:400;line-height:1.6;
+  color:rgba(0,0,0,.55);margin-bottom:22px;flex:1;
+}
+
+/* Fact rows — label and value on same baseline */
+.surf-facts{margin-top:auto;border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-direction:column;gap:0}
+.surf-fact{
+  display:grid;grid-template-columns:64px 1fr;align-items:baseline;gap:12px;
+  padding:10px 0;border-bottom:1px dashed var(--rule);font-size:12px;
+  min-height:56px;box-sizing:border-box;
+}
+.surf-fact:last-child{border-bottom:none}
+.surf-fact-key{
+  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gray);
+}
+.surf-fact-val{color:rgba(0,0,0,.78);line-height:1.5}
+
+/* Card 03 — dark */
+.surf-card-dark{background:var(--black)}
+.surf-card-dark .surf-content{color:var(--white)}
+.surf-card-dark .surf-num{color:rgba(255,255,255,.25)}
+.surf-card-dark .surf-name{color:var(--white)}
+.surf-card-dark .surf-tagline{color:rgba(255,255,255,.5)}
+.surf-card-dark .surf-facts{border-top-color:rgba(255,255,255,.1)}
+.surf-card-dark .surf-fact{border-bottom-color:rgba(255,255,255,.08)}
+.surf-card-dark .surf-fact-key{color:rgba(255,255,255,.28)}
+.surf-card-dark .surf-fact-val{color:rgba(255,255,255,.58)}
+
+/* ─── BROKER CTA ─── */
+.broker-cta{
+  margin-top:32px;padding:24px 28px;
+  border:1px solid var(--rule);
+  display:flex;align-items:center;justify-content:space-between;
+  gap:24px;flex-wrap:wrap;
+}
+.broker-cta-text{font-size:13px;color:rgba(0,0,0,.58);line-height:1.6;max-width:460px}
+.broker-cta-text strong{font-weight:600;color:rgba(0,0,0,.82);display:block;margin-bottom:4px}
+
+/* ─── RESPONSIVE ─── */
+@media(max-width:860px){
+  .surfaces-grid{grid-template-columns:1fr}
+  .surf-card{border-right:none;border-bottom:1px solid var(--rule)}
+  .surf-card-dark{border-bottom:none}
+  .surf-icon-block{height:110px}
+  .broker-cta{flex-direction:column;align-items:flex-start}
+}
 
 /* ─── RESPONSIVE ─── */
 @media(max-width:860px){
@@ -778,8 +951,10 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   .section-head{flex-direction:column}
   .next-grid{grid-template-columns:1fr;gap:48px}
 }
-@media(max-width:560px){
+@media(max-width:720px){
   .nav-a{display:none}
+}
+@media(max-width:560px){
   nav{padding:12px 0}
   .nav-inner{padding:0 16px}
   .wrap{padding:0 16px}
@@ -837,7 +1012,20 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 <nav>
   <div class="nav-inner">
-    <a class="logo" href="#top">Africa Real Estate Index</a>
+    <a class="lk-compact lk-nav" href="#top" aria-label="Africa Real Estate Index — home">
+      <svg class="brand-mark" width="22" height="22" viewBox="0 0 24 24" fill="none"
+           stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true">
+        <rect x="3"   y="3"   width="14" height="14"/>
+        <rect x="6.5" y="6.5" width="14" height="14"/>
+        <rect x="10"  y="10"  width="9"  height="9" fill="currentColor" stroke="none"/>
+      </svg>
+      <span class="lk-text">Africa<span class="lk-desc">Real Estate Index</span></span>
+      <span class="lk-text-mobile" aria-hidden="true">
+        <span class="lk-m1">Africa</span>
+        <span class="lk-m2">Real Estate</span>
+        <span class="lk-m3">Index</span>
+      </span>
+    </a>
     <div class="nav-links">
       <a class="nav-a" href="#opportunity">Gap</a>
       <a class="nav-a" href="#benchmarks">Markets</a>
@@ -855,7 +1043,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       <h1>Africa's property data is everywhere. We bring it together.</h1>
       <p class="hero-sub">We pull them together, clean them up, and make them searchable. Starting with Cape Verde.</p>
       <div class="hero-ctas">
-        <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-primary">Visit KazaVerde [&rarr;]</a>
+        <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-primary">View Cape Verde Index [&rarr;]</a>
         <a href="#contact" class="btn-secondary">Investor enquiry &rarr;</a>
       </div>
     </div>
@@ -865,7 +1053,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 1. THE GAP ═══ -->
-<section class="section" id="opportunity">
+<section class="section section-off" id="opportunity">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -885,7 +1073,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 2. OPPORTUNITY SCALE ═══ -->
-<section class="section section-off" id="benchmarks">
+<section class="section" id="benchmarks">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -943,7 +1131,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 3. THE ENGINE ═══ -->
-<section class="section section-dark section-compact">
+<section class="section section-off section-compact">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -960,14 +1148,138 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 </section>
 
 
+<!-- ═══ 3b. THREE SURFACES ═══ -->
+<section class="section" id="surfaces">
+  <div class="wrap">
+    <div class="section-head rv">
+      <div class="section-head-left">
+        <span class="ey">The Model</span>
+        <h2>Three surfaces, one engine.</h2>
+        <p>The same structured data layer powers public transparency, data acquisition, and professional intelligence. Each surface serves a distinct role in the market ecosystem.</p>
+      </div>
+    </div>
+    <div class="surfaces-grid rv">
+
+      <!-- 01 Public Index Surface -->
+      <div class="surf-card">
+        <div class="surf-icon-block surf-icon-01">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="currentColor" stroke-width="1.4">
+            <!-- Index table: outer frame + column divider + data rows -->
+            <rect x="6" y="6" width="32" height="32"/>
+            <line x1="6"  y1="17" x2="38" y2="17"/>
+            <line x1="6"  y1="27" x2="38" y2="27"/>
+            <line x1="17" y1="6"  x2="17" y2="38"/>
+            <line x1="11" y1="22" x2="14" y2="22"/>
+            <line x1="11" y1="32" x2="14" y2="32"/>
+          </svg>
+        </div>
+        <div class="surf-content">
+          <div class="surf-eyebrow">
+            <span class="surf-num">01</span>
+            <span class="surf-tag surf-tag-free">Free</span>
+          </div>
+          <h3 class="surf-name">Public Index Surface</h3>
+          <p class="surf-tagline">Country-level market data and methodology, open to the public. The authority layer.</p>
+          <div class="surf-facts">
+            <div class="surf-fact">
+              <span class="surf-fact-key">For</span>
+              <span class="surf-fact-val">Public, investors, media, researchers</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Includes</span>
+              <span class="surf-fact-val">Index pages, listings, monthly signal, methodology</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Role</span>
+              <span class="surf-fact-val">SEO authority, top of funnel</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 02 Broker Tools -->
+      <div class="surf-card">
+        <div class="surf-icon-block surf-icon-02">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--black)" stroke-width="1.4">
+            <!-- Listing submission: card + upload arrow -->
+            <rect x="8" y="18" width="22" height="18"/>
+            <rect x="14" y="12" width="22" height="18"/>
+            <line x1="19" y1="8"  x2="19" y2="18"/>
+            <polyline points="14,13 19,8 24,13"/>
+          </svg>
+        </div>
+        <div class="surf-content">
+          <div class="surf-eyebrow">
+            <span class="surf-num">02</span>
+            <span class="surf-tag surf-tag-freemium">Free / Paid</span>
+          </div>
+          <h3 class="surf-name">Broker Tools</h3>
+          <p class="surf-tagline">Submission, validation, and performance tools for brokers active in covered markets.</p>
+          <div class="surf-facts">
+            <div class="surf-fact">
+              <span class="surf-fact-key">For</span>
+              <span class="surf-fact-val">Licensed brokers and agents</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Includes</span>
+              <span class="surf-fact-val">Listing submission, AI validation, leads, benchmark</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Role</span>
+              <span class="surf-fact-val">Data acquisition. Brokers get international reach.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 03 Intelligence Layer -->
+      <div class="surf-card">
+        <div class="surf-icon-block surf-icon-03">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--black)" stroke-width="1.4">
+            <!-- Trend chart: axes + rising line + terminal dot -->
+            <line x1="8" y1="36" x2="38" y2="36"/>
+            <line x1="8" y1="8"  x2="8"  y2="36"/>
+            <polyline points="10,30 17,22 24,25 34,11"/>
+            <circle cx="34" cy="11" r="2.5" fill="var(--black)" stroke="none"/>
+          </svg>
+        </div>
+        <div class="surf-content">
+          <div class="surf-eyebrow">
+            <span class="surf-num">03</span>
+            <span class="surf-tag surf-tag-paid">Paid</span>
+          </div>
+          <h3 class="surf-name">Intelligence Layer</h3>
+          <p class="surf-tagline">Decision-grade analysis for professional and institutional use. The revenue surface.</p>
+          <div class="surf-facts">
+            <div class="surf-fact">
+              <span class="surf-fact-key">For</span>
+              <span class="surf-fact-val">Asset managers, developers, analysts</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Includes</span>
+              <span class="surf-fact-val">Screener, confidence scoring, briefings, API, dashboards</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Role</span>
+              <span class="surf-fact-val">Revenue. Intelligence for decision-grade analysis.</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+
 <!-- ═══ 4. LIVE PROOF ═══ -->
 <section class="section section-off" id="proof">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
         <span class="ey"><span class="ey-dot"></span>Live</span>
-        <h2>KazaVerde is the first product built on the engine.</h2>
-        <p>Every listing aggregated, cleaned, and published automatically.</p>
+        <h2>Cape Verde Real Estate Index is Market 01.</h2>
+        <p>Listing-based market data — monitored asking-price listings, source coverage, verification status, published methodology. Aggregated, cleaned, and published automatically.</p>
+        <p style="font-size:11px;color:var(--gray);margin-top:10px;letter-spacing:.04em">Based on monitored asking-price listings. Not transaction prices or valuations.</p>
       </div>
     </div>
     <div class="lc-track rv" id="lc-track">
@@ -997,7 +1309,16 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       </div>
     </div>
     <div class="proof-cta rv">
-      <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-outline">Visit KazaVerde [&rarr;]</a>
+      <a href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer" class="btn-outline">View Cape Verde Index [&rarr;]</a>
+    </div>
+
+
+    <div class="broker-cta rv">
+      <div class="broker-cta-text">
+        <strong>Are you a broker in Cape Verde?</strong>
+        Join the index surface and receive international visibility for your listings.
+      </div>
+      <a href="#contact" class="btn-outline">Broker pilot enquiry [&rarr;]</a>
     </div>
   </div>
 </section>
@@ -1020,28 +1341,28 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
         </div>
         <a class="bp-row bp-row-active bp-row-link" href="https://www.kazaverde.com" target="_blank" rel="noopener noreferrer">
           <span class="bp-node bp-node-active"></span>
-          <span class="bp-row-label">Cape Verde <span class="bp-row-sub">&rarr; KazaVerde</span></span>
+          <span class="bp-row-label">Market 01 <span class="bp-row-sub">&rarr; Cape Verde &middot; Live</span></span>
           <span class="bp-row-value">Active</span>
         </a>
         <div class="bp-row">
           <span class="bp-node"></span>
-          <span class="bp-row-label">Market 02</span>
-          <span class="bp-row-value">In research</span>
+          <span class="bp-row-label">Market 02 <span class="bp-row-sub">Ghana &middot; Selected &middot; 2027</span></span>
+          <span class="bp-row-value">Selected</span>
         </div>
         <div class="bp-row">
           <span class="bp-node"></span>
-          <span class="bp-row-label">Market 03</span>
-          <span class="bp-row-value">In research</span>
+          <span class="bp-row-label">Market 03 <span class="bp-row-sub">Nigeria</span></span>
+          <span class="bp-row-value">Research</span>
         </div>
         <div class="bp-row">
           <span class="bp-node"></span>
-          <span class="bp-row-label">Market 04</span>
-          <span class="bp-row-value">Planned</span>
+          <span class="bp-row-label">Market 04 <span class="bp-row-sub">Morocco</span></span>
+          <span class="bp-row-value">Research</span>
         </div>
         <div class="bp-row">
           <span class="bp-node"></span>
-          <span class="bp-row-label">Market 05</span>
-          <span class="bp-row-value">Planned</span>
+          <span class="bp-row-label">Market 05 <span class="bp-row-sub">Senegal &middot; Kenya</span></span>
+          <span class="bp-row-value">Research</span>
         </div>
         <div class="mkt-summary">
           <span>Coverage &middot; 01 / 54</span>
@@ -1059,9 +1380,8 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
     <div class="founder rv">
       <span class="ey">From the founder</span>
       <blockquote class="founder-quote">
-        <p>&ldquo;I came to this market as an investor. Cape Verde was where I started, and even after repeated trips, the market remained difficult to read.</p>
-        <p>The opportunity was visible. The structure was not. Inventory was spread across brokers and local sites, with no consistent data layer to compare opportunities or evaluate them with confidence.</p>
-        <p>That is the gap Africa Real Estate Index exists to close.&rdquo;</p>
+        <p>&ldquo;Africa&rsquo;s real estate market isn&rsquo;t lacking value &mdash; it&rsquo;s lacking structure. The data exists, but no one has normalized it, scored it, or published it with a methodology you can cite.</p>
+        <p>AREI is the infrastructure layer that turns fragmented listings into investable market signal.&rdquo;</p>
       </blockquote>
       <div class="founder-byline">
         <div class="founder-photo">
@@ -1113,13 +1433,21 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   <div class="wrap">
     <div class="footer-grid">
       <div class="footer-brand">
-        <span class="f-logo">Africa Real Estate Index</span>
+        <span class="lk-compact f-logo" style="margin-bottom:16px" aria-label="Africa Real Estate Index">
+          <svg class="brand-mark" width="22" height="22" viewBox="0 0 24 24" fill="none"
+               stroke="currentColor" stroke-width="1.4" stroke-linecap="square" aria-hidden="true">
+            <rect x="3"   y="3"   width="14" height="14"/>
+            <rect x="6.5" y="6.5" width="14" height="14"/>
+            <rect x="10"  y="10"  width="9"  height="9" fill="currentColor" stroke="none"/>
+          </svg>
+          <span>Africa<span class="lk-desc">Real Estate Index</span></span>
+        </span>
         <p>Data acquisition and intelligence infrastructure for African property markets.</p>
         <div class="footer-status"><span class="sd"></span> Systems operational</div>
       </div>
       <div class="footer-col">
         <h4>Explore</h4>
-        <a href="https://kazaverde.com" target="_blank" rel="noopener noreferrer">KazaVerde</a>
+        <a href="https://kazaverde.com" target="_blank" rel="noopener noreferrer">Cape Verde Index</a>
         <a href="#proof">Live</a>
         <a href="#model">What's Next</a>
         <a href="mailto:hello@africarealestateindex.com">Contact</a>
@@ -1132,7 +1460,6 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
     </div>
     <div class="footer-bottom">
       <span class="footer-copy">&copy; 2026 Africa Real Estate Index</span>
-      <span class="footer-idx">001</span>
     </div>
   </div>
 </footer>

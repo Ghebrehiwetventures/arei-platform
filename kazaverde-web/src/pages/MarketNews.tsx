@@ -41,7 +41,7 @@ function sortNews(a: MarketNewsItem, b: MarketNewsItem): number {
 }
 
 export default function MarketNews() {
-  useDocumentMeta("Cape Verde Market News — AREI", MARKET_NEWS_DESCRIPTION);
+  useDocumentMeta("Cape Verde Market News", MARKET_NEWS_DESCRIPTION);
 
   const { items, loading, error } = useMarketNews();
 

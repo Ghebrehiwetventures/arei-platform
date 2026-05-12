@@ -9,6 +9,8 @@
   background: var(--kv-green);
   font-family: var(--kv-mono);
   color: var(--kv-black);
+  /* Flat header — no fade-in animation, no shadow, no blur,
+     no hairline. The sage bar separates itself from page content. */
 }
 
 .nav-inner {
@@ -24,7 +26,6 @@
 .logo {
   font-family: var(--kv-mono);
   font-size: 10px;
-  font-weight: 600;
   letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--kv-black);
@@ -71,8 +72,9 @@
 
 @media (max-width: 560px) {
   /* Three-line lockup needs more vertical room than the desktop
-     52px nav can offer. Pad the nav element itself so the lockup
-     breathes. Effective nav height becomes ~76px on narrow viewports. */
+     52px nav can offer. Match arei-landing: pad the nav element
+     itself so the lockup breathes around the 52px nav-inner.
+     Effective nav height becomes ~76px on narrow viewports. */
   .nav { padding: 12px 0; }
   .lk-nav { gap: 8px; align-items: center; }
   .lk-nav .brand-mark { width: 30px; height: 30px; }

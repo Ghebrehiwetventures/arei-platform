@@ -35,7 +35,7 @@ export default function Navbar() {
   ];
 
   return (
-    <nav className="nav anim-fd">
+    <nav className="nav">
       <div className="nav-inner">
         <a
           className="logo lk-compact lk-nav"

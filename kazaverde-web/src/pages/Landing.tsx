@@ -156,8 +156,8 @@ function categoryLabel(cat: string): string {
 
 export default function Landing() {
   useDocumentMeta(
-    "AREI — Cape Verde Real Estate",
-    "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with AREI.",
+    "Cape Verde Real Estate Index",
+    "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with the Cape Verde Real Estate Index, published by AREI.",
   );
 
   /* Inject homepage JSON-LD: Organization + WebSite. FAQPage lives on
@@ -165,24 +165,24 @@ export default function Landing() {
      visible page content. */
   useEffect(() => {
     const origin =
-      typeof window !== "undefined" ? window.location.origin : "https://www.africarealestateindex.com";
+      typeof window !== "undefined" ? window.location.origin : "https://capeverderealestateindex.com";
     const data = {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "Organization",
           "@id": `${origin}/#organization`,
-          name: "AREI",
+          name: "Cape Verde Real Estate Index",
           url: origin,
           logo: `${origin}/og-default.png`,
           description:
-            "AREI is an independent property search and data platform for Cape Verde real estate. It is not a broker or agency.",
+            "Cape Verde Real Estate Index is an independent property search and data platform for Cape Verde real estate, published by AREI. It is not a broker or agency.",
         },
         {
           "@type": "WebSite",
           "@id": `${origin}/#website`,
           url: origin,
-          name: "AREI",
+          name: "Cape Verde Real Estate Index",
           description:
             "Search Cape Verde real estate listings aggregated from local agencies, portals and property websites.",
           publisher: { "@id": `${origin}/#organization` },

@@ -16,23 +16,15 @@ import {
   type LatestSyncLog,
 } from "./data";
 
-const SYNC_STALE_MINUTES = 24 * 60 * 3; // 3 days
 const SOURCE_STALE_DAYS = 30;
 
 // The only market currently in production. Other markets present in the
 // database (gh, ke, ng, zm, bw…) are test pipeline / legacy and must not
 // dominate operational health signals.
 const ACTIVE_MARKET_ID = "cv";
-const ACTIVE_MARKET_LABEL = "Cape Verde";
 
 function isActiveMarket(marketId: string): boolean {
   return marketId === ACTIVE_MARKET_ID;
-}
-
-/** Cap a list of names for display, returning "A, B, C +N more". */
-function formatSourceList(names: string[], cap = 5): string {
-  if (names.length <= cap) return names.join(", ");
-  return `${names.slice(0, cap).join(", ")} +${names.length - cap} more`;
 }
 
 /** RFC-4180-ish CSV value escape: quote fields containing comma, quote, or
@@ -93,6 +85,34 @@ function useTheme() {
 import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
 import { supabaseAuth } from "./supabase";
 import { PropertyChatLabView } from "./PropertyChatLab";
+import { SourceHealthReport, buildReportHtml, loadSnapshots, saveSnapshot, summarize, SourceSnapshot } from "./sourceHealthReport";
+import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, STATUS_LABEL } from "./marketContext";
+
+// ============================================
+// D · LAYERS MARK — AREI brand mark (SVG)
+// ============================================
+
+function DLayersMark({ size = 32 }: { size?: number }) {
+  return (
+    <svg
+      width={size}
+      height={size}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-label="AREI D·Layers mark"
+      stroke="currentColor"
+      strokeWidth="1.4"
+      strokeLinecap="square"
+    >
+      {/* Canonical geometry: docs/brand/assets/d-layers-mark.svg
+          Source: AREI Brand Guidelines v1.0. Do not redraw from memory. */}
+      <rect x="3"   y="3"   width="14" height="14" />
+      <rect x="6.5" y="6.5" width="14" height="14" />
+      <rect x="10"  y="10"  width="9"  height="9"  fill="currentColor" stroke="none" />
+    </svg>
+  );
+}
 
 // ============================================
 // IMAGE GALLERY — arrows on hover, dot navigation
@@ -283,7 +303,7 @@ function StatusBadge({ status }: { status: SourceStatus }) {
     PAUSED_BY_SYSTEM: "bg-amber-muted text-amber",
   };
   return (
-    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded-md ${classes[status] ?? "bg-surface-3 text-foreground-muted"}`}>
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded ${classes[status] ?? "bg-surface-3 text-foreground-muted"}`}>
       {status}
     </span>
   );
@@ -296,7 +316,7 @@ function RunPhaseBadge({ latestSync }: { latestSync: LatestSyncLog }) {
     : "bg-amber-muted text-amber";
 
   return (
-    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded-md ${classes}`}>
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded ${classes}`}>
       {latestSync.phaseLabel}
     </span>
   );
@@ -360,7 +380,7 @@ function GradeBadge({ grade }: { grade: "A" | "B" | "C" | "D" }) {
     D: "bg-red-muted text-red",
   };
   return (
-    <span className={`inline-flex items-center justify-center w-7 h-6 text-xs font-semibold rounded-md ${classes[grade] ?? "bg-surface-3 text-foreground-muted"}`}>
+    <span className={`inline-flex items-center justify-center w-7 h-6 text-xs font-mono font-semibold rounded ${classes[grade] ?? "bg-surface-3 text-foreground-muted"}`}>
       {grade}
     </span>
   );
@@ -381,7 +401,7 @@ function DraftStatusBadge({ status }: { status: ContentDraftStatus }) {
   };
 
   return (
-    <span className={`inline-block px-2.5 py-1 text-[11px] font-medium rounded-md ${classes[status]}`}>
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded ${classes[status]}`}>
       {labels[status]}
     </span>
   );
@@ -447,7 +467,7 @@ function AgentsApprovalsView() {
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Content Drafts
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -458,25 +478,25 @@ function AgentsApprovalsView() {
           type="button"
           onClick={handleGenerate}
           disabled={generating}
-          className="px-5 py-2.5 text-sm font-medium rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
+          className="px-5 py-2.5 text-sm font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
         >
           {generating ? "Generating…" : "Generate drafts"}
         </button>
       </div>
 
       {/* ── Stats row ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 sm:gap-4">
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Total drafts</div>
-          <div className="text-3xl font-bold tabular-nums tracking-tight">{drafts.length}</div>
+      <div className="grid grid-cols-3 gap-2 sm:gap-4">
+        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Total drafts</div>
+          <div className="text-xl sm:text-3xl font-bold tabular-nums tracking-tight font-mono">{drafts.length}</div>
         </div>
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Pending</div>
-          <div className="text-3xl font-bold text-amber tabular-nums tracking-tight">{pendingCount}</div>
+        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Pending</div>
+          <div className="text-xl sm:text-3xl font-bold text-amber tabular-nums tracking-tight font-mono">{pendingCount}</div>
         </div>
-        <div className="surface-1 rounded-xl p-5 border border-border shadow-sm">
-          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-3">Publishing</div>
-          <div className="text-sm font-medium text-foreground-muted mt-1">Manual only</div>
+        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
+          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Publishing</div>
+          <div className="text-xs sm:text-sm font-medium text-foreground-muted mt-0.5 sm:mt-1">Manual only</div>
         </div>
       </div>
 
@@ -487,7 +507,7 @@ function AgentsApprovalsView() {
           <select
             value={typeFilter}
             onChange={(e) => setTypeFilter(e.target.value as "all" | "content_draft")}
-            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded-lg"
+            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded"
           >
             <option value="content_draft">Content drafts</option>
             <option value="all">All items</option>
@@ -498,7 +518,7 @@ function AgentsApprovalsView() {
           <select
             value={statusFilter}
             onChange={(e) => setStatusFilter(e.target.value as ContentDraftStatus | "all")}
-            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded-lg"
+            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded"
           >
             <option value="all">All</option>
             <option value="pending">Pending</option>
@@ -513,11 +533,11 @@ function AgentsApprovalsView() {
       {loading && <p className="text-foreground-muted text-sm py-8">Loading drafts…</p>}
 
       {!loading && filteredDrafts.length === 0 && (
-        <div className="surface-1 rounded-xl border border-border border-dashed p-14 text-center">
+        <div className="surface-1 rounded border border-border border-dashed p-14 text-center">
           <div className="w-12 h-12 rounded-full bg-accent-muted flex items-center justify-center mx-auto mb-4">
             <span className="text-accent text-lg">◉</span>
           </div>
-          <h3 className="text-base font-semibold text-foreground mb-1.5">No drafts yet</h3>
+          <h3 className="text-base font-semibold text-foreground font-mono mb-1.5">No drafts yet</h3>
           <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
             Generate drafts to pull candidates from live listings. Each draft goes through review before anything is published.
           </p>
@@ -525,14 +545,14 @@ function AgentsApprovalsView() {
             type="button"
             onClick={handleGenerate}
             disabled={generating}
-            className="mt-5 px-5 py-2.5 text-sm font-medium rounded-lg bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
+            className="mt-5 px-5 py-2.5 text-sm font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
           >
             {generating ? "Generating…" : "Generate drafts"}
           </button>
         </div>
       )}
 
-      <div className="surface-1 rounded-xl border border-border overflow-hidden divide-y divide-border">
+      <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
         {filteredDrafts.map((draft) => {
           const isExpanded = expandedIds.has(draft.id);
           return (
@@ -633,7 +653,7 @@ function AgentsApprovalsView() {
                     <button
                       type="button"
                       onClick={() => handleStatusUpdate(draft.id, "revision_requested")}
-                      className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+                      className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
                     >
                       Request revision
                     </button>
@@ -657,23 +677,6 @@ const GITHUB_ACTIONS_URL = import.meta.env.VITE_GITHUB_ACTIONS_URL ?? "";
 
 type SourceQualitySortKey = "sourceName" | "marketId" | "listing_count" | "approved_pct" | "with_image_pct" | "with_price_pct" | "grade";
 
-function FlagGroup({ tone, title, message }: { tone: "bad" | "warn" | "muted"; title: string; message: string }) {
-  const cls =
-    tone === "bad"
-      ? "bg-red-muted"
-      : tone === "warn"
-        ? "bg-amber-muted"
-        : "bg-surface-2";
-  const titleCls =
-    tone === "bad" ? "text-red font-medium" : tone === "warn" ? "text-amber font-medium" : "text-foreground-subtle font-medium";
-  return (
-    <div className={`rounded-lg p-3 text-sm ${cls}`}>
-      <div className={titleCls}>{title}</div>
-      <div className="text-foreground-muted mt-0.5">{message}</div>
-    </div>
-  );
-}
-
 function SourceHealthStat({ label, value, tone }: { label: string; value: number; tone?: "good" | "warn" | "bad" }) {
   const toneClass =
     tone === "bad"
@@ -685,13 +688,16 @@ function SourceHealthStat({ label, value, tone }: { label: string; value: number
           : "text-foreground";
   return (
     <div>
-      <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1.5">{label}</div>
+      <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1.5 min-h-[2.5em] flex items-end">{label}</div>
       <div className={`text-2xl font-semibold tabular-nums font-mono ${toneClass}`}>{value}</div>
     </div>
   );
 }
 
 function DashboardView() {
+  const { selected: selectedMarket } = useSelectedMarket();
+  const selectedMarketId = selectedMarket.id;
+  const selectedMarketLabel = selectedMarket.name;
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
@@ -741,10 +747,10 @@ function DashboardView() {
 
   const approvedPct = stats.totalListings > 0 ? Math.round((100 * stats.approvedCount) / stats.totalListings) : 0;
 
-  // ── Source Health (active market only) ─────────────────────────────────────
-  // Only Cape Verde is in production. Counting non-active markets here would
-  // swamp the operator with test-pipeline noise.
-  const healthRows = stats.sourceRows.filter((r) => isActiveMarket(r.marketId));
+  // ── Pipeline Health (selected market only) ────────────────────────────────
+  // Scoped to the operator's chosen market. Non-selected markets stay out of
+  // every summary card, issue list, and attention pill on this view.
+  const healthRows = stats.sourceRows.filter((r) => r.marketId === selectedMarketId && !r.isStub);
   const totalSources = healthRows.length;
   const freshSources = healthRows.filter((r) => {
     const f = formatFreshness(r.last_updated_at);
@@ -775,11 +781,11 @@ function DashboardView() {
   // Top 3 issues to highlight, in priority order
   type HealthIssue = { label: string; count: number; tone: "bad" | "warn" };
   const allIssues: HealthIssue[] = [
-    { label: "approved → 0 public feed", count: approvedNoFeedSources, tone: "bad" },
-    { label: "approved → 0 trust pass", count: approvedNoTrustSources, tone: "bad" },
+    { label: "ingest-approved → 0 live feed", count: approvedNoFeedSources, tone: "bad" },
+    { label: "ingest-approved → 0 trust pass", count: approvedNoTrustSources, tone: "bad" },
     { label: "stale (>30d)", count: staleSourcesCount, tone: "warn" },
     { label: "0% sqm coverage", count: missingSqmSources, tone: "warn" },
-    { label: "low feed conversion (<25%)", count: lowFeedConvSources, tone: "warn" },
+    { label: "low ingest→feed ratio (<25%)", count: lowFeedConvSources, tone: "warn" },
   ];
   const topIssues = allIssues.filter((i) => i.count > 0).slice(0, 3);
 
@@ -829,55 +835,66 @@ function DashboardView() {
   return (
     <div className="space-y-8">
       {/* ── Page header ─────────────────────────────────────────── */}
-      <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
-          Dashboard
-        </h1>
-        <p className="text-sm text-foreground-muted mt-1">
-          Data quality overview and source health
-        </p>
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
+            Dashboard
+          </h1>
+          <p className="text-sm text-foreground-muted mt-1">
+            Pipeline health and ingest quality
+          </p>
+          <p className="text-xs text-foreground-subtle mt-0.5">
+            Measures scraper/source quality from raw ingest data. Not the same as live published inventory.
+          </p>
+        </div>
+        <MarketSelector />
       </div>
 
-      {/* ── Cape Verde health pill ──────────────────────────────── */}
+      {selectedMarket.status !== "active" && healthRows.length === 0 ? (
+        <PipelineEmptyState market={selectedMarket} />
+      ) : (
+      <>
+      {/* ── Selected-market health pill ─────────────────────────── */}
       <div className="flex flex-wrap items-center gap-2.5">
-        <span className="text-xs text-foreground-muted">{ACTIVE_MARKET_LABEL} health:</span>
+        <span className="text-xs text-foreground-muted">{selectedMarketLabel} health:</span>
         <span
           className={
-            "text-xs font-medium px-2.5 py-1 rounded-md " +
+            "text-[10px] font-mono font-medium px-2 py-0.5 rounded uppercase tracking-wider " +
             (cvHasCriticalIssue ? "bg-amber-muted text-amber" : "bg-green-muted text-green")
           }
         >
           {cvStatusLabel}
         </span>
         <span className="text-xs text-foreground-subtle">
-          other markets are test pipeline · see Sources tab
+          {STATUS_LABEL[selectedMarket.status]} market — change the dropdown above for portfolio context.
         </span>
       </div>
 
-      {/* ── Cape Verde source health (PRIMARY) ──────────────────── */}
-      <section className="surface-1 rounded-xl border border-border p-5">
+      {/* ── Selected-market pipeline health (PRIMARY) ───────────── */}
+      <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground">{ACTIVE_MARKET_LABEL} source health</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">{selectedMarketLabel} pipeline health</h2>
         </div>
-        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-4">
-          <SourceHealthStat label={`${ACTIVE_MARKET_LABEL} sources`} value={totalSources} />
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
+          <SourceHealthStat label={`${selectedMarketLabel} sources`} value={totalSources} />
+          <SourceHealthStat label="Live feed" value={healthRows.reduce((acc: number, r: SourceQualityRow) => acc + r.public_feed_count_n, 0)} tone="good" />
           <SourceHealthStat label="Fresh (≤30d)" value={freshSources} tone={totalSources > 0 && freshSources === totalSources ? "good" : undefined} />
           <SourceHealthStat label="Stale (>30d)" value={staleSourcesCount} tone={staleSourcesCount > 0 ? "warn" : "good"} />
           <SourceHealthStat label="Missing sqm" value={missingSqmSources} tone={missingSqmSources > 0 ? "warn" : "good"} />
-          <SourceHealthStat label="Approved · 0 feed" value={approvedNoFeedSources} tone={approvedNoFeedSources > 0 ? "bad" : "good"} />
-          <SourceHealthStat label="Low feed conv" value={lowFeedConvSources} tone={lowFeedConvSources > 0 ? "warn" : "good"} />
+          <SourceHealthStat label="0 live feed" value={approvedNoFeedSources} tone={approvedNoFeedSources > 0 ? "bad" : "good"} />
+          <SourceHealthStat label="Ratio <25%" value={lowFeedConvSources} tone={lowFeedConvSources > 0 ? "warn" : "good"} />
         </div>
         {topIssues.length > 0 && (
           <div className="mt-4 pt-4 border-t border-border">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Top issues to address</div>
             <ol className="space-y-1 text-sm">
               {topIssues.map((iss, i) => (
-                <li key={iss.label} className="flex gap-2 items-baseline">
-                  <span className="text-foreground-subtle tabular-nums">{i + 1}.</span>
-                  <span className={iss.tone === "bad" ? "text-red font-medium" : "text-amber font-medium"}>
+                <li key={iss.label} className="flex gap-2 items-baseline min-w-0">
+                  <span className="shrink-0 text-foreground-subtle tabular-nums">{i + 1}.</span>
+                  <span className={`shrink-0 ${iss.tone === "bad" ? "text-red font-medium" : "text-amber font-medium"}`}>
                     {iss.count}
                   </span>
-                  <span className="text-foreground-muted">{iss.label}</span>
+                  <span className="text-foreground-muted break-words min-w-0">{iss.label}</span>
                 </li>
               ))}
             </ol>
@@ -888,17 +905,17 @@ function DashboardView() {
       {(cvWorst.length > 0 || cvBest.length > 0) && (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {cvWorst.length > 0 && (
-            <div className="rounded-lg p-4 border border-border bg-amber-muted">
-              <div className="text-xs font-medium text-amber mb-2">Needs attention · {ACTIVE_MARKET_LABEL}</div>
-              <p className="text-sm text-foreground">
+            <div className="rounded p-4 border border-border border-l-2 border-l-amber bg-surface-1 min-w-0">
+              <div className="text-[10px] font-mono font-medium text-amber uppercase tracking-wider mb-2">Needs attention · {selectedMarketLabel}</div>
+              <p className="text-sm text-foreground break-words leading-relaxed">
                 {cvWorst.map((r) => r.sourceName).join(", ")}
               </p>
             </div>
           )}
           {cvBest.length > 0 && (
-            <div className="rounded-lg p-4 border border-border bg-green-muted">
-              <div className="text-xs font-medium text-green mb-2">Performing well · {ACTIVE_MARKET_LABEL}</div>
-              <p className="text-sm text-foreground">
+            <div className="rounded p-4 border border-border border-l-2 border-l-green bg-surface-1 min-w-0">
+              <div className="text-[10px] font-mono font-medium text-green uppercase tracking-wider mb-2">Performing well · {selectedMarketLabel}</div>
+              <p className="text-sm text-foreground break-words leading-relaxed">
                 {cvBest.map((r) => r.sourceName).join(", ")}
               </p>
             </div>
@@ -906,7 +923,7 @@ function DashboardView() {
         </div>
       )}
 
-      {/* ── Latest sync ─────────────────────────────────────────── */}
+      {/* ── Latest ingest run ───────────────────────────────────── */}
       {(() => {
         // Fallback to source-row timestamps when the ingest report file is
         // not served. Active-market rows are preferred so the operator sees
@@ -915,17 +932,17 @@ function DashboardView() {
           rows
             .map((r) => (r.last_updated_at ? new Date(r.last_updated_at).getTime() : NaN))
             .filter((t) => Number.isFinite(t));
-        const activeTs = tsValues(stats.sourceRows.filter((r) => isActiveMarket(r.marketId)));
+        const selectedTs = tsValues(healthRows);
         const allTs = tsValues(stats.sourceRows);
-        const fallbackMs = activeTs.length > 0 ? Math.max(...activeTs) : allTs.length > 0 ? Math.max(...allTs) : null;
-        const fallbackSourceLabel = activeTs.length > 0 ? ACTIVE_MARKET_LABEL : "all sources";
+        const fallbackMs = selectedTs.length > 0 ? Math.max(...selectedTs) : allTs.length > 0 ? Math.max(...allTs) : null;
+        const fallbackSourceLabel = selectedTs.length > 0 ? selectedMarketLabel : "all sources";
         const fallbackIso = fallbackMs != null ? new Date(fallbackMs).toISOString() : null;
         const fallbackFresh = fallbackIso ? formatFreshness(fallbackIso) : null;
         const hasAnySync = !!latestSync?.at || fallbackMs != null;
         return (
-      <section className="surface-1 rounded-xl border border-border p-5">
+      <section className="surface-1 rounded border border-border p-5">
         <div className="flex items-center justify-between mb-3">
-          <h2 className="text-base font-semibold text-foreground">Latest sync</h2>
+          <h2 className="text-base font-semibold text-foreground font-mono">Latest ingest run</h2>
           {latestSync && <RunPhaseBadge latestSync={latestSync} />}
         </div>
         <div className="text-sm text-foreground-muted mb-3">
@@ -962,7 +979,7 @@ function DashboardView() {
             type="button"
             onClick={handleExportRunReport}
             disabled={exportingRunReport || !latestSync}
-            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
           >
             {exportingRunReport ? "Exporting…" : "Export report"}
           </button>
@@ -971,7 +988,7 @@ function DashboardView() {
               href={GITHUB_ACTIONS_URL}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
             >
               GitHub Actions
             </a>
@@ -980,34 +997,36 @@ function DashboardView() {
       </section>
         );
       })()}
+      </>
+      )}
 
-      {/* ── All markets · including test pipeline ───────────────── */}
-      <section>
+      {/* ── Portfolio overview · all markets (SECONDARY) ─────────── */}
+      <section className="opacity-90">
         <div className="flex items-baseline justify-between mb-4 gap-3">
-          <h2 className="text-base font-semibold text-foreground">All markets</h2>
-          <span className="text-xs text-foreground-subtle">including test pipeline</span>
+          <h2 className="text-sm font-semibold text-foreground-muted font-mono">Portfolio overview</h2>
+          <span className="text-xs text-foreground-subtle">secondary — all markets, including pipeline</span>
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4 mb-6">
-          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Total listings</div>
-            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.totalListings.toLocaleString()}</div>
+          <div className="surface-1 rounded p-4 border border-border shadow-sm">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Raw pipeline inventory</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.totalListings.toLocaleString()}</div>
           </div>
-          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
-            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Approved</div>
+          <div className="surface-1 rounded p-4 border border-border shadow-sm">
+            <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Pipeline-approved</div>
             <div className="text-2xl font-bold text-green tabular-nums tracking-tight">{stats.approvedCount.toLocaleString()}</div>
             <div className="text-xs text-foreground-subtle mt-1 tabular-nums">{approvedPct}% rate</div>
           </div>
-          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+          <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Sources</div>
-            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.sourceCount}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.sourceCount}</div>
           </div>
-          <div className="surface-1 rounded-xl p-4 border border-border shadow-sm">
+          <div className="surface-1 rounded p-4 border border-border shadow-sm">
             <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-2">Markets</div>
-            <div className="text-2xl font-bold tabular-nums tracking-tight">{stats.marketCount}</div>
+            <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.marketCount}</div>
           </div>
         </div>
-        <h2 className="text-base font-semibold text-foreground mb-4">Source quality · all markets</h2>
-        <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
+        <h2 className="text-base font-semibold text-foreground font-mono mb-4">Pipeline quality · all markets</h2>
+        <div className="surface-1 rounded border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto">
             <table className="w-full min-w-[700px] data-table data-table-id-narrow">
               <thead>
@@ -1017,7 +1036,7 @@ function DashboardView() {
                       { key: "sourceName" as const, label: "Source" },
                       { key: "marketId" as const, label: "Market" },
                       { key: "listing_count" as const, label: "Count" },
-                      { key: "approved_pct" as const, label: "Approved %" },
+                      { key: "approved_pct" as const, label: "Pipeline approved %" },
                       { key: "with_image_pct" as const, label: "Image %" },
                       { key: "with_price_pct" as const, label: "Price %" },
                       { key: "grade" as const, label: "Health" },
@@ -1059,7 +1078,7 @@ function DashboardView() {
           </div>
         </div>
         {stats.sourceRows.length === 0 && (
-          <div className="surface-1 rounded-xl border border-border border-dashed p-12 text-center mt-4">
+          <div className="surface-1 rounded border border-border border-dashed p-12 text-center mt-4">
             <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-3">
               <span className="text-foreground-subtle text-sm">⬡</span>
             </div>
@@ -1091,7 +1110,7 @@ function ListingCard({
       tabIndex={0}
       onClick={onClick}
       onKeyDown={(e) => e.key === "Enter" && onClick()}
-      className="surface-1 rounded-xl overflow-hidden w-[280px] border border-border cursor-pointer transition-all hover:border-border-strong hover:translate-y-[-1px]"
+      className="surface-1 rounded overflow-hidden w-[280px] border border-border cursor-pointer transition-all hover:border-border-strong hover:translate-y-[-1px]"
     >
       <ImageGallery images={listing.images} width={280} height={190} />
 
@@ -1224,6 +1243,7 @@ function ListingsTabView() {
   const [exporting, setExporting] = useState(false);
   const [exportOpen, setExportOpen] = useState(false);
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("original");
+  const [filtersOpen, setFiltersOpen] = useState(false);
 
   useEffect(() => {
     getMarketIds().then(setMarkets);
@@ -1304,13 +1324,13 @@ function ListingsTabView() {
     );
   }
 
-  const inputCls = "bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded-lg w-full";
+  const inputCls = "bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded w-full";
 
   return (
     <div>
       <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Listings
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
@@ -1323,7 +1343,7 @@ function ListingsTabView() {
               setFilters({});
               setPage(1);
             }}
-            className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
           >
             Clear filters
           </button>
@@ -1332,7 +1352,7 @@ function ListingsTabView() {
               type="button"
               onClick={() => setExportOpen((o) => !o)}
               disabled={exporting}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
             >
               {exporting ? "Exporting…" : "Export"}
             </button>
@@ -1343,18 +1363,18 @@ function ListingsTabView() {
                   aria-hidden
                   onClick={() => setExportOpen(false)}
                 />
-                <div className="absolute right-0 top-full z-20 mt-1 min-w-[200px] surface-1 border border-border rounded-xl py-1 shadow-lg">
+                <div className="absolute right-0 top-full z-20 mt-1 min-w-[200px] surface-1 border border-border rounded py-1 shadow-md">
                   <button
                     type="button"
                     onClick={handleExportPage}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors rounded-lg"
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors"
                   >
                     This page (CSV)
                   </button>
                   <button
                     type="button"
                     onClick={handleExportAll}
-                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors rounded-lg"
+                    className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors"
                   >
                     All matching, max {EXPORT_ALL_MAX.toLocaleString()} (CSV)
                   </button>
@@ -1365,9 +1385,23 @@ function ListingsTabView() {
         </div>
       </div>
 
-      <div className="surface-1 rounded-xl border border-border p-4 mb-6">
-        <div className="text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3">
+      <div className="surface-1 rounded border border-border p-4 mb-6">
+        <button
+          type="button"
+          onClick={() => setFiltersOpen((o) => !o)}
+          className="sm:hidden w-full flex items-center justify-between mb-0"
+        >
+          <span className="text-[11px] text-foreground-subtle uppercase tracking-wider">Filters</span>
+          <span className="flex items-center gap-1.5">
+            {(() => {
+              const n = [marketId !== "all", filters.sourceId, filters.approved !== undefined, filters.importedAfter, filters.importedBefore, filters.titleSearch, filters.priceMin, filters.priceMax, filters.island, filters.city, filters.bedrooms, filters.bathrooms, filters.areaMin, filters.areaMax].filter(Boolean).length;
+              return n > 0 ? <span className="bg-accent text-accent-foreground text-[10px] font-medium px-1.5 py-0.5 rounded-full">{n}</span> : null;
+            })()}
+            <span className={"text-foreground-subtle text-[10px] transition-transform " + (filtersOpen ? "rotate-180" : "")}>▼</span>
+          </span>
+        </button>
+        <div className="hidden sm:block text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
+        <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 ${filtersOpen ? "mt-3" : "hidden sm:grid sm:mt-0"}`}>
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
             <select
@@ -1417,7 +1451,7 @@ function ListingsTabView() {
             </select>
           </div>
           <div>
-            <label className="text-[11px] text-foreground-subtle block mb-1">Approved</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Pipeline-approved</label>
             <select
               value={filters.approved === undefined ? "" : filters.approved ? "yes" : "no"}
               onChange={(e) => {
@@ -1589,7 +1623,7 @@ function ListingsTabView() {
 
       {!loading && (
         <>
-          <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
+          <div className="surface-1 rounded border border-border overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1000px] data-table">
                 <thead>
@@ -1690,7 +1724,7 @@ function ListingsTabView() {
             <button
               disabled={page <= 1}
               onClick={() => setPage((p) => p - 1)}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Previous
             </button>
@@ -1700,7 +1734,7 @@ function ListingsTabView() {
             <button
               disabled={page >= totalPages}
               onClick={() => setPage((p) => p + 1)}
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
             >
               Next
             </button>
@@ -1710,7 +1744,7 @@ function ListingsTabView() {
 
       {detailLoading && (
         <div className="fixed inset-0 bg-background/80 backdrop-blur-sm flex items-center justify-center z-50">
-          <div className="surface-1 rounded-xl p-6 border border-border text-sm text-foreground-muted">
+          <div className="surface-1 rounded p-6 border border-border text-sm text-foreground-muted">
             Loading listing…
           </div>
         </div>
@@ -1797,11 +1831,14 @@ function compareSortValues(a: number | null, b: number | null, dir: SortDir): nu
 }
 
 function SourcesView() {
+  const { selected: selectedMarket } = useSelectedMarket();
+  const selectedMarketId = selectedMarket.id;
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [markets, setMarkets] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SourcesSortKey>("listing_count");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [snapshots, setSnapshots] = useState<SourceSnapshot[]>([]);
 
   const onSort = (key: SourcesSortKey) => {
     if (key === sortKey) {
@@ -1814,6 +1851,11 @@ function SourcesView() {
     }
   };
 
+  // Reload snapshots from localStorage whenever the selected market changes.
+  useEffect(() => {
+    setSnapshots(loadSnapshots(selectedMarketId));
+  }, [selectedMarketId]);
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([getDashboardStats(), getMarketIds()]).then(([s, m]) => {
@@ -1821,6 +1863,25 @@ function SourcesView() {
         setStats(s);
         setMarkets(m);
         setLoading(false);
+        // Save today's snapshot for the selected market.
+        const scoped = s.sourceRows.filter((r) => r.marketId === selectedMarketId && !r.isStub);
+        if (scoped.length > 0) {
+          const sum = summarize(scoped);
+          const snap: SourceSnapshot = {
+            date: new Date().toISOString().slice(0, 10),
+            marketId: selectedMarketId,
+            totalListings: sum.totalListings,
+            publicFeed: sum.publicFeed,
+            feedConversionPct: sum.feedConversionPct,
+            sourceCount: sum.sourceCount,
+            staleCount: sum.staleCount,
+            approvedNoFeedCount: sum.approvedNoFeedCount,
+            gradeDist: sum.gradeDist,
+            abPct: sum.sourceCount > 0 ? Math.round(((sum.gradeDist.A + sum.gradeDist.B) / sum.sourceCount) * 100) : 0,
+          };
+          saveSnapshot(snap);
+          setSnapshots(loadSnapshots(selectedMarketId));
+        }
       }
     });
     return () => {
@@ -1837,21 +1898,13 @@ function SourcesView() {
   }
 
   const marketNameById = new Map(markets.map((m) => [m.id, m.name]));
+  // Scope everything on this tab to the selected market. The visual report,
+  // detail table, and CSV export all read from `scopedRows` so they stay in
+  // lockstep with the dropdown.
+  const scopedRows = stats.sourceRows.filter((r) => r.marketId === selectedMarketId);
   const byMarket = new Map<string, SourceQualityRow[]>();
-  for (const r of stats.sourceRows) {
-    const m = r.marketId;
-    if (!byMarket.has(m)) byMarket.set(m, []);
-    byMarket.get(m)!.push(r);
-  }
-  // Put the active market first; remaining markets sorted by name. Test
-  // pipeline markets stay visible but visually subordinate.
-  const marketIds = [...byMarket.keys()].sort((a, b) => {
-    if (isActiveMarket(a) && !isActiveMarket(b)) return -1;
-    if (!isActiveMarket(a) && isActiveMarket(b)) return 1;
-    const nameA = marketNameById.get(a) ?? a;
-    const nameB = marketNameById.get(b) ?? b;
-    return nameA.localeCompare(nameB);
-  });
+  if (scopedRows.length > 0) byMarket.set(selectedMarketId, scopedRows);
+  const marketIds = [...byMarket.keys()];
 
   const handleExportCsv = () => {
     const header = [
@@ -1907,25 +1960,78 @@ function SourcesView() {
     downloadTextFile(`arei-source-health-${date}.csv`, lines.join("\r\n") + "\r\n");
   };
 
+  const reportRows = scopedRows;
+  const reportMarketLabel = selectedMarket.name;
+
+  const handleExportHtmlReport = () => {
+    const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
+    const date = new Date().toISOString().slice(0, 10);
+    downloadTextFile(`arei-source-health-report-${date}.html`, html, "text/html;charset=utf-8");
+  };
+
+  const handlePrintReport = () => {
+    const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
+    const w = window.open("", "_blank", "noopener,noreferrer");
+    if (!w) {
+      alert("Pop-up blocked. Allow pop-ups for this site to print the report.");
+      return;
+    }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    // Defer print until the new document has parsed and rendered.
+    w.onload = () => {
+      try { w.focus(); w.print(); } catch { /* user dismissed */ }
+    };
+  };
+
   return (
     <div className="space-y-6">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Sources
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
-            All sources grouped by market
+            Pipeline Source Health Report — visual overview, then detail tables · scoped to selected market
           </p>
         </div>
-        <button
-          type="button"
-          onClick={handleExportCsv}
-          disabled={stats.sourceRows.length === 0}
-          className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-        >
-          Export CSV
-        </button>
+        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
+          <MarketSelector />
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              onClick={handleExportCsv}
+              disabled={scopedRows.length === 0}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            >
+              Export CSV
+            </button>
+            <button
+              type="button"
+              onClick={handleExportHtmlReport}
+              disabled={reportRows.length === 0}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            >
+              Export HTML report
+            </button>
+            <button
+              type="button"
+              onClick={handlePrintReport}
+              disabled={reportRows.length === 0}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            >
+              Print / PDF
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} snapshots={snapshots} />
+
+      <div>
+        <h2 className="text-sm font-semibold text-foreground font-mono mb-3 mt-2">Source detail tables</h2>
+        <p className="text-xs text-foreground-muted mb-3">Full data per market — secondary to the visual report above.</p>
       </div>
 
       {marketIds.map((marketId) => {
@@ -1934,10 +2040,10 @@ function SourcesView() {
         const totalListings = rows.reduce((acc, r) => acc + Number(r.listing_count), 0);
         const isActive = isActiveMarket(marketId);
         return (
-          <section key={marketId} className={`surface-1 rounded-xl border border-border overflow-hidden shadow-sm ${isActive ? "" : "opacity-80"}`}>
+          <section key={marketId} className={`surface-1 rounded border border-border overflow-hidden shadow-sm ${isActive ? "" : "opacity-80"}`}>
             <div className="px-4 py-3 flex flex-wrap items-center justify-between gap-2 border-b border-border bg-surface-2">
               <div className="flex items-center gap-2">
-                <h3 className="text-sm font-semibold text-foreground">
+                <h3 className="text-sm font-semibold text-foreground font-mono">
                   {marketName}
                 </h3>
                 {isActive ? (
@@ -1947,7 +2053,7 @@ function SourcesView() {
                 )}
               </div>
               <span className="text-xs text-foreground-muted tabular-nums">
-                {rows.length} source{rows.length !== 1 ? "s" : ""} · {totalListings.toLocaleString()} listings
+                {rows.length} source{rows.length !== 1 ? "s" : ""} · {totalListings.toLocaleString()} ingest listings
               </span>
             </div>
             <div className="overflow-x-auto">
@@ -1956,8 +2062,8 @@ function SourcesView() {
                   <tr className="border-b border-border bg-surface-2">
                     <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Source</th>
                     <SourceSortHeader label="Listings" sortKey="listing_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
-                    <SourceSortHeader label="Public feed" sortKey="public_feed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
-                    <SourceSortHeader label="Approved" sortKey="approved_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Live feed" sortKey="public_feed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    <SourceSortHeader label="Pipeline-approved" sortKey="approved_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Indexable" sortKey="indexable_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Trust passed" sortKey="trust_passed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Sqm %" sortKey="with_sqm_pct" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
@@ -2015,389 +2121,25 @@ function SourcesView() {
         );
       })}
 
-      {marketIds.length === 0 && (
-        <div className="surface-1 rounded-xl border border-border border-dashed p-14 text-center">
-          <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-4">
-            <span className="text-foreground-subtle text-lg">⬡</span>
+      {scopedRows.length === 0 && (
+        selectedMarket.status !== "active" ? (
+          <PipelineEmptyState market={selectedMarket} />
+        ) : (
+          <div className="surface-1 rounded border border-border border-dashed p-14 text-center">
+            <div className="w-12 h-12 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-4">
+              <span className="text-foreground-subtle text-lg">⬡</span>
+            </div>
+            <h3 className="text-base font-semibold text-foreground font-mono mb-1.5">No source data</h3>
+            <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
+              Run <code className="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded text-foreground-muted">get_source_quality_stats</code> RPC in Supabase to populate this view.
+            </p>
           </div>
-          <h3 className="text-base font-semibold text-foreground mb-1.5">No source data</h3>
-          <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
-            Run <code className="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded text-foreground-muted">get_source_quality_stats</code> RPC in Supabase to populate this view.
-          </p>
-        </div>
+        )
       )}
     </div>
   );
 }
 
-// ============================================
-// STATS — Developer-focused metrics & red flags
-// ============================================
-
-function StatsView() {
-  const [stats, setStats] = useState<DashboardStats | null>(null);
-  const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let cancelled = false;
-    Promise.all([getDashboardStats(), getLatestSyncLog()]).then(([s, log]) => {
-      if (!cancelled) {
-        setStats(s);
-        setLatestSync(log ?? null);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  if (loading || !stats) {
-    return (
-      <div className="py-12 text-foreground-muted text-sm">
-        Loading stats…
-      </div>
-    );
-  }
-
-  const rows = stats.sourceRows;
-  const approvedPct = stats.totalListings > 0 ? (100 * stats.approvedCount) / stats.totalListings : 0;
-  const gradeCounts = { A: 0, B: 0, C: 0, D: 0 } as Record<string, number>;
-  rows.forEach((r) => {
-    gradeCounts[r.grade]++;
-  });
-
-  const syncAt = latestSync?.at ? new Date(latestSync.at).getTime() : null;
-  const syncAgeMinutes = syncAt ? (Date.now() - syncAt) / (60 * 1000) : null;
-  const syncStale = syncAgeMinutes != null && syncAgeMinutes > SYNC_STALE_MINUTES;
-  const syncMissing = !latestSync?.at;
-
-  const noImages = rows.filter((r) => r.with_image_pct < 10);
-  const noPrice = rows.filter((r) => r.with_price_pct < 10);
-  const gradeD = rows.filter((r) => r.grade === "D");
-  const gradeC = rows.filter((r) => r.grade === "C");
-
-  // Operational red flags are scoped to the active market only. Issues from
-  // test-pipeline markets would otherwise drown out the real signal.
-  const activeRows = rows.filter((r) => isActiveMarket(r.marketId));
-  const inactiveRows = rows.filter((r) => !isActiveMarket(r.marketId));
-  const cvStale = activeRows.filter((r) => formatFreshness(r.last_updated_at).stale && !formatFreshness(r.last_updated_at).missing);
-  const cvMissingFreshness = activeRows.filter((r) => formatFreshness(r.last_updated_at).missing);
-  const cvApprovedNoFeed = activeRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0);
-  const cvApprovedNoTrust = activeRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0);
-  const cvApprovedNoIndexable = activeRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0);
-  const cvListingsNoApproved = activeRows.filter((r) => Number(r.listing_count) >= 10 && Number(r.approved_count) === 0);
-  const cvListingsNoSqm = activeRows.filter((r) => Number(r.listing_count) >= 10 && Number(r.with_sqm_count ?? 0) === 0);
-  const cvLowFeedConv = activeRows.filter((r) => Number(r.approved_count) >= 20 && r.public_feed_count_n > 0 && r.feed_conversion_pct < 25);
-
-  // Aggregate non-active markets into a single muted note rather than per-source rows.
-  const inactiveSourcesWithIssues = inactiveRows.filter(
-    (r) =>
-      Number(r.approved_count) > 0 && (r.public_feed_count_n === 0 || r.trust_passed_count_n === 0)
-  ).length;
-  const byMarket = new Map<string, { listings: number; sources: number; approvedSum: number; worstGrade: number }>();
-  rows.forEach((r) => {
-    const m = r.marketId;
-    if (!byMarket.has(m)) byMarket.set(m, { listings: 0, sources: 0, approvedSum: 0, worstGrade: 4 });
-    const g = byMarket.get(m)!;
-    g.listings += Number(r.listing_count);
-    g.sources += 1;
-    g.approvedSum += (r.approved_pct / 100) * Number(r.listing_count);
-    const gradeNum = { A: 4, B: 3, C: 2, D: 1 }[r.grade];
-    if (gradeNum < g.worstGrade) g.worstGrade = gradeNum;
-  });
-
-  const totalWithImage = rows.reduce((acc, r) => acc + (r.with_image_pct / 100) * Number(r.listing_count), 0);
-  const totalWithPrice = rows.reduce((acc, r) => acc + (r.with_price_pct / 100) * Number(r.listing_count), 0);
-  const globalImagePct = stats.totalListings > 0 ? (100 * totalWithImage) / stats.totalListings : 0;
-  const globalPricePct = stats.totalListings > 0 ? (100 * totalWithPrice) / stats.totalListings : 0;
-
-  const worstImage = rows.length ? rows.reduce((a, b) => (a.with_image_pct <= b.with_image_pct ? a : b)) : null;
-  const worstPrice = rows.length ? rows.reduce((a, b) => (a.with_price_pct <= b.with_price_pct ? a : b)) : null;
-  const bestApproved = rows.length ? rows.reduce((a, b) => (a.approved_pct >= b.approved_pct ? a : b)) : null;
-
-  // Red-flag count is an active-market operations signal. Each grouped issue
-  // counts once (not once per affected source) so the badge stays bounded
-  // and meaningful even when many sources share the same pathology.
-  const flagCount =
-    (syncStale ? 1 : 0) +
-    (syncMissing ? 1 : 0) +
-    (cvApprovedNoFeed.length > 0 ? 1 : 0) +
-    (cvApprovedNoTrust.length > 0 ? 1 : 0) +
-    (cvApprovedNoIndexable.length > 0 ? 1 : 0) +
-    (cvListingsNoApproved.length > 0 ? 1 : 0) +
-    (cvListingsNoSqm.length > 0 ? 1 : 0) +
-    (cvLowFeedConv.length > 0 ? 1 : 0) +
-    (cvStale.length > 0 ? 1 : 0) +
-    (cvMissingFreshness.length > 0 ? 1 : 0);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-foreground">
-          Stats
-        </h1>
-        <p className="text-sm text-foreground-muted mt-1">
-          Metrics and red flags
-        </p>
-      </div>
-
-      {/* Pulse */}
-      <section className="surface-1 rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-foreground mb-4">Pulse</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Last sync</div>
-            <div className="text-sm text-foreground font-mono">
-              {latestSync?.at
-                ? new Date(latestSync.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })
-                : "—"}
-            </div>
-            {latestSync && (
-              <div className="mt-2"><RunPhaseBadge latestSync={latestSync} /></div>
-            )}
-            {syncMissing && (
-              <p className="text-amber text-xs mt-1">No sync report available</p>
-            )}
-            {syncStale && syncAt && (
-              <p className="text-amber text-xs mt-1">
-                Stale: {Math.round(syncAgeMinutes! / (60 * 24))} days ago
-              </p>
-            )}
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Approval rate</div>
-            <div className={`text-2xl font-semibold tabular-nums font-mono ${approvedPct >= 70 ? "text-green" : approvedPct >= 40 ? "text-amber" : "text-red"}`}>
-              {approvedPct.toFixed(1)}%
-            </div>
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Red flags</div>
-            <div className={`text-2xl font-semibold tabular-nums font-mono ${flagCount === 0 ? "text-green" : flagCount <= 3 ? "text-amber" : "text-red"}`}>
-              {flagCount}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      {/* Red flags — active market only */}
-      <section>
-        <div className="flex items-baseline justify-between mb-3 gap-3">
-          <h2 className="text-base font-semibold text-foreground">{ACTIVE_MARKET_LABEL} operational issues</h2>
-          <span className="text-xs text-foreground-subtle">grouped by issue type</span>
-        </div>
-        <div className="space-y-2">
-          {syncMissing && (
-            <FlagGroup tone="warn" title="Sync" message="No ingest report loaded" />
-          )}
-          {syncStale && !syncMissing && (
-            <FlagGroup tone="warn" title="Stale sync" message="Last sync > 3 days ago" />
-          )}
-          {cvApprovedNoFeed.length > 0 && (
-            <FlagGroup
-              tone="bad"
-              title={`${cvApprovedNoFeed.length} ${ACTIVE_MARKET_LABEL} source${cvApprovedNoFeed.length === 1 ? "" : "s"}: approved but none reach public feed`}
-              message={formatSourceList(cvApprovedNoFeed.map((r) => r.sourceName))}
-            />
-          )}
-          {cvApprovedNoTrust.length > 0 && (
-            <FlagGroup
-              tone="bad"
-              title={`${cvApprovedNoTrust.length} ${ACTIVE_MARKET_LABEL} source${cvApprovedNoTrust.length === 1 ? "" : "s"}: approved but none pass trust gate`}
-              message={formatSourceList(cvApprovedNoTrust.map((r) => r.sourceName))}
-            />
-          )}
-          {cvApprovedNoIndexable.length > 0 && (
-            <FlagGroup
-              tone="bad"
-              title={`${cvApprovedNoIndexable.length} ${ACTIVE_MARKET_LABEL} source${cvApprovedNoIndexable.length === 1 ? "" : "s"}: approved but none indexable`}
-              message={formatSourceList(cvApprovedNoIndexable.map((r) => r.sourceName))}
-            />
-          )}
-          {cvListingsNoApproved.length > 0 && (
-            <FlagGroup
-              tone="bad"
-              title={`${cvListingsNoApproved.length} ${ACTIVE_MARKET_LABEL} source${cvListingsNoApproved.length === 1 ? "" : "s"}: listings but 0 approved`}
-              message={cvListingsNoApproved
-                .slice(0, 5)
-                .map((r) => `${r.sourceName} (${Number(r.listing_count).toLocaleString()})`)
-                .join(", ") + (cvListingsNoApproved.length > 5 ? ` +${cvListingsNoApproved.length - 5} more` : "")}
-            />
-          )}
-          {cvStale.length > 0 && (
-            <FlagGroup
-              tone="warn"
-              title={`${cvStale.length} ${ACTIVE_MARKET_LABEL} source${cvStale.length === 1 ? "" : "s"} stale (>${SOURCE_STALE_DAYS}d)`}
-              message={cvStale
-                .slice(0, 5)
-                .map((r) => {
-                  const days = formatFreshness(r.last_updated_at).days;
-                  return `${r.sourceName}${days != null ? ` (${days}d)` : ""}`;
-                })
-                .join(", ") + (cvStale.length > 5 ? ` +${cvStale.length - 5} more` : "")}
-            />
-          )}
-          {cvListingsNoSqm.length > 0 && (
-            <FlagGroup
-              tone="warn"
-              title={`${cvListingsNoSqm.length} ${ACTIVE_MARKET_LABEL} source${cvListingsNoSqm.length === 1 ? "" : "s"} missing sqm coverage`}
-              message={cvListingsNoSqm
-                .slice(0, 5)
-                .map((r) => `${r.sourceName} (${Number(r.listing_count).toLocaleString()} listings, 0% sqm)`)
-                .join(", ") + (cvListingsNoSqm.length > 5 ? ` +${cvListingsNoSqm.length - 5} more` : "")}
-            />
-          )}
-          {cvLowFeedConv.length > 0 && (
-            <FlagGroup
-              tone="warn"
-              title={`${cvLowFeedConv.length} ${ACTIVE_MARKET_LABEL} source${cvLowFeedConv.length === 1 ? "" : "s"} with low feed conversion (<25%)`}
-              message={cvLowFeedConv
-                .slice(0, 5)
-                .map((r) => `${r.sourceName} (${r.public_feed_count_n}/${Number(r.approved_count)} = ${r.feed_conversion_pct}%)`)
-                .join(", ") + (cvLowFeedConv.length > 5 ? ` +${cvLowFeedConv.length - 5} more` : "")}
-            />
-          )}
-          {cvMissingFreshness.length > 0 && (
-            <FlagGroup
-              tone="muted"
-              title={`${cvMissingFreshness.length} ${ACTIVE_MARKET_LABEL} source${cvMissingFreshness.length === 1 ? "" : "s"} missing last_updated_at`}
-              message="RPC may need to be re-run"
-            />
-          )}
-          {inactiveSourcesWithIssues > 0 && (
-            <FlagGroup
-              tone="muted"
-              title={`Test pipeline markets: ${inactiveSourcesWithIssues} additional issue${inactiveSourcesWithIssues === 1 ? "" : "s"}`}
-              message="Non-active markets (Ghana, Kenya, Nigeria, Zambia, Botswana) — see Sources tab for detail"
-            />
-          )}
-          {flagCount === 0 && (
-            <div className="rounded-lg p-3 bg-green-muted text-sm text-green">
-              No active-market operational issues.
-            </div>
-          )}
-        </div>
-        {(gradeD.length > 0 || gradeC.length > 0 || noImages.length > 0 || noPrice.length > 0) && (
-          <div className="mt-4 pt-3 border-t border-border text-xs text-foreground-subtle">
-            Health across all markets: {gradeD.length} D, {gradeC.length} C; {noImages.length} sources &lt;10% images, {noPrice.length} sources &lt;10% prices.
-          </div>
-        )}
-      </section>
-
-      {/* Health distribution */}
-      <section className="surface-1 rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-foreground mb-4">Health distribution</h2>
-        <div className="flex flex-wrap gap-6 items-end">
-          {(["A", "B", "C", "D"] as const).map((g) => (
-            <div key={g} className="flex flex-col items-center gap-1.5">
-              <div className="text-lg font-semibold tabular-nums font-mono">
-                {gradeCounts[g] ?? 0}
-              </div>
-              <div
-                className={`w-12 rounded ${
-                  g === "A" ? "bg-green" : g === "B" ? "bg-green/70" : g === "C" ? "bg-amber" : "bg-red"
-                }`}
-                style={{ height: `${Math.max(16, (gradeCounts[g] ?? 0) * 14)}px` }}
-              />
-              <span className="text-[11px] text-foreground-subtle">{g}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-
-      {/* By market */}
-      <section>
-        <h2 className="text-base font-semibold text-foreground mb-3">By market</h2>
-        <div className="surface-1 rounded-xl border border-border overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[400px]">
-              <thead>
-                <tr className="border-b border-border bg-surface-2">
-                  <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Market</th>
-                  <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Listings</th>
-                  <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Sources</th>
-                  <th className="text-right py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Approved</th>
-                  <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Worst</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[...byMarket.entries()]
-                  .sort((a, b) => b[1].listings - a[1].listings)
-                  .map(([marketId, v]) => {
-                    const avgApproved = v.listings > 0 ? (100 * v.approvedSum) / v.listings : 0;
-                    const worstGrade = ["D", "C", "B", "A"][v.worstGrade - 1] as "A" | "B" | "C" | "D";
-                    return (
-                      <tr key={marketId} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
-                        <td className="py-2.5 px-3 text-sm font-medium">{marketId.toUpperCase()}</td>
-                        <td className="py-2.5 px-3 text-right text-sm tabular-nums font-mono">{v.listings.toLocaleString()}</td>
-                        <td className="py-2.5 px-3 text-right text-sm tabular-nums font-mono">{v.sources}</td>
-                        <td className="py-2.5 px-3 text-right text-sm tabular-nums font-mono">{avgApproved.toFixed(1)}%</td>
-                        <td className="py-2.5 px-3">
-                          <GradeBadge grade={worstGrade} />
-                        </td>
-                      </tr>
-                    );
-                  })}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      </section>
-
-      {/* Data quality snapshot */}
-      <section className="surface-1 rounded-xl border border-border p-5">
-        <h2 className="text-base font-semibold text-foreground mb-4">Data quality</h2>
-        <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">With image</div>
-            <div className="text-xl font-semibold tabular-nums font-mono">{globalImagePct.toFixed(1)}%</div>
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">With price</div>
-            <div className="text-xl font-semibold tabular-nums font-mono">{globalPricePct.toFixed(1)}%</div>
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Approved</div>
-            <div className="text-xl font-semibold tabular-nums font-mono">{approvedPct.toFixed(1)}%</div>
-          </div>
-          <div>
-            <div className="text-xs text-foreground-muted mb-1">Total</div>
-            <div className="text-xl font-semibold tabular-nums font-mono">{stats.totalListings.toLocaleString()}</div>
-          </div>
-        </div>
-      </section>
-
-      {/* Outliers */}
-      <section>
-        <h2 className="text-base font-semibold text-foreground mb-3">Outliers</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-          {bestApproved && (
-            <div className="surface-1 rounded-xl border border-border p-4">
-              <div className="text-xs text-foreground-muted mb-1">Best approval</div>
-              <div className="text-sm font-medium text-foreground">{bestApproved.sourceName}</div>
-              <div className="text-green text-sm font-mono mt-0.5">{bestApproved.approved_pct.toFixed(1)}%</div>
-            </div>
-          )}
-          {worstImage && (
-            <div className="surface-1 rounded-xl border border-border p-4">
-              <div className="text-xs text-foreground-muted mb-1">Lowest images</div>
-              <div className="text-sm font-medium text-foreground">{worstImage.sourceName}</div>
-              <div className="text-red text-sm font-mono mt-0.5">{worstImage.with_image_pct.toFixed(1)}%</div>
-            </div>
-          )}
-          {worstPrice && (
-            <div className="surface-1 rounded-xl border border-border p-4">
-              <div className="text-xs text-foreground-muted mb-1">Lowest prices</div>
-              <div className="text-sm font-medium text-foreground">{worstPrice.sourceName}</div>
-              <div className="text-red text-sm font-mono mt-0.5">{worstPrice.with_price_pct.toFixed(1)}%</div>
-            </div>
-          )}
-        </div>
-      </section>
-    </div>
-  );
-}
 
 // ============================================
 // MARKET OVERVIEW (legacy – kept for optional use)
@@ -2773,7 +2515,7 @@ function ListingDetail({
     { label: "Island", value: listing.island },
     { label: "City", value: listing.city },
     { label: "Status", value: listing.status },
-    { label: "Approved", value: listing.approved != null ? (listing.approved ? "Yes" : "No") : null },
+    { label: "Pipeline-approved", value: listing.approved != null ? (listing.approved ? "Yes" : "No") : null },
     { label: "Price period", value: listing.price_period },
     { label: "Project", value: listing.project_flag != null ? (listing.project_flag ? "Yes" : "No") : null },
     { label: "Project start price", value: listing.project_start_price },
@@ -2784,7 +2526,7 @@ function ListingDetail({
       <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
         <button
           onClick={onBack}
-          className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+          className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
         >
           ← Back
         </button>
@@ -2797,7 +2539,7 @@ function ListingDetail({
               href={listing.sourceUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="px-3 py-1.5 text-xs font-medium rounded-md border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors no-underline"
             >
               View original ↗
             </a>
@@ -2810,14 +2552,14 @@ function ListingDetail({
           <div className="w-full max-w-[560px] aspect-[560/360] overflow-hidden rounded-lg">
             <ImageGallery images={listing.images} width={560} height={360} responsive />
           </div>
-          <h2 className="text-xl font-semibold tracking-tight text-foreground mt-4">
+          <h2 className="text-xl font-semibold tracking-tight text-foreground font-mono mt-4">
             {listing.title || "[No title]"}
           </h2>
           {listing.location && (
             <p className="text-foreground-muted text-sm mt-1">{listing.location}</p>
           )}
           {facts.length > 0 && (
-            <div className="surface-1 rounded-xl border border-border p-4 mt-4">
+            <div className="surface-1 rounded border border-border p-4 mt-4">
               <h4 className="text-xs text-foreground-subtle mb-3">Key facts</h4>
               <dl className="m-0 text-sm text-foreground">
                 {facts.map((f) => (
@@ -2843,7 +2585,7 @@ function ListingDetail({
           )}
         </div>
         <div>
-          <div className="surface-1 rounded-xl border border-border p-4">
+          <div className="surface-1 rounded border border-border p-4">
             <h4 className="text-xs text-foreground-subtle mb-2">Description</h4>
             <p className="text-foreground text-sm leading-relaxed whitespace-pre-wrap">
               {listing.description || "No description."}
@@ -2853,7 +2595,7 @@ function ListingDetail({
             <p className="m-1"><span className="text-foreground-muted">Source:</span> {listing.sourceName}</p>
             <p className="m-1"><span className="text-foreground-muted">ID:</span> <span className="font-mono">{listing.id}</span></p>
           </div>
-          <div className="surface-1 rounded-xl border border-border p-3 mt-4 text-foreground-subtle text-xs">
+          <div className="surface-1 rounded border border-border p-3 mt-4 text-foreground-subtle text-xs">
             Aggregated from an external source. AREI does not verify accuracy or facilitate transactions.
           </div>
         </div>
@@ -2995,15 +2737,14 @@ function MarketDetail({
 // APP (Dashboard | Listings)
 // ============================================
 
-type Tab = "dashboard" | "listings" | "sources" | "stats" | "agents" | "chatlab";
+type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab";
 
-const NAV_ITEMS: { key: Tab; label: string; icon: string }[] = [
-  { key: "dashboard", label: "Dashboard", icon: "◈" },
-  { key: "listings", label: "Listings", icon: "▤" },
-  { key: "sources", label: "Sources", icon: "⬡" },
-  { key: "stats", label: "Stats", icon: "◫" },
-  { key: "agents", label: "Agents", icon: "◉" },
-  { key: "chatlab", label: "Chat Lab", icon: "◐" },
+const NAV_ITEMS: { key: Tab; label: string }[] = [
+  { key: "dashboard",   label: "Dashboard"   },
+  { key: "listings",    label: "Listings"    },
+  { key: "sources",     label: "Sources"     },
+  { key: "agents",      label: "Agents"      },
+  { key: "chatlab",     label: "Chat Lab"    },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
@@ -3040,16 +2781,15 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
         "transition-transform duration-200 ease-out md:transition-none " +
         (sidebarOpen ? "translate-x-0" : "-translate-x-full md:translate-x-0")
       }>
-        <div className="px-5 pt-6 pb-5">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded-lg bg-foreground flex items-center justify-center text-sm font-bold text-primary-foreground">
-              A
-            </div>
+        {/* ── Sidebar header ───────────────────────── */}
+        <div className="px-5 pt-5 pb-4 border-b border-border">
+          <div className="flex items-center gap-3">
+            <DLayersMark size={32} />
             <div>
-              <div className="text-[13px] font-semibold text-foreground tracking-tight leading-none">
+              <div className="text-[14px] font-semibold text-foreground leading-none font-mono tracking-tight">
                 AREI
               </div>
-              <div className="text-[11px] text-foreground-muted mt-0.5">
+              <div className="text-[10px] text-foreground-subtle mt-1 uppercase tracking-wider font-mono">
                 Admin Console
               </div>
             </div>
@@ -3063,56 +2803,52 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
           </div>
         </div>
 
-        <div className="px-3 mb-2">
-          <div className="text-[10px] uppercase tracking-wider text-foreground-subtle font-medium px-2 mb-1.5">
-            Main menu
-          </div>
-        </div>
-
-        <nav className="flex-1 px-3 space-y-0.5">
-          {NAV_ITEMS.map(({ key, label, icon }) => (
-            <button
-              key={key}
-              onClick={() => selectTab(key)}
-              className={
-                "w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg transition-all duration-150 " +
-                (tab === key
-                  ? "bg-surface-2 text-foreground"
-                  : "text-foreground-muted hover:text-foreground hover:bg-surface-2")
-              }
-            >
-              <span className="text-base leading-none opacity-50">{icon}</span>
-              {label}
-              {key === "agents" && (
-                <span className="ml-auto text-[10px] font-medium bg-green-muted text-green px-1.5 py-0.5 rounded-md">
-                  NEW
-                </span>
+        {/* ── Nav ──────────────────────────────────── */}
+        <nav className="flex-1 pt-3 pb-2">
+          {NAV_ITEMS.map(({ key, label }) => (
+            <div key={key} className="relative">
+              {tab === key && (
+                <span
+                  className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent pointer-events-none"
+                  aria-hidden="true"
+                />
               )}
-            </button>
+              <button
+                onClick={() => selectTab(key)}
+                className={
+                  "w-full flex items-center justify-between pl-4 pr-3 py-2 text-[12px] font-mono font-medium transition-colors duration-150 " +
+                  (tab === key
+                    ? "text-foreground"
+                    : "text-foreground-muted hover:text-foreground hover:bg-surface-2")
+                }
+              >
+                {label}
+                {key === "agents" && (
+                  <span className="text-[9px] font-mono font-medium bg-green-muted text-green px-1.5 py-0.5 rounded uppercase tracking-wider">
+                    NEW
+                  </span>
+                )}
+              </button>
+            </div>
           ))}
         </nav>
 
-        <div className="px-3 pb-4 mt-auto space-y-2">
+        {/* ── Footer utilities ─────────────────────── */}
+        <div className="px-2 pt-2 pb-4 border-t border-border space-y-0.5">
           <button
             onClick={toggleTheme}
-            className="w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-all duration-150"
+            className="w-full px-3 py-2 text-left text-[12px] font-mono font-medium rounded text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors duration-150"
           >
-            <span className="text-base leading-none opacity-50">{dark ? "☀" : "☾"}</span>
             {dark ? "Light mode" : "Dark mode"}
           </button>
           {onSignOut && (
             <button
               onClick={onSignOut}
-              className="w-full flex items-center gap-3 px-3 py-2 text-[13px] font-medium rounded-lg text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-all duration-150"
+              className="w-full px-3 py-2 text-left text-[12px] font-mono font-medium rounded text-foreground-muted hover:text-foreground hover:bg-surface-2 transition-colors duration-150"
             >
-              <span className="text-base leading-none opacity-50">↩</span>
               Sign out
             </button>
           )}
-          <div className="rounded-lg px-3 py-3 border border-border">
-            <div className="text-[11px] text-foreground-subtle mb-0.5">AREI Admin</div>
-            <div className="text-[11px] text-foreground-muted">Pan-African Real Estate</div>
-          </div>
         </div>
       </aside>
 
@@ -3129,15 +2865,19 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
               <path d="M3 5h14M3 10h14M3 15h14" />
             </svg>
           </button>
-          <span className="text-[13px] font-semibold text-foreground tracking-tight">AREI</span>
+          <div className="flex items-center gap-2">
+            <DLayersMark size={20} />
+            <span className="text-[13px] font-semibold text-foreground tracking-tight font-mono">AREI</span>
+          </div>
         </div>
         <div className="max-w-[1200px] mx-auto px-4 py-5 md:px-8 md:py-8">
-          {tab === "dashboard" && <DashboardView />}
-          {tab === "listings" && <ListingsTabView />}
-          {tab === "sources" && <SourcesView />}
-          {tab === "stats" && <StatsView />}
-          {tab === "agents" && <AgentsApprovalsView />}
-          {tab === "chatlab" && <PropertyChatLabView />}
+          <MarketProvider>
+            {tab === "dashboard" && <DashboardView />}
+            {tab === "listings" && <ListingsTabView />}
+            {tab === "sources" && <SourcesView />}
+            {tab === "agents" && <AgentsApprovalsView />}
+            {tab === "chatlab" && <PropertyChatLabView />}
+          </MarketProvider>
         </div>
       </main>
     </div>
@@ -3199,13 +2939,11 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
     <div className="min-h-screen bg-background flex items-center justify-center p-6">
       <div className="w-full max-w-sm">
         <div className="flex items-center gap-2.5 mb-8 justify-center">
-          <div className="w-9 h-9 rounded-lg bg-foreground flex items-center justify-center text-sm font-bold text-primary-foreground">
-            A
-          </div>
-          <span className="text-lg font-semibold tracking-tight">AREI</span>
+          <DLayersMark size={32} />
+          <span className="text-lg font-semibold tracking-tight font-mono">AREI</span>
         </div>
-        <div className="surface-1 rounded-xl p-7 border border-border">
-          <h1 className="text-lg font-semibold text-foreground mb-1 text-center">
+        <div className="surface-1 rounded p-7 border border-border">
+          <h1 className="text-lg font-semibold text-foreground font-mono mb-1 text-center">
             Sign in to Admin
           </h1>
           <p className="text-sm text-foreground-muted mb-6 text-center">
@@ -3217,7 +2955,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               placeholder="Email"
-              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded-lg focus:border-foreground-subtle focus:outline-none transition-colors"
+              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded focus:border-foreground-subtle focus:outline-none transition-colors"
               autoFocus
               autoComplete="email"
             />
@@ -3226,7 +2964,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               placeholder="Password"
-              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded-lg focus:border-foreground-subtle focus:outline-none transition-colors"
+              className="w-full bg-background border border-border text-foreground px-4 py-2.5 text-sm rounded focus:border-foreground-subtle focus:outline-none transition-colors"
               autoComplete="current-password"
             />
             {error && (
@@ -3235,7 +2973,7 @@ function LoginScreen({ onSuccess }: { onSuccess: () => void }) {
             <button
               type="submit"
               disabled={loading}
-              className="w-full px-4 py-2.5 text-sm font-medium rounded-lg bg-foreground text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50"
+              className="w-full px-4 py-2.5 text-sm font-medium rounded bg-foreground text-primary-foreground hover:opacity-90 transition-all disabled:opacity-50"
             >
               {loading ? "Signing in…" : "Sign in"}
             </button>

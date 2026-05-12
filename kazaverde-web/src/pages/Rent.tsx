@@ -49,7 +49,7 @@ const INTENT_COPY: Record<Intent, {
 
 export default function Rent() {
   useDocumentMeta(
-    "Rent · List your property — AREI",
+    "Rent · List your property",
     "A two-sided rentals marketplace for Cape Verde — coming soon. Join the waitlist as a renter or as an owner.",
   );
 

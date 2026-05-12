@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import DLayersMark from "./DLayersMark";
 import "./Footer.css";
 
 /* Footer — four columns at desktop (brand + Index + Resources + Connect),
@@ -11,11 +12,14 @@ export default function Footer() {
       <div className="ft-inner">
         <div className="fg">
           <div className="footer-brand">
-            <Link className="f-logo" to="/">AREI</Link>
+            <Link className="f-logo lk-compact" to="/" aria-label="Cape Verde Real Estate Index">
+              <DLayersMark size={28} />
+              <span>Cape Verde<span className="lk-desc">Real Estate Index</span></span>
+            </Link>
             <p>
-              A read-only index of public property listings across Cape Verde.
-              We aggregate from local agents, clean the data, and publish it
-              in one searchable place.
+              An independent, read-only index of public property listings
+              across Cape Verde. We aggregate from local agents, clean the
+              data, and publish it in one searchable place. Published by AREI.
             </p>
             <div className="footer-status">
               <span className="sd" aria-hidden="true" />

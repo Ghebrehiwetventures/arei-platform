@@ -57,23 +57,23 @@ const HOMEPAGE_SCHEMA = {
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://www.africarealestateindex.com/#organization",
-      "name": "AREI",
-      "url": "https://www.africarealestateindex.com",
-      "description": "Independent property index for Cape Verde real estate",
+      "@id": "https://capeverderealestateindex.com/#organization",
+      "name": "Cape Verde Real Estate Index",
+      "url": "https://capeverderealestateindex.com",
+      "description": "Cape Verde's independent real estate index, published by AREI.",
     },
     {
       "@type": "WebSite",
-      "@id": "https://www.africarealestateindex.com/#website",
-      "name": "AREI",
-      "url": "https://www.africarealestateindex.com",
-      "publisher": { "@id": "https://www.africarealestateindex.com/#organization" },
+      "@id": "https://capeverderealestateindex.com/#website",
+      "name": "Cape Verde Real Estate Index",
+      "url": "https://capeverderealestateindex.com",
+      "publisher": { "@id": "https://capeverderealestateindex.com/#organization" },
     },
   ],
 };
 
 export default function Home() {
-  useDocumentMeta("AREI — Cape Verde Real Estate", HOME_META_DESCRIPTION);
+  useDocumentMeta("Cape Verde Real Estate Index", HOME_META_DESCRIPTION);
   const navigate = useNavigate();
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);

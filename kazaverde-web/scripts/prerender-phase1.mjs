@@ -79,26 +79,26 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           "@graph": [
             {
               "@type": "Organization",
-              "@id": "https://www.africarealestateindex.com/#organization",
-              name: "AREI",
-              url: "https://www.africarealestateindex.com",
-              logo: "https://www.africarealestateindex.com/og-default.png",
+              "@id": `${siteUrl}/#organization`,
+              name: "Cape Verde Real Estate Index",
+              url: siteUrl,
+              logo: `${siteUrl}/og-default.png`,
               description:
-                "AREI is an independent property search and data platform for Cape Verde real estate. It is not a broker or agency.",
+                "Cape Verde Real Estate Index is an independent property search and data platform for Cape Verde real estate, published by AREI. It is not a broker or agency.",
             },
             {
               "@type": "WebSite",
-              "@id": "https://www.africarealestateindex.com/#website",
-              url: "https://www.africarealestateindex.com",
-              name: "AREI",
+              "@id": `${siteUrl}/#website`,
+              url: siteUrl,
+              name: "Cape Verde Real Estate Index",
               description:
                 "Search Cape Verde real estate listings aggregated from local agencies, portals and property websites.",
-              publisher: { "@id": "https://www.africarealestateindex.com/#organization" },
+              publisher: { "@id": `${siteUrl}/#organization` },
               potentialAction: {
                 "@type": "SearchAction",
                 target: {
                   "@type": "EntryPoint",
-                  urlTemplate: "https://www.africarealestateindex.com/listings?q={search_term_string}",
+                  urlTemplate: `${siteUrl}/listings?q={search_term_string}`,
                 },
                 "query-input": "required name=search_term_string",
               },
@@ -250,7 +250,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
             jsonLd: {
               "@context": "https://schema.org",
               "@type": "FAQPage",
-              "@id": "https://www.africarealestateindex.com/blog#faq",
+              "@id": `${siteUrl}/blog#faq`,
               mainEntity: faqEntries.map((f) => ({
                 "@type": "Question",
                 name: f.question,

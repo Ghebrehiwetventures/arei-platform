@@ -1,7 +1,14 @@
 # Visual Identity — AREI
 
+> **Updated 2026-05:** The current AREI brand source of truth is `docs/brand/README.md`.
+> Older admin-specific guidance in this file (Inter/JetBrains Mono fonts, amber as primary accent) is superseded.
+> This document remains useful for cross-product visual principles and tonality rules.
+>
+> **D·Layers mark SVG:** `docs/brand/assets/d-layers-mark.svg` — canonical geometry.
+> Do not redraw from memory. Admin component: `arei-admin/app.tsx` `DLayersMark`.
+
 Status: `living document`
-Last updated: 2026-04-28
+Last updated: 2026-05-11
 Decision reference: `docs/09-decisions/decision-log.md` (2026-04-28 — Cross-product visual alignment)
 
 This is the brand & visual language reference for AREI products. It complements `docs/04-platform/design-tokens-discovery.md`, which catalogs the technical tokens. This doc describes the *intent* behind those tokens.
@@ -46,9 +53,9 @@ The KazaVerde sage appears in AREI surfaces as a *quiet thread* of identity — 
 |---|---|---|---|
 | **Audience** | Consumer / investor browsing listings | Institutional, investors, partners | Internal operators |
 | **Voice** | Editorial, calm, real | Institutional, data-first, premium | Functional, dense, dashboard-readable |
-| **Primary accent** | KazaVerde green `#8ecfbf` | Same sage, used sparingly as institutional accent | Currently amber `#d97706` (legacy; refresh deferred) |
+| **Primary accent** | KazaVerde green `#8ecfbf` | Same sage, used sparingly as institutional accent | Sage `#8ecfbf` (aligned with brand system; amber reserved for severity only) |
 | **Dark mode** | None — light only by design | None | Full light + dark |
-| **Type** | IBM Plex Mono dominant; IBM Plex Sans for prose | IBM Plex Mono only | Inter + JetBrains Mono |
+| **Type** | IBM Plex Mono dominant; IBM Plex Sans for prose | IBM Plex Mono only | IBM Plex Mono + IBM Plex Sans (aligned with brand system) |
 | **Density** | Editorial, generous whitespace | Editorial, generous whitespace | Dense, compact for ops |
 | **Imagery** | Photographic listings, no overlays | Sparse, data-led | None — UI only |
 
@@ -60,7 +67,7 @@ Read this table as: KazaVerde and landing are siblings (editorial twins, differe
 
 - **Mono — IBM Plex Mono** is the primary face across KazaVerde and AREI landing. It carries the data-first, neutral, editorial tone. Used for UI, labels, headings, all numerical data.
 - **Sans — IBM Plex Sans** is reserved for long-form prose (descriptions, articles).
-- **Admin** uses Inter + JetBrains Mono for higher legibility in dense dashboards. This is a deliberate divergence; do not "fix" it unless admin's role changes.
+- **Admin** was previously Inter + JetBrains Mono. As of the brand alignment pass (2026-05), admin now uses IBM Plex Sans + IBM Plex Mono, matching the unified AREI design system. Admin is the foundation for future broker/CRM tooling — one coherent type system across all AREI products.
 
 Weights: 400 / 500 / 600. Avoid heavier weights — they break the institutional restraint.
 
@@ -134,7 +141,7 @@ These values appear in two or more apps with the same intent. They should not dr
 | Warm tint | `#f2f0ec` | KV `--kv-off-white`, landing `--off-white` (admin n/a) |
 | Primary ink | `#0a0a0a` | KV `--kv-black`, landing `--black`. Admin uses `#111113` — accepted minor drift, not worth migrating |
 | Meta gray | `#888` / `#888888` | KV + landing |
-| Mono font | `IBM Plex Mono` (with `ui-monospace, 'SF Mono', Menlo, Consolas, monospace` fallback) | KV + landing. Admin uses JetBrains Mono — deliberate, see below |
+| Mono font | `IBM Plex Mono` (with `ui-monospace, 'SF Mono', Menlo, Consolas, monospace` fallback) | All three — admin aligned as of 2026-05 brand pass |
 | Sans font | `IBM Plex Sans` | KV. Landing is mono-only by design |
 | Divider, light surface | `rgba(0,0,0,0.15)` | KV `--kv-rule`, landing `--rule` |
 | Button/input radius | `8px` | All three, currently hard-coded — not yet tokenized |
@@ -147,9 +154,9 @@ These values appear in two or more apps with the same intent. They should not dr
 
 | Concern | KazaVerde | arei-admin | arei-landing | Why |
 |---|---|---|---|---|
-| Brand accent | sage `#8ecfbf` | amber `#d97706` (light), `#f59e0b` (dark) | sage `#8ecfbf` (used sparingly) | Admin is internal/operational; KV + landing carry brand |
+| Brand accent | sage `#8ecfbf` | sage `#8ecfbf` (aligned 2026-05; amber `#92600a` severity-only) | sage `#8ecfbf` (used sparingly) | Unified AREI brand system |
 | Dark mode | none | full | none | KV + landing are light-only by design |
-| Typeface | IBM Plex Mono + Sans | Inter + JetBrains Mono | IBM Plex Mono only | Admin chose JetBrains for dashboard density |
+| Typeface | IBM Plex Mono + Sans | IBM Plex Mono + IBM Plex Sans (aligned 2026-05) | IBM Plex Mono only | All AREI products now share IBM Plex |
 | Semantic color tokens | minimal | full set (`--color-green/red/amber`, light + dark) | minimal | Only admin renders error/warning states |
 | Spacing scale | full (`--kv-s-1..12`) | none (Tailwind utilities) | none (inline) | Acceptable — not currently a drift risk |
 

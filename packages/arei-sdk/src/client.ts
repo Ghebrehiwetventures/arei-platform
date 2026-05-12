@@ -139,9 +139,12 @@ export class AREIClient {
         .lte("price", bucket.max);
     }
 
-    // Sort and paginate
+    // Sort and paginate. `id` is the unique tie-breaker — without it, rows
+    // sharing a `first_seen_at` value can drift between pages, making the same
+    // listing appear on multiple pages of the paginated feed.
     query = query
       .order("first_seen_at", { ascending: false })
+      .order("id", { ascending: true })
       .range(from, to);
 
     const { data, count, error } = await query;
@@ -291,6 +294,7 @@ export class AREIClient {
         .gt("price", 0)
         .neq("id", listing.id)
         .order("first_seen_at", { ascending: false })
+        .order("id", { ascending: true })
         .limit(limit + 4);
 
       if (strategy.type) {

@@ -78,7 +78,7 @@ export default function BlogPost() {
   const article = slug ? getArticleBySlug(slug) : undefined;
 
   useDocumentMeta(
-    article ? `${article.title} — AREI` : "Article not found",
+    article ? article.title : "Article not found",
     article?.description ?? "",
     article?.heroImage ? { image: article.heroImage } : undefined,
   );

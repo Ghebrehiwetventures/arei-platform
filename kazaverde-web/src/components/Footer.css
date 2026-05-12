@@ -24,14 +24,35 @@
 }
 
 .footer-brand .f-logo {
-  display: inline-block;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
   font-family: var(--kv-mono);
   font-size: 11px;
-  font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
   color: var(--kv-black);
   margin-bottom: 16px;
+}
+
+.footer-brand .f-logo svg {
+  flex-shrink: 0;
+}
+
+/* Footer lockup — canonical AREI .lk-compact rule.
+   Country dominant (600), descriptor muted (400 + opacity 0.7).
+   Same rule as navbar; markup pattern mirrors arei-landing. */
+.footer-brand .f-logo.lk-compact {
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.18em;
+  font-weight: 600;
+  line-height: 1;
+}
+.footer-brand .f-logo.lk-compact .lk-desc {
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 0.4em;
 }
 .footer-brand p {
   font-size: 12px;
