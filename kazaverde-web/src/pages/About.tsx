@@ -13,21 +13,21 @@ const SECTIONS: {
   {
     eyebrow: "Why this exists",
     heading: "A growing market with fragmented public information.",
-    body: "Cape Verde has international buyer demand, diaspora interest, and a property market where information is spread across local agents, portals, developer pages, private networks, and incomplete public records. That makes comparison difficult. KazaVerde exists to make the public listing layer easier to read without pretending it is the full market.",
+    body: "Cape Verde has international buyer demand, diaspora interest, and a property market where information is spread across local agents, portals, developer pages, private networks, and incomplete public records. That makes comparison difficult. AREI exists to make the public listing layer easier to read without pretending it is the full market.",
   },
   {
-    eyebrow: "What KazaVerde does",
+    eyebrow: "What AREI does",
     heading: "Public listings, normalised into one searchable index.",
-    body: "KazaVerde collects publicly accessible listings from tracked source pages, normalises them into a consistent format, links back to the original source, and presents the result in one searchable interface. It is the first live market in the Africa Real Estate Index, an independent real estate data layer for African markets.",
+    body: "AREI collects publicly accessible listings from tracked source pages, normalises them into a consistent format, links back to the original source, and presents the result in one searchable interface. It is the first live market in the Africa Real Estate Index, an independent real estate data layer for African markets.",
   },
   {
     eyebrow: "What we are not",
     heading: "Not a broker, agency, marketplace, or transaction platform.",
     list: [
-      "KazaVerde does not broker property transactions.",
-      "KazaVerde is not an estate agency and does not represent buyers or sellers.",
-      "KazaVerde is not a transaction platform and does not handle offers, deposits, contracts, or completion.",
-      "KazaVerde is not commission-led. The index is built around source-linked public records, not sales mandates.",
+      "AREI does not broker property transactions.",
+      "AREI is not an estate agency and does not represent buyers or sellers.",
+      "AREI is not a transaction platform and does not handle offers, deposits, contracts, or completion.",
+      "AREI is not commission-led. The index is built around source-linked public records, not sales mandates.",
     ],
     note: "Any decision to act on a property should be verified with the original publisher, an independent local lawyer, and any other qualified professional relevant to the transaction.",
   },
@@ -49,7 +49,7 @@ const SECTIONS: {
   {
     eyebrow: "Deduplication & normalisation",
     heading: "One current public record, never guessed fields.",
-    body: "Where duplicate public listings are detected, KazaVerde keeps one current public record rather than showing every duplicate variant. Normalisation may include currency conversion for display, standardising size units, mapping location data to canonical island and city names where reliable, and extracting structured specifications when the source supports it. Missing fields stay missing rather than being guessed.",
+    body: "Where duplicate public listings are detected, AREI keeps one current public record rather than showing every duplicate variant. Normalisation may include currency conversion for display, standardising size units, mapping location data to canonical island and city names where reliable, and extracting structured specifications when the source supports it. Missing fields stay missing rather than being guessed.",
   },
 ];
 
@@ -60,11 +60,11 @@ const QUALITY_NOTES = [
   },
   {
     name: "Partial location",
-    desc: "Some listings support island-level location confidently, but not a specific city or area. KazaVerde does not fill in missing location detail by guesswork.",
+    desc: "Some listings support island-level location confidently, but not a specific city or area. AREI does not fill in missing location detail by guesswork.",
   },
   {
     name: "Source-first links",
-    desc: "If you want to verify the latest public version of a listing, use the source link on the detail page. KazaVerde is a read-only index, not the original publisher.",
+    desc: "If you want to verify the latest public version of a listing, use the source link on the detail page. AREI is a read-only index, not the original publisher.",
   },
   {
     name: "Asking prices only",
@@ -72,11 +72,11 @@ const QUALITY_NOTES = [
   },
   {
     name: "Not legally verified",
-    desc: "KazaVerde does not verify title, ownership, debts, permits, taxes, or transaction readiness. Legal due diligence belongs with an independent local lawyer.",
+    desc: "AREI does not verify title, ownership, debts, permits, taxes, or transaction readiness. Legal due diligence belongs with an independent local lawyer.",
   },
   {
     name: "Market sample, not market truth",
-    desc: "The index reflects the public listings KazaVerde currently tracks. It should be read as a structured market sample, not a complete record of all property activity in Cape Verde.",
+    desc: "The index reflects the public listings AREI currently tracks. It should be read as a structured market sample, not a complete record of all property activity in Cape Verde.",
   },
 ];
 
@@ -101,18 +101,18 @@ function CheckIcon() {
 
 export default function About() {
   useDocumentMeta(
-    "About AREI / KazaVerde — KazaVerde",
-    "KazaVerde is the first live market in the Africa Real Estate Index: a read-only, source-linked property index for Cape Verde.",
+    "About AREI",
+    "AREI is the first live market in the Africa Real Estate Index: a read-only, source-linked property index for Cape Verde.",
   );
 
   return (
     <div className="kv-pol kv-m">
       <header className="kv-hero kv-hero-slim">
         <div className="kv-hero-inner">
-          <div className="kv-hero-eyebrow">About AREI / KazaVerde</div>
+          <div className="kv-hero-eyebrow">About AREI</div>
           <h1>Building the real estate data layer for Africa, starting with Cape Verde.</h1>
           <p className="kv-hero-sub">
-            KazaVerde is the first live market in the Africa Real Estate Index:
+            AREI is the first live market in the Africa Real Estate Index:
             a read-only, source-linked property index built to make fragmented
             real estate markets more transparent, comparable and easier to
             understand.
@@ -167,7 +167,7 @@ export default function About() {
             <h2>We don't claim full market coverage.</h2>
           </div>
           <div className="kv-pol-pull">
-            <strong>KazaVerde does not claim full market coverage.</strong>{" "}
+            <strong>AREI does not claim full market coverage.</strong>{" "}
             Our index represents a meaningful sample of publicly advertised
             properties, but off-market deals, private sales, and listings on
             sources we do not currently track are not included.

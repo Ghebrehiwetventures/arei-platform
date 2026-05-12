@@ -52,7 +52,7 @@ interface IslandStat {
 
 export default function Saved() {
   useDocumentMeta(
-    "Shortlist — KazaVerde",
+    "Shortlist — AREI",
     "Properties you've saved on this device. A read-only index of public Cape Verde listings.",
   );
 
@@ -401,11 +401,7 @@ export default function Saved() {
       )}
 
       {/* ─── Editorial close (green) ─── */}
-      <NewsletterCta
-        overline="Stay close"
-        heading={<>Notify me when prices change.</>}
-        description="Once a month, we email a digest of new listings, median-price shifts, and source activity across Cape Verde. Per-listing price-change alerts on saved properties — coming soon."
-      />
+      <NewsletterCta />
     </div>
   );
 }

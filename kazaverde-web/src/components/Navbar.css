@@ -32,6 +32,67 @@
   cursor: pointer;
   position: relative;
   z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.logo svg {
+  flex-shrink: 0;
+}
+
+/* Brand lockup — canonical AREI .lk-compact system (mirrors
+   arei-landing on main). Country is the variable, dominant. The
+   "Real Estate Index" descriptor is the fixed, muted descriptor.
+   Two text blocks; CSS toggles between desktop single-line
+   (.lk-text) and mobile stacked (.lk-text-mobile) at 560px. */
+.lk-compact {
+  display: inline-flex;
+  align-items: center;
+  gap: 9px;
+  color: var(--kv-black);
+  font-family: var(--kv-mono);
+  text-transform: uppercase;
+  white-space: nowrap;
+  font-size: 13px;
+  letter-spacing: 0.12em;
+  font-weight: 600;
+  line-height: 1;
+}
+.lk-compact .lk-desc {
+  font-weight: 400;
+  opacity: 0.7;
+  margin-left: 0.4em;
+}
+
+/* Nav-scoped lockup: show single-line on desktop, stacked on mobile. */
+.lk-nav .lk-text { display: inline; }
+.lk-nav .lk-text-mobile { display: none; }
+
+@media (max-width: 560px) {
+  /* Three-line lockup needs more vertical room than the desktop
+     52px nav can offer. Pad the nav element itself so the lockup
+     breathes. Effective nav height becomes ~76px on narrow viewports. */
+  .nav { padding: 12px 0; }
+  .lk-nav { gap: 8px; align-items: center; }
+  .lk-nav .brand-mark { width: 30px; height: 30px; }
+  .lk-nav .lk-text { display: none; }
+  .lk-nav .lk-text-mobile {
+    display: flex;
+    flex-direction: column;
+    line-height: 1.05;
+    letter-spacing: 0.1em;
+    font-family: var(--kv-mono);
+    text-transform: uppercase;
+  }
+  .lk-nav .lk-text-mobile .lk-m1 { font-size: 11px; font-weight: 600; }
+  .lk-nav .lk-text-mobile .lk-m2,
+  .lk-nav .lk-text-mobile .lk-m3 {
+    font-size: 9px;
+    font-weight: 400;
+    opacity: 0.7;
+    margin-top: 1px;
+  }
 }
 
 /* ── Desktop links ── */

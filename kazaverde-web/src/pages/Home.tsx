@@ -57,23 +57,23 @@ const HOMEPAGE_SCHEMA = {
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://kazaverde.com/#organization",
-      "name": "KazaVerde",
-      "url": "https://kazaverde.com",
+      "@id": "https://www.africarealestateindex.com/#organization",
+      "name": "AREI",
+      "url": "https://www.africarealestateindex.com",
       "description": "Independent property index for Cape Verde real estate",
     },
     {
       "@type": "WebSite",
-      "@id": "https://kazaverde.com/#website",
-      "name": "KazaVerde",
-      "url": "https://kazaverde.com",
-      "publisher": { "@id": "https://kazaverde.com/#organization" },
+      "@id": "https://www.africarealestateindex.com/#website",
+      "name": "AREI",
+      "url": "https://www.africarealestateindex.com",
+      "publisher": { "@id": "https://www.africarealestateindex.com/#organization" },
     },
   ],
 };
 
 export default function Home() {
-  useDocumentMeta("KazaVerde — Cape Verde Real Estate", HOME_META_DESCRIPTION);
+  useDocumentMeta("AREI — Cape Verde Real Estate", HOME_META_DESCRIPTION);
   const navigate = useNavigate();
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);

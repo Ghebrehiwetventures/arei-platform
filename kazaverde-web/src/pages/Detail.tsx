@@ -27,7 +27,7 @@ import "./Detail.css";
 
 const SITE_URL =
   (typeof import.meta !== "undefined" && (import.meta as { env?: { VITE_SITE_URL?: string } }).env?.VITE_SITE_URL) ||
-  (typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com");
+  (typeof window !== "undefined" ? window.location.origin : "https://www.africarealestateindex.com");
 
 /** Collapse WP size variants (-1024x768.jpg) into one image per base filename, keeping the largest. */
 function dedupeWpImages(urls: string[]): string[] {
@@ -184,9 +184,9 @@ function buildListingMetaDescription(detail: ListingDetailType, title: string): 
   }
 
   if (detail.property_type) {
-    parts.push(`Source-linked ${detail.property_type.toLowerCase()} listing on KazaVerde.`);
+    parts.push(`Source-linked ${detail.property_type.toLowerCase()} listing on AREI.`);
   } else {
-    parts.push("Source-linked property listing on KazaVerde.");
+    parts.push("Source-linked property listing on AREI.");
   }
 
   return truncateSeoText(parts.join(" "));
@@ -926,7 +926,7 @@ export default function Detail() {
                 {detail.island} listings
               </Link>,{" "}
               <Link to="/market">market data</Link>, or{" "}
-              <Link to="/about">how KazaVerde works</Link>.
+              <Link to="/about">how AREI works</Link>.
             </p>
           </div>
         </aside>

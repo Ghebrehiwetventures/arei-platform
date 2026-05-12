@@ -2,9 +2,10 @@ import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useNavigate } from "react-router-dom";
 import { useSaved } from "../hooks/useSaved";
+import DLayersMark from "./DLayersMark";
 import "./Navbar.css";
 
-/* Five-link nav — Listings · Rent · Market · Guides · Shortlist.
+/* Five-link nav — Listings · Market · News · Guides · Shortlist.
    Mobile menu is the cv-listing.html drawer pattern: 3-span burger
    that morphs to X on open, full-screen black panel that slides in
    from the right (translateX 100% → 0). Body scroll lock via the
@@ -28,6 +29,7 @@ export default function Navbar() {
   const links = [
     { to: "/listings", label: "Listings" },
     { to: "/market", label: "Market" },
+    { to: "/market-news", label: "News" },
     { to: "/blog", label: "Guides" },
     { to: "/saved", label: count > 0 ? `Shortlist · ${count}` : "Shortlist" },
   ];
@@ -35,8 +37,22 @@ export default function Navbar() {
   return (
     <nav className="nav anim-fd">
       <div className="nav-inner">
-        <a className="logo" onClick={() => navigate("/")} role="button" tabIndex={0}>
-          KazaVerde
+        <a
+          className="logo lk-compact lk-nav"
+          onClick={() => navigate("/")}
+          role="button"
+          tabIndex={0}
+          aria-label="Cape Verde Real Estate Index — home"
+        >
+          <DLayersMark size={20} />
+          <span className="lk-text">
+            Cape Verde<span className="lk-desc">Real Estate Index</span>
+          </span>
+          <span className="lk-text-mobile" aria-hidden="true">
+            <span className="lk-m1">Cape Verde</span>
+            <span className="lk-m2">Real Estate</span>
+            <span className="lk-m3">Index</span>
+          </span>
         </a>
 
         <div className="nav-links hide-mobile">

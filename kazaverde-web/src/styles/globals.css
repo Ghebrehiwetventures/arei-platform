@@ -1,10 +1,10 @@
 /* ══════════════════════════════════════════════════════════
-   KAZAVERDE — Master design system
+   AREI — Master design system
    ──────────────────────────────────────────────────────────
    IBM Plex Mono · #fafafa surface · #0a0a0a ink · #8ecfbf accent
    Editorial / data-first / mono-typographic.
 
-   This file is the single source of truth for the KazaVerde
+   This file is the single source of truth for the AREI
    sage palette across all AREI products. Page CSS should
    consume these tokens — avoid redeclaring locally and avoid
    hard-coded hex. arei-landing mirrors --kv-green / --kv-green-deep

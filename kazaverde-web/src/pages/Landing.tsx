@@ -156,8 +156,8 @@ function categoryLabel(cat: string): string {
 
 export default function Landing() {
   useDocumentMeta(
-    "KazaVerde — Cape Verde Real Estate",
-    "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with KazaVerde.",
+    "AREI — Cape Verde Real Estate",
+    "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with AREI.",
   );
 
   /* Inject homepage JSON-LD: Organization + WebSite. FAQPage lives on
@@ -165,24 +165,24 @@ export default function Landing() {
      visible page content. */
   useEffect(() => {
     const origin =
-      typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com";
+      typeof window !== "undefined" ? window.location.origin : "https://www.africarealestateindex.com";
     const data = {
       "@context": "https://schema.org",
       "@graph": [
         {
           "@type": "Organization",
           "@id": `${origin}/#organization`,
-          name: "KazaVerde",
+          name: "AREI",
           url: origin,
           logo: `${origin}/og-default.png`,
           description:
-            "KazaVerde is an independent property search and data platform for Cape Verde real estate. It is not a broker or agency.",
+            "AREI is an independent property search and data platform for Cape Verde real estate. It is not a broker or agency.",
         },
         {
           "@type": "WebSite",
           "@id": `${origin}/#website`,
           url: origin,
-          name: "KazaVerde",
+          name: "AREI",
           description:
             "Search Cape Verde real estate listings aggregated from local agencies, portals and property websites.",
           publisher: { "@id": `${origin}/#organization` },
@@ -622,11 +622,7 @@ export default function Landing() {
       </section>
 
       {/* ═══ NEWSLETTER ═══ */}
-      <NewsletterCta
-        overline="Monthly update"
-        heading={<>One email a month. Everything that changed on the index.</>}
-        description="New listings, median-price shifts, island activity, sources added. No promotional mail, no listings to feature, no spam — just the month in Cape Verde property."
-      />
+      <NewsletterCta />
     </div>
   );
 }

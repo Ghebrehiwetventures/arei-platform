@@ -11,7 +11,7 @@ export default function Footer() {
       <div className="ft-inner">
         <div className="fg">
           <div className="footer-brand">
-            <Link className="f-logo" to="/">KAZAVERDE</Link>
+            <Link className="f-logo" to="/">AREI</Link>
             <p>
               A read-only index of public property listings across Cape Verde.
               We aggregate from local agents, clean the data, and publish it
@@ -33,6 +33,7 @@ export default function Footer() {
           <div className="footer-col">
             <h4>Resources</h4>
             <Link to="/blog">Guides &amp; FAQ</Link>
+            <Link to="/market-news">News</Link>
             <Link to="/blog/buying-property-cape-verde-guide">Buying guide</Link>
             <Link to="/market#methodology">Methodology</Link>
             <Link to="/about">About</Link>
@@ -40,9 +41,8 @@ export default function Footer() {
 
           <div className="footer-col">
             <h4>Connect</h4>
-            <a href="mailto:info@kazaverde.com">Contact</a>
-            <a href="https://instagram.com/kazaverde.cv" target="_blank" rel="noopener noreferrer">Instagram</a>
-            <a href="https://x.com/kazaverdecv" target="_blank" rel="noopener noreferrer">X / Twitter</a>
+            <a href="mailto:info@africarealestateindex.com">Contact</a>
+            <a href="https://www.africarealestateindex.com/" target="_blank" rel="noopener noreferrer">AREI</a>
             <Link to="/privacy">Privacy</Link>
             <Link to="/cookie-policy">Cookies</Link>
           </div>

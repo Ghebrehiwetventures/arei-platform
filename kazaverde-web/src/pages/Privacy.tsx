@@ -6,8 +6,8 @@ import "./Policy.css";
 
 export default function Privacy() {
   useDocumentMeta(
-    "Privacy Policy — KazaVerde",
-    "How KazaVerde handles your data, what we collect, and your rights.",
+    "Privacy Policy — AREI",
+    "How AREI handles your data, what we collect, and your rights.",
   );
 
   return (
@@ -18,7 +18,7 @@ export default function Privacy() {
           <h1>How we handle your data.</h1>
           <p className="kv-hero-sub">
             What we collect, what we don't, and how to reach us if you want
-            something removed. KazaVerde is a read-only index — we collect
+            something removed. AREI is a read-only index — we collect
             very little.
           </p>
           <span className="kv-pol-stamp">Last updated · 27 March 2026</span>
@@ -29,13 +29,12 @@ export default function Privacy() {
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
             <span className="kv-l-eyebrow">Who we are</span>
-            <h2>KazaVerde, operated under Africa Real Estate Index.</h2>
+            <h2>AREI, operated under Africa Real Estate Index.</h2>
           </div>
           <p className="kv-pol-prose">
-            KazaVerde (<strong>kazaverde.com</strong>) is a read-only property
-            index for Cape Verde, operated as part of Africa Real Estate Index
-            (AREI). This policy explains what data we collect, why we collect
-            it, and how we protect it.
+            AREI is a read-only property index for Cape Verde, operated as
+            part of Africa Real Estate Index. This policy explains what data
+            we collect, why we collect it, and how we protect it.
           </p>
         </div>
       </section>
@@ -91,7 +90,7 @@ export default function Privacy() {
             <h2>Almost none.</h2>
           </div>
           <p className="kv-pol-prose">
-            KazaVerde uses minimal browser storage. Vercel Web Analytics is
+            AREI uses minimal browser storage. Vercel Web Analytics is
             cookieless. The only persistent storage is localStorage for your
             saved properties and cookie-banner acknowledgement. For the full
             breakdown, see the{" "}
@@ -106,7 +105,7 @@ export default function Privacy() {
             <span className="kv-l-eyebrow">Third-party services</span>
             <h2>Who else touches your request.</h2>
             <p>
-              KazaVerde is a small read-only site, but a request to it
+              AREI is a small read-only site, but a request to it
               involves a handful of upstream providers. Each has its own
               privacy policy — links below.
             </p>
@@ -158,7 +157,7 @@ export default function Privacy() {
           <p className="kv-pol-prose">
             You can request deletion of your newsletter subscription at any
             time by emailing{" "}
-            <a href="mailto:info@kazaverde.com">info@kazaverde.com</a>. Since
+            <a href="mailto:info@africarealestateindex.com">info@africarealestateindex.com</a>. Since
             we don't collect personal data beyond newsletter emails, there is
             no additional data to access or delete.
           </p>
@@ -175,7 +174,7 @@ export default function Privacy() {
             We may update this policy as the product evolves. Material
             changes are noted with a fresh date at the top of this page.
             Questions? Email{" "}
-            <a href="mailto:info@kazaverde.com">info@kazaverde.com</a>.
+            <a href="mailto:info@africarealestateindex.com">info@africarealestateindex.com</a>.
           </p>
         </div>
       </section>
