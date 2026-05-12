@@ -57,18 +57,9 @@ html{scroll-behavior:smooth}
 a{color:inherit;text-decoration:none}
 
 /* ─── TYPOGRAPHY ───
-   Mono is AREI's visual signature — kept on headings, nav, eyebrow labels, numbers,
-   buttons, and metadata. Sans is only on body prose, quotes, and form fields. */
-.hero-sub,
-.section-head p,
-.surf-tagline,
-.founder-quote,
-.cta-inner>p,
-.broker-cta-text,
-.broker-cta-text strong,
-.cta-form input,
-.cta-form textarea,
-blockquote{font-family:var(--sans)}
+   AREI landing is mono-only — per visual-identity.md and per signature.
+   Plex Mono carries headings, body prose, quotes, form fields, data — everything.
+   The --sans token is kept available for admin / dense-data surfaces. */
 
 /* ─── REVEAL ─── */
 .rv{opacity:0;transition:opacity .6s ease}
@@ -611,8 +602,8 @@ nav .lk-compact{color:var(--white)}
   margin-left:6px;font-size:10.5px;letter-spacing:.04em;
   color:var(--bp-muted);font-variant-numeric:tabular-nums;
 }
-.xfm-delta-down{color:#c75c5c}
-.xfm-delta-up{color:var(--bp-active);opacity:.8}
+.xfm-delta-down{color:#c44a3a}
+.xfm-delta-up{color:#2e7d52}
 .xfm-delta-flat{color:var(--bp-muted)}
 
 .transform-engine{
@@ -798,7 +789,7 @@ nav .lk-compact{color:var(--white)}
 .cta-form input,.cta-form textarea{
   width:100%;padding:12px 14px;
   border:1px solid rgba(255,255,255,.2);background:transparent;
-  color:var(--white);font-family:var(--sans);font-size:14px;
+  color:var(--white);font-family:var(--mono);font-size:13px;
   outline:none;transition:border-color .15s;
 }
 .cta-form input::placeholder,.cta-form textarea::placeholder{color:rgba(255,255,255,.4)}
