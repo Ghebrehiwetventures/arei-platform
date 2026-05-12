@@ -11,7 +11,7 @@ const blogDataPath = path.resolve(__dirname, "../src/lib/blog-data.ts");
 const faqDataPath = path.resolve(__dirname, "../src/lib/faq-data.ts");
 const marketNewsDataPath = path.resolve(__dirname, "../src/lib/market-news-data.ts");
 const prerenderListingsPath = path.resolve(__dirname, "../src/lib/prerender-listings.ts");
-const siteUrl = "https://www.africarealestateindex.com";
+const siteUrl = "https://capeverderealestateindex.com";
 const ogImage = `${siteUrl}/og-default.png`;
 const sitemapPath = path.join(distDir, "sitemap.xml");
 const publicSupabaseUrl = "https://bhqjdzjtiwckfuteycfl.supabase.co";
@@ -190,7 +190,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
         jsonLd: {
           "@context": "https://schema.org",
           "@type": "CollectionPage",
-          "@id": "https://www.africarealestateindex.com/market-news",
+          "@id": "https://capeverderealestateindex.com/market-news",
           name: "Cape Verde Market News",
           description:
             "Curated economic, tourism, policy and investment news relevant to Cape Verde's property market.",

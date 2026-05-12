@@ -54,7 +54,7 @@ export default function MarketNews() {
     const schema = {
       "@context": "https://schema.org",
       "@type": "CollectionPage",
-      "@id": "https://www.africarealestateindex.com/market-news",
+      "@id": "https://capeverderealestateindex.com/market-news",
       name: "Cape Verde Market News",
       description: MARKET_NEWS_DESCRIPTION,
       mainEntity: {
