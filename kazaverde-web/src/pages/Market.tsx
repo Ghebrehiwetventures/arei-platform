@@ -252,7 +252,7 @@ export default function Market() {
     const schema = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "@id": "https://www.kazaverde.com/market#faq",
+      "@id": "https://capeverderealestateindex.com/market#faq",
       mainEntity: MARKET_FAQ.map((item) => ({
         "@type": "Question",
         name: item.q,

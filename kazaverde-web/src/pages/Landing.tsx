@@ -165,7 +165,7 @@ export default function Landing() {
      visible page content. */
   useEffect(() => {
     const origin =
-      typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com";
+      typeof window !== "undefined" ? window.location.origin : "https://capeverderealestateindex.com";
     const data = {
       "@context": "https://schema.org",
       "@graph": [
