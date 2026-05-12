@@ -5,7 +5,7 @@ import { useSaved } from "../hooks/useSaved";
 import DLayersMark from "./DLayersMark";
 import "./Navbar.css";
 
-/* Five-link nav — Listings · Rent · Market · Guides · Shortlist.
+/* Five-link nav — Listings · Market · News · Guides · Shortlist.
    Mobile menu is the cv-listing.html drawer pattern: 3-span burger
    that morphs to X on open, full-screen black panel that slides in
    from the right (translateX 100% → 0). Body scroll lock via the
@@ -29,6 +29,7 @@ export default function Navbar() {
   const links = [
     { to: "/listings", label: "Listings" },
     { to: "/market", label: "Market" },
+    { to: "/market-news", label: "News" },
     { to: "/blog", label: "Guides" },
     { to: "/saved", label: count > 0 ? `Shortlist · ${count}` : "Shortlist" },
   ];

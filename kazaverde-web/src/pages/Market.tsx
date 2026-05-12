@@ -721,11 +721,7 @@ export default function Market() {
         </div>
       </section>
 
-      <NewsletterCta
-        overline="Monthly market report"
-        heading={<>Median moves and notable shifts. Once a month.</>}
-        description="Per-island price movements, inventory trends, and the notable activity from the index — delivered the 1st of every month."
-      />
+      <NewsletterCta />
     </div>
   );
 }

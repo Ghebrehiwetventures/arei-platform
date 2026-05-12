@@ -9,7 +9,7 @@ import GoogleAnalytics from "./components/GoogleAnalytics";
 import Landing from "./pages/Landing";
 
 // Phase A live: / (landing), /listings (grid), /listing/:id, /saved,
-// /market, /blog, /blog/:slug. Other routes still redirect to /
+// /market, /market-news, /blog, /blog/:slug. Other routes still redirect to /
 // until they're rebuilt in the KV design.
 const Listings = lazy(() => import("./pages/Listings"));
 const Detail = lazy(() => import("./pages/Detail"));
@@ -17,6 +17,7 @@ const Saved = lazy(() => import("./pages/Saved"));
 const BlogList = lazy(() => import("./pages/BlogList"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Market = lazy(() => import("./pages/Market"));
+const MarketNews = lazy(() => import("./pages/MarketNews"));
 const Rent = lazy(() => import("./pages/Rent"));
 const About = lazy(() => import("./pages/About"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -67,6 +68,7 @@ export default function App() {
           <Route path="/listings/sal" element={<Navigate to="/?island=Sal" replace />} />
           <Route path="/listings/boa-vista" element={<Navigate to="/?island=Boa+Vista" replace />} />
           <Route path="/market" element={<Market />} />
+          <Route path="/market-news" element={<MarketNews />} />
           {/* Rent surface offline — redirect to listings. Rent page and data model preserved. */}
           <Route path="/rent" element={<Navigate to="/listings" replace />} />
           <Route path="/about" element={<About />} />
