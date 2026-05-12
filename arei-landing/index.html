@@ -65,7 +65,7 @@ a{color:inherit;text-decoration:none}
 /* ─── NAV ─── */
 nav{
   position:sticky;top:0;z-index:200;
-  background:var(--deep-green);
+  background:var(--black);
 }
 .nav-inner{
   max-width:1120px;margin:0 auto;height:52px;
@@ -137,12 +137,12 @@ nav{
   font-family:var(--mono);color:var(--white);
   transition:background .2s,color .2s,border-color .2s;
 }
-.nav-btn:hover{background:var(--white);color:var(--deep-green);border-color:var(--white)}
+.nav-btn:hover{background:var(--white);color:var(--black);border-color:var(--white)}
 nav .lk-compact{color:var(--white)}
 
 /* ─── HERO ─── */
 .hero-section{
-  background:var(--deep-green);
+  background:var(--black);
   padding:96px 0 80px;
 }
 .hero h1{
@@ -825,50 +825,69 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   border:1px solid var(--rule);
 }
 .surf-card{
-  background:var(--white);padding:32px 28px;
+  background:var(--white);
   border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;
 }
 .surf-card:last-child{border-right:none}
-.surf-card-paid{background:var(--deep-green);color:var(--white)}
-.surf-head{
+
+/* Icon block */
+.surf-icon-block{
+  height:136px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.surf-icon-block svg{width:44px;height:44px;fill:none;stroke-linecap:square;stroke-linejoin:miter;}
+.surf-icon-01{background:var(--green)}
+.surf-icon-02{background:var(--off-white)}
+.surf-icon-03{background:var(--deep-green)}
+.surf-icon-03 svg{stroke:var(--green)}
+
+/* Content */
+.surf-content{padding:24px 26px 28px;display:flex;flex-direction:column;flex:1}
+.surf-eyebrow{
   display:flex;justify-content:space-between;align-items:center;
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
-.surf-label{
-  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
-  color:rgba(0,0,0,.22);
-}
-.surf-card-paid .surf-label{color:rgba(255,255,255,.28)}
+.surf-num{font-size:10px;font-weight:600;letter-spacing:.18em;color:rgba(0,0,0,.22)}
 .surf-tag{
-  font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
   padding:3px 8px;border:1px solid;
 }
 .surf-tag-free{color:rgba(0,0,0,.38);border-color:rgba(0,0,0,.14)}
 .surf-tag-freemium{color:rgba(0,0,0,.5);border-color:rgba(0,0,0,.2)}
 .surf-tag-paid{color:var(--green);border-color:rgba(142,207,191,.35)}
-.surf-title{
-  font-size:clamp(14px,1.4vw,16px);font-weight:500;
-  line-height:1.35;margin-bottom:22px;letter-spacing:-.01em;
+.surf-name{
+  font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:10px;color:var(--black);
 }
-.surf-card-paid .surf-title{color:var(--white)}
-.surf-body{
-  display:flex;flex-direction:column;
-  border-top:1px solid var(--rule);
+.surf-tagline{
+  font-size:13px;font-weight:400;line-height:1.6;
+  color:rgba(0,0,0,.55);margin-bottom:22px;flex:1;
 }
-.surf-card-paid .surf-body{border-top-color:var(--rule-dark)}
-.surf-row{
-  display:grid;grid-template-columns:62px 1fr;gap:12px;
-  padding:11px 0;border-bottom:1px dashed var(--rule);font-size:12px;
+
+/* Fact rows — label and value on same baseline */
+.surf-facts{border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-direction:column;gap:0}
+.surf-fact{
+  display:grid;grid-template-columns:64px 1fr;align-items:baseline;gap:12px;
+  padding:8px 0;border-bottom:1px dashed var(--rule);font-size:12px;
 }
-.surf-card-paid .surf-row{border-bottom-color:rgba(255,255,255,.1)}
-.surf-row:last-child{border-bottom:none}
-.surf-key{
-  font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--gray);padding-top:1px;
+.surf-fact:last-child{border-bottom:none}
+.surf-fact-key{
+  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gray);
 }
-.surf-card-paid .surf-key{color:rgba(255,255,255,.28)}
-.surf-val{color:rgba(0,0,0,.62);line-height:1.55}
-.surf-card-paid .surf-val{color:rgba(255,255,255,.58)}
+.surf-fact-val{color:rgba(0,0,0,.62);line-height:1.5}
+
+/* Card 03 — dark */
+.surf-card-dark{background:var(--deep-green)}
+.surf-card-dark .surf-content{color:var(--white)}
+.surf-card-dark .surf-num{color:rgba(255,255,255,.25)}
+.surf-card-dark .surf-name{color:var(--white)}
+.surf-card-dark .surf-tagline{color:rgba(255,255,255,.5)}
+.surf-card-dark .surf-facts{border-top-color:rgba(255,255,255,.1)}
+.surf-card-dark .surf-fact{border-bottom-color:rgba(255,255,255,.08)}
+.surf-card-dark .surf-fact-key{color:rgba(255,255,255,.28)}
+.surf-card-dark .surf-fact-val{color:rgba(255,255,255,.58)}
 
 /* ─── BROKER CTA ─── */
 .broker-cta{
@@ -884,7 +903,8 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 @media(max-width:860px){
   .surfaces-grid{grid-template-columns:1fr}
   .surf-card{border-right:none;border-bottom:1px solid var(--rule)}
-  .surf-card-paid{border-bottom:none}
+  .surf-card-dark{border-bottom:none}
+  .surf-icon-block{height:110px}
   .broker-cta{flex-direction:column;align-items:flex-start}
 }
 
@@ -1129,66 +1149,110 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       </div>
     </div>
     <div class="surfaces-grid rv">
+
+      <!-- 01 Public Index Surface -->
       <div class="surf-card">
-        <div class="surf-head">
-          <span class="surf-label">01</span>
-          <span class="surf-tag surf-tag-free">Free</span>
+        <div class="surf-icon-block surf-icon-01">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="currentColor" stroke-width="1.4">
+            <!-- Index table: outer frame + column divider + data rows -->
+            <rect x="6" y="6" width="32" height="32"/>
+            <line x1="6"  y1="17" x2="38" y2="17"/>
+            <line x1="6"  y1="27" x2="38" y2="27"/>
+            <line x1="17" y1="6"  x2="17" y2="38"/>
+            <line x1="11" y1="22" x2="14" y2="22"/>
+            <line x1="11" y1="32" x2="14" y2="32"/>
+          </svg>
         </div>
-        <h3 class="surf-title">Public Index Surface</h3>
-        <div class="surf-body">
-          <div class="surf-row">
-            <span class="surf-key">Audience</span>
-            <span class="surf-val">Public, media, researchers, investors evaluating markets</span>
+        <div class="surf-content">
+          <div class="surf-eyebrow">
+            <span class="surf-num">01</span>
+            <span class="surf-tag surf-tag-free">Free</span>
           </div>
-          <div class="surf-row">
-            <span class="surf-key">Offer</span>
-            <span class="surf-val">Country index pages, public listings, monthly listing-based market signal, methodology disclosure</span>
-          </div>
-          <div class="surf-row">
-            <span class="surf-key">Role</span>
-            <span class="surf-val">SEO authority, top of funnel, market legitimacy</span>
+          <h3 class="surf-name">Public Index Surface</h3>
+          <p class="surf-tagline">Country-level market data and methodology, open to the public. The authority layer.</p>
+          <div class="surf-facts">
+            <div class="surf-fact">
+              <span class="surf-fact-key">For</span>
+              <span class="surf-fact-val">Public, investors, media, researchers</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Includes</span>
+              <span class="surf-fact-val">Index pages, listings, monthly signal, methodology</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Role</span>
+              <span class="surf-fact-val">SEO authority, top of funnel</span>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- 02 Broker Tools -->
       <div class="surf-card">
-        <div class="surf-head">
-          <span class="surf-label">02</span>
-          <span class="surf-tag surf-tag-freemium">Free / Paid</span>
+        <div class="surf-icon-block surf-icon-02">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--deep-green)" stroke-width="1.4">
+            <!-- Listing submission: card + upload arrow -->
+            <rect x="8" y="18" width="22" height="18"/>
+            <rect x="14" y="12" width="22" height="18"/>
+            <line x1="19" y1="8"  x2="19" y2="18"/>
+            <polyline points="14,13 19,8 24,13"/>
+          </svg>
         </div>
-        <h3 class="surf-title">Broker Tools</h3>
-        <div class="surf-body">
-          <div class="surf-row">
-            <span class="surf-key">Audience</span>
-            <span class="surf-val">Licensed brokers and agents active in covered markets</span>
+        <div class="surf-content">
+          <div class="surf-eyebrow">
+            <span class="surf-num">02</span>
+            <span class="surf-tag surf-tag-freemium">Free / Paid</span>
           </div>
-          <div class="surf-row">
-            <span class="surf-key">Offer</span>
-            <span class="surf-val">Listing submission, AI-assisted validation, leads, distribution, performance benchmark</span>
-          </div>
-          <div class="surf-row">
-            <span class="surf-key">Role</span>
-            <span class="surf-val">Data acquisition. Brokers get international reach. AREI gets cleaner market data.</span>
+          <h3 class="surf-name">Broker Tools</h3>
+          <p class="surf-tagline">Submission, validation, and performance tools for brokers active in covered markets.</p>
+          <div class="surf-facts">
+            <div class="surf-fact">
+              <span class="surf-fact-key">For</span>
+              <span class="surf-fact-val">Licensed brokers and agents</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Includes</span>
+              <span class="surf-fact-val">Listing submission, AI validation, leads, benchmark</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Role</span>
+              <span class="surf-fact-val">Data acquisition. Brokers get international reach.</span>
+            </div>
           </div>
         </div>
       </div>
-      <div class="surf-card surf-card-paid">
-        <div class="surf-head">
-          <span class="surf-label">03</span>
-          <span class="surf-tag surf-tag-paid">Paid</span>
+
+      <!-- 03 Intelligence Layer -->
+      <div class="surf-card surf-card-dark">
+        <div class="surf-icon-block surf-icon-03">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--green)" stroke-width="1.4">
+            <!-- Trend chart: axes + rising line + terminal dot -->
+            <line x1="8" y1="36" x2="38" y2="36"/>
+            <line x1="8" y1="8"  x2="8"  y2="36"/>
+            <polyline points="10,30 17,22 24,25 34,11"/>
+            <circle cx="34" cy="11" r="2.5" fill="var(--green)" stroke="none"/>
+          </svg>
         </div>
-        <h3 class="surf-title">Professional &amp; Institutional Intelligence</h3>
-        <div class="surf-body">
-          <div class="surf-row">
-            <span class="surf-key">Audience</span>
-            <span class="surf-val">Asset managers, developers, analysts, institutional investors</span>
+        <div class="surf-content">
+          <div class="surf-eyebrow">
+            <span class="surf-num">03</span>
+            <span class="surf-tag surf-tag-paid">Paid</span>
           </div>
-          <div class="surf-row">
-            <span class="surf-key">Offer</span>
-            <span class="surf-val">Market screener, confidence scoring, comparable listings, briefings, API, dashboards, historical series</span>
-          </div>
-          <div class="surf-row">
-            <span class="surf-key">Role</span>
-            <span class="surf-val">Revenue. Intelligence layer for decision-grade analysis.</span>
+          <h3 class="surf-name">Intelligence Layer</h3>
+          <p class="surf-tagline">Decision-grade analysis for professional and institutional use. The revenue surface.</p>
+          <div class="surf-facts">
+            <div class="surf-fact">
+              <span class="surf-fact-key">For</span>
+              <span class="surf-fact-val">Asset managers, developers, analysts</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Includes</span>
+              <span class="surf-fact-val">Screener, confidence scoring, briefings, API, dashboards</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Role</span>
+              <span class="surf-fact-val">Revenue. Intelligence for decision-grade analysis.</span>
+            </div>
           </div>
         </div>
       </div>
