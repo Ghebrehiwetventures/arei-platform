@@ -222,6 +222,44 @@ export interface ReportSummary {
   checks: { discovered: number; approved: number; indexable: number; trustPassed: number; publicFeed: number };
 }
 
+// ───────── Snapshot storage (localStorage, one per day per market) ─────────
+
+export interface SourceSnapshot {
+  date: string; // YYYY-MM-DD
+  marketId: string;
+  totalListings: number;
+  publicFeed: number;
+  feedConversionPct: number;
+  sourceCount: number;
+  staleCount: number;
+  approvedNoFeedCount: number;
+  gradeDist: Record<"A" | "B" | "C" | "D", number>;
+  abPct: number; // (A+B) / total sources * 100
+}
+
+const snapshotKey = (marketId: string) => `arei_snapshots_v1_${marketId}`;
+
+export function loadSnapshots(marketId: string): SourceSnapshot[] {
+  try {
+    const raw = localStorage.getItem(snapshotKey(marketId));
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+export function saveSnapshot(snap: SourceSnapshot): void {
+  try {
+    const existing = loadSnapshots(snap.marketId).filter((s) => s.date !== snap.date);
+    const updated = [...existing, snap].slice(-90);
+    localStorage.setItem(snapshotKey(snap.marketId), JSON.stringify(updated));
+  } catch {
+    // localStorage unavailable — silently skip
+  }
+}
+
 export function summarize(rows: SourceQualityRow[]): ReportSummary {
   const gradeDist: Record<"A" | "B" | "C" | "D", number> = { A: 0, B: 0, C: 0, D: 0 };
   let totalListings = 0, publicFeed = 0, approved = 0, indexable = 0, trustPassed = 0;
@@ -251,14 +289,162 @@ export function summarize(rows: SourceQualityRow[]): ReportSummary {
 
 // ───────── React components ─────────
 
-function StatCard({ label, value, hint, tone }: { label: string; value: React.ReactNode; hint?: string; tone?: StatusTone }) {
+function Sparkline({ data, tone }: { data: number[]; tone?: StatusTone }) {
+  if (data.length < 2) return null;
+  const w = 64, h = 22;
+  const min = Math.min(...data);
+  const max = Math.max(...data);
+  const rng = max - min || 1;
+  const tx = (i: number) => 2 + (i / (data.length - 1)) * (w - 4);
+  const ty = (v: number) => (h - 3) - ((v - min) / rng) * (h - 5);
+  const pts = data.map((v, i) => `${tx(i)},${ty(v)}`).join(" ");
+  const lx = tx(data.length - 1);
+  const ly = ty(data[data.length - 1]);
+  const stroke = tone === "bad" ? "#ef4444" : tone === "warn" ? "#f59e0b" : tone === "good" ? "#22c55e" : "#6b7280";
+  return (
+    <svg width={w} height={h} className="mt-2 opacity-75">
+      <polyline points={pts} fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={lx} cy={ly} r="2.5" fill={stroke} />
+    </svg>
+  );
+}
+
+function StatCard({ label, value, hint, tone, sparkData }: { label: string; value: React.ReactNode; hint?: string; tone?: StatusTone; sparkData?: number[] }) {
   const toneText = tone === "bad" ? "text-red" : tone === "warn" ? "text-amber" : tone === "good" ? "text-green" : "text-foreground";
   return (
     <div className="surface-1 border border-border rounded p-4 shadow-sm">
       <div className="text-[10px] uppercase tracking-wider text-foreground-subtle font-mono font-medium">{label}</div>
       <div className={`mt-2 text-2xl font-semibold tabular-nums font-mono ${toneText}`}>{value}</div>
       {hint && <div className="mt-1 text-[11px] text-foreground-muted">{hint}</div>}
+      {sparkData && sparkData.length >= 2 && <Sparkline data={sparkData} tone={tone} />}
     </div>
+  );
+}
+
+function TrendChart({
+  label,
+  data,
+  format,
+  toneFor,
+}: {
+  label: string;
+  data: Array<{ date: string; value: number }>;
+  format: (v: number) => string;
+  toneFor?: (v: number) => StatusTone;
+}) {
+  if (data.length < 2) {
+    return (
+      <div className="surface-1 border border-border rounded p-4 shadow-sm flex flex-col justify-between min-h-[130px]">
+        <div className="text-[10px] uppercase tracking-wider text-foreground-subtle font-mono font-medium">{label}</div>
+        <div>
+          <div className="text-xs text-foreground-muted">Collecting data…</div>
+          <div className="text-[10px] text-foreground-subtle mt-1">Check back tomorrow</div>
+        </div>
+      </div>
+    );
+  }
+  const W = 200, H = 72;
+  const pl = 2, pr = 2, pt = 6, pb = 6;
+  const iw = W - pl - pr, ih = H - pt - pb;
+  const values = data.map((d) => d.value);
+  const minV = Math.min(...values);
+  const maxV = Math.max(...values);
+  const rng = maxV - minV || 1;
+  const tx = (i: number) => pl + (i / (data.length - 1)) * iw;
+  const ty = (v: number) => pt + (1 - (v - minV) / rng) * ih;
+  const pts = data.map((d, i) => `${tx(i)},${ty(d.value)}`).join(" ");
+  const lastVal = data[data.length - 1].value;
+  const firstVal = data[0].value;
+  const delta = lastVal - firstVal;
+  const tone = toneFor?.(lastVal);
+  const stroke = tone === "bad" ? "#ef4444" : tone === "warn" ? "#f59e0b" : tone === "good" ? "#22c55e" : "currentColor";
+  const deltaClass = delta > 0 ? "text-green" : delta < 0 ? "text-red" : "text-foreground-muted";
+  const deltaStr = (delta > 0 ? "+" : "") + format(delta);
+  return (
+    <div className="surface-1 border border-border rounded p-4 shadow-sm">
+      <div className="text-[10px] uppercase tracking-wider text-foreground-subtle font-mono font-medium">{label}</div>
+      <div className="flex items-baseline gap-2 mt-1.5">
+        <span className="text-xl font-semibold font-mono tabular-nums" style={{ color: stroke }}>{format(lastVal)}</span>
+        <span className={`text-[11px] font-mono tabular-nums ${deltaClass}`}>{deltaStr}</span>
+      </div>
+      <svg viewBox={`0 0 ${W} ${H}`} className="w-full mt-1" style={{ height: H }}>
+        <polyline points={pts} fill="none" stroke={stroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={tx(data.length - 1)} cy={ty(lastVal)} r="3" fill={stroke} />
+      </svg>
+      <div className="flex justify-between text-[10px] text-foreground-subtle font-mono mt-0.5">
+        <span>{data[0].date.slice(5)}</span>
+        <span>{data[data.length - 1].date.slice(5)}</span>
+      </div>
+    </div>
+  );
+}
+
+type TrendRange = 30 | 60 | 90;
+
+function TrendsSection({ snapshots }: { snapshots: SourceSnapshot[] }) {
+  const [range, setRange] = React.useState<TrendRange>(30);
+  const sorted = [...snapshots].sort((a, b) => a.date.localeCompare(b.date));
+  const cutoff = new Date();
+  cutoff.setDate(cutoff.getDate() - range);
+  const cutoffStr = cutoff.toISOString().slice(0, 10);
+  const window = sorted.filter((s) => s.date >= cutoffStr);
+
+  return (
+    <section className="surface-1 border border-border rounded p-4 shadow-sm">
+      <div className="flex items-center justify-between gap-3 mb-4">
+        <div>
+          <h2 className="text-sm font-semibold text-foreground">Trends</h2>
+          <p className="text-xs text-foreground-muted mt-0.5">Pipeline quality over time — one snapshot per day this page is visited</p>
+        </div>
+        <div className="flex gap-1">
+          {([30, 60, 90] as TrendRange[]).map((r) => (
+            <button
+              key={r}
+              type="button"
+              onClick={() => setRange(r)}
+              className={`px-2.5 py-1 text-[11px] font-mono rounded transition-colors ${
+                range === r
+                  ? "bg-foreground text-background"
+                  : "text-foreground-muted hover:text-foreground hover:bg-surface-3 border border-border"
+              }`}
+            >
+              {r}d
+            </button>
+          ))}
+        </div>
+      </div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <TrendChart
+          label="Live feed"
+          data={window.map((s) => ({ date: s.date, value: s.publicFeed }))}
+          format={(v) => Math.round(v).toLocaleString()}
+          toneFor={(v) => (v > 200 ? "good" : v > 100 ? "warn" : "bad")}
+        />
+        <TrendChart
+          label="Ingest→feed ratio"
+          data={window.map((s) => ({ date: s.date, value: s.feedConversionPct }))}
+          format={(v) => `${Math.round(v)}%`}
+          toneFor={(v) => (v >= 50 ? "good" : v >= 25 ? "warn" : "bad")}
+        />
+        <TrendChart
+          label="A/B grade sources"
+          data={window.map((s) => ({ date: s.date, value: s.abPct }))}
+          format={(v) => `${Math.round(v)}%`}
+          toneFor={(v) => (v >= 50 ? "good" : v >= 25 ? "warn" : "bad")}
+        />
+        <TrendChart
+          label="Stale sources"
+          data={window.map((s) => ({ date: s.date, value: s.staleCount }))}
+          format={(v) => String(Math.round(v))}
+          toneFor={(v) => (v === 0 ? "good" : v <= 2 ? "warn" : "bad")}
+        />
+      </div>
+      {snapshots.length < 2 && (
+        <p className="text-[11px] text-foreground-subtle mt-3 border-t border-border pt-3">
+          Visit this page on different days — charts will fill in automatically as data accumulates.
+        </p>
+      )}
+    </section>
   );
 }
 
@@ -325,7 +511,7 @@ function GradePill({ grade }: { grade: "A" | "B" | "C" | "D" }) {
   return <span className={`inline-flex items-center justify-center w-6 h-6 rounded text-[11px] font-mono font-bold ${cls}`}>{grade}</span>;
 }
 
-export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityRow[]; marketLabel: string }) {
+export function SourceHealthReport({ rows, marketLabel, snapshots = [] }: { rows: SourceQualityRow[]; marketLabel: string; snapshots?: SourceSnapshot[] }) {
   if (rows.length === 0) return null;
   // Stubs (cv_source_*) are real DB rows but represent test/placeholder
   // sources, not production publishers. They are excluded from every primary
@@ -372,31 +558,37 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
       </div>
     ) : null;
 
+  const sortedSnaps = [...snapshots].sort((a, b) => a.date.localeCompare(b.date));
+  const spark14 = <T,>(fn: (s: SourceSnapshot) => T) => sortedSnaps.slice(-14).map(fn) as number[];
+
   return (
     <div className="space-y-6">
       <section>
         <h2 className="text-sm font-semibold text-foreground mb-3">Executive summary — {marketLabel}</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard label="Raw pipeline inventory" value={summary.totalListings.toLocaleString()} />
-          <StatCard label="Live feed" value={summary.publicFeed.toLocaleString()} />
+          <StatCard label="Raw pipeline inventory" value={summary.totalListings.toLocaleString()} sparkData={spark14((s) => s.totalListings)} />
+          <StatCard label="Live feed" value={summary.publicFeed.toLocaleString()} sparkData={spark14((s) => s.publicFeed)} />
           <StatCard
             label="Ingest→feed ratio"
             value={`${summary.feedConversionPct}%`}
             hint="live feed ÷ pipeline-approved"
             tone={summary.feedConversionPct < 25 ? "bad" : summary.feedConversionPct < 50 ? "warn" : "good"}
+            sparkData={spark14((s) => s.feedConversionPct)}
           />
-          <StatCard label="Sources" value={summary.sourceCount} />
+          <StatCard label="Sources" value={summary.sourceCount} sparkData={spark14((s) => s.sourceCount)} />
           <StatCard
             label="Stale sources"
             value={summary.staleCount}
             hint={`≥ ${STALE_DAYS}d since update`}
             tone={summary.staleCount > 0 ? "warn" : "good"}
+            sparkData={spark14((s) => s.staleCount)}
           />
           <StatCard
             label="Pipeline-approved, 0 live feed"
             value={summary.approvedNoFeedCount}
             hint="pipeline-approved but not in live feed"
             tone={summary.approvedNoFeedCount > 0 ? "bad" : "good"}
+            sparkData={spark14((s) => s.approvedNoFeedCount)}
           />
           <div className="surface-1 border border-border rounded p-4 shadow-sm col-span-2">
             <div className="text-[11px] uppercase tracking-wider text-foreground-subtle font-medium mb-2">Grade distribution</div>
@@ -404,6 +596,8 @@ export function SourceHealthReport({ rows, marketLabel }: { rows: SourceQualityR
           </div>
         </div>
       </section>
+
+      <TrendsSection snapshots={snapshots} />
 
       <section className="surface-1 border border-border rounded p-4 shadow-sm">
         <h2 className="text-sm font-semibold text-foreground mb-1">Eligibility checks</h2>

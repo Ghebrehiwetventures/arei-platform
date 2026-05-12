@@ -92,7 +92,7 @@ function useTheme() {
 import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
 import { supabaseAuth } from "./supabase";
 import { PropertyChatLabView } from "./PropertyChatLab";
-import { SourceHealthReport, buildReportHtml } from "./sourceHealthReport";
+import { SourceHealthReport, buildReportHtml, loadSnapshots, saveSnapshot, summarize, SourceSnapshot } from "./sourceHealthReport";
 import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, STATUS_LABEL } from "./marketContext";
 
 // ============================================
@@ -1847,6 +1847,7 @@ function SourcesView() {
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SourcesSortKey>("listing_count");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [snapshots, setSnapshots] = useState<SourceSnapshot[]>([]);
 
   const onSort = (key: SourcesSortKey) => {
     if (key === sortKey) {
@@ -1859,6 +1860,11 @@ function SourcesView() {
     }
   };
 
+  // Reload snapshots from localStorage whenever the selected market changes.
+  useEffect(() => {
+    setSnapshots(loadSnapshots(selectedMarketId));
+  }, [selectedMarketId]);
+
   useEffect(() => {
     let cancelled = false;
     Promise.all([getDashboardStats(), getMarketIds()]).then(([s, m]) => {
@@ -1866,6 +1872,25 @@ function SourcesView() {
         setStats(s);
         setMarkets(m);
         setLoading(false);
+        // Save today's snapshot for the selected market.
+        const scoped = s.sourceRows.filter((r) => r.marketId === selectedMarketId && !r.isStub);
+        if (scoped.length > 0) {
+          const sum = summarize(scoped);
+          const snap: SourceSnapshot = {
+            date: new Date().toISOString().slice(0, 10),
+            marketId: selectedMarketId,
+            totalListings: sum.totalListings,
+            publicFeed: sum.publicFeed,
+            feedConversionPct: sum.feedConversionPct,
+            sourceCount: sum.sourceCount,
+            staleCount: sum.staleCount,
+            approvedNoFeedCount: sum.approvedNoFeedCount,
+            gradeDist: sum.gradeDist,
+            abPct: sum.sourceCount > 0 ? Math.round(((sum.gradeDist.A + sum.gradeDist.B) / sum.sourceCount) * 100) : 0,
+          };
+          saveSnapshot(snap);
+          setSnapshots(loadSnapshots(selectedMarketId));
+        }
       }
     });
     return () => {
@@ -2011,7 +2036,7 @@ function SourcesView() {
         </div>
       </div>
 
-      <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} />
+      <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} snapshots={snapshots} />
 
       <div>
         <h2 className="text-sm font-semibold text-foreground font-mono mb-3 mt-2">Source detail tables</h2>
