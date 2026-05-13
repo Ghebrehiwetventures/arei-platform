@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getBrokerListing, submitListingForReview, computeListingHints, isReadyForReview } from "../brokerData";
 import { PublishStatusBadge } from "../components/StatusBadge";
 import ListingForm from "../components/ListingForm";
+import ShareSheet from "../components/ShareSheet";
+import { useAgency } from "../app";
 import type { BrokerListing } from "../types";
 
 function formatPrice(price: number | null, currency: string): string {
@@ -17,10 +19,12 @@ function formatPrice(price: number | null, currency: string): string {
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { agency } = useAgency();
   const [listing, setListing] = useState<BrokerListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -66,8 +70,17 @@ export default function ListingDetailPage() {
   const hasFailedHints = failedRequired.length > 0 || failedRecommended.length > 0;
   const ready = isReadyForReview(listing);
 
+  const agencySlug = agency?.agency_name.toLowerCase().replace(/\s+/g, "-") ?? "";
+  const contactPhone = listing?.contact_phone ?? agency?.phone ?? null;
+  const waNumber = (contactPhone ?? "").replace(/\D/g, "");
+  const waMessage = encodeURIComponent(
+    `Hi, I saw your listing for "${listing?.title ?? ""}" — is it still available?`
+  );
+
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div
+      className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-36 sm:pb-24"
+    >
       {/* Back */}
       <button
         type="button"
@@ -366,6 +379,78 @@ export default function ListingDetailPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ── Sticky bottom CTA bar ──────────────────────────────────────────────── */}
+      {!editing && listing && (
+        <div
+          className="fixed left-0 right-0 z-20 flex items-center gap-2 px-4 py-3 bottom-14 sm:bottom-0"
+          style={{
+            background: "var(--color-surface-1)",
+            borderTop: "1px solid var(--color-border)",
+          }}
+        >
+          {/* WhatsApp — primary */}
+          {waNumber ? (
+            <a
+              href={`https://wa.me/${waNumber}?text=${waMessage}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 flex items-center justify-center py-2.5 rounded text-sm font-semibold"
+              style={{ background: "#25D366", color: "#ffffff" }}
+            >
+              WhatsApp
+            </a>
+          ) : (
+            <div
+              className="flex-1 flex items-center justify-center py-2.5 rounded text-sm"
+              style={{
+                background: "var(--color-surface-3)",
+                color: "var(--color-foreground-subtle)",
+              }}
+            >
+              No contact phone
+            </div>
+          )}
+
+          {/* Call */}
+          {contactPhone && (
+            <a
+              href={`tel:${contactPhone}`}
+              className="flex items-center justify-center px-4 py-2.5 rounded text-sm font-medium"
+              style={{
+                background: "var(--color-surface-2)",
+                border: "1px solid var(--color-border)",
+                color: "var(--color-foreground-muted)",
+              }}
+            >
+              Call
+            </a>
+          )}
+
+          {/* Share */}
+          <button
+            type="button"
+            onClick={() => setShowShare(true)}
+            className="flex items-center justify-center px-4 py-2.5 rounded text-sm font-medium"
+            style={{
+              background: "var(--color-surface-2)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-foreground-muted)",
+            }}
+          >
+            Share
+          </button>
+        </div>
+      )}
+
+      {/* Share sheet */}
+      {showShare && listing && (
+        <ShareSheet
+          listing={listing}
+          agencySlug={agencySlug}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </div>
   );

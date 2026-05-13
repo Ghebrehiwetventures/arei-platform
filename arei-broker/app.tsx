@@ -3,11 +3,11 @@ import { BrowserRouter, Route, Routes } from "react-router-dom";
 import Nav from "./components/Nav";
 import { getBrokerAgencies } from "./brokerData";
 import type { BrokerAgency } from "./types";
+import TodayPage from "./pages/TodayPage";
 import InboxPage from "./pages/InboxPage";
 import ListingsPage from "./pages/ListingsPage";
 import ListingDetailPage from "./pages/ListingDetailPage";
 import WebsitePage from "./pages/WebsitePage";
-import PerformancePage from "./pages/PerformancePage";
 import ProfilePage from "./pages/ProfilePage";
 
 // ── Agency context ────────────────────────────────────────────────────────────
@@ -100,13 +100,14 @@ export default function App() {
         )}
         <Nav />
         {/* pb-16 ensures content clears the fixed bottom tab bar on mobile */}
+        {/* pb-16 clears the fixed mobile bottom tab bar; sm:pb-0 resets on desktop */}
         <div className="pb-16 sm:pb-0">
           <Routes>
-            <Route path="/" element={<InboxPage />} />
+            <Route path="/" element={<TodayPage />} />
+            <Route path="/leads" element={<InboxPage />} />
             <Route path="/listings" element={<ListingsPage />} />
             <Route path="/listings/:id" element={<ListingDetailPage />} />
             <Route path="/website" element={<WebsitePage />} />
-            <Route path="/performance" element={<PerformancePage />} />
             <Route path="/profile" element={<ProfilePage />} />
           </Routes>
         </div>

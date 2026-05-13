@@ -9,7 +9,7 @@ const STATUS_FILTERS: { value: LeadStatus | "all"; label: string }[] = [
   { value: "all", label: "All" },
   { value: "new", label: "New" },
   { value: "contacted", label: "Contacted" },
-  { value: "viewing_booked", label: "Viewing Booked" },
+  { value: "viewing_booked", label: "Viewing" },
   { value: "negotiating", label: "Negotiating" },
   { value: "lost", label: "Lost" },
   { value: "closed", label: "Closed" },
@@ -47,6 +47,12 @@ export default function InboxPage() {
     statusFilter === "all" ? leads : leads.filter((l) => l.status === statusFilter);
 
   const newCount = leads.filter((l) => l.status === "new").length;
+
+  // Count per status for filter pills
+  function statusCount(value: LeadStatus | "all"): number {
+    if (value === "all") return leads.length;
+    return leads.filter((l) => l.status === value).length;
+  }
   const selectedLead = leads.find((l) => l.id === selectedId) ?? null;
 
   function handleUpdate(updated: Lead) {
@@ -61,7 +67,14 @@ export default function InboxPage() {
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
       <h1 className="text-xl font-semibold mb-4" style={{ color: "var(--color-foreground)" }}>
-        Inbox{newCount > 0 ? ` (${newCount} new)` : ""}
+        Leads{newCount > 0 ? (
+          <span
+            className="ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-sm font-semibold"
+            style={{ background: "var(--color-deep-green)", color: "var(--color-deep-green-foreground)" }}
+          >
+            {newCount} new
+          </span>
+        ) : null}
       </h1>
 
       {loading ? (
@@ -100,24 +113,32 @@ export default function InboxPage() {
                 background: "var(--color-surface-2)",
               }}
             >
-              {STATUS_FILTERS.map((f) => (
-                <button
-                  key={f.value}
-                  type="button"
-                  onClick={() => setStatusFilter(f.value)}
-                  className="px-2 py-0.5 rounded text-xs transition-colors"
-                  style={{
-                    background:
-                      statusFilter === f.value ? "var(--color-deep-green)" : "transparent",
-                    color:
-                      statusFilter === f.value
-                        ? "var(--color-deep-green-foreground)"
-                        : "var(--color-foreground-muted)",
-                  }}
-                >
-                  {f.label}
-                </button>
-              ))}
+              {STATUS_FILTERS.map((f) => {
+                const count = statusCount(f.value);
+                return (
+                  <button
+                    key={f.value}
+                    type="button"
+                    onClick={() => setStatusFilter(f.value)}
+                    className="px-2.5 py-1 rounded text-xs transition-colors"
+                    style={{
+                      background:
+                        statusFilter === f.value ? "var(--color-deep-green)" : "transparent",
+                      color:
+                        statusFilter === f.value
+                          ? "var(--color-deep-green-foreground)"
+                          : "var(--color-foreground-muted)",
+                    }}
+                  >
+                    {f.label}
+                    {count > 0 && (
+                      <span className="ml-1" style={{ opacity: 0.75 }}>
+                        {count}
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
 
             {/* Lead list */}

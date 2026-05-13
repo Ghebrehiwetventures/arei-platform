@@ -141,21 +141,46 @@ export default function LeadDetail({ lead, listingTitle, onUpdate }: LeadDetailP
         </div>
       )}
 
-      {/* Actions */}
+      {/* Primary action — WhatsApp */}
+      {waNumber ? (
+        <a
+          href={`https://wa.me/${waNumber}?text=${waMessage}`}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="flex items-center justify-center gap-2 w-full py-3 rounded text-sm font-semibold"
+          style={{
+            background: "#25D366",
+            color: "#ffffff",
+          }}
+        >
+          Reply on WhatsApp
+        </a>
+      ) : (
+        <div
+          className="rounded px-3 py-2 text-xs"
+          style={{
+            background: "var(--color-surface-2)",
+            border: "1px solid var(--color-border)",
+            color: "var(--color-foreground-subtle)",
+          }}
+        >
+          No WhatsApp or phone number on this lead.
+        </div>
+      )}
+
+      {/* Secondary actions */}
       <div className="flex flex-wrap gap-2">
-        {waNumber && (
+        {lead.buyer_phone && (
           <a
-            href={`https://wa.me/${waNumber}?text=${waMessage}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded text-sm font-medium"
+            href={`tel:${lead.buyer_phone}`}
+            className="px-3 py-1.5 rounded text-sm"
             style={{
-              background: "var(--color-green-muted)",
-              color: "var(--color-green)",
-              border: "1px solid rgba(46,125,82,0.2)",
+              background: "var(--color-surface-2)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-foreground-muted)",
             }}
           >
-            WhatsApp
+            Call {lead.buyer_phone}
           </a>
         )}
         <button
@@ -168,7 +193,7 @@ export default function LeadDetail({ lead, listingTitle, onUpdate }: LeadDetailP
             color: "var(--color-foreground-muted)",
           }}
         >
-          Copy contact details
+          Copy contact
         </button>
       </div>
 
