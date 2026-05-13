@@ -27,7 +27,7 @@ export default function Nav() {
             className="text-sm font-normal"
             style={{ color: "var(--color-foreground-muted)" }}
           >
-            Agency Console
+            Listings &amp; Leads
           </span>
           <span
             className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium"

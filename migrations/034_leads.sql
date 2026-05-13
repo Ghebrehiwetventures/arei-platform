@@ -86,13 +86,19 @@ alter table leads enable row level security;
 -- Allow anon SELECT, INSERT, UPDATE for V0 admin-operated demo.
 -- Replace with scoped broker policies in V1.
 create policy "anon_select_leads" on leads
-  for select using (true);
+  for select
+  to anon, authenticated
+  using (true);
 
 create policy "anon_insert_leads" on leads
-  for insert with check (true);
+  for insert
+  to anon
+  with check (true);
 
 create policy "anon_update_leads" on leads
-  for update using (true);
+  for update
+  to anon
+  using (true);
 
 -- No anon DELETE — use status = 'lost' or 'closed' to retire leads.
 
