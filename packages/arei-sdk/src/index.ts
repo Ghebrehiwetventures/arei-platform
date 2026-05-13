@@ -17,6 +17,7 @@ export type {
   GetSimilarParams,
   PaginatedListings,
   AREIConfig,
+  MarketNewsRow,
 } from "./types.js";
 
 export {

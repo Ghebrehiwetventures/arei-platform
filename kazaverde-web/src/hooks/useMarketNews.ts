@@ -1,5 +1,11 @@
-import { useMemo } from "react";
-import { MARKET_NEWS_ITEMS, type MarketNewsItem } from "../lib/market-news-data";
+import { useEffect, useState } from "react";
+import type { MarketNewsRow } from "arei-sdk";
+import { arei } from "../lib/arei";
+import {
+  MARKET_NEWS_ITEMS,
+  type MarketNewsCategory,
+  type MarketNewsItem,
+} from "../lib/market-news-data";
 
 export type UseMarketNewsResult = {
   items: MarketNewsItem[];
@@ -7,35 +13,63 @@ export type UseMarketNewsResult = {
   error: string | null;
 };
 
+// published_at / created_at arrive as ISO timestamptz strings from Supabase.
+// MarketNewsItem expects a plain date string ("YYYY-MM-DD").
+function isoToDate(iso: string): string {
+  return iso.slice(0, 10);
+}
+
+function toMarketNewsItem(row: MarketNewsRow): MarketNewsItem {
+  return {
+    id: row.id,
+    title: row.title,
+    originalTitle: row.original_title ?? undefined,
+    sourceName: row.source_name,
+    sourceUrl: row.source_url,
+    publishedAt: row.published_at ? isoToDate(row.published_at) : isoToDate(row.created_at),
+    category: row.category as MarketNewsCategory,
+    snippet: row.snippet,
+    whyItMatters: row.why_it_matters ?? undefined,
+    addedAt: isoToDate(row.created_at),
+  };
+}
+
 /*
- * Phase 1 — static curated data, no network calls.
+ * Phase 2b — reads from public.market_news (status = 'published').
+ * Falls back to MARKET_NEWS_ITEMS when:
+ *   - env vars are missing (getClient() throws synchronously)
+ *   - Supabase query errors
+ *   - Supabase returns zero rows
  *
- * Phase 2 replacement (Supabase):
- *   Replace this hook body with:
- *
- *   const [items, setItems] = useState<MarketNewsItem[]>([]);
- *   const [loading, setLoading] = useState(true);
- *   const [error, setError] = useState<string | null>(null);
- *
- *   useEffect(() => {
- *     supabase
- *       .from("market_news")
- *       .select("*")
- *       .eq("status", "published")
- *       .order("published_at", { ascending: false })
- *       .then(({ data, error }) => {
- *         if (error) setError(error.message);
- *         else setItems(data ?? []);
- *         setLoading(false);
- *       });
- *   }, []);
- *
- *   return { items, loading, error };
- *
- * The component (MarketNews.tsx) does not need to change.
- * Map DB column names to MarketNewsItem field names in the select or a transform.
+ * MarketNews.tsx does not need to change.
  */
 export function useMarketNews(): UseMarketNewsResult {
-  const items = useMemo(() => MARKET_NEWS_ITEMS, []);
-  return { items, loading: false, error: null };
+  const [items, setItems] = useState<MarketNewsItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    (async () => {
+      try {
+        const rows = await arei.getMarketNews();
+        if (cancelled) return;
+        setItems(rows.length > 0 ? rows.map(toMarketNewsItem) : MARKET_NEWS_ITEMS);
+        setLoading(false);
+      } catch {
+        if (cancelled) return;
+        // Silent fallback — public page always has content
+        setItems(MARKET_NEWS_ITEMS);
+        setError(null);
+        setLoading(false);
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  return { items, loading, error };
 }
