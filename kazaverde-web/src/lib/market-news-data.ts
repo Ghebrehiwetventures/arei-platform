@@ -51,6 +51,8 @@ export type MarketNewsItem = {
   category: MarketNewsCategory;
   snippet: string;
   whyItMatters?: string;
+  signalTags?: string[];
+  affectedRegions?: string[];
   addedAt: string;
   featured?: boolean;
 };
