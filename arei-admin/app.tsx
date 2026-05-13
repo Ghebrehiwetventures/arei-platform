@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import {
   getMarkets,
@@ -14,6 +14,7 @@ import {
   getMarketNewsQueue,
   updateMarketNewsStatus,
   updateMarketNewsFields,
+  getUnreadNotificationCount,
   type ListingsFilters,
   type ListingsSortKey,
   type LatestSyncLog,
@@ -21,6 +22,7 @@ import {
   type MarketNewsRow,
   type MarketNewsFieldUpdate,
 } from "./data";
+import { NotificationsView } from "./NotificationsView";
 
 const SOURCE_STALE_DAYS = 30;
 
@@ -3323,24 +3325,26 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news";
+type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "notifications";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
-  { key: "dashboard",    label: "Dashboard"            },
-  { key: "listings",     label: "Listings"             },
-  { key: "sources",      label: "Sources"              },
-  { key: "agents",       label: "Agents"               },
-  { key: "chatlab",      label: "Chat Lab"             },
-  { key: "agencies",     label: "Agency Console"       },
-  { key: "agency-data",  label: "Agency Data Console"  },
-  { key: "broker-pilot", label: "Broker Pilot Preview"  },
-  { key: "market-news",  label: "Market News"           },
+  { key: "dashboard",     label: "Dashboard"            },
+  { key: "listings",      label: "Listings"             },
+  { key: "sources",       label: "Sources"              },
+  { key: "agents",        label: "Agents"               },
+  { key: "chatlab",       label: "Chat Lab"             },
+  { key: "agencies",      label: "Agency Console"       },
+  { key: "agency-data",   label: "Agency Data Console"  },
+  { key: "broker-pilot",  label: "Broker Pilot Preview"  },
+  { key: "market-news",   label: "Market News"           },
+  { key: "notifications", label: "Notifications"         },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [dark, toggleTheme] = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
 
   // Close sidebar when resizing up to desktop
   useEffect(() => {
@@ -3348,6 +3352,15 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
     const handler = () => { if (mq.matches) setSidebarOpen(false); };
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // Fetch unread notification count on mount
+  useEffect(() => {
+    getUnreadNotificationCount().then(setUnreadCount).catch(() => {});
+  }, []);
+
+  const handleNotificationCountChange = useCallback((count: number) => {
+    setUnreadCount(count);
   }, []);
 
   const selectTab = (key: Tab) => {
@@ -3418,6 +3431,11 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
                     NEW
                   </span>
                 )}
+                {key === "notifications" && unreadCount > 0 && (
+                  <span className="text-[9px] font-mono font-semibold bg-[#C44A3A]/10 text-[#C44A3A] px-1.5 py-0.5 rounded tabular-nums">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </button>
             </div>
           ))}
@@ -3471,6 +3489,9 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "agency-data" && <AgencyDataConsoleView />}
             {tab === "broker-pilot" && <BrokerPilotView />}
             {tab === "market-news" && <MarketNewsView />}
+            {tab === "notifications" && (
+              <NotificationsView onCountChange={handleNotificationCountChange} />
+            )}
           </MarketProvider>
         </div>
       </main>

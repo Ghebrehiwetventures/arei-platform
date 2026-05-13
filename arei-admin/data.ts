@@ -1157,3 +1157,75 @@ export async function updateMarketNewsFields(id: string, fields: MarketNewsField
     throw new Error(`[Admin] updateMarketNewsFields failed: ${error.message}`);
   }
 }
+
+// ============================================
+// ADMIN NOTIFICATIONS
+// All browser reads/writes use supabaseAuth (authenticated session).
+// INSERT is performed by scripts using the service role key only —
+// never from the browser. Anon role has no access.
+// ============================================
+
+export type NotificationSeverity = "info" | "warning" | "critical";
+
+export interface AdminNotification {
+  id: string;
+  event_type: string;
+  severity: NotificationSeverity;
+  title: string;
+  body: string | null;
+  entity_type: string | null;
+  entity_id: string | null;
+  meta: Record<string, unknown>;
+  read_at: string | null;
+  created_at: string;
+}
+
+export async function getAdminNotifications(): Promise<AdminNotification[]> {
+  const { data, error } = await supabaseAuth
+    .from("admin_notifications")
+    .select("id,event_type,severity,title,body,entity_type,entity_id,meta,read_at,created_at")
+    .order("created_at", { ascending: false })
+    .limit(100);
+
+  if (error) {
+    console.error("[Admin] getAdminNotifications failed:", error.message);
+    return [];
+  }
+  return (data ?? []) as AdminNotification[];
+}
+
+export async function getUnreadNotificationCount(): Promise<number> {
+  const { count, error } = await supabaseAuth
+    .from("admin_notifications")
+    .select("id", { count: "exact", head: true })
+    .is("read_at", null);
+
+  if (error) {
+    console.error("[Admin] getUnreadNotificationCount failed:", error.message);
+    return 0;
+  }
+  return count ?? 0;
+}
+
+export async function markNotificationRead(id: string): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("admin_notifications")
+    .update({ read_at: new Date().toISOString() })
+    .eq("id", id)
+    .is("read_at", null);
+
+  if (error) {
+    throw new Error(`[Admin] markNotificationRead failed: ${error.message}`);
+  }
+}
+
+export async function markAllNotificationsRead(): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("admin_notifications")
+    .update({ read_at: new Date().toISOString() })
+    .is("read_at", null);
+
+  if (error) {
+    throw new Error(`[Admin] markAllNotificationsRead failed: ${error.message}`);
+  }
+}
