@@ -33,7 +33,7 @@ export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
   {
     id: "gnews-cv-economy",
     name: "Google News — Cape Verde Economy & Investment",
-    url: 'https://news.google.com/rss/search?q=%22Cape+Verde%22+economy+OR+investment+OR+GDP&hl=en&gl=US&ceid=US:en',
+    url: 'https://news.google.com/rss/search?q=%22Cape+Verde%22+economy+OR+investment+OR+GDP+-site%3Astatista.com&hl=en&gl=US&ceid=US:en',
     type: "google_news_rss",
     defaultCategory: "Economy",
     language: "en",
@@ -42,7 +42,7 @@ export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
   {
     id: "gnews-cv-tourism",
     name: "Google News — Cape Verde Tourism",
-    url: 'https://news.google.com/rss/search?q=%22Cape+Verde%22+tourism+OR+hotel+OR+resort&hl=en&gl=US&ceid=US:en',
+    url: 'https://news.google.com/rss/search?q=%22Cape+Verde%22+hotel+OR+resort+OR+hospitality+-crime+-assault+-outbreak&hl=en&gl=US&ceid=US:en',
     type: "google_news_rss",
     defaultCategory: "Tourism",
     language: "en",
@@ -69,7 +69,7 @@ export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
   {
     id: "gnews-cv-policy",
     name: "Google News — Cape Verde Policy & Regulation",
-    url: 'https://news.google.com/rss/search?q=%22Cape+Verde%22+tax+OR+regulation+OR+policy+OR+residency&hl=en&gl=US&ceid=US:en',
+    url: 'https://news.google.com/rss/search?q=%22Cape+Verde%22+%28policy+OR+regulation+OR+tax+OR+residency%29+%28investment+OR+property+OR+%22real+estate%22+OR+construction%29&hl=en&gl=US&ceid=US:en',
     type: "google_news_rss",
     defaultCategory: "Policy / regulation",
     language: "en",
@@ -78,7 +78,7 @@ export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
   {
     id: "gnews-cv-infrastructure",
     name: "Google News — Cape Verde Infrastructure & Energy",
-    url: 'https://news.google.com/rss/search?q=%22Cape+Verde%22+infrastructure+OR+energy+OR+water&hl=en&gl=US&ceid=US:en',
+    url: 'https://news.google.com/rss/search?q=%22Cape+Verde%22+infrastructure+OR+energy+OR+port+OR+water+-travel+-cruise+-hantavirus&hl=en&gl=US&ceid=US:en',
     type: "google_news_rss",
     defaultCategory: "Infrastructure",
     language: "en",
