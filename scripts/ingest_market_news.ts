@@ -34,6 +34,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { MARKET_NEWS_SOURCES, MarketNewsSource } from "./lib/market-news-sources";
 import { parseFeedItems, transformFeedItem, MarketNewsInsert } from "./lib/market-news-transform";
 import { loadExistingKeys, isDuplicate } from "./lib/market-news-dedup";
+import { insertAdminNotification } from "./lib/notifications";
 
 // Load from repo root .env. Matches the pattern in snapshot_source_health.ts —
 // tries the conventional relative path first, then a known absolute fallback
@@ -101,6 +102,49 @@ async function insertCandidate(
     // Unique constraint violation means a concurrent run beat us to it — safe to ignore.
     if (error.code === "23505") return;
     throw new Error(error.message);
+  }
+}
+
+// ── Admin notification emit ────────────────────────────────────────────────
+
+async function emitMarketNewsNotifications(
+  sb: SupabaseClient,
+  results: SourceResult[],
+  totalInserted: number
+): Promise<void> {
+  const errorResults = results.filter((r) => r.error !== null);
+
+  // One summary notification per run
+  await insertAdminNotification(sb, {
+    event_type: "market_news.candidates_imported",
+    severity:   errorResults.length > 0 ? "warning" : "info",
+    title:      `${totalInserted} new Market News candidate${totalInserted !== 1 ? "s" : ""} imported`,
+    body:
+      `${results.length} source${results.length !== 1 ? "s" : ""} checked.` +
+      (errorResults.length > 0 ? ` ${errorResults.length} had errors.` : ""),
+    meta: {
+      sources_run: results.length,
+      inserted:    totalInserted,
+      source_breakdown: results.map((r) => ({
+        id:       r.source.id,
+        name:     r.source.name,
+        inserted: r.inserted,
+        error:    r.error ?? null,
+      })),
+    },
+  });
+
+  // One warning notification per errored source
+  for (const r of errorResults) {
+    await insertAdminNotification(sb, {
+      event_type:  "market_news.source_error",
+      severity:    "warning",
+      title:       `Ingestion error: ${r.source.name}`,
+      body:        r.error,
+      entity_type: "source",
+      entity_id:   r.source.id,
+      meta:        { source_id: r.source.id, source_name: r.source.name },
+    });
   }
 }
 
@@ -263,6 +307,17 @@ async function main() {
   if (totalErrors === enabledSources.length && enabledSources.length > 0) {
     log("\nAll sources failed.");
     process.exit(2);
+  }
+
+  // Emit admin notifications (commit mode only — dry-run never writes)
+  if (!DRY_RUN) {
+    try {
+      await emitMarketNewsNotifications(sb, results, totalInserted);
+      log("\nNotifications emitted.");
+    } catch (err) {
+      // Non-fatal: notification failure must not fail the ingestion run
+      log(`[warn] Notification emit error: ${err instanceof Error ? err.message : String(err)}`);
+    }
   }
 
   process.exit(0);
