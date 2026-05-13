@@ -66,9 +66,12 @@ create unique index if not exists market_news_canonical_url_uidx
   where canonical_url is not null;
 
 -- Secondary dedup lookup: script can SELECT EXISTS before inserting when
--- canonical_url is absent
+-- canonical_url is absent. Index on full timestamptz — date-level comparison
+-- is done in the WHERE clause of the lookup query, not in the index expression.
+-- (timestamptz::date is timezone-dependent and therefore not IMMUTABLE, which
+-- Postgres requires for index expressions.)
 create index if not exists market_news_source_dedup_idx
-  on public.market_news (source_url, source_name, (published_at::date));
+  on public.market_news (source_url, source_name, published_at);
 
 -- ─── updated_at trigger ───────────────────────────────────────────────────────
 
