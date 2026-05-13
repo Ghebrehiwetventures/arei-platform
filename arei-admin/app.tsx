@@ -2786,6 +2786,20 @@ function textToArr(s: string): string[] | null {
   return parts.length > 0 ? parts : null;
 }
 
+type EnrichSuggestion = {
+  title: string;
+  snippet: string;
+  why_it_matters: string;
+  category: string;
+  signal_tags: string[];
+  affected_regions: string[];
+  relevance_score: number;
+  recommendation: "publish" | "keep_candidate" | "archive";
+  reasoning: string;
+};
+
+type EnrichState = "idle" | "loading" | "done" | "error";
+
 function MarketNewsEditPanel({
   item,
   onSave,
@@ -2806,6 +2820,10 @@ function MarketNewsEditPanel({
   const [affectedRegions, setAffectedRegions] = React.useState(arrToText(item.affected_regions));
   const [signalTags, setSignalTags] = React.useState(arrToText(item.signal_tags));
 
+  const [enrichState, setEnrichState] = React.useState<EnrichState>("idle");
+  const [enrichError, setEnrichError] = React.useState<string | null>(null);
+  const [suggestion, setSuggestion] = React.useState<EnrichSuggestion | null>(null);
+
   const isDirty =
     title !== item.title ||
     snippet !== item.snippet ||
@@ -2823,6 +2841,57 @@ function MarketNewsEditPanel({
       affected_regions: textToArr(affectedRegions),
       signal_tags: textToArr(signalTags),
     });
+  };
+
+  const handleEnrich = async () => {
+    setEnrichState("loading");
+    setEnrichError(null);
+    setSuggestion(null);
+    try {
+      const res = await fetch("/api/enrich-candidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: item.id,
+          title: item.title,
+          original_title: item.original_title,
+          snippet: item.snippet,
+          source_name: item.source_name,
+          source_url: item.source_url,
+          category: item.category,
+          published_at: item.published_at,
+          language: item.language,
+          ingestion_source: item.ingestion_source,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? `Request failed (${res.status})`);
+      }
+      setSuggestion(data as EnrichSuggestion);
+      setEnrichState("done");
+    } catch (err) {
+      setEnrichError(err instanceof Error ? err.message : "Enrichment failed");
+      setEnrichState("error");
+    }
+  };
+
+  const handleApplySuggestion = () => {
+    if (!suggestion) return;
+    setTitle(suggestion.title);
+    setSnippet(suggestion.snippet);
+    setWhyItMatters(suggestion.why_it_matters);
+    setCategory(suggestion.category);
+    setAffectedRegions(arrToText(suggestion.affected_regions));
+    setSignalTags(arrToText(suggestion.signal_tags));
+    setSuggestion(null);
+    setEnrichState("idle");
+  };
+
+  const handleDismissEnrich = () => {
+    setSuggestion(null);
+    setEnrichState("idle");
+    setEnrichError(null);
   };
 
   const pubDate = item.published_at
@@ -2912,6 +2981,121 @@ function MarketNewsEditPanel({
           >
             {saving ? "Saving…" : "Save changes"}
           </button>
+        </div>
+      )}
+
+      {/* AI Enrichment — candidates only */}
+      {item.status === "candidate" && (
+        <div className="space-y-2">
+          {enrichState === "idle" && (
+            <button
+              type="button"
+              onClick={handleEnrich}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+            >
+              Rewrite / Enrich
+            </button>
+          )}
+
+          {enrichState === "loading" && (
+            <p className="text-xs text-foreground-subtle py-1">Generating suggestion…</p>
+          )}
+
+          {enrichState === "error" && enrichError && (
+            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 space-y-1">
+              <p className="text-xs text-red-700">{enrichError}</p>
+              <button
+                type="button"
+                onClick={handleDismissEnrich}
+                className="text-xs text-red-600 underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {enrichState === "done" && suggestion && (
+            <div className="rounded border border-border bg-surface-2 divide-y divide-border text-xs">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-[10px] font-semibold text-foreground-subtle uppercase tracking-wider">
+                  AI Suggestion
+                </span>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-[10px] text-foreground-subtle">
+                    Relevance: {suggestion.relevance_score}/100
+                  </span>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded uppercase tracking-wide ${
+                      suggestion.recommendation === "publish"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : suggestion.recommendation === "archive"
+                          ? "bg-gray-100 text-gray-500"
+                          : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {suggestion.recommendation.replace("_", " ")}
+                  </span>
+                </div>
+              </div>
+
+              {/* Fields */}
+              <div className="px-4 py-3 space-y-2.5">
+                <div>
+                  <span className="block text-foreground-subtle mb-0.5">Title</span>
+                  <span className="text-foreground font-medium leading-snug">{suggestion.title}</span>
+                </div>
+                <div>
+                  <span className="block text-foreground-subtle mb-0.5">Snippet</span>
+                  <span className="text-foreground-muted leading-relaxed">{suggestion.snippet}</span>
+                </div>
+                <div>
+                  <span className="block text-foreground-subtle mb-0.5">Why it matters</span>
+                  <span className="text-foreground-muted leading-relaxed">{suggestion.why_it_matters}</span>
+                </div>
+                <div className="flex flex-wrap gap-x-6 gap-y-2">
+                  <div>
+                    <span className="block text-foreground-subtle mb-0.5">Category</span>
+                    <span className="text-foreground-muted">{suggestion.category}</span>
+                  </div>
+                  {suggestion.affected_regions.length > 0 && (
+                    <div>
+                      <span className="block text-foreground-subtle mb-0.5">Regions</span>
+                      <span className="text-foreground-muted">{suggestion.affected_regions.join(", ")}</span>
+                    </div>
+                  )}
+                  {suggestion.signal_tags.length > 0 && (
+                    <div>
+                      <span className="block text-foreground-subtle mb-0.5">Signal tags</span>
+                      <span className="text-foreground-muted">{suggestion.signal_tags.join(", ")}</span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <span className="block text-foreground-subtle mb-0.5">Reasoning</span>
+                  <span className="text-foreground-muted italic">{suggestion.reasoning}</span>
+                </div>
+              </div>
+
+              {/* Apply / Dismiss */}
+              <div className="flex gap-2 px-4 py-2.5">
+                <button
+                  type="button"
+                  onClick={handleApplySuggestion}
+                  className="px-3 py-1.5 text-xs font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+                >
+                  Apply suggestion
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDismissEnrich}
+                  className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
