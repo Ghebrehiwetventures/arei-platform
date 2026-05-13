@@ -40,7 +40,7 @@ export default function WebsitePage() {
 
       {/* URL banner */}
       <div
-        className="rounded-lg px-4 py-3 flex items-center justify-between gap-4"
+        className="rounded-lg px-4 py-3 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2"
         style={{ background: "var(--color-accent-muted)", border: "1px solid rgba(142,207,191,0.3)" }}
       >
         <div className="text-sm">
@@ -105,7 +105,7 @@ export default function WebsitePage() {
             )}
 
             {/* Contact buttons */}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-col sm:flex-row sm:flex-wrap gap-2">
               {agency.email && (
                 <a
                   href={`mailto:${agency.email}`}

@@ -99,14 +99,17 @@ export default function App() {
           </div>
         )}
         <Nav />
-        <Routes>
-          <Route path="/" element={<InboxPage />} />
-          <Route path="/listings" element={<ListingsPage />} />
-          <Route path="/listings/:id" element={<ListingDetailPage />} />
-          <Route path="/website" element={<WebsitePage />} />
-          <Route path="/performance" element={<PerformancePage />} />
-          <Route path="/profile" element={<ProfilePage />} />
-        </Routes>
+        {/* pb-16 ensures content clears the fixed bottom tab bar on mobile */}
+        <div className="pb-16 sm:pb-0">
+          <Routes>
+            <Route path="/" element={<InboxPage />} />
+            <Route path="/listings" element={<ListingsPage />} />
+            <Route path="/listings/:id" element={<ListingDetailPage />} />
+            <Route path="/website" element={<WebsitePage />} />
+            <Route path="/performance" element={<PerformancePage />} />
+            <Route path="/profile" element={<ProfilePage />} />
+          </Routes>
+        </div>
       </BrowserRouter>
     </AgencyContext.Provider>
   );

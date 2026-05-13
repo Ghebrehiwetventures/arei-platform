@@ -128,14 +128,14 @@ export default function ListingsPage() {
       {/* Create form modal */}
       {showCreateForm && agency && (
         <div
-          className="fixed inset-0 z-50 flex items-start justify-center pt-16 px-4"
+          className="fixed inset-0 z-50 flex items-start justify-center pt-4 sm:pt-16 px-4"
           style={{ background: "rgba(0,0,0,0.5)" }}
           onClick={(e) => {
             if (e.target === e.currentTarget) setShowCreateForm(false);
           }}
         >
           <div
-            className="w-full max-w-xl rounded-lg p-6 max-h-[80vh] overflow-y-auto"
+            className="w-full max-w-xl rounded-lg p-4 sm:p-6 max-h-[90vh] sm:max-h-[80vh] overflow-y-auto"
             style={{
               background: "var(--color-surface-1)",
               border: "1px solid var(--color-border)",

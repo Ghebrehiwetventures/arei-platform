@@ -164,7 +164,7 @@ export default function ListingForm({
         </select>
       </Field>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
           <Field label="Price">
             <input
@@ -225,7 +225,7 @@ export default function ListingForm({
         />
       </Field>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Field label="Bedrooms">
           <input
             type="number"
@@ -296,7 +296,7 @@ export default function ListingForm({
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Contact email">
           <input
             type="email"

@@ -22,6 +22,8 @@ export default function InboxPage() {
   const [loading, setLoading] = useState(true);
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [statusFilter, setStatusFilter] = useState<LeadStatus | "all">("all");
+  // Mobile: show "list" or "detail" view (desktop always shows both side-by-side)
+  const [mobileView, setMobileView] = useState<"list" | "detail">("list");
 
   useEffect(() => {
     if (!agency) return;
@@ -51,6 +53,11 @@ export default function InboxPage() {
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
   }
 
+  function handleSelectLead(id: string) {
+    setSelectedId(id);
+    setMobileView("detail");
+  }
+
   return (
     <div className="max-w-7xl mx-auto px-4 sm:px-6 py-6">
       <h1 className="text-xl font-semibold mb-4" style={{ color: "var(--color-foreground)" }}>
@@ -71,27 +78,27 @@ export default function InboxPage() {
         </div>
       ) : (
         <div
-          className="rounded-lg overflow-hidden flex"
+          className="rounded-lg overflow-hidden sm:flex"
           style={{
             border: "1px solid var(--color-border)",
             background: "var(--color-surface-1)",
             minHeight: "60vh",
           }}
         >
-          {/* Left panel */}
+          {/* ── Lead list panel ── */}
+          {/* Mobile: full-width when mobileView==="list", hidden when mobileView==="detail" */}
+          {/* Desktop (sm+): always visible, fixed 320px width */}
           <div
-            style={{
-              width: "320px",
-              minWidth: "320px",
-              borderRight: "1px solid var(--color-border)",
-              display: "flex",
-              flexDirection: "column",
-            }}
+            className={`${mobileView === "detail" ? "hidden sm:flex" : "flex"} flex-col sm:w-80`}
+            style={{ borderRight: "1px solid var(--color-border)" }}
           >
             {/* Filter bar */}
             <div
               className="px-3 py-2 flex gap-1 flex-wrap"
-              style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-surface-2)" }}
+              style={{
+                borderBottom: "1px solid var(--color-border)",
+                background: "var(--color-surface-2)",
+              }}
             >
               {STATUS_FILTERS.map((f) => (
                 <button
@@ -129,15 +136,34 @@ export default function InboxPage() {
                     lead={lead}
                     listingTitle={listingTitle(lead.listing_id)}
                     selected={selectedId === lead.id}
-                    onClick={() => setSelectedId(lead.id)}
+                    onClick={() => handleSelectLead(lead.id)}
                   />
                 ))
               )}
             </div>
           </div>
 
-          {/* Right panel */}
-          <div style={{ flex: 1, overflowY: "auto" }}>
+          {/* ── Lead detail panel ── */}
+          {/* Mobile: full-width when mobileView==="detail", hidden when mobileView==="list" */}
+          {/* Desktop (sm+): always visible, takes remaining flex space */}
+          <div
+            className={`${mobileView === "list" ? "hidden sm:flex" : "flex"} flex-col flex-1`}
+            style={{ overflowY: "auto" }}
+          >
+            {/* Back button — mobile only */}
+            <button
+              type="button"
+              className="sm:hidden w-full text-left px-4 py-3 text-sm flex-shrink-0"
+              style={{
+                borderBottom: "1px solid var(--color-border)",
+                color: "var(--color-foreground-muted)",
+                background: "var(--color-surface-2)",
+              }}
+              onClick={() => setMobileView("list")}
+            >
+              ← All leads
+            </button>
+
             {selectedLead ? (
               <LeadDetail
                 lead={selectedLead}
