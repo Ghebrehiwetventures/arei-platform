@@ -3,7 +3,7 @@
 **Working name:** Listo by AREI *(working name only — final name TBD; see naming note below)*  
 **App/package name:** arei-broker  
 **Stage:** Concept → V0 pilot  
-**Last updated:** 2026-05-12
+**Last updated:** 2026-05-13
 
 > **Naming note:** "Listo by AREI" is a working product name used for UI copy, docs, and internal discussion. The final name depends on domain availability, trademark checks, language checks across target markets, and broker feedback. Do not rename folders, packages, or database concepts to "listo" until the name is confirmed.
 
@@ -13,9 +13,11 @@
 
 Most real estate agencies in African and emerging markets run on WhatsApp, phone calls, and personal relationships. They do not have a shared listing database. They do not have a lead inbox. They lose buyer enquiries because there is no structured place for leads to land. When someone asks "do you have anything in [location]?", the answer is a WhatsApp forward — a photo, a voice note, a price. There is no link to share. No professional page. No follow-up system.
 
-The expensive tools that solve this (Casafari, Agency CRM platforms, portal back-offices) are built for European and US markets. They are too complex, too expensive, and too far from the workflows these agencies actually use.
+The tools designed to solve this (Casafari, enterprise CRM platforms, portal back-offices) are built for European and US markets. They are too complex, too expensive, and too far from the workflows these agencies actually use. But they are not the real competition.
 
-Listo by AREI offers 80% of the practical value at 20% of the complexity. It meets agencies where they are — WhatsApp-first, mobile-friendly, low-friction — and gives them the basics they are missing: a structured listing catalogue, a lead inbox, and a professional public agency page they can share.
+**The real competitor is Google Sheets + WhatsApp + Facebook.** That combination costs nothing, runs on a phone, and requires zero training. Any tool that replaces it must be faster, simpler, and more useful — not more powerful. The positioning is not "better than Casafari." It is: **"The simplest way to run your agency from your phone."**
+
+Listo by AREI meets agencies where they are — WhatsApp-first, mobile-first, low-friction — and gives them the basics they are missing: a structured listing catalogue, a lead inbox, and a professional public agency page they can share.
 
 AREI benefits in the background: structured listing data, active/inactive/sold status, price history, lead demand signals, and agency attribution — all feeding into the Africa Real Estate Index. The value exchange is explicit, not hidden. Agencies get a free useful tool. AREI gets structured data.
 
@@ -51,7 +53,9 @@ An agency with 3 agents does not need automated AVM valuation, market trend repo
 3. A way to follow up without losing track.
 4. A link they can share on WhatsApp.
 
-Design principle: **one screen, one job**. No configuration wizard. No tutorial. A broker should be able to add a listing in under three minutes.
+Design principle: **one screen, one job**. No configuration wizard. No tutorial. A broker should be able to add a listing in under three minutes from their phone.
+
+**Mobile-first is a V0 requirement, not later polish.** Agents work from phones. 71% of real estate professionals in the target markets use mobile as their primary device. If the product is not fully usable on a smartphone at launch, it will not be used. Every page, form, and flow must be designed for a 390px screen before a desktop layout is considered.
 
 Complexity that this product deliberately avoids in V0:
 - Automated valuation
@@ -60,7 +64,7 @@ Complexity that this product deliberately avoids in V0:
 - Complicated pipeline stages
 - Team/role management
 - API integrations
-- Mobile app (mobile web only in V0)
+- Native mobile app (mobile web is the target; a native app is a later decision)
 
 ---
 
@@ -134,7 +138,7 @@ Inbox | Listings | Website | Performance | Profile
 | Feature | Notes |
 |---|---|
 | Broker self-login | Magic link via agency email; Supabase Auth broker role |
-| Mobile-optimised UI | Current V0 is desktop-first; V1 targets mobile |
+| Mobile-responsive polish | V0 is mobile-first by design; V1 refines responsive breakpoints and adds touch-optimised interactions |
 | Lead notifications | WhatsApp message or email when a new lead arrives |
 | Listing page (public) | Hosted at `listo.arei.io/[agency-slug]/[listing-id]` or similar |
 | Agency page (public) | Hosted at `listo.arei.io/[agency-slug]` |
@@ -210,7 +214,52 @@ Use these to validate the product before building:
 
 ---
 
-## 11. What this product is not
+## 11. Competitive context
+
+> Full competitive landscape research: `docs/03-product/broker-tool-competitive-landscape-2026.md`
+
+### What this product is competing against
+
+**The real competitor is Google Sheets + WhatsApp + Facebook Pages.** That is what small agencies in Cape Verde, Nairobi, and Lagos use today. Combined cost: $0. Any tool that replaces this stack must win on speed, simplicity, and mobile usability — not on features.
+
+Enterprise tools (Casafari, Propertybase, kvCORE) are irrelevant for this market. They cost $400–$1,400/month, require MLS/European portal infrastructure, and solve problems small African agencies do not have. This product is not a Casafari replacement.
+
+General-purpose CRMs (HubSpot, Zoho, Pipedrive) are overbuilt. Teams use roughly 20% of CRM features they pay for. Building a "full CRM" is not the goal. Building something simpler than a spreadsheet is.
+
+WhatsApp CRM tools (Kommo, Callbell) handle messaging but do not manage listings, publish agency pages, or generate structured property data. Close but not complete.
+
+### Reference products (not targets)
+
+**ImobiBrasil** (Brazil, ~$10/mo) is the strongest practical reference. It uses AI to parse WhatsApp voice notes into property listings, syndicates to local portals, and targets small agencies. Proven model, right price point, right complexity level. AREI's V0 is roughly "ImobiBrasil for Africa — without the AI, with the structured data angle."
+
+**Socia** (Portugal) proves the AI-first vision: unified inbox across WhatsApp/email/SMS, AI lead qualification, AI-generated marketing materials. Not the immediate target — this is V2+ ambition. Do not position V0 as an AI product.
+
+**PropCon** (South Africa, ~$13/mo) proves African agencies will pay for a simple listing + CRM + portal syndication tool. Functional proof of concept, no AI, SA only.
+
+### Positioning
+
+> "The simplest way to run your agency from your phone."
+
+Not "the most powerful." Not "AI-powered." Not "the future of real estate." Simple. Phone. Your agency. Today.
+
+### What not to build in V0
+
+- Market intelligence or comparable sales analysis (requires data scale first)
+- Transaction management or document generation
+- Commission tracking or accounting
+- Desktop-first features
+- Complex reporting or BI dashboards
+- Portal syndication (V1 feature, after proving daily utility)
+- AI-assisted listing creation (V1, reference: ImobiBrasil architecture)
+- Anything that requires training or a configuration wizard
+
+### How AREI wins
+
+The data generated by broker usage is the real business value — every listing entered is a structured market data point. This is AREI's background value proposition, not the broker's. Do not lead with data, analytics, or market intelligence in the broker-facing product. The broker pitch is: **daily utility**. The AREI business case is: structured market data at scale.
+
+---
+
+## 12. What this product is not (summary)
 
 - Not a portal (Listo does not aggregate listings from multiple agencies for a buyer to browse — that's kazaverde.com)
 - Not a valuation tool
@@ -221,7 +270,7 @@ Use these to validate the product before building:
 
 ---
 
-## 12. Relationship to the AREI admin tools
+## 13. Relationship to the AREI admin tools
 
 The admin-side tools (Agency Console, Agency Data Console, Broker Pilot Preview) are **internal AREI infrastructure**. They are used by AREI staff to:
 
@@ -236,7 +285,7 @@ The broker sees Listo. AREI sees the admin tools. The Supabase backend is shared
 
 ---
 
-## 13. Open questions
+## 14. Open questions
 
 - **Product name:** "Listo by AREI" is the working name. Confirm before launch. Check trademark conflicts.
 - **Domain:** `listo.arei.io` or `listo.kazaverde.com` (Cape Verde pilot only)?
