@@ -106,15 +106,15 @@ function NotificationRow({
           </p>
         )}
 
-        <div className="mt-1.5 flex items-center gap-3">
-          <span className="text-[10px] font-mono text-foreground-subtle uppercase tracking-wider">
+        <div className="mt-1.5 flex items-center gap-3 min-w-0">
+          <span className="text-[10px] font-mono text-foreground-subtle uppercase tracking-wider truncate">
             {n.event_type}
           </span>
           {unread && (
             <button
               onClick={handleMarkRead}
               disabled={marking}
-              className="text-[10px] font-mono text-foreground-subtle hover:text-foreground-muted transition-colors duration-100 disabled:opacity-40"
+              className="flex-shrink-0 text-[10px] font-mono text-foreground-subtle hover:text-foreground-muted transition-colors duration-100 disabled:opacity-40"
             >
               {marking ? "marking…" : "mark read"}
             </button>
@@ -188,22 +188,22 @@ export function NotificationsView({ onCountChange }: NotificationsViewProps) {
   };
 
   return (
-    <div>
+    <div className="space-y-6">
       {/* ── Header ── */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
-          <h1 className="text-[18px] font-semibold font-mono text-foreground tracking-tight">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             Notifications
           </h1>
-          {!loading && (
-            <p className="text-[12px] font-mono text-foreground-muted mt-0.5">
-              {unreadCount > 0
-                ? `${unreadCount} unread · ${notifications.length} total`
-                : notifications.length === 0
-                ? "No notifications yet"
-                : `All read · ${notifications.length} total`}
-            </p>
-          )}
+          <p className="text-sm text-foreground-muted mt-1">
+            {loading
+              ? "Loading…"
+              : unreadCount > 0
+              ? `${unreadCount} unread · ${notifications.length} total`
+              : notifications.length === 0
+              ? "System events will appear here."
+              : `All read · ${notifications.length} total`}
+          </p>
         </div>
         {unreadCount > 0 && (
           <button
@@ -217,23 +217,15 @@ export function NotificationsView({ onCountChange }: NotificationsViewProps) {
       </div>
 
       {/* ── States ── */}
-      {loading && (
-        <div className="text-[12px] font-mono text-foreground-muted py-8 text-center">
-          Loading…
-        </div>
-      )}
-
       {!loading && error && (
-        <div className="text-[12px] font-mono text-[#C44A3A] py-4">
-          {error}
-        </div>
+        <div className="text-sm font-mono text-[#C44A3A]">{error}</div>
       )}
 
       {!loading && !error && notifications.length === 0 && (
         <div className="py-16 text-center">
-          <p className="text-[13px] font-mono text-foreground-muted">No notifications yet.</p>
-          <p className="text-[11px] font-mono text-foreground-subtle mt-1">
-            Events from ingestion runs and system actions will appear here.
+          <p className="text-sm font-mono text-foreground-muted">No notifications yet.</p>
+          <p className="text-xs font-mono text-foreground-subtle mt-1">
+            Ingestion runs, source errors, and other system events will appear here.
           </p>
         </div>
       )}
