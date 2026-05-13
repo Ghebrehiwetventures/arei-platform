@@ -15,12 +15,13 @@ function CopyButton({ text, label }: { text: string; label: string }) {
     <button
       type="button"
       onClick={handleCopy}
-      className="inline-flex items-center px-3 py-1.5 rounded text-sm"
+      className="inline-flex items-center px-3 py-1.5 text-sm"
       style={{
         border: "1px solid var(--color-border)",
         color: copied ? "var(--color-green)" : "var(--color-foreground-muted)",
         background: copied ? "var(--color-green-muted)" : "var(--color-surface-2)",
         transition: "all 0.15s",
+        borderRadius: "2px",
       }}
     >
       {copied ? "✓ Copied!" : label}

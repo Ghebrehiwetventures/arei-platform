@@ -199,7 +199,16 @@ export default function LeadDetail({ lead, listingTitle, onUpdate }: LeadDetailP
 
       {/* Status change */}
       <div>
-        <p className="text-xs font-medium mb-2" style={{ color: "var(--color-foreground-muted)" }}>
+        <p
+          className="mb-2"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: "var(--color-foreground-muted)",
+          }}
+        >
           Update status
         </p>
         <div className="flex flex-wrap gap-1.5">
@@ -209,18 +218,23 @@ export default function LeadDetail({ lead, listingTitle, onUpdate }: LeadDetailP
               type="button"
               disabled={savingStatus || lead.status === opt.value}
               onClick={() => handleStatusChange(opt.value)}
-              className="px-2.5 py-1 rounded text-xs transition-opacity"
+              className="px-2.5 py-1 transition-opacity"
               style={{
                 background:
                   lead.status === opt.value
-                    ? "var(--color-deep-green)"
+                    ? "var(--color-foreground)"
                     : "var(--color-surface-2)",
                 color:
                   lead.status === opt.value
-                    ? "var(--color-deep-green-foreground)"
+                    ? "var(--color-surface-1)"
                     : "var(--color-foreground-muted)",
                 border: "1px solid var(--color-border)",
+                borderRadius: "2px",
                 opacity: savingStatus ? 0.6 : 1,
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                textTransform: "uppercase",
+                letterSpacing: "0.05em",
               }}
             >
               {opt.label}
@@ -231,7 +245,16 @@ export default function LeadDetail({ lead, listingTitle, onUpdate }: LeadDetailP
 
       {/* Follow-up date */}
       <div>
-        <p className="text-xs font-medium mb-1.5" style={{ color: "var(--color-foreground-muted)" }}>
+        <p
+          className="mb-1.5"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: "var(--color-foreground-muted)",
+          }}
+        >
           Follow-up date
         </p>
         <div className="flex items-center gap-2">
@@ -260,7 +283,16 @@ export default function LeadDetail({ lead, listingTitle, onUpdate }: LeadDetailP
 
       {/* Notes */}
       <div>
-        <p className="text-xs font-medium mb-1.5" style={{ color: "var(--color-foreground-muted)" }}>
+        <p
+          className="mb-1.5"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: "var(--color-foreground-muted)",
+          }}
+        >
           Notes
         </p>
         <textarea

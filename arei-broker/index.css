@@ -148,11 +148,11 @@ table {
 
 button {
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 2px;
 }
 
 input, select, textarea {
-  border-radius: 6px;
+  border-radius: 2px;
 }
 
 /* ── Scrollbar (subtle) ──────────────────────────────────────────── */

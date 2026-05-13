@@ -38,7 +38,16 @@ const inputStyle: React.CSSProperties = {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <label className="block text-xs font-medium" style={{ color: "var(--color-foreground-muted)" }}>
+      <label
+        className="block"
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: "var(--color-foreground-muted)",
+        }}
+      >
         {label}
       </label>
       {children}
@@ -351,9 +360,10 @@ export default function ListingForm({
           disabled={saving}
           className="px-4 py-2 text-sm font-medium transition-opacity"
           style={{
-            background: "var(--color-deep-green)",
-            color: "var(--color-deep-green-foreground)",
+            background: "var(--color-foreground)",
+            color: "var(--color-surface-1)",
             opacity: saving ? 0.6 : 1,
+            borderRadius: "2px",
           }}
         >
           {saving ? "Saving…" : mode === "create" ? "Save listing" : "Save changes"}

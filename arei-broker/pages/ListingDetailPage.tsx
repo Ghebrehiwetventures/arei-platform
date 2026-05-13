@@ -85,8 +85,13 @@ export default function ListingDetailPage() {
       <button
         type="button"
         onClick={() => navigate("/listings")}
-        className="text-sm"
-        style={{ color: "var(--color-foreground-muted)" }}
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: "var(--color-foreground-muted)",
+        }}
       >
         ← Listings
       </button>
@@ -127,11 +132,16 @@ export default function ListingDetailPage() {
                 <button
                   type="button"
                   onClick={() => setEditing(true)}
-                  className="px-3 py-1 text-xs"
+                  className="px-3 py-1"
                   style={{
                     border: "1px solid var(--color-border)",
                     color: "var(--color-foreground-muted)",
                     background: "var(--color-surface-2)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    borderRadius: "2px",
                   }}
                 >
                   Edit
@@ -202,7 +212,16 @@ export default function ListingDetailPage() {
 
             {listing.description && (
               <div className="mt-4">
-                <p className="text-xs font-medium mb-1" style={{ color: "var(--color-foreground-muted)" }}>
+                <p
+                  className="mb-1"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "var(--color-foreground-muted)",
+                  }}
+                >
                   Description
                 </p>
                 <p className="text-sm" style={{ color: "var(--color-foreground)" }}>
@@ -217,7 +236,16 @@ export default function ListingDetailPage() {
                 className="mt-4 pt-4"
                 style={{ borderTop: "1px solid var(--color-border)" }}
               >
-                <p className="text-xs font-medium mb-1" style={{ color: "var(--color-foreground-muted)" }}>
+                <p
+                  className="mb-1"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "var(--color-foreground-muted)",
+                  }}
+                >
                   Contact
                 </p>
                 <div className="text-sm space-y-0.5">
@@ -276,7 +304,16 @@ export default function ListingDetailPage() {
             className="rounded-lg p-4"
             style={{ background: "var(--color-surface-1)", border: "1px solid var(--color-border)" }}
           >
-            <p className="text-sm font-medium mb-2" style={{ color: "var(--color-foreground)" }}>
+            <p
+              className="mb-2"
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "var(--color-foreground-muted)",
+              }}
+            >
               Publication status
             </p>
             {listing.publish_status === "draft" && ready && (
@@ -290,9 +327,10 @@ export default function ListingDetailPage() {
                   disabled={submitting}
                   className="px-4 py-1.5 text-sm font-medium"
                   style={{
-                    background: "var(--color-deep-green)",
-                    color: "var(--color-deep-green-foreground)",
+                    background: "var(--color-foreground)",
+                    color: "var(--color-surface-1)",
                     opacity: submitting ? 0.6 : 1,
+                    borderRadius: "2px",
                   }}
                 >
                   {submitting ? "Submitting…" : "Submit for review"}
@@ -396,17 +434,18 @@ export default function ListingDetailPage() {
               href={`https://wa.me/${waNumber}?text=${waMessage}`}
               target="_blank"
               rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center py-2.5 rounded text-sm font-semibold"
-              style={{ background: "#25D366", color: "#ffffff" }}
+              className="flex-1 flex items-center justify-center py-2.5 text-sm font-semibold"
+              style={{ background: "#25D366", color: "#ffffff", borderRadius: "2px" }}
             >
               WhatsApp
             </a>
           ) : (
             <div
-              className="flex-1 flex items-center justify-center py-2.5 rounded text-sm"
+              className="flex-1 flex items-center justify-center py-2.5 text-sm"
               style={{
                 background: "var(--color-surface-3)",
                 color: "var(--color-foreground-subtle)",
+                borderRadius: "2px",
               }}
             >
               No contact phone
@@ -417,11 +456,12 @@ export default function ListingDetailPage() {
           {contactPhone && (
             <a
               href={`tel:${contactPhone}`}
-              className="flex items-center justify-center px-4 py-2.5 rounded text-sm font-medium"
+              className="flex items-center justify-center px-4 py-2.5 text-sm font-medium"
               style={{
                 background: "var(--color-surface-2)",
                 border: "1px solid var(--color-border)",
                 color: "var(--color-foreground-muted)",
+                borderRadius: "2px",
               }}
             >
               Call

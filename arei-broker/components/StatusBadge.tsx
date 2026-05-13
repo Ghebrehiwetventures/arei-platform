@@ -60,8 +60,15 @@ export function PublishStatusBadge({ status, className = "" }: PublishStatusBadg
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${className}`}
-      style={style}
+      className={`inline-flex items-center px-2 py-0.5 ${className}`}
+      style={{
+        ...style,
+        fontFamily: "var(--font-mono)",
+        fontSize: "10px",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        borderRadius: "2px",
+      }}
     >
       {PUBLISH_STATUS_LABELS[status]}
     </span>
@@ -109,8 +116,15 @@ export function LeadStatusBadge({ status, className = "" }: LeadStatusBadgeProps
 
   return (
     <span
-      className={`inline-flex items-center px-2 py-0.5 rounded text-xs font-medium ${className}`}
-      style={style}
+      className={`inline-flex items-center px-2 py-0.5 ${className}`}
+      style={{
+        ...style,
+        fontFamily: "var(--font-mono)",
+        fontSize: "10px",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        borderRadius: "2px",
+      }}
     >
       {LEAD_STATUS_LABELS[status]}
     </span>

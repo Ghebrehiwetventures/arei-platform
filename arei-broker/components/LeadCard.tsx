@@ -31,7 +31,7 @@ export default function LeadCard({ lead, listingTitle, selected = false, onClick
   return (
     <button
       onClick={onClick}
-      className="w-full text-left px-4 py-3 transition-colors"
+      className="w-full text-left px-4 py-4 transition-colors"
       style={{
         background: selected ? "var(--color-accent-muted)" : "var(--color-surface-1)",
         borderBottom: "1px solid var(--color-border)",
@@ -47,8 +47,13 @@ export default function LeadCard({ lead, listingTitle, selected = false, onClick
 
       {listingTitle && (
         <p
-          className="mt-0.5 text-xs truncate"
-          style={{ color: "var(--color-foreground-muted)" }}
+          className="mt-0.5 truncate"
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            color: "var(--color-foreground-muted)",
+            letterSpacing: "0.02em",
+          }}
         >
           {listingTitle}
         </p>
@@ -64,15 +69,30 @@ export default function LeadCard({ lead, listingTitle, selected = false, onClick
       )}
 
       <div className="mt-1.5 flex items-center gap-2 flex-wrap">
-        <span className="text-xs" style={{ color: "var(--color-foreground-subtle)" }}>
+        <span
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            color: "var(--color-foreground-subtle)",
+            letterSpacing: "0.02em",
+          }}
+        >
           {relativeDate(lead.created_at)}
         </span>
         {overdue && (
           <span
-            className="text-xs px-1.5 py-0.5 rounded font-medium"
-            style={{ background: "var(--color-red-muted)", color: "var(--color-red)" }}
+            className="px-1.5 py-0.5"
+            style={{
+              background: "var(--color-red-muted)",
+              color: "var(--color-red)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
+              borderRadius: "2px",
+            }}
           >
-            Follow up overdue
+            Overdue
           </span>
         )}
       </div>

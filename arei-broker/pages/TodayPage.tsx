@@ -30,19 +30,29 @@ function Section({ title, count, children }: SectionProps) {
     <section className="space-y-2.5">
       <div className="flex items-center gap-2">
         <h2
-          className="text-xs font-semibold uppercase tracking-wider"
-          style={{ color: "var(--color-foreground-muted)" }}
+          style={{
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            textTransform: "uppercase",
+            letterSpacing: "0.08em",
+            color: "var(--color-foreground-muted)",
+            fontWeight: 500,
+          }}
         >
           {title}
         </h2>
         {count != null && count > 0 && (
           <span
-            className="inline-flex items-center px-1.5 py-0.5 rounded-full text-xs font-semibold"
+            className="inline-flex items-center px-1.5 py-0.5"
             style={{
-              background: "var(--color-deep-green)",
-              color: "var(--color-deep-green-foreground)",
+              background: "var(--color-foreground)",
+              color: "var(--color-surface-1)",
               minWidth: "1.25rem",
               textAlign: "center",
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              borderRadius: "2px",
+              letterSpacing: "0.03em",
             }}
           >
             {count}
@@ -242,10 +252,15 @@ export default function TodayPage() {
                   )}
                 </div>
                 <span
-                  className="text-xs px-2 py-1 rounded flex-shrink-0"
+                  className="px-2 py-1 flex-shrink-0"
                   style={{
                     background: "var(--color-red-muted)",
                     color: "var(--color-red)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.06em",
+                    borderRadius: "2px",
                   }}
                 >
                   Due
@@ -332,10 +347,11 @@ export default function TodayPage() {
           <button
             type="button"
             onClick={() => setShowAddListing(true)}
-            className="px-4 py-3.5 text-sm font-medium text-left rounded-lg"
+            className="px-4 py-3.5 text-sm font-medium text-left"
             style={{
-              background: "var(--color-deep-green)",
-              color: "var(--color-deep-green-foreground)",
+              background: "var(--color-foreground)",
+              color: "var(--color-surface-1)",
+              borderRadius: "2px",
             }}
           >
             + Add listing
@@ -388,13 +404,18 @@ export default function TodayPage() {
           </p>
         </div>
         <span
-          className="text-xs px-2 py-0.5 rounded flex-shrink-0"
+          className="px-2 py-0.5 flex-shrink-0"
           style={{
             background: "var(--color-surface-3)",
             color: "var(--color-foreground-subtle)",
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            borderRadius: "2px",
           }}
         >
-          Coming soon
+          Soon
         </span>
       </div>
 

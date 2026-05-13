@@ -103,10 +103,11 @@ export default function ListingsPage() {
         <button
           type="button"
           onClick={() => setShowCreateForm(true)}
-          className="px-4 py-2 text-sm font-medium rounded"
+          className="px-4 py-2 text-sm font-medium"
           style={{
-            background: "var(--color-deep-green)",
-            color: "var(--color-deep-green-foreground)",
+            background: "var(--color-foreground)",
+            color: "var(--color-surface-1)",
+            borderRadius: "2px",
           }}
         >
           + Add listing
@@ -123,14 +124,19 @@ export default function ListingsPage() {
             key={tab.value}
             type="button"
             onClick={() => setActiveTab(tab.value)}
-            className="px-3 py-1.5 rounded text-sm transition-colors"
+            className="px-3 py-1.5 transition-colors"
             style={{
               background:
-                activeTab === tab.value ? "var(--color-deep-green)" : "transparent",
+                activeTab === tab.value ? "var(--color-foreground)" : "transparent",
               color:
                 activeTab === tab.value
-                  ? "var(--color-deep-green-foreground)"
+                  ? "var(--color-surface-1)"
                   : "var(--color-foreground-muted)",
+              borderRadius: 0,
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              textTransform: "uppercase",
+              letterSpacing: "0.05em",
             }}
           >
             {tab.label}
@@ -165,10 +171,11 @@ export default function ListingsPage() {
           <button
             type="button"
             onClick={() => setShowCreateForm(true)}
-            className="px-4 py-2 text-sm font-medium rounded"
+            className="px-4 py-2 text-sm font-medium"
             style={{
-              background: "var(--color-deep-green)",
-              color: "var(--color-deep-green-foreground)",
+              background: "var(--color-foreground)",
+              color: "var(--color-surface-1)",
+              borderRadius: "2px",
             }}
           >
             + Add listing
@@ -287,11 +294,16 @@ export default function ListingsPage() {
                       e.stopPropagation();
                       setShareTarget(listing);
                     }}
-                    className="px-2.5 py-1.5 text-xs rounded"
+                    className="px-2.5 py-1.5"
                     style={{
                       background: "var(--color-surface-2)",
                       border: "1px solid var(--color-border)",
                       color: "var(--color-foreground-muted)",
+                      borderRadius: 0,
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "10px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
                     }}
                   >
                     Share
@@ -299,11 +311,16 @@ export default function ListingsPage() {
                   <button
                     type="button"
                     onClick={() => navigate(`/listings/${listing.id}`)}
-                    className="px-2.5 py-1.5 text-xs rounded"
+                    className="px-2.5 py-1.5"
                     style={{
                       background: "var(--color-surface-2)",
                       border: "1px solid var(--color-border)",
                       color: "var(--color-foreground-muted)",
+                      borderRadius: 0,
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "10px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.04em",
                     }}
                   >
                     Open

@@ -63,10 +63,14 @@ export default function ShareSheet({ listing, agencySlug, onClose }: ShareSheetP
       }}
     >
       <div
-        className="w-full sm:max-w-sm rounded-t-2xl sm:rounded-xl p-5 space-y-4"
+        className="w-full sm:max-w-sm p-5 space-y-4"
         style={{
           background: "var(--color-surface-1)",
           border: "1px solid var(--color-border)",
+          borderTopLeftRadius: "4px",
+          borderTopRightRadius: "4px",
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
         }}
       >
         {/* Header */}
@@ -155,24 +159,34 @@ export default function ShareSheet({ listing, agencySlug, onClose }: ShareSheetP
           <button
             type="button"
             onClick={handleCopy}
-            className="w-full py-3 text-sm font-medium rounded flex items-center justify-center gap-2"
+            className="w-full py-3 font-medium flex items-center justify-center gap-2"
             style={{
               background: copied ? "var(--color-green-muted)" : "var(--color-surface-2)",
               color: copied ? "var(--color-green)" : "var(--color-foreground)",
               border: `1px solid ${copied ? "transparent" : "var(--color-border)"}`,
               transition: "all 0.15s",
+              borderRadius: "2px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
             }}
           >
-            {copied ? "✓ Buyer link copied!" : "Copy buyer link"}
+            {copied ? "✓ Copied!" : "Copy buyer link"}
           </button>
           <a
             href={waUrl}
             target="_blank"
             rel="noopener noreferrer"
-            className="w-full py-3 text-sm font-medium rounded flex items-center justify-center gap-2"
+            className="w-full py-3 font-medium flex items-center justify-center gap-2"
             style={{
               background: "#25D366",
               color: "#ffffff",
+              borderRadius: "2px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
             }}
           >
             Share via WhatsApp

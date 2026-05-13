@@ -41,8 +41,14 @@ export default function Nav() {
           {/* Brand */}
           <div className="flex items-center gap-2">
             <span
-              className="font-mono font-bold text-sm tracking-tight"
-              style={{ color: "var(--color-deep-green)" }}
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontWeight: 700,
+                fontSize: "13px",
+                letterSpacing: "0.06em",
+                textTransform: "uppercase",
+                color: "var(--color-foreground)",
+              }}
             >
               Listo
             </span>
@@ -53,10 +59,15 @@ export default function Nav() {
               by AREI
             </span>
             <span
-              className="inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium"
+              className="inline-flex items-center px-1.5 py-0.5"
               style={{
-                background: "var(--color-accent-muted)",
-                color: "var(--color-deep-green)",
+                fontFamily: "var(--font-mono)",
+                fontSize: "9px",
+                letterSpacing: "0.08em",
+                textTransform: "uppercase",
+                color: "var(--color-foreground-muted)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "2px",
               }}
             >
               Pilot
@@ -74,9 +85,9 @@ export default function Nav() {
                 style={({ isActive }) =>
                   isActive
                     ? {
-                        color: "var(--color-deep-green)",
+                        color: "var(--color-foreground)",
                         fontWeight: 600,
-                        borderBottom: "2px solid var(--color-deep-green)",
+                        borderBottom: "2px solid var(--color-foreground)",
                         borderRadius: 0,
                         paddingBottom: "calc(0.375rem - 2px)",
                       }
@@ -123,7 +134,7 @@ export default function Nav() {
                   lineHeight: 1.2,
                   fontWeight: isActive ? 600 : 400,
                   color: isActive
-                    ? "var(--color-deep-green)"
+                    ? "var(--color-foreground)"
                     : "var(--color-foreground-subtle)",
                   textAlign: "center",
                   display: "block",

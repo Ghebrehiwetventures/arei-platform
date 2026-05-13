@@ -120,14 +120,19 @@ export default function InboxPage() {
                     key={f.value}
                     type="button"
                     onClick={() => setStatusFilter(f.value)}
-                    className="px-2.5 py-1 rounded text-xs transition-colors"
+                    className="px-2.5 py-1 transition-colors"
                     style={{
                       background:
-                        statusFilter === f.value ? "var(--color-deep-green)" : "transparent",
+                        statusFilter === f.value ? "var(--color-foreground)" : "transparent",
                       color:
                         statusFilter === f.value
-                          ? "var(--color-deep-green-foreground)"
+                          ? "var(--color-surface-1)"
                           : "var(--color-foreground-muted)",
+                      borderRadius: 0,
+                      fontFamily: "var(--font-mono)",
+                      fontSize: "10px",
+                      textTransform: "uppercase",
+                      letterSpacing: "0.05em",
                     }}
                   >
                     {f.label}
