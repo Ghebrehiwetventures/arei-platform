@@ -5,9 +5,18 @@
  * public.market_news with status = 'candidate'. Never auto-publishes.
  * Never modifies or deletes existing rows.
  *
+ * DEFAULT BEHAVIOUR: dry-run. Nothing is written to the database unless
+ * --commit is explicitly passed.
+ *
  * Usage:
  *   npx ts-node --transpile-only scripts/ingest_market_news.ts
- *   npx ts-node --transpile-only scripts/ingest_market_news.ts --dry-run
+ *     → dry-run: fetches, parses, dedupes, logs what would be inserted
+ *
+ *   npx ts-node --transpile-only scripts/ingest_market_news.ts --commit
+ *     → writes candidates to public.market_news (status = 'candidate')
+ *
+ * Per-source cap: at most MAX_PER_SOURCE new candidates are inserted per
+ * source per run. Items beyond the cap are skipped and counted separately.
  *
  * Required env (loaded from repo root .env):
  *   SUPABASE_URL
@@ -36,7 +45,10 @@ for (const p of [
   dotenv.config({ path: p });
 }
 
-const DRY_RUN = process.argv.includes("--dry-run");
+// Dry-run is the default. Real inserts require an explicit --commit flag.
+const COMMIT = process.argv.includes("--commit");
+const DRY_RUN = !COMMIT;
+const MAX_PER_SOURCE = 20;
 const FETCH_TIMEOUT_MS = 15_000;
 const USER_AGENT =
   "AREI-MarketNewsBot/1.0 (+https://capeverderealestateindex.com)";
@@ -98,7 +110,8 @@ interface SourceResult {
   source: MarketNewsSource;
   fetched: number;
   inserted: number;
-  skipped: number;
+  skippedDup: number;
+  skippedCap: number;
   error: string | null;
 }
 
@@ -112,7 +125,8 @@ async function processSource(
     source,
     fetched: 0,
     inserted: 0,
-    skipped: 0,
+    skippedDup: 0,
+    skippedCap: 0,
     error: null,
   };
 
@@ -130,18 +144,24 @@ async function processSource(
   for (const raw of rawItems) {
     const row = transformFeedItem(raw, source);
     if (!row) {
-      result.skipped++;
+      result.skippedDup++;
       continue;
     }
 
     if (isDuplicate(row.canonical_url, row.source_url, existingKeys)) {
-      result.skipped++;
+      result.skippedDup++;
+      continue;
+    }
+
+    // Per-source cap: stop inserting once MAX_PER_SOURCE is reached
+    if (result.inserted >= MAX_PER_SOURCE) {
+      result.skippedCap++;
       continue;
     }
 
     if (dryRun) {
       log(`  [dry-run] would insert: ${row.title.slice(0, 80)}`);
-      // Add to set so dry-run doesn't double-count across sources
+      // Add to set so dry-run dedup works consistently across sources
       existingKeys.add(row.canonical_url);
       result.inserted++;
     } else {
@@ -152,7 +172,7 @@ async function processSource(
         result.inserted++;
       } catch (err) {
         log(`  [error] insert failed: ${err instanceof Error ? err.message : String(err)}`);
-        result.skipped++;
+        result.skippedDup++;
       }
     }
   }
@@ -166,7 +186,8 @@ async function main() {
   const started = new Date().toISOString();
 
   banner(
-    `[ingest-market-news] ${started}${DRY_RUN ? "  ⚠  DRY RUN — no DB writes" : ""}`
+    `[ingest-market-news] ${started}` +
+    (DRY_RUN ? "  ⚠  DRY RUN — pass --commit to write" : "  ✎  COMMIT MODE")
   );
 
   const url = process.env.SUPABASE_URL?.trim();
@@ -203,25 +224,30 @@ async function main() {
       log(`  Error: ${result.error}`);
     } else {
       log(`  Fetched:  ${result.fetched} items`);
-      log(`  Inserted: ${result.inserted} candidates`);
-      log(`  Skipped:  ${result.skipped} (duplicates / no URL)`);
+      log(`  Inserted: ${result.inserted} candidates${result.inserted >= MAX_PER_SOURCE ? ` (cap: ${MAX_PER_SOURCE})` : ""}`);
+      log(`  Skipped:  ${result.skippedDup} duplicates / no URL`);
+      if (result.skippedCap > 0) {
+        log(`  Capped:   ${result.skippedCap} items beyond per-source limit of ${MAX_PER_SOURCE}`);
+      }
     }
   }
 
   // ── Summary ──────────────────────────────────────────────────────────────
 
-  const totalFetched = results.reduce((n, r) => n + r.fetched, 0);
+  const totalFetched  = results.reduce((n, r) => n + r.fetched, 0);
   const totalInserted = results.reduce((n, r) => n + r.inserted, 0);
-  const totalSkipped = results.reduce((n, r) => n + r.skipped, 0);
-  const totalErrors = results.filter((r) => r.error !== null).length;
+  const totalDup      = results.reduce((n, r) => n + r.skippedDup, 0);
+  const totalCapped   = results.reduce((n, r) => n + r.skippedCap, 0);
+  const totalErrors   = results.filter((r) => r.error !== null).length;
 
   banner("Summary");
-  log(`Sources checked:    ${activeSources.length}`);
-  log(`Items seen:         ${totalFetched}`);
-  log(`Candidates inserted:${DRY_RUN ? " (dry-run)" : ""} ${totalInserted}`);
-  log(`Skipped (dup/bad):  ${totalSkipped}`);
-  log(`Source errors:      ${totalErrors}`);
-  if (DRY_RUN) log("\n⚠  DRY RUN — nothing was written to the database.");
+  log(`Sources checked:      ${activeSources.length}`);
+  log(`Items seen:           ${totalFetched}`);
+  log(`Candidates inserted:  ${totalInserted}${DRY_RUN ? " (dry-run, not written)" : ""}`);
+  log(`Skipped (dup/no URL): ${totalDup}`);
+  log(`Skipped (cap):        ${totalCapped}`);
+  log(`Source errors:        ${totalErrors}`);
+  if (DRY_RUN) log("\n⚠  DRY RUN — pass --commit to write candidates to the database.");
 
   if (totalErrors === activeSources.length && activeSources.length > 0) {
     log("\nAll sources failed.");
