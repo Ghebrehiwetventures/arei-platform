@@ -4,14 +4,15 @@ import { getLeads, getBrokerListings, updateLead } from "../brokerData";
 import LeadDetail from "../components/LeadDetail";
 import type { Lead, LeadStatus, BrokerListing } from "../types";
 
-// ── Pipeline columns — ordered left → right ───────────────────────────────────
+// ── Pipeline stages ───────────────────────────────────────────────────────────
 
-interface PipelineCol {
-  value: LeadStatus;
+interface Stage {
+  value: LeadStatus | "all";
   label: string;
 }
 
-const PIPELINE: PipelineCol[] = [
+const STAGES: Stage[] = [
+  { value: "all", label: "All" },
   { value: "new", label: "New" },
   { value: "contacted", label: "Contacted" },
   { value: "viewing_booked", label: "Viewing" },
@@ -19,6 +20,24 @@ const PIPELINE: PipelineCol[] = [
   { value: "closed", label: "Closed" },
   { value: "lost", label: "Lost" },
 ];
+
+const STATUS_COLORS: Record<LeadStatus, { bg: string; fg: string }> = {
+  new: { bg: "var(--color-foreground)", fg: "var(--color-surface-1)" },
+  contacted: { bg: "var(--color-accent-muted)", fg: "var(--color-deep-green)" },
+  viewing_booked: { bg: "var(--color-accent-muted)", fg: "var(--color-deep-green)" },
+  negotiating: { bg: "var(--color-amber-muted)", fg: "var(--color-amber)" },
+  closed: { bg: "var(--color-green-muted)", fg: "var(--color-green)" },
+  lost: { bg: "var(--color-surface-3)", fg: "var(--color-foreground-muted)" },
+};
+
+const STATUS_LABELS: Record<LeadStatus, string> = {
+  new: "New",
+  contacted: "Contacted",
+  viewing_booked: "Viewing",
+  negotiating: "Negotiating",
+  closed: "Closed",
+  lost: "Lost",
+};
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -37,78 +56,255 @@ function isOverdue(followUpDate: string | null): boolean {
   return new Date(followUpDate) < new Date();
 }
 
-// ── Kanban card ───────────────────────────────────────────────────────────────
+function formatFollowUp(followUpDate: string | null): string | null {
+  if (!followUpDate) return null;
+  const d = new Date(followUpDate);
+  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
 
-interface KanbanCardProps {
+// ── Status badge ──────────────────────────────────────────────────────────────
+
+function StatusPill({ status }: { status: LeadStatus }) {
+  const { bg, fg } = STATUS_COLORS[status];
+  return (
+    <span
+      style={{
+        display: "inline-block",
+        background: bg,
+        color: fg,
+        fontFamily: "var(--font-mono)",
+        fontSize: "9px",
+        textTransform: "uppercase",
+        letterSpacing: "0.06em",
+        padding: "2px 6px",
+        borderRadius: "2px",
+        whiteSpace: "nowrap",
+      }}
+    >
+      {STATUS_LABELS[status]}
+    </span>
+  );
+}
+
+// ── Mobile card ───────────────────────────────────────────────────────────────
+
+interface LeadCardProps {
   lead: Lead;
   listingTitle?: string;
   onClick: () => void;
-  onDragStart: () => void;
-  isDragging: boolean;
 }
 
-function KanbanCard({ lead, listingTitle, onClick, onDragStart, isDragging }: KanbanCardProps) {
+function LeadCard({ lead, listingTitle, onClick }: LeadCardProps) {
   const overdue = isOverdue(lead.follow_up_date);
-  const buyerName = lead.buyer_name || "Anonymous";
+  const followUp = formatFollowUp(lead.follow_up_date);
 
   return (
-    <div
-      draggable
-      onDragStart={(e) => {
-        e.dataTransfer.effectAllowed = "move";
-        onDragStart();
-      }}
+    <button
+      type="button"
       onClick={onClick}
-      className="p-3 space-y-1.5 select-none"
+      className="w-full text-left"
       style={{
+        display: "block",
+        padding: "14px 16px",
         background: "var(--color-surface-1)",
         border: "1px solid var(--color-border)",
         borderRadius: "2px",
-        opacity: isDragging ? 0.45 : 1,
-        cursor: "grab",
-        transition: "opacity 0.1s",
+        cursor: "pointer",
       }}
     >
-      {/* Name */}
-      <p className="font-medium text-sm leading-snug" style={{ color: "var(--color-foreground)" }}>
-        {buyerName}
-      </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0 flex-1">
+          {/* Name */}
+          <p
+            className="font-medium text-sm leading-snug"
+            style={{ color: "var(--color-foreground)" }}
+          >
+            {lead.buyer_name || "Anonymous"}
+          </p>
+
+          {/* Listing */}
+          {listingTitle && (
+            <p
+              className="mt-0.5 truncate"
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                color: "var(--color-foreground-muted)",
+                letterSpacing: "0.02em",
+              }}
+            >
+              {listingTitle}
+            </p>
+          )}
+
+          {/* Message */}
+          {lead.message && (
+            <p
+              className="mt-1 text-xs leading-relaxed"
+              style={{
+                color: "var(--color-foreground-subtle)",
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+              }}
+            >
+              {lead.message}
+            </p>
+          )}
+
+          {/* Follow-up */}
+          {followUp && (
+            <div className="flex items-center gap-1.5 mt-2">
+              <span
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "9px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.05em",
+                  color: overdue ? "var(--color-red)" : "var(--color-foreground-subtle)",
+                }}
+              >
+                Follow-up {followUp}
+                {overdue && " — Overdue"}
+              </span>
+            </div>
+          )}
+        </div>
+
+        {/* Right: status + date */}
+        <div className="flex flex-col items-end gap-1.5 flex-shrink-0">
+          <StatusPill status={lead.status} />
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "9px",
+              color: "var(--color-foreground-subtle)",
+            }}
+          >
+            {relativeDate(lead.created_at)}
+          </span>
+        </div>
+      </div>
+    </button>
+  );
+}
+
+// ── Desktop table row ─────────────────────────────────────────────────────────
+
+interface TableRowProps {
+  lead: Lead;
+  listingTitle?: string;
+  onClick: () => void;
+}
+
+function TableRow({ lead, listingTitle, onClick }: TableRowProps) {
+  const overdue = isOverdue(lead.follow_up_date);
+  const followUp = formatFollowUp(lead.follow_up_date);
+
+  return (
+    <tr
+      onClick={onClick}
+      style={{
+        borderBottom: "1px solid var(--color-border)",
+        cursor: "pointer",
+        transition: "background 0.1s",
+      }}
+      onMouseEnter={(e) => {
+        (e.currentTarget as HTMLTableRowElement).style.background =
+          "var(--color-surface-2)";
+      }}
+      onMouseLeave={(e) => {
+        (e.currentTarget as HTMLTableRowElement).style.background = "transparent";
+      }}
+    >
+      {/* Name + message */}
+      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
+        <p
+          className="font-medium text-sm"
+          style={{ color: "var(--color-foreground)" }}
+        >
+          {lead.buyer_name || "Anonymous"}
+        </p>
+        {lead.message && (
+          <p
+            className="text-xs mt-0.5 truncate"
+            style={{
+              color: "var(--color-foreground-subtle)",
+              maxWidth: "260px",
+            }}
+          >
+            {lead.message}
+          </p>
+        )}
+      </td>
 
       {/* Listing */}
-      {listingTitle && (
-        <p
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "10px",
-            color: "var(--color-foreground-muted)",
-            letterSpacing: "0.02em",
-            whiteSpace: "nowrap",
-            overflow: "hidden",
-            textOverflow: "ellipsis",
-          }}
-        >
-          {listingTitle}
-        </p>
-      )}
+      <td
+        style={{
+          padding: "12px 16px",
+          verticalAlign: "middle",
+          maxWidth: "160px",
+        }}
+      >
+        {listingTitle ? (
+          <span
+            className="truncate block"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              color: "var(--color-foreground-muted)",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {listingTitle}
+          </span>
+        ) : (
+          <span style={{ color: "var(--color-foreground-subtle)", fontSize: "12px" }}>—</span>
+        )}
+      </td>
 
-      {/* Message preview */}
-      {lead.message && (
-        <p
-          className="text-xs leading-relaxed"
-          style={{
-            color: "var(--color-foreground-subtle)",
-            display: "-webkit-box",
-            WebkitLineClamp: 2,
-            WebkitBoxOrient: "vertical",
-            overflow: "hidden",
-          }}
-        >
-          {lead.message}
-        </p>
-      )}
+      {/* Status */}
+      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
+        <StatusPill status={lead.status} />
+      </td>
 
-      {/* Meta row */}
-      <div className="flex items-center gap-2 flex-wrap pt-0.5">
+      {/* Follow-up */}
+      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
+        {followUp ? (
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              color: overdue ? "var(--color-red)" : "var(--color-foreground-muted)",
+              letterSpacing: "0.02em",
+            }}
+          >
+            {followUp}
+            {overdue && (
+              <span
+                style={{
+                  marginLeft: "6px",
+                  background: "var(--color-red-muted)",
+                  color: "var(--color-red)",
+                  fontSize: "9px",
+                  padding: "1px 4px",
+                  borderRadius: "2px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.04em",
+                }}
+              >
+                Overdue
+              </span>
+            )}
+          </span>
+        ) : (
+          <span style={{ color: "var(--color-foreground-subtle)", fontSize: "12px" }}>—</span>
+        )}
+      </td>
+
+      {/* Date */}
+      <td style={{ padding: "12px 16px", verticalAlign: "middle" }}>
         <span
           style={{
             fontFamily: "var(--font-mono)",
@@ -118,132 +314,8 @@ function KanbanCard({ lead, listingTitle, onClick, onDragStart, isDragging }: Ka
         >
           {relativeDate(lead.created_at)}
         </span>
-        {overdue && (
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "9px",
-              textTransform: "uppercase",
-              letterSpacing: "0.05em",
-              color: "var(--color-red)",
-              background: "var(--color-red-muted)",
-              padding: "1px 4px",
-              borderRadius: "2px",
-            }}
-          >
-            Overdue
-          </span>
-        )}
-      </div>
-    </div>
-  );
-}
-
-// ── Kanban column ─────────────────────────────────────────────────────────────
-
-interface KanbanColumnProps {
-  col: PipelineCol;
-  leads: Lead[];
-  onDrop: (status: LeadStatus) => void;
-  onCardClick: (lead: Lead) => void;
-  draggingId: string | null;
-  onDragStart: (id: string) => void;
-  listingTitle: (id: string | null) => string | undefined;
-}
-
-function KanbanColumn({
-  col,
-  leads,
-  onDrop,
-  onCardClick,
-  draggingId,
-  onDragStart,
-  listingTitle,
-}: KanbanColumnProps) {
-  const [isOver, setIsOver] = useState(false);
-
-  return (
-    <div className="flex-shrink-0 flex flex-col" style={{ width: "240px" }}>
-      {/* Column header */}
-      <div className="flex items-center gap-2 mb-2 px-0.5">
-        <span
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "10px",
-            textTransform: "uppercase",
-            letterSpacing: "0.08em",
-            color: "var(--color-foreground-muted)",
-            fontWeight: 500,
-          }}
-        >
-          {col.label}
-        </span>
-        {leads.length > 0 && (
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              color: "var(--color-foreground-subtle)",
-            }}
-          >
-            {leads.length}
-          </span>
-        )}
-      </div>
-
-      {/* Drop zone */}
-      <div
-        className="flex-1 flex flex-col gap-2 p-2"
-        style={{
-          background: isOver ? "var(--color-accent-muted)" : "var(--color-surface-2)",
-          border: `1px solid ${isOver ? "var(--color-accent)" : "var(--color-border)"}`,
-          borderRadius: "2px",
-          minHeight: "80px",
-          transition: "background 0.1s, border-color 0.1s",
-        }}
-        onDragOver={(e) => {
-          e.preventDefault();
-          e.dataTransfer.dropEffect = "move";
-          setIsOver(true);
-        }}
-        onDragLeave={(e) => {
-          if (!e.currentTarget.contains(e.relatedTarget as Node)) {
-            setIsOver(false);
-          }
-        }}
-        onDrop={(e) => {
-          e.preventDefault();
-          setIsOver(false);
-          onDrop(col.value);
-        }}
-      >
-        {leads.map((lead) => (
-          <KanbanCard
-            key={lead.id}
-            lead={lead}
-            listingTitle={listingTitle(lead.listing_id)}
-            onClick={() => onCardClick(lead)}
-            onDragStart={() => onDragStart(lead.id)}
-            isDragging={draggingId === lead.id}
-          />
-        ))}
-        {leads.length === 0 && (
-          <div
-            className="flex items-center justify-center py-4"
-            style={{
-              borderRadius: "2px",
-              border: "1px dashed var(--color-border)",
-              color: "var(--color-foreground-subtle)",
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              letterSpacing: "0.04em",
-            }}
-          >
-            Drop here
-          </div>
-        )}
-      </div>
-    </div>
+      </td>
+    </tr>
   );
 }
 
@@ -260,7 +332,7 @@ function LeadModal({ lead, listingTitle, onUpdate, onClose }: LeadModalProps) {
   return (
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
-      style={{ background: "rgba(0,0,0,0.5)" }}
+      style={{ background: "rgba(0,0,0,0.45)" }}
       onClick={(e) => {
         if (e.target === e.currentTarget) onClose();
       }}
@@ -276,7 +348,7 @@ function LeadModal({ lead, listingTitle, onUpdate, onClose }: LeadModalProps) {
           borderBottomRightRadius: 0,
         }}
       >
-        {/* Modal header */}
+        {/* Header */}
         <div
           className="flex items-center justify-between px-4 py-3 sticky top-0"
           style={{
@@ -324,7 +396,7 @@ export default function InboxPage() {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [listings, setListings] = useState<BrokerListing[]>([]);
   const [loading, setLoading] = useState(true);
-  const [draggingId, setDraggingId] = useState<string | null>(null);
+  const [filter, setFilter] = useState<LeadStatus | "all">("all");
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
 
   useEffect(() => {
@@ -347,40 +419,13 @@ export default function InboxPage() {
     [listings]
   );
 
-  const leadsInCol = useCallback(
-    (status: LeadStatus) => leads.filter((l) => l.status === status),
-    [leads]
-  );
-
-  async function handleDrop(toStatus: LeadStatus) {
-    if (!draggingId) return;
-    const lead = leads.find((l) => l.id === draggingId);
-    if (!lead || lead.status === toStatus) {
-      setDraggingId(null);
-      return;
-    }
-    // Optimistic update
-    setLeads((prev) =>
-      prev.map((l) => (l.id === draggingId ? { ...l, status: toStatus } : l))
-    );
-    setDraggingId(null);
-    try {
-      await updateLead(draggingId, { status: toStatus });
-    } catch (err) {
-      console.error(err);
-      // Revert on failure
-      setLeads((prev) =>
-        prev.map((l) => (l.id === lead.id ? { ...l, status: lead.status } : l))
-      );
-    }
-  }
+  const filtered = filter === "all" ? leads : leads.filter((l) => l.status === filter);
+  const newCount = leads.filter((l) => l.status === "new").length;
 
   function handleUpdate(updated: Lead) {
     setLeads((prev) => prev.map((l) => (l.id === updated.id ? updated : l)));
     setSelectedLead(updated);
   }
-
-  const newCount = leads.filter((l) => l.status === "new").length;
 
   if (loading) {
     return (
@@ -391,7 +436,7 @@ export default function InboxPage() {
   }
 
   return (
-    <div className="px-4 sm:px-6 py-6">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
       {/* Header */}
       <div className="flex items-center gap-3 mb-5">
         <h1 className="text-xl font-semibold" style={{ color: "var(--color-foreground)" }}>
@@ -414,9 +459,62 @@ export default function InboxPage() {
         )}
       </div>
 
+      {/* Filter pills */}
+      <div
+        className="flex gap-1 mb-4 overflow-x-auto pb-px"
+        style={{ scrollbarWidth: "none" }}
+      >
+        {STAGES.map((stage) => {
+          const count =
+            stage.value === "all"
+              ? leads.length
+              : leads.filter((l) => l.status === stage.value).length;
+          const active = filter === stage.value;
+          return (
+            <button
+              key={stage.value}
+              type="button"
+              onClick={() => setFilter(stage.value)}
+              style={{
+                flexShrink: 0,
+                padding: "5px 10px",
+                background: active
+                  ? "var(--color-foreground)"
+                  : "var(--color-surface-1)",
+                color: active
+                  ? "var(--color-surface-1)"
+                  : "var(--color-foreground-muted)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "2px",
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                cursor: "pointer",
+                transition: "background 0.1s, color 0.1s",
+                whiteSpace: "nowrap",
+              }}
+            >
+              {stage.label}
+              {count > 0 && (
+                <span
+                  style={{
+                    marginLeft: "5px",
+                    opacity: active ? 0.7 : 0.5,
+                  }}
+                >
+                  {count}
+                </span>
+              )}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* Empty state */}
       {leads.length === 0 ? (
         <div
-          className="max-w-4xl mx-auto rounded p-8 text-center"
+          className="rounded p-8 text-center"
           style={{
             background: "var(--color-surface-1)",
             border: "1px solid var(--color-border)",
@@ -427,28 +525,81 @@ export default function InboxPage() {
             page.
           </p>
         </div>
-      ) : (
-        /* Kanban board — horizontally scrollable */
+      ) : filtered.length === 0 ? (
         <div
-          className="flex gap-3 overflow-x-auto pb-6"
-          style={{ minHeight: 0 }}
-          onDragEnd={() => setDraggingId(null)}
+          className="rounded p-8 text-center"
+          style={{
+            background: "var(--color-surface-1)",
+            border: "1px solid var(--color-border)",
+          }}
         >
-          {PIPELINE.map((col) => (
-            <KanbanColumn
-              key={col.value}
-              col={col}
-              leads={leadsInCol(col.value)}
-              onDrop={handleDrop}
-              onCardClick={setSelectedLead}
-              draggingId={draggingId}
-              onDragStart={setDraggingId}
-              listingTitle={listingTitle}
-            />
-          ))}
-          {/* Right spacer so last column has breathing room */}
-          <div className="flex-shrink-0 w-1" />
+          <p className="text-sm" style={{ color: "var(--color-foreground-muted)" }}>
+            No leads in this stage.
+          </p>
         </div>
+      ) : (
+        <>
+          {/* ── Desktop table (sm+) ── */}
+          <div
+            className="hidden sm:block"
+            style={{
+              background: "var(--color-surface-1)",
+              border: "1px solid var(--color-border)",
+              borderRadius: "2px",
+            }}
+          >
+            <table className="w-full">
+              <thead>
+                <tr
+                  style={{
+                    borderBottom: "1px solid var(--color-border)",
+                    background: "var(--color-surface-2)",
+                  }}
+                >
+                  {["Buyer", "Listing", "Status", "Follow-up", "Added"].map((h) => (
+                    <th
+                      key={h}
+                      style={{
+                        padding: "8px 16px",
+                        textAlign: "left",
+                        fontFamily: "var(--font-mono)",
+                        fontSize: "9px",
+                        textTransform: "uppercase",
+                        letterSpacing: "0.08em",
+                        color: "var(--color-foreground-muted)",
+                        fontWeight: 500,
+                      }}
+                    >
+                      {h}
+                    </th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {filtered.map((lead) => (
+                  <TableRow
+                    key={lead.id}
+                    lead={lead}
+                    listingTitle={listingTitle(lead.listing_id)}
+                    onClick={() => setSelectedLead(lead)}
+                  />
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          {/* ── Mobile card list (< sm) ── */}
+          <div className="sm:hidden flex flex-col gap-2">
+            {filtered.map((lead) => (
+              <LeadCard
+                key={lead.id}
+                lead={lead}
+                listingTitle={listingTitle(lead.listing_id)}
+                onClick={() => setSelectedLead(lead)}
+              />
+            ))}
+          </div>
+        </>
       )}
 
       {/* Lead detail modal */}

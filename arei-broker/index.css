@@ -109,6 +109,8 @@ html {
   scroll-behavior: smooth;
   overflow-x: hidden;
   max-width: 100%;
+  /* Prevent layout shift when scrollbar appears/disappears on page navigation */
+  scrollbar-gutter: stable;
 }
 
 body {
