@@ -31,7 +31,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
       `
         <main>
           <section>
-            <p>AREI</p>
+            <p>Cape Verde Real Estate Index</p>
             <h1>Cape Verde real estate, aggregated in one place</h1>
             <p>
               An independent property search and data platform for Cape Verde — listings
@@ -179,7 +179,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           <section>
             <h2>Copyright and source policy</h2>
             <p>
-              Market News is a curated link feed. AREI does not republish full
+              Market News is a curated link feed. Cape Verde Real Estate Index does not republish full
               articles, provide investment advice, or replace the original
               publisher. Follow each outbound link for the full report.
             </p>
@@ -269,10 +269,10 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
       `
         <main>
           <section>
-            <p>About AREI</p>
+            <p>About Cape Verde Real Estate Index</p>
             <h1>How the index works</h1>
             <p>
-              AREI is a read-only property index for Cape Verde. We collect publicly accessible listing
+              Cape Verde Real Estate Index is a read-only property index for Cape Verde. We collect publicly accessible listing
               data from tracked source pages, normalize it into a consistent format, and link every listing
               back to its original source.
             </p>
@@ -317,7 +317,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
             <h2>What we do not collect</h2>
             <p>
               We do not collect payment information, advertising tracker data, or unnecessary personal data.
-              Saved properties stay in local browser storage and are not transmitted to AREI servers.
+              Saved properties stay in local browser storage and are not transmitted to our servers.
             </p>
           </section>
         </main>
@@ -465,7 +465,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           </section>
 
           <section>
-            <h2>What AREI uses</h2>
+            <h2>What we use</h2>
             <ul>
               <li>Cookieless Vercel Web Analytics for anonymous traffic measurement</li>
               <li>Local browser storage for saved properties</li>
@@ -474,7 +474,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           </section>
 
           <section>
-            <h2>What AREI does not use</h2>
+            <h2>What we do not use</h2>
             <p>
               No advertising cookies, third-party tracking pixels, social media tracking cookies,
               or cross-site behavioral tracking are used on the public site.
@@ -641,7 +641,7 @@ function renderRouteHtml(baseHtml, route) {
 function wrapPrerenderMarkup(body, description) {
   return `      <div class="prerender-shell" aria-label="Prerendered page snapshot">
         <header>
-          <a href="/">AREI</a>
+          <a href="/">Cape Verde Real Estate Index</a>
           <p>${escapeHtml(description)}</p>
         </header>
 ${indent(body.trim(), 4)}
@@ -814,9 +814,9 @@ function buildListingSeoDescription(detail) {
   }
 
   if (detail.property_type) {
-    parts.push(`Source-linked ${String(detail.property_type).toLowerCase()} listing on AREI.`);
+    parts.push(`Source-linked ${String(detail.property_type).toLowerCase()} listing on Cape Verde Real Estate Index.`);
   } else {
-    parts.push("Source-linked property listing on AREI.");
+    parts.push("Source-linked property listing on Cape Verde Real Estate Index.");
   }
 
   return truncateSeoText(parts.join(" "));
@@ -922,7 +922,7 @@ function renderListingDetailBody(detail) {
           <a href="/listings">All Cape Verde listings</a> ·
           <a href="/listings?island=${encodeURIComponent(detail.island)}">${escapeHtml(detail.island)} listings</a> ·
           <a href="/market">Market data</a> ·
-          <a href="/about">How AREI works</a>
+          <a href="/about">How Cape Verde Real Estate Index works</a>
         </p>
         ${firstImage ? `<p><img src="${escapeHtml(firstImage)}" alt="${escapeHtml(buildListingSeoTitle(detail))}" loading="eager" /></p>` : ""}
         ${specs.length > 0 ? `<ul>\n${specs.map((spec) => `          <li><strong>${escapeHtml(spec.label)}:</strong> ${escapeHtml(spec.value)}</li>`).join("\n")}\n        </ul>` : ""}
