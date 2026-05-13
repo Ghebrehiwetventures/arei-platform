@@ -17,6 +17,7 @@ import type {
   ListingCard,
   ListingDetail,
   PriceBucket,
+  MarketNewsRow,
 } from "./types.js";
 import {
   PRICE_BUCKETS,
@@ -505,5 +506,20 @@ export class AREIClient {
       return { ok: false, error: error.message };
     }
     return { ok: true };
+  }
+
+  // =========================================================================
+  // getMarketNews — published market news items for public display
+  // RLS on public.market_news ensures only status = 'published' is returned.
+  // =========================================================================
+  async getMarketNews(): Promise<MarketNewsRow[]> {
+    const { data, error } = await this.sb
+      .from("market_news")
+      .select("*")
+      .eq("status", "published")
+      .order("published_at", { ascending: false });
+
+    if (error) throw new Error(`getMarketNews failed: ${error.message}`);
+    return (data ?? []) as MarketNewsRow[];
   }
 }

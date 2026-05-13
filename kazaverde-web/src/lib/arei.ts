@@ -35,4 +35,5 @@ export const arei = {
   getIslandContext: (island: string, listingPrice: number | null) =>
     getClient().getIslandContext(island, listingPrice),
   subscribeNewsletter: (email: string) => getClient().subscribeNewsletter(email),
+  getMarketNews: () => getClient().getMarketNews(),
 };

@@ -172,3 +172,25 @@ export const MIN_MEDIAN_SAMPLE = 5;
 /** Outlier price bounds */
 export const PRICE_FLOOR = 10_000;
 export const PRICE_CEILING = 5_000_000;
+
+/** Raw row returned by the public.market_news table (snake_case DB shape) */
+export interface MarketNewsRow {
+  id: string;
+  title: string;
+  original_title: string | null;
+  source_name: string;
+  source_url: string;
+  published_at: string | null;
+  category: string;
+  snippet: string;
+  why_it_matters: string | null;
+  status: string;
+  canonical_url: string | null;
+  language: string | null;
+  country_code: string;
+  affected_regions: string[] | null;
+  signal_tags: string[] | null;
+  ingestion_source: string | null;
+  created_at: string;
+  updated_at: string;
+}
