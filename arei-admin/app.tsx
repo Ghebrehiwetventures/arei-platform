@@ -3463,20 +3463,75 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
       {/* ── Main content ─────────────────────────── */}
       <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-background">
         {/* Mobile header */}
-        <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-background border-b border-border md:hidden">
+        <div className="sticky top-0 z-20 flex items-center gap-1 px-3 py-2.5 bg-background border-b border-border md:hidden">
+          {/* Hamburger */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-1.5 -ml-1 text-foreground-muted hover:text-foreground"
+            className="p-1.5 -ml-0.5 text-foreground-muted hover:text-foreground"
             aria-label="Open menu"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <path d="M3 5h14M3 10h14M3 15h14" />
             </svg>
           </button>
-          <div className="flex items-center gap-2">
+
+          {/* Brand */}
+          <div className="flex items-center gap-2 ml-1">
             <DLayersMark size={20} />
             <span className="text-[13px] font-semibold text-foreground tracking-tight font-mono">AREI</span>
           </div>
+
+          {/* Spacer */}
+          <div className="flex-1" />
+
+          {/* Notification bell */}
+          <button
+            onClick={() => selectTab("notifications")}
+            className="relative p-1.5 text-foreground-muted hover:text-foreground"
+            aria-label="Notifications"
+          >
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+              <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+            </svg>
+            {unreadCount > 0 && (
+              <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#C44A3A]" aria-hidden="true" />
+            )}
+          </button>
+
+          {/* Theme toggle */}
+          <button
+            onClick={toggleTheme}
+            className="p-1.5 text-foreground-muted hover:text-foreground"
+            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {dark ? (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="4" />
+                <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+              </svg>
+            ) : (
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+              </svg>
+            )}
+          </button>
+
+          {/* Sign out */}
+          {onSignOut && (
+            <button
+              onClick={onSignOut}
+              className="p-1.5 text-foreground-muted hover:text-foreground"
+              aria-label="Sign out"
+              title="Sign out"
+            >
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                <polyline points="16 17 21 12 16 7" />
+                <line x1="21" y1="12" x2="9" y2="12" />
+              </svg>
+            </button>
+          )}
         </div>
         <div className="max-w-[1200px] mx-auto px-4 py-5 md:px-8 md:py-8">
           <MarketProvider>
