@@ -5,6 +5,64 @@ import { getBrokerListings, getLeads } from "../brokerData";
 import ListingForm from "../components/ListingForm";
 import type { BrokerListing, Lead } from "../types";
 
+// ── Mock data — example content until backend integration ────────────────────
+
+const MOCK_VIEWINGS = [
+  {
+    id: "v1",
+    buyerName: "Marco Bianchi",
+    listingTitle: "3BR Villa · Sal, Santa Maria",
+    date: "Tomorrow",
+    time: "10:00",
+    status: "confirmed",
+  },
+  {
+    id: "v2",
+    buyerName: "Sofia Andrade",
+    listingTitle: "2BR Apartment · São Vicente, Mindelo",
+    date: "Fri 16 May",
+    time: "14:30",
+    status: "pending",
+  },
+  {
+    id: "v3",
+    buyerName: "João Santos",
+    listingTitle: "Land plot · Boavista",
+    date: "Mon 19 May",
+    time: "11:00",
+    status: "confirmed",
+  },
+];
+
+const MOCK_PULSE = [
+  {
+    id: "p1",
+    urgency: "high" as const,
+    text: "Marco Bianchi has not been contacted in 4 days — he enquired about the Sal villa.",
+    subtext: "Leads older than 48h without response are 3× less likely to convert.",
+    action: "Reply",
+    route: "/leads",
+  },
+  {
+    id: "p2",
+    urgency: "medium" as const,
+    text: "Your beachfront listing has 3 unread leads this week.",
+    subtext: null,
+    action: "View",
+    route: "/leads",
+  },
+  {
+    id: "p3",
+    urgency: "low" as const,
+    text: "Sofia Andrade's viewing is tomorrow at 10:00 — consider sending a confirmation.",
+    subtext: null,
+    action: "Leads",
+    route: "/leads",
+  },
+];
+
+// ─────────────────────────────────────────────────────────────────────────────
+
 function relativeDate(isoDate: string): string {
   const diff = Date.now() - new Date(isoDate).getTime();
   const days = Math.floor(diff / (1000 * 60 * 60 * 24));
@@ -117,7 +175,7 @@ export default function TodayPage() {
 
   if (loading) {
     return (
-      <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
         <p style={{ color: "var(--color-foreground-muted)" }}>Loading…</p>
       </div>
     );
@@ -126,7 +184,7 @@ export default function TodayPage() {
   const allClear = newLeads.length === 0 && followUps.length === 0 && attentionListings.length === 0;
 
   return (
-    <div className="max-w-2xl mx-auto px-4 sm:px-6 py-6 space-y-7">
+    <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-7">
       {/* Page header */}
       <div>
         <h1 className="text-xl font-semibold" style={{ color: "var(--color-foreground)" }}>
@@ -387,37 +445,281 @@ export default function TodayPage() {
         </div>
       </Section>
 
-      {/* Viewings placeholder */}
-      <div
-        className="rounded-lg px-4 py-3.5 flex items-center justify-between gap-3"
-        style={{
-          background: "var(--color-surface-2)",
-          border: "1px solid var(--color-border)",
-        }}
-      >
-        <div>
-          <p className="text-sm font-medium" style={{ color: "var(--color-foreground-muted)" }}>
-            Viewings
-          </p>
-          <p className="text-xs mt-0.5" style={{ color: "var(--color-foreground-subtle)" }}>
-            Schedule and track property viewings from leads
-          </p>
+      {/* ── Upcoming viewings — example data ─────────────────────────────────── */}
+      <Section title="Upcoming viewings">
+        <div
+          className="overflow-hidden"
+          style={{ border: "1px solid var(--color-border)", borderRadius: "2px" }}
+        >
+          {MOCK_VIEWINGS.map((v, i) => (
+            <div
+              key={v.id}
+              className="px-4 py-3.5 flex items-center gap-3"
+              style={{
+                background: "var(--color-surface-1)",
+                borderBottom: i < MOCK_VIEWINGS.length - 1 ? "1px solid var(--color-border)" : undefined,
+              }}
+            >
+              {/* Time column */}
+              <div className="flex-shrink-0 text-right" style={{ minWidth: "72px" }}>
+                <p
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "11px",
+                    color: "var(--color-foreground)",
+                    lineHeight: 1.2,
+                  }}
+                >
+                  {v.time}
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    color: "var(--color-foreground-subtle)",
+                  }}
+                >
+                  {v.date}
+                </p>
+              </div>
+
+              {/* Divider */}
+              <div
+                className="flex-shrink-0 w-px self-stretch"
+                style={{ background: "var(--color-border)" }}
+              />
+
+              {/* Content */}
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium" style={{ color: "var(--color-foreground)" }}>
+                  {v.buyerName}
+                </p>
+                <p
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    color: "var(--color-foreground-muted)",
+                    marginTop: "1px",
+                  }}
+                >
+                  {v.listingTitle}
+                </p>
+              </div>
+
+              {/* Status chip */}
+              <span
+                className="flex-shrink-0 px-2 py-0.5"
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "9px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  borderRadius: "2px",
+                  background:
+                    v.status === "confirmed"
+                      ? "var(--color-green-muted)"
+                      : "var(--color-surface-3)",
+                  color:
+                    v.status === "confirmed"
+                      ? "var(--color-green)"
+                      : "var(--color-foreground-subtle)",
+                }}
+              >
+                {v.status}
+              </span>
+            </div>
+          ))}
+
+          {/* Footer */}
+          <div
+            className="px-4 py-2.5 flex items-center justify-between"
+            style={{
+              background: "var(--color-surface-2)",
+              borderTop: "1px solid var(--color-border)",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "9px",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: "var(--color-foreground-subtle)",
+              }}
+            >
+              Example data — connect Google Calendar to sync
+            </span>
+            <span
+              className="px-2 py-0.5"
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "9px",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: "var(--color-foreground-subtle)",
+                border: "1px solid var(--color-border)",
+                borderRadius: "2px",
+              }}
+            >
+              Soon
+            </span>
+          </div>
         </div>
-        <span
-          className="px-2 py-0.5 flex-shrink-0"
+      </Section>
+
+      {/* ── Listo Pulse — AI briefing mock ───────────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: "var(--color-foreground-muted)",
+              fontWeight: 500,
+            }}
+          >
+            Listo Pulse
+          </span>
+          <span
+            className="px-2 py-0.5"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "9px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "var(--color-deep-green)",
+              background: "var(--color-accent-muted)",
+              borderRadius: "2px",
+            }}
+          >
+            Preview
+          </span>
+        </div>
+
+        <div
+          className="overflow-hidden"
           style={{
-            background: "var(--color-surface-3)",
-            color: "var(--color-foreground-subtle)",
-            fontFamily: "var(--font-mono)",
-            fontSize: "10px",
-            textTransform: "uppercase",
-            letterSpacing: "0.06em",
+            background: "var(--color-surface-1)",
+            border: "1px solid var(--color-border)",
             borderRadius: "2px",
           }}
         >
-          Soon
-        </span>
-      </div>
+          {/* Descriptor */}
+          <div
+            className="px-4 py-3"
+            style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-surface-2)" }}
+          >
+            <p className="text-xs" style={{ color: "var(--color-foreground-muted)" }}>
+              Your AI briefing — actions suggested based on your leads, listings, and calendar.
+            </p>
+          </div>
+
+          {/* Pulse items */}
+          {MOCK_PULSE.map((item, i) => (
+            <div
+              key={item.id}
+              className="px-4 py-3.5 flex items-start gap-3"
+              style={{
+                borderBottom: i < MOCK_PULSE.length - 1 ? "1px solid var(--color-border)" : undefined,
+              }}
+            >
+              {/* Priority dot */}
+              <div
+                className="flex-shrink-0 mt-1 w-2 h-2 rounded-full"
+                style={{
+                  background:
+                    item.urgency === "high"
+                      ? "var(--color-red)"
+                      : item.urgency === "medium"
+                      ? "var(--color-amber)"
+                      : "var(--color-foreground-subtle)",
+                }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm" style={{ color: "var(--color-foreground)" }}>
+                  {item.text}
+                </p>
+                {item.subtext && (
+                  <p
+                    className="mt-0.5 text-xs"
+                    style={{ color: "var(--color-foreground-subtle)" }}
+                  >
+                    {item.subtext}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(item.route)}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "10px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "var(--color-foreground-muted)",
+                  background: "var(--color-surface-2)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "2px",
+                  padding: "2px 8px",
+                  flexShrink: 0,
+                  cursor: "pointer",
+                }}
+              >
+                {item.action}
+              </button>
+            </div>
+          ))}
+
+          {/* Integrations footer */}
+          <div
+            className="px-4 py-3 flex flex-wrap items-center gap-2"
+            style={{
+              borderTop: "1px solid var(--color-border)",
+              background: "var(--color-surface-2)",
+            }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "9px",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: "var(--color-foreground-subtle)",
+                flexShrink: 0,
+              }}
+            >
+              Connect to unlock:
+            </span>
+            {[
+              { label: "Google Calendar" },
+              { label: "Gmail" },
+            ].map((int) => (
+              <button
+                key={int.label}
+                type="button"
+                disabled
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "9px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "var(--color-foreground-subtle)",
+                  background: "transparent",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "2px",
+                  padding: "3px 8px",
+                  cursor: "default",
+                  opacity: 0.7,
+                }}
+              >
+                {int.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* Add listing modal */}
       {showAddListing && agency && (

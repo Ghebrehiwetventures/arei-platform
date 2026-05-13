@@ -50,7 +50,7 @@ export default function ListingDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
         <p style={{ color: "var(--color-foreground-muted)" }}>Loading…</p>
       </div>
     );
@@ -58,7 +58,7 @@ export default function ListingDetailPage() {
 
   if (!listing) {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
         <p style={{ color: "var(--color-red)" }}>Listing not found.</p>
       </div>
     );
@@ -71,15 +71,10 @@ export default function ListingDetailPage() {
   const ready = isReadyForReview(listing);
 
   const agencySlug = agency?.agency_name.toLowerCase().replace(/\s+/g, "-") ?? "";
-  const contactPhone = listing?.contact_phone ?? agency?.phone ?? null;
-  const waNumber = (contactPhone ?? "").replace(/\D/g, "");
-  const waMessage = encodeURIComponent(
-    `Hi, I saw your listing for "${listing?.title ?? ""}" — is it still available?`
-  );
 
   return (
     <div
-      className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-36 sm:pb-24"
+      className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-36 sm:pb-24"
     >
       {/* Back */}
       <button
@@ -419,7 +414,7 @@ export default function ListingDetailPage() {
         </>
       )}
 
-      {/* ── Sticky bottom CTA bar ──────────────────────────────────────────────── */}
+      {/* ── Sticky bottom CTA bar — broker actions only ───────────────────────── */}
       {!editing && listing && (
         <div
           className="fixed left-0 right-0 z-20 flex items-center gap-2 px-4 py-3 bottom-14 sm:bottom-0"
@@ -428,58 +423,41 @@ export default function ListingDetailPage() {
             borderTop: "1px solid var(--color-border)",
           }}
         >
-          {/* WhatsApp — primary */}
-          {waNumber ? (
-            <a
-              href={`https://wa.me/${waNumber}?text=${waMessage}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex-1 flex items-center justify-center py-2.5 text-sm font-semibold"
-              style={{ background: "#25D366", color: "#ffffff", borderRadius: "2px" }}
-            >
-              WhatsApp
-            </a>
-          ) : (
-            <div
-              className="flex-1 flex items-center justify-center py-2.5 text-sm"
-              style={{
-                background: "var(--color-surface-3)",
-                color: "var(--color-foreground-subtle)",
-                borderRadius: "2px",
-              }}
-            >
-              No contact phone
-            </div>
-          )}
-
-          {/* Call */}
-          {contactPhone && (
-            <a
-              href={`tel:${contactPhone}`}
-              className="flex items-center justify-center px-4 py-2.5 text-sm font-medium"
-              style={{
-                background: "var(--color-surface-2)",
-                border: "1px solid var(--color-border)",
-                color: "var(--color-foreground-muted)",
-                borderRadius: "2px",
-              }}
-            >
-              Call
-            </a>
-          )}
-
-          {/* Share */}
+          {/* Share property pack — primary broker action */}
           <button
             type="button"
             onClick={() => setShowShare(true)}
-            className="flex items-center justify-center px-4 py-2.5 rounded text-sm font-medium"
+            className="flex-1 flex items-center justify-center py-2.5 font-medium"
+            style={{
+              background: "var(--color-foreground)",
+              color: "var(--color-surface-1)",
+              borderRadius: "2px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+            }}
+          >
+            Share property pack
+          </button>
+
+          {/* Edit */}
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="flex items-center justify-center px-5 py-2.5 font-medium"
             style={{
               background: "var(--color-surface-2)",
               border: "1px solid var(--color-border)",
               color: "var(--color-foreground-muted)",
+              borderRadius: "2px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
             }}
           >
-            Share
+            Edit
           </button>
         </div>
       )}
