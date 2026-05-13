@@ -2802,6 +2802,22 @@ type EnrichSuggestion = {
 
 type EnrichState = "idle" | "loading" | "done" | "error";
 
+const MARKET_NEWS_CATEGORIES = [
+  "Economy",
+  "Tourism",
+  "Hospitality",
+  "Infrastructure",
+  "Aviation",
+  "Foreign investment",
+  "Policy / regulation",
+  "Tax / residency",
+  "Construction",
+  "Banking / credit",
+  "Currency / macro risk",
+  "Property",
+  "Other",
+];
+
 function MarketNewsEditPanel({
   item,
   onSave,
@@ -2942,12 +2958,17 @@ function MarketNewsEditPanel({
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Category</label>
-            <input
-              type="text"
+            <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
               className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent"
-            />
+            >
+              {MARKET_NEWS_CATEGORIES.concat(
+                !MARKET_NEWS_CATEGORIES.includes(category) ? [category] : []
+              ).map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Affected regions <span className="text-foreground-subtle">(comma-sep)</span></label>
@@ -3335,9 +3356,13 @@ const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "chatlab",       label: "Chat Lab"             },
   { key: "agencies",      label: "Agency Console"       },
   { key: "agency-data",   label: "Agency Data Console"  },
-  { key: "broker-pilot",  label: "Broker Pilot Preview"  },
   { key: "market-news",   label: "Market News"           },
   { key: "notifications", label: "Notifications"         },
+];
+
+// BrokerPilotView is a legacy internal preview. The real broker product lives in arei-broker.
+const LABS_NAV_ITEMS: { key: Tab; label: string }[] = [
+  { key: "broker-pilot", label: "Broker Pilot Preview" },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
@@ -3345,6 +3370,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
   const [dark, toggleTheme] = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [labsOpen, setLabsOpen] = useState(false);
 
   // Close sidebar when resizing up to desktop
   useEffect(() => {
@@ -3439,6 +3465,38 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
               </button>
             </div>
           ))}
+
+          {/* ── Labs (internal / legacy previews) ─── */}
+          <div className="mt-3 border-t border-border pt-2">
+            <button
+              onClick={() => setLabsOpen((o) => !o)}
+              className="w-full flex items-center justify-between pl-4 pr-3 py-1.5 text-[10px] font-mono font-medium uppercase tracking-widest text-foreground-subtle hover:text-foreground-muted transition-colors duration-150"
+            >
+              Labs
+              <span className="text-[9px] leading-none">{labsOpen ? "▴" : "▾"}</span>
+            </button>
+            {labsOpen && LABS_NAV_ITEMS.map(({ key, label }) => (
+              <div key={key} className="relative">
+                {tab === key && (
+                  <span
+                    className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent pointer-events-none"
+                    aria-hidden="true"
+                  />
+                )}
+                <button
+                  onClick={() => selectTab(key)}
+                  className={
+                    "w-full flex items-center pl-6 pr-3 py-1.5 text-[11px] font-mono transition-colors duration-150 " +
+                    (tab === key
+                      ? "text-foreground-muted"
+                      : "text-foreground-subtle hover:text-foreground-muted hover:bg-surface-2")
+                  }
+                >
+                  {label}
+                </button>
+              </div>
+            ))}
+          </div>
         </nav>
 
         {/* ── Footer utilities ─────────────────────── */}
