@@ -198,7 +198,7 @@ function KanbanColumn({
           background: isOver ? "var(--color-accent-muted)" : "var(--color-surface-2)",
           border: `1px solid ${isOver ? "var(--color-accent)" : "var(--color-border)"}`,
           borderRadius: "2px",
-          minHeight: "220px",
+          minHeight: "80px",
           transition: "background 0.1s, border-color 0.1s",
         }}
         onDragOver={(e) => {
@@ -228,8 +228,18 @@ function KanbanColumn({
           />
         ))}
         {leads.length === 0 && (
-          <div className="flex-1 flex items-center justify-center">
-            <span style={{ fontSize: "18px", opacity: 0.2 }}>—</span>
+          <div
+            className="flex items-center justify-center py-4"
+            style={{
+              borderRadius: "2px",
+              border: "1px dashed var(--color-border)",
+              color: "var(--color-foreground-subtle)",
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              letterSpacing: "0.04em",
+            }}
+          >
+            Drop here
           </div>
         )}
       </div>
@@ -383,7 +393,7 @@ export default function InboxPage() {
   return (
     <div className="px-4 sm:px-6 py-6">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-5 max-w-4xl mx-auto">
+      <div className="flex items-center gap-3 mb-5">
         <h1 className="text-xl font-semibold" style={{ color: "var(--color-foreground)" }}>
           Leads
         </h1>
@@ -402,16 +412,6 @@ export default function InboxPage() {
             {newCount} new
           </span>
         )}
-        <span
-          style={{
-            fontFamily: "var(--font-mono)",
-            fontSize: "10px",
-            color: "var(--color-foreground-subtle)",
-            letterSpacing: "0.04em",
-          }}
-        >
-          Drag cards to move between stages
-        </span>
       </div>
 
       {leads.length === 0 ? (
@@ -431,7 +431,7 @@ export default function InboxPage() {
         /* Kanban board — horizontally scrollable */
         <div
           className="flex gap-3 overflow-x-auto pb-6"
-          style={{ minHeight: "60vh" }}
+          style={{ minHeight: 0 }}
           onDragEnd={() => setDraggingId(null)}
         >
           {PIPELINE.map((col) => (
