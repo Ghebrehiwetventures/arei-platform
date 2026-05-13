@@ -1,9 +1,16 @@
 -- ============================================================
 -- Migration 036: Admin Notification Center
 -- ============================================================
--- Creates a generic admin_notifications table for system events.
--- Covers: market news ingestion results, source errors, and
--- future events (leads, source health drops, agency activity).
+-- Generic admin_notifications table for all AREI system events.
+-- Not specific to any single domain. Event types use dot-notation:
+--   market_news.*   ingestion runs, source errors
+--   source_health.* grade drops, new sources added
+--   ingestion.*     cross-market pipeline failures
+--   listing.*       quality warnings, bulk status changes
+--   broker.*        new leads, agency registrations
+--   system.*        general platform / script errors
+-- See scripts/lib/notifications.ts for the insertion helper and
+-- the authoritative list of known event types.
 --
 -- Security model:
 --   INSERT  — service role only (scripts). Never from the browser.

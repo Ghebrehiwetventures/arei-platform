@@ -34,6 +34,7 @@ import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import { MARKET_NEWS_SOURCES, MarketNewsSource } from "./lib/market-news-sources";
 import { parseFeedItems, transformFeedItem, MarketNewsInsert } from "./lib/market-news-transform";
 import { loadExistingKeys, isDuplicate } from "./lib/market-news-dedup";
+import { insertAdminNotification } from "./lib/notifications";
 
 // Load from repo root .env. Matches the pattern in snapshot_source_health.ts —
 // tries the conventional relative path first, then a known absolute fallback
@@ -106,7 +107,7 @@ async function insertCandidate(
 
 // ── Admin notification emit ────────────────────────────────────────────────
 
-async function emitNotifications(
+async function emitMarketNewsNotifications(
   sb: SupabaseClient,
   results: SourceResult[],
   totalInserted: number
@@ -114,44 +115,36 @@ async function emitNotifications(
   const errorResults = results.filter((r) => r.error !== null);
 
   // One summary notification per run
-  const { error: summaryErr } = await sb.from("admin_notifications").insert({
+  await insertAdminNotification(sb, {
     event_type: "market_news.candidates_imported",
-    severity: errorResults.length > 0 ? "warning" : "info",
-    title: `${totalInserted} new Market News candidate${totalInserted !== 1 ? "s" : ""} imported`,
+    severity:   errorResults.length > 0 ? "warning" : "info",
+    title:      `${totalInserted} new Market News candidate${totalInserted !== 1 ? "s" : ""} imported`,
     body:
       `${results.length} source${results.length !== 1 ? "s" : ""} checked.` +
       (errorResults.length > 0 ? ` ${errorResults.length} had errors.` : ""),
     meta: {
       sources_run: results.length,
-      inserted: totalInserted,
+      inserted:    totalInserted,
       source_breakdown: results.map((r) => ({
-        id: r.source.id,
-        name: r.source.name,
+        id:       r.source.id,
+        name:     r.source.name,
         inserted: r.inserted,
-        error: r.error ?? null,
+        error:    r.error ?? null,
       })),
     },
   });
 
-  if (summaryErr) {
-    log(`  [warn] Failed to emit summary notification: ${summaryErr.message}`);
-  }
-
   // One warning notification per errored source
   for (const r of errorResults) {
-    const { error: srcErr } = await sb.from("admin_notifications").insert({
-      event_type: "market_news.source_error",
-      severity: "warning",
-      title: `Ingestion error: ${r.source.name}`,
-      body: r.error,
+    await insertAdminNotification(sb, {
+      event_type:  "market_news.source_error",
+      severity:    "warning",
+      title:       `Ingestion error: ${r.source.name}`,
+      body:        r.error,
       entity_type: "source",
-      entity_id: r.source.id,
-      meta: { source_id: r.source.id, source_name: r.source.name },
+      entity_id:   r.source.id,
+      meta:        { source_id: r.source.id, source_name: r.source.name },
     });
-
-    if (srcErr) {
-      log(`  [warn] Failed to emit source error notification for ${r.source.id}: ${srcErr.message}`);
-    }
   }
 }
 
@@ -319,7 +312,7 @@ async function main() {
   // Emit admin notifications (commit mode only — dry-run never writes)
   if (!DRY_RUN) {
     try {
-      await emitNotifications(sb, results, totalInserted);
+      await emitMarketNewsNotifications(sb, results, totalInserted);
       log("\nNotifications emitted.");
     } catch (err) {
       // Non-fatal: notification failure must not fail the ingestion run
