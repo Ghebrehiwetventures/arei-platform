@@ -3248,13 +3248,16 @@ function MarketNewsView() {
             type="button"
             onClick={() => setStatusTab(key)}
             className={
-              "px-4 py-2 text-[12px] font-mono font-medium transition-colors border-b-2 -mb-px " +
+              "relative px-4 py-2 text-[12px] font-mono font-medium transition-colors -mb-px " +
               (statusTab === key
-                ? "border-accent text-foreground"
-                : "border-transparent text-foreground-muted hover:text-foreground")
+                ? "text-foreground"
+                : "text-foreground-muted hover:text-foreground")
             }
           >
             {label}
+            {statusTab === key && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full" />
+            )}
           </button>
         ))}
       </div>
