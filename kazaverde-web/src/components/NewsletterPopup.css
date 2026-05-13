@@ -1,10 +1,10 @@
-/* NewsletterPopup — centered modal, sage background, editorial tone */
+/* NewsletterPopup — ink ground · sage mark · sage deep secondary (master surface) */
 
 .nlp-overlay {
   position: fixed;
   inset: 0;
   z-index: 9000;
-  background: rgba(10, 10, 10, 0.55);
+  background: rgba(10, 10, 10, 0.72);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -21,10 +21,10 @@
   position: relative;
   width: min(520px, 100%);
   padding: 48px 44px 40px;
-  background: var(--kv-green);
-  border: 1px solid var(--kv-black);
+  background: var(--kv-black);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   font-family: var(--kv-mono);
-  color: var(--kv-black);
+  color: var(--kv-paper);
   animation: nlp-rise 0.3s ease-out;
 }
 
@@ -45,21 +45,22 @@
   font-size: 22px;
   line-height: 1;
   font-family: var(--kv-mono);
-  color: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.35);
   background: transparent;
   border: none;
   cursor: pointer;
   transition: color 0.15s;
   padding: 0;
 }
-.nlp-close:hover { color: var(--kv-black); }
+.nlp-close:hover { color: var(--kv-paper); }
 
+/* Sage as the mark/accent — brand master surface treatment */
 .nlp-overline {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--kv-green);
   margin-bottom: 18px;
 }
 
@@ -69,14 +70,14 @@
   font-weight: var(--kv-fw-regular);
   line-height: 1.2;
   letter-spacing: var(--kv-ls-display);
-  color: var(--kv-black);
+  color: var(--kv-paper);
   margin-bottom: 14px;
   text-wrap: balance;
 }
 
 .nlp-desc {
   font-size: var(--kv-t-sm);
-  color: rgba(0, 0, 0, 0.7);
+  color: rgba(255, 255, 255, 0.58);
   line-height: 1.65;
   margin-bottom: 28px;
 }
@@ -90,28 +91,29 @@
 .nlp-input {
   width: 100%;
   padding: 13px 15px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   background: transparent;
   font-family: var(--kv-mono);
   font-size: var(--kv-t-base);
-  color: var(--kv-black);
+  color: var(--kv-paper);
   outline: none;
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
-.nlp-input::placeholder { color: rgba(0, 0, 0, 0.3); }
-.nlp-input:focus { border-color: rgba(0, 0, 0, 0.55); }
-.nlp-input:disabled { opacity: 0.5; cursor: not-allowed; }
+.nlp-input::placeholder { color: rgba(255, 255, 255, 0.28); }
+.nlp-input:focus { border-color: var(--kv-green); }
+.nlp-input:disabled { opacity: 0.4; cursor: not-allowed; }
 
+/* Sage-outlined button on ink — fills sage on hover */
 .nlp-submit {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   align-self: flex-start;
   padding: 12px 22px;
-  border: 1px solid var(--kv-black);
+  border: 1px solid var(--kv-green);
   background: transparent;
-  color: var(--kv-black);
+  color: var(--kv-green);
   font-family: var(--kv-mono);
   font-size: var(--kv-t-sm);
   font-weight: var(--kv-fw-semibold);
@@ -121,28 +123,28 @@
   transition: background 0.2s, color 0.2s;
 }
 .nlp-submit:hover:not(:disabled) {
-  background: var(--kv-black);
-  color: var(--kv-green);
+  background: var(--kv-green);
+  color: var(--kv-black);
 }
 .nlp-submit:active:not(:disabled) { transform: translateY(1px); }
-.nlp-submit:disabled { opacity: 0.6; cursor: not-allowed; }
+.nlp-submit:disabled { opacity: 0.4; cursor: not-allowed; }
 
 .nlp-success {
   display: inline-block;
   padding: 12px 22px;
-  border: 1px solid var(--kv-black);
-  background: rgba(255, 255, 255, 0.45);
+  border: 1px solid var(--kv-green);
+  background: transparent;
   font-size: var(--kv-t-sm);
   font-weight: var(--kv-fw-semibold);
   letter-spacing: var(--kv-ls-label);
   text-transform: uppercase;
-  color: var(--kv-black);
+  color: var(--kv-green);
 }
 
 .nlp-error {
   margin-top: 10px;
   font-size: var(--kv-t-sm);
-  color: #8b1f1c;
+  color: #e07470;
   letter-spacing: 0.04em;
 }
 
@@ -150,7 +152,7 @@
   margin-top: 20px;
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: rgba(0, 0, 0, 0.5);
+  color: rgba(255, 255, 255, 0.3);
 }
 
 @media (max-width: 540px) {
