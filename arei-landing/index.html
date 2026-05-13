@@ -1514,6 +1514,11 @@ function capitalize(value) {
   return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
+function toTitleCase(str) {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
+}
+
 function formatPrice(price, currency) {
   if (typeof price !== 'number' || !currency) return 'View listing';
   try {
@@ -1591,7 +1596,7 @@ function renderLiveListings(rows) {
 
   const cardHtml = selected.map((row) => {
     const image = escapeHtml(row.image_urls[0]);
-    const title = escapeHtml(row.title);
+    const title = escapeHtml(toTitleCase(row.title));
     const location = escapeHtml([row.city, row.island].filter(Boolean).join(', '));
     const meta = escapeHtml(formatMeta(row));
     const tag = escapeHtml(capitalize(row.property_type));
