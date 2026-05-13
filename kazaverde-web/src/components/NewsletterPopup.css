@@ -21,10 +21,10 @@
   position: relative;
   width: min(520px, 100%);
   padding: 48px 44px 40px;
-  background: var(--kv-black);
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  background: var(--kv-paper);
+  border-left: 4px solid var(--kv-green-deep, #2D4A42);
   font-family: var(--kv-mono);
-  color: var(--kv-paper);
+  color: var(--kv-black);
   animation: nlp-rise 0.3s ease-out;
 }
 
@@ -45,22 +45,21 @@
   font-size: 22px;
   line-height: 1;
   font-family: var(--kv-mono);
-  color: rgba(255, 255, 255, 0.35);
+  color: rgba(0, 0, 0, 0.3);
   background: transparent;
   border: none;
   cursor: pointer;
   transition: color 0.15s;
   padding: 0;
 }
-.nlp-close:hover { color: var(--kv-paper); }
+.nlp-close:hover { color: var(--kv-black); }
 
-/* Sage as the mark/accent — brand master surface treatment */
 .nlp-overline {
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: var(--kv-green);
+  color: var(--kv-green-deep, #2D4A42);
   margin-bottom: 18px;
 }
 
@@ -70,14 +69,14 @@
   font-weight: var(--kv-fw-regular);
   line-height: 1.2;
   letter-spacing: var(--kv-ls-display);
-  color: var(--kv-paper);
+  color: var(--kv-black);
   margin-bottom: 14px;
   text-wrap: balance;
 }
 
 .nlp-desc {
   font-size: var(--kv-t-sm);
-  color: rgba(255, 255, 255, 0.58);
+  color: rgba(0, 0, 0, 0.58);
   line-height: 1.65;
   margin-bottom: 28px;
 }
@@ -91,29 +90,28 @@
 .nlp-input {
   width: 100%;
   padding: 13px 15px;
-  border: 1px solid rgba(255, 255, 255, 0.18);
+  border: 1px solid rgba(0, 0, 0, 0.15);
   background: transparent;
   font-family: var(--kv-mono);
   font-size: var(--kv-t-base);
-  color: var(--kv-paper);
+  color: var(--kv-black);
   outline: none;
   transition: border-color 0.15s;
   box-sizing: border-box;
 }
-.nlp-input::placeholder { color: rgba(255, 255, 255, 0.28); }
-.nlp-input:focus { border-color: var(--kv-green); }
+.nlp-input::placeholder { color: rgba(0, 0, 0, 0.28); }
+.nlp-input:focus { border-color: var(--kv-green-deep, #2D4A42); }
 .nlp-input:disabled { opacity: 0.4; cursor: not-allowed; }
 
-/* Sage-outlined button on ink — fills sage on hover */
 .nlp-submit {
   display: inline-flex;
   align-items: center;
   gap: 8px;
   align-self: flex-start;
   padding: 12px 22px;
-  border: 1px solid var(--kv-green);
-  background: transparent;
-  color: var(--kv-green);
+  border: 1px solid var(--kv-black);
+  background: var(--kv-black);
+  color: var(--kv-paper);
   font-family: var(--kv-mono);
   font-size: var(--kv-t-sm);
   font-weight: var(--kv-fw-semibold);
@@ -123,8 +121,9 @@
   transition: background 0.2s, color 0.2s;
 }
 .nlp-submit:hover:not(:disabled) {
-  background: var(--kv-green);
-  color: var(--kv-black);
+  background: var(--kv-green-deep, #2D4A42);
+  border-color: var(--kv-green-deep, #2D4A42);
+  color: var(--kv-paper);
 }
 .nlp-submit:active:not(:disabled) { transform: translateY(1px); }
 .nlp-submit:disabled { opacity: 0.4; cursor: not-allowed; }
@@ -132,19 +131,19 @@
 .nlp-success {
   display: inline-block;
   padding: 12px 22px;
-  border: 1px solid var(--kv-green);
+  border: 1px solid var(--kv-green-deep, #2D4A42);
   background: transparent;
   font-size: var(--kv-t-sm);
   font-weight: var(--kv-fw-semibold);
   letter-spacing: var(--kv-ls-label);
   text-transform: uppercase;
-  color: var(--kv-green);
+  color: var(--kv-green-deep, #2D4A42);
 }
 
 .nlp-error {
   margin-top: 10px;
   font-size: var(--kv-t-sm);
-  color: #e07470;
+  color: var(--kv-coral, #C44A3A);
   letter-spacing: 0.04em;
 }
 
@@ -152,7 +151,7 @@
   margin-top: 20px;
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: rgba(255, 255, 255, 0.3);
+  color: rgba(0, 0, 0, 0.38);
 }
 
 @media (max-width: 540px) {
