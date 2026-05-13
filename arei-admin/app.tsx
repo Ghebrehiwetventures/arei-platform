@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { createRoot } from "react-dom/client";
 import {
   getMarkets,
@@ -11,10 +11,18 @@ import {
   getContentDrafts,
   generateContentDrafts,
   updateContentDraftStatus,
+  getMarketNewsQueue,
+  updateMarketNewsStatus,
+  updateMarketNewsFields,
+  getUnreadNotificationCount,
   type ListingsFilters,
   type ListingsSortKey,
   type LatestSyncLog,
+  type MarketNewsStatus,
+  type MarketNewsRow,
+  type MarketNewsFieldUpdate,
 } from "./data";
+import { NotificationsView } from "./NotificationsView";
 
 const SOURCE_STALE_DAYS = 30;
 
@@ -2740,24 +2748,633 @@ function MarketDetail({
 // APP (Dashboard | Listings)
 // ============================================
 
-type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot";
+// ============================================
+// MARKET NEWS VIEW — admin candidate review queue
+// ============================================
+
+const MARKET_NEWS_STATUS_TABS: { key: MarketNewsStatus; label: string }[] = [
+  { key: "candidate", label: "Candidates" },
+  { key: "published", label: "Published"  },
+  { key: "hidden",    label: "Hidden"     },
+  { key: "archived",  label: "Archived"   },
+];
+
+function MarketNewsStatusBadge({ status }: { status: MarketNewsStatus }) {
+  const classes: Record<MarketNewsStatus, string> = {
+    candidate: "bg-amber-muted text-amber",
+    published:  "bg-green-muted text-green",
+    hidden:     "bg-surface-3 text-foreground-muted",
+    archived:   "bg-surface-3 text-foreground-subtle",
+  };
+  const labels: Record<MarketNewsStatus, string> = {
+    candidate: "Candidate",
+    published:  "Published",
+    hidden:     "Hidden",
+    archived:   "Archived",
+  };
+  return (
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded ${classes[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
+
+function arrToText(arr: string[] | null | undefined): string {
+  return (arr ?? []).join(", ");
+}
+
+function textToArr(s: string): string[] | null {
+  const parts = s.split(",").map((p) => p.trim()).filter(Boolean);
+  return parts.length > 0 ? parts : null;
+}
+
+type EnrichSuggestion = {
+  title: string;
+  snippet: string;
+  why_it_matters: string;
+  category: string;
+  signal_tags: string[];
+  affected_regions: string[];
+  relevance_score: number;
+  recommendation: "publish" | "keep_candidate" | "archive";
+  reasoning: string;
+};
+
+type EnrichState = "idle" | "loading" | "done" | "error";
+
+const MARKET_NEWS_CATEGORIES = [
+  "Economy",
+  "Tourism",
+  "Hospitality",
+  "Infrastructure",
+  "Aviation",
+  "Foreign investment",
+  "Policy / regulation",
+  "Tax / residency",
+  "Construction",
+  "Banking / credit",
+  "Currency / macro risk",
+  "Property",
+  "Other",
+];
+
+function MarketNewsEditPanel({
+  item,
+  onSave,
+  onClose,
+  onStatusChange,
+  saving,
+}: {
+  item: MarketNewsRow;
+  onSave: (id: string, fields: MarketNewsFieldUpdate) => Promise<void>;
+  onClose: () => void;
+  onStatusChange: (id: string, status: MarketNewsStatus) => Promise<void>;
+  saving: boolean;
+}) {
+  const [title, setTitle] = React.useState(item.title);
+  const [snippet, setSnippet] = React.useState(item.snippet);
+  const [whyItMatters, setWhyItMatters] = React.useState(item.why_it_matters ?? "");
+  const [category, setCategory] = React.useState(item.category);
+  const [affectedRegions, setAffectedRegions] = React.useState(arrToText(item.affected_regions));
+  const [signalTags, setSignalTags] = React.useState(arrToText(item.signal_tags));
+
+  const [enrichState, setEnrichState] = React.useState<EnrichState>("idle");
+  const [enrichError, setEnrichError] = React.useState<string | null>(null);
+  const [suggestion, setSuggestion] = React.useState<EnrichSuggestion | null>(null);
+
+  const isDirty =
+    title !== item.title ||
+    snippet !== item.snippet ||
+    whyItMatters !== (item.why_it_matters ?? "") ||
+    category !== item.category ||
+    affectedRegions !== arrToText(item.affected_regions) ||
+    signalTags !== arrToText(item.signal_tags);
+
+  const handleSave = async () => {
+    await onSave(item.id, {
+      title: title.trim() || item.title,
+      snippet,
+      why_it_matters: whyItMatters.trim() || null,
+      category: category.trim() || item.category,
+      affected_regions: textToArr(affectedRegions),
+      signal_tags: textToArr(signalTags),
+    });
+  };
+
+  const handleEnrich = async () => {
+    setEnrichState("loading");
+    setEnrichError(null);
+    setSuggestion(null);
+    try {
+      const res = await fetch("/api/enrich-candidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: item.id,
+          title: item.title,
+          original_title: item.original_title,
+          snippet: item.snippet,
+          source_name: item.source_name,
+          source_url: item.source_url,
+          category: item.category,
+          published_at: item.published_at,
+          language: item.language,
+          ingestion_source: item.ingestion_source,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.error ?? `Request failed (${res.status})`);
+      }
+      setSuggestion(data as EnrichSuggestion);
+      setEnrichState("done");
+    } catch (err) {
+      setEnrichError(err instanceof Error ? err.message : "Enrichment failed");
+      setEnrichState("error");
+    }
+  };
+
+  const handleApplySuggestion = () => {
+    if (!suggestion) return;
+    setTitle(suggestion.title);
+    setSnippet(suggestion.snippet);
+    setWhyItMatters(suggestion.why_it_matters);
+    setCategory(suggestion.category);
+    setAffectedRegions(arrToText(suggestion.affected_regions));
+    setSignalTags(arrToText(suggestion.signal_tags));
+    setSuggestion(null);
+    setEnrichState("idle");
+  };
+
+  const handleDismissEnrich = () => {
+    setSuggestion(null);
+    setEnrichState("idle");
+    setEnrichError(null);
+  };
+
+  const pubDate = item.published_at
+    ? new Date(item.published_at).toLocaleDateString()
+    : "—";
+
+  return (
+    <div className="px-4 pb-5 pt-2 border-t border-border bg-surface-2/50 space-y-4">
+      {/* Meta */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-foreground-subtle pt-1">
+        <span>Source: <span className="text-foreground-muted">{item.source_name}</span></span>
+        <span>Published: <span className="text-foreground-muted">{pubDate}</span></span>
+        <span>Ingest: <span className="text-foreground-muted font-mono">{item.ingestion_source ?? "—"}</span></span>
+      </div>
+
+      {/* Editable fields */}
+      <div className="space-y-3">
+        <div>
+          <label className="text-[11px] text-foreground-subtle block mb-1">Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-foreground-subtle block mb-1">Snippet</label>
+          <textarea
+            value={snippet}
+            onChange={(e) => setSnippet(e.target.value)}
+            rows={3}
+            className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-foreground-subtle block mb-1">Why it matters <span className="text-foreground-subtle">(optional)</span></label>
+          <textarea
+            value={whyItMatters}
+            onChange={(e) => setWhyItMatters(e.target.value)}
+            rows={2}
+            placeholder="Add editorial context…"
+            className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y placeholder:text-foreground-subtle"
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Category</label>
+            <select
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full h-[34px] bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent"
+            >
+              {MARKET_NEWS_CATEGORIES.concat(
+                !MARKET_NEWS_CATEGORIES.includes(category) ? [category] : []
+              ).map((c) => (
+                <option key={c} value={c}>{c}</option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Affected regions <span className="text-foreground-subtle">(comma-sep)</span></label>
+            <input
+              type="text"
+              value={affectedRegions}
+              onChange={(e) => setAffectedRegions(e.target.value)}
+              placeholder="e.g. Sal, Santiago"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-foreground-subtle"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Signal tags <span className="text-foreground-subtle">(comma-sep)</span></label>
+            <input
+              type="text"
+              value={signalTags}
+              onChange={(e) => setSignalTags(e.target.value)}
+              placeholder="e.g. tourism, investment"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-foreground-subtle"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Save */}
+      {isDirty && (
+        <div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-1.5 text-xs font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      )}
+
+      {/* AI Enrichment — candidates only */}
+      {item.status === "candidate" && (
+        <div className="space-y-2">
+          {enrichState === "idle" && (
+            <button
+              type="button"
+              onClick={handleEnrich}
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+            >
+              Rewrite / Enrich
+            </button>
+          )}
+
+          {enrichState === "loading" && (
+            <p className="text-xs text-foreground-subtle py-1">Generating suggestion…</p>
+          )}
+
+          {enrichState === "error" && enrichError && (
+            <div className="rounded border border-red-200 bg-red-50 px-3 py-2 space-y-1">
+              <p className="text-xs text-red-700">{enrichError}</p>
+              <button
+                type="button"
+                onClick={handleDismissEnrich}
+                className="text-xs text-red-600 underline"
+              >
+                Dismiss
+              </button>
+            </div>
+          )}
+
+          {enrichState === "done" && suggestion && (
+            <div className="rounded border border-border bg-surface-2 divide-y divide-border text-xs">
+              {/* Header */}
+              <div className="flex items-center justify-between px-4 py-2.5">
+                <span className="text-[10px] font-semibold text-foreground-subtle uppercase tracking-wider">
+                  AI Suggestion
+                </span>
+                <div className="flex items-center gap-2.5">
+                  <span className="text-[10px] text-foreground-subtle">
+                    Relevance: {suggestion.relevance_score}/100
+                  </span>
+                  <span
+                    className={`text-[10px] font-semibold px-2 py-0.5 rounded uppercase tracking-wide ${
+                      suggestion.recommendation === "publish"
+                        ? "bg-emerald-100 text-emerald-700"
+                        : suggestion.recommendation === "archive"
+                          ? "bg-gray-100 text-gray-500"
+                          : "bg-amber-100 text-amber-700"
+                    }`}
+                  >
+                    {suggestion.recommendation.replace("_", " ")}
+                  </span>
+                </div>
+              </div>
+
+              {/* Fields */}
+              <div className="px-4 py-3 space-y-2.5">
+                <div>
+                  <span className="block text-foreground-subtle mb-0.5">Title</span>
+                  <span className="text-foreground font-medium leading-snug">{suggestion.title}</span>
+                </div>
+                <div>
+                  <span className="block text-foreground-subtle mb-0.5">Snippet</span>
+                  <span className="text-foreground-muted leading-relaxed">{suggestion.snippet}</span>
+                </div>
+                <div>
+                  <span className="block text-foreground-subtle mb-0.5">Why it matters</span>
+                  <span className="text-foreground-muted leading-relaxed">{suggestion.why_it_matters}</span>
+                </div>
+                <div className="flex flex-wrap gap-x-6 gap-y-2">
+                  <div>
+                    <span className="block text-foreground-subtle mb-0.5">Category</span>
+                    <span className="text-foreground-muted">{suggestion.category}</span>
+                  </div>
+                  {suggestion.affected_regions.length > 0 && (
+                    <div>
+                      <span className="block text-foreground-subtle mb-0.5">Regions</span>
+                      <span className="text-foreground-muted">{suggestion.affected_regions.join(", ")}</span>
+                    </div>
+                  )}
+                  {suggestion.signal_tags.length > 0 && (
+                    <div>
+                      <span className="block text-foreground-subtle mb-0.5">Signal tags</span>
+                      <span className="text-foreground-muted">{suggestion.signal_tags.join(", ")}</span>
+                    </div>
+                  )}
+                </div>
+                <div>
+                  <span className="block text-foreground-subtle mb-0.5">Reasoning</span>
+                  <span className="text-foreground-muted italic">{suggestion.reasoning}</span>
+                </div>
+              </div>
+
+              {/* Apply / Dismiss */}
+              <div className="flex gap-2 px-4 py-2.5">
+                <button
+                  type="button"
+                  onClick={handleApplySuggestion}
+                  className="px-3 py-1.5 text-xs font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-opacity"
+                >
+                  Apply suggestion
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDismissEnrich}
+                  className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+                >
+                  Dismiss
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+        {item.status !== "published" && (
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "published")}
+            disabled={saving}
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-green-muted text-green hover:bg-green hover:text-primary-foreground transition-colors disabled:opacity-50"
+          >
+            Publish
+          </button>
+        )}
+        {item.status !== "hidden" && (
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "hidden")}
+            disabled={saving}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-50"
+          >
+            Hide
+          </button>
+        )}
+        {item.status !== "archived" && (
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "archived")}
+            disabled={saving}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-50"
+          >
+            Archive
+          </button>
+        )}
+        <a
+          href={item.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+        >
+          Open source ↗
+        </a>
+        <button
+          type="button"
+          onClick={onClose}
+          className="ml-auto px-3 py-1.5 text-xs font-medium rounded text-foreground-subtle hover:text-foreground transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MarketNewsView() {
+  const [statusTab, setStatusTab] = React.useState<MarketNewsStatus>("candidate");
+  const [items, setItems] = React.useState<MarketNewsRow[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const load = React.useCallback(async (status: MarketNewsStatus) => {
+    setLoading(true);
+    setExpandedId(null);
+    setError(null);
+    const rows = await getMarketNewsQueue(status);
+    setItems(rows);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load(statusTab);
+  }, [statusTab, load]);
+
+  const handleStatusChange = async (id: string, status: MarketNewsStatus) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await updateMarketNewsStatus(id, status);
+      // Remove from current list and close panel
+      setItems((prev) => prev.filter((r) => r.id !== id));
+      setExpandedId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveFields = async (id: string, fields: MarketNewsFieldUpdate) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await updateMarketNewsFields(id, fields);
+      // Refresh item in list with saved values
+      setItems((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, ...fields, updated_at: new Date().toISOString() } : r
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div>
+        <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
+          Market News Queue
+        </h1>
+        <p className="text-sm text-foreground-muted mt-1">
+          Review imported market-news candidates before they appear publicly.
+        </p>
+      </div>
+
+      {/* ── Status tabs ─────────────────────────────────────────── */}
+      <div className="flex gap-1 border-b border-border">
+        {MARKET_NEWS_STATUS_TABS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setStatusTab(key)}
+            className={
+              "relative px-4 py-2 text-[12px] font-mono font-medium transition-colors -mb-px " +
+              (statusTab === key
+                ? "text-foreground"
+                : "text-foreground-muted hover:text-foreground")
+            }
+          >
+            {label}
+            {statusTab === key && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full" />
+            )}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Error ───────────────────────────────────────────────── */}
+      {error && (
+        <div className="rounded border border-red/30 bg-red-muted px-4 py-3 text-sm text-red">
+          {error}
+        </div>
+      )}
+
+      {/* ── List ────────────────────────────────────────────────── */}
+      {loading && (
+        <p className="text-foreground-muted text-sm py-8">Loading…</p>
+      )}
+
+      {!loading && items.length === 0 && (
+        <div className="surface-1 rounded border border-border border-dashed p-14 text-center">
+          <p className="text-sm text-foreground-muted">No {statusTab} items.</p>
+        </div>
+      )}
+
+      {!loading && items.length > 0 && (
+        <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
+          {/* Table header */}
+          <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_120px_80px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
+            <span>Title</span>
+            <span>Source</span>
+            <span>Published</span>
+            <span>Category</span>
+            <span>Ingest</span>
+            <span>Status</span>
+            <span />
+          </div>
+
+          {items.map((item) => {
+            const isExpanded = expandedId === item.id;
+            const pubDate = item.published_at
+              ? new Date(item.published_at).toLocaleDateString()
+              : "—";
+
+            return (
+              <article key={item.id}>
+                {/* ── Row ── */}
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                  className="w-full grid grid-cols-1 md:grid-cols-[1fr_160px_100px_120px_120px_80px_32px] gap-2 md:gap-3 items-center px-4 py-3 text-left hover:bg-surface-2 transition-colors"
+                >
+                  <span className="text-sm font-medium text-foreground line-clamp-1 min-w-0">
+                    {item.title}
+                  </span>
+                  <span className="text-[11px] text-foreground-muted truncate hidden md:block">
+                    {item.source_name}
+                  </span>
+                  <span className="text-[11px] text-foreground-subtle hidden md:block">
+                    {pubDate}
+                  </span>
+                  <span className="text-[11px] text-foreground-muted truncate hidden md:block">
+                    {item.category}
+                  </span>
+                  <span className="text-[11px] text-foreground-subtle font-mono truncate hidden md:block">
+                    {item.ingestion_source ?? "—"}
+                  </span>
+                  <span className="hidden md:block">
+                    <MarketNewsStatusBadge status={item.status} />
+                  </span>
+                  <span className={"text-foreground-subtle text-xs transition-transform duration-150 " + (isExpanded ? "rotate-180" : "")}>
+                    ▼
+                  </span>
+                </button>
+
+                {/* ── Expanded edit panel ── */}
+                {isExpanded && (
+                  <MarketNewsEditPanel
+                    item={item}
+                    onSave={handleSaveFields}
+                    onClose={() => setExpandedId(null)}
+                    onStatusChange={handleStatusChange}
+                    saving={saving}
+                  />
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "notifications";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
-  { key: "dashboard",    label: "Dashboard"            },
-  { key: "listings",     label: "Listings"             },
-  { key: "sources",      label: "Sources"              },
-  { key: "agents",       label: "Agents"               },
-  { key: "chatlab",      label: "Chat Lab"             },
-  { key: "agencies",     label: "Agency Console"       },
-  { key: "agency-data",  label: "Agency Data Console"  },
-  // Legacy internal preview. New broker product work should happen in arei-broker.
-  { key: "broker-pilot", label: "Legacy Broker Preview"  },
+  { key: "dashboard",     label: "Dashboard"            },
+  { key: "listings",      label: "Listings"             },
+  { key: "sources",       label: "Sources"              },
+  { key: "agents",        label: "Agents"               },
+  { key: "chatlab",       label: "Chat Lab"             },
+  { key: "agencies",      label: "Agency Console"       },
+  { key: "agency-data",   label: "Agency Data Console"  },
+  { key: "market-news",   label: "Market News"           },
+  { key: "notifications", label: "Notifications"         },
+];
+
+// BrokerPilotView is a legacy internal preview. New broker product work
+// should happen in arei-broker — the real broker-facing product.
+const LABS_NAV_ITEMS: { key: Tab; label: string }[] = [
+  { key: "broker-pilot", label: "Legacy Broker Preview" },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
   const [tab, setTab] = useState<Tab>("dashboard");
   const [dark, toggleTheme] = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [labsOpen, setLabsOpen] = useState(false);
 
   // Close sidebar when resizing up to desktop
   useEffect(() => {
@@ -2765,6 +3382,15 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
     const handler = () => { if (mq.matches) setSidebarOpen(false); };
     mq.addEventListener("change", handler);
     return () => mq.removeEventListener("change", handler);
+  }, []);
+
+  // Fetch unread notification count on mount
+  useEffect(() => {
+    getUnreadNotificationCount().then(setUnreadCount).catch(() => {});
+  }, []);
+
+  const handleNotificationCountChange = useCallback((count: number) => {
+    setUnreadCount(count);
   }, []);
 
   const selectTab = (key: Tab) => {
@@ -2835,9 +3461,46 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
                     NEW
                   </span>
                 )}
+                {key === "notifications" && unreadCount > 0 && (
+                  <span className="text-[9px] font-mono font-semibold bg-[#C44A3A]/10 text-[#C44A3A] px-1.5 py-0.5 rounded tabular-nums">
+                    {unreadCount > 99 ? "99+" : unreadCount}
+                  </span>
+                )}
               </button>
             </div>
           ))}
+
+          {/* ── Labs (internal / legacy previews) ─── */}
+          <div className="mt-3 border-t border-border pt-2">
+            <button
+              onClick={() => setLabsOpen((o) => !o)}
+              className="w-full flex items-center justify-between pl-4 pr-3 py-1.5 text-[10px] font-mono font-medium uppercase tracking-widest text-foreground-subtle hover:text-foreground-muted transition-colors duration-150"
+            >
+              Labs
+              <span className="text-[9px] leading-none">{labsOpen ? "▴" : "▾"}</span>
+            </button>
+            {labsOpen && LABS_NAV_ITEMS.map(({ key, label }) => (
+              <div key={key} className="relative">
+                {tab === key && (
+                  <span
+                    className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent pointer-events-none"
+                    aria-hidden="true"
+                  />
+                )}
+                <button
+                  onClick={() => selectTab(key)}
+                  className={
+                    "w-full flex items-center pl-6 pr-3 py-1.5 text-[11px] font-mono transition-colors duration-150 " +
+                    (tab === key
+                      ? "text-foreground-muted"
+                      : "text-foreground-subtle hover:text-foreground-muted hover:bg-surface-2")
+                  }
+                >
+                  {label}
+                </button>
+              </div>
+            ))}
+          </div>
         </nav>
 
         {/* ── Footer utilities ─────────────────────── */}
@@ -2862,19 +3525,74 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
       {/* ── Main content ─────────────────────────── */}
       <main className="flex-1 min-w-0 overflow-x-hidden overflow-y-auto bg-background">
         {/* Mobile header */}
-        <div className="sticky top-0 z-20 flex items-center gap-3 px-4 py-3 bg-background border-b border-border md:hidden">
+        <div className="sticky top-0 z-20 flex items-center gap-1 px-3 py-2.5 bg-background border-b border-border md:hidden">
+          {/* Hamburger */}
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-1.5 -ml-1 text-foreground-muted hover:text-foreground"
+            className="p-1.5 -ml-0.5 text-foreground-muted hover:text-foreground"
             aria-label="Open menu"
           >
             <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
               <path d="M3 5h14M3 10h14M3 15h14" />
             </svg>
           </button>
-          <div className="flex items-center gap-2">
+
+          {/* Brand */}
+          <div className="flex items-center gap-2 ml-1">
             <DLayersMark size={20} />
             <span className="text-[13px] font-semibold text-foreground tracking-tight font-mono">AREI</span>
+          </div>
+
+          {/* Right actions — ml-auto pushes this group to the edge */}
+          <div className="ml-auto flex items-center gap-0.5">
+            {/* Notification bell */}
+            <button
+              onClick={() => selectTab("notifications")}
+              className="relative p-1.5 text-foreground-muted hover:text-foreground"
+              aria-label="Notifications"
+            >
+              <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9" />
+                <path d="M13.73 21a2 2 0 0 1-3.46 0" />
+              </svg>
+              {unreadCount > 0 && (
+                <span className="absolute top-1.5 right-1.5 w-1.5 h-1.5 rounded-full bg-[#C44A3A]" aria-hidden="true" />
+              )}
+            </button>
+
+            {/* Theme toggle */}
+            <button
+              onClick={toggleTheme}
+              className="p-1.5 text-foreground-muted hover:text-foreground"
+              aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+            >
+              {dark ? (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="12" r="4" />
+                  <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" />
+                </svg>
+              ) : (
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z" />
+                </svg>
+              )}
+            </button>
+
+            {/* Sign out */}
+            {onSignOut && (
+              <button
+                onClick={onSignOut}
+                className="p-1.5 text-foreground-muted hover:text-foreground"
+                aria-label="Sign out"
+                title="Sign out"
+              >
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <polyline points="16 17 21 12 16 7" />
+                  <line x1="21" y1="12" x2="9" y2="12" />
+                </svg>
+              </button>
+            )}
           </div>
         </div>
         <div className="max-w-[1200px] mx-auto px-4 py-5 md:px-8 md:py-8">
@@ -2887,6 +3605,10 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "agencies" && <AgencyConsoleView />}
             {tab === "agency-data" && <AgencyDataConsoleView />}
             {tab === "broker-pilot" && <BrokerPilotView />}
+            {tab === "market-news" && <MarketNewsView />}
+            {tab === "notifications" && (
+              <NotificationsView onCountChange={handleNotificationCountChange} />
+            )}
           </MarketProvider>
         </div>
       </main>

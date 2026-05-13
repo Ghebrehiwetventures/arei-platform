@@ -2,15 +2,13 @@ import { useEffect, useMemo, useState } from "react";
 import NewsletterCta from "../components/NewsletterCta";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useMarketNews } from "../hooks/useMarketNews";
-import {
-  MARKET_NEWS_CATEGORIES,
-  type MarketNewsCategory,
-  type MarketNewsItem,
-} from "../lib/market-news-data";
+import type { MarketNewsItem } from "../lib/market-news-data";
 import "./MarketNews.css";
 
 const MARKET_NEWS_DESCRIPTION =
   "Curated economic, tourism, investment and policy news relevant to Cape Verde's property market.";
+
+const MAX_VISIBLE_TAGS = 3;
 
 function fmtDate(iso: string): string {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
@@ -30,6 +28,8 @@ function matches(query: string, item: MarketNewsItem): boolean {
     item.category,
     item.snippet,
     item.whyItMatters ?? "",
+    ...(item.signalTags ?? []),
+    ...(item.affectedRegions ?? []),
   ].join("   ").toLowerCase();
   return q.split(/\s+/).every((token) => haystack.includes(token));
 }
@@ -40,13 +40,27 @@ function sortNews(a: MarketNewsItem, b: MarketNewsItem): number {
   return b.publishedAt.localeCompare(a.publishedAt);
 }
 
+function SignalTags({ tags }: { tags: string[] }) {
+  if (tags.length === 0) return null;
+  const visible = tags.slice(0, MAX_VISIBLE_TAGS);
+  const extra = tags.length - MAX_VISIBLE_TAGS;
+  return (
+    <div className="kv-news-signals">
+      <span className="kv-news-signals-label">Signals</span>
+      <span className="kv-news-signals-items">
+        {visible.join(" · ")}
+        {extra > 0 && <span className="kv-news-signals-more"> +{extra}</span>}
+      </span>
+    </div>
+  );
+}
+
 export default function MarketNews() {
   useDocumentMeta("Cape Verde Market News", MARKET_NEWS_DESCRIPTION);
 
   const { items, loading, error } = useMarketNews();
 
   const [query, setQuery] = useState("");
-  const [category, setCategory] = useState<MarketNewsCategory | "All">("All");
 
   useEffect(() => {
     if (!items.length) return;
@@ -82,15 +96,11 @@ export default function MarketNews() {
 
   const sortedItems = useMemo(() => [...items].sort(sortNews), [items]);
   const filteredItems = useMemo(
-    () =>
-      sortedItems.filter((item) => {
-        if (category !== "All" && item.category !== category) return false;
-        return matches(query, item);
-      }),
-    [category, query, sortedItems],
+    () => sortedItems.filter((item) => matches(query, item)),
+    [query, sortedItems],
   );
 
-  const isSearching = query.trim().length > 0 || category !== "All";
+  const isSearching = query.trim().length > 0;
 
   return (
     <div className="kv-news">
@@ -129,31 +139,10 @@ export default function MarketNews() {
 
       <main className="kv-news-body">
         <section className="kv-news-section">
-          <div className="kv-news-filterbar" aria-label="Filter by category">
-            <button
-              type="button"
-              className={`kv-news-filter${category === "All" ? " on" : ""}`}
-              onClick={() => setCategory("All")}
-            >
-              All
-            </button>
-            {MARKET_NEWS_CATEGORIES.map((cat) => (
-              <button
-                type="button"
-                key={cat}
-                className={`kv-news-filter${category === cat ? " on" : ""}`}
-                onClick={() => setCategory(cat)}
-              >
-                {cat}
-              </button>
-            ))}
-          </div>
-
           {isSearching && (
             <div className="kv-news-result-meta">
               <b>{filteredItems.length}</b>{" "}
               {filteredItems.length === 1 ? "result" : "results"}
-              {category !== "All" ? ` · ${category}` : ""}
             </div>
           )}
 
@@ -173,6 +162,7 @@ export default function MarketNews() {
                     <div className="kv-news-item-meta">
                       <span>{item.sourceName}</span>
                       <span>{fmtDate(item.publishedAt)}</span>
+                      <span>{item.category}</span>
                     </div>
 
                     <a
@@ -198,6 +188,10 @@ export default function MarketNews() {
                         <span>Why it matters</span>
                         <p>{item.whyItMatters}</p>
                       </div>
+                    )}
+
+                    {item.signalTags && item.signalTags.length > 0 && (
+                      <SignalTags tags={item.signalTags} />
                     )}
 
                     <a

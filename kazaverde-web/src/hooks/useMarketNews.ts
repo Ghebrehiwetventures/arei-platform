@@ -30,6 +30,8 @@ function toMarketNewsItem(row: MarketNewsRow): MarketNewsItem {
     category: row.category as MarketNewsCategory,
     snippet: row.snippet,
     whyItMatters: row.why_it_matters ?? undefined,
+    signalTags: row.signal_tags ?? undefined,
+    affectedRegions: row.affected_regions ?? undefined,
     addedAt: isoToDate(row.created_at),
   };
 }
