@@ -690,6 +690,67 @@ async function loadBlogArticles() {
 }
 
 async function loadMarketNewsItems() {
+  // Always load static items first — used as fallback if Supabase is unavailable.
+  const staticItems = await loadStaticMarketNewsItems();
+
+  const supabaseUrl = process.env.VITE_SUPABASE_URL || publicSupabaseUrl;
+  const supabaseKey = process.env.VITE_SUPABASE_ANON_KEY || publicSupabaseAnonKey;
+
+  if (!supabaseUrl || !supabaseKey) {
+    console.log("[prerender-phase1] /market-news: Supabase env vars missing — using static fallback");
+    return staticItems;
+  }
+
+  try {
+    const endpoint =
+      `${supabaseUrl}/rest/v1/market_news` +
+      `?status=eq.published` +
+      `&order=published_at.desc` +
+      `&select=id,title,original_title,source_name,source_url,published_at,category,snippet,why_it_matters`;
+
+    const res = await fetch(endpoint, {
+      headers: {
+        apikey: supabaseKey,
+        Authorization: `Bearer ${supabaseKey}`,
+      },
+    });
+
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    }
+
+    const rows = await res.json();
+
+    if (!Array.isArray(rows) || rows.length === 0) {
+      console.log("[prerender-phase1] /market-news: Supabase returned 0 published rows — using static fallback");
+      return staticItems;
+    }
+
+    console.log(`[prerender-phase1] /market-news: using ${rows.length} published rows from Supabase`);
+
+    return rows.map((row) => ({
+      id: row.id,
+      title: row.title,
+      originalTitle: row.original_title ?? undefined,
+      sourceName: row.source_name,
+      sourceUrl: row.source_url,
+      // published_at is a timestamptz — slice to "YYYY-MM-DD" for the template
+      publishedAt: row.published_at ? row.published_at.slice(0, 10) : "",
+      category: row.category,
+      snippet: row.snippet,
+      whyItMatters: row.why_it_matters ?? undefined,
+      addedAt: "",
+    }));
+  } catch (error) {
+    console.warn(
+      "[prerender-phase1] /market-news: Supabase query failed — using static fallback:",
+      error instanceof Error ? error.message : error,
+    );
+    return staticItems;
+  }
+}
+
+async function loadStaticMarketNewsItems() {
   const source = await readFile(marketNewsDataPath, "utf8");
   const sanitizedSource = source
     .replace(/export type MarketNewsCategory[\s\S]*?;\n\n/, "")
