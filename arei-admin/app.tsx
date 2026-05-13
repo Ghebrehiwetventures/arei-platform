@@ -2750,7 +2750,8 @@ const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "chatlab",      label: "Chat Lab"             },
   { key: "agencies",     label: "Agency Console"       },
   { key: "agency-data",  label: "Agency Data Console"  },
-  { key: "broker-pilot", label: "Broker Pilot Preview"  },
+  // Legacy internal preview. New broker product work should happen in arei-broker.
+  { key: "broker-pilot", label: "Legacy Broker Preview"  },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
