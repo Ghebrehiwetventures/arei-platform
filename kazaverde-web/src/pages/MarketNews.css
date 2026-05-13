@@ -206,28 +206,27 @@
   margin-top: 14px;
 }
 
-/* Why it matters — secondary but readable */
+/* Why it matters — ink callout box, clearly separated from body */
 .kv-news-why {
   max-width: 700px;
   margin-top: 20px;
-  padding: 14px 16px;
-  border-left: 2px solid rgba(0, 0, 0, 0.18);
-  background: transparent;
+  padding: 14px 16px 16px;
+  background: var(--kv-black);
 }
 .kv-news-why span {
   display: block;
   font-size: 10px;
   font-weight: 600;
-  letter-spacing: 0.14em;
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--kv-gray-500);
-  margin-bottom: 6px;
+  color: var(--kv-green);
+  margin-bottom: 8px;
 }
 .kv-news-why p {
-  font-family: var(--kv-sans);
-  font-size: 14px;
-  line-height: 1.68;
-  color: rgba(0, 0, 0, 0.70);
+  font-family: var(--kv-mono);
+  font-size: 13px;
+  line-height: 1.65;
+  color: rgba(255, 255, 255, 0.72);
 }
 
 /* Read at source link */
