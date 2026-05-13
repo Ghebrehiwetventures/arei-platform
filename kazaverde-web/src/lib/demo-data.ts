@@ -1,5 +1,5 @@
 /**
- * Demo data for KazaVerde UI.
+ * Demo data for AREI UI.
  *
  * This file is the ONLY place with mock data. When arei-sdk is wired,
  * replace usages with AREIClient calls. The shapes match ListingCard

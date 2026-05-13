@@ -252,7 +252,7 @@ export default function Market() {
     const schema = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "@id": "https://www.kazaverde.com/market#faq",
+      "@id": "https://capeverderealestateindex.com/market#faq",
       mainEntity: MARKET_FAQ.map((item) => ({
         "@type": "Question",
         name: item.q,
@@ -721,11 +721,7 @@ export default function Market() {
         </div>
       </section>
 
-      <NewsletterCta
-        overline="Monthly market report"
-        heading={<>Median moves and notable shifts. Once a month.</>}
-        description="Per-island price movements, inventory trends, and the notable activity from the index — delivered the 1st of every month."
-      />
+      <NewsletterCta />
     </div>
   );
 }

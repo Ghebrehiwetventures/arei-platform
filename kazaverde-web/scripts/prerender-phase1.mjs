@@ -9,8 +9,9 @@ const baseHtmlPath = path.join(distDir, "index.html");
 const spaFallbackPath = path.join(distDir, "spa-fallback", "index.html");
 const blogDataPath = path.resolve(__dirname, "../src/lib/blog-data.ts");
 const faqDataPath = path.resolve(__dirname, "../src/lib/faq-data.ts");
+const marketNewsDataPath = path.resolve(__dirname, "../src/lib/market-news-data.ts");
 const prerenderListingsPath = path.resolve(__dirname, "../src/lib/prerender-listings.ts");
-const siteUrl = "https://kazaverde.com";
+const siteUrl = "https://capeverderealestateindex.com";
 const ogImage = `${siteUrl}/og-default.png`;
 const sitemapPath = path.join(distDir, "sitemap.xml");
 const publicSupabaseUrl = "https://bhqjdzjtiwckfuteycfl.supabase.co";
@@ -20,17 +21,17 @@ function page(title, description, body, options = {}) {
   return { title, description, body, ...options };
 }
 
-function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
+function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], marketNewsItems = []) {
   return [
     {
       route: "/",
       ...page(
-      "KazaVerde — Cape Verde Real Estate",
-      "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with KazaVerde.",
+      "Cape Verde Real Estate Index",
+      "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands.",
       `
         <main>
           <section>
-            <p>KazaVerde</p>
+            <p>Cape Verde Real Estate Index</p>
             <h1>Cape Verde real estate, aggregated in one place</h1>
             <p>
               An independent property search and data platform for Cape Verde — listings
@@ -48,6 +49,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
             <ul>
               <li>Source-linked property listings tracked across multiple Cape Verde islands</li>
               <li>Market-level context including median price and inventory coverage</li>
+              <li>Curated market news on the wider economy, tourism, policy and investment backdrop</li>
               <li>Editorial guides on buying, tax changes, residency, and island selection</li>
             </ul>
           </section>
@@ -64,7 +66,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
           <section>
             <h2>Built for discovery, not transactions</h2>
             <p>
-              KazaVerde is not a broker, agency, or marketplace, and listings are not
+              AREI is not a broker, agency, or marketplace, and listings are not
               legally verified. Each property links back to its original source page, so
               buyers can confirm details directly with the agent and their own lawyer.
             </p>
@@ -77,26 +79,26 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
           "@graph": [
             {
               "@type": "Organization",
-              "@id": "https://kazaverde.com/#organization",
-              name: "KazaVerde",
-              url: "https://kazaverde.com",
-              logo: "https://kazaverde.com/og-default.png",
+              "@id": `${siteUrl}/#organization`,
+              name: "Cape Verde Real Estate Index",
+              url: siteUrl,
+              logo: `${siteUrl}/og-default.png`,
               description:
-                "KazaVerde is an independent property search and data platform for Cape Verde real estate. It is not a broker or agency.",
+                "Cape Verde Real Estate Index is an independent property search and data platform for Cape Verde real estate, published by AREI. It is not a broker or agency.",
             },
             {
               "@type": "WebSite",
-              "@id": "https://kazaverde.com/#website",
-              url: "https://kazaverde.com",
-              name: "KazaVerde",
+              "@id": `${siteUrl}/#website`,
+              url: siteUrl,
+              name: "Cape Verde Real Estate Index",
               description:
                 "Search Cape Verde real estate listings aggregated from local agencies, portals and property websites.",
-              publisher: { "@id": "https://kazaverde.com/#organization" },
+              publisher: { "@id": `${siteUrl}/#organization` },
               potentialAction: {
                 "@type": "SearchAction",
                 target: {
                   "@type": "EntryPoint",
-                  urlTemplate: "https://kazaverde.com/listings?q={search_term_string}",
+                  urlTemplate: `${siteUrl}/listings?q={search_term_string}`,
                 },
                 "query-input": "required name=search_term_string",
               },
@@ -109,7 +111,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
     {
       route: "/market",
       ...page(
-      "Market Data — KazaVerde",
+      "Cape Verde Market Data | Cape Verde Real Estate Index",
       "Median prices by island, inventory trends, and Cape Verde property market insights.",
       `
         <main>
@@ -144,9 +146,71 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
     ),
     },
     {
+      route: "/market-news",
+      ...page(
+      "Cape Verde Market News | Cape Verde Real Estate Index",
+      "Curated economic, tourism, policy and investment news relevant to Cape Verde's property market.",
+      `
+        <main>
+          <section>
+            <p>Market News</p>
+            <h1>Cape Verde Market News</h1>
+            <p>
+              Curated economic, tourism, policy and investment news relevant to Cape Verde's property market.
+            </p>
+          </section>
+
+          <section>
+            <h2>Latest curated links</h2>
+            <ul>
+              ${marketNewsItems.map(
+                (item) => `
+                  <li>
+                    <a href="${escapeHtml(item.sourceUrl)}">${escapeHtml(item.title)}</a>
+                    <p>${escapeHtml(item.sourceName)} · ${escapeHtml(formatIsoDate(item.publishedAt))} · ${escapeHtml(item.category)}</p>
+                    <p>${escapeHtml(item.snippet)}</p>
+                    ${item.whyItMatters ? `<p><strong>Why it matters:</strong> ${escapeHtml(item.whyItMatters)}</p>` : ""}
+                  </li>
+                `,
+              ).join("")}
+            </ul>
+          </section>
+
+          <section>
+            <h2>Copyright and source policy</h2>
+            <p>
+              Market News is a curated link feed. Cape Verde Real Estate Index does not republish full
+              articles, provide investment advice, or replace the original
+              publisher. Follow each outbound link for the full report.
+            </p>
+          </section>
+        </main>
+      `,
+      {
+        jsonLd: {
+          "@context": "https://schema.org",
+          "@type": "CollectionPage",
+          "@id": "https://capeverderealestateindex.com/market-news",
+          name: "Cape Verde Market News",
+          description:
+            "Curated economic, tourism, policy and investment news relevant to Cape Verde's property market.",
+          mainEntity: {
+            "@type": "ItemList",
+            itemListElement: marketNewsItems.map((item, index) => ({
+              "@type": "ListItem",
+              position: index + 1,
+              url: item.sourceUrl,
+              name: item.title,
+            })),
+          },
+        },
+      },
+    ),
+    },
+    {
       route: "/blog",
       ...page(
-      "Blog — KazaVerde",
+      "Cape Verde Real Estate Blog | Cape Verde Real Estate Index",
       "Cape Verde real estate insights, guides, and market analysis. Property buying, islands, legal requirements, and investment tips.",
       `
         <main>
@@ -186,7 +250,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
             jsonLd: {
               "@context": "https://schema.org",
               "@type": "FAQPage",
-              "@id": "https://www.kazaverde.com/blog#faq",
+              "@id": `${siteUrl}/blog#faq`,
               mainEntity: faqEntries.map((f) => ({
                 "@type": "Question",
                 name: f.question,
@@ -200,15 +264,15 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
     {
       route: "/about",
       ...page(
-      "About — KazaVerde",
-      "How KazaVerde works. Data sources, update cadence, deduplication, and transparency.",
+      "About | Cape Verde Real Estate Index",
+      "How Cape Verde Real Estate Index works. Data sources, update cadence, deduplication, and transparency.",
       `
         <main>
           <section>
-            <p>About KazaVerde</p>
+            <p>About Cape Verde Real Estate Index</p>
             <h1>How the index works</h1>
             <p>
-              KazaVerde is a read-only property index for Cape Verde. We collect publicly accessible listing
+              Cape Verde Real Estate Index is a read-only property index for Cape Verde. We collect publicly accessible listing
               data from tracked source pages, normalize it into a consistent format, and link every listing
               back to its original source.
             </p>
@@ -230,8 +294,8 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
     {
       route: "/privacy",
       ...page(
-      "Privacy Policy — KazaVerde",
-      "How KazaVerde handles your data, what we collect, and your rights.",
+      "Privacy Policy | Cape Verde Real Estate Index",
+      "How Cape Verde Real Estate Index handles your data, what we collect, and your rights.",
       `
         <main>
           <section>
@@ -253,7 +317,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
             <h2>What we do not collect</h2>
             <p>
               We do not collect payment information, advertising tracker data, or unnecessary personal data.
-              Saved properties stay in local browser storage and are not transmitted to KazaVerde servers.
+              Saved properties stay in local browser storage and are not transmitted to our servers.
             </p>
           </section>
         </main>
@@ -263,7 +327,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
     {
       route: "/listings",
       ...page(
-      "Cape Verde Properties for Sale — KazaVerde",
+      "Cape Verde Properties for Sale | Cape Verde Real Estate Index",
       "Browse tracked property listings across Cape Verde. Source-linked homes, apartments, villas, and land for sale on Sal, Boa Vista, Santiago, and more.",
       `
         <main>
@@ -296,7 +360,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
     {
       route: "/listings/sal",
       ...page(
-      "Property for Sale in Sal, Cape Verde | KazaVerde",
+      "Property for Sale in Sal, Cape Verde | Cape Verde Real Estate Index",
       "Browse property listings for sale in Sal, Cape Verde. Apartments, villas, and resort properties in Santa Maria and across the island.",
       (() => {
         const salListings = listingRoutes.filter(
@@ -343,7 +407,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
     {
       route: "/listings/boa-vista",
       ...page(
-      "Property for Sale in Boa Vista, Cape Verde | KazaVerde",
+      "Property for Sale in Boa Vista, Cape Verde | Cape Verde Real Estate Index",
       "Browse property listings for sale in Boa Vista, Cape Verde. Beach villas, resort apartments, and coastal properties in Sal Rei and across the island.",
       (() => {
         const boaVistaListings = listingRoutes.filter(
@@ -390,8 +454,8 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
     {
       route: "/cookie-policy",
       ...page(
-      "Cookie Policy — KazaVerde",
-      "What cookies and local storage KazaVerde uses and why.",
+      "Cookie Policy | Cape Verde Real Estate Index",
+      "What cookies and local storage Cape Verde Real Estate Index uses and why.",
       `
         <main>
           <section>
@@ -401,7 +465,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
           </section>
 
           <section>
-            <h2>What KazaVerde uses</h2>
+            <h2>What we use</h2>
             <ul>
               <li>Cookieless Vercel Web Analytics for anonymous traffic measurement</li>
               <li>Local browser storage for saved properties</li>
@@ -410,7 +474,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
           </section>
 
           <section>
-            <h2>What KazaVerde does not use</h2>
+            <h2>What we do not use</h2>
             <p>
               No advertising cookies, third-party tracking pixels, social media tracking cookies,
               or cross-site behavioral tracking are used on the public site.
@@ -426,8 +490,13 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = []) {
 async function main() {
   const blogArticles = await loadBlogArticles();
   const faqEntries = await loadFaqEntries();
+  const marketNewsItems = await loadMarketNewsItems();
   const listingRoutes = await getListingDetailRoutes();
-  const routes = [...getStaticRoutes(blogArticles, listingRoutes, faqEntries), ...getBlogArticleRoutes(blogArticles), ...listingRoutes];
+  const routes = [
+    ...getStaticRoutes(blogArticles, listingRoutes, faqEntries, marketNewsItems),
+    ...getBlogArticleRoutes(blogArticles),
+    ...listingRoutes,
+  ];
   const baseHtml = await readFile(baseHtmlPath, "utf8");
 
   await mkdir(path.dirname(spaFallbackPath), { recursive: true });
@@ -507,6 +576,9 @@ async function writeSitemap(routes) {
     } else if (r.route.startsWith("/blog/")) {
       priority = "0.6";
       changefreq = "monthly";
+    } else if (r.route === "/market-news") {
+      priority = "0.8";
+      changefreq = "weekly";
     } else if (r.route === "/listings" || r.route.startsWith("/listings/")) {
       priority = "0.9";
       changefreq = "daily";
@@ -522,14 +594,15 @@ async function writeSitemap(routes) {
 function renderRouteHtml(baseHtml, route) {
   const canonicalUrl = new URL(route.route, `${siteUrl}/`).toString();
   const ogType = route.ogType ?? "website";
-  const documentTitle = route.title.includes("KazaVerde") ? route.title : `${route.title} — KazaVerde`;
+  const SITE_NAME = "Cape Verde Real Estate Index";
+  const documentTitle = route.title.includes(SITE_NAME) ? route.title : `${route.title} | ${SITE_NAME}`;
   const headExtras = [
     `<link rel="canonical" href="${canonicalUrl}" />`,
     `<meta property="og:title" content="${escapeHtml(documentTitle)}" />`,
     `<meta property="og:description" content="${escapeHtml(route.description)}" />`,
     `<meta property="og:type" content="${escapeHtml(ogType)}" />`,
     `<meta property="og:url" content="${canonicalUrl}" />`,
-    `<meta property="og:site_name" content="KazaVerde" />`,
+    `<meta property="og:site_name" content="Cape Verde Real Estate Index" />`,
     `<meta property="og:image" content="${escapeHtml(route.image ?? ogImage)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(documentTitle)}" />`,
@@ -568,12 +641,12 @@ function renderRouteHtml(baseHtml, route) {
 function wrapPrerenderMarkup(body, description) {
   return `      <div class="prerender-shell" aria-label="Prerendered page snapshot">
         <header>
-          <a href="/">KazaVerde</a>
+          <a href="/">Cape Verde Real Estate Index</a>
           <p>${escapeHtml(description)}</p>
         </header>
 ${indent(body.trim(), 4)}
         <footer>
-          <p><a href="/listings">Listings</a> · <a href="/market">Market</a> · <a href="/blog">Blog</a> · <a href="/about">About</a></p>
+          <p><a href="/listings">Listings</a> · <a href="/market">Market</a> · <a href="/market-news">Market News</a> · <a href="/blog">Blog</a> · <a href="/about">About</a></p>
           <p><a href="/privacy">Privacy</a> · <a href="/cookie-policy">Cookie Policy</a></p>
         </footer>
       </div>`;
@@ -614,6 +687,31 @@ async function loadBlogArticles() {
   const moduleUrl = `data:text/javascript;charset=utf-8,${encodeURIComponent(`${sanitizedSource}\nexport { BLOG_ARTICLES };`)}`;
   const module = await import(moduleUrl);
   return module.BLOG_ARTICLES;
+}
+
+async function loadMarketNewsItems() {
+  const source = await readFile(marketNewsDataPath, "utf8");
+  const sanitizedSource = source
+    .replace(/export type MarketNewsCategory[\s\S]*?;\n\n/, "")
+    .replace(/export type MarketNewsItem = \{[\s\S]*?\n\};\n\n/, "")
+    .replace(/export const MARKET_NEWS_CATEGORIES: MarketNewsCategory\[] =/, "const MARKET_NEWS_CATEGORIES =")
+    .replace(/export const MARKET_NEWS_ITEMS: MarketNewsItem\[] =/, "const MARKET_NEWS_ITEMS =");
+  const moduleUrl = `data:text/javascript;charset=utf-8,${encodeURIComponent(`${sanitizedSource}\nexport { MARKET_NEWS_ITEMS };`)}`;
+  const module = await import(moduleUrl);
+  return [...module.MARKET_NEWS_ITEMS].sort((a, b) => {
+    if (a.featured && !b.featured) return -1;
+    if (!a.featured && b.featured) return 1;
+    return b.publishedAt.localeCompare(a.publishedAt);
+  });
+}
+
+function formatIsoDate(iso) {
+  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  });
 }
 
 async function loadListingPrerenderIds() {
@@ -716,9 +814,9 @@ function buildListingSeoDescription(detail) {
   }
 
   if (detail.property_type) {
-    parts.push(`Source-linked ${String(detail.property_type).toLowerCase()} listing on KazaVerde.`);
+    parts.push(`Source-linked ${String(detail.property_type).toLowerCase()} listing on Cape Verde Real Estate Index.`);
   } else {
-    parts.push("Source-linked property listing on KazaVerde.");
+    parts.push("Source-linked property listing on Cape Verde Real Estate Index.");
   }
 
   return truncateSeoText(parts.join(" "));
@@ -824,7 +922,7 @@ function renderListingDetailBody(detail) {
           <a href="/listings">All Cape Verde listings</a> ·
           <a href="/listings?island=${encodeURIComponent(detail.island)}">${escapeHtml(detail.island)} listings</a> ·
           <a href="/market">Market data</a> ·
-          <a href="/about">How KazaVerde works</a>
+          <a href="/about">How Cape Verde Real Estate Index works</a>
         </p>
         ${firstImage ? `<p><img src="${escapeHtml(firstImage)}" alt="${escapeHtml(buildListingSeoTitle(detail))}" loading="eager" /></p>` : ""}
         ${specs.length > 0 ? `<ul>\n${specs.map((spec) => `          <li><strong>${escapeHtml(spec.label)}:</strong> ${escapeHtml(spec.value)}</li>`).join("\n")}\n        </ul>` : ""}

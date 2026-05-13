@@ -3,6 +3,20 @@
 This directory is the canonical brand reference for all AREI products.
 When docs conflict, this directory wins over older per-product visual guidance.
 
+## Start here (agent / engineer entry point)
+
+If you are arriving fresh and need to understand the AREI design system:
+
+1. **`source/README.md`** — index of authored brand guidelines v1.0 source files (JSX) with read order
+2. **`source/manual/manual-01-foundations.jsx`** — canonical brand: cover, brand idea, architecture, logo & mark, country lockup, **color system §06**
+3. **`source/bg/foundations.jsx`** — codified color tokens, typography specimens, spacing
+4. **`audit-2026-05-12.md`** — current reconciliation between canonical brand v1 and live implementations; lists known divergences and the planned PR sequence
+5. This file (`README.md`) — concise summary below
+
+The canonical brand source files live in `source/` because they were authored as
+JSX components and rendered to a standalone HTML brand guide. They are the
+single source of truth for color, typography, mark geometry, and pairing rules.
+
 ---
 
 ## D·Layers mark

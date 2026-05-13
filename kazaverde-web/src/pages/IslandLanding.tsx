@@ -246,11 +246,7 @@ export default function IslandLanding({ island }: Props) {
         </div>
       )}
 
-      <NewsletterCta
-        overline={config.newsletterOverline}
-        heading={<>New listings in <em>{config.name}</em></>}
-        description={config.newsletterDescription}
-      />
+      <NewsletterCta />
     </>
   );
 }

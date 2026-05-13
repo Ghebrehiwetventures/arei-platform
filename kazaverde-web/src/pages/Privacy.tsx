@@ -32,7 +32,7 @@ export default function Privacy() {
             <h2>The Cape Verde Real Estate Index, published by AREI.</h2>
           </div>
           <p className="kv-pol-prose">
-            The Cape Verde Real Estate Index (<strong>kazaverde.com</strong>)
+            The Cape Verde Real Estate Index (<strong>capeverderealestateindex.com</strong>)
             is a read-only property index for Cape Verde, published as part of
             Africa Real Estate Index (AREI). This policy explains what data we
             collect, why we collect it, and how we protect it.
@@ -158,7 +158,7 @@ export default function Privacy() {
           <p className="kv-pol-prose">
             You can request deletion of your newsletter subscription at any
             time by emailing{" "}
-            <a href="mailto:info@kazaverde.com">info@kazaverde.com</a>. Since
+            <a href="mailto:info@africarealestateindex.com">info@africarealestateindex.com</a>. Since
             we don't collect personal data beyond newsletter emails, there is
             no additional data to access or delete.
           </p>
@@ -175,7 +175,7 @@ export default function Privacy() {
             We may update this policy as the product evolves. Material
             changes are noted with a fresh date at the top of this page.
             Questions? Email{" "}
-            <a href="mailto:info@kazaverde.com">info@kazaverde.com</a>.
+            <a href="mailto:info@africarealestateindex.com">info@africarealestateindex.com</a>.
           </p>
         </div>
       </section>

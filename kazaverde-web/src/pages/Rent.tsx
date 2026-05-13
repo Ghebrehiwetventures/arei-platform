@@ -243,11 +243,7 @@ export default function Rent() {
           this is the same general newsletter shipped on every page so
           visitors who aren't ready to commit to either rentals cohort
           can still stay close to the sales index. */}
-      <NewsletterCta
-        overline="Monthly update"
-        heading={<>One email a month. Everything that changed on the index.</>}
-        description="New sales listings, median-price shifts, island activity, sources added. Separate from the rentals waitlist above — no overlap, unsubscribe in one click."
-      />
+      <NewsletterCta />
     </div>
   );
 }

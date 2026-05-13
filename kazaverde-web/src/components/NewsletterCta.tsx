@@ -10,9 +10,9 @@ interface Props {
 }
 
 export default function NewsletterCta({
-  overline = "Monthly Property Index",
-  heading = "Cape Verde market intelligence.",
-  description = "Median prices by island, inventory trends, new development alerts, and regulatory changes.",
+  overline = "Market Brief",
+  heading = "Cape Verde property market updates, without the noise.",
+  description = "Source-linked updates on listings data, price shifts, island activity, source coverage, and market news affecting Cape Verde's property market.",
 }: Props) {
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -75,7 +75,7 @@ export default function NewsletterCta({
         )}
         {status === "error" && <div className="nl-error">{errorMsg}</div>}
         <div className="nl-fine">
-          Free. Unsubscribe any time. Every email has a direct reply-to.
+          No spam. Unsubscribe anytime.
         </div>
       </div>
     </div>

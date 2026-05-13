@@ -49,7 +49,7 @@ export default function BlogList() {
     const data = {
       "@context": "https://schema.org",
       "@type": "FAQPage",
-      "@id": "https://www.kazaverde.com/blog#faq",
+      "@id": "https://capeverderealestateindex.com/blog#faq",
       mainEntity: FAQ_ENTRIES.map((f) => ({
         "@type": "Question",
         name: f.question,
@@ -239,11 +239,7 @@ export default function BlogList() {
         )}
       </section>
 
-      <NewsletterCta
-        overline="Monthly update"
-        heading={<>One email a month. Everything that changed on the index.</>}
-        description="New listings, median-price shifts, island activity, sources added. No promotional mail, no listings to feature, no spam — just the month in Cape Verde property."
-      />
+      <NewsletterCta />
     </div>
   );
 }

@@ -165,7 +165,7 @@ export default function Landing() {
      visible page content. */
   useEffect(() => {
     const origin =
-      typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com";
+      typeof window !== "undefined" ? window.location.origin : "https://capeverderealestateindex.com";
     const data = {
       "@context": "https://schema.org",
       "@graph": [
@@ -622,11 +622,7 @@ export default function Landing() {
       </section>
 
       {/* ═══ NEWSLETTER ═══ */}
-      <NewsletterCta
-        overline="Monthly update"
-        heading={<>One email a month. Everything that changed on the index.</>}
-        description="New listings, median-price shifts, island activity, sources added. No promotional mail, no listings to feature, no spam — just the month in Cape Verde property."
-      />
+      <NewsletterCta />
     </div>
   );
 }

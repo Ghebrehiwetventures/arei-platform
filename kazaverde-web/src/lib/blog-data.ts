@@ -345,7 +345,7 @@ const _ALL_BLOG_ARTICLES = [
 <p>One of the challenges of the Cape Verdean property market is that listings are scattered across dozens of agency websites, international portals, and developer pages. Prices may be listed in euros, dollars, or escudos. Specifications are often inconsistent. The same property may appear on multiple sites with different descriptions.</p>
 <p><a href="https://kazaverde.com">Cape Verde Real Estate Index</a> was built to solve this problem. We aggregate listings from multiple sources, normalize all prices to euros, standardize specifications, deduplicate properties that appear on multiple sites, and present everything in a single searchable interface. Every listing links to its original source — we&#39;re a read-only index, not a broker.</p>
 <p>Current coverage: listings across 9 sources on 6 islands.</p>
-<p><em>Start your search at <a href="https://kazaverde.com">kazaverde.com</a></em></p>
+<p><em>Start your search at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>Which Cape Verde island is best for property investment?</h3>
@@ -700,7 +700,7 @@ const _ALL_BLOG_ARTICLES = [
 <h2>Finding Properties That Qualify</h2>
 <p>Not every listing on the market will meet the Green Card investment threshold — particularly at the €80,000 level, where options are more limited. Use <a href="https://kazaverde.com">Cape Verde Real Estate Index</a> to filter properties by price range and island to identify which listings fall within the qualifying investment bands.</p>
 <p>Keep in mind that the threshold applies to the property purchase value, and that the area classification (above or below average GDP per capita) determines which threshold applies. Your lawyer can confirm the classification for any specific property or area.</p>
-<p><em>Search properties at <a href="https://kazaverde.com">kazaverde.com</a></em></p>
+<p><em>Search properties at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>How much do I need to invest for Cape Verde residency?</h3>
@@ -1052,7 +1052,7 @@ const _ALL_BLOG_ARTICLES = [
 <h2>The Bottom Line</h2>
 <p>Off-plan purchasing in Cape Verde is legitimate and can be financially rational — but the risk profile is materially higher than buying a completed property. The due diligence required is more extensive, the legal protections matter more, and developer quality is the central variable.</p>
 <p>Never buy off-plan without an independent Cape Verdean lawyer reviewing the full contract before you sign anything or pay any deposit. The cost of legal advice is trivial relative to the capital at risk.</p>
-<p><em>Browse completed resale properties at <a href="https://kazaverde.com">kazaverde.com</a></em></p>
+<p><em>Browse completed resale properties at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
 <hr>
 <h2>Related Guides</h2>
 <ul>

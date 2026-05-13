@@ -22,7 +22,7 @@
 <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='6' fill='%238ecfbf'/%3E%3C/svg%3E">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:ital,wght@0,300;0,400;0,500;0,600;1,400&family=IBM+Plex+Sans:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
 /* ═══════════════════════════════════════════
    AREI LANDING — Brutalist / Swiss
@@ -40,10 +40,11 @@
   --black:#0a0a0a;
   --white:#fafafa;
   --off-white:#f2f0ec;
-  --gray:#888;
+  --gray:#666;
   --rule:rgba(0,0,0,.15);
   --rule-dark:rgba(255,255,255,.15);
   --mono:'IBM Plex Mono',ui-monospace,'SF Mono',Menlo,Consolas,monospace;
+  --sans:'IBM Plex Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;
 }
 *,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
 body{
@@ -55,6 +56,11 @@ body{
 html{scroll-behavior:smooth}
 a{color:inherit;text-decoration:none}
 
+/* ─── TYPOGRAPHY ───
+   AREI landing is mono-only — per visual-identity.md and per signature.
+   Plex Mono carries headings, body prose, quotes, form fields, data — everything.
+   The --sans token is kept available for admin / dense-data surfaces. */
+
 /* ─── REVEAL ─── */
 .rv{opacity:0;transition:opacity .6s ease}
 .rv.v{opacity:1}
@@ -65,7 +71,7 @@ a{color:inherit;text-decoration:none}
 /* ─── NAV ─── */
 nav{
   position:sticky;top:0;z-index:200;
-  background:var(--green);
+  background:var(--black);
 }
 .nav-inner{
   max-width:1120px;margin:0 auto;height:52px;
@@ -128,38 +134,47 @@ nav{
   .lk-primary .brand-mark{width:48px;height:48px}
 }
 .nav-links{display:flex;align-items:center;gap:28px}
-.nav-a{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(0,0,0,.5);transition:color .2s}
-.nav-a:hover{color:var(--black)}
+.nav-a{font-size:11px;font-weight:500;letter-spacing:.1em;text-transform:uppercase;color:rgba(255,255,255,.5);transition:color .2s}
+.nav-a:hover{color:var(--white)}
 .nav-btn{
   padding:6px 16px;
-  border:1px solid var(--black);
+  border:1px solid rgba(255,255,255,.3);
   font-size:11px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-  font-family:var(--mono);
-  transition:background .2s,color .2s;
+  font-family:var(--mono);color:var(--white);
+  transition:background .2s,color .2s,border-color .2s;
 }
-.nav-btn:hover{background:var(--black);color:var(--white)}
+.nav-btn:hover{background:var(--white);color:var(--black);border-color:var(--white)}
+nav .lk-compact{color:var(--white)}
 
 /* ─── HERO ─── */
 .hero-section{
-  background:var(--green);
+  background:var(--black);
   padding:96px 0 80px;
 }
 .hero h1{
   font-size:clamp(32px,5.5vw,56px);font-weight:400;line-height:1.15;
-  letter-spacing:-.02em;color:var(--black);
+  letter-spacing:-.02em;color:var(--white);
   max-width:780px;margin-bottom:24px;
 }
 .hero-sub{
-  font-size:clamp(15px,1.4vw,17px);color:rgba(0,0,0,.65);line-height:1.6;
+  font-size:clamp(15px,1.4vw,17px);color:rgba(255,255,255,.62);line-height:1.6;
   max-width:620px;margin-bottom:40px;
 }
+.hero-section .btn-primary{
+  background:var(--white);border-color:var(--white);color:var(--black);
+}
+.hero-section .btn-primary:hover{opacity:.88}
+.hero-section .btn-secondary{
+  color:rgba(255,255,255,.55);border-color:rgba(255,255,255,.2);
+}
+.hero-section .btn-secondary:hover{color:var(--white);border-color:rgba(255,255,255,.5)}
 .hero-ctas{display:flex;gap:16px;align-items:center;flex-wrap:wrap;margin-bottom:24px}
 .btn-primary{
   display:inline-flex;align-items:center;gap:8px;
   padding:14px 26px;
   border:1px solid var(--black);background:var(--black);
   font-size:11px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;
-  font-family:var(--mono);color:var(--green);
+  font-family:var(--mono);color:var(--white);
   cursor:pointer;transition:opacity .2s;
 }
 .btn-primary:hover{opacity:.85}
@@ -191,7 +206,7 @@ nav{
   content:'';display:inline-block;flex-shrink:0;
   width:9px;height:9px;border-radius:50%;
   border:1.5px solid rgba(0,0,0,.1);
-  border-top-color:rgba(0,0,0,.52);border-right-color:rgba(0,0,0,.28);
+  border-top-color:rgba(0,0,0,.65);border-right-color:rgba(0,0,0,.28);
   animation:eng-spin .65s linear infinite;
 }
 @keyframes eng-spin{to{transform:rotate(360deg)}}
@@ -201,7 +216,7 @@ nav{
 }
 .src-ticker{
   display:block;font-size:11px;
-  color:rgba(0,0,0,.52);letter-spacing:.01em;
+  color:rgba(0,0,0,.65);letter-spacing:.01em;
 }
 .src-ticker.t-enter{animation:t-in .32s cubic-bezier(.4,0,.2,1) both}
 .src-ticker.t-exit{animation:t-out .28s cubic-bezier(.4,0,.2,1) forwards}
@@ -258,7 +273,7 @@ nav{
 .section{padding:120px 0}
 .section-compact{padding:80px 0}
 .section-compact .section-head{margin-bottom:32px}
-.section-dark{background:var(--deep-green);color:var(--white)}
+.section-dark{background:var(--black);color:var(--white)}
 .section-green{background:var(--green);color:var(--black)}
 .section-off{background:var(--off-white)}
 
@@ -277,7 +292,7 @@ nav{
   letter-spacing:-.02em;
 }
 .ey-dot{
-  display:inline-block;width:7px;height:7px;border-radius:50%;
+  display:inline-block;width:7px;height:7px;
   background:#22c55e;margin-right:8px;vertical-align:middle;
   box-shadow:0 0 0 0 rgba(34,197,94,.5);
   animation:ey-pulse 2s ease-in-out infinite;
@@ -300,24 +315,24 @@ nav{
   color:rgba(0,0,0,.55);margin-bottom:32px;display:block;
 }
 .founder-quote{
-  font-size:clamp(19px,2.2vw,26px);font-weight:400;line-height:1.5;
-  letter-spacing:-.01em;color:var(--black);
-  margin-bottom:44px;
+  font-size:15px;font-weight:400;line-height:1.7;
+  color:var(--black);
+  margin-bottom:36px;max-width:620px;
 }
-.founder-quote p + p{margin-top:18px}
+.founder-quote p + p{margin-top:14px}
 .founder-byline{
   display:flex;align-items:center;gap:18px;
   padding-top:28px;border-top:1px solid rgba(0,0,0,.18);
 }
 .founder-photo{
-  width:60px;height:60px;border-radius:50%;
-  background:var(--deep-green);
+  width:60px;height:60px;
+  background:var(--black);
   flex-shrink:0;overflow:hidden;position:relative;
   display:flex;align-items:center;justify-content:center;
 }
 .founder-photo::before{
   content:'MG';
-  color:var(--green);font-size:15px;font-weight:600;letter-spacing:.06em;
+  color:var(--white);font-size:15px;font-weight:600;letter-spacing:.06em;
 }
 .founder-photo img{
   position:absolute;inset:0;width:100%;height:100%;object-fit:cover;
@@ -397,7 +412,7 @@ nav{
   font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
   margin-bottom:20px;padding-bottom:10px;display:block;
 }
-.dtv-raw .dtv-label{color:rgba(0,0,0,.45);border-bottom:1px solid rgba(0,0,0,.1)}
+.dtv-raw .dtv-label{color:rgba(0,0,0,.55);border-bottom:1px solid rgba(0,0,0,.1)}
 .dtv-out .dtv-label{color:rgba(255,255,255,.2);border-bottom:1px solid rgba(255,255,255,.08)}
 .dtv-raw .src{
   display:block;padding:8px 0;border-bottom:1px solid rgba(0,0,0,.06);color:rgba(0,0,0,.55);
@@ -428,10 +443,11 @@ nav{
 :root{
   --bp-line:rgba(0,0,0,.3);
   --bp-line-soft:rgba(0,0,0,.12);
-  --bp-label:rgba(0,0,0,.42);
-  --bp-text:rgba(0,0,0,.72);
-  --bp-muted:rgba(0,0,0,.35);
-  --bp-active:#2d6a4f;
+  --bp-label:rgba(0,0,0,.55);
+  --bp-text:rgba(0,0,0,.82);
+  --bp-muted:rgba(0,0,0,.55);
+  --bp-active:#0a0a0a;
+  --bp-status:#22c55e;
   --bp-stroke:1px;
 }
 .section-dark{
@@ -440,7 +456,8 @@ nav{
   --bp-label:rgba(255,255,255,.4);
   --bp-text:rgba(255,255,255,.78);
   --bp-muted:rgba(255,255,255,.32);
-  --bp-active:#8ecfbf;
+  --bp-active:#fafafa;
+  --bp-status:#22c55e;
 }
 
 /* ── Panel — the base container ── */
@@ -471,11 +488,11 @@ nav{
   display:inline-block;position:relative;
 }
 .bp-node-active{
-  background:var(--bp-active);border-color:var(--bp-active);
+  background:var(--bp-status);border-color:var(--bp-status);
 }
 .bp-node-active::after{
-  content:'';position:absolute;inset:-5px;border-radius:50%;
-  background:var(--bp-active);opacity:.18;
+  content:'';position:absolute;inset:-5px;
+  background:var(--bp-status);opacity:.22;
   animation:bp-pulse 2.4s ease-in-out infinite;
 }
 @keyframes bp-pulse{
@@ -585,8 +602,8 @@ nav{
   margin-left:6px;font-size:10.5px;letter-spacing:.04em;
   color:var(--bp-muted);font-variant-numeric:tabular-nums;
 }
-.xfm-delta-down{color:#c75c5c}
-.xfm-delta-up{color:var(--bp-active);opacity:.8}
+.xfm-delta-down{color:#c44a3a}
+.xfm-delta-up{color:#2e7d52}
 .xfm-delta-flat{color:var(--bp-muted)}
 
 .transform-engine{
@@ -704,7 +721,7 @@ nav{
 .lc-img{height:156px;overflow:hidden;background:#e8e8e8}
 .lc-img img{width:100%;height:100%;object-fit:cover;display:block}
 .lc-body{padding:14px 16px 16px}
-.lc-topline{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.35);margin-bottom:10px}
+.lc-topline{font-size:10px;font-weight:600;letter-spacing:.12em;text-transform:uppercase;color:rgba(0,0,0,.55);margin-bottom:10px}
 .lc-price{font-size:18px;font-weight:500;letter-spacing:-.01em;color:var(--black);margin-bottom:8px}
 .lc-title{
   font-size:12px;font-weight:400;color:rgba(0,0,0,.6);line-height:1.5;margin-bottom:6px;
@@ -756,36 +773,38 @@ nav{
 .section-dark .lr-idx{color:rgba(255,255,255,.08)}
 
 /* ─── CTA ─── */
-.cta-section{background:var(--green);padding:100px 0}
+.cta-section{background:var(--black);color:var(--white);padding:100px 0 60px}
 .cta-inner{max-width:600px}
 .cta-inner .ey{
   font-size:11px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
-  color:rgba(0,0,0,.4);margin-bottom:16px;display:block;
+  color:rgba(255,255,255,.55);margin-bottom:16px;display:block;
 }
 .cta-inner h2{
   font-size:clamp(22px,3vw,36px);font-weight:400;line-height:1.15;
   letter-spacing:-.02em;margin-bottom:12px;
 }
-.cta-inner>p{font-size:14px;color:rgba(0,0,0,.5);line-height:1.7;margin-bottom:32px}
+.cta-inner>p{font-size:14px;color:rgba(255,255,255,.7);line-height:1.7;margin-bottom:32px}
 .cta-form{display:flex;flex-direction:column;gap:12px}
 .cta-row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
 .cta-form input,.cta-form textarea{
   width:100%;padding:12px 14px;
-  border:1px solid rgba(0,0,0,.15);background:transparent;
-  color:var(--black);font-family:var(--mono);font-size:13px;
+  border:1px solid rgba(255,255,255,.2);background:transparent;
+  color:var(--white);font-family:var(--mono);font-size:13px;
   outline:none;transition:border-color .15s;
 }
-.cta-form input::placeholder,.cta-form textarea::placeholder{color:rgba(0,0,0,.3)}
-.cta-form input:focus,.cta-form textarea:focus{border-color:rgba(0,0,0,.5)}
+.cta-form input::placeholder,.cta-form textarea::placeholder{color:rgba(255,255,255,.4)}
+.cta-form input:focus,.cta-form textarea:focus{border-color:rgba(255,255,255,.6)}
 .cta-form textarea{min-height:100px;resize:vertical}
 .cta-actions{display:flex;align-items:center;gap:14px;flex-wrap:wrap;margin-top:4px}
+.cta-section .btn-outline{background:var(--white);border-color:var(--white);color:var(--black)}
+.cta-section .btn-outline:hover{opacity:.88;background:var(--white);color:var(--black)}
 .cta-feedback{font-size:13px;line-height:1.5}
-.cta-feedback.ok{color:rgba(0,0,0,.7)}
-.cta-feedback.err{color:#c44}
-.cta-micro{margin-top:20px;font-size:12px;color:rgba(0,0,0,.3)}
+.cta-feedback.ok{color:rgba(255,255,255,.75)}
+.cta-feedback.err{color:#ff8a8a}
+.cta-micro{margin-top:20px;font-size:12px;color:rgba(255,255,255,.5)}
 
 /* ─── FOOTER ─── */
-footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
+footer{padding:60px 0 40px;background:var(--white)}
 .footer-grid{display:grid;grid-template-columns:1.8fr 1fr 1fr;gap:40px;align-items:start}
 .footer-brand .f-logo{margin-bottom:16px}
 .footer-brand p{font-size:12px;color:var(--gray);line-height:1.7;max-width:280px;margin-bottom:20px}
@@ -794,7 +813,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   font-size:11px;color:var(--gray);font-weight:500;
   padding:6px 14px;border:1px solid var(--rule);
 }
-.footer-status .sd{width:6px;height:6px;border-radius:50%;background:#22c55e}
+.footer-status .sd{width:6px;height:6px;background:#22c55e}
 .footer-col h4{
   font-size:10px;font-weight:600;letter-spacing:.14em;text-transform:uppercase;
   color:var(--gray);margin-bottom:18px;padding-bottom:10px;
@@ -815,50 +834,70 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   border:1px solid var(--rule);
 }
 .surf-card{
-  background:var(--white);padding:32px 28px;
+  background:var(--white);
   border-right:1px solid var(--rule);
+  display:flex;flex-direction:column;
 }
 .surf-card:last-child{border-right:none}
-.surf-card-paid{background:var(--deep-green);color:var(--white)}
-.surf-head{
+
+/* Icon block */
+.surf-icon-block{
+  height:136px;display:flex;align-items:center;justify-content:center;
+  flex-shrink:0;
+}
+.surf-icon-block svg{width:44px;height:44px;fill:none;stroke-linecap:square;stroke-linejoin:miter;}
+.surf-icon-01{background:var(--off-white)}
+.surf-icon-02{background:var(--off-white)}
+.surf-icon-03{background:var(--off-white)}
+.surf-icon-03 svg{stroke:var(--black)}
+
+/* Content */
+.surf-content{padding:24px 26px 28px;display:flex;flex-direction:column;flex:1}
+.surf-eyebrow{
   display:flex;justify-content:space-between;align-items:center;
-  margin-bottom:16px;
+  margin-bottom:14px;
 }
-.surf-label{
-  font-size:11px;font-weight:600;letter-spacing:.18em;text-transform:uppercase;
-  color:rgba(0,0,0,.22);
-}
-.surf-card-paid .surf-label{color:rgba(255,255,255,.28)}
+.surf-num{font-size:10px;font-weight:600;letter-spacing:.18em;color:rgba(0,0,0,.22)}
 .surf-tag{
-  font-size:9px;font-weight:700;letter-spacing:.16em;text-transform:uppercase;
+  font-size:9px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;
   padding:3px 8px;border:1px solid;
 }
 .surf-tag-free{color:rgba(0,0,0,.38);border-color:rgba(0,0,0,.14)}
 .surf-tag-freemium{color:rgba(0,0,0,.5);border-color:rgba(0,0,0,.2)}
-.surf-tag-paid{color:var(--green);border-color:rgba(142,207,191,.35)}
-.surf-title{
-  font-size:clamp(14px,1.4vw,16px);font-weight:500;
-  line-height:1.35;margin-bottom:22px;letter-spacing:-.01em;
+.surf-tag-paid{background:var(--black);color:var(--white);border-color:var(--black)}
+.surf-name{
+  font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;
+  margin-bottom:10px;color:var(--black);
 }
-.surf-card-paid .surf-title{color:var(--white)}
-.surf-body{
-  display:flex;flex-direction:column;
-  border-top:1px solid var(--rule);
+.surf-tagline{
+  font-size:13px;font-weight:400;line-height:1.6;
+  color:rgba(0,0,0,.55);margin-bottom:22px;flex:1;
 }
-.surf-card-paid .surf-body{border-top-color:var(--rule-dark)}
-.surf-row{
-  display:grid;grid-template-columns:62px 1fr;gap:12px;
-  padding:11px 0;border-bottom:1px dashed var(--rule);font-size:12px;
+
+/* Fact rows — label and value on same baseline */
+.surf-facts{margin-top:auto;border-top:1px solid var(--rule);padding-top:16px;display:flex;flex-direction:column;gap:0}
+.surf-fact{
+  display:grid;grid-template-columns:64px 1fr;align-items:baseline;gap:12px;
+  padding:10px 0;border-bottom:1px dashed var(--rule);font-size:12px;
+  min-height:56px;box-sizing:border-box;
 }
-.surf-card-paid .surf-row{border-bottom-color:rgba(255,255,255,.1)}
-.surf-row:last-child{border-bottom:none}
-.surf-key{
-  font-size:9.5px;font-weight:600;letter-spacing:.1em;text-transform:uppercase;
-  color:var(--gray);padding-top:1px;
+.surf-fact:last-child{border-bottom:none}
+.surf-fact-key{
+  font-size:9px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
+  color:var(--gray);
 }
-.surf-card-paid .surf-key{color:rgba(255,255,255,.28)}
-.surf-val{color:rgba(0,0,0,.62);line-height:1.55}
-.surf-card-paid .surf-val{color:rgba(255,255,255,.58)}
+.surf-fact-val{color:rgba(0,0,0,.78);line-height:1.5}
+
+/* Card 03 — dark */
+.surf-card-dark{background:var(--black)}
+.surf-card-dark .surf-content{color:var(--white)}
+.surf-card-dark .surf-num{color:rgba(255,255,255,.25)}
+.surf-card-dark .surf-name{color:var(--white)}
+.surf-card-dark .surf-tagline{color:rgba(255,255,255,.5)}
+.surf-card-dark .surf-facts{border-top-color:rgba(255,255,255,.1)}
+.surf-card-dark .surf-fact{border-bottom-color:rgba(255,255,255,.08)}
+.surf-card-dark .surf-fact-key{color:rgba(255,255,255,.28)}
+.surf-card-dark .surf-fact-val{color:rgba(255,255,255,.58)}
 
 /* ─── BROKER CTA ─── */
 .broker-cta{
@@ -868,13 +907,14 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
   gap:24px;flex-wrap:wrap;
 }
 .broker-cta-text{font-size:13px;color:rgba(0,0,0,.58);line-height:1.6;max-width:460px}
-.broker-cta-text strong{font-weight:600;color:rgba(0,0,0,.72);display:block;margin-bottom:4px}
+.broker-cta-text strong{font-weight:600;color:rgba(0,0,0,.82);display:block;margin-bottom:4px}
 
 /* ─── RESPONSIVE ─── */
 @media(max-width:860px){
   .surfaces-grid{grid-template-columns:1fr}
   .surf-card{border-right:none;border-bottom:1px solid var(--rule)}
-  .surf-card-paid{border-bottom:none}
+  .surf-card-dark{border-bottom:none}
+  .surf-icon-block{height:110px}
   .broker-cta{flex-direction:column;align-items:flex-start}
 }
 
@@ -1013,7 +1053,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 1. THE GAP ═══ -->
-<section class="section" id="opportunity">
+<section class="section section-off" id="opportunity">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -1033,7 +1073,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 2. OPPORTUNITY SCALE ═══ -->
-<section class="section section-off" id="benchmarks">
+<section class="section" id="benchmarks">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -1091,7 +1131,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 3. THE ENGINE ═══ -->
-<section class="section section-dark section-compact">
+<section class="section section-off section-compact">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -1109,7 +1149,7 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
 
 
 <!-- ═══ 3b. THREE SURFACES ═══ -->
-<section class="section section-off" id="surfaces">
+<section class="section" id="surfaces">
   <div class="wrap">
     <div class="section-head rv">
       <div class="section-head-left">
@@ -1119,66 +1159,110 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
       </div>
     </div>
     <div class="surfaces-grid rv">
+
+      <!-- 01 Public Index Surface -->
       <div class="surf-card">
-        <div class="surf-head">
-          <span class="surf-label">01</span>
-          <span class="surf-tag surf-tag-free">Free</span>
+        <div class="surf-icon-block surf-icon-01">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="currentColor" stroke-width="1.4">
+            <!-- Index table: outer frame + column divider + data rows -->
+            <rect x="6" y="6" width="32" height="32"/>
+            <line x1="6"  y1="17" x2="38" y2="17"/>
+            <line x1="6"  y1="27" x2="38" y2="27"/>
+            <line x1="17" y1="6"  x2="17" y2="38"/>
+            <line x1="11" y1="22" x2="14" y2="22"/>
+            <line x1="11" y1="32" x2="14" y2="32"/>
+          </svg>
         </div>
-        <h3 class="surf-title">Public Index Surface</h3>
-        <div class="surf-body">
-          <div class="surf-row">
-            <span class="surf-key">Audience</span>
-            <span class="surf-val">Public, media, researchers, investors evaluating markets</span>
+        <div class="surf-content">
+          <div class="surf-eyebrow">
+            <span class="surf-num">01</span>
+            <span class="surf-tag surf-tag-free">Free</span>
           </div>
-          <div class="surf-row">
-            <span class="surf-key">Offer</span>
-            <span class="surf-val">Country index pages, public listings, monthly listing-based market signal, methodology disclosure</span>
-          </div>
-          <div class="surf-row">
-            <span class="surf-key">Role</span>
-            <span class="surf-val">SEO authority, top of funnel, market legitimacy</span>
+          <h3 class="surf-name">Public Index Surface</h3>
+          <p class="surf-tagline">Country-level market data and methodology, open to the public. The authority layer.</p>
+          <div class="surf-facts">
+            <div class="surf-fact">
+              <span class="surf-fact-key">For</span>
+              <span class="surf-fact-val">Public, investors, media, researchers</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Includes</span>
+              <span class="surf-fact-val">Index pages, listings, monthly signal, methodology</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Role</span>
+              <span class="surf-fact-val">SEO authority, top of funnel</span>
+            </div>
           </div>
         </div>
       </div>
+
+      <!-- 02 Broker Tools -->
       <div class="surf-card">
-        <div class="surf-head">
-          <span class="surf-label">02</span>
-          <span class="surf-tag surf-tag-freemium">Free / Paid</span>
+        <div class="surf-icon-block surf-icon-02">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--black)" stroke-width="1.4">
+            <!-- Listing submission: card + upload arrow -->
+            <rect x="8" y="18" width="22" height="18"/>
+            <rect x="14" y="12" width="22" height="18"/>
+            <line x1="19" y1="8"  x2="19" y2="18"/>
+            <polyline points="14,13 19,8 24,13"/>
+          </svg>
         </div>
-        <h3 class="surf-title">Broker Tools</h3>
-        <div class="surf-body">
-          <div class="surf-row">
-            <span class="surf-key">Audience</span>
-            <span class="surf-val">Licensed brokers and agents active in covered markets</span>
+        <div class="surf-content">
+          <div class="surf-eyebrow">
+            <span class="surf-num">02</span>
+            <span class="surf-tag surf-tag-freemium">Free / Paid</span>
           </div>
-          <div class="surf-row">
-            <span class="surf-key">Offer</span>
-            <span class="surf-val">Listing submission, AI-assisted validation, leads, distribution, performance benchmark</span>
-          </div>
-          <div class="surf-row">
-            <span class="surf-key">Role</span>
-            <span class="surf-val">Data acquisition. Brokers get international reach. AREI gets cleaner market data.</span>
+          <h3 class="surf-name">Broker Tools</h3>
+          <p class="surf-tagline">Submission, validation, and performance tools for brokers active in covered markets.</p>
+          <div class="surf-facts">
+            <div class="surf-fact">
+              <span class="surf-fact-key">For</span>
+              <span class="surf-fact-val">Licensed brokers and agents</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Includes</span>
+              <span class="surf-fact-val">Listing submission, AI validation, leads, benchmark</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Role</span>
+              <span class="surf-fact-val">Data acquisition. Brokers get international reach.</span>
+            </div>
           </div>
         </div>
       </div>
-      <div class="surf-card surf-card-paid">
-        <div class="surf-head">
-          <span class="surf-label">03</span>
-          <span class="surf-tag surf-tag-paid">Paid</span>
+
+      <!-- 03 Intelligence Layer -->
+      <div class="surf-card">
+        <div class="surf-icon-block surf-icon-03">
+          <svg width="44" height="44" viewBox="0 0 44 44" stroke="var(--black)" stroke-width="1.4">
+            <!-- Trend chart: axes + rising line + terminal dot -->
+            <line x1="8" y1="36" x2="38" y2="36"/>
+            <line x1="8" y1="8"  x2="8"  y2="36"/>
+            <polyline points="10,30 17,22 24,25 34,11"/>
+            <circle cx="34" cy="11" r="2.5" fill="var(--black)" stroke="none"/>
+          </svg>
         </div>
-        <h3 class="surf-title">Professional &amp; Institutional Intelligence</h3>
-        <div class="surf-body">
-          <div class="surf-row">
-            <span class="surf-key">Audience</span>
-            <span class="surf-val">Asset managers, developers, analysts, institutional investors</span>
+        <div class="surf-content">
+          <div class="surf-eyebrow">
+            <span class="surf-num">03</span>
+            <span class="surf-tag surf-tag-paid">Paid</span>
           </div>
-          <div class="surf-row">
-            <span class="surf-key">Offer</span>
-            <span class="surf-val">Market screener, confidence scoring, comparable listings, briefings, API, dashboards, historical series</span>
-          </div>
-          <div class="surf-row">
-            <span class="surf-key">Role</span>
-            <span class="surf-val">Revenue. Intelligence layer for decision-grade analysis.</span>
+          <h3 class="surf-name">Intelligence Layer</h3>
+          <p class="surf-tagline">Decision-grade analysis for professional and institutional use. The revenue surface.</p>
+          <div class="surf-facts">
+            <div class="surf-fact">
+              <span class="surf-fact-key">For</span>
+              <span class="surf-fact-val">Asset managers, developers, analysts</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Includes</span>
+              <span class="surf-fact-val">Screener, confidence scoring, briefings, API, dashboards</span>
+            </div>
+            <div class="surf-fact">
+              <span class="surf-fact-key">Role</span>
+              <span class="surf-fact-val">Revenue. Intelligence for decision-grade analysis.</span>
+            </div>
           </div>
         </div>
       </div>
@@ -1296,9 +1380,8 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
     <div class="founder rv">
       <span class="ey">From the founder</span>
       <blockquote class="founder-quote">
-        <p>&ldquo;I came to this market as an investor. Cape Verde was where I started, and even after repeated trips, the market remained difficult to read.</p>
-        <p>The opportunity was visible. The structure was not. Inventory was spread across brokers and local sites, with no consistent data layer to compare opportunities or evaluate them with confidence.</p>
-        <p>That is the gap Africa Real Estate Index exists to close.&rdquo;</p>
+        <p>&ldquo;Africa&rsquo;s real estate market isn&rsquo;t lacking value &mdash; it&rsquo;s lacking structure. The data exists, but no one has normalized it, scored it, or published it with a methodology you can cite.</p>
+        <p>AREI is the infrastructure layer that turns fragmented listings into investable market signal.&rdquo;</p>
       </blockquote>
       <div class="founder-byline">
         <div class="founder-photo">
@@ -1377,7 +1460,6 @@ footer{padding:60px 0 40px;border-top:1px solid var(--rule)}
     </div>
     <div class="footer-bottom">
       <span class="footer-copy">&copy; 2026 Africa Real Estate Index</span>
-      <span class="footer-idx">001</span>
     </div>
   </div>
 </footer>
@@ -1430,6 +1512,11 @@ function escapeHtml(value) {
 function capitalize(value) {
   if (!value) return 'Listing';
   return value.charAt(0).toUpperCase() + value.slice(1);
+}
+
+function toTitleCase(str) {
+  if (!str) return '';
+  return str.toLowerCase().replace(/\b\w/g, c => c.toUpperCase());
 }
 
 function formatPrice(price, currency) {
@@ -1509,7 +1596,7 @@ function renderLiveListings(rows) {
 
   const cardHtml = selected.map((row) => {
     const image = escapeHtml(row.image_urls[0]);
-    const title = escapeHtml(row.title);
+    const title = escapeHtml(toTitleCase(row.title));
     const location = escapeHtml([row.city, row.island].filter(Boolean).join(', '));
     const meta = escapeHtml(formatMeta(row));
     const tag = escapeHtml(capitalize(row.property_type));

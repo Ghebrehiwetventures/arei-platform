@@ -278,11 +278,7 @@ export default function BlogPost() {
         </section>
       )}
 
-      <NewsletterCta
-        overline="Monthly update"
-        heading={<>One email a month. Everything that changed on the index.</>}
-        description="New listings, median-price shifts, island activity, sources added. No promotional mail, no listings to feature, no spam — just the month in Cape Verde property."
-      />
+      <NewsletterCta />
     </div>
   );
 }

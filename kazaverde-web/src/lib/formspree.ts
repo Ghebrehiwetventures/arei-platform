@@ -14,7 +14,7 @@ export async function notifyFormspree(payload: {
       },
       body: JSON.stringify({
         ...payload,
-        _subject: `KazaVerde: ${payload.source} — ${payload.email}`,
+        _subject: `AREI: ${payload.source} — ${payload.email}`,
       }),
     });
     return { ok: res.ok };

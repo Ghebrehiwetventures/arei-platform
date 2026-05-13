@@ -57,17 +57,17 @@ const HOMEPAGE_SCHEMA = {
   "@graph": [
     {
       "@type": "Organization",
-      "@id": "https://kazaverde.com/#organization",
+      "@id": "https://capeverderealestateindex.com/#organization",
       "name": "Cape Verde Real Estate Index",
-      "url": "https://kazaverde.com",
+      "url": "https://capeverderealestateindex.com",
       "description": "Cape Verde's independent real estate index, published by AREI.",
     },
     {
       "@type": "WebSite",
-      "@id": "https://kazaverde.com/#website",
+      "@id": "https://capeverderealestateindex.com/#website",
       "name": "Cape Verde Real Estate Index",
-      "url": "https://kazaverde.com",
-      "publisher": { "@id": "https://kazaverde.com/#organization" },
+      "url": "https://capeverderealestateindex.com",
+      "publisher": { "@id": "https://capeverderealestateindex.com/#organization" },
     },
   ],
 };

@@ -27,7 +27,7 @@ import "./Detail.css";
 
 const SITE_URL =
   (typeof import.meta !== "undefined" && (import.meta as { env?: { VITE_SITE_URL?: string } }).env?.VITE_SITE_URL) ||
-  (typeof window !== "undefined" ? window.location.origin : "https://kazaverde.com");
+  (typeof window !== "undefined" ? window.location.origin : "https://capeverderealestateindex.com");
 
 /** Collapse WP size variants (-1024x768.jpg) into one image per base filename, keeping the largest. */
 function dedupeWpImages(urls: string[]): string[] {
