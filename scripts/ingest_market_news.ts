@@ -211,9 +211,19 @@ async function main() {
   }
 
   const activeSources = MARKET_NEWS_SOURCES.filter((s) => s.active !== false);
+  const enabledSources = activeSources.filter((s) => s.enabled !== false);
+  const disabledSources = activeSources.filter((s) => s.enabled === false);
+
+  if (disabledSources.length > 0) {
+    log(`\nSkipping ${disabledSources.length} disabled source(s):`);
+    for (const s of disabledSources) {
+      log(`  [disabled] ${s.name} [${s.id}]`);
+    }
+  }
+
   const results: SourceResult[] = [];
 
-  for (const source of activeSources) {
+  for (const source of enabledSources) {
     log(`\nSource: ${source.name} [${source.id}]`);
     log(`  URL: ${source.url.slice(0, 90)}…`);
 
@@ -241,7 +251,8 @@ async function main() {
   const totalErrors   = results.filter((r) => r.error !== null).length;
 
   banner("Summary");
-  log(`Sources checked:      ${activeSources.length}`);
+  log(`Sources enabled:      ${enabledSources.length}`);
+  log(`Sources disabled:     ${disabledSources.length}`);
   log(`Items seen:           ${totalFetched}`);
   log(`Candidates inserted:  ${totalInserted}${DRY_RUN ? " (dry-run, not written)" : ""}`);
   log(`Skipped (dup/no URL): ${totalDup}`);
@@ -249,7 +260,7 @@ async function main() {
   log(`Source errors:        ${totalErrors}`);
   if (DRY_RUN) log("\n⚠  DRY RUN — pass --commit to write candidates to the database.");
 
-  if (totalErrors === activeSources.length && activeSources.length > 0) {
+  if (totalErrors === enabledSources.length && enabledSources.length > 0) {
     log("\nAll sources failed.");
     process.exit(2);
   }

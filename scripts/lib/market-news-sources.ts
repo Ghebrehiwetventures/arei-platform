@@ -26,6 +26,8 @@ export interface MarketNewsSource {
   countryCode: string;
   /** Set to false to skip without removing from config */
   active?: boolean;
+  /** Set to false to disable this source without removing it from config */
+  enabled?: boolean;
 }
 
 export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
@@ -38,6 +40,7 @@ export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
     defaultCategory: "Economy",
     language: "en",
     countryCode: "CV",
+    enabled: false,
   },
   {
     id: "gnews-cv-tourism",
@@ -47,6 +50,7 @@ export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
     defaultCategory: "Tourism",
     language: "en",
     countryCode: "CV",
+    enabled: false,
   },
   {
     id: "gnews-cv-aviation",
@@ -74,6 +78,7 @@ export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
     defaultCategory: "Policy / regulation",
     language: "en",
     countryCode: "CV",
+    enabled: false,
   },
   {
     id: "gnews-cv-infrastructure",
@@ -83,6 +88,7 @@ export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
     defaultCategory: "Infrastructure",
     language: "en",
     countryCode: "CV",
+    enabled: false,
   },
 
   // ── Google News RSS — Portuguese queries ──────────────────────────────────
@@ -94,6 +100,7 @@ export const MARKET_NEWS_SOURCES: MarketNewsSource[] = [
     defaultCategory: "Economy",
     language: "pt",
     countryCode: "CV",
+    enabled: false,
   },
 
   // ── Direct publisher RSS feeds ────────────────────────────────────────────
