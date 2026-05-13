@@ -130,3 +130,270 @@ export interface ContentDraft {
   status: ContentDraftStatus;
   statusNote?: string;
 }
+
+// ============================================================
+// AGENCY CONSOLE TYPES
+// Two-layer model: agencies (broker-safe) + agency_relationships (internal only)
+// See docs/03-product/agency-console-v0.md
+// ============================================================
+
+export type AgencyClaimedStatus = "unclaimed" | "invited" | "claimed" | "verified";
+export type AgencyDataPartnerStatus = "none" | "interested" | "active" | "paused";
+export type AgencyRelationshipStatus =
+  | "not_contacted"
+  | "contacted"
+  | "replied"
+  | "meeting_booked"
+  | "onboarded"
+  | "rejected"
+  | "dormant";
+export type AgencyPriority = "high" | "medium" | "low";
+export type AgencyLeadQuality = "unknown" | "strong" | "average" | "weak";
+
+/** Broker-safe agency profile. Safe to eventually expose to agency users. */
+export interface Agency {
+  id: string;
+  market_code: string;
+  agency_name: string;
+  public_display_name: string | null;
+  contact_person: string | null;
+  website: string | null;
+  email: string | null;
+  phone: string | null;
+  whatsapp: string | null;
+  logo_url: string | null;
+  description: string | null;
+  source_ids: string[];
+  claimed_status: AgencyClaimedStatus;
+  data_partner_status: AgencyDataPartnerStatus;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Internal relationship CRM record. NEVER expose to broker-facing surfaces. */
+export interface AgencyRelationship {
+  id: string;
+  agency_id: string;
+  relationship_status: AgencyRelationshipStatus;
+  priority: AgencyPriority;
+  lead_quality: AgencyLeadQuality;
+  relationship_owner: string | null;
+  last_contacted_at: string | null;
+  next_follow_up_at: string | null;
+  internal_notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Joined view used in the Agency Console table — agency + its relationship record. */
+export interface AgencyWithRelationship extends Agency {
+  relationship: AgencyRelationship | null;
+}
+
+// ============================================================
+// AGENCY DATA CONSOLE TYPES
+// Broker contribution / data acquisition layer.
+// See docs/03-product/agency-data-console-v0.md
+// ============================================================
+
+export type AgencyListingRelationshipType = "source_owner" | "claimed" | "submitted" | "verified";
+
+export interface AgencyListingLink {
+  id: string;
+  agency_id: string;
+  listing_id: string | null;
+  source_id: string | null;
+  external_listing_id: string | null;
+  relationship_type: AgencyListingRelationshipType;
+  created_at: string;
+  updated_at: string;
+}
+
+export type SubmissionType =
+  | "new_listing"
+  | "update_existing"
+  | "availability_update"
+  | "duplicate_report"
+  | "removal_request";
+
+export type SubmissionStatus =
+  | "draft"
+  | "submitted"
+  | "under_review"
+  | "approved"
+  | "rejected"
+  | "needs_more_info";
+
+/** Payload shape for update_existing and availability_update submissions. */
+export interface SubmissionPayload {
+  title?: string;
+  price?: number | null;
+  currency?: string;
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  property_size_sqm?: number | null;
+  land_area_sqm?: number | null;
+  island?: string | null;
+  city?: string | null;
+  description?: string | null;
+  property_type?: string | null;
+  availability_status?: AvailabilityStatus;
+  image_urls?: string[];
+  /** For new_listing: full source URL */
+  source_url?: string | null;
+  /** For duplicate_report: the canonical ID of the original */
+  duplicate_of_id?: string | null;
+  /** Free-text note from the agency explaining the change */
+  agency_note?: string | null;
+}
+
+export interface AgencyListingSubmission {
+  id: string;
+  agency_id: string;
+  listing_id: string | null;
+  submission_type: SubmissionType;
+  status: SubmissionStatus;
+  payload: SubmissionPayload;
+  reviewer_notes: string | null;
+  submitted_at: string | null;
+  reviewed_at: string | null;
+  reviewed_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export type IssueType =
+  | "missing_price"
+  | "missing_sqm"
+  | "missing_bedrooms"
+  | "missing_bathrooms"
+  | "missing_location"
+  | "missing_photos"
+  | "weak_description"
+  | "stale_listing"
+  | "possible_duplicate"
+  | "broken_image"
+  | "suspicious_price";
+
+export type IssueSeverity = "low" | "medium" | "high";
+export type IssueStatus = "open" | "fixed" | "ignored" | "submitted_for_review";
+
+export interface ListingDataIssue {
+  id: string;
+  listing_id: string;
+  agency_id: string | null;
+  source_id: string | null;
+  issue_type: IssueType;
+  severity: IssueSeverity;
+  status: IssueStatus;
+  detected_at: string;
+  resolved_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface AgencyDataQualitySnapshot {
+  id: string;
+  agency_id: string;
+  market_code: string;
+  snapshot_date: string;
+  listing_count: number;
+  missing_price_count: number;
+  missing_sqm_count: number;
+  missing_photo_count: number;
+  missing_beds_count: number;
+  missing_baths_count: number;
+  stale_listing_count: number;
+  open_issues_count: number;
+  open_submissions_count: number;
+  average_quality_score: number;
+  created_at: string;
+}
+
+/** Listing availability status used in agency submissions and UI. */
+export type AvailabilityStatus =
+  | "available"
+  | "sold"
+  | "reserved"
+  | "rented"
+  | "duplicate"
+  | "removed"
+  | "unknown";
+
+/** A raw listing row as returned from Supabase, with quality computed client-side. */
+export interface ListingQualityRow {
+  id: string;
+  title: string | null;
+  price: number | null;
+  currency: string;
+  source_id: string;
+  source_url: string | null;
+  island: string | null;
+  city: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  property_size_sqm: number | null;
+  image_urls: string[];
+  description: string | null;
+  property_type: string | null;
+  approved: boolean;
+  last_seen_at: string | null;
+  updated_at: string | null;
+  /** Computed client-side via computeListingQualityScore() */
+  quality_score: number;
+  /** Detected missing/weak fields */
+  issues: IssueType[];
+  /** Pending submission for this listing (if any) */
+  pending_submission: AgencyListingSubmission | null;
+}
+
+// ============================================================
+// BROKER PILOT WORKSPACE TYPES
+// See docs/03-product/broker-pilot-workspace-v0.md
+// ============================================================
+
+export type PilotPublishStatus = "draft" | "ready_for_review" | "published" | "rejected";
+
+/**
+ * A listing submitted directly by an agency through the Broker Pilot Workspace.
+ * Not a correction to an existing pipeline listing — a net-new listing record.
+ *
+ * reviewer_notes, reviewed_by, reviewed_at are admin-only fields.
+ * NEVER render them in any broker-facing view or component.
+ */
+export interface PilotListing {
+  id: string;
+  agency_id: string;
+  market_code: string;
+  title: string;
+  price: number | null;
+  currency: string;
+  property_type: string | null;
+  island: string | null;
+  city: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  property_size_sqm: number | null;
+  description: string | null;
+  image_urls: string[];
+  source_url: string | null;
+  contact_name: string | null;
+  contact_email: string | null;
+  contact_phone: string | null;
+  publish_status: PilotPublishStatus;
+  /** Admin-only. Never show in broker-facing surfaces. */
+  reviewer_notes: string | null;
+  reviewed_by: string | null;
+  reviewed_at: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Quality check result for a pilot listing — one entry per check. */
+export interface PilotQualityCheck {
+  id: string;
+  label: string;
+  passed: boolean;
+  severity: "required" | "recommended" | "optional";
+  detail?: string;
+}
