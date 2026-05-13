@@ -807,7 +807,7 @@ export function AgencyDataConsoleView() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Agency Data Console
+            Agency Listing Quality
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
             Review listing quality, identify missing data, and manage agency data contributions.
@@ -820,7 +820,7 @@ export function AgencyDataConsoleView() {
         <div className="surface-1 rounded border border-border border-dashed p-10 text-center">
           <h3 className="text-base font-semibold font-mono text-foreground mb-1">No agencies yet</h3>
           <p className="text-sm text-foreground-muted">
-            Add agencies in the Agency Console tab first, then link source IDs to see listing quality here.
+            Add agencies in Agency Relationships first, then link source IDs to see listing quality here.
           </p>
         </div>
       ) : (
@@ -841,7 +841,7 @@ export function AgencyDataConsoleView() {
             {selectedAgency && (
               <div className="text-[11px] text-foreground-subtle font-mono mt-4">
                 {selectedAgency.source_ids.length === 0 ? (
-                  <span className="text-amber">No sources linked — add source IDs in Agency Console</span>
+                  <span className="text-amber">No sources linked — add source IDs in Agency Relationships</span>
                 ) : (
                   <>Sources: {selectedAgency.source_ids.map((s) => (
                     <span key={s} className="bg-surface-3 px-1.5 py-0.5 rounded mr-1">{s}</span>
@@ -951,7 +951,7 @@ export function AgencyDataConsoleView() {
                 <div className="surface-1 rounded border border-border border-dashed p-10 text-center">
                   <h3 className="text-base font-semibold font-mono text-foreground mb-1">No sources linked</h3>
                   <p className="text-sm text-foreground-muted">
-                    Link source IDs to this agency in the Agency Console to see listing quality here.
+                    Link source IDs to this agency in Agency Relationships to see listing quality here.
                   </p>
                 </div>
               )}

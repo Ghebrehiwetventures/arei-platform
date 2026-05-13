@@ -976,7 +976,7 @@ export function BrokerPilotView() {
         <div className="surface-1 rounded border border-border border-dashed p-12 text-center">
           <h3 className="text-base font-semibold font-mono text-foreground mb-1">No agencies yet</h3>
           <p className="text-sm text-foreground-muted max-w-sm mx-auto">
-            Create an agency in the Agency Console tab first, then return here to add pilot listings.
+            Create an agency in Agency Relationships first, then return here to add pilot listings.
           </p>
         </div>
       ) : (

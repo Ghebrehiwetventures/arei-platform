@@ -3352,21 +3352,24 @@ function MarketNewsView() {
 type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "notifications";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
-  { key: "dashboard",     label: "Dashboard"            },
-  { key: "listings",      label: "Listings"             },
-  { key: "sources",       label: "Sources"              },
-  { key: "agents",        label: "Agents"               },
-  { key: "chatlab",       label: "Chat Lab"             },
-  { key: "agencies",      label: "Agency Console"       },
-  { key: "agency-data",   label: "Agency Data Console"  },
-  { key: "market-news",   label: "Market News"           },
-  { key: "notifications", label: "Notifications"         },
+  { key: "dashboard",     label: "Dashboard"     },
+  { key: "listings",      label: "Listings"      },
+  { key: "sources",       label: "Sources"       },
+  { key: "agents",        label: "Agents"        },
+  { key: "market-news",   label: "Market News"   },
+  { key: "notifications", label: "Notifications" },
+];
+
+const AGENCIES_NAV_ITEMS: { key: Tab; label: string }[] = [
+  { key: "agencies",    label: "Relationships"    },
+  { key: "agency-data", label: "Listing Quality"  },
 ];
 
 // BrokerPilotView is a legacy internal preview. New broker product work
 // should happen in arei-broker — the real broker-facing product.
 const LABS_NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "broker-pilot", label: "Legacy Broker Preview" },
+  { key: "chatlab",      label: "Chat Lab"              },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
@@ -3374,6 +3377,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
   const [dark, toggleTheme] = useTheme();
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
+  const [agenciesOpen, setAgenciesOpen] = useState(false);
   const [labsOpen, setLabsOpen] = useState(false);
 
   // Close sidebar when resizing up to desktop
@@ -3469,6 +3473,38 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
               </button>
             </div>
           ))}
+
+          {/* ── Agencies ─────────────────────────── */}
+          <div className="mt-3 border-t border-border pt-2">
+            <button
+              onClick={() => setAgenciesOpen((o) => !o)}
+              className="w-full flex items-center justify-between pl-4 pr-3 py-1.5 text-[10px] font-mono font-medium uppercase tracking-widest text-foreground-subtle hover:text-foreground-muted transition-colors duration-150"
+            >
+              Agencies
+              <span className="text-[9px] leading-none">{agenciesOpen ? "▴" : "▾"}</span>
+            </button>
+            {agenciesOpen && AGENCIES_NAV_ITEMS.map(({ key, label }) => (
+              <div key={key} className="relative">
+                {tab === key && (
+                  <span
+                    className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent pointer-events-none"
+                    aria-hidden="true"
+                  />
+                )}
+                <button
+                  onClick={() => selectTab(key)}
+                  className={
+                    "w-full flex items-center pl-6 pr-3 py-1.5 text-[11px] font-mono transition-colors duration-150 " +
+                    (tab === key
+                      ? "text-foreground-muted"
+                      : "text-foreground-subtle hover:text-foreground-muted hover:bg-surface-2")
+                  }
+                >
+                  {label}
+                </button>
+              </div>
+            ))}
+          </div>
 
           {/* ── Labs (internal / legacy previews) ─── */}
           <div className="mt-3 border-t border-border pt-2">
