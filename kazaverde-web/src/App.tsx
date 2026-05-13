@@ -5,6 +5,7 @@ import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
 import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
+import NewsletterPopup from "./components/NewsletterPopup";
 import GoogleAnalytics from "./components/GoogleAnalytics";
 import Landing from "./pages/Landing";
 
@@ -79,6 +80,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
+      <NewsletterPopup />
       <CookieBanner />
       <Footer />
       <GoogleAnalytics />

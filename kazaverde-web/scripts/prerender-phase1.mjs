@@ -26,12 +26,12 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/",
       ...page(
-      "AREI — Cape Verde Real Estate",
-      "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with AREI.",
+      "Cape Verde Real Estate Index",
+      "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands.",
       `
         <main>
           <section>
-            <p>AREI</p>
+            <p>Cape Verde Real Estate Index</p>
             <h1>Cape Verde real estate, aggregated in one place</h1>
             <p>
               An independent property search and data platform for Cape Verde — listings
@@ -111,7 +111,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/market",
       ...page(
-      "Market Data — AREI",
+      "Cape Verde Market Data | Cape Verde Real Estate Index",
       "Median prices by island, inventory trends, and Cape Verde property market insights.",
       `
         <main>
@@ -148,7 +148,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/market-news",
       ...page(
-      "Cape Verde Market News — AREI",
+      "Cape Verde Market News | Cape Verde Real Estate Index",
       "Curated economic, tourism, policy and investment news relevant to Cape Verde's property market.",
       `
         <main>
@@ -179,7 +179,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           <section>
             <h2>Copyright and source policy</h2>
             <p>
-              Market News is a curated link feed. AREI does not republish full
+              Market News is a curated link feed. Cape Verde Real Estate Index does not republish full
               articles, provide investment advice, or replace the original
               publisher. Follow each outbound link for the full report.
             </p>
@@ -210,7 +210,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/blog",
       ...page(
-      "Blog — AREI",
+      "Cape Verde Real Estate Blog | Cape Verde Real Estate Index",
       "Cape Verde real estate insights, guides, and market analysis. Property buying, islands, legal requirements, and investment tips.",
       `
         <main>
@@ -264,15 +264,15 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/about",
       ...page(
-      "About — AREI",
-      "How AREI works. Data sources, update cadence, deduplication, and transparency.",
+      "About | Cape Verde Real Estate Index",
+      "How Cape Verde Real Estate Index works. Data sources, update cadence, deduplication, and transparency.",
       `
         <main>
           <section>
-            <p>About AREI</p>
+            <p>About Cape Verde Real Estate Index</p>
             <h1>How the index works</h1>
             <p>
-              AREI is a read-only property index for Cape Verde. We collect publicly accessible listing
+              Cape Verde Real Estate Index is a read-only property index for Cape Verde. We collect publicly accessible listing
               data from tracked source pages, normalize it into a consistent format, and link every listing
               back to its original source.
             </p>
@@ -294,8 +294,8 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/privacy",
       ...page(
-      "Privacy Policy — AREI",
-      "How AREI handles your data, what we collect, and your rights.",
+      "Privacy Policy | Cape Verde Real Estate Index",
+      "How Cape Verde Real Estate Index handles your data, what we collect, and your rights.",
       `
         <main>
           <section>
@@ -317,7 +317,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
             <h2>What we do not collect</h2>
             <p>
               We do not collect payment information, advertising tracker data, or unnecessary personal data.
-              Saved properties stay in local browser storage and are not transmitted to AREI servers.
+              Saved properties stay in local browser storage and are not transmitted to our servers.
             </p>
           </section>
         </main>
@@ -327,7 +327,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/listings",
       ...page(
-      "Cape Verde Properties for Sale — AREI",
+      "Cape Verde Properties for Sale | Cape Verde Real Estate Index",
       "Browse tracked property listings across Cape Verde. Source-linked homes, apartments, villas, and land for sale on Sal, Boa Vista, Santiago, and more.",
       `
         <main>
@@ -360,7 +360,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/listings/sal",
       ...page(
-      "Property for Sale in Sal, Cape Verde | AREI",
+      "Property for Sale in Sal, Cape Verde | Cape Verde Real Estate Index",
       "Browse property listings for sale in Sal, Cape Verde. Apartments, villas, and resort properties in Santa Maria and across the island.",
       (() => {
         const salListings = listingRoutes.filter(
@@ -407,7 +407,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/listings/boa-vista",
       ...page(
-      "Property for Sale in Boa Vista, Cape Verde | AREI",
+      "Property for Sale in Boa Vista, Cape Verde | Cape Verde Real Estate Index",
       "Browse property listings for sale in Boa Vista, Cape Verde. Beach villas, resort apartments, and coastal properties in Sal Rei and across the island.",
       (() => {
         const boaVistaListings = listingRoutes.filter(
@@ -454,8 +454,8 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/cookie-policy",
       ...page(
-      "Cookie Policy — AREI",
-      "What cookies and local storage AREI uses and why.",
+      "Cookie Policy | Cape Verde Real Estate Index",
+      "What cookies and local storage Cape Verde Real Estate Index uses and why.",
       `
         <main>
           <section>
@@ -465,7 +465,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           </section>
 
           <section>
-            <h2>What AREI uses</h2>
+            <h2>What we use</h2>
             <ul>
               <li>Cookieless Vercel Web Analytics for anonymous traffic measurement</li>
               <li>Local browser storage for saved properties</li>
@@ -474,7 +474,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           </section>
 
           <section>
-            <h2>What AREI does not use</h2>
+            <h2>What we do not use</h2>
             <p>
               No advertising cookies, third-party tracking pixels, social media tracking cookies,
               or cross-site behavioral tracking are used on the public site.
@@ -594,14 +594,15 @@ async function writeSitemap(routes) {
 function renderRouteHtml(baseHtml, route) {
   const canonicalUrl = new URL(route.route, `${siteUrl}/`).toString();
   const ogType = route.ogType ?? "website";
-  const documentTitle = route.title.includes("AREI") ? route.title : `${route.title} — AREI`;
+  const SITE_NAME = "Cape Verde Real Estate Index";
+  const documentTitle = route.title.includes(SITE_NAME) ? route.title : `${route.title} | ${SITE_NAME}`;
   const headExtras = [
     `<link rel="canonical" href="${canonicalUrl}" />`,
     `<meta property="og:title" content="${escapeHtml(documentTitle)}" />`,
     `<meta property="og:description" content="${escapeHtml(route.description)}" />`,
     `<meta property="og:type" content="${escapeHtml(ogType)}" />`,
     `<meta property="og:url" content="${canonicalUrl}" />`,
-    `<meta property="og:site_name" content="AREI" />`,
+    `<meta property="og:site_name" content="Cape Verde Real Estate Index" />`,
     `<meta property="og:image" content="${escapeHtml(route.image ?? ogImage)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(documentTitle)}" />`,
@@ -640,7 +641,7 @@ function renderRouteHtml(baseHtml, route) {
 function wrapPrerenderMarkup(body, description) {
   return `      <div class="prerender-shell" aria-label="Prerendered page snapshot">
         <header>
-          <a href="/">AREI</a>
+          <a href="/">Cape Verde Real Estate Index</a>
           <p>${escapeHtml(description)}</p>
         </header>
 ${indent(body.trim(), 4)}
@@ -813,9 +814,9 @@ function buildListingSeoDescription(detail) {
   }
 
   if (detail.property_type) {
-    parts.push(`Source-linked ${String(detail.property_type).toLowerCase()} listing on AREI.`);
+    parts.push(`Source-linked ${String(detail.property_type).toLowerCase()} listing on Cape Verde Real Estate Index.`);
   } else {
-    parts.push("Source-linked property listing on AREI.");
+    parts.push("Source-linked property listing on Cape Verde Real Estate Index.");
   }
 
   return truncateSeoText(parts.join(" "));
@@ -921,7 +922,7 @@ function renderListingDetailBody(detail) {
           <a href="/listings">All Cape Verde listings</a> ·
           <a href="/listings?island=${encodeURIComponent(detail.island)}">${escapeHtml(detail.island)} listings</a> ·
           <a href="/market">Market data</a> ·
-          <a href="/about">How AREI works</a>
+          <a href="/about">How Cape Verde Real Estate Index works</a>
         </p>
         ${firstImage ? `<p><img src="${escapeHtml(firstImage)}" alt="${escapeHtml(buildListingSeoTitle(detail))}" loading="eager" /></p>` : ""}
         ${specs.length > 0 ? `<ul>\n${specs.map((spec) => `          <li><strong>${escapeHtml(spec.label)}:</strong> ${escapeHtml(spec.value)}</li>`).join("\n")}\n        </ul>` : ""}

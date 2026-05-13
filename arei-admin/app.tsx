@@ -93,6 +93,9 @@ import { supabaseAuth } from "./supabase";
 import { PropertyChatLabView } from "./PropertyChatLab";
 import { SourceHealthReport, buildReportHtml, loadSnapshots, saveSnapshot, summarize, SourceSnapshot } from "./sourceHealthReport";
 import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, STATUS_LABEL } from "./marketContext";
+import { AgencyConsoleView } from "./AgencyConsoleView";
+import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
+import { BrokerPilotView } from "./BrokerPilotView";
 
 // ============================================
 // D · LAYERS MARK — AREI brand mark (SVG)
@@ -3136,15 +3139,18 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "market-news";
+type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
-  { key: "dashboard",   label: "Dashboard"   },
-  { key: "listings",    label: "Listings"    },
-  { key: "sources",     label: "Sources"     },
-  { key: "agents",      label: "Agents"      },
-  { key: "chatlab",     label: "Chat Lab"    },
-  { key: "market-news", label: "Market News" },
+  { key: "dashboard",    label: "Dashboard"            },
+  { key: "listings",     label: "Listings"             },
+  { key: "sources",      label: "Sources"              },
+  { key: "agents",       label: "Agents"               },
+  { key: "chatlab",      label: "Chat Lab"             },
+  { key: "agencies",     label: "Agency Console"       },
+  { key: "agency-data",  label: "Agency Data Console"  },
+  { key: "broker-pilot", label: "Broker Pilot Preview"  },
+  { key: "market-news",  label: "Market News"           },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
@@ -3277,6 +3283,9 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "sources" && <SourcesView />}
             {tab === "agents" && <AgentsApprovalsView />}
             {tab === "chatlab" && <PropertyChatLabView />}
+            {tab === "agencies" && <AgencyConsoleView />}
+            {tab === "agency-data" && <AgencyDataConsoleView />}
+            {tab === "broker-pilot" && <BrokerPilotView />}
             {tab === "market-news" && <MarketNewsView />}
           </MarketProvider>
         </div>

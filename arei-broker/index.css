@@ -1,0 +1,190 @@
+@import "tailwindcss";
+
+/* ══════════════════════════════════════════════════════════
+   AREI BROKER — Theme tokens
+   ──────────────────────────────────────────────────────────
+   Neutrals, typography, surfaces, and semantic colors mirror
+   the AREI core. Sage is the primary accent for broker surfaces.
+   Amber is used sparingly — only for "for_review" status badge.
+
+   Cross-product visual rules:
+     docs/04-platform/visual-identity.md
+   ══════════════════════════════════════════════════════════ */
+
+/* ── Theme — AREI brand ────────────────────────────────────────────── */
+@theme {
+  --font-sans: "IBM Plex Sans", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-mono: "IBM Plex Mono", ui-monospace, "Cascadia Code", monospace;
+
+  /* Surface depth system — off-white / paper */
+  --color-background: #f7f6f2;
+  --color-surface-1: #ffffff;
+  --color-surface-2: #f2f1ed;
+  --color-surface-3: #eae9e4;
+
+  --color-foreground: #111110;
+  --color-foreground-muted: #6b7280;
+  --color-foreground-subtle: #9ca3af;
+
+  --color-primary: #111110;
+  --color-primary-foreground: #ffffff;
+
+  /* Tailwind compat */
+  --color-muted: #f2f1ed;
+  --color-muted-foreground: #6b7280;
+
+  --color-border: #dddbd5;
+  --color-border-strong: #c8c6bf;
+
+  /* Accent — AREI sage (canonical: #8ecfbf) */
+  --color-accent: #8ecfbf;
+  --color-accent-foreground: #0d1f1c;
+  --color-accent-muted: rgba(142, 207, 191, 0.15);
+
+  /* Deep green — structural headings, active states */
+  --color-deep-green: #2d4a42;
+  --color-deep-green-foreground: #ffffff;
+  --color-deep-green-muted: rgba(45, 74, 66, 0.12);
+
+  /* Semantic — severity only */
+  --color-green: #2e7d52;
+  --color-green-muted: rgba(46, 125, 82, 0.09);
+  /* Amber — use only for "for_review" status badge */
+  --color-amber: #92600a;
+  --color-amber-muted: rgba(146, 96, 10, 0.09);
+  --color-red: #b91c1c;
+  --color-red-muted: rgba(185, 28, 28, 0.07);
+
+  /* Sage — brand accent tone (same as accent) */
+  --color-sage: #8ecfbf;
+  --color-sage-muted: rgba(142, 207, 191, 0.15);
+
+  /* Pilot banner — subtle sage-tinted surface */
+  --color-pilot-banner: #f0faf7;
+}
+
+/* ── Dark mode overrides ─────────────────────────────────────────── */
+.dark {
+  --color-background: #0d0d0b;
+  --color-surface-1: #161614;
+  --color-surface-2: #1e1e1b;
+  --color-surface-3: #272724;
+
+  --color-foreground: #edecea;
+  --color-foreground-muted: #9ca3af;
+  --color-foreground-subtle: #6b7280;
+
+  --color-primary: #edecea;
+  --color-primary-foreground: #0d0d0b;
+
+  --color-muted: #1e1e1b;
+  --color-muted-foreground: #9ca3af;
+
+  --color-border: #2e2e2b;
+  --color-border-strong: #3e3e3a;
+
+  --color-accent: #6ebfaf;
+  --color-accent-foreground: #0d1f1c;
+  --color-accent-muted: rgba(110, 191, 175, 0.18);
+
+  --color-deep-green: #4a7a6e;
+  --color-deep-green-foreground: #ffffff;
+  --color-deep-green-muted: rgba(74, 122, 110, 0.18);
+
+  --color-green: #4ade80;
+  --color-green-muted: rgba(74, 222, 128, 0.12);
+  --color-amber: #fbbf24;
+  --color-amber-muted: rgba(251, 191, 36, 0.12);
+  --color-red: #f87171;
+  --color-red-muted: rgba(248, 113, 113, 0.1);
+
+  --color-sage: #6ebfaf;
+  --color-sage-muted: rgba(110, 191, 175, 0.18);
+
+  --color-pilot-banner: #0f1f1c;
+}
+
+/* ── Base ─────────────────────────────────────────────────────────── */
+html {
+  scroll-behavior: smooth;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+body {
+  font-family: var(--font-sans);
+  background: var(--color-background);
+  color: var(--color-foreground);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  font-size: 14px;
+  line-height: 1.5;
+  overflow-x: hidden;
+  max-width: 100%;
+}
+
+::selection {
+  background: var(--color-accent);
+  color: var(--color-accent-foreground);
+}
+
+/* ── Surface utilities ────────────────────────────────────────────── */
+@utility surface-1 {
+  background: var(--color-surface-1);
+}
+
+@utility surface-2 {
+  background: var(--color-surface-2);
+}
+
+@utility surface-3 {
+  background: var(--color-surface-3);
+}
+
+/* ── Layout ─────────────────────────────────────────────────────── */
+table {
+  border-collapse: collapse;
+}
+
+button {
+  cursor: pointer;
+  border-radius: 6px;
+}
+
+input, select, textarea {
+  border-radius: 6px;
+}
+
+/* ── Scrollbar (subtle) ──────────────────────────────────────────── */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border-strong);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-foreground-subtle);
+}
+
+/* ── Section card elevation — flat/hairline, no floating shadow ──── */
+.shadow-sm {
+  box-shadow: none;
+}
+
+.dark .shadow-sm {
+  box-shadow: none;
+}
+
+/* ── Focus ring ──────────────────────────────────────────────────── */
+:focus-visible {
+  outline: 1px solid var(--color-foreground-subtle);
+  outline-offset: 2px;
+}
