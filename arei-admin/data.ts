@@ -1139,7 +1139,7 @@ export async function getMarketNewsQueue(status: MarketNewsStatus): Promise<Mark
 export async function updateMarketNewsStatus(id: string, status: MarketNewsStatus): Promise<void> {
   const { error } = await supabaseAuth
     .from("market_news")
-    .update({ status, updated_at: new Date().toISOString() })
+    .update({ status })
     .eq("id", id);
 
   if (error) {
@@ -1150,7 +1150,7 @@ export async function updateMarketNewsStatus(id: string, status: MarketNewsStatu
 export async function updateMarketNewsFields(id: string, fields: MarketNewsFieldUpdate): Promise<void> {
   const { error } = await supabaseAuth
     .from("market_news")
-    .update({ ...fields, updated_at: new Date().toISOString() })
+    .update(fields)
     .eq("id", id);
 
   if (error) {
