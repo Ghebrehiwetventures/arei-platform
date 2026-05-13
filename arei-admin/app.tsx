@@ -11,9 +11,15 @@ import {
   getContentDrafts,
   generateContentDrafts,
   updateContentDraftStatus,
+  getMarketNewsQueue,
+  updateMarketNewsStatus,
+  updateMarketNewsFields,
   type ListingsFilters,
   type ListingsSortKey,
   type LatestSyncLog,
+  type MarketNewsStatus,
+  type MarketNewsRow,
+  type MarketNewsFieldUpdate,
 } from "./data";
 
 const SOURCE_STALE_DAYS = 30;
@@ -2737,7 +2743,400 @@ function MarketDetail({
 // APP (Dashboard | Listings)
 // ============================================
 
-type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab";
+// ============================================
+// MARKET NEWS VIEW — admin candidate review queue
+// ============================================
+
+const MARKET_NEWS_STATUS_TABS: { key: MarketNewsStatus; label: string }[] = [
+  { key: "candidate", label: "Candidates" },
+  { key: "published", label: "Published"  },
+  { key: "hidden",    label: "Hidden"     },
+  { key: "archived",  label: "Archived"   },
+];
+
+function MarketNewsStatusBadge({ status }: { status: MarketNewsStatus }) {
+  const classes: Record<MarketNewsStatus, string> = {
+    candidate: "bg-amber-muted text-amber",
+    published:  "bg-green-muted text-green",
+    hidden:     "bg-surface-3 text-foreground-muted",
+    archived:   "bg-surface-3 text-foreground-subtle",
+  };
+  const labels: Record<MarketNewsStatus, string> = {
+    candidate: "Candidate",
+    published:  "Published",
+    hidden:     "Hidden",
+    archived:   "Archived",
+  };
+  return (
+    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded ${classes[status]}`}>
+      {labels[status]}
+    </span>
+  );
+}
+
+function arrToText(arr: string[] | null | undefined): string {
+  return (arr ?? []).join(", ");
+}
+
+function textToArr(s: string): string[] | null {
+  const parts = s.split(",").map((p) => p.trim()).filter(Boolean);
+  return parts.length > 0 ? parts : null;
+}
+
+function MarketNewsEditPanel({
+  item,
+  onSave,
+  onClose,
+  onStatusChange,
+  saving,
+}: {
+  item: MarketNewsRow;
+  onSave: (id: string, fields: MarketNewsFieldUpdate) => Promise<void>;
+  onClose: () => void;
+  onStatusChange: (id: string, status: MarketNewsStatus) => Promise<void>;
+  saving: boolean;
+}) {
+  const [title, setTitle] = React.useState(item.title);
+  const [snippet, setSnippet] = React.useState(item.snippet);
+  const [whyItMatters, setWhyItMatters] = React.useState(item.why_it_matters ?? "");
+  const [category, setCategory] = React.useState(item.category);
+  const [affectedRegions, setAffectedRegions] = React.useState(arrToText(item.affected_regions));
+  const [signalTags, setSignalTags] = React.useState(arrToText(item.signal_tags));
+
+  const isDirty =
+    title !== item.title ||
+    snippet !== item.snippet ||
+    whyItMatters !== (item.why_it_matters ?? "") ||
+    category !== item.category ||
+    affectedRegions !== arrToText(item.affected_regions) ||
+    signalTags !== arrToText(item.signal_tags);
+
+  const handleSave = async () => {
+    await onSave(item.id, {
+      title: title.trim() || item.title,
+      snippet,
+      why_it_matters: whyItMatters.trim() || null,
+      category: category.trim() || item.category,
+      affected_regions: textToArr(affectedRegions),
+      signal_tags: textToArr(signalTags),
+    });
+  };
+
+  const pubDate = item.published_at
+    ? new Date(item.published_at).toLocaleDateString()
+    : "—";
+
+  return (
+    <div className="px-4 pb-5 pt-2 border-t border-border bg-surface-2/50 space-y-4">
+      {/* Meta */}
+      <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-foreground-subtle pt-1">
+        <span>Source: <span className="text-foreground-muted">{item.source_name}</span></span>
+        <span>Published: <span className="text-foreground-muted">{pubDate}</span></span>
+        <span>Ingest: <span className="text-foreground-muted font-mono">{item.ingestion_source ?? "—"}</span></span>
+      </div>
+
+      {/* Editable fields */}
+      <div className="space-y-3">
+        <div>
+          <label className="text-[11px] text-foreground-subtle block mb-1">Title</label>
+          <input
+            type="text"
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-foreground-subtle block mb-1">Snippet</label>
+          <textarea
+            value={snippet}
+            onChange={(e) => setSnippet(e.target.value)}
+            rows={3}
+            className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y"
+          />
+        </div>
+        <div>
+          <label className="text-[11px] text-foreground-subtle block mb-1">Why it matters <span className="text-foreground-subtle">(optional)</span></label>
+          <textarea
+            value={whyItMatters}
+            onChange={(e) => setWhyItMatters(e.target.value)}
+            rows={2}
+            placeholder="Add editorial context…"
+            className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y placeholder:text-foreground-subtle"
+          />
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Category</label>
+            <input
+              type="text"
+              value={category}
+              onChange={(e) => setCategory(e.target.value)}
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Affected regions <span className="text-foreground-subtle">(comma-sep)</span></label>
+            <input
+              type="text"
+              value={affectedRegions}
+              onChange={(e) => setAffectedRegions(e.target.value)}
+              placeholder="e.g. Sal, Santiago"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-foreground-subtle"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Signal tags <span className="text-foreground-subtle">(comma-sep)</span></label>
+            <input
+              type="text"
+              value={signalTags}
+              onChange={(e) => setSignalTags(e.target.value)}
+              placeholder="e.g. tourism, investment"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-foreground-subtle"
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* Save */}
+      {isDirty && (
+        <div>
+          <button
+            type="button"
+            onClick={handleSave}
+            disabled={saving}
+            className="px-4 py-1.5 text-xs font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {saving ? "Saving…" : "Save changes"}
+          </button>
+        </div>
+      )}
+
+      {/* Actions */}
+      <div className="flex flex-wrap gap-2 pt-2 border-t border-border">
+        {item.status !== "published" && (
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "published")}
+            disabled={saving}
+            className="px-3 py-1.5 text-xs font-medium rounded-md bg-green-muted text-green hover:bg-green hover:text-primary-foreground transition-colors disabled:opacity-50"
+          >
+            Publish
+          </button>
+        )}
+        {item.status !== "hidden" && (
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "hidden")}
+            disabled={saving}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-50"
+          >
+            Hide
+          </button>
+        )}
+        {item.status !== "archived" && (
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "archived")}
+            disabled={saving}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-50"
+          >
+            Archive
+          </button>
+        )}
+        <a
+          href={item.source_url}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+        >
+          Open source ↗
+        </a>
+        <button
+          type="button"
+          onClick={onClose}
+          className="ml-auto px-3 py-1.5 text-xs font-medium rounded text-foreground-subtle hover:text-foreground transition-colors"
+        >
+          Close
+        </button>
+      </div>
+    </div>
+  );
+}
+
+function MarketNewsView() {
+  const [statusTab, setStatusTab] = React.useState<MarketNewsStatus>("candidate");
+  const [items, setItems] = React.useState<MarketNewsRow[]>([]);
+  const [loading, setLoading] = React.useState(true);
+  const [expandedId, setExpandedId] = React.useState<string | null>(null);
+  const [saving, setSaving] = React.useState(false);
+  const [error, setError] = React.useState<string | null>(null);
+
+  const load = React.useCallback(async (status: MarketNewsStatus) => {
+    setLoading(true);
+    setExpandedId(null);
+    setError(null);
+    const rows = await getMarketNewsQueue(status);
+    setItems(rows);
+    setLoading(false);
+  }, []);
+
+  useEffect(() => {
+    load(statusTab);
+  }, [statusTab, load]);
+
+  const handleStatusChange = async (id: string, status: MarketNewsStatus) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await updateMarketNewsStatus(id, status);
+      // Remove from current list and close panel
+      setItems((prev) => prev.filter((r) => r.id !== id));
+      setExpandedId(null);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleSaveFields = async (id: string, fields: MarketNewsFieldUpdate) => {
+    setSaving(true);
+    setError(null);
+    try {
+      await updateMarketNewsFields(id, fields);
+      // Refresh item in list with saved values
+      setItems((prev) =>
+        prev.map((r) =>
+          r.id === id ? { ...r, ...fields, updated_at: new Date().toISOString() } : r
+        )
+      );
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div>
+        <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
+          Market News Queue
+        </h1>
+        <p className="text-sm text-foreground-muted mt-1">
+          Review imported market-news candidates before they appear publicly.
+        </p>
+      </div>
+
+      {/* ── Status tabs ─────────────────────────────────────────── */}
+      <div className="flex gap-1 border-b border-border">
+        {MARKET_NEWS_STATUS_TABS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setStatusTab(key)}
+            className={
+              "px-4 py-2 text-[12px] font-mono font-medium transition-colors border-b-2 -mb-px " +
+              (statusTab === key
+                ? "border-accent text-foreground"
+                : "border-transparent text-foreground-muted hover:text-foreground")
+            }
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {/* ── Error ───────────────────────────────────────────────── */}
+      {error && (
+        <div className="rounded border border-red/30 bg-red-muted px-4 py-3 text-sm text-red">
+          {error}
+        </div>
+      )}
+
+      {/* ── List ────────────────────────────────────────────────── */}
+      {loading && (
+        <p className="text-foreground-muted text-sm py-8">Loading…</p>
+      )}
+
+      {!loading && items.length === 0 && (
+        <div className="surface-1 rounded border border-border border-dashed p-14 text-center">
+          <p className="text-sm text-foreground-muted">No {statusTab} items.</p>
+        </div>
+      )}
+
+      {!loading && items.length > 0 && (
+        <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
+          {/* Table header */}
+          <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_120px_80px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
+            <span>Title</span>
+            <span>Source</span>
+            <span>Published</span>
+            <span>Category</span>
+            <span>Ingest</span>
+            <span>Status</span>
+            <span />
+          </div>
+
+          {items.map((item) => {
+            const isExpanded = expandedId === item.id;
+            const pubDate = item.published_at
+              ? new Date(item.published_at).toLocaleDateString()
+              : "—";
+
+            return (
+              <article key={item.id}>
+                {/* ── Row ── */}
+                <button
+                  type="button"
+                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                  className="w-full grid grid-cols-1 md:grid-cols-[1fr_160px_100px_120px_120px_80px_32px] gap-2 md:gap-3 items-center px-4 py-3 text-left hover:bg-surface-2 transition-colors"
+                >
+                  <span className="text-sm font-medium text-foreground line-clamp-1 min-w-0">
+                    {item.title}
+                  </span>
+                  <span className="text-[11px] text-foreground-muted truncate hidden md:block">
+                    {item.source_name}
+                  </span>
+                  <span className="text-[11px] text-foreground-subtle hidden md:block">
+                    {pubDate}
+                  </span>
+                  <span className="text-[11px] text-foreground-muted truncate hidden md:block">
+                    {item.category}
+                  </span>
+                  <span className="text-[11px] text-foreground-subtle font-mono truncate hidden md:block">
+                    {item.ingestion_source ?? "—"}
+                  </span>
+                  <span className="hidden md:block">
+                    <MarketNewsStatusBadge status={item.status} />
+                  </span>
+                  <span className={"text-foreground-subtle text-xs transition-transform duration-150 " + (isExpanded ? "rotate-180" : "")}>
+                    ▼
+                  </span>
+                </button>
+
+                {/* ── Expanded edit panel ── */}
+                {isExpanded && (
+                  <MarketNewsEditPanel
+                    item={item}
+                    onSave={handleSaveFields}
+                    onClose={() => setExpandedId(null)}
+                    onStatusChange={handleStatusChange}
+                    saving={saving}
+                  />
+                )}
+              </article>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+}
+
+type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "market-news";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",   label: "Dashboard"   },
@@ -2745,6 +3144,7 @@ const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "sources",     label: "Sources"     },
   { key: "agents",      label: "Agents"      },
   { key: "chatlab",     label: "Chat Lab"    },
+  { key: "market-news", label: "Market News" },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
@@ -2877,6 +3277,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "sources" && <SourcesView />}
             {tab === "agents" && <AgentsApprovalsView />}
             {tab === "chatlab" && <PropertyChatLabView />}
+            {tab === "market-news" && <MarketNewsView />}
           </MarketProvider>
         </div>
       </main>

@@ -10,7 +10,7 @@ import {
   ContentDraft,
   ContentDraftStatus,
 } from "./types";
-import { supabase } from "./supabase";
+import { supabase, supabaseAuth } from "./supabase";
 import { computeHealthGrade } from "./sourceHealthGrade";
 
 // ============================================
@@ -1082,4 +1082,78 @@ export async function updateContentDraftStatus(
 ): Promise<ContentDraft[]> {
   await updateStoredContentDraftStatus(id, status, statusNote);
   return listStoredContentDrafts();
+}
+
+// ============================================
+// MARKET NEWS — Admin queue helpers
+// All reads and writes use supabaseAuth so the authenticated JWT is sent.
+// Public anon reads continue to use the anon client (only published rows).
+// ============================================
+
+export type MarketNewsStatus = "candidate" | "published" | "hidden" | "archived";
+
+export interface MarketNewsRow {
+  id: string;
+  title: string;
+  original_title: string | null;
+  source_name: string;
+  source_url: string;
+  canonical_url: string | null;
+  published_at: string | null;
+  category: string;
+  snippet: string;
+  why_it_matters: string | null;
+  status: MarketNewsStatus;
+  language: string;
+  country_code: string;
+  affected_regions: string[] | null;
+  signal_tags: string[] | null;
+  ingestion_source: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface MarketNewsFieldUpdate {
+  title?: string;
+  snippet?: string;
+  why_it_matters?: string | null;
+  category?: string;
+  affected_regions?: string[] | null;
+  signal_tags?: string[] | null;
+}
+
+export async function getMarketNewsQueue(status: MarketNewsStatus): Promise<MarketNewsRow[]> {
+  const { data, error } = await supabaseAuth
+    .from("market_news")
+    .select("id,title,original_title,source_name,source_url,canonical_url,published_at,category,snippet,why_it_matters,status,language,country_code,affected_regions,signal_tags,ingestion_source,created_at,updated_at")
+    .eq("status", status)
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error("[Admin] getMarketNewsQueue failed:", error.message);
+    return [];
+  }
+  return (data ?? []) as MarketNewsRow[];
+}
+
+export async function updateMarketNewsStatus(id: string, status: MarketNewsStatus): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("market_news")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`[Admin] updateMarketNewsStatus failed: ${error.message}`);
+  }
+}
+
+export async function updateMarketNewsFields(id: string, fields: MarketNewsFieldUpdate): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("market_news")
+    .update({ ...fields, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`[Admin] updateMarketNewsFields failed: ${error.message}`);
+  }
 }
