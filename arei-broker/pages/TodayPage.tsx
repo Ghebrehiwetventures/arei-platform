@@ -195,6 +195,151 @@ export default function TodayPage() {
         </p>
       </div>
 
+      {/* ── Listo Pulse — AI briefing mock ───────────────────────────────────── */}
+      <section className="space-y-3">
+        <div className="flex items-center gap-2">
+          <span
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "10px",
+              textTransform: "uppercase",
+              letterSpacing: "0.08em",
+              color: "var(--color-foreground-muted)",
+              fontWeight: 500,
+            }}
+          >
+            Listo Pulse
+          </span>
+          <span
+            className="px-2 py-0.5"
+            style={{
+              fontFamily: "var(--font-mono)",
+              fontSize: "9px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+              color: "var(--color-deep-green)",
+              background: "var(--color-accent-muted)",
+              borderRadius: "2px",
+            }}
+          >
+            Preview
+          </span>
+        </div>
+
+        <div
+          className="overflow-hidden"
+          style={{
+            background: "var(--color-surface-1)",
+            border: "1px solid var(--color-border)",
+            borderRadius: "2px",
+          }}
+        >
+          {/* Descriptor */}
+          <div
+            className="px-4 py-3"
+            style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-surface-2)" }}
+          >
+            <p className="text-xs" style={{ color: "var(--color-foreground-muted)" }}>
+              Your AI briefing — actions suggested based on your leads, listings, and calendar.
+            </p>
+          </div>
+
+          {/* Pulse items */}
+          {MOCK_PULSE.map((item, i) => (
+            <div
+              key={item.id}
+              className="px-4 py-3.5 flex items-start gap-3"
+              style={{
+                borderBottom: i < MOCK_PULSE.length - 1 ? "1px solid var(--color-border)" : undefined,
+              }}
+            >
+              <div
+                className="flex-shrink-0 mt-1 w-2 h-2 rounded-full"
+                style={{
+                  background:
+                    item.urgency === "high"
+                      ? "var(--color-red)"
+                      : item.urgency === "medium"
+                      ? "var(--color-amber)"
+                      : "var(--color-foreground-subtle)",
+                }}
+              />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm" style={{ color: "var(--color-foreground)" }}>
+                  {item.text}
+                </p>
+                {item.subtext && (
+                  <p className="mt-0.5 text-xs" style={{ color: "var(--color-foreground-subtle)" }}>
+                    {item.subtext}
+                  </p>
+                )}
+              </div>
+              <button
+                type="button"
+                onClick={() => navigate(item.route)}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "10px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "var(--color-foreground-muted)",
+                  background: "var(--color-surface-2)",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "2px",
+                  padding: "2px 8px",
+                  flexShrink: 0,
+                  cursor: "pointer",
+                }}
+              >
+                {item.action}
+              </button>
+            </div>
+          ))}
+
+          {/* Integrations footer */}
+          <div
+            className="px-4 py-3 flex flex-wrap items-center gap-2"
+            style={{ borderTop: "1px solid var(--color-border)", background: "var(--color-surface-2)" }}
+          >
+            <span
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "9px",
+                textTransform: "uppercase",
+                letterSpacing: "0.06em",
+                color: "var(--color-foreground-subtle)",
+                flexShrink: 0,
+              }}
+            >
+              Connect to unlock:
+            </span>
+            {["Google Calendar", "Gmail"].map((label) => (
+              <button
+                key={label}
+                type="button"
+                onClick={() => navigate("/profile")}
+                style={{
+                  fontFamily: "var(--font-mono)",
+                  fontSize: "9px",
+                  textTransform: "uppercase",
+                  letterSpacing: "0.06em",
+                  color: "var(--color-foreground-muted)",
+                  background: "transparent",
+                  border: "1px solid var(--color-border)",
+                  borderRadius: "2px",
+                  padding: "3px 8px",
+                  cursor: "pointer",
+                  textDecoration: "underline",
+                  textDecorationStyle: "dotted",
+                }}
+              >
+                {label}
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* New leads */}
       <Section title="New leads" count={newLeads.length}>
         {newLeads.length === 0 ? (
@@ -566,160 +711,6 @@ export default function TodayPage() {
           </div>
         </div>
       </Section>
-
-      {/* ── Listo Pulse — AI briefing mock ───────────────────────────────────── */}
-      <section className="space-y-3">
-        <div className="flex items-center gap-2">
-          <span
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "10px",
-              textTransform: "uppercase",
-              letterSpacing: "0.08em",
-              color: "var(--color-foreground-muted)",
-              fontWeight: 500,
-            }}
-          >
-            Listo Pulse
-          </span>
-          <span
-            className="px-2 py-0.5"
-            style={{
-              fontFamily: "var(--font-mono)",
-              fontSize: "9px",
-              textTransform: "uppercase",
-              letterSpacing: "0.06em",
-              color: "var(--color-deep-green)",
-              background: "var(--color-accent-muted)",
-              borderRadius: "2px",
-            }}
-          >
-            Preview
-          </span>
-        </div>
-
-        <div
-          className="overflow-hidden"
-          style={{
-            background: "var(--color-surface-1)",
-            border: "1px solid var(--color-border)",
-            borderRadius: "2px",
-          }}
-        >
-          {/* Descriptor */}
-          <div
-            className="px-4 py-3"
-            style={{ borderBottom: "1px solid var(--color-border)", background: "var(--color-surface-2)" }}
-          >
-            <p className="text-xs" style={{ color: "var(--color-foreground-muted)" }}>
-              Your AI briefing — actions suggested based on your leads, listings, and calendar.
-            </p>
-          </div>
-
-          {/* Pulse items */}
-          {MOCK_PULSE.map((item, i) => (
-            <div
-              key={item.id}
-              className="px-4 py-3.5 flex items-start gap-3"
-              style={{
-                borderBottom: i < MOCK_PULSE.length - 1 ? "1px solid var(--color-border)" : undefined,
-              }}
-            >
-              {/* Priority dot */}
-              <div
-                className="flex-shrink-0 mt-1 w-2 h-2 rounded-full"
-                style={{
-                  background:
-                    item.urgency === "high"
-                      ? "var(--color-red)"
-                      : item.urgency === "medium"
-                      ? "var(--color-amber)"
-                      : "var(--color-foreground-subtle)",
-                }}
-              />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm" style={{ color: "var(--color-foreground)" }}>
-                  {item.text}
-                </p>
-                {item.subtext && (
-                  <p
-                    className="mt-0.5 text-xs"
-                    style={{ color: "var(--color-foreground-subtle)" }}
-                  >
-                    {item.subtext}
-                  </p>
-                )}
-              </div>
-              <button
-                type="button"
-                onClick={() => navigate(item.route)}
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "10px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "var(--color-foreground-muted)",
-                  background: "var(--color-surface-2)",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "2px",
-                  padding: "2px 8px",
-                  flexShrink: 0,
-                  cursor: "pointer",
-                }}
-              >
-                {item.action}
-              </button>
-            </div>
-          ))}
-
-          {/* Integrations footer */}
-          <div
-            className="px-4 py-3 flex flex-wrap items-center gap-2"
-            style={{
-              borderTop: "1px solid var(--color-border)",
-              background: "var(--color-surface-2)",
-            }}
-          >
-            <span
-              style={{
-                fontFamily: "var(--font-mono)",
-                fontSize: "9px",
-                textTransform: "uppercase",
-                letterSpacing: "0.06em",
-                color: "var(--color-foreground-subtle)",
-                flexShrink: 0,
-              }}
-            >
-              Connect to unlock:
-            </span>
-            {[
-              { label: "Google Calendar" },
-              { label: "Gmail" },
-            ].map((int) => (
-              <button
-                key={int.label}
-                type="button"
-                disabled
-                style={{
-                  fontFamily: "var(--font-mono)",
-                  fontSize: "9px",
-                  textTransform: "uppercase",
-                  letterSpacing: "0.06em",
-                  color: "var(--color-foreground-subtle)",
-                  background: "transparent",
-                  border: "1px solid var(--color-border)",
-                  borderRadius: "2px",
-                  padding: "3px 8px",
-                  cursor: "default",
-                  opacity: 0.7,
-                }}
-              >
-                {int.label}
-              </button>
-            ))}
-          </div>
-        </div>
-      </section>
 
       {/* Add listing modal */}
       {showAddListing && agency && (
