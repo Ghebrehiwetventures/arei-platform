@@ -26,8 +26,8 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/",
       ...page(
-      "AREI — Cape Verde Real Estate",
-      "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with AREI.",
+      "Cape Verde Real Estate Index",
+      "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands.",
       `
         <main>
           <section>
@@ -111,7 +111,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/market",
       ...page(
-      "Market Data — AREI",
+      "Cape Verde Market Data | Cape Verde Real Estate Index",
       "Median prices by island, inventory trends, and Cape Verde property market insights.",
       `
         <main>
@@ -148,7 +148,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/market-news",
       ...page(
-      "Cape Verde Market News — AREI",
+      "Cape Verde Market News | Cape Verde Real Estate Index",
       "Curated economic, tourism, policy and investment news relevant to Cape Verde's property market.",
       `
         <main>
@@ -210,7 +210,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/blog",
       ...page(
-      "Blog — AREI",
+      "Cape Verde Real Estate Blog | Cape Verde Real Estate Index",
       "Cape Verde real estate insights, guides, and market analysis. Property buying, islands, legal requirements, and investment tips.",
       `
         <main>
@@ -264,8 +264,8 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/about",
       ...page(
-      "About — AREI",
-      "How AREI works. Data sources, update cadence, deduplication, and transparency.",
+      "About | Cape Verde Real Estate Index",
+      "How Cape Verde Real Estate Index works. Data sources, update cadence, deduplication, and transparency.",
       `
         <main>
           <section>
@@ -294,8 +294,8 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/privacy",
       ...page(
-      "Privacy Policy — AREI",
-      "How AREI handles your data, what we collect, and your rights.",
+      "Privacy Policy | Cape Verde Real Estate Index",
+      "How Cape Verde Real Estate Index handles your data, what we collect, and your rights.",
       `
         <main>
           <section>
@@ -327,7 +327,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/listings",
       ...page(
-      "Cape Verde Properties for Sale — AREI",
+      "Cape Verde Properties for Sale | Cape Verde Real Estate Index",
       "Browse tracked property listings across Cape Verde. Source-linked homes, apartments, villas, and land for sale on Sal, Boa Vista, Santiago, and more.",
       `
         <main>
@@ -360,7 +360,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/listings/sal",
       ...page(
-      "Property for Sale in Sal, Cape Verde | AREI",
+      "Property for Sale in Sal, Cape Verde | Cape Verde Real Estate Index",
       "Browse property listings for sale in Sal, Cape Verde. Apartments, villas, and resort properties in Santa Maria and across the island.",
       (() => {
         const salListings = listingRoutes.filter(
@@ -407,7 +407,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/listings/boa-vista",
       ...page(
-      "Property for Sale in Boa Vista, Cape Verde | AREI",
+      "Property for Sale in Boa Vista, Cape Verde | Cape Verde Real Estate Index",
       "Browse property listings for sale in Boa Vista, Cape Verde. Beach villas, resort apartments, and coastal properties in Sal Rei and across the island.",
       (() => {
         const boaVistaListings = listingRoutes.filter(
@@ -454,8 +454,8 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/cookie-policy",
       ...page(
-      "Cookie Policy — AREI",
-      "What cookies and local storage AREI uses and why.",
+      "Cookie Policy | Cape Verde Real Estate Index",
+      "What cookies and local storage Cape Verde Real Estate Index uses and why.",
       `
         <main>
           <section>
@@ -594,14 +594,15 @@ async function writeSitemap(routes) {
 function renderRouteHtml(baseHtml, route) {
   const canonicalUrl = new URL(route.route, `${siteUrl}/`).toString();
   const ogType = route.ogType ?? "website";
-  const documentTitle = route.title.includes("AREI") ? route.title : `${route.title} — AREI`;
+  const SITE_NAME = "Cape Verde Real Estate Index";
+  const documentTitle = route.title.includes(SITE_NAME) ? route.title : `${route.title} | ${SITE_NAME}`;
   const headExtras = [
     `<link rel="canonical" href="${canonicalUrl}" />`,
     `<meta property="og:title" content="${escapeHtml(documentTitle)}" />`,
     `<meta property="og:description" content="${escapeHtml(route.description)}" />`,
     `<meta property="og:type" content="${escapeHtml(ogType)}" />`,
     `<meta property="og:url" content="${canonicalUrl}" />`,
-    `<meta property="og:site_name" content="AREI" />`,
+    `<meta property="og:site_name" content="Cape Verde Real Estate Index" />`,
     `<meta property="og:image" content="${escapeHtml(route.image ?? ogImage)}" />`,
     `<meta name="twitter:card" content="summary_large_image" />`,
     `<meta name="twitter:title" content="${escapeHtml(documentTitle)}" />`,
