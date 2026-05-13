@@ -2961,7 +2961,7 @@ function MarketNewsEditPanel({
             <select
               value={category}
               onChange={(e) => setCategory(e.target.value)}
-              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent"
+              className="w-full h-[34px] bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent"
             >
               {MARKET_NEWS_CATEGORIES.concat(
                 !MARKET_NEWS_CATEGORIES.includes(category) ? [category] : []
