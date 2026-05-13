@@ -3363,9 +3363,10 @@ const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "notifications", label: "Notifications"         },
 ];
 
-// BrokerPilotView is a legacy internal preview. The real broker product lives in arei-broker.
+// BrokerPilotView is a legacy internal preview. New broker product work
+// should happen in arei-broker — the real broker-facing product.
 const LABS_NAV_ITEMS: { key: Tab; label: string }[] = [
-  { key: "broker-pilot", label: "Broker Pilot Preview" },
+  { key: "broker-pilot", label: "Legacy Broker Preview" },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {

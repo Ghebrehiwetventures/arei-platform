@@ -940,13 +940,14 @@ export function BrokerPilotView() {
 
   return (
     <div className="space-y-6">
-      {/* ── Pilot banner ── */}
+      {/* ── Legacy banner ── */}
+      {/* This is a legacy internal preview. New broker product work should happen in arei-broker. */}
       <div className="bg-amber-muted/60 border border-amber/40 rounded px-4 py-2 flex items-center gap-3">
         <span className="text-amber text-[11px] font-mono font-semibold uppercase tracking-wider">
-          Broker Pilot Preview
+          Legacy
         </span>
         <span className="text-[11px] text-foreground-muted">
-          Admin-hosted preview of the future broker-facing workspace. Not the production broker app. No external broker login required.
+          Legacy internal preview. The real broker-facing product lives in arei-broker. Use this only for historical testing and internal comparison.
         </span>
       </div>
 
@@ -954,7 +955,7 @@ export function BrokerPilotView() {
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Broker Pilot Preview
+            Legacy Broker Preview
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
             Agency profile · Listing intake · Quality check · Public preview

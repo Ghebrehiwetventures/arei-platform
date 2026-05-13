@@ -3,6 +3,8 @@ import { useParams, useNavigate } from "react-router-dom";
 import { getBrokerListing, submitListingForReview, computeListingHints, isReadyForReview } from "../brokerData";
 import { PublishStatusBadge } from "../components/StatusBadge";
 import ListingForm from "../components/ListingForm";
+import ShareSheet from "../components/ShareSheet";
+import { useAgency } from "../app";
 import type { BrokerListing } from "../types";
 
 function formatPrice(price: number | null, currency: string): string {
@@ -17,10 +19,12 @@ function formatPrice(price: number | null, currency: string): string {
 export default function ListingDetailPage() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { agency } = useAgency();
   const [listing, setListing] = useState<BrokerListing | null>(null);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [showShare, setShowShare] = useState(false);
 
   useEffect(() => {
     if (!id) return;
@@ -46,7 +50,7 @@ export default function ListingDetailPage() {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
         <p style={{ color: "var(--color-foreground-muted)" }}>Loading…</p>
       </div>
     );
@@ -54,7 +58,7 @@ export default function ListingDetailPage() {
 
   if (!listing) {
     return (
-      <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6">
+      <div className="max-w-4xl mx-auto px-4 sm:px-6 py-6">
         <p style={{ color: "var(--color-red)" }}>Listing not found.</p>
       </div>
     );
@@ -66,14 +70,23 @@ export default function ListingDetailPage() {
   const hasFailedHints = failedRequired.length > 0 || failedRecommended.length > 0;
   const ready = isReadyForReview(listing);
 
+  const agencySlug = agency?.agency_name.toLowerCase().replace(/\s+/g, "-") ?? "";
+
   return (
-    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-6 space-y-6">
+    <div
+      className="max-w-4xl mx-auto px-4 sm:px-6 py-6 space-y-6 pb-36 sm:pb-24"
+    >
       {/* Back */}
       <button
         type="button"
         onClick={() => navigate("/listings")}
-        className="text-sm"
-        style={{ color: "var(--color-foreground-muted)" }}
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: "var(--color-foreground-muted)",
+        }}
       >
         ← Listings
       </button>
@@ -114,11 +127,16 @@ export default function ListingDetailPage() {
                 <button
                   type="button"
                   onClick={() => setEditing(true)}
-                  className="px-3 py-1 text-xs"
+                  className="px-3 py-1"
                   style={{
                     border: "1px solid var(--color-border)",
                     color: "var(--color-foreground-muted)",
                     background: "var(--color-surface-2)",
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.05em",
+                    borderRadius: "2px",
                   }}
                 >
                   Edit
@@ -189,7 +207,16 @@ export default function ListingDetailPage() {
 
             {listing.description && (
               <div className="mt-4">
-                <p className="text-xs font-medium mb-1" style={{ color: "var(--color-foreground-muted)" }}>
+                <p
+                  className="mb-1"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "var(--color-foreground-muted)",
+                  }}
+                >
                   Description
                 </p>
                 <p className="text-sm" style={{ color: "var(--color-foreground)" }}>
@@ -204,7 +231,16 @@ export default function ListingDetailPage() {
                 className="mt-4 pt-4"
                 style={{ borderTop: "1px solid var(--color-border)" }}
               >
-                <p className="text-xs font-medium mb-1" style={{ color: "var(--color-foreground-muted)" }}>
+                <p
+                  className="mb-1"
+                  style={{
+                    fontFamily: "var(--font-mono)",
+                    fontSize: "10px",
+                    textTransform: "uppercase",
+                    letterSpacing: "0.08em",
+                    color: "var(--color-foreground-muted)",
+                  }}
+                >
                   Contact
                 </p>
                 <div className="text-sm space-y-0.5">
@@ -263,7 +299,16 @@ export default function ListingDetailPage() {
             className="rounded-lg p-4"
             style={{ background: "var(--color-surface-1)", border: "1px solid var(--color-border)" }}
           >
-            <p className="text-sm font-medium mb-2" style={{ color: "var(--color-foreground)" }}>
+            <p
+              className="mb-2"
+              style={{
+                fontFamily: "var(--font-mono)",
+                fontSize: "10px",
+                textTransform: "uppercase",
+                letterSpacing: "0.08em",
+                color: "var(--color-foreground-muted)",
+              }}
+            >
               Publication status
             </p>
             {listing.publish_status === "draft" && ready && (
@@ -277,9 +322,10 @@ export default function ListingDetailPage() {
                   disabled={submitting}
                   className="px-4 py-1.5 text-sm font-medium"
                   style={{
-                    background: "var(--color-deep-green)",
-                    color: "var(--color-deep-green-foreground)",
+                    background: "var(--color-foreground)",
+                    color: "var(--color-surface-1)",
                     opacity: submitting ? 0.6 : 1,
+                    borderRadius: "2px",
                   }}
                 >
                   {submitting ? "Submitting…" : "Submit for review"}
@@ -366,6 +412,63 @@ export default function ListingDetailPage() {
             </div>
           </div>
         </>
+      )}
+
+      {/* ── Sticky bottom CTA bar — broker actions only ───────────────────────── */}
+      {!editing && listing && (
+        <div
+          className="fixed left-0 right-0 z-20 flex items-center gap-2 px-4 py-3 bottom-14 sm:bottom-0"
+          style={{
+            background: "var(--color-surface-1)",
+            borderTop: "1px solid var(--color-border)",
+          }}
+        >
+          {/* Share property pack — primary broker action */}
+          <button
+            type="button"
+            onClick={() => setShowShare(true)}
+            className="flex-1 flex items-center justify-center py-2.5 font-medium"
+            style={{
+              background: "var(--color-foreground)",
+              color: "var(--color-surface-1)",
+              borderRadius: "2px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+            }}
+          >
+            Share property pack
+          </button>
+
+          {/* Edit */}
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="flex items-center justify-center px-5 py-2.5 font-medium"
+            style={{
+              background: "var(--color-surface-2)",
+              border: "1px solid var(--color-border)",
+              color: "var(--color-foreground-muted)",
+              borderRadius: "2px",
+              fontFamily: "var(--font-mono)",
+              fontSize: "11px",
+              textTransform: "uppercase",
+              letterSpacing: "0.06em",
+            }}
+          >
+            Edit
+          </button>
+        </div>
+      )}
+
+      {/* Share sheet */}
+      {showShare && listing && (
+        <ShareSheet
+          listing={listing}
+          agencySlug={agencySlug}
+          onClose={() => setShowShare(false)}
+        />
       )}
     </div>
   );

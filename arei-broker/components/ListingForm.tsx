@@ -38,7 +38,16 @@ const inputStyle: React.CSSProperties = {
 function Field({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <div className="space-y-1">
-      <label className="block text-xs font-medium" style={{ color: "var(--color-foreground-muted)" }}>
+      <label
+        className="block"
+        style={{
+          fontFamily: "var(--font-mono)",
+          fontSize: "10px",
+          textTransform: "uppercase",
+          letterSpacing: "0.08em",
+          color: "var(--color-foreground-muted)",
+        }}
+      >
         {label}
       </label>
       {children}
@@ -164,7 +173,7 @@ export default function ListingForm({
         </select>
       </Field>
 
-      <div className="flex gap-3">
+      <div className="flex flex-col sm:flex-row gap-3">
         <div className="flex-1">
           <Field label="Price">
             <input
@@ -225,7 +234,7 @@ export default function ListingForm({
         />
       </Field>
 
-      <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
         <Field label="Bedrooms">
           <input
             type="number"
@@ -296,7 +305,7 @@ export default function ListingForm({
         />
       </Field>
 
-      <div className="grid grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
         <Field label="Contact email">
           <input
             type="email"
@@ -351,9 +360,10 @@ export default function ListingForm({
           disabled={saving}
           className="px-4 py-2 text-sm font-medium transition-opacity"
           style={{
-            background: "var(--color-deep-green)",
-            color: "var(--color-deep-green-foreground)",
+            background: "var(--color-foreground)",
+            color: "var(--color-surface-1)",
             opacity: saving ? 0.6 : 1,
+            borderRadius: "2px",
           }}
         >
           {saving ? "Saving…" : mode === "create" ? "Save listing" : "Save changes"}

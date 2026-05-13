@@ -3,6 +3,32 @@ import { useAgency } from "../app";
 import { getBrokerListings } from "../brokerData";
 import type { BrokerListing } from "../types";
 
+function CopyButton({ text, label }: { text: string; label: string }) {
+  const [copied, setCopied] = useState(false);
+  function handleCopy() {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+    }).catch(console.error);
+  }
+  return (
+    <button
+      type="button"
+      onClick={handleCopy}
+      className="inline-flex items-center px-3 py-1.5 text-sm"
+      style={{
+        border: "1px solid var(--color-border)",
+        color: copied ? "var(--color-green)" : "var(--color-foreground-muted)",
+        background: copied ? "var(--color-green-muted)" : "var(--color-surface-2)",
+        transition: "all 0.15s",
+        borderRadius: "2px",
+      }}
+    >
+      {copied ? "✓ Copied!" : label}
+    </button>
+  );
+}
+
 function formatPrice(price: number | null, currency: string): string {
   if (price == null) return "Price on request";
   return new Intl.NumberFormat("en", {
@@ -38,23 +64,37 @@ export default function WebsitePage() {
         Your Agency Page
       </h1>
 
-      {/* URL banner */}
+      {/* URL + share banner */}
       <div
-        className="rounded-lg px-4 py-3 flex items-center justify-between gap-4"
+        className="rounded-lg px-4 py-4 space-y-3"
         style={{ background: "var(--color-accent-muted)", border: "1px solid rgba(142,207,191,0.3)" }}
       >
         <div className="text-sm">
-          <span style={{ color: "var(--color-foreground-muted)" }}>Your agency page URL will be: </span>
-          <span className="font-mono font-medium" style={{ color: "var(--color-deep-green)" }}>
+          <p className="text-xs font-medium mb-1" style={{ color: "var(--color-foreground-muted)" }}>
+            Your agency page URL
+          </p>
+          <span className="font-mono text-sm font-medium" style={{ color: "var(--color-deep-green)" }}>
             listo.arei.io/{agencySlug}
           </span>
         </div>
-        <span
-          className="text-xs px-2 py-0.5 rounded flex-shrink-0"
-          style={{ background: "var(--color-surface-2)", color: "var(--color-foreground-subtle)" }}
-        >
-          Shareable link coming soon
-        </span>
+        <div className="flex flex-wrap gap-2">
+          <CopyButton
+            text={`https://listo.arei.io/${agencySlug}`}
+            label="Copy page link"
+          />
+          <a
+            href={`https://wa.me/?text=${encodeURIComponent(`Check out our property listings: https://listo.arei.io/${agencySlug}`)}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center px-3 py-1.5 rounded text-sm font-medium"
+            style={{ background: "#25D366", color: "#ffffff" }}
+          >
+            Share via WhatsApp
+          </a>
+        </div>
+        <p className="text-xs" style={{ color: "var(--color-foreground-subtle)" }}>
+          Shareable links will go live soon. Copy the link now to test it.
+        </p>
       </div>
 
       {/* Preview watermark label */}
@@ -105,7 +145,7 @@ export default function WebsitePage() {
             )}
 
             {/* Contact buttons */}
-            <div className="mt-3 flex flex-wrap gap-2">
+            <div className="mt-3 flex flex-col sm:flex-row sm:flex-wrap gap-2">
               {agency.email && (
                 <a
                   href={`mailto:${agency.email}`}

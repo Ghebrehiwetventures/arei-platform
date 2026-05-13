@@ -109,6 +109,11 @@ html {
   scroll-behavior: smooth;
   overflow-x: hidden;
   max-width: 100%;
+  /* Always reserve space for vertical scrollbar so pages with less content
+     don't reflow the viewport width when navigating. `scrollbar-gutter: stable`
+     is ignored by Chrome/WebKit when combined with `overflow-x: hidden`, so we
+     use the classic always-on scrollbar approach instead. */
+  overflow-y: scroll;
 }
 
 body {
@@ -148,11 +153,11 @@ table {
 
 button {
   cursor: pointer;
-  border-radius: 6px;
+  border-radius: 2px;
 }
 
 input, select, textarea {
-  border-radius: 6px;
+  border-radius: 2px;
 }
 
 /* ── Scrollbar (subtle) ──────────────────────────────────────────── */
