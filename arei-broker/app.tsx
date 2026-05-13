@@ -9,6 +9,8 @@ import ListingsPage from "./pages/ListingsPage";
 import ListingDetailPage from "./pages/ListingDetailPage";
 import WebsitePage from "./pages/WebsitePage";
 import ProfilePage from "./pages/ProfilePage";
+import NotificationsPage from "./pages/NotificationsPage";
+import { NotificationsProvider } from "./notificationsData";
 
 // ── Agency context ────────────────────────────────────────────────────────────
 
@@ -65,6 +67,7 @@ export default function App() {
 
   return (
     <AgencyContext.Provider value={{ agency, setAgency }}>
+      <NotificationsProvider>
       <BrowserRouter>
         {showDemoBar && (
           <div
@@ -109,9 +112,11 @@ export default function App() {
             <Route path="/listings/:id" element={<ListingDetailPage />} />
             <Route path="/website" element={<WebsitePage />} />
             <Route path="/profile" element={<ProfilePage />} />
+            <Route path="/notifications" element={<NotificationsPage />} />
           </Routes>
         </div>
       </BrowserRouter>
+      </NotificationsProvider>
     </AgencyContext.Provider>
   );
 }

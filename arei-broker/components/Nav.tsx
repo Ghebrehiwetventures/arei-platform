@@ -1,6 +1,12 @@
-import { Link, NavLink } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useTheme } from "../hooks/useTheme";
 import { useState, useRef, useEffect } from "react";
+import {
+  useNotifications,
+  relativeTime,
+  type Notification,
+  type NotificationType,
+} from "../notificationsData";
 
 const NAV_LINKS = [
   { to: "/", label: "Today", end: true },
@@ -9,53 +15,11 @@ const NAV_LINKS = [
   { to: "/website", label: "Website" },
 ];
 
-// ── Mock notifications ────────────────────────────────────────────────────────
+// Max items shown inline in the bell dropdown. Anything beyond this becomes
+// reachable via the "See all" link at the footer.
+const DROPDOWN_MAX = 6;
 
-interface Notification {
-  id: string;
-  type: "lead" | "overdue" | "listing" | "viewing";
-  title: string;
-  body: string;
-  time: string;
-  read: boolean;
-}
-
-const MOCK_NOTIFS: Notification[] = [
-  {
-    id: "n1",
-    type: "lead",
-    title: "New lead",
-    body: "João Silva enquired about Casa da Luz",
-    time: "10 min ago",
-    read: false,
-  },
-  {
-    id: "n2",
-    type: "overdue",
-    title: "Follow-up overdue",
-    body: "Maria Santos — was due yesterday",
-    time: "1h ago",
-    read: false,
-  },
-  {
-    id: "n3",
-    type: "viewing",
-    title: "Viewing confirmed",
-    body: "Apt 3B, Mindelo — tomorrow 10:00",
-    time: "3h ago",
-    read: true,
-  },
-  {
-    id: "n4",
-    type: "listing",
-    title: "Listing approved",
-    body: "Moradia T3, São Vicente is now live",
-    time: "Yesterday",
-    read: true,
-  },
-];
-
-const TYPE_DOT: Record<Notification["type"], string> = {
+const TYPE_DOT: Record<NotificationType, string> = {
   lead: "var(--color-foreground)",
   overdue: "var(--color-red)",
   listing: "var(--color-green)",
@@ -110,11 +74,20 @@ function BellIcon() {
 
 interface NotifPanelProps {
   notifs: Notification[];
+  totalCount: number;
   onMarkAllRead: () => void;
+  onSeeAll: () => void;
   onClose: () => void;
 }
 
-function NotifPanel({ notifs, onMarkAllRead, onClose }: NotifPanelProps) {
+function NotifPanel({
+  notifs,
+  totalCount,
+  onMarkAllRead,
+  onSeeAll,
+  onClose,
+}: NotifPanelProps) {
+  const hiddenCount = Math.max(0, totalCount - notifs.length);
   return (
     <div
       style={{
@@ -244,7 +217,7 @@ function NotifPanel({ notifs, onMarkAllRead, onClose }: NotifPanelProps) {
                       color: "var(--color-foreground-subtle)",
                     }}
                   >
-                    {n.time}
+                    {relativeTime(n.createdAt)}
                   </span>
                 </div>
                 <p
@@ -259,18 +232,50 @@ function NotifPanel({ notifs, onMarkAllRead, onClose }: NotifPanelProps) {
         )}
       </div>
 
-      {/* Footer */}
+      {/* Footer: See all + Settings */}
       <div
         style={{
           borderTop: "1px solid var(--color-border)",
           background: "var(--color-surface-2)",
-          padding: "8px 16px",
         }}
       >
+        <button
+          type="button"
+          onClick={onSeeAll}
+          style={{
+            width: "100%",
+            padding: "10px 16px",
+            background: "none",
+            border: "none",
+            borderBottom: "1px solid var(--color-border)",
+            cursor: "pointer",
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "space-between",
+            fontFamily: "var(--font-mono)",
+            fontSize: "10px",
+            textTransform: "uppercase",
+            letterSpacing: "0.06em",
+            color: "var(--color-foreground)",
+            fontWeight: 500,
+          }}
+        >
+          <span>See all notifications</span>
+          <span
+            style={{
+              color: "var(--color-foreground-subtle)",
+              fontWeight: 400,
+            }}
+          >
+            {hiddenCount > 0 ? `+${hiddenCount} more →` : "→"}
+          </span>
+        </button>
         <Link
           to="/profile"
           onClick={onClose}
           style={{
+            display: "block",
+            padding: "8px 16px",
             fontFamily: "var(--font-mono)",
             fontSize: "9px",
             textTransform: "uppercase",
@@ -289,11 +294,13 @@ function NotifPanel({ notifs, onMarkAllRead, onClose }: NotifPanelProps) {
 
 export default function Nav() {
   const { theme, toggle } = useTheme();
+  const { notifications, unreadCount, markAllRead } = useNotifications();
+  const navigate = useNavigate();
   const [notifOpen, setNotifOpen] = useState(false);
-  const [notifs, setNotifs] = useState<Notification[]>(MOCK_NOTIFS);
   const notifRef = useRef<HTMLDivElement>(null);
 
-  const unreadCount = notifs.filter((n) => !n.read).length;
+  // Dropdown shows only the most recent N — full list is on /notifications
+  const visibleNotifs = notifications.slice(0, DROPDOWN_MAX);
 
   // Close panel on outside click
   useEffect(() => {
@@ -307,8 +314,9 @@ export default function Nav() {
     return () => document.removeEventListener("mousedown", handleClick);
   }, [notifOpen]);
 
-  function markAllRead() {
-    setNotifs((prev) => prev.map((n) => ({ ...n, read: true })));
+  function handleSeeAll() {
+    setNotifOpen(false);
+    navigate("/notifications");
   }
 
   return (
@@ -430,8 +438,10 @@ export default function Nav() {
 
               {notifOpen && (
                 <NotifPanel
-                  notifs={notifs}
+                  notifs={visibleNotifs}
+                  totalCount={notifications.length}
                   onMarkAllRead={markAllRead}
+                  onSeeAll={handleSeeAll}
                   onClose={() => setNotifOpen(false)}
                 />
               )}
