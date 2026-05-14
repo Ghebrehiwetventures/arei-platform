@@ -2,7 +2,7 @@
 
 **Status:** V0.1 — admin-hosted pilot preview  
 **Working product name:** Listo by AREI *(working name only — final name TBD)*  
-**Last updated:** 2026-05-13
+**Last updated:** 2026-05-13 (Market Access module added)
 
 ---
 
@@ -40,21 +40,56 @@ The admin pilot preview is **internal infrastructure only**. Its UX, language ("
 Listo is a simple listing and lead workspace for real estate agencies. See the full product brief:  
 `docs/03-product/listo-by-arei-product-brief.md`
 
+### Two-world structure
+
+The broker workspace is organised into two conceptually separate areas:
+
+**My Agency** — the broker's operational workspace
+- Inbox (leads)
+- Listings (own agency's catalogue)
+- Website (public agency page)
+- Performance (own listing metrics)
+- Profile (agency settings)
+
+**Market** — a read-only view of the full AREI market
+- Browse all active public listings
+- Search and filter (island, price, property type, bedrooms)
+- Market overview (listing counts)
+- Comparable listings view (from a broker's own listing)
+- Share a market listing with a buyer
+
+These worlds are visually and functionally separate. Brokers never edit or claim Market listings. The Market tab is a window, not a workspace.
+
 ### Product modules
 
-| Module | Description |
-|---|---|
-| **Listings** | Add and manage property listings — price, photos, location, status, shareable link |
-| **Inbox** | Buyer lead inbox — name, phone, email, WhatsApp, linked listing, follow-up date |
-| **Website** | Public agency page — active listings, contact buttons, WhatsApp CTA |
-| **Performance** | Listing views, leads per listing, contact clicks (placeholders in V0) |
-| **Profile** | Agency display name, description, contact person, email, phone, WhatsApp |
+| Module | World | Description |
+|---|---|---|
+| **Listings** | My Agency | Add and manage property listings — price, photos, location, status, shareable link |
+| **Inbox** | My Agency | Buyer lead inbox — name, phone, email, WhatsApp, linked listing, follow-up date |
+| **Website** | My Agency | Public agency page — active listings, contact buttons, WhatsApp CTA |
+| **Performance** | My Agency | Listing views, leads per listing, contact clicks (placeholders in V0) |
+| **Profile** | My Agency | Agency display name, description, contact person, email, phone, WhatsApp |
+| **Market** | Market | Read-only browse of all active public AREI listings; search, filter, comparable view, share |
 
-### Navigation (broker-facing)
+### Navigation (broker-facing) — options under review, not final
 
+Two nav structures are under consideration. Do not implement either as final until tested with brokers in a pilot. See `docs/03-product/listo-by-arei-product-brief.md` §8.2 for full rationale.
+
+**Option A:**
 ```
-Inbox | Listings | Website | Performance | Profile
+Inbox | Listings | Market | More
 ```
+"More" drawer: Performance, Website, Profile.
+
+**Option B (preferred starting point):**
+```
+Today | Leads | Listings | Market
+```
+Website and Profile via top-right agency/settings menu.
+
+Option B is the preferred starting point because it models the actual broker daily workflow more accurately. Today = action hub for the day. Leads = buyer follow-up as a dedicated space. Option A is the fallback if Today screen proves too complex before the first agency demo.
+
+Website and Profile are set-and-forget in either option — they must not occupy a primary nav slot.
 
 ### What is deliberately excluded from the broker surface
 
@@ -99,6 +134,102 @@ The following data must never be accessible in Listo, regardless of implementati
 | Any row from `agency_data_quality_snapshots` | that table | Internal quality metrics |
 | Any row from `listing_data_issues` | that table | Internal issue tracking |
 | Lead contact details | `leads` table (future) | Broker-owned data — must not be indexed or aggregated |
+
+---
+
+## Market Access — data rules
+
+### What the Market tab reads
+
+`arei-broker` Market Access reads from **`broker.market_listings_view`** — a broker-safe wrapper view over `public.v1_feed_cv`, created in migration 037.
+
+`public.v1_feed_cv` is the canonical public feed that powers kazaverde.com. It serves only curated, approved, published listings from `kv_curated.listings`. `broker.market_listings_view` selects a fixed broker-safe column subset from it.
+
+**Data source chain (no raw pipeline access):**
+```
+kv_curated.listings (published rows)
+  → public.v1_feed_cv_curated_preview
+  → public.v1_feed_cv
+  → broker.market_listings_view   ← arei-broker reads here
+```
+
+**Do not use `broker_pilot_listings` as the Market Access data source.** That table holds agency-submitted listings for the My Agency workspace. It is not the public market feed.
+
+**Do not use raw pipeline tables, scraper snapshots, `public.listings` directly, or admin-only diagnostic views.**
+
+**Do not create a new market dataset.**
+
+### broker.market_listings_view — selected columns
+
+Migration: `migrations/037_broker_market_listings_view.sql`
+
+| Column | Purpose |
+|---|---|
+| `id` | Stable listing identifier |
+| `title` | Listing name |
+| `description` | Plain-text listing description |
+| `price` | Asking price |
+| `currency` | Price currency |
+| `price_period` | e.g. per month for rentals |
+| `price_status` | `ok` or `price_on_request` |
+| `country` | Country |
+| `island` | Cape Verde island |
+| `city` | City/location |
+| `latitude` / `longitude` | Public map coordinates |
+| `property_type` | Apartment, Villa, Land, etc. |
+| `bedrooms` / `bathrooms` | Room counts |
+| `property_size_sqm` / `land_area_sqm` | Area |
+| `amenities` | Public listing features |
+| `image_urls` | Full image array |
+| `cover_image_url` | Primary/hero image |
+| `source_url` | Original public listing URL (shown on kazaverde.com detail pages) |
+| `first_seen_at` | When listing first appeared |
+| `updated_at` | Last update timestamp |
+
+**23 columns total.**
+
+Excluded from V0 (with reasoning in migration 037):
+- `description_html` — scraped HTML, detail-view only, not needed for browse/search, `dangerouslySetInnerHTML` risk in broker app. Add in V1 if a broker listing detail view is built.
+- `ai_descriptions` — JSONB, detail-view only (`DETAIL_COLUMNS_OPTIONAL` in arei-sdk). Not needed for list/card/compare views in Market V0. Add in V1.
+
+All internal diagnostic, scraper metadata, and pipeline columns also excluded. See migration 037 for the full exclusion list.
+
+### What Market may expose
+
+| Field | Expose in Market? |
+|---|---|
+| Property type, price, location, island | ✓ Yes |
+| Bedrooms, bathrooms, sqm | ✓ Yes (where populated) |
+| Photos | ✓ Yes |
+| Agency name | ✓ Yes — consistent with public index |
+| Agency contact (phone/WhatsApp) | ✓ Yes — broker may want to refer a buyer |
+| Listing ID / shareable link | ✓ Yes — broker shares with buyers |
+
+### What Market must never expose
+
+| Data | Why |
+|---|---|
+| `reviewer_notes`, `reviewed_by` | Admin editorial — internal only |
+| `claimed_status`, `data_partner_status`, `source_ids` | Internal pipeline classification |
+| `agency_relationships.*` | Internal CRM |
+| Any other agency's `leads` data | Broker-owned data |
+| Lead volumes or enquiry counts per listing (other agencies) | Private demand signal |
+| `agency_data_quality_snapshots` | Internal quality metrics |
+| Price history | Reserved for future paid Intelligence tier |
+| Internal quality scores or review status | Admin-only context |
+
+### RLS requirement
+
+Market Access reads from `public.v1_feed_cv`, which is already publicly readable (anon key) — the same access used by kazaverde.com. No additional RLS work is required for Market Access specifically.
+
+The "own agency only" RLS constraint applies to the My Agency side (`broker_pilot_listings` / `agency_listings`). Market Access is a separate read path against the public feed and does not conflict with it.
+
+The broker app has two distinct read paths:
+
+```
+My Agency  →  broker_pilot_listings / agency_listings   (RLS: own agency only)
+Market     →  broker.market_listings_view               (public feed, no agency scoping needed)
+```
 
 ---
 
@@ -152,24 +283,43 @@ V0.1 (now)
 
 V0.2 (next — scaffold)
   Create arei-broker/ app (Listo by AREI)
-  Navigation: Inbox | Listings | Website | Performance | Profile
+  Navigation: Option B preferred (Today | Leads | Listings | Market); fall back to Option A (Inbox | Listings | Market | More) — not locked until pilot feedback
   Listings module: CRUD using broker_pilot_listings (scoped to demo agency)
   Inbox module: requires new leads table migration
   Website module: public agency page (static render from agencies table)
-  Performance: placeholder tiles only
+  Performance: placeholder tiles only (in More drawer)
+  Market module: read-only browse of active published listings; search + filter
+    - Data source: broker.market_listings_view (migration 037, wrapper over public.v1_feed_cv)
+    - Do NOT use broker_pilot_listings — that is the broker's own agency listings, not the public market feed
+    - Filters: island, price range, property type, bedrooms
+    - Market summary tile: active listing count
+    - Comparable view: from a broker's own listing, show similar market listings
+    - Share: copy link or WhatsApp share of a market listing
+    - No price history, no analytics, no exports
   Still admin-operated (no broker login yet)
   Demo-mode agency selector at top of app
 
 V1 (production)
   Full broker self-login (magic link)
-  RLS scoped to broker role
+  RLS scoped to broker role — including cross-agency SELECT for Market tab
   Mobile-optimised UI
   Lead notifications (WhatsApp / email)
   Photo upload (Supabase storage)
   Public listing pages and agency URLs
   Portuguese localisation
   Verified badge on published listings
-  Market data light (avg price context)
+  Market: saved searches
+  Market: comparable alert (notify when new listing matches broker's listing profile)
+
+Future / Intelligence tier (V2+, paid)
+  Price history charts
+  Price per sqm benchmarks by location
+  Alerts (new listings matching saved criteria)
+  Data exports (CSV)
+  Advanced comparable analysis
+  Market reports
+  Investor-grade analytics
+  (Requires data density: ~500+ active listings, 12+ months of history)
 ```
 
 ---
@@ -200,8 +350,9 @@ The table `broker_pilot_listings` was named for the V0 pilot phase. In productio
 
 ## Related documents
 
-- `docs/03-product/listo-by-arei-product-brief.md` — full product brief, target broker, V0 features, V1 roadmap
+- `docs/03-product/listo-by-arei-product-brief.md` — full product brief, target broker, V0 features, Market Access module (§8), V1 roadmap
 - `docs/03-product/broker-pilot-workspace-v0.md` — V0.1 admin pilot spec
 - `docs/03-product/broker-pilot-demo-setup.md` — how to apply migrations and seed data
 - `docs/03-product/verified-agency-listing-policy.md` — Verified Agency and Verified Listing definitions
 - `docs/04-platform/security-baseline.md` — broader security model
+- `migrations/037_broker_market_listings_view.sql` — broker.market_listings_view (Market Access data source)

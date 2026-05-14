@@ -3,7 +3,7 @@
 **Working name:** Listo by AREI *(working name only — final name TBD; see naming note below)*  
 **App/package name:** arei-broker  
 **Stage:** Concept → V0 pilot  
-**Last updated:** 2026-05-13
+**Last updated:** 2026-05-13 (Market Access module added)
 
 > **Naming note:** "Listo by AREI" is a working product name used for UI copy, docs, and internal discussion. The final name depends on domain availability, trademark checks, language checks across target markets, and broker feedback. Do not rename folders, packages, or database concepts to "listo" until the name is confirmed.
 
@@ -77,6 +77,7 @@ Complexity that this product deliberately avoids in V0:
 - **WhatsApp workflow** — one-click WhatsApp CTA on listings and agency page; prefilled messages; mark lead as contacted
 - **Follow-up tracking** — set a follow-up date on a lead; see overdue follow-ups at a glance
 - **Listing status** — mark listings as active, reserved, sold, or inactive to keep the catalogue current
+- **Market Access** — browse, search, and filter public listings across the AREI market; understand what is currently available; compare their own listings with similar market listings at a glance
 
 V0 pilot is free. No credit card. No contract. Explicit understanding that listing data is shared with and indexed by AREI (see §6).
 
@@ -122,18 +123,180 @@ V0 is admin-operated: an AREI staff member creates the agency account, adds the 
 | **Agency website** | Public agency profile page, active listings, contact buttons, WhatsApp CTA, shareable agency URL |
 | **Performance** | Listing views (placeholder), leads per listing, WA clicks, contact clicks |
 | **Profile** | Agency name, description, contact person, email, phone, WhatsApp, logo URL |
+| **Market** | Browse and search public active listings; filter by island, price range, property type, bedrooms; see a simple market overview count |
 
 **Leads table (new — needed for V0):**  
-The current schema has no leads table. A `leads` table is needed before the Leads module can be built. See §9 (data model notes).
+The current schema has no leads table. A `leads` table is needed before the Leads module can be built. See §10 (data model notes).
 
-**Navigation (broker-facing):**
+**Navigation (broker-facing) — options under review:**
+
+Two nav structures are under consideration. Neither is final until tested with brokers. See §8.2 for full rationale.
+
+**Option A:**
 ```
-Inbox | Listings | Website | Performance | Profile
+Inbox | Listings | Market | More
 ```
+"More" drawer: Performance, Website, Profile.
+
+**Option B (preferred starting point):**
+```
+Today | Leads | Listings | Market
+```
+Website and Profile accessible via a top-right agency/settings menu.
+
+Do not lock a nav structure before piloting. See §8.2.
 
 ---
 
-## 8. V1 roadmap
+## 8. Market Access module
+
+### What it is
+
+Market Access gives brokers visibility into what is currently available across the AREI market — not just their own listings. It is a read-only view of the same public listing data that powers AREI's public index surfaces (e.g. kazaverde.com for Cape Verde).
+
+The framing is **market visibility for brokers**, not an intelligence product. A broker should be able to check: "What 3-bed villas are currently listed in Sal? What is the typical asking price?" They should be able to answer a buyer enquiry with real market context, not guesswork.
+
+This creates an explicit and fair give-and-take:
+- Brokers contribute structured listing data to AREI.
+- Brokers get operational tools **and** visibility into the full market they are operating in.
+
+### Two worlds
+
+The broker workspace has two distinct areas:
+
+**My Agency**
+- My listings
+- My leads (Inbox)
+- My agency page (Website)
+- My performance
+
+**Market**
+- All active public listings across the AREI market
+- Comparable listings to my own
+- Simple market overview
+
+These worlds must remain visually and conceptually separate. "My Agency" is the broker's operational workspace. "Market" is a read-only market window. Brokers never edit or claim Market listings.
+
+### Answered product questions
+
+**1. Should Market be a main bottom nav item?**  
+Yes. Market is a distinct daily-use job — not a configuration screen. Brokers who are preparing a buyer meeting or responding to an enquiry will open Market regularly. It belongs in the primary bottom nav. The open question is which other items share the bar — see §8.2.
+
+**2. Should Website/Profile move to settings/more?**  
+Yes. Website and Profile are set-and-forget configuration screens. They should not occupy a primary nav slot. Whether they live in a "More" drawer (Option A) or a top-right agency/settings menu (Option B) is an open question. See §8.2.
+
+**3. What is the minimum useful Market V0?**  
+See §8.1 below.
+
+**4. What data source should Market use?**  
+`broker.market_listings_view` — a broker-safe wrapper view over `public.v1_feed_cv`, created in migration 037.
+
+`public.v1_feed_cv` is the canonical public feed that powers kazaverde.com. It contains only curated, approved, published listings. `broker.market_listings_view` selects a fixed broker-safe column subset from it and grants SELECT to `anon` and `authenticated`, matching the public site's access model.
+
+Product rule: **what buyers can already see on the live public site can also be shown inside the broker tool as Market Access.** The live site already has sufficient listing volume for this to be useful. The key issue is not volume — it is using the correct live/public feed.
+
+**Do not use `broker_pilot_listings` as the Market Access source.** That table holds the broker's own agency listings (the My Agency side). It is not the public market feed.
+
+Do not use raw pipeline tables, scraper snapshots, or admin-only diagnostic views. Do not create a new market dataset.
+
+**5. What must not be exposed?**  
+- Lead contact details from any agency's `leads` table  
+- `reviewer_notes`, `reviewed_by`, `reviewed_at` on any listing  
+- `claimed_status`, `data_partner_status`, `source_ids` on agencies  
+- `agency_relationships` CRM data  
+- `agency_data_quality_snapshots` and `listing_data_issues` tables  
+- Any other agency's lead volume or enquiry data  
+- Price history (reserved for future paid Intelligence tier)  
+- Internal quality scores
+
+**6. What belongs in future paid Intelligence instead?**  
+See §8.3 below.
+
+---
+
+### 8.1 Market V0 — minimum useful scope
+
+| Capability | V0 scope |
+|---|---|
+| **Browse listings** | Paginated list of active public listings across the market |
+| **Search** | Keyword search (location name, listing title) |
+| **Filter: island/location** | Dropdown or chip filter by island (Sal, Santiago, etc.) |
+| **Filter: price range** | Min/max price inputs |
+| **Filter: property type** | Apartment, Villa, Land, Commercial (matching listing types) |
+| **Filter: bedrooms** | Optional — include if data coverage is sufficient |
+| **Market summary tile** | "N active listings in [island]" — simple count, no charts |
+| **Listing detail (read-only)** | Photos, price, location, property type, size, agency name |
+| **Share a listing** | Copy link or WhatsApp share — so broker can forward to a buyer |
+| **Comparable view** | From a broker's own listing: "See similar listings in the market" — filtered by same island + property type, nearby price range |
+
+What is explicitly **not** in Market V0:
+- Price history charts
+- Price per sqm benchmarks
+- Trend lines or YoY comparisons
+- Alerts or saved searches
+- Exports
+- Any form of AVM or valuation estimate
+
+### 8.2 Navigation options — not final until tested
+
+**Do not lock a nav structure before piloting with brokers.** Two options are on the table:
+
+---
+
+**Option A: Inbox | Listings | Market | More**
+
+```
+Inbox | Listings | Market | More
+```
+
+"More" drawer: Performance, Website, Profile.
+
+- Familiar CRM-style pattern
+- "Inbox" maps clearly to the lead workflow brokers already know from WhatsApp
+- "More" is a necessary compromise — four items is the practical mobile bottom-nav limit
+
+---
+
+**Option B (preferred starting point): Today | Leads | Listings | Market**
+
+```
+Today | Leads | Listings | Market
+```
+
+Website and Profile accessible via a top-right agency/settings menu (avatar or gear icon).
+
+- **Today** — daily action hub: overdue follow-ups, new leads, listing activity since last visit. Gives brokers a single place to start their day without hunting across tabs.
+- **Leads** — dedicated buyer follow-up tab. Separates lead management from listing management, which is more accurate to how brokers think ("my buyers" vs "my properties").
+- **Listings** — own agency inventory, unchanged.
+- **Market** — all visible market listings, unchanged.
+- Website and Profile move to a persistent top-right menu — consistent with how mobile apps handle account and settings, and these are genuinely infrequent actions.
+
+Option B is more ambitious — it requires a Today screen that doesn't exist yet. But it better reflects the daily broker workflow and avoids the "More" drawer problem.
+
+---
+
+**Decision:** Test Option B in V0.2 pilot. Fall back to Option A if Today screen proves too complex to build before the first agency demo. Do not present either as final to brokers — treat nav as an explicit open variable during the pilot.
+
+### 8.3 Future paid Intelligence tier (not V0, not V1)
+
+These features belong in a future Intelligence product, likely a separate SKU or a paid upgrade within the broker app. They require data at scale and deliberate UX design to be useful:
+
+| Feature | Why it is premium, not free |
+|---|---|
+| Price history over time | Requires longitudinal data; not available at launch |
+| Price per sqm benchmarks by location | Requires sufficient listing density to be statistically meaningful |
+| Saved searches + alerts | Requires notification infrastructure |
+| CSV / data exports | Enables data re-use; appropriate as a paid feature |
+| Advanced comparable analysis | Goes beyond simple visibility into analytical tooling |
+| Market reports (PDF/share) | Packaged output for investor or buyer meetings |
+| Absorption rate / time-on-market | Requires sold + inactive status history at scale |
+| Investor-grade analytics | Out of scope for the agency operational tool |
+
+These features will be clearly labelled in the UI when they appear: "Available in AREI Intelligence" or similar. The free tier must remain genuinely useful without them.
+
+---
+
+## 9. V1 roadmap
 
 | Feature | Notes |
 |---|---|
@@ -150,10 +313,25 @@ Inbox | Listings | Website | Performance | Profile
 | Market data light | Simple market context: avg price per sqm in [island], trend vs last quarter |
 | CSV export | Export listings and leads |
 | Portuguese UI | Full localisation for Cape Verde market |
+| Market: saved searches | Save a filter combination; return to it quickly |
+| Market: comparable alerts | Notify broker when a new listing matches their own listing's profile |
+
+**Future paid / Intelligence tier (V2+):**
+
+| Feature | Notes |
+|---|---|
+| Price history charts | Requires longitudinal data at scale |
+| Price per sqm benchmarks | Requires listing density to be meaningful |
+| Alerts | New listing alerts matching saved criteria |
+| Data exports | CSV/XLSX of market listings |
+| Advanced comparables | Comparable analysis beyond simple filter matching |
+| Market reports | Packaged PDF/share output for buyer or investor meetings |
+| Absorption rate / time-on-market | Requires historical status data |
+| Investor-grade analytics | Separate product consideration |
 
 ---
 
-## 9. Data model notes
+## 10. Data model notes
 
 ### Existing tables (reuse)
 
@@ -187,7 +365,7 @@ This table is **broker-owned data** — lead contact details belong to the agenc
 
 ---
 
-## 10. Interview questions for broker meetings
+## 11. Interview questions for broker meetings
 
 Use these to validate the product before building:
 
@@ -214,7 +392,7 @@ Use these to validate the product before building:
 
 ---
 
-## 11. Competitive context
+## 12. Competitive context
 
 > Full competitive landscape research: `docs/03-product/broker-tool-competitive-landscape-2026.md`
 
@@ -259,7 +437,7 @@ The data generated by broker usage is the real business value — every listing 
 
 ---
 
-## 12. What this product is not (summary)
+## 13. What this product is not (summary)
 
 - Not a portal (Listo does not aggregate listings from multiple agencies for a buyer to browse — that's kazaverde.com)
 - Not a valuation tool
@@ -267,10 +445,12 @@ The data generated by broker usage is the real business value — every listing 
 - Not a mortgage or finance calculator
 - Not a competitor to the agencies' own websites (it complements them)
 - Not a complex CRM with pipeline stages and reporting
+- **Market Access is not an intelligence product** — it is market visibility. Price history, benchmarks, and analytics belong in a future paid Intelligence tier, not in the free broker workspace
+- **Market Access is not a buyer-facing portal** — brokers may share individual listings with buyers, but the Market tab is a broker-facing tool for market awareness, not a consumer product
 
 ---
 
-## 13. Relationship to the AREI admin tools
+## 14. Relationship to the AREI admin tools
 
 The admin-side tools (Agency Console, Agency Data Console, Broker Pilot Preview) are **internal AREI infrastructure**. They are used by AREI staff to:
 
@@ -285,7 +465,7 @@ The broker sees Listo. AREI sees the admin tools. The Supabase backend is shared
 
 ---
 
-## 14. Open questions
+## 15. Open questions
 
 - **Product name:** "Listo by AREI" is the working name. Confirm before launch. Check trademark conflicts.
 - **Domain:** `listo.arei.io` or `listo.kazaverde.com` (Cape Verde pilot only)?
@@ -293,3 +473,7 @@ The broker sees Listo. AREI sees the admin tools. The Supabase backend is shared
 - **Pricing:** Free forever? Freemium? Subscription for V1 features?
 - **Leads table migration:** Which migration number? Apply before building leads module.
 - **Listing page hosting:** Where does `listo.arei.io/agency-slug/listing-id` resolve?
+- **Market data source — resolved:** `arei-broker` Market tab reads from `broker.market_listings_view` (migration 037), a broker-safe wrapper over `public.v1_feed_cv`. Decision closed.
+- **Market share link:** When a broker shares a Market listing with a buyer, where does the link resolve — the AREI public surface (kazaverde.com) or a Listo-hosted listing page? Resolve before building share flow.
+- **Agency name display in Market:** Should the listing agency's name be visible in Market, or should it be anonymised? Current lean: show agency name, as it enables broker-to-broker referrals and is consistent with how AREI public surfaces work.
+- **Intelligence tier timing:** When does the paid Intelligence tier become viable? Requires meaningful data density (likely 500+ active listings and 12+ months of history). Do not surface Intelligence features until the data supports them.
