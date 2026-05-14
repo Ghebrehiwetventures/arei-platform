@@ -46,11 +46,11 @@ Snippet rules:
 
 Why it matters rules:
 - Write for a foreign investor, buyer or broker who does not know Cape Verde well.
-- Start simply: "This matters because..." or "For outside investors, this is relevant because..."
-- Connect to the market only when the link is reasonable and honest.
-- Use cautious language when the connection to property or investment is indirect.
-- It is fine to say: "This matters because it gives investors a clearer picture of how the country is developing."
-- Do not pretend every story directly changes property prices or proves market growth.
+- The goal is to help outside investors understand Cape Verde — not to force every story into a property-price argument.
+- Good connections include: tourism, infrastructure, aviation and access, public investment, regulation, government capacity and transparency, the cultural and visitor economy, foreign investment activity, and property-market context when it genuinely applies.
+- Use cautious language when the connection is indirect. It is fine to say the story helps investors understand how the country is developing.
+- Do not pretend every story directly affects property prices or demand.
+- "This matters because..." is a natural way to open, but do not force it every time. Write in a way that feels human and clear, not templated. Vary the phrasing when it reads better.
 
 Avoid these words and phrases in all fields:
 - will boost property demand
