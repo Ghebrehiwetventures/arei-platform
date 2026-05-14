@@ -2,9 +2,9 @@
 
 **Document:** AREI-IB-001 · v1.2
 **Date:** May 2026
-**Status:** Confidential · external-readiness pass
+**Status:** Internal working draft · not for external fundraising use
 **Audience:** Pre-seed investors
-**External sharing note:** Do not send externally until methodology v1.0, team bios, and TAM assumptions are reviewed.
+**External sharing note:** Do not send externally until broker validation, methodology v1.0 direction, team structure, and ARR assumptions are reviewed.
 
 ---
 
@@ -290,6 +290,8 @@ Cape Verde is not the revenue market. It is where the parser, methodology, brand
 **Body footer:**
 No revenue assumption for Cape Verde in year one. First paid customers expected in Ghana, where buyer density and broker concentration support a paid professional tier. The thesis is repeatability across markets, not single-market monetization. The 60-month figure assumes seven country indices live and an institutional API launched — both conditions are required for that range to be realistic. Targets are planning ranges, not forecasts.
 
+*ARR ranges are placeholders for planning and will be revised after broker validation and Market 02 assumptions are confirmed.*
+
 ---
 
 ## SLIDE 11 — COMPETITION & DEFENSIBILITY
@@ -379,6 +381,8 @@ Senior technical lead. One data engineer. One data analyst for methodology and b
 
 **Why this matters:**
 The company needs two capabilities: market and operator judgment, and reliable data infrastructure. The first is founder-led. The second is the first major hiring priority.
+
+*Technical hiring and contributor structure to be finalized before external fundraising.*
 
 ---
 
@@ -474,12 +478,12 @@ A few things worth flagging when this goes into layout:
 
 ## OUTSTANDING ITEMS
 
-Three things to fill in before sending:
+Required before external distribution:
 
-1. **Team framing (slide 13)** — confirm whether any external technical contributors should be named before external distribution.
-2. **Validate TAM ranges (slide 10)** — confirm or adjust the indicative ARR figures.
-3. **Citation pass** — add sources for remittance flows and Ghana/Accra market-growth assumptions.
-4. **Optional appendix slides** — source registry detail, methodology v0.3 summary, engineering roadmap.
+1. **Team structure (slide 13)** — technical hiring and contributor framing to be finalized before external distribution. Do not share externally with current "technical support" framing unless context is clearly internal.
+2. **ARR/TAM assumptions (slide 10)** — ranges to be validated after broker conversations and methodology work. Current figures are planning placeholders only.
+3. **Citation pass** — add sources for remittance flows (slide 03) and Ghana/Accra market-growth assumptions (slide 07).
+4. **Optional appendix slides** — methodology v0.3 summary and source registry detail when ready.
 
 ---
 
