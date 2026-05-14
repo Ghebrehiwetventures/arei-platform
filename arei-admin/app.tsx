@@ -888,7 +888,10 @@ function DashboardView() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
           <SourceHealthStat label={`${selectedMarketLabel} sources`} value={totalSources} />
-          <SourceHealthStat label="Live feed (CV)" value={healthRows.reduce((acc: number, r: SourceQualityRow) => acc + r.public_feed_count_n, 0)} tone="good" />
+          {/* Direct COUNT(*) FROM public.v1_feed_cv — same source as the public website.
+              Not derived from per-source RPC sums, which under-count when v1_feed_cv
+              contains source_ids absent from public.listings. */}
+          <SourceHealthStat label="Live feed (CV)" value={stats.liveFeedTotal} tone="good" />
           <SourceHealthStat label="Fresh (≤30d)" value={freshSources} tone={totalSources > 0 && freshSources === totalSources ? "good" : undefined} />
           <SourceHealthStat label="Stale (>30d)" value={staleSourcesCount} tone={staleSourcesCount > 0 ? "warn" : "good"} />
           <SourceHealthStat label="Missing sqm" value={missingSqmSources} tone={missingSqmSources > 0 ? "warn" : "good"} />

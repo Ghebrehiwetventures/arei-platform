@@ -112,6 +112,12 @@ export interface DashboardStats {
   sourceCount: number;
   marketCount: number;
   sourceRows: SourceQualityRow[];
+  // Direct COUNT(*) FROM public.v1_feed_cv — the canonical public feed.
+  // Do NOT derive this by summing per-source public_feed_count from the RPC:
+  // the RPC starts from public.listings and silently drops v1_feed_cv rows
+  // whose source_id has no corresponding row in public.listings (e.g. rows
+  // that originate in kv_curated but never touched the pipeline table).
+  liveFeedTotal: number;
 }
 
 export type IngestRunPhase = "post_fetch_snapshot" | "final_post_enrichment";
