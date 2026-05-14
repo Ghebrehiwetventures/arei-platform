@@ -567,7 +567,20 @@ function isStubSourceId(sourceId: string): boolean {
 
 export async function getDashboardStats(): Promise<DashboardStats> {
   try {
-    const { data: rows, error } = await supabase.rpc("get_source_quality_stats");
+    // Fire the RPC and the direct feed count in parallel.
+    // The direct count is the authoritative "live feed" total — it is a
+    // single COUNT(*) on public.v1_feed_cv, identical to what the public
+    // website SDK counts.  The per-source aggregation in the RPC starts from
+    // public.listings and silently under-counts when v1_feed_cv contains
+    // source_ids not present in public.listings (e.g. kv_curated-only rows).
+    const [rpcResult, feedCountResult] = await Promise.all([
+      supabase.rpc("get_source_quality_stats"),
+      supabase.from("v1_feed_cv").select("id", { count: "exact", head: true }),
+    ]);
+
+    const liveFeedTotal = feedCountResult.count ?? 0;
+
+    const { data: rows, error } = rpcResult;
     if (error) {
       console.warn("[Admin] RPC get_source_quality_stats failed (run docs/supabase_rpc.sql?):", error.message);
       return {
@@ -576,6 +589,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
         sourceCount: 0,
         marketCount: 0,
         sourceRows: [],
+        liveFeedTotal,
       };
     }
     const raw = (rows || []) as SourceQualityRowRaw[];
@@ -644,6 +658,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       sourceCount: sourceRows.length,
       marketCount: marketSet.size,
       sourceRows,
+      liveFeedTotal,
     };
   } catch (err) {
     console.error("[Admin] getDashboardStats error:", err);
@@ -653,6 +668,7 @@ export async function getDashboardStats(): Promise<DashboardStats> {
       sourceCount: 0,
       marketCount: 0,
       sourceRows: [],
+      liveFeedTotal: 0,
     };
   }
 }
