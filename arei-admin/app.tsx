@@ -705,6 +705,57 @@ function SourceHealthStat({ label, value, tone }: { label: string; value: number
   );
 }
 
+function NorthStarBanner() {
+  return (
+    <div className="rounded border border-border bg-surface-1 p-5 space-y-4">
+      {/* Header */}
+      <div className="flex items-baseline gap-3">
+        <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle">North Star</span>
+        <span className="text-[10px] text-foreground-subtle">·</span>
+        <span className="text-[10px] text-foreground-subtle font-mono">internal only</span>
+      </div>
+
+      {/* Hero + descriptor */}
+      <div>
+        <p className="text-base font-semibold text-foreground font-mono leading-snug">
+          Africa's property data is everywhere. We bring it together.
+        </p>
+        <p className="text-sm text-foreground-muted mt-1">
+          Data acquisition and intelligence infrastructure for African property markets.
+        </p>
+        <p className="text-xs text-foreground-subtle mt-1">
+          AREI is not a broker and not a generic property portal. We structure fragmented property data into readable market intelligence, starting with Cape Verde.
+        </p>
+      </div>
+
+      {/* Three surfaces */}
+      <div>
+        <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-2">Three surfaces. One engine.</p>
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+          <div className="rounded border border-border p-3">
+            <p className="text-[10px] font-mono font-medium text-foreground uppercase tracking-wider">Public Index Surface</p>
+            <p className="text-xs text-foreground-muted mt-1">Authority · SEO · transparency</p>
+          </div>
+          <div className="rounded border border-border p-3">
+            <p className="text-[10px] font-mono font-medium text-foreground uppercase tracking-wider">Broker Tools</p>
+            <p className="text-xs text-foreground-muted mt-1">Attribution · data cooperation · buyer intent</p>
+          </div>
+          <div className="rounded border border-border p-3">
+            <p className="text-[10px] font-mono font-medium text-foreground uppercase tracking-wider">Intelligence Layer</p>
+            <p className="text-xs text-foreground-muted mt-1">Paid data products · professional users · institutional insight</p>
+          </div>
+        </div>
+      </div>
+
+      {/* Drift warning */}
+      <div className="flex items-start gap-2 pt-1 border-t border-border">
+        <span className="text-[10px] font-mono font-medium text-amber uppercase tracking-wider shrink-0 mt-0.5">Do not drift into</span>
+        <span className="text-xs text-foreground-muted">generic property portal · full CRM · lead-gen site · hype before data quality</span>
+      </div>
+    </div>
+  );
+}
+
 function DashboardView() {
   const { selected: selectedMarket } = useSelectedMarket();
   const selectedMarketId = selectedMarket.id;
@@ -845,6 +896,7 @@ function DashboardView() {
 
   return (
     <div className="space-y-8">
+      <NorthStarBanner />
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
