@@ -792,7 +792,7 @@ function DashboardView() {
   // Top 3 issues to highlight, in priority order
   type HealthIssue = { label: string; count: number; tone: "bad" | "warn" };
   const allIssues: HealthIssue[] = [
-    { label: "ingest-approved → 0 live feed", count: approvedNoFeedSources, tone: "bad" },
+    { label: "ingest-approved → 0 in CV feed", count: approvedNoFeedSources, tone: "bad" },
     { label: "ingest-approved → 0 trust pass", count: approvedNoTrustSources, tone: "bad" },
     { label: "stale (>30d)", count: staleSourcesCount, tone: "warn" },
     { label: "0% sqm coverage", count: missingSqmSources, tone: "warn" },
@@ -888,11 +888,11 @@ function DashboardView() {
         </div>
         <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-7 gap-3 sm:gap-4">
           <SourceHealthStat label={`${selectedMarketLabel} sources`} value={totalSources} />
-          <SourceHealthStat label="Live feed" value={healthRows.reduce((acc: number, r: SourceQualityRow) => acc + r.public_feed_count_n, 0)} tone="good" />
+          <SourceHealthStat label="Live feed (CV)" value={healthRows.reduce((acc: number, r: SourceQualityRow) => acc + r.public_feed_count_n, 0)} tone="good" />
           <SourceHealthStat label="Fresh (≤30d)" value={freshSources} tone={totalSources > 0 && freshSources === totalSources ? "good" : undefined} />
           <SourceHealthStat label="Stale (>30d)" value={staleSourcesCount} tone={staleSourcesCount > 0 ? "warn" : "good"} />
           <SourceHealthStat label="Missing sqm" value={missingSqmSources} tone={missingSqmSources > 0 ? "warn" : "good"} />
-          <SourceHealthStat label="0 live feed" value={approvedNoFeedSources} tone={approvedNoFeedSources > 0 ? "bad" : "good"} />
+          <SourceHealthStat label="0 in CV feed" value={approvedNoFeedSources} tone={approvedNoFeedSources > 0 ? "bad" : "good"} />
           <SourceHealthStat label="Ratio <25%" value={lowFeedConvSources} tone={lowFeedConvSources > 0 ? "warn" : "good"} />
         </div>
         {topIssues.length > 0 && (
@@ -961,7 +961,7 @@ function DashboardView() {
             <>
               {new Date(latestSync.at).toLocaleString(undefined, { dateStyle: "medium", timeStyle: "short" })}
               <span className="text-foreground-subtle ml-2">
-                {latestSync.marketName}: {latestSync.totalListings} total, {latestSync.visibleCount} visible
+                {latestSync.marketName}: {latestSync.totalListings} total, {latestSync.visibleCount} pipeline-eligible
               </span>
             </>
           ) : fallbackMs != null ? (
@@ -2073,7 +2073,7 @@ function SourcesView() {
                   <tr className="border-b border-border bg-surface-2">
                     <th className="text-left py-2.5 px-3 text-[11px] uppercase tracking-wider text-foreground-subtle font-medium">Source</th>
                     <SourceSortHeader label="Listings" sortKey="listing_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
-                    <SourceSortHeader label="Live feed" sortKey="public_feed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
+                    {isActive && <SourceSortHeader label="In public feed" sortKey="public_feed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />}
                     <SourceSortHeader label="Pipeline-approved" sortKey="approved_count" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Indexable" sortKey="indexable_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
                     <SourceSortHeader label="Trust passed" sortKey="trust_passed_count_n" currentKey={sortKey} currentDir={sortDir} onSort={onSort} align="right" />
@@ -2106,7 +2106,7 @@ function SourcesView() {
                         <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">
                           {Number(r.listing_count).toLocaleString()}
                         </td>
-                        <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.public_feed_count_n.toLocaleString()}</td>
+                        {isActive && <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{r.public_feed_count_n.toLocaleString()}</td>}
                         <td className="py-2.5 px-3 text-right text-sm text-foreground-muted tabular-nums font-mono">{approvedN.toLocaleString()}</td>
                         <td className={`py-2.5 px-3 text-right text-sm tabular-nums font-mono ${indexableClass}`}>{r.indexable_count_n.toLocaleString()}</td>
                         <td className={`py-2.5 px-3 text-right text-sm tabular-nums font-mono ${trustClass}`}>{r.trust_passed_count_n.toLocaleString()}</td>
