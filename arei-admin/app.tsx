@@ -707,51 +707,48 @@ function SourceHealthStat({ label, value, tone }: { label: string; value: number
 
 function NorthStarBanner() {
   return (
-    <div className="rounded border border-border bg-surface-1 p-5 space-y-4">
-      {/* Header */}
-      <div className="flex items-baseline gap-3">
-        <span className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle">North Star</span>
-        <span className="text-[10px] text-foreground-subtle">·</span>
-        <span className="text-[10px] text-foreground-subtle font-mono">internal only</span>
-      </div>
+    <div className="rounded border border-border bg-surface-2 px-5 py-4">
+      {/* Title */}
+      <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-2">North Star</p>
 
       {/* Hero + descriptor */}
-      <div>
-        <p className="text-base font-semibold text-foreground font-mono leading-snug">
-          Africa's property data is everywhere. We bring it together.
-        </p>
-        <p className="text-sm text-foreground-muted mt-1">
-          Data acquisition and intelligence infrastructure for African property markets.
-        </p>
-        <p className="text-xs text-foreground-subtle mt-1">
-          AREI is not a broker and not a generic property portal. We structure fragmented property data into readable market intelligence, starting with Cape Verde.
-        </p>
-      </div>
+      <p className="text-sm font-semibold text-foreground font-mono leading-snug">
+        Africa's property data is everywhere. We bring it together.
+      </p>
+      <p className="text-xs text-foreground-muted mt-1">
+        Data acquisition and intelligence infrastructure for African property markets.
+      </p>
 
-      {/* Three surfaces */}
-      <div>
-        <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-2">Three surfaces. One engine.</p>
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-          <div className="rounded border border-border p-3">
-            <p className="text-[10px] font-mono font-medium text-foreground uppercase tracking-wider">Public Index Surface</p>
-            <p className="text-xs text-foreground-muted mt-1">Authority · SEO · transparency</p>
-          </div>
-          <div className="rounded border border-border p-3">
-            <p className="text-[10px] font-mono font-medium text-foreground uppercase tracking-wider">Broker Tools</p>
-            <p className="text-xs text-foreground-muted mt-1">Attribution · data cooperation · buyer intent</p>
-          </div>
-          <div className="rounded border border-border p-3">
-            <p className="text-[10px] font-mono font-medium text-foreground uppercase tracking-wider">Intelligence Layer</p>
-            <p className="text-xs text-foreground-muted mt-1">Paid data products · professional users · institutional insight</p>
-          </div>
+      {/* Desktop: three columns */}
+      <div className="hidden sm:grid grid-cols-3 gap-5 mt-4">
+        <div>
+          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-1">What</p>
+          <p className="text-xs text-foreground-muted leading-relaxed">We structure fragmented public property listings into readable market intelligence.</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-1">How</p>
+          <p className="text-xs text-foreground-muted leading-relaxed">One engine collects, cleans, scores and publishes market records.</p>
+        </div>
+        <div>
+          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-1">Why</p>
+          <p className="text-xs text-foreground-muted leading-relaxed">To make African property markets easier to understand for buyers, brokers and professional users.</p>
         </div>
       </div>
 
-      {/* Drift warning */}
-      <div className="flex items-start gap-2 pt-1 border-t border-border">
-        <span className="text-[10px] font-mono font-medium text-amber uppercase tracking-wider shrink-0 mt-0.5">Do not drift into</span>
-        <span className="text-xs text-foreground-muted">generic property portal · full CRM · lead-gen site · hype before data quality</span>
-      </div>
+      {/* Mobile: compact single block */}
+      <p className="sm:hidden text-xs text-foreground-muted mt-2 leading-relaxed">
+        Structure fragmented listings. One engine cleans, scores and publishes records. Make the market easier to understand.
+      </p>
+
+      {/* Footer: surfaces */}
+      <p className="text-[10px] font-mono text-foreground-subtle mt-3 pt-3 border-t border-border">
+        Three surfaces. One engine:{" "}
+        <span className="text-foreground-muted">Public Index</span>
+        {" · "}
+        <span className="text-foreground-muted">Broker Tools</span>
+        {" · "}
+        <span className="text-foreground-muted">Intelligence</span>
+      </p>
     </div>
   );
 }
