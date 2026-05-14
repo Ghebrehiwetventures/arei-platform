@@ -4,7 +4,8 @@
   "version": "0.0.1",
   "description": "Canonical static AREI landing site for africarealestateindex.com",
   "scripts": {
-    "build": "mkdir -p dist && cp index.html arei-og.png dist/",
+    "build": "mkdir -p dist && cp index.html arei-og.png favicon.svg apple-touch-icon.png dist/",
+    "gen:icons": "node ../scripts/gen-icons.js",
     "dev": "python3 -m http.server 4321",
     "deploy:link": "npx -y vercel@latest link --yes --project arei-landing",
     "deploy:preview": "bash scripts/deploy.sh preview",
