@@ -93,3 +93,5 @@ The following guidance is **stale** and superseded by this directory:
 - Any per-product mark that is not `d-layers-mark.svg`
 
 See also: `docs/04-platform/visual-identity.md` (cross-product rules and principles).
+
+For voice, writing rules, approved/banned phrases, and do/don't examples across all AREI surfaces: **`voice-and-language.md`**.
