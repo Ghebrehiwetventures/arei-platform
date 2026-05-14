@@ -6,76 +6,66 @@ Brand reference: `docs/brand/README.md`, `docs/brand/source/`
 
 ---
 
-## Publish status
+## Approved assets
 
-| Asset | Status | Notes |
+| File | Dimensions | Use |
 |---|---|---|
-| `arei-avatar-1080.png` | **Approved** | Canonical SVG mark via cairosvg, bone background |
-| `arei-avatar-400.png` | **Approved** | Downscaled from 1080 master |
-| `arei-instagram-profile-1080.png` | **Approved** | Identical to avatar master |
-| `arei-x-header-1500x500.png` | **Blocked** | Not committed — see below |
-| `arei-linkedin-company-banner-1128x191.png` | **Blocked** | Not committed — see below |
-| `arei-linkedin-founder-banner-1584x396.png` | **Blocked** | Not committed — see below |
-| `arei-og-image-1200x630.png` | **Blocked** | Not committed — see below |
+| `arei-x-banner-1500x500.png` | 1500 × 500 | X/Twitter header image |
+| `arei-og-1200x630.png` | 1200 × 630 | AREI link preview / Open Graph image |
+| `cvrei-og-1200x630.png` | 1200 × 630 | CVREI link preview / Open Graph image |
+| `arei-avatar-ink-1080x1080.png` | 1080 × 1080 | Profile image — ink bg (master) |
+| `arei-avatar-ink-400x400.png` | 400 × 400 | Profile image — ink bg (upload size) |
+| `arei-avatar-1080.png` | 1080 × 1080 | Profile image — bone bg (master) |
+| `arei-avatar-400.png` | 400 × 400 | Profile image — bone bg |
+| `arei-instagram-profile-1080.png` | 1080 × 1080 | Instagram profile image |
+
+**Generation method:** HTML/SVG sources in `draft/` rendered via Playwright headless
+Chromium at exact pixel dimensions. Font loaded from Google Fonts (IBM Plex Mono).
+Mark geometry sourced verbatim from `docs/brand/assets/d-layers-mark.svg`.
 
 ---
 
-## What is approved
+## Upload guide
 
-### Avatar / profile images
-
-Three mark-only assets are approved for upload:
-
-- `arei-avatar-1080.png` — use as the source master
-- `arei-avatar-400.png` — upload to X/Twitter profile image, LinkedIn company logo
-- `arei-instagram-profile-1080.png` — upload to Instagram profile
-
-**Generation method:** `docs/brand/assets/d-layers-mark.svg` rendered directly via
-`cairosvg.svg2png()`. No mark geometry was hand-coded or manually reproduced.
-Canonical SVG was not modified. Background: bone (`#f2f0ec`). Mark: ink (`#0a0a0a`).
-
----
-
-## What is blocked
-
-### Text-bearing banners — DO NOT PUBLISH
-
-The following assets are **not committed** and **must not be published**:
-
-- X/Twitter header (1500 × 500)
-- LinkedIn company banner (1128 × 191)
-- LinkedIn founder banner (1584 × 396)
-- Open Graph image (1200 × 630)
-
-**Reason:** Programmatic Pillow/Python rendering does not produce output that
-meets the AREI brand standard. Even with IBM Plex Mono, the result is too
-heavy and terminal-like — it does not match the AREI visual system in practice.
-
-**Required:** Final banner exports must come from the actual AREI brand system —
-i.e., from the authored brand guidelines source in `docs/brand/source/`, exported
-via a design tool (Figma or equivalent) using the canonical color tokens,
-typography scale, and spacing documented in `docs/brand/source/bg/foundations.jsx`.
-
-Font files (`IBMPlexMono-*.ttf`) are not committed to this repository.
-If a generation script is needed in future, fonts should be sourced at runtime
-from Google Fonts (the same source as `arei-admin/index.html`) — not committed.
-
----
-
-## Upload guide (approved assets only)
-
-| Platform | File to upload |
+| Platform | File |
 |---|---|
-| X/Twitter — profile image | `arei-avatar-400.png` |
-| LinkedIn — company logo | `arei-avatar-400.png` |
+| X/Twitter — header | `arei-x-banner-1500x500.png` |
+| X/Twitter — profile image | `arei-avatar-ink-400x400.png` |
+| LinkedIn — company banner | `arei-x-banner-1500x500.png` (crop to 1128×191) |
+| LinkedIn — company logo | `arei-avatar-ink-400x400.png` |
 | Instagram — profile image | `arei-instagram-profile-1080.png` |
-| All others | Blocked — do not upload until design exports are produced |
+| AREI landing OG | `arei-og-1200x630.png` → deployed as `arei-landing/arei-og.png` |
+| CVREI site OG | `cvrei-og-1200x630.png` → deployed as `kazaverde-web/public/cvrei-og.png` |
+
+Use the **ink bg** avatar (`arei-avatar-ink-400x400.png`) on X and LinkedIn — it
+matches the ink background of the banner, so the profile photo and header read
+as a single cohesive system.
 
 ---
 
-## Checks before uploading avatars
+## Draft sources
 
-- [ ] Circle crop looks clean at 40px diameter
-- [ ] Mark centered and not touching the circle edge
-- [ ] Background is bone (`#f2f0ec`), not pure white
-- [ ] No KazaVerde name visible
+Approved source files in `draft/`:
+
+- `draft/banner-c-marked.html` — X/Twitter banner source
+- `draft/og-arei.html` — AREI OG source
+- `draft/og-cvrei.html` — CVREI OG source
+
+The following draft directions were explored but not used:
+
+- `draft/banner-a-institutional.html` — rejected
+- `draft/banner-b-editorial.html` — rejected
+
+`draft/review.html` is a design review composite, not a production asset.
+
+---
+
+## Color tokens used
+
+| Token | Hex | Role |
+|---|---|---|
+| Ink | `#0a0a0a` | Background (all banners and OG) |
+| Bone | `#f2f0ec` | Primary hero text |
+| Sage | `#8ecfbf` | Accent / sub-line |
+| Gray 500 | `#888888` | URL / secondary labels |
+| Paper | `#ffffff` | Mark geometry on ink |
