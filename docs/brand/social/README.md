@@ -1,92 +1,81 @@
 # AREI Social Media Assets
 
-Generated per `docs/brand/social-media-asset-kit.md`.
-Planning spec and visual rules: see that file.
-Copy source: `docs/brand/public-profile-language.md`.
+Planning spec: `docs/brand/social-media-asset-kit.md`
+Copy source: `docs/brand/public-profile-language.md`
+Brand reference: `docs/brand/README.md`, `docs/brand/source/`
 
 ---
 
 ## Publish status
 
-| Asset | Mark source | Font | Status |
-|---|---|---|---|
-| `arei-avatar-1080.png` | canonical SVG via cairosvg | — (mark only) | **Publish-ready** |
-| `arei-avatar-400.png` | canonical SVG via cairosvg | — (mark only) | **Publish-ready** |
-| `arei-instagram-profile-1080.png` | canonical SVG via cairosvg | — (mark only) | **Publish-ready** |
-| `arei-x-header-1500x500.png` | canonical SVG via cairosvg | IBM Plex Mono | **Publish-ready** |
-| `arei-linkedin-company-banner-1128x191.png` | — (no mark) | IBM Plex Mono | **Publish-ready** |
-| `arei-linkedin-founder-banner-1584x396.png` | — (no mark) | IBM Plex Mono | **Publish-ready** |
-| `arei-og-image-1200x630.png` | canonical SVG via cairosvg | IBM Plex Mono | **Publish-ready** |
-
----
-
-## Files and upload targets
-
-| File | Upload to |
-|---|---|
-| `arei-avatar-1080.png` | Source master for all avatars |
-| `arei-avatar-400.png` | X/Twitter profile image, LinkedIn company logo |
-| `arei-instagram-profile-1080.png` | Instagram profile image |
-| `arei-x-header-1500x500.png` | X/Twitter header/banner |
-| `arei-linkedin-company-banner-1128x191.png` | LinkedIn company page banner |
-| `arei-linkedin-founder-banner-1584x396.png` | LinkedIn personal/founder profile banner |
-| `arei-og-image-1200x630.png` | Open Graph meta tag (`og:image`); Twitter Card, iMessage, WhatsApp previews |
-
----
-
-## Generation method
-
-**Version:** v2 — canonical SVG rendered directly, no manual geometry reproduction.
-
-**Mark source:** `docs/brand/assets/d-layers-mark.svg`
-The canonical SVG was **not modified**. It was passed directly to `cairosvg.svg2png()`
-with color substitution applied at the SVG XML level (ink → paper for dark backgrounds).
-No mark geometry was hand-coded or manually reproduced.
-
-**SVG renderer:** `cairosvg` 2.8.2 + Cairo 1.18.4 (Homebrew).
-The Homebrew cairo library path was required because cairocffi's `dlopen` does not
-search `/opt/homebrew/lib` by default on Apple Silicon. A one-line patch was applied
-to `cairocffi/__init__.py` to add the absolute path; this does not affect any repo file.
-
-**Font:** IBM Plex Mono Regular 400 + Bold 700.
-Files in `fonts/` were downloaded from Google Fonts — the same source as `arei-admin/index.html`.
-These files are for asset generation only, not for web deployment.
-
-**Color tokens used (from `docs/brand/source/bg/foundations.jsx`):**
-
-| Token | Hex | Use |
+| Asset | Status | Notes |
 |---|---|---|
-| `--kv-black` (ink) | `#0a0a0a` | Mark on light, text on light, dark backgrounds |
-| `--kv-paper` | `#ffffff` | Mark on dark |
-| `--kv-off-white` (bone) | `#f2f0ec` | Avatar and company banner background |
-| `--kv-green` (sage) | `#8ecfbf` | Accent lines, label text |
-| `--kv-gray-500` | `#888888` | Secondary/footer text |
+| `arei-avatar-1080.png` | **Approved** | Canonical SVG mark via cairosvg, bone background |
+| `arei-avatar-400.png` | **Approved** | Downscaled from 1080 master |
+| `arei-instagram-profile-1080.png` | **Approved** | Identical to avatar master |
+| `arei-x-header-1500x500.png` | **Blocked** | Not committed — see below |
+| `arei-linkedin-company-banner-1128x191.png` | **Blocked** | Not committed — see below |
+| `arei-linkedin-founder-banner-1584x396.png` | **Blocked** | Not committed — see below |
+| `arei-og-image-1200x630.png` | **Blocked** | Not committed — see below |
 
 ---
 
-## Visual approach per asset
+## What is approved
 
-**Avatars / Instagram profile** — Bone (`#f2f0ec`) background. Canonical D-Layers mark
-centered at 420px rendered size (39% of canvas). No text. Circle-crop safe.
+### Avatar / profile images
 
-**X/Twitter header** — Ink background. Small mark (88px, paper) top-left. Hero lines
-left-aligned in IBM Plex Mono Bold 56pt. `MARKET 01 · CAPE VERDE` in sage, lower-right.
+Three mark-only assets are approved for upload:
 
-**LinkedIn company banner** — Bone background, ink IBM Plex Mono Bold 26pt, descriptor
-centered across two lines. No mark (LinkedIn places the company logo adjacent automatically).
+- `arei-avatar-1080.png` — use as the source master
+- `arei-avatar-400.png` — upload to X/Twitter profile image, LinkedIn company logo
+- `arei-instagram-profile-1080.png` — upload to Instagram profile
 
-**LinkedIn founder banner** — Ink background. Hero text starts at x=350 to clear the
-LinkedIn profile photo safe zone (bottom-left ≈ x < 330, y > 230). Descriptor in sage below.
-
-**Open Graph** — Ink background. Canonical mark (72px, paper) + `AREI` label top-left.
-Hero line 1 in paper, hero line 2 in sage. Descriptor in gray. `arei.so` bottom-right.
+**Generation method:** `docs/brand/assets/d-layers-mark.svg` rendered directly via
+`cairosvg.svg2png()`. No mark geometry was hand-coded or manually reproduced.
+Canonical SVG was not modified. Background: bone (`#f2f0ec`). Mark: ink (`#0a0a0a`).
 
 ---
 
-## Checks before uploading
+## What is blocked
 
-- [ ] Circle crop looks clean at 40px (avatar and Instagram)
-- [ ] X header text readable at 375px mobile viewport width
-- [ ] LinkedIn founder banner — text clears profile photo bottom-left
-- [ ] No KazaVerde name visible in any asset
-- [ ] OG image makes sense with no surrounding context (test via link unfurl)
+### Text-bearing banners — DO NOT PUBLISH
+
+The following assets are **not committed** and **must not be published**:
+
+- X/Twitter header (1500 × 500)
+- LinkedIn company banner (1128 × 191)
+- LinkedIn founder banner (1584 × 396)
+- Open Graph image (1200 × 630)
+
+**Reason:** Programmatic Pillow/Python rendering does not produce output that
+meets the AREI brand standard. Even with IBM Plex Mono, the result is too
+heavy and terminal-like — it does not match the AREI visual system in practice.
+
+**Required:** Final banner exports must come from the actual AREI brand system —
+i.e., from the authored brand guidelines source in `docs/brand/source/`, exported
+via a design tool (Figma or equivalent) using the canonical color tokens,
+typography scale, and spacing documented in `docs/brand/source/bg/foundations.jsx`.
+
+Font files (`IBMPlexMono-*.ttf`) are not committed to this repository.
+If a generation script is needed in future, fonts should be sourced at runtime
+from Google Fonts (the same source as `arei-admin/index.html`) — not committed.
+
+---
+
+## Upload guide (approved assets only)
+
+| Platform | File to upload |
+|---|---|
+| X/Twitter — profile image | `arei-avatar-400.png` |
+| LinkedIn — company logo | `arei-avatar-400.png` |
+| Instagram — profile image | `arei-instagram-profile-1080.png` |
+| All others | Blocked — do not upload until design exports are produced |
+
+---
+
+## Checks before uploading avatars
+
+- [ ] Circle crop looks clean at 40px diameter
+- [ ] Mark centered and not touching the circle edge
+- [ ] Background is bone (`#f2f0ec`), not pure white
+- [ ] No KazaVerde name visible
