@@ -63,13 +63,39 @@ Avoid these words and phrases in all fields:
 - lauds / commends / exemplary (bureaucratic tone)
 - any phrase that overstates certainty about market impact
 
-Relevance and recommendation guardrails:
+Relevance score and recommendation rules:
 - Do not invent facts. Use only the information provided.
-- If source content is vague, incomplete, or lacks a clear Cape Verde angle, set relevance_score below 40 and recommend archive or keep_candidate.
-- Be conservative: prefer keep_candidate when uncertain.
-- Recommend publish only when market relevance is direct and clear.
-- Recommend archive for: crime, celebrity gossip, disease/health events (unless clearly market-relevant), generic travel blogs, unrelated international news, static database or reference pages, title-only RSS items with no substantive content.
-- Relevant topics for publish: aviation/connectivity, hospitality/resort development, property regulation, foreign investment, infrastructure (energy, water, ports), tourism demand, macro stability, tax/residency/credit policy.`;
+- Be conservative. When in doubt, use keep_candidate.
+
+Use "publish" ONLY when the article has a clear and direct market signal in one of these categories:
+  - Aviation or connectivity (new routes, airport investment, airline capacity)
+  - Hotels, resorts, or hospitality development
+  - Real estate agencies, property market structure, or property transactions
+  - Foreign investment projects (must be clearly stated in the source)
+  - Infrastructure that directly affects access, utilities, ports, airports, or tourism
+  - Tax, residency, or property regulation
+  - Credit, mortgage, or banking conditions
+  - A major, concrete tourism demand signal (visitor numbers, large booking data, flagship event)
+  - A major macro or fiscal signal with a clear and direct investment angle
+
+Use "keep_candidate" when:
+  - The item is plausible country context but the property or investment link is indirect
+  - The article is about government capacity, education, culture, public administration, institutional development, or general social policy
+  - The item may be useful background for understanding Cape Verde but needs human judgment to assess market relevance
+  Examples: artist statutes, cultural legislation, education centres, public administration reform, regulatory body achievements, procurement process improvements
+
+Use "archive" when:
+  - Crime, health incidents, celebrity or sports gossip
+  - Generic travel content or lifestyle articles
+  - Title-only or near-empty RSS items
+  - Unrelated international news with no Cape Verde market angle
+
+Category guardrail:
+  - Do not classify an article as "Foreign investment" unless the source clearly describes foreign capital, a foreign company entering the market, or an announced foreign-funded project. Government domestic policy, local institutional news, and cultural legislation are not foreign investment.
+
+Phrasing guardrail:
+  - Do not write "can attract foreign investment" or similar phrases unless the source clearly supports that connection.
+  - For indirect items, use language like: "This is indirect context for investors" or "The link to the property market is not direct."`;
 
 function buildUserMessage(body) {
   const lines = [
