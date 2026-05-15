@@ -96,6 +96,10 @@ create table if not exists public.agency_memberships (
 create unique index if not exists agency_memberships_one_active_owner_idx
   on public.agency_memberships (agency_id)
   where role = 'owner' and status = 'active';
+-- Note: this index enforces at most one active owner per agency. It does NOT
+-- prevent zero active owners. If the sole owner is suspended or removed, the
+-- agency has no owner until reassigned. Phase 2 should add a controlled
+-- ownership-transfer RPC to guard against this.
 
 create index if not exists agency_memberships_agency_idx
   on public.agency_memberships (agency_id);

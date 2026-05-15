@@ -22,7 +22,8 @@
 --   - Agency A users cannot read Agency B private leads/listings.
 --   - Agency B users cannot read Agency A private leads/listings.
 --   - Viewer can read but cannot mutate through authenticated policies.
---   - Agent can mutate assigned/own rows only.
+--   - Agent has no mutation policies in Phase 1. Mutation rules (assigned/own rows only)
+--     are deferred to Phase 2 along with authenticated INSERT/UPDATE paths.
 --   - broker.market_listings_view remains public/read-only and is not seeded here.
 --
 -- This seed intentionally does not touch agency_relationships.
@@ -213,6 +214,8 @@ insert into public.agency_memberships (
 on conflict (id) do nothing;
 
 -- ── Invitations ───────────────────────────────────────────────────────────
+-- token_hash values in this seed are local test strings only. Production must
+-- store a cryptographic hash of the actual invitation token, never the raw token.
 
 insert into public.agency_invitations (
   id, agency_id, email, role, status, token_hash,

@@ -143,7 +143,7 @@ comment on function public.is_agency_owner_or_manager(uuid) is
   'Convenience wrapper for owner/manager broker permissions.';
 
 comment on function public.can_access_lead(uuid, uuid) is
-  'Broker lead read helper: Owner/Manager/Viewer can read agency leads; Agents read assigned leads, or all agency leads only if the agency flag allows it.';
+  'Broker lead read helper: Owner/Manager/Viewer can read agency leads; Agents read assigned leads, or all agency leads only if the agency flag allows it. Viewer role is intentionally included in the full-read group — viewers have read-only access to all agency leads without assignment restrictions.';
 
 -- ── agency_users policies ─────────────────────────────────────────────────
 
