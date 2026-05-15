@@ -888,7 +888,7 @@ function mapContentDraftToInsert(row: ContentDraft) {
 }
 
 async function listStoredContentDrafts(): Promise<ContentDraft[]> {
-  const { data, error } = await supabase
+  const { data, error } = await supabaseAuth
     .from("content_drafts")
     .select("id,source_listing_id,listing_title,selected_image,suggested_caption,suggested_hashtags,suggested_channel,created_at,status,status_note")
     .order("created_at", { ascending: false });
@@ -904,7 +904,7 @@ async function listStoredContentDrafts(): Promise<ContentDraft[]> {
 async function insertContentDrafts(drafts: ContentDraft[]): Promise<void> {
   if (drafts.length === 0) return;
 
-  const { error } = await supabase
+  const { error } = await supabaseAuth
     .from("content_drafts")
     .upsert(drafts.map(mapContentDraftToInsert), { onConflict: "id", ignoreDuplicates: true });
   if (error) {
@@ -919,7 +919,7 @@ async function updateStoredContentDraftStatus(id: string, status: ContentDraftSt
     updated_at: new Date().toISOString(),
   };
 
-  const { error } = await supabase.from("content_drafts").update(payload).eq("id", id);
+  const { error } = await supabaseAuth.from("content_drafts").update(payload).eq("id", id);
   if (error) {
     throw new Error(`[Admin] Failed to update content draft status: ${error.message}`);
   }
@@ -1004,7 +1004,7 @@ async function getLiveContentCandidateListings(limit = 80): Promise<Listing[]> {
     for (const feedSource of feedSources) {
       const { data, error } = await supabase
         .from(feedSource)
-        .select("id,title,price,currency,source_id,source_url,island,city,bedrooms,bathrooms,property_size_sqm,image_urls,approved,property_type,description")
+        .select("id,title,price,currency,source_id,source_url,island,city,bedrooms,bathrooms,property_size_sqm,image_urls,property_type,description")
         .order("updated_at", { ascending: false })
         .limit(limit);
 
@@ -1031,7 +1031,7 @@ async function getLiveContentCandidateListings(limit = 80): Promise<Listing[]> {
           bedrooms: l.bedrooms,
           bathrooms: l.bathrooms,
           area_sqm: l.property_size_sqm,
-          approved: l.approved,
+          approved: true,
           project_flag: l.project_flag ?? null,
           project_start_price: l.project_start_price ?? null,
           property_type: l.property_type || undefined,
