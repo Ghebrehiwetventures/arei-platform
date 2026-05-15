@@ -2,6 +2,7 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { AREIClient } from "../../packages/arei-sdk/dist/index.js";
+import { normalizeListingDisplayTitle } from "../src/lib/listingTitleDisplay.js";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../dist");
@@ -432,7 +433,7 @@ async function getListingDetailRoutes() {
 }
 
 function buildListingSeoTitle(detail) {
-  return toTitleCase(detail.title || "Property");
+  return normalizeListingDisplayTitle(detail.title);
 }
 
 function buildListingSeoDescription(detail) {
@@ -530,13 +531,6 @@ function isLandListing(detail) {
   const landTypes = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
   const landTitle = /\b(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)\b/i;
   return landTypes.test(detail.property_type ?? "") || landTitle.test(detail.title ?? "");
-}
-
-function toTitleCase(value) {
-  if (!value || value !== value.toUpperCase()) return value;
-  return value
-    .toLowerCase()
-    .replace(/(?:^|\s|[-/])\S/g, (char) => char.toUpperCase());
 }
 
 main().catch((error) => {

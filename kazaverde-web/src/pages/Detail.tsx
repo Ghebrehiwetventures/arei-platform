@@ -9,6 +9,7 @@ import type { ListingDetail as ListingDetailType, ListingCard } from "arei-sdk";
 import type { DemoListing } from "../lib/demo-data";
 import { cardToDemoListing } from "../lib/transforms";
 import { formatPrice, formatLocation, formatBedrooms, formatBathrooms, formatSourceLabel } from "../lib/format";
+import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
 import { looksItalian, stripHtml, translateItalianToEnglish } from "../lib/translation";
 import NotFound from "./NotFound";
 import MortgageCalculator from "../components/MortgageCalculator";
@@ -61,17 +62,8 @@ function dedupeWpImages(urls: string[]): string[] {
     .map((g) => g.url);
 }
 
-/** Convert ALL CAPS titles to Title Case */
-function toTitleCase(str: string): string {
-  if (str !== str.toUpperCase()) return str;
-  return str
-    .toLowerCase()
-    .replace(/(?:^|\s|[-/])\S/g, (c) => c.toUpperCase());
-}
-
 function buildListingMetaTitle(title: string | null | undefined): string {
-  const normalized = title ? toTitleCase(title) : "Property";
-  return normalized;
+  return normalizeListingDisplayTitle(title);
 }
 
 function buildListingMetaDescription(detail: DemoListing | null, isLand: boolean): string {
@@ -300,7 +292,7 @@ export default function Detail() {
     );
   }
 
-  const displayTitle = toTitleCase(listing.title);
+  const displayTitle = normalizeListingDisplayTitle(listing.title);
   const saved = isSaved(listing.id);
   const mobileDisplayPrice = formatPrice(listing.price, listing.currency);
   const showMobileCvePrice = Boolean(listing.price && listing.currency === "EUR");

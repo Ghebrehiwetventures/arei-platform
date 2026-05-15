@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useSaved } from "../hooks/useSaved";
 import type { DemoListing } from "../lib/demo-data";
 import { formatPrice, formatLocation, formatBedrooms, formatBathrooms, isNewListing } from "../lib/format";
+import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
 import "./PropertyCard.css";
 
 interface Props {
@@ -16,6 +17,7 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
   const { toggle, isSaved } = useSaved();
   const isNew = isNewListing(listing.first_seen_at);
   const saved = isSaved(listing.id);
+  const displayTitle = normalizeListingDisplayTitle(listing.title);
   const [imageIndex, setImageIndex] = useState(0);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);
@@ -129,7 +131,7 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
             e.stopPropagation();
             toggle(listing.id);
           }}
-          aria-label={saved ? `Remove ${listing.title} from saved properties` : `Save ${listing.title} to saved properties`}
+          aria-label={saved ? `Remove ${displayTitle} from saved properties` : `Save ${displayTitle} to saved properties`}
           aria-pressed={saved}
           title={saved ? "Saved" : "Save"}
         >
@@ -145,7 +147,7 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid" }: 
           {listing.property_type && (
             <div className="pc-type">{listing.property_type}</div>
           )}
-          <div className="pct">{listing.title}</div>
+          <div className="pct">{displayTitle}</div>
           <div className="pca">{formatLocation(listing.city, listing.island)}</div>
           {!isList && <div className="pc-gprice">{formatPrice(listing.price, listing.currency)}</div>}
           {specs.length > 0 && (
