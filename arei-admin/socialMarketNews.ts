@@ -92,10 +92,17 @@ async function parseApiResponse<T>(response: Response): Promise<T> {
   return data as T;
 }
 
+async function authHeaders(): Promise<HeadersInit> {
+  const { data } = await supabaseAuth.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 export async function fetchMarketNewsSocialState(): Promise<SocialAgentState> {
   const response = await fetch("/api/social-market-news", {
     method: "GET",
     credentials: "include",
+    headers: await authHeaders(),
   });
   return parseApiResponse<SocialAgentState>(response);
 }
@@ -104,7 +111,7 @@ async function postAction<T>(body: Record<string, unknown>): Promise<T> {
   const response = await fetch("/api/social-market-news", {
     method: "POST",
     credentials: "include",
-    headers: { "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json", ...(await authHeaders()) },
     body: JSON.stringify(body),
   });
   return parseApiResponse<T>(response);
@@ -157,3 +164,4 @@ export function upsertDraft(
   if (!exists) return [draft, ...drafts];
   return drafts.map((item) => (item.id === draft.id ? draft : item));
 }
+import { supabaseAuth } from "./supabase";

@@ -4,7 +4,6 @@ const COOKIE_NAME = "admin_session";
 const PROMPT_VERSION = "market-news-social-v1";
 const DEFAULT_COUNTRY = "Cape Verde";
 const DEFAULT_REGION = "West Africa";
-const IS_PRODUCTION = process.env.NODE_ENV === "production" || process.env.VERCEL_ENV === "production";
 
 function send(res, status, data) {
   res.statusCode = status;
@@ -12,18 +11,18 @@ function send(res, status, data) {
   res.end(JSON.stringify(data));
 }
 
-function isAuthorized(req) {
+function getBearerToken(req) {
+  const header = (req.headers?.authorization || "").toString();
+  const match = header.match(/^Bearer\s+(.+)$/i);
+  return match?.[1]?.trim() || "";
+}
+
+function isCookieAuthorized(req) {
   const secret = process.env.ADMIN_SESSION_SECRET;
-  if (!secret) return !IS_PRODUCTION;
+  if (!secret) return false;
   const cookie = (req.headers?.cookie || "").toString();
   const match = cookie.match(new RegExp(COOKIE_NAME + "=([^;]+)"));
   return Boolean(match && match[1] === secret);
-}
-
-function getAuthConfigurationError() {
-  return IS_PRODUCTION && !process.env.ADMIN_SESSION_SECRET
-    ? "ADMIN_SESSION_SECRET is required for Market Social API in production"
-    : "";
 }
 
 function getSupabase() {
@@ -33,6 +32,39 @@ function getSupabase() {
     throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY are required for social draft admin API");
   }
   return createClient(url, key, { auth: { persistSession: false } });
+}
+
+async function authorizeRequest(req, sb) {
+  const token = getBearerToken(req);
+  if (!token) {
+    if (isCookieAuthorized(req)) return { ok: true, user: null, reviewer: "admin_session" };
+    return { ok: false, status: 401, error: "Unauthorized" };
+  }
+
+  const { data: userData, error: userError } = await sb.auth.getUser(token);
+  const user = userData?.user;
+  if (userError || !user) {
+    return { ok: false, status: 401, error: "Unauthorized" };
+  }
+
+  const { data: adminRow, error: adminError } = await sb
+    .from("admin_users")
+    .select("role,email")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  if (adminError) {
+    throw new Error(`Could not verify admin user: ${adminError.message}`);
+  }
+  if (!adminRow) {
+    return { ok: false, status: 403, error: "Forbidden" };
+  }
+
+  return {
+    ok: true,
+    user,
+    reviewer: cleanText(adminRow.email) || user.email || user.id,
+    role: adminRow.role || null,
+  };
 }
 
 function cleanText(value) {
@@ -555,17 +587,6 @@ async function publishInstagram(sb, body) {
 }
 
 export default async function handler(req, res) {
-  const authConfigurationError = getAuthConfigurationError();
-  if (authConfigurationError) {
-    send(res, 500, { error: authConfigurationError });
-    return;
-  }
-
-  if (!isAuthorized(req)) {
-    send(res, 401, { error: "Unauthorized" });
-    return;
-  }
-
   let sb;
   try {
     sb = getSupabase();
@@ -575,6 +596,12 @@ export default async function handler(req, res) {
   }
 
   try {
+    const auth = await authorizeRequest(req, sb);
+    if (!auth.ok) {
+      send(res, auth.status, { error: auth.error });
+      return;
+    }
+
     if (req.method === "GET") {
       const [itemsResult, draftsResult] = await Promise.all([listMarketNewsItems(sb), listDrafts(sb)]);
       send(res, 200, {
@@ -621,7 +648,7 @@ export default async function handler(req, res) {
     }
 
     if (action === "approve") {
-      const draft = await setApprovalStatus(sb, body, "approved");
+      const draft = await setApprovalStatus(sb, { ...body, approvedBy: body.approvedBy || auth.reviewer }, "approved");
       send(res, 200, { draft });
       return;
     }

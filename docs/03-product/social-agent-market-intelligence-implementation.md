@@ -75,9 +75,16 @@ Actions:
 - `POST { action: "reset" }`: returns a draft to pending review.
 - `POST { action: "publish_instagram" }`: publishes only approved Instagram feed captions.
 
-The endpoint checks the `admin_session` cookie when `ADMIN_SESSION_SECRET` is configured.
+The endpoint uses the existing AREI Admin Supabase Auth model. The browser sends the current logged-in admin user's Supabase access token in an `Authorization: Bearer ...` header. The server verifies the token with Supabase Auth, then checks `admin_users` with the same `user_id` before allowing Market Social actions.
 
-Production auth fails closed: when `NODE_ENV=production` or `VERCEL_ENV=production`, the endpoint rejects requests with a server configuration error if `ADMIN_SESSION_SECRET` is missing. Local development may run without the secret for developer convenience, but deployed E2E must set it.
+Auth behavior:
+
+- Missing bearer token returns `401`.
+- Invalid bearer token returns `401`.
+- Valid Supabase user without an `admin_users` row returns `403`.
+- Valid Supabase admin user can load items and perform Market Social actions.
+
+`ADMIN_SESSION_SECRET` is not required for the normal deployed Supabase Auth path. If it is configured, the server still accepts the legacy `admin_session` cookie as an alternate server-session path, but the deployed admin app does not depend on that cookie.
 
 ## LLM provider behavior
 
@@ -228,8 +235,9 @@ Before deployed E2E, configure:
 
 - `SUPABASE_URL`
 - `SUPABASE_SERVICE_ROLE_KEY`
-- `ADMIN_SESSION_SECRET`
 - `OPENAI_API_KEY` or `ANTHROPIC_API_KEY`
+
+The admin user used for E2E must be able to sign in through Supabase Auth and must have a row in `admin_users`.
 
 Optional for Instagram API publishing:
 

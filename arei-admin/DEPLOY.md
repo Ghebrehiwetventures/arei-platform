@@ -32,10 +32,8 @@ In Vercel: Project → Settings → Environment Variables. Add:
 | `VITE_SUPABASE_URL` | Your Supabase project URL |
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
 | `VITE_ADMIN_PROTECTED` | Optional. Set to `false` only if you intentionally want to disable protection. Production should remain protected. |
-| `ADMIN_PASSWORD` | The password users enter to log in |
-| `ADMIN_SESSION_SECRET` | Random string (e.g. `openssl rand -hex 24`) for the session cookie |
 
-Production Market Social API requests fail closed when `ADMIN_SESSION_SECRET` is missing. Keep this variable set in production before deployed E2E.
+AREI Admin uses Supabase Auth. Market Social API requests send the logged-in admin user's Supabase access token in an `Authorization: Bearer ...` header. The server verifies the token and confirms the user exists in `admin_users` before allowing access.
 
 Optional:
 
@@ -55,6 +53,7 @@ Market News social drafting / publishing:
 | `INSTAGRAM_BUSINESS_ACCOUNT_ID`, `INSTAGRAM_IG_USER_ID`, or `META_INSTAGRAM_BUSINESS_ACCOUNT_ID` | Optional. Instagram professional account ID used by Graph API publishing. |
 | `INSTAGRAM_GRAPH_API_VERSION` | Optional. Defaults to `v20.0`. |
 | `INSTAGRAM_DEFAULT_IMAGE_URL` | Optional. Public image URL used when an Instagram feed draft has no media URL. |
+| `ADMIN_SESSION_SECRET` | Optional legacy fallback for server-session cookie access. Not required for the normal Supabase Auth Market Social path. |
 
 Before deployed Market Social E2E, apply `migrations/024_market_news_social_drafts.sql` and verify RLS/no public policies using the checklist in `docs/03-product/social-agent-market-intelligence-implementation.md`.
 

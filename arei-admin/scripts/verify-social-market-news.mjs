@@ -29,12 +29,17 @@ assert(api.includes("approval_status !== \"approved\""), "server API enforces ap
 assert(api.includes("source_url"), "server API validates source URL fields");
 assert(api.includes("publish_status: \"published\""), "server API records successful publish status");
 assert(api.includes("publish_status: status"), "server API records publish failures/not configured states");
-assert(api.includes("ADMIN_SESSION_SECRET is required for Market Social API in production"), "server API fails closed when production auth secret is missing");
-assert(api.includes("return !IS_PRODUCTION"), "server API keeps local missing-secret behavior out of production");
+assert(api.includes("getBearerToken"), "server API reads Supabase Bearer tokens");
+assert(api.includes("sb.auth.getUser(token)"), "server API verifies Supabase access tokens");
+assert(api.includes(".from(\"admin_users\")"), "server API checks admin_users before allowing access");
+assert(api.includes("status: 401"), "server API returns 401 for missing or invalid auth");
+assert(api.includes("status: 403"), "server API returns 403 for valid non-admin users");
 
 assert(!client.includes("OPENAI_API_KEY"), "client wrapper does not reference OpenAI secret env var");
 assert(!client.includes("ANTHROPIC_API_KEY"), "client wrapper does not reference Anthropic secret env var");
 assert(!client.includes("INSTAGRAM_ACCESS_TOKEN"), "client wrapper does not reference Instagram secret env var");
+assert(!client.includes("SUPABASE_SERVICE_ROLE_KEY"), "client wrapper does not reference Supabase service-role env var");
+assert(client.includes("Authorization: `Bearer ${token}`"), "client sends Supabase access token to Market Social API");
 assert(app.includes("MarketNewsSocialAgentView"), "admin UI exposes Market Social tab");
 assert(view.includes("canPublishInstagram"), "admin UI disables Instagram publish through local gate");
 assert(view.includes("Copy"), "admin UI includes manual copy/export fallback");
