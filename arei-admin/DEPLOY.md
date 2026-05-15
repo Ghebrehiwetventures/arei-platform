@@ -35,9 +35,28 @@ In Vercel: Project → Settings → Environment Variables. Add:
 | `ADMIN_PASSWORD` | The password users enter to log in |
 | `ADMIN_SESSION_SECRET` | Random string (e.g. `openssl rand -hex 24`) for the session cookie |
 
+Production Market Social API requests fail closed when `ADMIN_SESSION_SECRET` is missing. Keep this variable set in production before deployed E2E.
+
 Optional:
 
 - `VITE_GITHUB_ACTIONS_URL` — link to GitHub Actions for "Open GitHub Actions" on Dashboard.
+
+Market News social drafting / publishing:
+
+| Variable | Description |
+|----------|-------------|
+| `SUPABASE_URL` | Supabase project URL for server-side admin API access |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase service-role key. Never expose to browser clients. |
+| `OPENAI_API_KEY` | Optional. Enables OpenAI/ChatGPT social draft generation. |
+| `OPENAI_MODEL` | Optional. Defaults to `gpt-4o-mini`. |
+| `ANTHROPIC_API_KEY` | Optional. Enables Claude social draft generation. |
+| `ANTHROPIC_MODEL` | Optional. Defaults to `claude-3-5-sonnet-latest`. |
+| `INSTAGRAM_ACCESS_TOKEN` or `META_ACCESS_TOKEN` | Optional. Enables server-side Instagram publishing. |
+| `INSTAGRAM_BUSINESS_ACCOUNT_ID`, `INSTAGRAM_IG_USER_ID`, or `META_INSTAGRAM_BUSINESS_ACCOUNT_ID` | Optional. Instagram professional account ID used by Graph API publishing. |
+| `INSTAGRAM_GRAPH_API_VERSION` | Optional. Defaults to `v20.0`. |
+| `INSTAGRAM_DEFAULT_IMAGE_URL` | Optional. Public image URL used when an Instagram feed draft has no media URL. |
+
+Before deployed Market Social E2E, apply `migrations/024_market_news_social_drafts.sql` and verify RLS/no public policies using the checklist in `docs/03-product/social-agent-market-intelligence-implementation.md`.
 
 ## 3. Deploy
 
