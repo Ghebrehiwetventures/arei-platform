@@ -16,6 +16,7 @@ import {
   formatMedian,
   formatPricePerSqm,
 } from "../lib/format";
+import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
 // Italian-runtime-translation helper removed: descriptions are now
 // pre-translated and rewritten in AREI voice via the backend backfill
 // (Claude Sonnet 4.6, see scripts/backfill_ai_descriptions.ts) and
@@ -48,11 +49,6 @@ function dedupeWpImages(urls: string[]): string[] {
   return Array.from(groups.values())
     .sort((a, b) => a.order - b.order)
     .map((g) => g.url);
-}
-
-function toTitleCase(str: string): string {
-  if (str !== str.toUpperCase()) return str;
-  return str.toLowerCase().replace(/(?:^|\s|[-/])\S/g, (c) => c.toUpperCase());
 }
 
 function capitalize(str: string): string {
@@ -227,7 +223,7 @@ export default function Detail() {
   const [similar, setSimilar] = useState<ListingCard[]>([]);
   const [marketCtx, setMarketCtx] = useState<IslandContext | null>(null);
 
-  const displayTitle = detail ? toTitleCase(detail.title) : "Property";
+  const displayTitle = detail ? normalizeListingDisplayTitle(detail.title) : "Property";
   const listingCanonicalUrl = detail ? buildListingCanonicalUrl(detail.id) : undefined;
 
   useDocumentMeta(
@@ -1469,7 +1465,7 @@ function KvSimilar({ cards }: { cards: ListingCard[] }) {
                   {loc && <span className="kv-d-sim-loc">{loc}</span>}
                 </div>
                 <div className="kv-d-sim-price">{formatPrice(l.price, l.currency)}</div>
-                <div className="kv-d-sim-title">{toTitleCase(l.title)}</div>
+                <div className="kv-d-sim-title">{normalizeListingDisplayTitle(l.title)}</div>
               </div>
             </Link>
           );
