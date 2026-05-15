@@ -5,7 +5,9 @@
   "type": "module",
   "scripts": {
     "dev": "npx vite",
-    "build": "npx vite build"
+    "build": "npx vite build",
+    "typecheck": "npx tsc -b",
+    "test:social-agent": "node ./scripts/verify-social-market-news.mjs"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.95.3",

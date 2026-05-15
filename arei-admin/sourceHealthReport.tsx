@@ -492,7 +492,7 @@ function GradeBar({ dist }: { dist: Record<"A" | "B" | "C" | "D", number> }) {
   );
 }
 
-function CoveragePill({ label, value }: { label: string; value: number }) {
+export function CoveragePill({ label, value }: { label: string; value: number }) {
   const tone = value < 30 ? "bg-red-muted text-red" : value < 60 ? "bg-amber-muted text-amber" : "bg-green-muted text-green";
   return (
     <span className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded text-[10px] font-mono font-medium tabular-nums ${tone}`}>
@@ -843,7 +843,7 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
   const gradesBar = `<div class="grades">${
     [["A", gd.A, "gA"], ["B", gd.B, "gB"], ["C", gd.C, "gC"], ["D", gd.D, "gD"]]
       .filter(([, n]) => (n as number) > 0)
-      .map(([l, n, cls]) => `<div class="${cls}" style="width:${((n as number) / gTotal) * 100}%">${n}</div>`)
+      .map(([, n, cls]) => `<div class="${cls}" style="width:${((n as number) / gTotal) * 100}%">${n}</div>`)
       .join("")
   }</div>`;
 
