@@ -13,9 +13,12 @@
   "dependencies": {
     "@vercel/analytics": "^2.0.1",
     "arei-sdk": "file:../packages/arei-sdk",
+    "i18next": "^26.2.0",
+    "i18next-browser-languagedetector": "^8.2.1",
     "mapbox-gl": "^3.8.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-i18next": "^17.0.8",
     "react-router-dom": "^6.28.0"
   },
   "devDependencies": {

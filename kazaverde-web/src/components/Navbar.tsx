@@ -1,8 +1,10 @@
 import { useState, useEffect } from "react";
 import { createPortal } from "react-dom";
 import { NavLink, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useSaved } from "../hooks/useSaved";
 import DLayersMark from "./DLayersMark";
+import LanguageToggle from "./LanguageToggle";
 import "./Navbar.css";
 
 /* Five-link nav — Listings · Market · News · Guides · Shortlist.
@@ -13,6 +15,7 @@ import "./Navbar.css";
    so it escapes the sticky nav's stacking context. */
 export default function Navbar() {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const [menuOpen, setMenuOpen] = useState(false);
   const { count } = useSaved();
 
@@ -27,11 +30,11 @@ export default function Navbar() {
   }, [menuOpen]);
 
   const links = [
-    { to: "/listings", label: "Listings" },
-    { to: "/market", label: "Market" },
-    { to: "/market-news", label: "News" },
-    { to: "/blog", label: "Guides" },
-    { to: "/saved", label: count > 0 ? `Shortlist · ${count}` : "Shortlist" },
+    { to: "/listings", label: t("common.listings") },
+    { to: "/market", label: t("common.market") },
+    { to: "/market-news", label: t("common.news") },
+    { to: "/blog", label: t("common.guides") },
+    { to: "/saved", label: count > 0 ? `${t("common.shortlist")} · ${count}` : t("common.shortlist") },
   ];
 
   return (
@@ -42,7 +45,7 @@ export default function Navbar() {
           onClick={() => navigate("/")}
           role="button"
           tabIndex={0}
-          aria-label="Cape Verde Real Estate Index — home"
+          aria-label={t("nav.homeAria")}
         >
           <DLayersMark size={20} />
           <span className="lk-text">
@@ -67,11 +70,15 @@ export default function Navbar() {
           ))}
         </div>
 
+        <div className="hide-mobile">
+          <LanguageToggle />
+        </div>
+
         <button
           type="button"
           className={`nav-burger hide-desktop${menuOpen ? " open" : ""}`}
           onClick={() => setMenuOpen((o) => !o)}
-          aria-label={menuOpen ? "Close menu" : "Open menu"}
+          aria-label={menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
           aria-expanded={menuOpen}
         >
           <span></span><span></span><span></span>
@@ -89,7 +96,7 @@ export default function Navbar() {
             type="button"
             className="nav-drawer-close"
             onClick={closeMenu}
-            aria-label="Close menu"
+            aria-label={t("nav.closeMenu")}
           >
             <span aria-hidden="true">×</span>
           </button>
@@ -104,8 +111,9 @@ export default function Navbar() {
               {l.label}
             </NavLink>
           ))}
+          <LanguageToggle />
           <NavLink to="/listings" onClick={closeMenu} className="nav-drawer-cta">
-            All listings →
+            {t("nav.allListingsCta")}
           </NavLink>
         </div>,
         document.body,

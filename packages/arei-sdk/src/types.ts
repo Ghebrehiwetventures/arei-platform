@@ -5,6 +5,7 @@
 
 /** Per-language entry inside listings.ai_descriptions JSONB */
 export interface AiDescriptionEntry {
+  title?: string;
   text: string;
   generated_at: string;
   prompt_version: string;
@@ -60,6 +61,7 @@ export interface ListingCard {
   image_url: string | null;
   source_id: string;
   first_seen_at: string;
+  ai_descriptions?: AiDescriptions | null;
   is_new: boolean;
 }
 

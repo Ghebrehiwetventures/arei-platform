@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { arei } from "../lib/arei";
 import { notifyFormspree } from "../lib/formspree";
 import "./NewsletterCta.css";
@@ -10,10 +11,11 @@ interface Props {
 }
 
 export default function NewsletterCta({
-  overline = "Market Brief",
-  heading = "Cape Verde property market updates, without the noise.",
-  description = "Source-linked updates on listings data, price shifts, island activity, source coverage, and market news affecting Cape Verde's property market.",
+  overline,
+  heading,
+  description,
 }: Props) {
+  const { t } = useTranslation();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -23,7 +25,7 @@ export default function NewsletterCta({
     const trimmed = email.trim();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       setStatus("error");
-      setErrorMsg("Please enter a valid email address.");
+      setErrorMsg(t("newsletter.error"));
       return;
     }
     setStatus("submitting");
@@ -37,45 +39,45 @@ export default function NewsletterCta({
         setStatus("success");
       } else {
         setStatus("error");
-        setErrorMsg("Something went wrong. Please try again.");
+        setErrorMsg(t("newsletter.error"));
       }
     } catch {
       setStatus("error");
-      setErrorMsg("Something went wrong. Please try again.");
+      setErrorMsg(t("newsletter.error"));
     }
   };
 
   return (
     <div className="nl-cta anim-fu delay-4">
       <div className="nl-cta-inner">
-        <div className="nl-overline">{overline}</div>
-        <h2>{heading}</h2>
-        <p>{description}</p>
+        <div className="nl-overline">{overline ?? t("newsletter.eyebrow")}</div>
+        <h2>{heading ?? t("newsletter.title")}</h2>
+        <p>{description ?? t("newsletter.description")}</p>
         {status === "success" ? (
-          <div className="nl-success">You're subscribed!</div>
+          <div className="nl-success">{t("newsletter.success")}</div>
         ) : (
           <form className="nl-form" onSubmit={handleSubmit}>
             <input
               type="email"
               className="nl-input"
-              placeholder="Your email"
+              placeholder={t("newsletter.placeholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={status === "submitting"}
-              aria-label="Your email"
+              aria-label={t("newsletter.placeholder")}
             />
             <button
               type="submit"
               className="nl-submit"
               disabled={status === "submitting"}
             >
-              {status === "submitting" ? "Sending..." : <>Subscribe <span aria-hidden="true">[→]</span></>}
+              {status === "submitting" ? t("newsletter.submitting") : <>{t("newsletter.submit")} <span aria-hidden="true">[→]</span></>}
             </button>
           </form>
         )}
         {status === "error" && <div className="nl-error">{errorMsg}</div>}
         <div className="nl-fine">
-          No spam. Unsubscribe anytime.
+          {t("newsletter.fine")}
         </div>
       </div>
     </div>

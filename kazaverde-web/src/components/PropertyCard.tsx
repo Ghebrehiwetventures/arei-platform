@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useSaved } from "../hooks/useSaved";
 import type { DemoListing } from "../lib/demo-data";
 import { formatPrice, formatLocation, formatBedrooms, formatBathrooms, isNewListing } from "../lib/format";
@@ -15,6 +16,7 @@ interface Props {
 
 export default function PropertyCard({ listing, index = 0, viewMode = "grid", disableSwipe = false }: Props) {
   const navigate = useNavigate();
+  const { t } = useTranslation();
   const { toggle, isSaved } = useSaved();
   const isNew = isNewListing(listing.first_seen_at);
   const saved = isSaved(listing.id);
@@ -132,15 +134,15 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid", di
             e.stopPropagation();
             toggle(listing.id);
           }}
-          aria-label={saved ? `Remove ${displayTitle} from saved properties` : `Save ${displayTitle} to saved properties`}
+          aria-label={saved ? `${t("listings.saved")}: ${displayTitle}` : `${t("listings.save")}: ${displayTitle}`}
           aria-pressed={saved}
-          title={saved ? "Saved" : "Save"}
+          title={saved ? t("listings.saved") : t("listings.save")}
         >
           <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
           </svg>
         </button>
-        {isNew && <span className="tg tg-n">NEW</span>}
+        {isNew && <span className="tg tg-n">{t("listings.new")}</span>}
         {!isList && <div className="pr">{formatPrice(listing.price, listing.currency)}</div>}
       </div>
       <div className="pcb">

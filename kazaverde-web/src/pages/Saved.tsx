@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useSaved } from "../hooks/useSaved";
 import { arei } from "../lib/arei";
@@ -15,6 +16,7 @@ function detailToCard(d: NonNullable<Awaited<ReturnType<typeof arei.getListing>>
     id: d.id,
     source_id: d.source_id,
     title: d.title,
+    ai_descriptions: d.ai_descriptions,
     price: d.price,
     currency: d.currency,
     city: d.city,
@@ -51,9 +53,11 @@ interface IslandStat {
 }
 
 export default function Saved() {
+  const { i18n, t } = useTranslation();
+  const isPt = i18n.language.startsWith("pt");
   useDocumentMeta(
-    "Shortlist",
-    "Properties you've saved on this device. A read-only index of public Cape Verde listings.",
+    t("common.shortlist"),
+    isPt ? "Imóveis guardados neste dispositivo." : "Properties you've saved on this device. A read-only index of public Cape Verde listings.",
   );
 
   const { saved, count, clear } = useSaved();
@@ -199,7 +203,7 @@ export default function Saved() {
   }, [cards, marketStats]);
 
   const handleClear = () => {
-    if (window.confirm("Clear your entire shortlist? This only affects this device.")) {
+    if (window.confirm(isPt ? "Limpar toda a sua lista? Isto afeta apenas este dispositivo." : "Clear your entire shortlist? This only affects this device.")) {
       clear();
     }
   };
@@ -209,16 +213,16 @@ export default function Saved() {
       {/* ─── Header (off-white) ─── */}
       <header className="kv-saved-head">
         <div className="kv-saved-head-inner">
-          <div className="kv-saved-eyebrow">Shortlist</div>
+          <div className="kv-saved-eyebrow">{t("common.shortlist")}</div>
           <h1 className="kv-saved-title">
-            {isEmpty ? "Nothing saved yet." : "Your shortlist."}
+            {isEmpty ? (isPt ? "Ainda não guardou nada." : "Nothing saved yet.") : (isPt ? "A sua lista." : "Your shortlist.")}
           </h1>
           <div className="kv-saved-meta">
-            <span><b>{count}</b> {count === 1 ? "property" : "properties"}</span>
+            <span><b>{count}</b> {count === 1 ? (isPt ? "imóvel" : "property") : (isPt ? "imóveis" : "properties")}</span>
             {unavailable > 0 && (
-              <span><b>{unavailable}</b> no longer in feed</span>
+              <span><b>{unavailable}</b> {isPt ? "já não está no feed" : "no longer in feed"}</span>
             )}
-            <span>This device only</span>
+            <span>{isPt ? "Apenas este dispositivo" : "This device only"}</span>
           </div>
         </div>
       </header>
@@ -227,7 +231,7 @@ export default function Saved() {
       {loading && (
         <section className="kv-saved-section kv-saved-section-white">
           <div className="kv-saved-section-inner">
-            <div className="kv-saved-loading-lbl">Loading shortlist</div>
+            <div className="kv-saved-loading-lbl">{isPt ? "A carregar lista" : "Loading shortlist"}</div>
             <div className="kv-saved-loading-skel" aria-hidden="true">
               <span /><span /><span />
             </div>
@@ -242,12 +246,12 @@ export default function Saved() {
             <div className="kv-saved-section-inner">
               <div className="kv-saved-empty">
                 <p className="kv-saved-empty-lead">
-                  Open any listing and tap <b>Save to shortlist</b> in the
-                  listing summary card. Your list lives in this browser — no
-                  account, no sync, no marketing.
+                  {isPt
+                    ? "Abra qualquer anúncio e toque em guardar na lista no resumo do anúncio. A lista fica neste navegador — sem conta, sem sincronização, sem marketing."
+                    : <>Open any listing and tap <b>Save to shortlist</b> in the listing summary card. Your list lives in this browser — no account, no sync, no marketing.</>}
                 </p>
                 <Link to="/listings" className="kv-saved-cta">
-                  <span>Browse all listings</span>
+                  <span>{t("common.browseAllListings")}</span>
                   <span aria-hidden="true">→</span>
                 </Link>
               </div>
@@ -259,11 +263,11 @@ export default function Saved() {
               <div className="kv-saved-section-inner">
                 <div className="kv-saved-section-head">
                   <div>
-                    <div className="kv-saved-section-eyebrow">While you decide</div>
-                    <h2 className="kv-saved-section-title">Newest on the index.</h2>
+                    <div className="kv-saved-section-eyebrow">{isPt ? "Enquanto decide" : "While you decide"}</div>
+                    <h2 className="kv-saved-section-title">{isPt ? "Mais recentes no índice." : "Newest on the index."}</h2>
                   </div>
                   <Link to="/listings" className="kv-saved-section-link">
-                    All listings →
+                    {t("nav.allListingsCta")}
                   </Link>
                 </div>
                 <div className="kv-grid">
@@ -282,11 +286,11 @@ export default function Saved() {
             {summary && (
               <div className="kv-saved-summary">
                 <div className="kv-saved-summary-cell">
-                  <div className="kv-saved-summary-lbl">Average asking</div>
+                  <div className="kv-saved-summary-lbl">{isPt ? "Preço pedido médio" : "Average asking"}</div>
                   <div className="kv-saved-summary-num">{fmtPrice(summary.avgPrice)}</div>
                 </div>
                 <div className="kv-saved-summary-cell">
-                  <div className="kv-saved-summary-lbl">Range</div>
+                  <div className="kv-saved-summary-lbl">{isPt ? "Intervalo" : "Range"}</div>
                   <div className="kv-saved-summary-num">
                     {summary.minPrice != null && summary.maxPrice != null
                       ? `${fmtPrice(summary.minPrice)} – ${fmtPrice(summary.maxPrice)}`
@@ -294,11 +298,11 @@ export default function Saved() {
                   </div>
                 </div>
                 <div className="kv-saved-summary-cell">
-                  <div className="kv-saved-summary-lbl">Islands</div>
+                  <div className="kv-saved-summary-lbl">{t("home.islands")}</div>
                   <div className="kv-saved-summary-num">{summary.islands}</div>
                 </div>
                 <div className="kv-saved-summary-cell">
-                  <div className="kv-saved-summary-lbl">Sources</div>
+                  <div className="kv-saved-summary-lbl">{isPt ? "Fontes" : "Sources"}</div>
                   <div className="kv-saved-summary-num">{summary.sources}</div>
                 </div>
               </div>
@@ -310,7 +314,7 @@ export default function Saved() {
 
             <div className="kv-saved-foot">
               <Link to="/listings" className="kv-saved-foot-link">
-                <span>Browse all listings</span>
+                <span>{t("common.browseAllListings")}</span>
                 <span aria-hidden="true">→</span>
               </Link>
               <button
@@ -318,7 +322,7 @@ export default function Saved() {
                 className="kv-saved-foot-clear"
                 onClick={handleClear}
               >
-                Clear shortlist
+                {isPt ? "Limpar lista" : "Clear shortlist"}
               </button>
             </div>
           </div>
@@ -334,32 +338,32 @@ export default function Saved() {
           <div className="kv-saved-section-inner">
             <div className="kv-saved-section-head">
               <div>
-                <div className="kv-saved-section-eyebrow">How yours compares</div>
+                <div className="kv-saved-section-eyebrow">{isPt ? "Como compara" : "How yours compares"}</div>
                 <h2 className="kv-saved-section-title">
-                  Your shortlist against the index.
+                  {isPt ? "A sua lista face ao índice." : "Your shortlist against the index."}
                 </h2>
                 <p className="kv-saved-section-sub">
-                  We compare your average asking price per island to the median for
-                  the same island across the full index. Small samples are excluded
-                  — only islands with enough liquidity for a stable median appear.
+                  {isPt
+                    ? "Comparamos o seu preço pedido médio por ilha com a mediana da mesma ilha no índice completo. Amostras pequenas são excluídas."
+                    : "We compare your average asking price per island to the median for the same island across the full index. Small samples are excluded — only islands with enough liquidity for a stable median appear."}
                 </p>
               </div>
               {indexCoverage && (
                 <div className="kv-saved-coverage">
                   <div className="kv-saved-coverage-row">
-                    <span className="kv-saved-coverage-k">Indexed total</span>
+                    <span className="kv-saved-coverage-k">{isPt ? "Total indexado" : "Indexed total"}</span>
                     <span className="kv-saved-coverage-v">{indexCoverage.indexTotal.toLocaleString()}</span>
                   </div>
                   <div className="kv-saved-coverage-row">
-                    <span className="kv-saved-coverage-k">Your islands</span>
+                    <span className="kv-saved-coverage-k">{isPt ? "As suas ilhas" : "Your islands"}</span>
                     <span className="kv-saved-coverage-v">
-                      {indexCoverage.userIslands} of {indexCoverage.indexIslands}
+                      {indexCoverage.userIslands} {isPt ? "de" : "of"} {indexCoverage.indexIslands}
                     </span>
                   </div>
                   <div className="kv-saved-coverage-row">
-                    <span className="kv-saved-coverage-k">Your sources</span>
+                    <span className="kv-saved-coverage-k">{isPt ? "As suas fontes" : "Your sources"}</span>
                     <span className="kv-saved-coverage-v">
-                      {indexCoverage.userSources} of {indexCoverage.indexSources}
+                      {indexCoverage.userSources} {isPt ? "de" : "of"} {indexCoverage.indexSources}
                     </span>
                   </div>
                 </div>
@@ -368,11 +372,11 @@ export default function Saved() {
 
             <div className="kv-saved-vs-table">
               <div className="kv-saved-vs-row kv-saved-vs-head">
-                <div>Island</div>
-                <div>You saved</div>
-                <div>Your avg</div>
-                <div>Island median</div>
-                <div>Vs market</div>
+                <div>{isPt ? "Ilha" : "Island"}</div>
+                <div>{isPt ? "Guardados" : "You saved"}</div>
+                <div>{isPt ? "Média" : "Your avg"}</div>
+                <div>{isPt ? "Mediana da ilha" : "Island median"}</div>
+                <div>{isPt ? "Face ao mercado" : "Vs market"}</div>
               </div>
               {islandStats.map((s) => (
                 <div className="kv-saved-vs-row" key={s.island}>

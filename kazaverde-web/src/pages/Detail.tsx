@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useSaved } from "../hooks/useSaved";
 import { arei } from "../lib/arei";
@@ -17,6 +18,7 @@ import {
   formatPricePerSqm,
 } from "../lib/format";
 import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
+import { getLocalizedDescription, getLocalizedTitle } from "../lib/i18n-listings";
 // Italian-runtime-translation helper removed: descriptions are now
 // pre-translated and rewritten in AREI voice via the backend backfill
 // (Claude Sonnet 4.6, see scripts/backfill_ai_descriptions.ts) and
@@ -210,6 +212,7 @@ function sourceSlug(sourceId: string): string {
 }
 
 export default function Detail() {
+  const { i18n, t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toggle, isSaved } = useSaved();
@@ -223,14 +226,15 @@ export default function Detail() {
   const [similar, setSimilar] = useState<ListingCard[]>([]);
   const [marketCtx, setMarketCtx] = useState<IslandContext | null>(null);
 
-  const displayTitle = detail ? normalizeListingDisplayTitle(detail.title) : "Property";
+  const displayTitle = detail ? normalizeListingDisplayTitle(getLocalizedTitle(detail, i18n.language).title) : t("common.property");
+  const localizedDescription = detail ? getLocalizedDescription(detail, i18n.language) : null;
   const listingCanonicalUrl = detail ? buildListingCanonicalUrl(detail.id) : undefined;
 
   useDocumentMeta(
-    detail ? displayTitle : error ? "Property not found" : "Property",
+    detail ? displayTitle : error ? t("detail.notFound") : t("common.property"),
     detail
       ? buildListingMetaDescription(detail, displayTitle)
-      : "Property listing in Cape Verde",
+      : t("detail.loading"),
     detail
       ? { image: images[0], url: listingCanonicalUrl }
       : images[0]
@@ -305,7 +309,7 @@ export default function Detail() {
       .then((d) => {
         if (cancelled) return;
         if (!d) {
-          setError("Property not found.");
+          setError(t("detail.notFound"));
           setDetail(null);
           return;
         }
@@ -314,7 +318,7 @@ export default function Detail() {
       })
       .catch((e) => {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Could not load property.");
+          setError(e instanceof Error ? e.message : t("detail.loading"));
           setDetail(null);
         }
       })
@@ -422,9 +426,9 @@ export default function Detail() {
     return (
       <div className="kv-d">
         <div className="kv-d-topbar">
-          <button type="button" className="kv-d-back" onClick={() => navigate("/")}>← All listings</button>
+          <button type="button" className="kv-d-back" onClick={() => navigate("/")}>← {t("common.allListings")}</button>
         </div>
-        <div className="kv-empty"><strong>Loading…</strong></div>
+        <div className="kv-empty"><strong>{t("detail.loading")}</strong></div>
       </div>
     );
   }
@@ -432,7 +436,7 @@ export default function Detail() {
   if (error || !detail) {
     return (
       <NotFound
-        title="Property not found"
+        title={t("detail.notFound")}
         message="This listing may have been removed or the link is no longer valid."
       />
     );
@@ -457,7 +461,7 @@ export default function Detail() {
           back into the index; city stays plain text since the index does
           not yet support a city-level filter. */}
       <div className="kv-d-crumb">
-        <Link to="/listings">Listings</Link>
+        <Link to="/listings">{t("common.listings")}</Link>
         <span className="kv-d-crumb-sep">/</span>
         <Link to={`/listings?island=${encodeURIComponent(detail.island)}`}>{detail.island}</Link>
         {detail.city && (
@@ -473,7 +477,7 @@ export default function Detail() {
         <div className="kv-d-top-grid">
           <div className="kv-d-eyebrow">
             <span className={`kv-d-tag${detail.is_new ? " kv-d-tag-new" : ""}`}>
-              {detail.is_new ? "New" : "Indexed"}
+              {detail.is_new ? t("listings.new") : "Indexed"}
             </span>
             {detail.property_type && <b>{typeLabel}</b>}
             <span className="kv-d-eyebrow-dot" aria-hidden="true" />
@@ -488,7 +492,7 @@ export default function Detail() {
           <div className="kv-d-subline">
             {!isLand && detail.bedrooms != null && (
               <>
-                <b>{detail.bedrooms === 0 ? "Studio" : detail.bedrooms}</b> bed
+                <b>{detail.bedrooms === 0 ? t("listings.studio") : detail.bedrooms}</b> bed
               </>
             )}
             {!isLand && detail.bathrooms != null && detail.bathrooms > 0 && (
@@ -507,7 +511,7 @@ export default function Detail() {
           {/* Always rendered to reserve vertical space; empty when €/m² unknown.
               Format mirrors listing-v1.html .ppm: bold value + " per m²". */}
           <div className="kv-d-price-cve">
-            {pricePerSqm ? <><b>€{pricePerSqm.toLocaleString()}</b> per m²</> : ""}
+            {pricePerSqm ? <><b>€{pricePerSqm.toLocaleString()}</b> / m²</> : ""}
           </div>
         </div>
 
@@ -516,7 +520,7 @@ export default function Detail() {
             burying first/last-seen in the sidebar. */}
         <div className="kv-d-verified">
           <span className="kv-d-verified-dot" aria-hidden="true" />
-          <span className="kv-d-verified-lbl">Last verified</span>
+          <span className="kv-d-verified-lbl">{t("detail.lastChecked")}</span>
           <span className="kv-d-verified-val">{fmtVerifiedTime(detail.last_seen_at)}</span>
           {detail.first_seen_at && (
             <>
@@ -556,7 +560,7 @@ export default function Detail() {
                 : { background: "linear-gradient(135deg, #c9d4c8 0%, #a8bea4 100%)" }
             }
           />
-          {detail.is_new && <span className="kv-d-flag">New</span>}
+          {detail.is_new && <span className="kv-d-flag">{t("listings.new")}</span>}
           {hasMultipleImages && (
             <>
               <button
@@ -594,13 +598,13 @@ export default function Detail() {
           instead, so the row never reads as half-empty. */}
       <div className="kv-d-facts">
         <div className="kv-d-fact">
-          <div className="kv-d-fact-k">Type</div>
+              <div className="kv-d-fact-k">{t("detail.propertyType")}</div>
           <div className="kv-d-fact-v">{typeLabel}</div>
         </div>
         {isLand ? (
           <>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Plot area</div>
+              <div className="kv-d-fact-k">{t("detail.landArea")}</div>
               <div className="kv-d-fact-v">
                 {landArea != null ? (
                   <>
@@ -626,34 +630,34 @@ export default function Detail() {
               </div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Price / m²</div>
+              <div className="kv-d-fact-k">{t("detail.price")} / m²</div>
               <div className="kv-d-fact-v">{pricePerSqm ? `€${pricePerSqm.toLocaleString()}` : "—"}</div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Location</div>
+              <div className="kv-d-fact-k">{t("detail.location")}</div>
               <div className="kv-d-fact-v">{detail.city || detail.island}</div>
             </div>
           </>
         ) : (
           <>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Bedrooms</div>
+              <div className="kv-d-fact-k">{t("detail.bedrooms")}</div>
               <div className="kv-d-fact-v">
                 {detail.bedrooms == null
                   ? "—"
                   : detail.bedrooms === 0
-                    ? "Studio"
+                    ? t("listings.studio")
                     : detail.bedrooms}
               </div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Bathrooms</div>
+              <div className="kv-d-fact-k">{t("detail.bathrooms")}</div>
               <div className="kv-d-fact-v">
                 {detail.bathrooms == null || detail.bathrooms === 0 ? "—" : detail.bathrooms}
               </div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Interior</div>
+              <div className="kv-d-fact-k">{t("detail.size")}</div>
               <div className="kv-d-fact-v">
                 {effectiveArea != null ? (
                   <>
@@ -666,7 +670,7 @@ export default function Detail() {
               </div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Price / m²</div>
+              <div className="kv-d-fact-k">{t("detail.price")} / m²</div>
               <div className="kv-d-fact-v">{pricePerSqm ? `€${pricePerSqm.toLocaleString()}` : "—"}</div>
             </div>
           </>
@@ -686,31 +690,31 @@ export default function Detail() {
               raw scraped source. Source agent stays credited in the sidebar. */}
           <div className="kv-d-block">
             <div className="kv-d-block-head">
-              <h2 className="kv-d-block-h">Description</h2>
-              {detail.ai_descriptions?.en?.text && (
+              <h2 className="kv-d-block-h">{t("detail.description")}</h2>
+              {localizedDescription?.source === "ai" && (
                 <span
                   className="kv-d-ai-badge"
-                  title="Rewritten with AI to normalize tone and remove sales language. Source attribution unchanged — see Original source panel."
+                  title={t("detail.aiCaption")}
                 >
                   <span className="kv-d-ai-dot" aria-hidden="true" />
-                  AI · Rewritten
+                  {t("detail.aiBadge")}
                 </span>
               )}
             </div>
-            {detail.ai_descriptions?.en?.text ? (
-              <p>{detail.ai_descriptions.en.text}</p>
-            ) : detail.description_html ? (
-              <div className="kv-d-html" dangerouslySetInnerHTML={{ __html: detail.description_html }} />
-            ) : detail.description ? (
-              <p>{detail.description}</p>
+            {localizedDescription?.source === "ai" && localizedDescription.text ? (
+              <p>{localizedDescription.text}</p>
+            ) : localizedDescription?.source === "html" && localizedDescription.text ? (
+              <div className="kv-d-html" dangerouslySetInnerHTML={{ __html: localizedDescription.text }} />
+            ) : localizedDescription?.text ? (
+              <p>{localizedDescription.text}</p>
             ) : (
               <p>
-                This property is located in {formatLocation(detail.city, detail.island)}, Cape Verde.
+                {t("detail.noDescription")}
               </p>
             )}
-            {detail.ai_descriptions?.en?.text && (
+            {localizedDescription?.source === "ai" && (
               <p className="kv-d-ai-caption">
-                Description rewritten with AI for clarity — original source attribution unchanged.
+                {t("detail.aiCaption")}
               </p>
             )}
           </div>
@@ -789,7 +793,7 @@ export default function Detail() {
               card treatments. cv-listing.html .s-panel pattern. */}
           <div className="kv-d-card">
             <div className="kv-d-card-h">
-              <span>Listing summary</span>
+              <span>{t("detail.listingSummary")}</span>
             </div>
             <div className="kv-d-card-body">
               {detail.price && (
@@ -804,7 +808,7 @@ export default function Detail() {
                         <span className="kv-d-card-subline-sep"> · </span>
                       </>
                     )}
-                    <span>Asking price</span>
+                    <span>{t("detail.askingPrice")}</span>
                   </div>
                 </div>
               )}
@@ -838,7 +842,7 @@ export default function Detail() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  <span>View on {formatSourceLabel(detail.source_id)}</span>
+                  <span>{t("detail.view")} {formatSourceLabel(detail.source_id)}</span>
                   <span aria-hidden="true">→</span>
                 </a>
               )}
@@ -864,15 +868,15 @@ export default function Detail() {
             return (
               <div className="kv-d-meta-table">
                 <div className="kv-d-meta-table-row">
-                  <div className="kv-d-meta-table-k">Status</div>
-                  <div className="kv-d-meta-table-v">Active</div>
+                  <div className="kv-d-meta-table-k">{t("detail.status")}</div>
+                  <div className="kv-d-meta-table-v">{t("detail.active")}</div>
                 </div>
                 <div className="kv-d-meta-table-row">
-                  <div className="kv-d-meta-table-k">First indexed</div>
+                  <div className="kv-d-meta-table-k">{t("detail.firstIndexed")}</div>
                   <div className="kv-d-meta-table-v">{fmtShortDate(detail.first_seen_at)}</div>
                 </div>
                 <div className="kv-d-meta-table-row">
-                  <div className="kv-d-meta-table-k">Days on index</div>
+                  <div className="kv-d-meta-table-k">{t("detail.daysOnIndex")}</div>
                   <div className="kv-d-meta-table-v">{days} {days === 1 ? "day" : "days"}</div>
                 </div>
                 <div className="kv-d-meta-table-row">
@@ -899,7 +903,7 @@ export default function Detail() {
 
           {/* Panel 3 — Original source (trust + disclaimer) */}
           <div className="kv-d-card kv-d-card-soft kv-d-source">
-            <div className="kv-d-source-lbl">Original source</div>
+            <div className="kv-d-source-lbl">{t("detail.originalSource")}</div>
             <div className="kv-d-source-name">{formatSourceLabel(detail.source_id)}</div>
             {detail.source_url && (
               <a
@@ -908,7 +912,7 @@ export default function Detail() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                View on {hostFromUrl(detail.source_url) || "source"} →
+                {t("detail.view")} {hostFromUrl(detail.source_url) || "source"} →
               </a>
             )}
             <p className="kv-d-source-disc">
@@ -944,12 +948,12 @@ export default function Detail() {
           action so the View-on-source link is one tap away while
           scrolling. Uses position: fixed at viewport bottom. */}
       {detail.source_url && (
-        <div className="kv-d-mcta" role="region" aria-label="Listing actions">
+        <div className="kv-d-mcta" role="region" aria-label={t("detail.listingActions")}>
           <div className="kv-d-mcta-info">
             {detail.price && (
               <div className="kv-d-mcta-price">{formatPrice(detail.price, detail.currency)}</div>
             )}
-            <div className="kv-d-mcta-source">via {formatSourceLabel(detail.source_id)}</div>
+            <div className="kv-d-mcta-source">{t("listings.source")} {formatSourceLabel(detail.source_id)}</div>
           </div>
           <a
             className="kv-d-mcta-btn"
@@ -957,7 +961,7 @@ export default function Detail() {
             target="_blank"
             rel="noopener noreferrer"
           >
-            View <span aria-hidden="true">→</span>
+            {t("detail.view")} <span aria-hidden="true">→</span>
           </a>
         </div>
       )}
@@ -1028,6 +1032,7 @@ function GalleryMosaic({
   isNew: boolean;
   onOpen: (index: number) => void;
 }) {
+  const { t } = useTranslation();
   // Show 5 tiles: primary (idx 0) + 4 smaller tiles
   const tiles = images.slice(0, 5);
   const extraCount = Math.max(0, images.length - 5);
@@ -1046,10 +1051,10 @@ function GalleryMosaic({
             role="button"
             tabIndex={0}
           >
-            {isPrimary && isNew && <span className="kv-d-g-flag">New</span>}
-            {isPrimary && !isNew && <span className="kv-d-g-flag">Primary</span>}
+            {isPrimary && isNew && <span className="kv-d-g-flag">{t("listings.new")}</span>}
+            {isPrimary && !isNew && <span className="kv-d-g-flag">{t("detail.primary")}</span>}
             {isLast && extraCount > 0 && (
-              <span className="kv-d-g-count">+{extraCount} images</span>
+              <span className="kv-d-g-count">+{extraCount} {t("detail.images")}</span>
             )}
           </div>
         );
@@ -1079,6 +1084,7 @@ function parseNum(raw: string, allowDecimal = false): number {
 }
 
 function KvMortgage({ price }: { price: number }) {
+  const { t } = useTranslation();
   const [input, setInput] = useState<MortgageInput>({
     totalAmount: price,
     downPaymentPct: 20,
@@ -1106,20 +1112,20 @@ function KvMortgage({ price }: { price: number }) {
   const totalCost = result.downPayment + result.loanAmount + totalInterest;
 
   const rows: { label: string; value: number }[] = [
-    { label: "Loan payment", value: result.monthlyMortgage },
-    { label: "Property tax", value: result.monthlyTax },
-    { label: "Insurance", value: result.monthlyInsurance },
-    { label: "Condo fee", value: result.monthlyHoa },
-    { label: "Maintenance", value: result.monthlyMaintenance },
-    { label: "Utilities", value: result.monthlyUtilities },
+    { label: t("detail.loanPayment"), value: result.monthlyMortgage },
+    { label: t("detail.propertyTax"), value: result.monthlyTax },
+    { label: t("detail.insurance"), value: result.monthlyInsurance },
+    { label: t("detail.condoFee"), value: result.monthlyHoa },
+    { label: t("detail.maintenance"), value: result.monthlyMaintenance },
+    { label: t("detail.utilities"), value: result.monthlyUtilities },
   ].filter((r) => r.value > 0);
 
   return (
     <section className="kv-d-section">
       <div className="kv-d-section-head">
         <div>
-          <div className="kv-d-ey">Estimate</div>
-          <h2 className="kv-d-h2">Monthly cost</h2>
+          <div className="kv-d-ey">{t("detail.estimate")}</div>
+          <h2 className="kv-d-h2">{t("detail.monthlyCost")}</h2>
         </div>
       </div>
 
@@ -1127,7 +1133,7 @@ function KvMortgage({ price }: { price: number }) {
         <div className="kv-d-mc-inputs">
           {/* Loan terms — primary inputs */}
           <div className="kv-d-mc-field kv-d-mc-field-wide">
-            <label>Property price</label>
+            <label>{t("detail.propertyPrice")}</label>
             <input
               type="text"
               inputMode="numeric"
@@ -1136,7 +1142,7 @@ function KvMortgage({ price }: { price: number }) {
             />
           </div>
           <div className="kv-d-mc-field">
-            <label>Deposit ({input.downPaymentPct}%)</label>
+            <label>{t("detail.deposit")} ({input.downPaymentPct}%)</label>
             <input
               type="range"
               min={0}
@@ -1147,7 +1153,7 @@ function KvMortgage({ price }: { price: number }) {
             />
           </div>
           <div className="kv-d-mc-field">
-            <label>Loan term ({input.loanTermYears}y)</label>
+            <label>{t("detail.loanTerm")} ({input.loanTermYears}y)</label>
             <input
               type="range"
               min={5}
@@ -1158,7 +1164,7 @@ function KvMortgage({ price }: { price: number }) {
             />
           </div>
           <div className="kv-d-mc-field">
-            <label>Interest rate (%)</label>
+            <label>{t("detail.interestRate")} (%)</label>
             <input
               type="text"
               inputMode="decimal"
@@ -1176,7 +1182,7 @@ function KvMortgage({ price }: { price: number }) {
               wrapper is hidden until the reader opens the toggle below. */}
           <div className="kv-d-mc-advanced" data-open={showAdvanced ? "true" : "false"}>
             <div className="kv-d-mc-field">
-              <label>Property tax (%)</label>
+              <label>{t("detail.propertyTax")} (%)</label>
               <input
                 type="text"
                 inputMode="decimal"
@@ -1185,7 +1191,7 @@ function KvMortgage({ price }: { price: number }) {
               />
             </div>
             <div className="kv-d-mc-field">
-              <label>Insurance (€/yr)</label>
+              <label>{t("detail.insurance")} (€/yr)</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -1194,7 +1200,7 @@ function KvMortgage({ price }: { price: number }) {
               />
             </div>
             <div className="kv-d-mc-field">
-              <label>Condo fee (€/mo)</label>
+              <label>{t("detail.condoFee")} (€/mo)</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -1203,7 +1209,7 @@ function KvMortgage({ price }: { price: number }) {
               />
             </div>
             <div className="kv-d-mc-field">
-              <label>Maintenance (€/mo)</label>
+              <label>{t("detail.maintenance")} (€/mo)</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -1212,7 +1218,7 @@ function KvMortgage({ price }: { price: number }) {
               />
             </div>
             <div className="kv-d-mc-field">
-              <label>Utilities (€/mo)</label>
+              <label>{t("detail.utilities")} (€/mo)</label>
               <input
                 type="text"
                 inputMode="numeric"
@@ -1227,16 +1233,16 @@ function KvMortgage({ price }: { price: number }) {
             onClick={() => setShowAdvanced((s) => !s)}
             aria-expanded={showAdvanced}
           >
-            <span>{showAdvanced ? "Hide advanced costs" : "Show advanced costs"}</span>
+            <span>{showAdvanced ? t("detail.hideAdvancedCosts") : t("detail.showAdvancedCosts")}</span>
             <span aria-hidden="true">{showAdvanced ? "−" : "+"}</span>
           </button>
         </div>
 
         <div className="kv-d-mc-result">
           <div className="kv-d-mc-hero">
-            <div className="kv-d-mc-hero-label">Estimated monthly</div>
+            <div className="kv-d-mc-hero-label">{t("detail.estimatedMonthly")}</div>
             <div className="kv-d-mc-hero-value">{fmtEur(result.totalMonthly, 0)}</div>
-            <div className="kv-d-mc-hero-sub">per month</div>
+            <div className="kv-d-mc-hero-sub">{t("detail.perMonth")}</div>
           </div>
           <div className="kv-d-mc-table">
             {rows.map((r) => (
@@ -1248,19 +1254,19 @@ function KvMortgage({ price }: { price: number }) {
           </div>
           <div className="kv-d-mc-summary">
             <div className="kv-d-mc-summary-row">
-              <span>Deposit</span>
+              <span>{t("detail.deposit")}</span>
               <span>{fmtEur(result.downPayment, 0)}</span>
             </div>
             <div className="kv-d-mc-summary-row">
-              <span>Loan amount</span>
+              <span>{t("detail.loanAmount")}</span>
               <span>{fmtEur(result.loanAmount, 0)}</span>
             </div>
             <div className="kv-d-mc-summary-row">
-              <span>Total interest</span>
+              <span>{t("detail.totalInterest")}</span>
               <span>{fmtEur(totalInterest, 0)}</span>
             </div>
             <div className="kv-d-mc-summary-row">
-              <span>Total cost ({input.loanTermYears}y)</span>
+              <span>{t("detail.totalCost")} ({input.loanTermYears}y)</span>
               <span>{fmtEur(totalCost, 0)}</span>
             </div>
           </div>
@@ -1268,7 +1274,7 @@ function KvMortgage({ price }: { price: number }) {
       </div>
 
       <p className="kv-d-disclaimer">
-        Illustrative estimate for planning purposes. Not financial advice — rates and taxes vary.
+        {t("detail.mortgageDisclaimer")}
       </p>
     </section>
   );
@@ -1278,7 +1284,8 @@ function KvMortgage({ price }: { price: number }) {
    Market Context
 ──────────────────────────────────────────────────────────── */
 
-function ordinal(n: number): string {
+function ordinal(n: number, lang: string): string {
+  if (lang.startsWith("pt")) return `${n}.º`;
   const suffix =
     n % 100 >= 11 && n % 100 <= 13
       ? "th"
@@ -1292,17 +1299,18 @@ function ordinal(n: number): string {
   return `${n}${suffix}`;
 }
 
-function formatDaysIndexed(iso: string | undefined): string {
+function formatDaysIndexed(iso: string | undefined, t: (key: string, options?: Record<string, unknown>) => string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   const days = Math.max(0, Math.floor((Date.now() - d.getTime()) / 86_400_000));
-  if (days === 0) return "Today";
-  if (days === 1) return "1 day";
-  return `${days} days`;
+  if (days === 0) return t("detail.today");
+  if (days === 1) return t("detail.oneDay");
+  return t("detail.days", { count: days });
 }
 
 function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; island: string; firstSeenAt?: string }) {
+  const { t, i18n } = useTranslation();
   const cards: {
     value: string;
     label: string;
@@ -1313,29 +1321,29 @@ function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; isl
   if (ctx.medianPrice !== null) {
     cards.push({
       value: formatMedian(ctx.medianPrice),
-      label: `${island} median`,
-      note: `${ctx.activeListings} priced listings`,
+      label: t("detail.median", { island }),
+      note: t("detail.pricedListings", { count: ctx.activeListings }),
     });
   }
   if (ctx.medianPricePerSqm !== null) {
     cards.push({
       value: formatPricePerSqm(ctx.medianPricePerSqm),
-      label: "Median €/m²",
-      note: `${ctx.nSqmListings} with size data`,
+      label: t("detail.medianPerSqm"),
+      note: t("detail.withSizeData", { count: ctx.nSqmListings }),
     });
   }
   if (ctx.pricePercentile !== null) {
     cards.push({
-      value: ordinal(ctx.pricePercentile),
-      label: "Price percentile",
-      note: ctx.pricePercentile >= 50 ? "Above island median" : "Below island median",
+      value: ordinal(ctx.pricePercentile, i18n.language),
+      label: t("detail.pricePercentile"),
+      note: ctx.pricePercentile >= 50 ? t("detail.aboveIslandMedian") : t("detail.belowIslandMedian"),
       percentile: ctx.pricePercentile,
     });
   }
   cards.push({
-    value: formatDaysIndexed(firstSeenAt),
-    label: "Days indexed",
-    note: "Since first tracked",
+    value: formatDaysIndexed(firstSeenAt, t),
+    label: t("detail.daysIndexed"),
+    note: t("detail.sinceFirstTracked"),
   });
 
   if (cards.length === 0) return null;
@@ -1344,8 +1352,8 @@ function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; isl
     <section className="kv-d-section">
       <div className="kv-d-section-head">
         <div>
-          <div className="kv-d-ey">Context</div>
-          <h2 className="kv-d-h2">Market context</h2>
+          <div className="kv-d-ey">{t("detail.context")}</div>
+          <h2 className="kv-d-h2">{t("detail.marketContextTitle")}</h2>
         </div>
       </div>
 
@@ -1360,8 +1368,8 @@ function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; isl
                   <div className="kv-d-mctx-bar-dot" style={{ left: `${c.percentile}%` }} />
                 </div>
                 <div className="kv-d-mctx-bar-labels">
-                  <span>Low</span>
-                  <span>High</span>
+                  <span>{t("detail.low")}</span>
+                  <span>{t("detail.high")}</span>
                 </div>
               </div>
             )}
@@ -1371,8 +1379,8 @@ function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; isl
       </div>
 
       <p className="kv-d-disclaimer">
-        Asking price data from public listings. Not financial advice.{" "}
-        <Link to="/market">View Cape Verde market data</Link>.
+        {t("detail.marketContextDisclaimer")}{" "}
+        <Link to="/market">{t("detail.viewMarketData")}</Link>.
       </p>
     </section>
   );
@@ -1383,6 +1391,7 @@ function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; isl
 ──────────────────────────────────────────────────────────── */
 
 function KvSimilar({ cards }: { cards: ListingCard[] }) {
+  const { i18n, t } = useTranslation();
   const ref = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
@@ -1422,15 +1431,15 @@ function KvSimilar({ cards }: { cards: ListingCard[] }) {
       <div className="kv-d-section-inner">
         <div className="kv-d-section-head">
         <div>
-          <div className="kv-d-ey">Comparable</div>
-          <h2 className="kv-d-h2">Similar properties</h2>
+          <div className="kv-d-ey">{t("detail.comparable")}</div>
+          <h2 className="kv-d-h2">{t("detail.similar")}</h2>
         </div>
         <div className="kv-d-sim-nav">
           <button
             type="button"
             className={`kv-d-sim-arrow${canPrev ? "" : " kv-d-sim-arrow-off"}`}
             onClick={() => scroll(-1)}
-            aria-label="Scroll left"
+            aria-label={t("detail.scrollLeft")}
             disabled={!canPrev}
           >
             ‹
@@ -1439,7 +1448,7 @@ function KvSimilar({ cards }: { cards: ListingCard[] }) {
             type="button"
             className={`kv-d-sim-arrow${canNext ? "" : " kv-d-sim-arrow-off"}`}
             onClick={() => scroll(1)}
-            aria-label="Scroll right"
+            aria-label={t("detail.scrollRight")}
             disabled={!canNext}
           >
             ›
@@ -1457,7 +1466,7 @@ function KvSimilar({ cards }: { cards: ListingCard[] }) {
           return (
             <Link key={l.id} to={`/listing/${l.id}`} className="kv-d-sim-card">
               <div className="kv-d-sim-img" style={bg}>
-                {l.is_new && <span className="kv-d-sim-flag">New</span>}
+                {l.is_new && <span className="kv-d-sim-flag">{t("listings.new")}</span>}
               </div>
               <div className="kv-d-sim-body">
                 <div className="kv-d-sim-top">
@@ -1465,7 +1474,7 @@ function KvSimilar({ cards }: { cards: ListingCard[] }) {
                   {loc && <span className="kv-d-sim-loc">{loc}</span>}
                 </div>
                 <div className="kv-d-sim-price">{formatPrice(l.price, l.currency)}</div>
-                <div className="kv-d-sim-title">{normalizeListingDisplayTitle(l.title)}</div>
+                <div className="kv-d-sim-title">{normalizeListingDisplayTitle(getLocalizedTitle(l, i18n.language).title)}</div>
               </div>
             </Link>
           );

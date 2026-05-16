@@ -1,4 +1,5 @@
 import { useState, useEffect, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { arei } from "../lib/arei";
 import { notifyFormspree } from "../lib/formspree";
 import "./NewsletterPopup.css";
@@ -6,6 +7,7 @@ import "./NewsletterPopup.css";
 const STORAGE_KEY = "kv_nl_popup";
 
 export default function NewsletterPopup() {
+  const { t } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -36,7 +38,7 @@ export default function NewsletterPopup() {
     const trimmed = email.trim();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       setStatus("error");
-      setErrorMsg("Please enter a valid email address.");
+      setErrorMsg(t("newsletter.error"));
       return;
     }
     setStatus("submitting");
@@ -56,39 +58,39 @@ export default function NewsletterPopup() {
         setTimeout(() => setVisible(false), 2800);
       } else {
         setStatus("error");
-        setErrorMsg("Something went wrong. Please try again.");
+        setErrorMsg(t("newsletter.error"));
       }
     } catch {
       setStatus("error");
-      setErrorMsg("Something went wrong. Please try again.");
+      setErrorMsg(t("newsletter.error"));
     }
   }
 
   if (!visible) return null;
 
   return (
-    <div className="nlp-overlay" role="dialog" aria-modal="true" aria-label="Newsletter signup" onClick={(e) => { if (e.target === e.currentTarget) dismiss(); }}>
+    <div className="nlp-overlay" role="dialog" aria-modal="true" aria-label={t("newsletterPopup.label")} onClick={(e) => { if (e.target === e.currentTarget) dismiss(); }}>
       <div className="nlp-card">
-        <button className="nlp-close" onClick={dismiss} aria-label="Close" type="button">
+        <button className="nlp-close" onClick={dismiss} aria-label={t("newsletterPopup.close")} type="button">
           ×
         </button>
-        <div className="nlp-overline">Market Brief</div>
-        <h2 className="nlp-heading">Stay ahead of Cape Verde's property market.</h2>
+        <div className="nlp-overline">{t("newsletterPopup.overline")}</div>
+        <h2 className="nlp-heading">{t("newsletterPopup.heading")}</h2>
         <p className="nlp-desc">
-          Monthly updates on listings data, price shifts, island activity, and market news — delivered to your inbox.
+          {t("newsletterPopup.description")}
         </p>
         {status === "success" ? (
-          <div className="nlp-success">You're subscribed!</div>
+          <div className="nlp-success">{t("newsletter.success")}</div>
         ) : (
           <form className="nlp-form" onSubmit={handleSubmit}>
             <input
               type="email"
               className="nlp-input"
-              placeholder="Your email"
+              placeholder={t("newsletter.placeholder")}
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               disabled={status === "submitting"}
-              aria-label="Your email"
+              aria-label={t("newsletter.placeholder")}
               autoFocus
             />
             <button
@@ -96,12 +98,12 @@ export default function NewsletterPopup() {
               className="nlp-submit"
               disabled={status === "submitting"}
             >
-              {status === "submitting" ? "Sending…" : <>Subscribe <span aria-hidden="true">[→]</span></>}
+              {status === "submitting" ? t("newsletter.submitting") : <>{t("newsletter.submit")} <span aria-hidden="true">[→]</span></>}
             </button>
           </form>
         )}
         {status === "error" && <div className="nlp-error">{errorMsg}</div>}
-        <div className="nlp-fine">No spam. Unsubscribe anytime.</div>
+        <div className="nlp-fine">{t("newsletter.fine")}</div>
       </div>
     </div>
   );

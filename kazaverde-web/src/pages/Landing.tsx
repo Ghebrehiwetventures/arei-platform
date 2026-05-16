@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { BLOG_ARTICLES } from "../lib/blog-data";
 import NewsletterCta from "../components/NewsletterCta";
@@ -17,6 +18,24 @@ const BUCKET_ORDER: PriceBucket[] = ["under_100k", "100k_250k", "250k_500k", "ov
 import { Card } from "./Listings";
 import "./Listings.css"; // shares kv-lcard primitives with Listings page
 import "./Landing.css";
+
+const GUIDE_TEASER_PT: Record<string, { title: string; description: string }> = {
+  "cape-verde-property-prices-by-island": {
+    title: "Preços de imóveis em Cabo Verde por ilha",
+    description:
+      "Medianas de preços pedidos e contagens de anúncios por ilha, retiradas do Cape Verde Real Estate Index.",
+  },
+  "buying-property-cape-verde-guide": {
+    title: "Como comprar imóvel em Cabo Verde",
+    description:
+      "Um guia passo a passo para compradores estrangeiros, desde NIF e conta bancária até escritura.",
+  },
+  "which-cape-verde-island-property": {
+    title: "Em que ilha de Cabo Verde deve comprar?",
+    description:
+      "Uma comparação prática entre ilhas, infraestrutura, procura e perfis de comprador.",
+  },
+};
 
 interface MmiSnapshot {
   medianPrice: number | null;
@@ -150,14 +169,12 @@ function categoryFor(tags: string[]): "buying" | "market" | "legal" | "tax" {
   return "buying";
 }
 
-function categoryLabel(cat: string): string {
-  return cat.charAt(0).toUpperCase() + cat.slice(1);
-}
-
 export default function Landing() {
+  const { i18n, t } = useTranslation();
+  const isPt = i18n.language.startsWith("pt");
   useDocumentMeta(
     "Cape Verde Real Estate Index",
-    "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with the Cape Verde Real Estate Index, published by AREI.",
+    t("landing.metaDescription"),
   );
 
   /* Inject homepage JSON-LD: Organization + WebSite. FAQPage lives on
@@ -372,15 +389,14 @@ export default function Landing() {
       <header className="kv-l-hero">
         <div className="kv-l-hero-inner">
           <h1 className="kv-l-hero-title">
-            Cape&nbsp;Verde real estate, aggregated in one place
+            {t("landing.heroTitle")}
           </h1>
           <p className="kv-l-hero-sub">
-            An independent property search and data platform — listings aggregated
-            from local agencies, portals and property websites across the archipelago.
+            {t("landing.heroSub")}
           </p>
           <div className="kv-l-hero-cta">
-            <Link to="/listings" className="kv-btn kv-btn-solid">Browse all listings →</Link>
-            <Link to="/market" className="kv-l-hero-cta-ghost">Read this month's index →</Link>
+            <Link to="/listings" className="kv-btn kv-btn-solid">{t("landing.browseAll")}</Link>
+            <Link to="/market" className="kv-l-hero-cta-ghost">{t("landing.readIndex")}</Link>
           </div>
         </div>
       </header>
@@ -391,15 +407,14 @@ export default function Landing() {
         <div className="kv-l-feat-inner">
           <div className="kv-l-mmi-head">
             <div>
-              <span className="kv-l-eyebrow">Featured this week · Week of {formatWeekStart()}</span>
-              <h2>Three listings worth a closer look.</h2>
+              <span className="kv-l-eyebrow">{t("landing.featuredEyebrow", { week: formatWeekStart() })}</span>
+              <h2>{t("landing.featuredTitle")}</h2>
               <p>
-                Hand-picked from this week's listings — across the archipelago.
-                Every card links back to the original source.
+                {t("landing.featuredSub")}
               </p>
             </div>
             <Link to="/listings" className="kv-l-section-link">
-              {totalListings ? `See all ${totalListings} listings →` : "See all listings →"}
+              {totalListings ? t("landing.seeAllListings", { count: totalListings }) : t("landing.seeAllListingsFallback")}
             </Link>
           </div>
 
@@ -411,7 +426,7 @@ export default function Landing() {
 
           <div className="kv-l-feat-foot">
             <Link to="/listings" className="kv-btn">
-              {totalListings ? `Browse all ${totalListings} listings →` : "Browse all listings →"}
+              {totalListings ? t("landing.browseAllCount", { count: totalListings }) : t("landing.browseAll")}
             </Link>
           </div>
         </div>
@@ -426,40 +441,38 @@ export default function Landing() {
           <div className="kv-l-mmi-head">
             <div>
               <span className="kv-l-eyebrow">
-                Index status · {new Date().toLocaleDateString("en-US", { month: "long", year: "numeric" })}
+                {t("landing.indexStatus", { date: new Date().toLocaleDateString(i18n.language === "pt" ? "pt-PT" : "en-US", { month: "long", year: "numeric" }) })}
               </span>
-              <h2>Where the Cape Verde index stands today.</h2>
+              <h2>{t("landing.statusTitle")}</h2>
               <p>
-                Live counts and medians across every tracked listing on the index.
-                Period-over-period movements begin once a full month of snapshots
-                accumulates.
+                {t("landing.statusSub")}
               </p>
             </div>
-            <Link to="/market" className="kv-l-section-link">Full market data →</Link>
+            <Link to="/market" className="kv-l-section-link">{t("common.fullMarketData")} →</Link>
           </div>
 
           <div className="kv-l-mmi-strip" aria-busy={!mmi}>
             {mmi ? (
               <>
                 <div className="kv-l-mmi-cell">
-                  <div className="kv-l-mmi-lbl">Median asking price</div>
+                  <div className="kv-l-mmi-lbl">{t("landing.medianAskingPrice")}</div>
                   <div className="kv-l-mmi-num">{formatMedian(mmi.medianPrice)}</div>
-                  <div className="kv-l-mmi-delta">Across {mmi.pricedCount.toLocaleString("en")} priced listings</div>
+                  <div className="kv-l-mmi-delta">{t("landing.acrossPriced", { count: mmi.pricedCount.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") })}</div>
                 </div>
                 <div className="kv-l-mmi-cell">
-                  <div className="kv-l-mmi-lbl">Total inventory</div>
-                  <div className="kv-l-mmi-num">{mmi.total.toLocaleString("en")}</div>
-                  <div className="kv-l-mmi-delta">Tracked across the archipelago</div>
+                  <div className="kv-l-mmi-lbl">{t("landing.totalInventory")}</div>
+                  <div className="kv-l-mmi-num">{mmi.total.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en")}</div>
+                  <div className="kv-l-mmi-delta">{t("landing.trackedAcross")}</div>
                 </div>
                 <div className="kv-l-mmi-cell">
-                  <div className="kv-l-mmi-lbl">Added this month</div>
-                  <div className="kv-l-mmi-num">{mmi.addedThisMonth.toLocaleString("en")}</div>
-                  <div className="kv-l-mmi-delta">First seen since the 1st</div>
+                  <div className="kv-l-mmi-lbl">{t("landing.addedThisMonth")}</div>
+                  <div className="kv-l-mmi-num">{mmi.addedThisMonth.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en")}</div>
+                  <div className="kv-l-mmi-delta">{t("landing.firstSeenSince")}</div>
                 </div>
                 <div className="kv-l-mmi-cell">
-                  <div className="kv-l-mmi-lbl">Verified-price coverage</div>
+                  <div className="kv-l-mmi-lbl">{t("landing.verifiedPriceCoverage")}</div>
                   <div className="kv-l-mmi-num">{mmi.pricedPct}%</div>
-                  <div className="kv-l-mmi-delta">Have a public asking price</div>
+                  <div className="kv-l-mmi-delta">{t("landing.havePublicPrice")}</div>
                 </div>
               </>
             ) : (
@@ -476,54 +489,58 @@ export default function Landing() {
           <div className="kv-l-mmi-notes" aria-busy={!mmi}>
             {hasMmiNotes ? (
               <>
-                <div className="kv-l-mmi-notes-head">This month's index activity</div>
+                <div className="kv-l-mmi-notes-head">{t("landing.activityHead")}</div>
                 <ul>
                   {mmi?.topIslandByInflow && (
                     <li>
                       <span className="kv-l-mmi-tag">{mmi.topIslandByInflow.name}</span>
                       <span className="kv-l-mmi-body">
-                        Largest inflow this month — {mmi.topIslandByInflow.count} new {mmi.topIslandByInflow.count === 1 ? "listing" : "listings"} since the 1st.
+                        {t("landing.largestInflow", {
+                          count: mmi.topIslandByInflow.count,
+                          label: mmi.topIslandByInflow.count === 1 ? t("landing.listing") : t("landing.listings"),
+                        })}
                       </span>
                     </li>
                   )}
                   {mmi && mmi.topSourcesByInflow.length > 0 && (
                     <li>
-                      <span className="kv-l-mmi-tag">Sources</span>
+                      <span className="kv-l-mmi-tag">{t("landing.sources")}</span>
                       <span className="kv-l-mmi-body">
-                        {mmi.topSourcesByInflow
-                          .map((s) => `${s.label} added ${s.count}`)
-                          .join(" · ")}{" "}
-                        since the 1st.
+                        {t("landing.sourcesAdded", {
+                          items: mmi.topSourcesByInflow
+                            .map((s) => t("landing.sourceAdded", { label: s.label, count: s.count }))
+                            .join(" · "),
+                        })}
                       </span>
                     </li>
                   )}
                   {mmi?.topPriceBand && (
                     <li>
-                      <span className="kv-l-mmi-tag">Price band</span>
+                      <span className="kv-l-mmi-tag">{t("landing.priceBand")}</span>
                       <span className="kv-l-mmi-body">
-                        Most priced inventory sits in <b>{mmi.topPriceBand.label}</b> — {mmi.topPriceBand.pct}% of priced listings ({mmi.topPriceBand.count.toLocaleString("en")} of them).
+                        <Trans i18nKey="landing.pricedInventory" values={{ label: mmi.topPriceBand.label, pct: mmi.topPriceBand.pct, count: mmi.topPriceBand.count.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") }} components={{ 1: <b /> }} />
                       </span>
                     </li>
                   )}
                   {mmi?.topType && (
                     <li>
-                      <span className="kv-l-mmi-tag">Mix</span>
+                      <span className="kv-l-mmi-tag">{t("landing.mix")}</span>
                       <span className="kv-l-mmi-body">
-                        {mmi.topType.name} dominate at {mmi.topType.pct}% of typed inventory ({mmi.topType.count.toLocaleString("en")} listings).
+                        {t("landing.mixBody", { name: mmi.topType.name, pct: mmi.topType.pct, count: mmi.topType.count.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") })}
                       </span>
                     </li>
                   )}
                   {mmi?.topBedroom && (
                     <li>
-                      <span className="kv-l-mmi-tag">Layout</span>
+                      <span className="kv-l-mmi-tag">{t("landing.layout")}</span>
                       <span className="kv-l-mmi-body">
-                        Most common layout is <b>{mmi.topBedroom.count}-bedroom</b> — {mmi.topBedroom.pct}% of bedroom-tagged listings ({mmi.topBedroom.n.toLocaleString("en")}).
+                        <Trans i18nKey="landing.layoutBody" values={{ count: mmi.topBedroom.count, pct: mmi.topBedroom.pct, n: mmi.topBedroom.n.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") }} components={{ 1: <b /> }} />
                       </span>
                     </li>
                   )}
                 </ul>
                 <div className="kv-l-mmi-foot">
-                  Live counts from the index · Updated daily as crawlers complete
+                  {t("landing.liveCountsFoot")}
                 </div>
               </>
             ) : !mmi ? (
@@ -543,17 +560,17 @@ export default function Landing() {
               </>
             ) : (
               <>
-                <div className="kv-l-mmi-notes-head">This month's index activity</div>
+                <div className="kv-l-mmi-notes-head">{t("landing.activityHead")}</div>
                 <ul>
                   <li>
                     <span className="kv-l-mmi-tag">Live data</span>
                     <span className="kv-l-mmi-body">
-                      Activity notes appear here once there is enough monthly movement to summarize.
+                      {t("landing.noActivity")}
                     </span>
                   </li>
                 </ul>
                 <div className="kv-l-mmi-foot">
-                  Live counts from the index · Updated daily as crawlers complete
+                  {t("landing.liveCountsFoot")}
                 </div>
               </>
             )}
@@ -564,24 +581,22 @@ export default function Landing() {
               the blur so visitors can read what's coming; only the
               data placeholder is held behind the overlay. */}
           <div className="kv-l-mmi-coming-head">
-            <div className="kv-l-mmi-coming-eyebrow">Coming next</div>
-            <h3>Median price moves &amp; market velocity.</h3>
+            <div className="kv-l-mmi-coming-eyebrow">{t("landing.comingEyebrow")}</div>
+            <h3>{t("landing.comingTitle")}</h3>
             <p>
-              Time-series movements — period-over-period asking prices, days on
-              market, and per-island deltas — start once we have a full month of
-              stored snapshots.
+              {t("landing.comingSub")}
             </p>
           </div>
           <div className="kv-coming kv-coming-slim">
             <div className="kv-coming-content" aria-hidden="true">
               <ul>
-                <li><span className="kv-l-mmi-tag">Median</span> Period-over-period asking-price moves.</li>
-                <li><span className="kv-l-mmi-tag">Velocity</span> Median days on market and inflow vs removals.</li>
-                <li><span className="kv-l-mmi-tag">Segments</span> Per-island, per-property-type price deltas.</li>
+                <li><span className="kv-l-mmi-tag">Median</span> {t("landing.comingMedian")}</li>
+                <li><span className="kv-l-mmi-tag">Velocity</span> {t("landing.comingVelocity")}</li>
+                <li><span className="kv-l-mmi-tag">Segments</span> {t("landing.comingSegments")}</li>
               </ul>
             </div>
             <div className="kv-coming-overlay">
-              <span className="kv-pill">Coming May 2026</span>
+              <span className="kv-pill">{t("common.comingMay")}</span>
             </div>
           </div>
         </div>
@@ -592,27 +607,26 @@ export default function Landing() {
         <div className="kv-l-guides-inner">
           <div className="kv-l-mmi-head">
             <div>
-              <span className="kv-l-eyebrow">Guides &amp; Reports</span>
-              <h2>Buying property in Cape Verde, explained.</h2>
+              <span className="kv-l-eyebrow">{t("landing.guidesEyebrow")}</span>
+              <h2>{t("landing.guidesTitle")}</h2>
               <p>
-                Independent explainers on the legal process, island comparisons, tax
-                changes, and residence options — written by people who've done it.
+                {t("landing.guidesSub")}
               </p>
             </div>
-            <Link to="/blog" className="kv-l-section-link">Read all guides →</Link>
+            <Link to="/blog" className="kv-l-section-link">{t("common.readAllGuides")} →</Link>
           </div>
 
           <div className="kv-l-guide-grid">
             {guides.map((a) => {
-              const cat = categoryFor(a.tags);
-              return (
-                <Link key={a.slug} to={`/blog/${a.slug}`} className="kv-l-guide">
-                  <span className="kv-eyebrow">{categoryLabel(cat)}</span>
-                  <div className="kv-l-guide-title">{a.title}</div>
-                  <div className="kv-l-guide-excerpt">{a.description}</div>
+                  const cat = categoryFor(a.tags);
+                  return (
+                    <Link key={a.slug} to={`/blog/${a.slug}`} className="kv-l-guide">
+                  <span className="kv-eyebrow">{t(`landing.${cat}`)}</span>
+                  <div className="kv-l-guide-title">{isPt ? GUIDE_TEASER_PT[a.slug]?.title ?? a.title : a.title}</div>
+                  <div className="kv-l-guide-excerpt">{isPt ? GUIDE_TEASER_PT[a.slug]?.description ?? a.description : a.description}</div>
                   <div className="kv-l-guide-foot">
-                    <span>{new Date(a.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
-                    <span>{a.readTime}</span>
+                    <span>{new Date(a.date).toLocaleDateString(isPt ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    <span>{isPt ? a.readTime.replace("min read", "min de leitura") : a.readTime}</span>
                   </div>
                 </Link>
               );

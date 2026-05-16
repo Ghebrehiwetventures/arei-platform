@@ -1,41 +1,40 @@
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { Link } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
 import "./Market.css"; // kv-hero, kv-m-intro, kv-m-section primitives
 import "./Policy.css";
 
 export default function Privacy() {
+  const { t } = useTranslation();
+  const collectList = t("privacy.collectList", { returnObjects: true }) as [string, string][];
+  const services = t("privacy.services", { returnObjects: true }) as [string, string, string][];
   useDocumentMeta(
-    "Privacy Policy",
-    "How the Cape Verde Real Estate Index handles your data, what we collect, and your rights.",
+    t("privacy.metaTitle"),
+    t("privacy.metaDescription"),
   );
 
   return (
     <div className="kv-pol kv-m">
       <header className="kv-hero kv-hero-slim">
         <div className="kv-hero-inner">
-          <div className="kv-hero-eyebrow">Privacy policy</div>
-          <h1>How we handle your data.</h1>
+          <div className="kv-hero-eyebrow">{t("privacy.eyebrow")}</div>
+          <h1>{t("privacy.title")}</h1>
           <p className="kv-hero-sub">
-            What we collect, what we don't, and how to reach us if you want
-            something removed. The Cape Verde Real Estate Index is a read-only
-            index — we collect very little.
+            {t("privacy.sub")}
           </p>
-          <span className="kv-pol-stamp">Last updated · 27 March 2026</span>
+          <span className="kv-pol-stamp">{t("privacy.updated")}</span>
         </div>
       </header>
 
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Who we are</span>
-            <h2>The Cape Verde Real Estate Index, published by AREI.</h2>
+            <span className="kv-l-eyebrow">{t("privacy.sections.0.0")}</span>
+            <h2>{t("privacy.sections.0.1")}</h2>
           </div>
           <p className="kv-pol-prose">
-            The Cape Verde Real Estate Index (<strong>capeverderealestateindex.com</strong>)
-            is a read-only property index for Cape Verde, published as part of
-            Africa Real Estate Index (AREI). This policy explains what data we
-            collect, why we collect it, and how we protect it.
+            <Trans i18nKey="privacy.sections.0.2" components={{ 1: <strong /> }} />
           </p>
         </div>
       </section>
@@ -43,29 +42,16 @@ export default function Privacy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">What we collect</span>
-            <h2>Three things, all minimal.</h2>
+            <span className="kv-l-eyebrow">{t("privacy.sections.1.0")}</span>
+            <h2>{t("privacy.sections.1.1")}</h2>
             <p>
-              We don't run advertising, retargeting, or personal profiling.
-              The list below is the full set of data the site interacts with.
+              {t("privacy.sections.1.2")}
             </p>
           </div>
           <ul className="kv-pol-list">
-            <li>
-              <strong>Analytics data.</strong> Vercel Web Analytics records
-              anonymous page views — URL, referrer, browser, device — without
-              cookies or any personally identifiable information.
-            </li>
-            <li>
-              <strong>Newsletter email.</strong> If you subscribe, we store
-              your email address to send periodic market updates. We don't
-              share it with third parties. Unsubscribe any time.
-            </li>
-            <li>
-              <strong>Saved properties.</strong> If you shortlist listings,
-              the IDs are kept in your browser's localStorage. They never
-              leave your device.
-            </li>
+            {collectList.map(([head, body]) => (
+              <li key={head}><strong>{head}</strong> {body}</li>
+            ))}
           </ul>
         </div>
       </section>
@@ -73,13 +59,11 @@ export default function Privacy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">What we don't collect</span>
-            <h2>Everything else.</h2>
+            <span className="kv-l-eyebrow">{t("privacy.sections.2.0")}</span>
+            <h2>{t("privacy.sections.2.1")}</h2>
           </div>
           <div className="kv-pol-pull">
-            <strong>No names, phone numbers, addresses, or payment data.</strong>{" "}
-            No advertising trackers. We do not sell or share data with
-            advertisers, brokers, or marketing networks.
+            {t("privacy.sections.2.2")}
           </div>
         </div>
       </section>
@@ -87,15 +71,11 @@ export default function Privacy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Cookies</span>
-            <h2>Almost none.</h2>
+            <span className="kv-l-eyebrow">{t("privacy.sections.3.0")}</span>
+            <h2>{t("privacy.sections.3.1")}</h2>
           </div>
           <p className="kv-pol-prose">
-            The Cape Verde Real Estate Index uses minimal browser storage.
-            Vercel Web Analytics is cookieless. The only persistent storage is
-            localStorage for your saved properties and cookie-banner
-            acknowledgement. For the full breakdown, see the{" "}
-            <Link to="/cookie-policy">Cookie Policy</Link>.
+            <Trans i18nKey="privacy.sections.3.2" components={{ 1: <Link to="/cookie-policy" /> }} />
           </p>
         </div>
       </section>
@@ -103,46 +83,41 @@ export default function Privacy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Third-party services</span>
-            <h2>Who else touches your request.</h2>
+            <span className="kv-l-eyebrow">{t("privacy.sections.4.0")}</span>
+            <h2>{t("privacy.sections.4.1")}</h2>
             <p>
-              The Cape Verde Real Estate Index is a small read-only site, but
-              a request to it involves a handful of upstream providers. Each
-              has its own privacy policy — links below.
+              {t("privacy.sections.4.2")}
             </p>
           </div>
           <ul className="kv-pol-list">
             <li>
-              <strong>Vercel.</strong> Hosts the site and provides anonymous
-              analytics.{" "}
+              <strong>{services[0][0]}</strong> {services[0][1]}{" "}
               <a
                 href="https://vercel.com/legal/privacy-policy"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Privacy policy ↗
+                {services[0][2]}
               </a>
             </li>
             <li>
-              <strong>Supabase.</strong> Stores newsletter subscriptions and
-              the listings index.{" "}
+              <strong>{services[1][0]}</strong> {services[1][1]}{" "}
               <a
                 href="https://supabase.com/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Privacy policy ↗
+                {services[1][2]}
               </a>
             </li>
             <li>
-              <strong>Google Fonts.</strong> Serves the typefaces used on the
-              site. Font requests can transmit your IP address to Google.{" "}
+              <strong>{services[2][0]}</strong> {services[2][1]}{" "}
               <a
                 href="https://policies.google.com/privacy"
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Privacy policy ↗
+                {services[2][2]}
               </a>
             </li>
           </ul>
@@ -152,15 +127,11 @@ export default function Privacy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Your rights</span>
-            <h2>Removal on request.</h2>
+            <span className="kv-l-eyebrow">{t("privacy.sections.5.0")}</span>
+            <h2>{t("privacy.sections.5.1")}</h2>
           </div>
           <p className="kv-pol-prose">
-            You can request deletion of your newsletter subscription at any
-            time by emailing{" "}
-            <a href="mailto:info@africarealestateindex.com">info@africarealestateindex.com</a>. Since
-            we don't collect personal data beyond newsletter emails, there is
-            no additional data to access or delete.
+            <Trans i18nKey="privacy.sections.5.2" components={{ 1: <a href="mailto:info@africarealestateindex.com" /> }} />
           </p>
         </div>
       </section>
@@ -168,14 +139,11 @@ export default function Privacy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Updates &amp; contact</span>
-            <h2>Material changes get a new date.</h2>
+            <span className="kv-l-eyebrow">{t("privacy.sections.6.0")}</span>
+            <h2>{t("privacy.sections.6.1")}</h2>
           </div>
           <p className="kv-pol-prose">
-            We may update this policy as the product evolves. Material
-            changes are noted with a fresh date at the top of this page.
-            Questions? Email{" "}
-            <a href="mailto:info@africarealestateindex.com">info@africarealestateindex.com</a>.
+            <Trans i18nKey="privacy.sections.6.2" components={{ 1: <a href="mailto:info@africarealestateindex.com" /> }} />
           </p>
         </div>
       </section>
