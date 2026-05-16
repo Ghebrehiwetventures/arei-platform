@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { BLOG_ARTICLES } from "../lib/blog-data";
 import { FAQ_ENTRIES, type FaqEntry } from "../lib/faq-data";
@@ -34,9 +35,10 @@ function matches(query: string, ...fields: string[]): boolean {
 }
 
 export default function BlogList() {
+  const { t } = useTranslation();
   useDocumentMeta(
-    "Guides",
-    "Independent explainers and a buyer's FAQ for Cape Verde property — legal process, island comparisons, tax changes, and residence options.",
+    t("blog.metaTitle"),
+    t("blog.metaDescription"),
   );
 
   const [query, setQuery] = useState("");
@@ -98,14 +100,12 @@ export default function BlogList() {
       {/* Off-white header band — quieter than the main hero */}
       <header className="kv-blog-head">
         <div className="kv-blog-head-inner">
-          <div className="kv-blog-eyebrow">Guides &amp; Knowledge Base</div>
+          <div className="kv-blog-eyebrow">{t("blog.eyebrow")}</div>
           <h1 className="kv-blog-title">
-            Buying property in Cape Verde, explained.
+            {t("blog.title")}
           </h1>
           <p className="kv-blog-sub">
-            Independent explainers on the legal process, island comparisons, tax
-            changes, and residence options — plus a searchable FAQ for the
-            questions buyers ask most.
+            {t("blog.sub")}
           </p>
 
           <form
@@ -117,17 +117,17 @@ export default function BlogList() {
             <input
               type="search"
               className="kv-blog-search-input"
-              placeholder="Search guides and FAQ — e.g. 'NIF', 'mortgage', 'IUP'"
+              placeholder={t("blog.placeholder")}
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              aria-label="Search guides and FAQ"
+              aria-label={t("blog.searchLabel")}
             />
             {isSearching && (
               <button
                 type="button"
                 className="kv-blog-search-clear"
                 onClick={() => setQuery("")}
-                aria-label="Clear search"
+                aria-label={t("blog.clearSearch")}
               >
                 ×
               </button>
@@ -136,9 +136,9 @@ export default function BlogList() {
 
           {isSearching && (
             <div className="kv-blog-search-meta">
-              <b>{totalHits}</b> {totalHits === 1 ? "result" : "results"}
+              <b>{totalHits}</b> {totalHits === 1 ? t("common.result") : t("common.results")}
               {" · "}
-              {filteredArticles.length} {filteredArticles.length === 1 ? "guide" : "guides"}
+              {filteredArticles.length} {filteredArticles.length === 1 ? t("blog.guide") : t("blog.guides")}
               {" · "}
               {filteredFaq.length} FAQ
             </div>
@@ -151,16 +151,15 @@ export default function BlogList() {
         {(filteredArticles.length > 0 || !isSearching) && (
           <div className="kv-blog-section">
             <div className="kv-blog-section-head">
-              <div className="kv-blog-section-eyebrow">Guides</div>
+              <div className="kv-blog-section-eyebrow">{t("blog.sectionGuides")}</div>
               <h2 className="kv-blog-section-title">
-                Long-form explainers
+                {t("blog.longForm")}
               </h2>
             </div>
 
             {filteredArticles.length === 0 ? (
               <div className="kv-blog-empty">
-                No guides match <b>"{query}"</b>. Check the FAQ below — short
-                answers to the most common buyer questions.
+                <Trans i18nKey="blog.noGuides" values={{ query }} components={{ 1: <b /> }} />
               </div>
             ) : (
               <div className="kv-blog-grid">
@@ -198,18 +197,15 @@ export default function BlogList() {
           <div className="kv-blog-section kv-blog-faq-section">
             <div className="kv-blog-section-head">
               <div className="kv-blog-section-eyebrow">FAQ</div>
-              <h2 className="kv-blog-section-title">
-                The questions buyers ask most.
-              </h2>
+              <h2 className="kv-blog-section-title">{t("blog.faqTitle")}</h2>
               <p className="kv-blog-section-sub">
-                Short, direct answers — sourced from the long-form guides above.
-                If the FAQ doesn't cover it, the guides go deeper.
+                {t("blog.faqSub")}
               </p>
             </div>
 
             {filteredFaq.length === 0 ? (
               <div className="kv-blog-empty">
-                No FAQ entries match <b>"{query}"</b>.
+                <Trans i18nKey="blog.noFaq" values={{ query }} components={{ 1: <b /> }} />
               </div>
             ) : (
               <div className="kv-faq">

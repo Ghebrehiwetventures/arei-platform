@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import DLayersMark from "./DLayersMark";
 import "./Footer.css";
 
@@ -7,6 +8,8 @@ import "./Footer.css";
    from the footer. Mobile collapses to a 2-col grid with brand
    spanning both. */
 export default function Footer() {
+  const { t } = useTranslation();
+
   return (
     <footer className="ft">
       <div className="ft-inner">
@@ -17,38 +20,36 @@ export default function Footer() {
               <span>Cape Verde<span className="lk-desc">Real Estate Index</span></span>
             </Link>
             <p>
-              An independent, read-only index of public property listings
-              across Cape Verde. We aggregate from local agents, clean the
-              data, and publish it in one searchable place. Published by AREI.
+              {t("footer.description")}
             </p>
             <div className="footer-status">
               <span className="sd" aria-hidden="true" />
-              Live · Source-linked index
+              Live · {t("common.sourceLinkedIndex")}
             </div>
           </div>
 
           <div className="footer-col">
-            <h4>Index</h4>
-            <Link to="/listings">All listings</Link>
-            <Link to="/market">Market data</Link>
-            <Link to="/saved">Shortlist</Link>
+            <h4>{t("footer.index")}</h4>
+            <Link to="/listings">{t("common.allListings")}</Link>
+            <Link to="/market">{t("common.marketData")}</Link>
+            <Link to="/saved">{t("common.shortlist")}</Link>
           </div>
 
           <div className="footer-col">
-            <h4>Resources</h4>
-            <Link to="/blog">Guides &amp; FAQ</Link>
-            <Link to="/market-news">News</Link>
-            <Link to="/blog/buying-property-cape-verde-guide">Buying guide</Link>
-            <Link to="/market#methodology">Methodology</Link>
-            <Link to="/about">About</Link>
+            <h4>{t("footer.resources")}</h4>
+            <Link to="/blog">{t("footer.guidesFaq")}</Link>
+            <Link to="/market-news">{t("common.news")}</Link>
+            <Link to="/blog/buying-property-cape-verde-guide">{t("footer.buyingGuide")}</Link>
+            <Link to="/market#methodology">{t("footer.methodology")}</Link>
+            <Link to="/about">{t("common.about")}</Link>
           </div>
 
           <div className="footer-col">
-            <h4>Connect</h4>
-            <a href="mailto:info@africarealestateindex.com">Contact</a>
+            <h4>{t("footer.connect")}</h4>
+            <a href="mailto:info@africarealestateindex.com">{t("common.contact")}</a>
             <a href="https://www.africarealestateindex.com/" target="_blank" rel="noopener noreferrer">AREI</a>
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/cookie-policy">Cookies</Link>
+            <Link to="/privacy">{t("common.privacy")}</Link>
+            <Link to="/cookie-policy">{t("common.cookies")}</Link>
           </div>
         </div>
 
@@ -61,7 +62,7 @@ export default function Footer() {
               target="_blank"
               rel="noopener noreferrer"
             >
-              Powered by Africa Real Estate Index ↗
+              {t("common.poweredBy")} ↗
             </a>
           </div>
           <div className="footer-idx">CV·01</div>

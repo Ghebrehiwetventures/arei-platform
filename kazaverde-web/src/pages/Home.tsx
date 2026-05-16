@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import PropertyCard from "../components/PropertyCard";
 import SectionHeader from "../components/SectionHeader";
@@ -73,7 +74,8 @@ const HOMEPAGE_SCHEMA = {
 };
 
 export default function Home() {
-  useDocumentMeta("Cape Verde Real Estate Index", HOME_META_DESCRIPTION);
+  const { t } = useTranslation();
+  useDocumentMeta("Cape Verde Real Estate Index", t("home.metaDescription"));
   const navigate = useNavigate();
   const [data, setData] = useState<HomeData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -126,7 +128,7 @@ export default function Home() {
         });
       } catch (e) {
         console.error("[Home] Failed to load data:", e);
-        setError(e instanceof Error ? e.message : "Could not load property data.");
+        setError(e instanceof Error ? e.message : t("common.liveDataUnavailable"));
       } finally {
         setLoading(false);
       }
@@ -138,11 +140,11 @@ export default function Home() {
     return (
       <section className="hero anim-fu delay-1">
         <h1>
-          Cape Verde<br />
-          <span className="ac">Real Estate</span><br />
-          Index
+          {t("home.heroTitleA")}<br />
+          <span className="ac">{t("home.heroTitleB")}</span><br />
+          {t("home.heroTitleC")}
         </h1>
-        <p className="hero-sub">Loading Cape Verde property data...</p>
+        <p className="hero-sub">{t("home.loadingData")}</p>
       </section>
     );
   }
@@ -151,12 +153,12 @@ export default function Home() {
     return (
       <section className="hero anim-fu delay-1">
         <h1>
-          Cape Verde<br />
-          <span className="ac">Real Estate</span><br />
-          Index
+          {t("home.heroTitleA")}<br />
+          <span className="ac">{t("home.heroTitleB")}</span><br />
+          {t("home.heroTitleC")}
         </h1>
         <p className="hero-sub">
-          {error ? "Live property data could not be loaded." : "Cape Verde's read-only property index."}
+          {error ? t("common.liveDataUnavailable") : t("home.fallbackSub")}
         </p>
         {error && (
           <div
@@ -170,12 +172,12 @@ export default function Home() {
               color: "#5f1d1d",
             }}
           >
-            <strong>Data connection error</strong>
+            <strong>{t("common.dataConnectionError")}</strong>
             <p style={{ margin: "8px 0 0" }}>{error}</p>
           </div>
         )}
         <div className="hero-acts">
-          <button className="bp" onClick={() => navigate("/listings")}>BROWSE PROPERTIES</button>
+          <button className="bp" onClick={() => navigate("/listings")}>{t("home.browseProperties")}</button>
         </div>
       </section>
     );
@@ -192,32 +194,32 @@ export default function Home() {
       {/* Hero */}
       <section className="hero anim-fu delay-1">
         <h1>
-          Cape Verde<br />
-          <span className="ac">Real Estate</span><br />
-          Index
+          {t("home.heroTitleA")}<br />
+          <span className="ac">{t("home.heroTitleB")}</span><br />
+          {t("home.heroTitleC")}
         </h1>
         <p className="hero-sub">
-          A read-only Cape Verde property index with {stats.total} tracked listings across {stats.islandCount} islands.
+          {t("home.heroSub", { total: stats.total, islandCount: stats.islandCount })}
         </p>
         <div className="hero-acts">
-          <button className="bp" onClick={() => navigate("/listings")}>BROWSE PROPERTIES</button>
-          <button className="bo" onClick={() => navigate("/market")}>MARKET DATA</button>
+          <button className="bp" onClick={() => navigate("/listings")}>{t("home.browseProperties")}</button>
+          <button className="bo" onClick={() => navigate("/market")}>{t("home.marketData")}</button>
         </div>
       </section>
 
       {/* Stats strip */}
       <div className="sr anim-fu delay-25">
-        <div className="si"><div className="sn">{stats.total}</div><div className="sl">Active Listings</div></div>
-        <div className="si si-desktop-only"><div className="sn">{stats.islandCount}</div><div className="sl">Islands</div></div>
-        <div className="si"><div className="sn">{ACTIVE_SOURCE_COUNT}</div><div className="sl">Active Sources</div></div>
-        <div className="si"><div className="sn">{stats.medianPrice ? formatMedian(stats.medianPrice) : "—"}</div><div className="sl">Estimated Median Price</div></div>
+        <div className="si"><div className="sn">{stats.total}</div><div className="sl">{t("home.activeListings")}</div></div>
+        <div className="si si-desktop-only"><div className="sn">{stats.islandCount}</div><div className="sl">{t("home.islands")}</div></div>
+        <div className="si"><div className="sn">{ACTIVE_SOURCE_COUNT}</div><div className="sl">{t("home.activeSources")}</div></div>
+        <div className="si"><div className="sn">{stats.medianPrice ? formatMedian(stats.medianPrice) : "—"}</div><div className="sl">{t("home.estimatedMedianPrice")}</div></div>
       </div>
 
       {/* Island explorer */}
       <SectionHeader
         action={
           <a className="sa" onClick={() => navigate("/listings")}>
-            View all
+            {t("common.viewAll")}
             <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
@@ -225,7 +227,7 @@ export default function Home() {
           </a>
         }
       >
-        Explore by <em>Island</em>
+        {t("home.exploreByIsland")} <em>{t("home.island")}</em>
       </SectionHeader>
       <div className="is anim-fu delay-35">
         {islands.map((island) => (
@@ -238,7 +240,7 @@ export default function Home() {
             <div className="ov" />
             <div className="ic-i">
               <h3>{island.name}</h3>
-              <span>{island.count} properties</span>
+              <span>{island.count} {t("common.properties")}</span>
             </div>
           </a>
         ))}
@@ -248,11 +250,11 @@ export default function Home() {
       <SectionHeader
         action={
           <a onClick={() => navigate("/market")} className="sa">
-            <span className="bo" style={{ padding: "8px 18px", fontSize: "0.72rem" }}>FULL MARKET DATA →</span>
+            <span className="bo" style={{ padding: "8px 18px", fontSize: "0.72rem" }}>{t("home.fullMarketData")}</span>
           </a>
         }
       >
-        Median Price by <em>Island</em>
+        {t("home.medianPriceByIsland")} <em>{t("home.island")}</em>
       </SectionHeader>
       <div className="mp-grid anim-fu delay-4">
         {stats.islands.filter(i => i.median !== null).slice(0, 4).map((island) => (
@@ -260,9 +262,9 @@ export default function Home() {
             <div className="mp-island">{island.name.toUpperCase()}</div>
             <div className="mp-price-row">
               <div className="mp-price">{formatMedian(island.median)}</div>
-              <div className="mp-coverage">{island.totalListings} listings</div>
+            <div className="mp-coverage">{island.totalListings} {t("common.listings")}</div>
             </div>
-            <div className="mp-note">Based on {island.count} listings with verified price</div>
+            <div className="mp-note">{t("home.listingsWithVerifiedPrice", { count: island.count })}</div>
           </div>
         ))}
       </div>
@@ -273,7 +275,7 @@ export default function Home() {
       <SectionHeader
         action={
           <a className="sa" onClick={() => navigate("/listings")}>
-            See all
+            {t("common.seeAll")}
             <svg viewBox="0 0 24 24" strokeLinecap="round" strokeLinejoin="round">
               <line x1="5" y1="12" x2="19" y2="12" />
               <polyline points="12 5 19 12 12 19" />
@@ -281,7 +283,7 @@ export default function Home() {
           </a>
         }
       >
-        Featured <em>Properties</em>
+        {t("home.featuredProperties")} <em>{t("home.propertiesEm")}</em>
       </SectionHeader>
       <div className="grid-3" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 24 }}>
         {featured.map((listing, index) => (

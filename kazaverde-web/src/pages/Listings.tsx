@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
@@ -68,9 +69,10 @@ function relTime(iso: string | null | undefined): string {
 }
 
 export default function Listings() {
+  const { i18n, t } = useTranslation();
   useDocumentMeta(
-    "Cape Verde Properties for Sale",
-    "Every home for sale in Cape Verde, in one place. We index public listings from the agents working the islands, clean the data, and show you the market."
+    t("listings.metaTitle"),
+    t("listings.metaDescription")
   );
 
   const [searchParams, setSearchParams] = useSearchParams();
@@ -176,7 +178,7 @@ export default function Listings() {
         setCards([]);
         setTotal(0);
         setTotalPages(0);
-        setError("We could not load listings right now. Please try again.");
+        setError(t("common.liveDataUnavailable"));
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -227,12 +229,12 @@ export default function Listings() {
   };
 
   const priceLabel = priceBucket
-    ? PRICE_OPTIONS.find((p) => p.value === priceBucket)?.label || "Price"
-    : "Price";
+    ? PRICE_OPTIONS.find((p) => p.value === priceBucket)?.label || t("listings.price")
+    : t("listings.price");
 
-  const typeLabel = type ? TYPES[type] : "Any type";
-  const bedsLabel = beds ? `${beds}+ bed` : "Bedrooms";
-  const islandLabel = island || "All islands";
+  const typeLabel = type ? t(`listings.${type}`) : t("listings.anyType");
+  const bedsLabel = beds ? `${beds}+ ${beds === 1 ? t("listings.onePlus").replace("1+ ", "") : t("detail.bedrooms").toLowerCase()}` : t("detail.bedrooms");
+  const islandLabel = island || t("listings.anyIsland");
   const sortLabel = SORT_OPTIONS.find((s) => s.value === sort)?.label || "Newest first";
 
   const shownCount = total;
@@ -244,12 +246,12 @@ export default function Listings() {
           page identifier + count. */}
       <section className="kv-hero kv-hero-slim">
         <div className="kv-hero-inner">
-          <div className="kv-hero-eyebrow">All listings</div>
-          <h1>The full Cape Verde index.</h1>
+          <div className="kv-hero-eyebrow">{t("common.allListings")}</div>
+          <h1>{t("listings.title")}</h1>
           <div className="kv-hero-meta">
-            <div><b>{(indexTotal || total).toLocaleString("en")}</b>&nbsp; listings indexed</div>
-            <div><b>{Math.max(islands.length, 1)}</b>&nbsp; islands covered</div>
-            <div className="kv-hero-meta-updated">Last updated <b>{lastUpdated}</b></div>
+            <div><b>{(indexTotal || total).toLocaleString(i18n.language === "pt" ? "pt-PT" : "en")}</b>&nbsp; {t("common.listings")}</div>
+            <div><b>{Math.max(islands.length, 1)}</b>&nbsp; {t("home.islands")}</div>
+            <div className="kv-hero-meta-updated">{t("detail.lastChecked")} <b>{lastUpdated}</b></div>
           </div>
         </div>
       </section>
@@ -270,7 +272,7 @@ export default function Listings() {
               </button>
               {openPop === "island" && (
                 <PopOver onClickInside={(e) => e.stopPropagation()}>
-                  <div className="kv-pop-h">Island</div>
+                  <div className="kv-pop-h">{t("listings.island")}</div>
                   <Option
                     selected={!island}
                     onClick={() => {
@@ -278,7 +280,7 @@ export default function Listings() {
                       setOpenPop("");
                     }}
                   >
-                    All islands <span className="kv-ct">{total || ""}</span>
+                    {t("listings.anyIsland")} <span className="kv-ct">{total || ""}</span>
                   </Option>
                   {islands.map((i) => (
                     <Option
@@ -308,7 +310,7 @@ export default function Listings() {
               </button>
               {openPop === "type" && (
                 <PopOver onClickInside={(e) => e.stopPropagation()}>
-                  <div className="kv-pop-h">Type</div>
+                  <div className="kv-pop-h">{t("listings.type")}</div>
                   <Option
                     selected={!type}
                     onClick={() => {
@@ -316,7 +318,7 @@ export default function Listings() {
                       setOpenPop("");
                     }}
                   >
-                    Any type
+                    {t("listings.anyType")}
                   </Option>
                   {Object.entries(TYPES).map(([k, v]) => (
                     <Option
@@ -327,7 +329,7 @@ export default function Listings() {
                         setOpenPop("");
                       }}
                     >
-                      {v}
+                      {t(`listings.${k}`)}
                     </Option>
                   ))}
                 </PopOver>
@@ -346,7 +348,7 @@ export default function Listings() {
               </button>
               {openPop === "price" && (
                 <PopOver onClickInside={(e) => e.stopPropagation()}>
-                  <div className="kv-pop-h">Price (EUR)</div>
+                  <div className="kv-pop-h">{t("listings.price")} (EUR)</div>
                   {PRICE_OPTIONS.map((p) => {
                     const count = p.value ? priceCounts[p.value] : indexTotal;
                     return (
@@ -358,7 +360,7 @@ export default function Listings() {
                           setOpenPop("");
                         }}
                       >
-                        {p.label}{" "}
+                        {p.value ? p.label : t("listings.anyPrice")}{" "}
                         {count != null && count > 0 && <span className="kv-ct">{count}</span>}
                       </Option>
                     );
@@ -379,7 +381,7 @@ export default function Listings() {
               </button>
               {openPop === "beds" && (
                 <PopOver onClickInside={(e) => e.stopPropagation()}>
-                  <div className="kv-pop-h">Bedrooms</div>
+                  <div className="kv-pop-h">{t("detail.bedrooms")}</div>
                   {BEDS_OPTIONS.map((b) => (
                     <Option
                       key={b}
@@ -389,7 +391,7 @@ export default function Listings() {
                         setOpenPop("");
                       }}
                     >
-                      {b === 0 ? "Any" : `${b}+ bedrooms`}
+                      {b === 0 ? t("listings.anyBeds") : `${b}+ ${t("detail.bedrooms").toLowerCase()}`}
                     </Option>
                   ))}
                 </PopOver>
@@ -398,14 +400,14 @@ export default function Listings() {
 
             {hasAnyFilter && (
               <button type="button" className="kv-field kv-clear" onClick={clearAll}>
-                Clear all ×
+                {t("listings.clearFilters")} ×
               </button>
             )}
           </div>
 
           <div className="kv-filter-spacer" />
           <div className="kv-filter-result">
-            <b>{shownCount}</b> {shownCount === 1 ? "listing" : "listings"}
+            <b>{shownCount}</b> {shownCount === 1 ? t("landing.listing") : t("landing.listings")}
           </div>
         </div>
       </div>
@@ -427,14 +429,14 @@ export default function Listings() {
       <section className="kv-section">
         <div className="kv-section-head">
           <div>
-            <span className="kv-ey">Results</span>
-            <h2>Browse every listing, cleaned and indexed.</h2>
+            <span className="kv-ey">{t("common.results")}</span>
+            <h2>{t("listings.sub")}</h2>
           </div>
 
           {/* Mobile-only count — paired with sort on a single row.
               Hidden on desktop (count lives in the filter bar instead). */}
           <div className="kv-section-head-count" aria-hidden="true">
-            <b>{shownCount}</b> {shownCount === 1 ? "listing" : "listings"}
+            <b>{shownCount}</b> {shownCount === 1 ? t("landing.listing") : t("landing.listings")}
           </div>
 
           <div className="kv-sort-wrap">
@@ -443,7 +445,7 @@ export default function Listings() {
               className="kv-sort"
               onClick={(e) => stopAndToggle(e, "sort")}
             >
-              <span className="kv-sort-prefix">Sort by </span><b>{sortLabel}</b> ▾
+              <span className="kv-sort-prefix">Sort </span><b>{sortLabel}</b> ▾
             </button>
             <div className="kv-view-toggle" role="group" aria-label="View mode">
               <button
@@ -487,8 +489,7 @@ export default function Listings() {
 
         {error ? (
           <div className="kv-empty" role="status" aria-live="polite">
-            <strong>We could not load listings right now.</strong>
-            Please try again.
+            <strong>{t("common.liveDataUnavailable")}</strong>
             <button
               type="button"
               className="kv-pager-btn"
@@ -502,15 +503,15 @@ export default function Listings() {
           <ListingGridSkeleton />
         ) : visible.length === 0 ? (
           <div className="kv-empty">
-            <strong>No listings match.</strong>
-            Try widening the filters.
+            <strong>{t("listings.noResults")}</strong>
+            {t("listings.noResultsHint")}
             {hasAnyFilter && (
               <button
                 type="button"
                 className="kv-pager-btn kv-empty-clear"
                 onClick={clearAll}
               >
-                Clear all filters ×
+                {t("listings.clearFilters")} ×
               </button>
             )}
           </div>
@@ -534,7 +535,7 @@ export default function Listings() {
         {!error && total > 0 && (
           <div className="kv-pager">
             <div>
-              Showing <b>{visible.length ? `1–${visible.length}` : "0"}</b> of <b>{total.toLocaleString("en")}</b>
+              {t("listings.showing", { count: visible.length ? `1–${visible.length}` : "0", total: total.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") })}
             </div>
             {canLoadMore && (
               <button
@@ -543,7 +544,7 @@ export default function Listings() {
                 onClick={() => setPage((p) => p + 1)}
                 disabled={loading}
               >
-                {loading ? "Loading…" : "Load more [↓]"}
+                {loading ? t("listings.loading") : "Load more [↓]"}
               </button>
             )}
           </div>
@@ -672,10 +673,12 @@ function capitalize(str: string): string {
 }
 
 export function Card({ l }: { l: ListingCard; index?: number }) {
+  const { t } = useTranslation();
   // NEW = indexed within the last 7 days (single source of truth in lib/format).
   // Drops the previous "first two cards always look new" hack.
   const isNew = l.is_new || isNewListing(l.first_seen_at);
-  const typeLabel = l.property_type ? TYPES[l.property_type.toLowerCase()] || capitalize(l.property_type) : "";
+  const typeKey = l.property_type?.toLowerCase();
+  const typeLabel = typeKey ? t(`listings.${typeKey}`, { defaultValue: TYPES[typeKey] || capitalize(l.property_type || "") }) : "";
   const location = [l.city, l.island].filter(Boolean).join(", ");
   const imgUrl = l.image_urls?.[0] || l.image_url;
 
@@ -695,22 +698,22 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
   if (isLand) {
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   } else {
-    if (l.bedrooms != null) specs.push({ label: "bed", value: l.bedrooms === 0 ? "Studio" : l.bedrooms });
-    if (l.bathrooms != null && l.bathrooms > 0) specs.push({ label: "bath", value: l.bathrooms });
+    if (l.bedrooms != null) specs.push({ label: t("detail.bedrooms").toLowerCase(), value: l.bedrooms === 0 ? t("listings.studio") : l.bedrooms });
+    if (l.bathrooms != null && l.bathrooms > 0) specs.push({ label: t("detail.bathrooms").toLowerCase(), value: l.bathrooms });
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   }
 
   return (
     <Link className="kv-lcard" to={`/listing/${l.id}`}>
       <div className="kv-lc-img" style={bgStyle}>
-        {isNew && <span className="kv-lc-flag">New</span>}
+        {isNew && <span className="kv-lc-flag">{t("listings.new")}</span>}
       </div>
       <div className="kv-lc-body">
         <div className="kv-lc-topline">
           <span>{typeLabel}</span>
           {location && <span className="kv-lc-loc">{location}</span>}
         </div>
-        <div className="kv-lc-price">{fmtPrice(l.price)}</div>
+        <div className="kv-lc-price">{l.price == null ? t("detail.price") : fmtPrice(l.price)}</div>
         <div className="kv-lc-title">{l.title}</div>
         {specs.length > 0 && (
           <div className="kv-lc-specs">
@@ -722,7 +725,7 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
           </div>
         )}
         <div className="kv-lc-provenance">
-          <span>via {formatSourceLabel(l.source_id)}</span>
+          <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
           <span>{relTime(l.first_seen_at)}</span>
         </div>
       </div>
@@ -733,8 +736,10 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
 /* ────────────────────────────────────────────────────── */
 
 function ListingRow({ l }: { l: ListingCard }) {
+  const { t } = useTranslation();
   const isNew = l.is_new || isNewListing(l.first_seen_at);
-  const typeLabel = l.property_type ? TYPES[l.property_type.toLowerCase()] || capitalize(l.property_type) : "";
+  const typeKey = l.property_type?.toLowerCase();
+  const typeLabel = typeKey ? t(`listings.${typeKey}`, { defaultValue: TYPES[typeKey] || capitalize(l.property_type || "") }) : "";
   const location = [l.city, l.island].filter(Boolean).join(", ");
   const imgUrl = l.image_urls?.[0] || l.image_url;
 
@@ -751,19 +756,19 @@ function ListingRow({ l }: { l: ListingCard }) {
   if (isLand) {
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   } else {
-    if (l.bedrooms != null) specs.push({ label: "bed", value: l.bedrooms === 0 ? "Studio" : l.bedrooms });
-    if (l.bathrooms != null && l.bathrooms > 0) specs.push({ label: "bath", value: l.bathrooms });
+    if (l.bedrooms != null) specs.push({ label: t("detail.bedrooms").toLowerCase(), value: l.bedrooms === 0 ? t("listings.studio") : l.bedrooms });
+    if (l.bathrooms != null && l.bathrooms > 0) specs.push({ label: t("detail.bathrooms").toLowerCase(), value: l.bathrooms });
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   }
 
   return (
     <Link className="kv-list-row" to={`/listing/${l.id}`}>
       <div className="kv-list-row-media" style={bgStyle}>
-        {isNew && <span className="kv-lc-flag">New</span>}
+        {isNew && <span className="kv-lc-flag">{t("listings.new")}</span>}
       </div>
       <div className="kv-list-row-body">
         <div className="kv-list-row-head">
-          <div className="kv-list-row-price">{fmtPrice(l.price)}</div>
+          <div className="kv-list-row-price">{l.price == null ? t("detail.price") : fmtPrice(l.price)}</div>
           {typeLabel && <div className="kv-list-row-type">{typeLabel}</div>}
         </div>
         <div className="kv-list-row-title">{l.title}</div>
@@ -778,7 +783,7 @@ function ListingRow({ l }: { l: ListingCard }) {
           </div>
         )}
         <div className="kv-list-row-meta">
-          <span>via {formatSourceLabel(l.source_id)}</span>
+          <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
           <span>{relTime(l.first_seen_at)}</span>
         </div>
       </div>

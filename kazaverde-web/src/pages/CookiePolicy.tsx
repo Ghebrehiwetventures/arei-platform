@@ -1,5 +1,6 @@
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { Link } from "react-router-dom";
+import { Trans, useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
 import "./Market.css";
 import "./Policy.css";
@@ -46,36 +47,37 @@ function CheckIcon() {
 }
 
 export default function CookiePolicy() {
+  const { t } = useTranslation();
+  const storageUses = (t("cookies.uses", { returnObjects: true }) as [string, string][])
+    .map(([name, desc]) => ({ name, desc }));
+  const notUsed = t("cookies.notUsed", { returnObjects: true }) as string[];
+
   useDocumentMeta(
-    "Cookie Policy",
-    "What cookies and local storage the Cape Verde Real Estate Index uses and why.",
+    t("cookies.metaTitle"),
+    t("cookies.metaDescription"),
   );
 
   return (
     <div className="kv-pol kv-m">
       <header className="kv-hero kv-hero-slim">
         <div className="kv-hero-inner">
-          <div className="kv-hero-eyebrow">Cookie policy</div>
-          <h1>Cookies &amp; local storage.</h1>
+          <div className="kv-hero-eyebrow">{t("cookies.eyebrow")}</div>
+          <h1>{t("cookies.title")}</h1>
           <p className="kv-hero-sub">
-            The Cape Verde Real Estate Index is built to minimise data
-            collection. No advertising cookies, no marketing trackers, no
-            third-party analytics cookies.
+            {t("cookies.sub")}
           </p>
-          <span className="kv-pol-stamp">Last updated · 27 March 2026</span>
+          <span className="kv-pol-stamp">{t("cookies.updated")}</span>
         </div>
       </header>
 
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Our approach</span>
-            <h2>Minimal storage, transparent purpose.</h2>
+            <span className="kv-l-eyebrow">{t("cookies.approachEyebrow")}</span>
+            <h2>{t("cookies.approachTitle")}</h2>
           </div>
           <p className="kv-pol-prose">
-            We use only the storage strictly required to make the site work
-            for you. This page lists every browser-side mechanism the site
-            touches, what it does, and why.
+            {t("cookies.approachBody")}
           </p>
         </div>
       </section>
@@ -83,11 +85,11 @@ export default function CookiePolicy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">What we use</span>
-            <h2>Three storage mechanisms.</h2>
+            <span className="kv-l-eyebrow">{t("cookies.useEyebrow")}</span>
+            <h2>{t("cookies.useTitle")}</h2>
           </div>
           <div className="kv-pol-cards">
-            {STORAGE_USES.map((s) => (
+            {storageUses.map((s) => (
               <div className="kv-pol-card" key={s.name}>
                 <div className="kv-pol-card-head">
                   <CheckIcon />
@@ -103,11 +105,11 @@ export default function CookiePolicy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">What we don't use</span>
-            <h2>Everything in the tracking-industry stack.</h2>
+            <span className="kv-l-eyebrow">{t("cookies.notUseEyebrow")}</span>
+            <h2>{t("cookies.notUseTitle")}</h2>
           </div>
           <ul className="kv-pol-list">
-            {NOT_USED.map((item) => (
+            {notUsed.map((item) => (
               <li key={item}>{item}</li>
             ))}
           </ul>
@@ -117,13 +119,11 @@ export default function CookiePolicy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Managing storage</span>
-            <h2>You're in control.</h2>
+            <span className="kv-l-eyebrow">{t("cookies.manageEyebrow")}</span>
+            <h2>{t("cookies.manageTitle")}</h2>
           </div>
           <p className="kv-pol-prose">
-            You can clear localStorage at any time through your browser
-            settings. This will remove your saved properties and cookie-banner
-            acknowledgement. No account or server-side data is affected.
+            {t("cookies.manageBody")}
           </p>
         </div>
       </section>
@@ -131,13 +131,17 @@ export default function CookiePolicy() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">More information</span>
-            <h2>Broader data handling.</h2>
+            <span className="kv-l-eyebrow">{t("cookies.moreEyebrow")}</span>
+            <h2>{t("cookies.moreTitle")}</h2>
           </div>
           <p className="kv-pol-prose">
-            For broader data-handling details, see the{" "}
-            <Link to="/privacy">Privacy Policy</Link>. Questions? Email{" "}
-            <a href="mailto:info@africarealestateindex.com">info@africarealestateindex.com</a>.
+            <Trans
+              i18nKey="cookies.moreBody"
+              components={{
+                1: <Link to="/privacy" />,
+                3: <a href="mailto:info@africarealestateindex.com" />,
+              }}
+            />
           </p>
         </div>
       </section>

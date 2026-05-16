@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Link, useParams, useNavigate } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useSaved } from "../hooks/useSaved";
 import { arei } from "../lib/arei";
@@ -17,6 +18,7 @@ import {
   formatPricePerSqm,
 } from "../lib/format";
 import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
+import { getLocalizedDescription } from "../lib/i18n-listings";
 // Italian-runtime-translation helper removed: descriptions are now
 // pre-translated and rewritten in AREI voice via the backend backfill
 // (Claude Sonnet 4.6, see scripts/backfill_ai_descriptions.ts) and
@@ -210,6 +212,7 @@ function sourceSlug(sourceId: string): string {
 }
 
 export default function Detail() {
+  const { i18n, t } = useTranslation();
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toggle, isSaved } = useSaved();
@@ -223,14 +226,15 @@ export default function Detail() {
   const [similar, setSimilar] = useState<ListingCard[]>([]);
   const [marketCtx, setMarketCtx] = useState<IslandContext | null>(null);
 
-  const displayTitle = detail ? normalizeListingDisplayTitle(detail.title) : "Property";
+  const displayTitle = detail ? normalizeListingDisplayTitle(detail.title) : t("common.property");
+  const localizedDescription = detail ? getLocalizedDescription(detail, i18n.language) : null;
   const listingCanonicalUrl = detail ? buildListingCanonicalUrl(detail.id) : undefined;
 
   useDocumentMeta(
-    detail ? displayTitle : error ? "Property not found" : "Property",
+    detail ? displayTitle : error ? t("detail.notFound") : t("common.property"),
     detail
       ? buildListingMetaDescription(detail, displayTitle)
-      : "Property listing in Cape Verde",
+      : t("detail.loading"),
     detail
       ? { image: images[0], url: listingCanonicalUrl }
       : images[0]
@@ -305,7 +309,7 @@ export default function Detail() {
       .then((d) => {
         if (cancelled) return;
         if (!d) {
-          setError("Property not found.");
+          setError(t("detail.notFound"));
           setDetail(null);
           return;
         }
@@ -314,7 +318,7 @@ export default function Detail() {
       })
       .catch((e) => {
         if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Could not load property.");
+          setError(e instanceof Error ? e.message : t("detail.loading"));
           setDetail(null);
         }
       })
@@ -422,9 +426,9 @@ export default function Detail() {
     return (
       <div className="kv-d">
         <div className="kv-d-topbar">
-          <button type="button" className="kv-d-back" onClick={() => navigate("/")}>← All listings</button>
+          <button type="button" className="kv-d-back" onClick={() => navigate("/")}>← {t("common.allListings")}</button>
         </div>
-        <div className="kv-empty"><strong>Loading…</strong></div>
+        <div className="kv-empty"><strong>{t("detail.loading")}</strong></div>
       </div>
     );
   }
@@ -432,7 +436,7 @@ export default function Detail() {
   if (error || !detail) {
     return (
       <NotFound
-        title="Property not found"
+        title={t("detail.notFound")}
         message="This listing may have been removed or the link is no longer valid."
       />
     );
@@ -457,7 +461,7 @@ export default function Detail() {
           back into the index; city stays plain text since the index does
           not yet support a city-level filter. */}
       <div className="kv-d-crumb">
-        <Link to="/listings">Listings</Link>
+        <Link to="/listings">{t("common.listings")}</Link>
         <span className="kv-d-crumb-sep">/</span>
         <Link to={`/listings?island=${encodeURIComponent(detail.island)}`}>{detail.island}</Link>
         {detail.city && (
@@ -473,7 +477,7 @@ export default function Detail() {
         <div className="kv-d-top-grid">
           <div className="kv-d-eyebrow">
             <span className={`kv-d-tag${detail.is_new ? " kv-d-tag-new" : ""}`}>
-              {detail.is_new ? "New" : "Indexed"}
+              {detail.is_new ? t("listings.new") : "Indexed"}
             </span>
             {detail.property_type && <b>{typeLabel}</b>}
             <span className="kv-d-eyebrow-dot" aria-hidden="true" />
@@ -488,7 +492,7 @@ export default function Detail() {
           <div className="kv-d-subline">
             {!isLand && detail.bedrooms != null && (
               <>
-                <b>{detail.bedrooms === 0 ? "Studio" : detail.bedrooms}</b> bed
+                <b>{detail.bedrooms === 0 ? t("listings.studio") : detail.bedrooms}</b> bed
               </>
             )}
             {!isLand && detail.bathrooms != null && detail.bathrooms > 0 && (
@@ -507,7 +511,7 @@ export default function Detail() {
           {/* Always rendered to reserve vertical space; empty when €/m² unknown.
               Format mirrors listing-v1.html .ppm: bold value + " per m²". */}
           <div className="kv-d-price-cve">
-            {pricePerSqm ? <><b>€{pricePerSqm.toLocaleString()}</b> per m²</> : ""}
+            {pricePerSqm ? <><b>€{pricePerSqm.toLocaleString()}</b> / m²</> : ""}
           </div>
         </div>
 
@@ -516,7 +520,7 @@ export default function Detail() {
             burying first/last-seen in the sidebar. */}
         <div className="kv-d-verified">
           <span className="kv-d-verified-dot" aria-hidden="true" />
-          <span className="kv-d-verified-lbl">Last verified</span>
+          <span className="kv-d-verified-lbl">{t("detail.lastChecked")}</span>
           <span className="kv-d-verified-val">{fmtVerifiedTime(detail.last_seen_at)}</span>
           {detail.first_seen_at && (
             <>
@@ -556,7 +560,7 @@ export default function Detail() {
                 : { background: "linear-gradient(135deg, #c9d4c8 0%, #a8bea4 100%)" }
             }
           />
-          {detail.is_new && <span className="kv-d-flag">New</span>}
+          {detail.is_new && <span className="kv-d-flag">{t("listings.new")}</span>}
           {hasMultipleImages && (
             <>
               <button
@@ -594,13 +598,13 @@ export default function Detail() {
           instead, so the row never reads as half-empty. */}
       <div className="kv-d-facts">
         <div className="kv-d-fact">
-          <div className="kv-d-fact-k">Type</div>
+              <div className="kv-d-fact-k">{t("detail.propertyType")}</div>
           <div className="kv-d-fact-v">{typeLabel}</div>
         </div>
         {isLand ? (
           <>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Plot area</div>
+              <div className="kv-d-fact-k">{t("detail.landArea")}</div>
               <div className="kv-d-fact-v">
                 {landArea != null ? (
                   <>
@@ -626,34 +630,34 @@ export default function Detail() {
               </div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Price / m²</div>
+              <div className="kv-d-fact-k">{t("detail.price")} / m²</div>
               <div className="kv-d-fact-v">{pricePerSqm ? `€${pricePerSqm.toLocaleString()}` : "—"}</div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Location</div>
+              <div className="kv-d-fact-k">{t("detail.location")}</div>
               <div className="kv-d-fact-v">{detail.city || detail.island}</div>
             </div>
           </>
         ) : (
           <>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Bedrooms</div>
+              <div className="kv-d-fact-k">{t("detail.bedrooms")}</div>
               <div className="kv-d-fact-v">
                 {detail.bedrooms == null
                   ? "—"
                   : detail.bedrooms === 0
-                    ? "Studio"
+                    ? t("listings.studio")
                     : detail.bedrooms}
               </div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Bathrooms</div>
+              <div className="kv-d-fact-k">{t("detail.bathrooms")}</div>
               <div className="kv-d-fact-v">
                 {detail.bathrooms == null || detail.bathrooms === 0 ? "—" : detail.bathrooms}
               </div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Interior</div>
+              <div className="kv-d-fact-k">{t("detail.size")}</div>
               <div className="kv-d-fact-v">
                 {effectiveArea != null ? (
                   <>
@@ -666,7 +670,7 @@ export default function Detail() {
               </div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">Price / m²</div>
+              <div className="kv-d-fact-k">{t("detail.price")} / m²</div>
               <div className="kv-d-fact-v">{pricePerSqm ? `€${pricePerSqm.toLocaleString()}` : "—"}</div>
             </div>
           </>
@@ -686,31 +690,31 @@ export default function Detail() {
               raw scraped source. Source agent stays credited in the sidebar. */}
           <div className="kv-d-block">
             <div className="kv-d-block-head">
-              <h2 className="kv-d-block-h">Description</h2>
-              {detail.ai_descriptions?.en?.text && (
+              <h2 className="kv-d-block-h">{t("detail.description")}</h2>
+              {localizedDescription?.source === "ai" && (
                 <span
                   className="kv-d-ai-badge"
-                  title="Rewritten with AI to normalize tone and remove sales language. Source attribution unchanged — see Original source panel."
+                  title={t("detail.aiCaption")}
                 >
                   <span className="kv-d-ai-dot" aria-hidden="true" />
-                  AI · Rewritten
+                  {t("detail.aiBadge")}
                 </span>
               )}
             </div>
-            {detail.ai_descriptions?.en?.text ? (
-              <p>{detail.ai_descriptions.en.text}</p>
-            ) : detail.description_html ? (
-              <div className="kv-d-html" dangerouslySetInnerHTML={{ __html: detail.description_html }} />
-            ) : detail.description ? (
-              <p>{detail.description}</p>
+            {localizedDescription?.source === "ai" && localizedDescription.text ? (
+              <p>{localizedDescription.text}</p>
+            ) : localizedDescription?.source === "html" && localizedDescription.text ? (
+              <div className="kv-d-html" dangerouslySetInnerHTML={{ __html: localizedDescription.text }} />
+            ) : localizedDescription?.text ? (
+              <p>{localizedDescription.text}</p>
             ) : (
               <p>
-                This property is located in {formatLocation(detail.city, detail.island)}, Cape Verde.
+                {t("detail.noDescription")}
               </p>
             )}
-            {detail.ai_descriptions?.en?.text && (
+            {localizedDescription?.source === "ai" && (
               <p className="kv-d-ai-caption">
-                Description rewritten with AI for clarity — original source attribution unchanged.
+                {t("detail.aiCaption")}
               </p>
             )}
           </div>

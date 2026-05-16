@@ -103,6 +103,26 @@
   align-items: center;
   gap: 28px;
 }
+
+.lang-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lang-toggle-btn {
+  border: 1px solid rgba(0, 0, 0, 0.18);
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font: inherit;
+  padding: 4px 7px;
+}
+
+.lang-toggle-btn.on {
+  border-color: currentColor;
+  font-weight: 600;
+}
 .nav-a {
   font-family: var(--kv-mono);
   font-size: 11px;

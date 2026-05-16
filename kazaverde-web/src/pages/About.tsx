@@ -1,4 +1,5 @@
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
+import { useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
 import "./Market.css";
 import "./Policy.css";
@@ -100,27 +101,29 @@ function CheckIcon() {
 }
 
 export default function About() {
+  const { t } = useTranslation();
+  const sections = t("about.sections", { returnObjects: true }) as typeof SECTIONS;
+  const qualityNotes = (t("about.qualityNotes", { returnObjects: true }) as [string, string][])
+    .map(([name, desc]) => ({ name, desc }));
+
   useDocumentMeta(
-    "About Cape Verde Real Estate Index",
-    "The Cape Verde Real Estate Index is the first live market in AREI: a read-only, source-linked property index for Cape Verde.",
+    t("about.metaTitle"),
+    t("about.metaDescription"),
   );
 
   return (
     <div className="kv-pol kv-m">
       <header className="kv-hero kv-hero-slim">
         <div className="kv-hero-inner">
-          <div className="kv-hero-eyebrow">About the Cape Verde Real Estate Index</div>
-          <h1>Building the real estate data layer for Africa, starting with Cape Verde.</h1>
+          <div className="kv-hero-eyebrow">{t("about.eyebrow")}</div>
+          <h1>{t("about.title")}</h1>
           <p className="kv-hero-sub">
-            The Cape Verde Real Estate Index is the first live market in AREI
-            (Africa Real Estate Index): a read-only, source-linked property
-            index built to make fragmented real estate markets more
-            transparent, comparable and easier to understand.
+            {t("about.sub")}
           </p>
         </div>
       </header>
 
-      {SECTIONS.map((sec) => (
+      {sections.map((sec) => (
         <section className="kv-m-section" key={sec.eyebrow}>
           <div className="kv-m-inner">
             <div className="kv-m-section-head">
@@ -143,11 +146,11 @@ export default function About() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Handling incomplete data</span>
-            <h2>Neutral fallbacks beat fake certainty.</h2>
+            <span className="kv-l-eyebrow">{t("about.qualityEyebrow")}</span>
+            <h2>{t("about.qualityTitle")}</h2>
           </div>
           <div className="kv-pol-cards">
-            {QUALITY_NOTES.map((q) => (
+            {qualityNotes.map((q) => (
               <div className="kv-pol-card" key={q.name}>
                 <div className="kv-pol-card-head">
                   <CheckIcon />
@@ -163,24 +166,20 @@ export default function About() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Coverage statement</span>
-            <h2>We don't claim full market coverage.</h2>
+            <span className="kv-l-eyebrow">{t("about.coverageEyebrow")}</span>
+            <h2>{t("about.coverageTitle")}</h2>
           </div>
           <div className="kv-pol-pull">
-            <strong>The Cape Verde Real Estate Index does not claim full market coverage.</strong>{" "}
-            Our index represents a meaningful sample of publicly advertised
-            properties, but off-market deals, private sales, and listings on
-            sources we do not currently track are not included.
+            <strong>{t("about.coveragePull")}</strong>{" "}
+            {t("about.coverageBody")}
           </div>
           <div className="kv-pol-coverage">
-            <div className="kv-pol-coverage-k">Current coverage</div>
+            <div className="kv-pol-coverage-k">{t("about.currentCoverage")}</div>
             <div className="kv-pol-coverage-v">
-              Inventory and island coverage are shown on the Listings and
-              Market pages, based on the current launch feed contract.
+              {t("about.currentCoverageBody")}
             </div>
             <div className="kv-pol-coverage-note">
-              We avoid static coverage numbers here to prevent stale
-              reporting.
+              {t("about.staleNote")}
             </div>
           </div>
         </div>
@@ -189,16 +188,11 @@ export default function About() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Long-term AREI vision</span>
-            <h2>Market 01, with broader market intelligence still to build.</h2>
+            <span className="kv-l-eyebrow">{t("about.visionEyebrow")}</span>
+            <h2>{t("about.visionTitle")}</h2>
           </div>
           <p className="kv-pol-prose">
-            Cape Verde is Market 01 for the Africa Real Estate Index. The
-            broader ambition is to build trusted real estate market intelligence
-            across African markets, starting with source-linked listings and
-            moving over time toward stronger pricing signals, historical data,
-            and more reliable transaction benchmarks where the underlying
-            evidence supports them.
+            {t("about.visionBody")}
           </p>
         </div>
       </section>
@@ -206,29 +200,18 @@ export default function About() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-pol-founder">
-            <span className="kv-l-eyebrow">From the founder</span>
+            <span className="kv-l-eyebrow">{t("about.founderEyebrow")}</span>
             <blockquote className="kv-pol-founder-quote">
-              <p>
-                "I came to this market as an investor. Cape Verde was where I
-                started, and even after repeated trips, the market remained
-                difficult to read.
-              </p>
-              <p>
-                The opportunity was visible. The structure was not. Inventory
-                was spread across brokers and local sites, with no consistent
-                data layer to compare opportunities or evaluate them with
-                confidence.
-              </p>
-              <p>
-                That is the gap Africa Real Estate Index exists to close."
-              </p>
+              {(t("about.founderQuote", { returnObjects: true }) as string[]).map((p, i, arr) => (
+                <p key={p}>{i === 0 ? `"${p}` : i === arr.length - 1 ? `${p}"` : p}</p>
+              ))}
             </blockquote>
             <div className="kv-pol-founder-byline">
               <div className="kv-pol-founder-meta">
                 <span className="kv-pol-founder-name">
                   Michael Ghebrehiwet
                 </span>
-                <span className="kv-pol-founder-role">Founder, AREI</span>
+                <span className="kv-pol-founder-role">{t("about.founderRole")}</span>
                 <a
                   className="kv-pol-founder-link"
                   href="https://www.linkedin.com/in/ghebrehiwet"
