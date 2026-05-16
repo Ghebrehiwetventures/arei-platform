@@ -12,7 +12,7 @@ const SITE_URL =
 /* Default social preview image. Lives in /public so it's served from the
    site root. Swap the file (1200x630 PNG/JPG) without touching this code.
    Per-page images can still be passed via options.image. */
-const DEFAULT_OG_IMAGE = `${SITE_URL}/og-default.png`;
+const DEFAULT_OG_IMAGE = `${SITE_URL}/cvrei-og.png?v=2`;
 
 function setMeta(name: string, content: string, isProperty = false) {
   const attr = isProperty ? "property" : "name";

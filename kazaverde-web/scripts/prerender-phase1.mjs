@@ -13,7 +13,7 @@ const faqDataPath = path.resolve(__dirname, "../src/lib/faq-data.ts");
 const marketNewsDataPath = path.resolve(__dirname, "../src/lib/market-news-data.ts");
 const prerenderListingsPath = path.resolve(__dirname, "../src/lib/prerender-listings.ts");
 const siteUrl = "https://capeverderealestateindex.com";
-const ogImage = `${siteUrl}/og-default.png`;
+const ogImage = `${siteUrl}/cvrei-og.png?v=2`;
 const sitemapPath = path.join(distDir, "sitemap.xml");
 const publicSupabaseUrl = "https://bhqjdzjtiwckfuteycfl.supabase.co";
 const publicSupabaseAnonKey = "sb_publishable_fFm5NsC3cWLYr_Wnx9OLWQ_Ytmnn-Wd";
@@ -83,7 +83,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
               "@id": `${siteUrl}/#organization`,
               name: "Cape Verde Real Estate Index",
               url: siteUrl,
-              logo: `${siteUrl}/og-default.png`,
+              logo: `${siteUrl}/cvrei-og.png`,
               description:
                 "Cape Verde Real Estate Index is an independent property search and data platform for Cape Verde real estate, published by AREI. It is not a broker or agency.",
             },
