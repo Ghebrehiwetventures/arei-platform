@@ -43,6 +43,7 @@ export function toListingCard(row: ListingRow): ListingCard {
     image_url: imageUrls[0] ?? null,
     source_id: row.source_id,
     first_seen_at: row.first_seen_at,
+    ai_descriptions: row.ai_descriptions ?? null,
     is_new: isNew(row.first_seen_at),
   };
 }

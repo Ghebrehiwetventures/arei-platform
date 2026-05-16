@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Trans, useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useMarketNews } from "../hooks/useMarketNews";
@@ -41,12 +42,13 @@ function sortNews(a: MarketNewsItem, b: MarketNewsItem): number {
 }
 
 function SignalTags({ tags }: { tags: string[] }) {
+  const { t } = useTranslation();
   if (tags.length === 0) return null;
   const visible = tags.slice(0, MAX_VISIBLE_TAGS);
   const extra = tags.length - MAX_VISIBLE_TAGS;
   return (
     <div className="kv-news-signals">
-      <span className="kv-news-signals-label">Signals</span>
+      <span className="kv-news-signals-label">{t("marketNews.signals")}</span>
       <span className="kv-news-signals-items">
         {visible.join(" · ")}
         {extra > 0 && <span className="kv-news-signals-more"> +{extra}</span>}
@@ -56,7 +58,8 @@ function SignalTags({ tags }: { tags: string[] }) {
 }
 
 export default function MarketNews() {
-  useDocumentMeta("Cape Verde Market News", MARKET_NEWS_DESCRIPTION);
+  const { t } = useTranslation();
+  useDocumentMeta(t("marketNews.metaTitle"), t("marketNews.description"));
 
   const { items, loading, error } = useMarketNews();
 
@@ -106,8 +109,8 @@ export default function MarketNews() {
     <div className="kv-news">
       <header className="kv-news-head">
         <div className="kv-news-head-inner">
-          <h1 className="kv-news-title">Cape Verde Market News</h1>
-          <p className="kv-news-sub">{MARKET_NEWS_DESCRIPTION}</p>
+          <h1 className="kv-news-title">{t("marketNews.metaTitle")}</h1>
+          <p className="kv-news-sub">{t("marketNews.description")}</p>
 
           <form
             className="kv-news-search"
@@ -118,17 +121,17 @@ export default function MarketNews() {
             <input
               type="search"
               className="kv-news-search-input"
-              placeholder="Search — e.g. aviation, tax, hotels"
+              placeholder={t("marketNews.searchPlaceholder")}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              aria-label="Search market news"
+              aria-label={t("marketNews.searchLabel")}
             />
             {query && (
               <button
                 type="button"
                 className="kv-news-search-clear"
                 onClick={() => setQuery("")}
-                aria-label="Clear search"
+                aria-label={t("marketNews.clearSearch")}
               >
                 ×
               </button>
@@ -142,19 +145,19 @@ export default function MarketNews() {
           {isSearching && (
             <div className="kv-news-result-meta">
               <b>{filteredItems.length}</b>{" "}
-              {filteredItems.length === 1 ? "result" : "results"}
+              {filteredItems.length === 1 ? t("common.result") : t("common.results")}
             </div>
           )}
 
           <div className="kv-news-layout">
             <div className="kv-news-feed">
               {loading ? (
-                <div className="kv-news-loading">Loading market news…</div>
+                <div className="kv-news-loading">{t("marketNews.loading")}</div>
               ) : error ? (
                 <div className="kv-news-error">{error}</div>
               ) : filteredItems.length === 0 ? (
                 <div className="kv-news-empty">
-                  No market news matches <b>"{query}"</b>.
+                  <Trans i18nKey="marketNews.empty" values={{ query }} components={{ 1: <b /> }} />
                 </div>
               ) : (
                 filteredItems.map((item) => (
@@ -177,7 +180,7 @@ export default function MarketNews() {
 
                     {item.originalTitle && (
                       <p className="kv-news-item-original">
-                        Source title: {item.originalTitle}
+                        {t("marketNews.sourceTitle")} {item.originalTitle}
                       </p>
                     )}
 
@@ -185,7 +188,7 @@ export default function MarketNews() {
 
                     {item.whyItMatters && (
                       <div className="kv-news-why">
-                        <span>Why it matters</span>
+                        <span>{t("marketNews.whyItMatters")}</span>
                         <p>{item.whyItMatters}</p>
                       </div>
                     )}
@@ -200,20 +203,18 @@ export default function MarketNews() {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      Read at {item.sourceName} →
+                      {t("marketNews.readAt", { source: item.sourceName })}
                     </a>
                   </article>
                 ))
               )}
             </div>
 
-            <aside className="kv-news-side" aria-label="Editorial criteria">
+            <aside className="kv-news-side" aria-label={t("marketNews.editorialCriteria")}>
               <div className="kv-news-side-card">
-                <div className="kv-news-side-eyebrow">Editorial criteria</div>
+                <div className="kv-news-side-eyebrow">{t("marketNews.editorialCriteria")}</div>
                 <p>
-                  We include source-linked stories that may affect demand,
-                  supply, financing, access, regulation, tourism,
-                  infrastructure, foreign investment or destination confidence.
+                  {t("marketNews.editorialCriteriaBody")}
                 </p>
               </div>
             </aside>
@@ -221,9 +222,7 @@ export default function MarketNews() {
         </section>
 
         <p className="kv-news-disclaimer">
-          Market News is a curated link feed. AREI does not republish full
-          articles, provide investment advice, or claim comprehensive coverage
-          of Cape Verde's economy or property market.
+          {t("marketNews.disclaimer")}
         </p>
       </main>
 

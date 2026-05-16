@@ -9,6 +9,9 @@ export default function LanguageToggle() {
     void i18n.changeLanguage(lang);
     try {
       window.localStorage.setItem("kv-language", lang);
+      const url = new URL(window.location.href);
+      url.searchParams.set("lang", lang);
+      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
     } catch {
       // Persistence is best-effort; i18next still updates in memory.
     }

@@ -6,6 +6,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
 import { formatSourceLabel, isNewListing } from "../lib/format";
+import { getLocalizedTitle } from "../lib/i18n-listings";
 import type { ListingCard, PriceBucket } from "arei-sdk";
 import "./Listings.css";
 
@@ -172,9 +173,8 @@ export default function Listings() {
         setCards((prev) => (page === 1 ? result.data : [...prev, ...result.data]));
         setTotal(result.total);
         setTotalPages(result.totalPages);
-      } catch (e) {
+      } catch {
         if (cancelled) return;
-        console.error("[Listings] Failed to load listings", e);
         setCards([]);
         setTotal(0);
         setTotalPages(0);
@@ -673,7 +673,7 @@ function capitalize(str: string): string {
 }
 
 export function Card({ l }: { l: ListingCard; index?: number }) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   // NEW = indexed within the last 7 days (single source of truth in lib/format).
   // Drops the previous "first two cards always look new" hack.
   const isNew = l.is_new || isNewListing(l.first_seen_at);
@@ -703,6 +703,8 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   }
 
+  const localizedTitle = getLocalizedTitle(l, i18n.language).title;
+
   return (
     <Link className="kv-lcard" to={`/listing/${l.id}`}>
       <div className="kv-lc-img" style={bgStyle}>
@@ -714,7 +716,7 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
           {location && <span className="kv-lc-loc">{location}</span>}
         </div>
         <div className="kv-lc-price">{l.price == null ? t("detail.price") : fmtPrice(l.price)}</div>
-        <div className="kv-lc-title">{l.title}</div>
+        <div className="kv-lc-title">{localizedTitle}</div>
         {specs.length > 0 && (
           <div className="kv-lc-specs">
             {specs.map((s) => (
@@ -736,7 +738,7 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
 /* ────────────────────────────────────────────────────── */
 
 function ListingRow({ l }: { l: ListingCard }) {
-  const { t } = useTranslation();
+  const { i18n, t } = useTranslation();
   const isNew = l.is_new || isNewListing(l.first_seen_at);
   const typeKey = l.property_type?.toLowerCase();
   const typeLabel = typeKey ? t(`listings.${typeKey}`, { defaultValue: TYPES[typeKey] || capitalize(l.property_type || "") }) : "";
@@ -761,6 +763,8 @@ function ListingRow({ l }: { l: ListingCard }) {
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   }
 
+  const localizedTitle = getLocalizedTitle(l, i18n.language).title;
+
   return (
     <Link className="kv-list-row" to={`/listing/${l.id}`}>
       <div className="kv-list-row-media" style={bgStyle}>
@@ -771,7 +775,7 @@ function ListingRow({ l }: { l: ListingCard }) {
           <div className="kv-list-row-price">{l.price == null ? t("detail.price") : fmtPrice(l.price)}</div>
           {typeLabel && <div className="kv-list-row-type">{typeLabel}</div>}
         </div>
-        <div className="kv-list-row-title">{l.title}</div>
+        <div className="kv-list-row-title">{localizedTitle}</div>
         {location && <div className="kv-list-row-loc">{location}</div>}
         {specs.length > 0 && (
           <div className="kv-list-row-specs">

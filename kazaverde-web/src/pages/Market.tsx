@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
@@ -13,6 +14,12 @@ const BUCKET_LABEL: Record<PriceBucket, string> = {
   "100k_250k": "€100K – €250K",
   "250k_500k": "€250K – €500K",
   over_500k: "Over €500K",
+};
+const BUCKET_LABEL_PT: Record<PriceBucket, string> = {
+  under_100k: "Abaixo de 100 mil €",
+  "100k_250k": "100 mil € – 250 mil €",
+  "250k_500k": "250 mil € – 500 mil €",
+  over_500k: "Acima de 500 mil €",
 };
 const BUCKET_ORDER: PriceBucket[] = ["under_100k", "100k_250k", "250k_500k", "over_500k"];
 
@@ -73,6 +80,54 @@ const MARKET_FAQ = [
   },
 ];
 
+const MARKET_FAQ_PT = [
+  {
+    topic: "Cobertura",
+    q: "O que mede o Cape Verde Real Estate Index?",
+    a: "Mede anúncios imobiliários públicos de Cabo Verde a partir de fontes acompanhadas. A página resume preços pedidos, inventário, distribuição por ilha e visibilidade de preços quando o índice consegue verificar os dados.",
+  },
+  {
+    topic: "Preços",
+    q: "São preços pedidos ou vendas concluídas?",
+    a: "São preços pedidos de anúncios públicos, não preços de vendas concluídas. O Cape Verde Real Estate Index não afirma representar valores de transação, avaliações bancárias ou dados oficiais de registo.",
+  },
+  {
+    topic: "Método",
+    q: "Como calculam o preço mediano dos imóveis?",
+    a: "O preço mediano é calculado a partir de anúncios com preço pedido público e extraível. Anúncios com preço sob consulta e outliers claros de introdução de dados são excluídos.",
+  },
+  {
+    topic: "Método",
+    q: "Porque excluem anúncios com “preço sob consulta”?",
+    a: "Contam para o inventário total, mas não têm um preço pedido utilizável. Incluí-los nos cálculos de preço tornaria medianas e faixas de preço enganadoras.",
+  },
+  {
+    topic: "Confiança",
+    q: "O que significa cobertura de preço verificado?",
+    a: "É a percentagem de anúncios acompanhados com preço público que o índice consegue ler e normalizar.",
+  },
+  {
+    topic: "Atualização",
+    q: "Com que frequência são atualizados os dados de mercado?",
+    a: "As fontes acompanhadas são verificadas diariamente. Novos anúncios, alterações de preço e remoções aparecem à medida que cada fonte é atualizada.",
+  },
+  {
+    topic: "Amostras",
+    q: "Porque algumas ilhas mostram inventário mas não preço mediano?",
+    a: "Algumas ilhas têm poucos anúncios com preço para uma mediana útil. Nesses casos o índice mostra o inventário, mas retém a mediana.",
+  },
+  {
+    topic: "Limites",
+    q: "Posso usar estes dados para avaliar um imóvel específico?",
+    a: "Não. Isto é um benchmark de mercado, não aconselhamento de avaliação. Um imóvel específico depende de localização, estado, título, vista, qualidade de construção, custos e due diligence local.",
+  },
+  {
+    topic: "Qualidade",
+    q: "O Cape Verde Real Estate Index remove anúncios duplicados?",
+    a: "O índice remove ou agrupa registos duplicados quando os dados de origem dão sinais suficientes. Alguns duplicados podem permanecer.",
+  },
+];
+
 /* SVG area chart — recoloured to use --kv-green so it speaks the
    KV palette. Identical geometry to the chocolate version. */
 function InventoryChart({ points }: { points: { label: string; value: number }[] }) {
@@ -127,6 +182,8 @@ function InventoryChart({ points }: { points: { label: string; value: number }[]
    - mapbox-gl is dynamically imported so it only ships in the
      Market route chunk, which is already lazy-loaded. */
 function CapeVerdeMap() {
+  const { i18n } = useTranslation();
+  const isPt = i18n.language.startsWith("pt");
   const token = import.meta.env.VITE_MAPBOX_TOKEN as string | undefined;
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -193,11 +250,11 @@ function CapeVerdeMap() {
           <div
             className="kv-m-geo-fallback"
             role="img"
-            aria-label="Map preview unavailable — Cape Verde, west of Senegal"
+            aria-label={isPt ? "Pré-visualização do mapa indisponível — Cabo Verde, a oeste do Senegal" : "Map preview unavailable — Cape Verde, west of Senegal"}
           >
             <div className="kv-m-geo-fallback-pin" aria-hidden="true">⊙</div>
-            <div className="kv-m-geo-fallback-label">Map preview unavailable</div>
-            <div className="kv-m-geo-fallback-sub">Cape Verde · West Africa · Atlantic Ocean</div>
+            <div className="kv-m-geo-fallback-label">{isPt ? "Pré-visualização do mapa indisponível" : "Map preview unavailable"}</div>
+            <div className="kv-m-geo-fallback-sub">{isPt ? "Cabo Verde · África Ocidental · Oceano Atlântico" : "Cape Verde · West Africa · Atlantic Ocean"}</div>
           </div>
         </div>
       </div>
@@ -211,7 +268,7 @@ function CapeVerdeMap() {
           ref={containerRef}
           className="kv-m-geo-mapbox"
           role="region"
-          aria-label="Interactive map showing Cape Verde in the Atlantic Ocean approximately 570 km west of Senegal, with Mauritania and the West African coast visible on the right"
+          aria-label={isPt ? "Mapa interativo que mostra Cabo Verde no Oceano Atlântico, cerca de 570 km a oeste do Senegal, com a Mauritânia e a costa oeste-africana à direita" : "Interactive map showing Cape Verde in the Atlantic Ocean approximately 570 km west of Senegal, with Mauritania and the West African coast visible on the right"}
         />
       </div>
     </div>
@@ -237,9 +294,18 @@ interface MarketData {
 }
 
 export default function Market() {
+  const { i18n, t } = useTranslation();
+  const isPt = i18n.language.startsWith("pt");
+  const copy = {
+    title: isPt ? "O estado do mercado imobiliário de Cabo Verde." : "The state of Cape Verde property.",
+    eyebrow: isPt ? "Inteligência de mercado · abril de 2026" : "Market intelligence · April 2026",
+    loading: isPt ? "A carregar dados de mercado…" : "Loading market data…",
+    unavailable: isPt ? "Dados de mercado indisponíveis" : "Market data unavailable",
+  };
+  const marketFaq = isPt ? MARKET_FAQ_PT : MARKET_FAQ;
   useDocumentMeta(
-    "Market Data",
-    "Median prices by island, inventory trends, and Cape Verde property market insights."
+    t("market.metaTitle"),
+    t("market.metaDescription")
   );
   const [openIdx, setOpenIdx] = useState(0);
   const [data, setData] = useState<MarketData | null>(null);
@@ -253,7 +319,7 @@ export default function Market() {
       "@context": "https://schema.org",
       "@type": "FAQPage",
       "@id": "https://capeverderealestateindex.com/market#faq",
-      mainEntity: MARKET_FAQ.map((item) => ({
+      mainEntity: marketFaq.map((item) => ({
         "@type": "Question",
         name: item.q,
         acceptedAnswer: {
@@ -285,7 +351,7 @@ export default function Market() {
     return () => {
       document.getElementById(MARKET_FAQ_SCRIPT_ID)?.remove();
     };
-  }, [loading, error, data]);
+  }, [loading, error, data, marketFaq]);
 
   useEffect(() => {
     let cancelled = false;
@@ -347,7 +413,7 @@ export default function Market() {
         }
         const buckets = BUCKET_ORDER.map((k) => ({
           key: k,
-          label: BUCKET_LABEL[k],
+          label: (i18n.language.startsWith("pt") ? BUCKET_LABEL_PT : BUCKET_LABEL)[k],
           count: bucketCounts[k],
         }));
 
@@ -382,12 +448,12 @@ export default function Market() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [i18n.language]);
 
   if (loading) {
     return (
       <div className="kv-m-state">
-        <p>Loading market data…</p>
+        <p>{copy.loading}</p>
       </div>
     );
   }
@@ -395,8 +461,8 @@ export default function Market() {
   if (error || !data) {
     return (
       <div className="kv-m-state kv-m-state-error">
-        <h1>Market data unavailable</h1>
-        <p>{error ?? "We could not load market data right now. Please try again later."}</p>
+        <h1>{copy.unavailable}</h1>
+        <p>{error ?? t("common.liveDataUnavailable")}</p>
       </div>
     );
   }
@@ -410,11 +476,12 @@ export default function Market() {
       {/* Hero — slim variant, brand surface for the page */}
       <header className="kv-hero kv-hero-slim">
         <div className="kv-hero-inner">
-          <div className="kv-hero-eyebrow">Market intelligence · April 2026</div>
-          <h1>The state of Cape Verde property.</h1>
+          <div className="kv-hero-eyebrow">{copy.eyebrow}</div>
+          <h1>{copy.title}</h1>
           <p className="kv-hero-sub">
-            Index-level data derived from {data.total.toLocaleString("en")} tracked public listings
-            across {data.islandCount} islands. Updated daily as crawlers complete.
+            {isPt
+              ? `Dados de índice derivados de ${data.total.toLocaleString("pt-PT")} anúncios públicos acompanhados em ${data.islandCount} ilhas. Atualizado diariamente após a conclusão dos crawlers.`
+              : `Index-level data derived from ${data.total.toLocaleString("en")} tracked public listings across ${data.islandCount} islands. Updated daily as crawlers complete.`}
           </p>
         </div>
       </header>
@@ -424,43 +491,43 @@ export default function Market() {
       <section className="kv-m-geo">
         <div className="kv-m-inner">
           <div className="kv-m-section-head" style={{ marginBottom: 20 }}>
-            <span className="kv-l-eyebrow">Where is Cape Verde?</span>
-            <h2>An archipelago off West Africa.</h2>
+            <span className="kv-l-eyebrow">{isPt ? "Onde fica Cabo Verde?" : "Where is Cape Verde?"}</span>
+            <h2>{isPt ? "Um arquipélago ao largo da África Ocidental." : "An archipelago off West Africa."}</h2>
           </div>
           <div className="kv-m-geo-grid">
             <CapeVerdeMap />
             <div className="kv-m-geo-facts">
               <div className="kv-m-geo-fact">
-                <span className="kv-m-geo-fact-k">Population</span>
+                <span className="kv-m-geo-fact-k">{isPt ? "População" : "Population"}</span>
                 <span className="kv-m-geo-fact-v">~600,000</span>
               </div>
               <div className="kv-m-geo-fact">
-                <span className="kv-m-geo-fact-k">Independence</span>
-                <span className="kv-m-geo-fact-v">1975 (from Portugal)</span>
+                <span className="kv-m-geo-fact-k">{isPt ? "Independência" : "Independence"}</span>
+                <span className="kv-m-geo-fact-v">{isPt ? "1975 (de Portugal)" : "1975 (from Portugal)"}</span>
               </div>
               <div className="kv-m-geo-fact">
-                <span className="kv-m-geo-fact-k">Capital</span>
+                <span className="kv-m-geo-fact-k">{isPt ? "Capital" : "Capital"}</span>
                 <span className="kv-m-geo-fact-v">Praia, Santiago</span>
               </div>
               <div className="kv-m-geo-fact">
-                <span className="kv-m-geo-fact-k">Islands</span>
-                <span className="kv-m-geo-fact-v">10 (9 inhabited)</span>
+                <span className="kv-m-geo-fact-k">{isPt ? "Ilhas" : "Islands"}</span>
+                <span className="kv-m-geo-fact-v">{isPt ? "10 (9 habitadas)" : "10 (9 inhabited)"}</span>
               </div>
               <div className="kv-m-geo-fact">
-                <span className="kv-m-geo-fact-k">Key investment islands</span>
+                <span className="kv-m-geo-fact-k">{isPt ? "Ilhas-chave de investimento" : "Key investment islands"}</span>
                 <span className="kv-m-geo-fact-v">Sal · Boa Vista · Santiago</span>
               </div>
               <div className="kv-m-geo-fact">
-                <span className="kv-m-geo-fact-k">Official language</span>
-                <span className="kv-m-geo-fact-v">Portuguese</span>
+                <span className="kv-m-geo-fact-k">{isPt ? "Língua oficial" : "Official language"}</span>
+                <span className="kv-m-geo-fact-v">{isPt ? "Português" : "Portuguese"}</span>
               </div>
               <div className="kv-m-geo-fact">
-                <span className="kv-m-geo-fact-k">Spoken language</span>
+                <span className="kv-m-geo-fact-k">{isPt ? "Língua falada" : "Spoken language"}</span>
                 <span className="kv-m-geo-fact-v">Kriolu</span>
               </div>
               <div className="kv-m-geo-fact">
-                <span className="kv-m-geo-fact-k">Currency</span>
-                <span className="kv-m-geo-fact-v">CVE · prices in EUR</span>
+                <span className="kv-m-geo-fact-k">{isPt ? "Moeda" : "Currency"}</span>
+                <span className="kv-m-geo-fact-v">{isPt ? "CVE · preços em EUR" : "CVE · prices in EUR"}</span>
               </div>
             </div>
           </div>
@@ -475,37 +542,32 @@ export default function Market() {
           <div className="kv-m-intro-grid">
             <div className="kv-m-intro-lead">
               <p>
-                Cape Verde's property market sits between Atlantic resort
-                economies and a domestic residential cycle that's growing
-                with the diaspora. There's no public land registry feed and
-                no single MLS — which makes a source-attributed index the
-                only way to see asking prices, supply concentration, and
-                month-over-month movement at a glance.
+                {isPt
+                  ? "O mercado imobiliário de Cabo Verde situa-se entre economias turísticas atlânticas e um ciclo residencial doméstico que cresce com a diáspora. Não existe um feed público de registo predial nem um MLS único — por isso, um índice com fontes atribuídas é a forma prática de ver preços pedidos, concentração de oferta e movimento mensal."
+                  : "Cape Verde's property market sits between Atlantic resort economies and a domestic residential cycle that's growing with the diaspora. There's no public land registry feed and no single MLS — which makes a source-attributed index the only way to see asking prices, supply concentration, and month-over-month movement at a glance."}
               </p>
               <p>
-                This page is the public read of that index. It's built from
-                tracked listings on agent and portal sources, refreshed
-                daily, and intentionally narrow on what it asserts: we
-                publish what we can verify, label what we can't, and never
-                represent ask as transaction.
+                {isPt
+                  ? "Esta página é a leitura pública desse índice. É construída a partir de anúncios acompanhados em fontes de agentes e portais, atualizada diariamente, e é intencionalmente cuidadosa no que afirma: publicamos o que conseguimos verificar, assinalamos o que não conseguimos e nunca tratamos preço pedido como transação."
+                  : "This page is the public read of that index. It's built from tracked listings on agent and portal sources, refreshed daily, and intentionally narrow on what it asserts: we publish what we can verify, label what we can't, and never represent ask as transaction."}
               </p>
             </div>
             <div className="kv-m-intro-meta">
               <div className="kv-m-intro-meta-row">
-                <span className="kv-m-intro-meta-k">Last refresh</span>
-                <span className="kv-m-intro-meta-v">Daily, automated</span>
+                <span className="kv-m-intro-meta-k">{isPt ? "Última atualização" : "Last refresh"}</span>
+                <span className="kv-m-intro-meta-v">{isPt ? "Diária, automática" : "Daily, automated"}</span>
               </div>
               <div className="kv-m-intro-meta-row">
-                <span className="kv-m-intro-meta-k">Sample</span>
-                <span className="kv-m-intro-meta-v">{data.total.toLocaleString("en")} listings · {data.islandCount} islands</span>
+                <span className="kv-m-intro-meta-k">{isPt ? "Amostra" : "Sample"}</span>
+                <span className="kv-m-intro-meta-v">{data.total.toLocaleString(isPt ? "pt-PT" : "en")} {isPt ? "anúncios" : "listings"} · {data.islandCount} {isPt ? "ilhas" : "islands"}</span>
               </div>
               <div className="kv-m-intro-meta-row">
-                <span className="kv-m-intro-meta-k">Method</span>
-                <span className="kv-m-intro-meta-v"><a href="#methodology">See below ↓</a></span>
+                <span className="kv-m-intro-meta-k">{isPt ? "Método" : "Method"}</span>
+                <span className="kv-m-intro-meta-v"><a href="#methodology">{isPt ? "Ver abaixo ↓" : "See below ↓"}</a></span>
               </div>
               <div className="kv-m-intro-meta-row">
-                <span className="kv-m-intro-meta-k">Use it for</span>
-                <span className="kv-m-intro-meta-v">Pricing benchmarks, not transactions</span>
+                <span className="kv-m-intro-meta-k">{isPt ? "Use para" : "Use it for"}</span>
+                <span className="kv-m-intro-meta-v">{isPt ? "Benchmarks de preço, não transações" : "Pricing benchmarks, not transactions"}</span>
               </div>
             </div>
           </div>
@@ -519,24 +581,24 @@ export default function Market() {
         <div className="kv-m-inner">
           <div className="kv-l-mmi-strip">
             <div className="kv-l-mmi-cell">
-              <div className="kv-l-mmi-lbl">Estimated median price</div>
+              <div className="kv-l-mmi-lbl">{isPt ? "Preço mediano estimado" : "Estimated median price"}</div>
               <div className="kv-l-mmi-num">{formatMedian(data.medianPrice)}</div>
-              <div className="kv-l-mmi-delta">Across {data.pricedCount.toLocaleString("en")} priced listings</div>
+              <div className="kv-l-mmi-delta">{isPt ? `Em ${data.pricedCount.toLocaleString("pt-PT")} anúncios com preço` : `Across ${data.pricedCount.toLocaleString("en")} priced listings`}</div>
             </div>
             <div className="kv-l-mmi-cell">
-              <div className="kv-l-mmi-lbl">Total inventory</div>
-              <div className="kv-l-mmi-num">{data.total.toLocaleString("en")}</div>
-              <div className="kv-l-mmi-delta">Tracked across {data.islandCount} islands</div>
+              <div className="kv-l-mmi-lbl">{isPt ? "Inventário total" : "Total inventory"}</div>
+              <div className="kv-l-mmi-num">{data.total.toLocaleString(isPt ? "pt-PT" : "en")}</div>
+              <div className="kv-l-mmi-delta">{isPt ? `Acompanhado em ${data.islandCount} ilhas` : `Tracked across ${data.islandCount} islands`}</div>
             </div>
             <div className="kv-l-mmi-cell">
-              <div className="kv-l-mmi-lbl">Added this month</div>
-              <div className="kv-l-mmi-num">{data.addedThisMonth.toLocaleString("en")}</div>
-              <div className="kv-l-mmi-delta">First seen since the 1st</div>
+              <div className="kv-l-mmi-lbl">{isPt ? "Adicionados este mês" : "Added this month"}</div>
+              <div className="kv-l-mmi-num">{data.addedThisMonth.toLocaleString(isPt ? "pt-PT" : "en")}</div>
+              <div className="kv-l-mmi-delta">{isPt ? "Vistos pela primeira vez desde dia 1" : "First seen since the 1st"}</div>
             </div>
             <div className="kv-l-mmi-cell">
-              <div className="kv-l-mmi-lbl">Verified-price coverage</div>
+              <div className="kv-l-mmi-lbl">{isPt ? "Cobertura de preço verificado" : "Verified-price coverage"}</div>
               <div className="kv-l-mmi-num">{pricedPct}%</div>
-              <div className="kv-l-mmi-delta">{data.pricedCount.toLocaleString("en")} of {data.total.toLocaleString("en")} have a public price</div>
+              <div className="kv-l-mmi-delta">{isPt ? `${data.pricedCount.toLocaleString("pt-PT")} de ${data.total.toLocaleString("pt-PT")} têm preço público` : `${data.pricedCount.toLocaleString("en")} of ${data.total.toLocaleString("en")} have a public price`}</div>
             </div>
           </div>
         </div>
@@ -548,12 +610,12 @@ export default function Market() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Price distribution</span>
-            <h2>Where the inventory sits.</h2>
+            <span className="kv-l-eyebrow">{isPt ? "Distribuição de preços" : "Price distribution"}</span>
+            <h2>{isPt ? "Onde se concentra o inventário." : "Where the inventory sits."}</h2>
             <p>
-              Priced listings grouped into four asking-price bands. Helps anchor
-              expectations before browsing — most of Cape Verde's tracked supply
-              clusters in a narrower band than headline medians suggest.
+              {isPt
+                ? "Anúncios com preço agrupados em quatro faixas de preço pedido. Ajuda a calibrar expectativas antes da pesquisa."
+                : "Priced listings grouped into four asking-price bands. Helps anchor expectations before browsing — most of Cape Verde's tracked supply clusters in a narrower band than headline medians suggest."}
             </p>
           </div>
 
@@ -572,8 +634,9 @@ export default function Market() {
             ))}
           </div>
           <p className="kv-m-disclaimer">
-            Based on {data.pricedCount.toLocaleString("en")} listings with a public price.
-            Price-on-request listings excluded.
+            {isPt
+              ? `Com base em ${data.pricedCount.toLocaleString("pt-PT")} anúncios com preço público. Anúncios com preço sob consulta excluídos.`
+              : `Based on ${data.pricedCount.toLocaleString("en")} listings with a public price. Price-on-request listings excluded.`}
           </p>
         </div>
       </section>
@@ -582,11 +645,12 @@ export default function Market() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">By island</span>
-            <h2>Median price by island.</h2>
+            <span className="kv-l-eyebrow">{isPt ? "Por ilha" : "By island"}</span>
+            <h2>{isPt ? "Preço mediano por ilha." : "Median price by island."}</h2>
             <p>
-              Asking-price median for each island with verified price data. Minimum sample 5 listings
-              per island; islands below the threshold show inventory only.
+              {isPt
+                ? "Mediana do preço pedido para cada ilha com dados de preço verificado. Amostra mínima de 5 anúncios por ilha; ilhas abaixo do limiar mostram apenas inventário."
+                : "Asking-price median for each island with verified price data. Minimum sample 5 listings per island; islands below the threshold show inventory only."}
             </p>
           </div>
 
@@ -598,14 +662,14 @@ export default function Market() {
               aligned tabular numbers, headers aligned to data columns. */}
           <div className="kv-m-island-table">
             <div className="kv-m-island-h">
-              <span>Island</span>
-              <span>Listings</span>
-              <span>Median price</span>
+              <span>{isPt ? "Ilha" : "Island"}</span>
+              <span>{isPt ? "Anúncios" : "Listings"}</span>
+              <span>{isPt ? "Preço mediano" : "Median price"}</span>
             </div>
             {data.islands.map((island) => (
               <div className="kv-m-island-row" key={island.name}>
                 <span className="kv-m-island-name">{island.name}</span>
-                <span className="kv-m-island-count">{island.totalListings.toLocaleString("en")}</span>
+                <span className="kv-m-island-count">{island.totalListings.toLocaleString(isPt ? "pt-PT" : "en")}</span>
                 <span className="kv-m-island-median">
                   {island.median !== null ? formatMedian(island.median) : "—"}
                 </span>
@@ -614,7 +678,9 @@ export default function Market() {
           </div>
 
           <p className="kv-m-disclaimer">
-            Based on listings with verified price. Minimum sample 5 listings per island.
+            {isPt
+              ? "Com base em anúncios com preço verificado. Amostra mínima de 5 anúncios por ilha."
+              : "Based on listings with verified price. Minimum sample 5 listings per island."}
           </p>
         </div>
       </section>
@@ -623,10 +689,12 @@ export default function Market() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Distribution</span>
-            <h2>Listings by island.</h2>
+            <span className="kv-l-eyebrow">{isPt ? "Distribuição" : "Distribution"}</span>
+            <h2>{isPt ? "Anúncios por ilha." : "Listings by island."}</h2>
             <p>
-              Share of tracked inventory per island — shows where supply concentrates.
+              {isPt
+                ? "Quota do inventário acompanhado por ilha — mostra onde a oferta se concentra."
+                : "Share of tracked inventory per island — shows where supply concentrates."}
             </p>
           </div>
 
@@ -646,7 +714,7 @@ export default function Market() {
                 </div>
               ))}
           </div>
-          <p className="kv-m-disclaimer">Based on tracked public listings.</p>
+          <p className="kv-m-disclaimer">{isPt ? "Com base em anúncios públicos acompanhados." : "Based on tracked public listings."}</p>
         </div>
       </section>
 
@@ -654,11 +722,12 @@ export default function Market() {
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Trend · Coming soon</span>
-            <h2>Inventory over time.</h2>
+            <span className="kv-l-eyebrow">{isPt ? "Tendência · Em breve" : "Trend · Coming soon"}</span>
+            <h2>{isPt ? "Inventário ao longo do tempo." : "Inventory over time."}</h2>
             <p>
-              Historical inventory tracking begins November 2025. The chart populates as monthly
-              snapshots accumulate.
+              {isPt
+                ? "O acompanhamento histórico do inventário começa em novembro de 2025. O gráfico será preenchido à medida que os snapshots mensais se acumularem."
+                : "Historical inventory tracking begins November 2025. The chart populates as monthly snapshots accumulate."}
             </p>
           </div>
 
@@ -667,8 +736,8 @@ export default function Market() {
               <InventoryChart points={data.trend} />
             </div>
             <div className="kv-coming-overlay">
-              <span className="kv-pill">Coming soon</span>
-              <p>Historical data collection in progress</p>
+              <span className="kv-pill">{isPt ? "Em breve" : "Coming soon"}</span>
+              <p>{isPt ? "Recolha de dados históricos em curso" : "Historical data collection in progress"}</p>
             </div>
           </div>
         </div>
@@ -678,17 +747,17 @@ export default function Market() {
       <section className="kv-m-section" id="methodology">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">Methodology</span>
-            <h2>How to read this market data.</h2>
+            <span className="kv-l-eyebrow">{isPt ? "Metodologia" : "Methodology"}</span>
+            <h2>{isPt ? "Como ler estes dados de mercado." : "How to read this market data."}</h2>
             <p>
-              Short answers on what the index measures, where the limits are,
-              and how to interpret the numbers without treating them as
-              transaction prices or valuation advice.
+              {isPt
+                ? "Respostas curtas sobre o que o índice mede, quais são os limites e como interpretar os números sem os tratar como preços de transação ou aconselhamento de avaliação."
+                : "Short answers on what the index measures, where the limits are, and how to interpret the numbers without treating them as transaction prices or valuation advice."}
             </p>
           </div>
 
           <div className="kv-m-faq" id="faq">
-            {MARKET_FAQ.map((item, i) => {
+            {marketFaq.map((item, i) => {
               const isOpen = openIdx === i;
               return (
                 <div className={`kv-m-faq-row${isOpen ? " is-open" : ""}`} key={item.q}>
@@ -711,11 +780,15 @@ export default function Market() {
           </div>
 
           <p className="kv-m-disclaimer">
-            All market data is based on tracked public listings. This is not legal, financial, or valuation advice.
+            {isPt
+              ? "Todos os dados de mercado são baseados em anúncios públicos acompanhados. Isto não é aconselhamento jurídico, financeiro ou de avaliação."
+              : "All market data is based on tracked public listings. This is not legal, financial, or valuation advice."}
           </p>
           <p className="kv-m-disclaimer">
             <Link to="/about">
-              Read more about how the Cape Verde Real Estate Index fits into AREI.
+              {isPt
+                ? "Leia mais sobre como o Cape Verde Real Estate Index se integra na AREI."
+                : "Read more about how the Cape Verde Real Estate Index fits into AREI."}
             </Link>
           </p>
         </div>

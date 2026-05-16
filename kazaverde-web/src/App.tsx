@@ -7,6 +7,7 @@ import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
 import NewsletterPopup from "./components/NewsletterPopup";
 import GoogleAnalytics from "./components/GoogleAnalytics";
+import LanguagePersistence from "./components/LanguagePersistence";
 import Landing from "./pages/Landing";
 
 // Phase A live: / (landing), /listings (grid), /listing/:id, /saved,
@@ -58,6 +59,7 @@ export default function App() {
   return (
     <div className="ctn">
       <ScrollToTop />
+      <LanguagePersistence />
       <Navbar />
       <Suspense fallback={null}>
         <Routes>
@@ -70,13 +72,17 @@ export default function App() {
           <Route path="/listings/boa-vista" element={<Navigate to="/?island=Boa+Vista" replace />} />
           <Route path="/market" element={<Market />} />
           <Route path="/market-news" element={<MarketNews />} />
+          <Route path="/news" element={<Navigate to="/market-news" replace />} />
           {/* Rent surface offline — redirect to listings. Rent page and data model preserved. */}
           <Route path="/rent" element={<Navigate to="/listings" replace />} />
           <Route path="/about" element={<About />} />
           <Route path="/blog" element={<BlogList />} />
+          <Route path="/guides" element={<Navigate to="/blog" replace />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/shortlist" element={<Navigate to="/saved" replace />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/cookie-policy" element={<CookiePolicy />} />
+          <Route path="/cookies" element={<Navigate to="/cookie-policy" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>

@@ -49,6 +49,7 @@ const CARD_COLUMNS = [
   "image_urls",
   "source_id",
   "first_seen_at",
+  "ai_descriptions",
 ].join(",");
 
 // ---------------------------------------------------------------------------
