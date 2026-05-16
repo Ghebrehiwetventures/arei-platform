@@ -19,6 +19,24 @@ import { Card } from "./Listings";
 import "./Listings.css"; // shares kv-lcard primitives with Listings page
 import "./Landing.css";
 
+const GUIDE_TEASER_PT: Record<string, { title: string; description: string }> = {
+  "cape-verde-property-prices-by-island": {
+    title: "Preços de imóveis em Cabo Verde por ilha",
+    description:
+      "Medianas de preços pedidos e contagens de anúncios por ilha, retiradas do Cape Verde Real Estate Index.",
+  },
+  "buying-property-cape-verde-guide": {
+    title: "Como comprar imóvel em Cabo Verde",
+    description:
+      "Um guia passo a passo para compradores estrangeiros, desde NIF e conta bancária até escritura.",
+  },
+  "which-cape-verde-island-property": {
+    title: "Em que ilha de Cabo Verde deve comprar?",
+    description:
+      "Uma comparação prática entre ilhas, infraestrutura, procura e perfis de comprador.",
+  },
+};
+
 interface MmiSnapshot {
   medianPrice: number | null;
   total: number;
@@ -153,6 +171,7 @@ function categoryFor(tags: string[]): "buying" | "market" | "legal" | "tax" {
 
 export default function Landing() {
   const { i18n, t } = useTranslation();
+  const isPt = i18n.language.startsWith("pt");
   useDocumentMeta(
     "Cape Verde Real Estate Index",
     t("landing.metaDescription"),
@@ -603,11 +622,11 @@ export default function Landing() {
                   return (
                     <Link key={a.slug} to={`/blog/${a.slug}`} className="kv-l-guide">
                   <span className="kv-eyebrow">{t(`landing.${cat}`)}</span>
-                  <div className="kv-l-guide-title">{a.title}</div>
-                  <div className="kv-l-guide-excerpt">{a.description}</div>
+                  <div className="kv-l-guide-title">{isPt ? GUIDE_TEASER_PT[a.slug]?.title ?? a.title : a.title}</div>
+                  <div className="kv-l-guide-excerpt">{isPt ? GUIDE_TEASER_PT[a.slug]?.description ?? a.description : a.description}</div>
                   <div className="kv-l-guide-foot">
-                    <span>{new Date(a.date).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
-                    <span>{a.readTime}</span>
+                    <span>{new Date(a.date).toLocaleDateString(isPt ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    <span>{isPt ? a.readTime.replace("min read", "min de leitura") : a.readTime}</span>
                   </div>
                 </Link>
               );

@@ -38,6 +38,34 @@ type SortKey = "newest" | "price-asc" | "price-desc" | "size-desc";
 type ViewMode = "grid" | "list";
 
 const PAGE_SIZE = 9;
+
+function priceOptionLabel(value: PriceBucket | "", t: ReturnType<typeof useTranslation>["t"]): string {
+  const labels: Record<PriceBucket | "", string> = {
+    "": t("listings.anyPrice"),
+    under_100k: t("listings.under100"),
+    "100k_250k": t("listings.between100250"),
+    "250k_500k": t("listings.between250500"),
+    over_500k: t("listings.over500"),
+  };
+  return labels[value];
+}
+
+function sortOptionLabel(value: SortKey, isPt: boolean): string {
+  const labels: Record<SortKey, string> = isPt
+    ? {
+        newest: "Mais recentes primeiro",
+        "price-asc": "Preço — baixo para alto",
+        "price-desc": "Preço — alto para baixo",
+        "size-desc": "Área — maior primeiro",
+      }
+    : {
+        newest: "Newest first",
+        "price-asc": "Price — low to high",
+        "price-desc": "Price — high to low",
+        "size-desc": "Size — largest first",
+      };
+  return labels[value];
+}
 const VIEW_STORAGE_KEY = "kv:listings:view";
 
 function readInitialView(searchParams: URLSearchParams): ViewMode {
@@ -59,18 +87,19 @@ function fmtPrice(n: number | null | undefined): string {
   return new Intl.NumberFormat("en", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
 }
 
-function relTime(iso: string | null | undefined): string {
-  if (!iso) return "indexed recently";
+function relTime(iso: string | null | undefined, isPt: boolean): string {
+  if (!iso) return isPt ? "indexado recentemente" : "indexed recently";
   const t = new Date(iso).getTime();
-  if (Number.isNaN(t)) return "indexed recently";
+  if (Number.isNaN(t)) return isPt ? "indexado recentemente" : "indexed recently";
   const days = Math.max(0, Math.round((Date.now() - t) / 86_400_000));
-  if (days === 0) return "indexed today";
-  if (days === 1) return "indexed 1d ago";
-  return `indexed ${days}d ago`;
+  if (days === 0) return isPt ? "indexado hoje" : "indexed today";
+  if (days === 1) return isPt ? "indexado há 1 dia" : "indexed 1d ago";
+  return isPt ? `indexado há ${days} dias` : `indexed ${days}d ago`;
 }
 
 export default function Listings() {
   const { i18n, t } = useTranslation();
+  const isPt = i18n.language.startsWith("pt");
   useDocumentMeta(
     t("listings.metaTitle"),
     t("listings.metaDescription")
@@ -208,7 +237,7 @@ export default function Listings() {
   const visible = applyClientSort(cards, sort);
 
   // Meta stats for the hero
-  const lastUpdated = new Date().toLocaleDateString("en-GB", {
+  const lastUpdated = new Date().toLocaleDateString(isPt ? "pt-PT" : "en-GB", {
     day: "numeric",
     month: "short",
     year: "numeric",
@@ -229,13 +258,13 @@ export default function Listings() {
   };
 
   const priceLabel = priceBucket
-    ? PRICE_OPTIONS.find((p) => p.value === priceBucket)?.label || t("listings.price")
+    ? priceOptionLabel(priceBucket, t)
     : t("listings.price");
 
   const typeLabel = type ? t(`listings.${type}`) : t("listings.anyType");
   const bedsLabel = beds ? `${beds}+ ${beds === 1 ? t("listings.onePlus").replace("1+ ", "") : t("detail.bedrooms").toLowerCase()}` : t("detail.bedrooms");
   const islandLabel = island || t("listings.anyIsland");
-  const sortLabel = SORT_OPTIONS.find((s) => s.value === sort)?.label || "Newest first";
+  const sortLabel = sortOptionLabel(sort, isPt);
 
   const shownCount = total;
   const canLoadMore = page < totalPages;
@@ -360,7 +389,7 @@ export default function Listings() {
                           setOpenPop("");
                         }}
                       >
-                        {p.value ? p.label : t("listings.anyPrice")}{" "}
+                        {priceOptionLabel(p.value, t)}{" "}
                         {count != null && count > 0 && <span className="kv-ct">{count}</span>}
                       </Option>
                     );
@@ -445,13 +474,13 @@ export default function Listings() {
               className="kv-sort"
               onClick={(e) => stopAndToggle(e, "sort")}
             >
-              <span className="kv-sort-prefix">Sort </span><b>{sortLabel}</b> ▾
+              <span className="kv-sort-prefix">{isPt ? "Ordenar " : "Sort "}</span><b>{sortLabel}</b> ▾
             </button>
-            <div className="kv-view-toggle" role="group" aria-label="View mode">
+            <div className="kv-view-toggle" role="group" aria-label={isPt ? "Modo de visualização" : "View mode"}>
               <button
                 type="button"
                 className="kv-view-toggle-btn"
-                aria-label="Grid view"
+                aria-label={isPt ? "Vista em grelha" : "Grid view"}
                 aria-pressed={view === "grid"}
                 onClick={() => setView("grid")}
               >
@@ -460,7 +489,7 @@ export default function Listings() {
               <button
                 type="button"
                 className="kv-view-toggle-btn"
-                aria-label="List view"
+                aria-label={isPt ? "Vista em lista" : "List view"}
                 aria-pressed={view === "list"}
                 onClick={() => setView("list")}
               >
@@ -469,7 +498,7 @@ export default function Listings() {
             </div>
             {openPop === "sort" && (
               <PopOver className="kv-pop-right" onClickInside={(e) => e.stopPropagation()}>
-                <div className="kv-pop-h">Sort</div>
+                <div className="kv-pop-h">{isPt ? "Ordenar" : "Sort"}</div>
                 {SORT_OPTIONS.map((s) => (
                   <Option
                     key={s.value}
@@ -479,7 +508,7 @@ export default function Listings() {
                       setOpenPop("");
                     }}
                   >
-                    {s.label}
+                    {sortOptionLabel(s.value, isPt)}
                   </Option>
                 ))}
               </PopOver>
@@ -615,8 +644,9 @@ function PopOver({
 }
 
 function ListingGridSkeleton() {
+  const { t } = useTranslation();
   return (
-    <div role="status" aria-label="Loading listings">
+    <div role="status" aria-label={t("listings.loading")}>
       <div className="kv-grid kv-grid-skeleton" aria-hidden="true">
         {Array.from({ length: PAGE_SIZE }, (_, i) => (
           <div className="kv-lcard kv-lcard-skeleton" key={i}>
@@ -642,7 +672,7 @@ function ListingGridSkeleton() {
           </div>
         ))}
       </div>
-      <span className="kv-sr-only">Loading listings...</span>
+      <span className="kv-sr-only">{t("listings.loading")}</span>
     </div>
   );
 }
@@ -674,6 +704,7 @@ function capitalize(str: string): string {
 
 export function Card({ l }: { l: ListingCard; index?: number }) {
   const { i18n, t } = useTranslation();
+  const isPt = i18n.language.startsWith("pt");
   // NEW = indexed within the last 7 days (single source of truth in lib/format).
   // Drops the previous "first two cards always look new" hack.
   const isNew = l.is_new || isNewListing(l.first_seen_at);
@@ -728,7 +759,7 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
         )}
         <div className="kv-lc-provenance">
           <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
-          <span>{relTime(l.first_seen_at)}</span>
+          <span>{relTime(l.first_seen_at, isPt)}</span>
         </div>
       </div>
     </Link>
@@ -739,6 +770,7 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
 
 function ListingRow({ l }: { l: ListingCard }) {
   const { i18n, t } = useTranslation();
+  const isPt = i18n.language.startsWith("pt");
   const isNew = l.is_new || isNewListing(l.first_seen_at);
   const typeKey = l.property_type?.toLowerCase();
   const typeLabel = typeKey ? t(`listings.${typeKey}`, { defaultValue: TYPES[typeKey] || capitalize(l.property_type || "") }) : "";
@@ -788,7 +820,7 @@ function ListingRow({ l }: { l: ListingCard }) {
         )}
         <div className="kv-list-row-meta">
           <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
-          <span>{relTime(l.first_seen_at)}</span>
+          <span>{relTime(l.first_seen_at, isPt)}</span>
         </div>
       </div>
     </Link>

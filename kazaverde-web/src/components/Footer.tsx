@@ -8,7 +8,8 @@ import "./Footer.css";
    from the footer. Mobile collapses to a 2-col grid with brand
    spanning both. */
 export default function Footer() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const isPt = i18n.language.startsWith("pt");
 
   return (
     <footer className="ft">
@@ -24,7 +25,7 @@ export default function Footer() {
             </p>
             <div className="footer-status">
               <span className="sd" aria-hidden="true" />
-              Live · {t("common.sourceLinkedIndex")}
+              {isPt ? "Em direto" : "Live"} · {t("common.sourceLinkedIndex")}
             </div>
           </div>
 

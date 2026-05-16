@@ -85,6 +85,12 @@ const resources = {
         accept: "Accept",
         policy: "Cookie policy",
       },
+      notFound: {
+        title: "Page not found",
+        body: "The page you're looking for doesn't exist or may have been removed.",
+        home: "Go to homepage",
+        back: "Go back",
+      },
       newsletterPopup: {
         label: "Newsletter signup",
         close: "Close",
@@ -351,6 +357,11 @@ const resources = {
           "Short, direct answers — sourced from the long-form guides above. If the FAQ doesn't cover it, the guides go deeper.",
         noFaq: "No FAQ entries match <1>\"{{query}}\"</1>.",
       },
+      blogPost: {
+        notFoundTitle: "Article not found",
+        notFoundBody: "This guide may have been moved or renamed.",
+        allGuides: "All guides",
+      },
       about: {
         metaTitle: "About Cape Verde Real Estate Index",
         metaDescription:
@@ -580,6 +591,12 @@ const resources = {
           "Usamos armazenamento local mínimo para anúncios guardados e confirmação de cookies. A analítica não usa cookies.",
         accept: "Aceitar",
         policy: "Política de cookies",
+      },
+      notFound: {
+        title: "Página não encontrada",
+        body: "A página que procura não existe ou pode ter sido removida.",
+        home: "Ir para a página inicial",
+        back: "Voltar",
       },
       newsletterPopup: {
         label: "Subscrição da newsletter",
@@ -846,6 +863,11 @@ const resources = {
         faqSub:
           "Respostas curtas e diretas — baseadas nos guias aprofundados acima. Se a FAQ não cobrir o tema, os guias aprofundam.",
         noFaq: "Nenhuma entrada da FAQ corresponde a <1>\"{{query}}\"</1>.",
+      },
+      blogPost: {
+        notFoundTitle: "Artigo não encontrado",
+        notFoundBody: "Este guia pode ter sido movido ou renomeado.",
+        allGuides: "Todos os guias",
       },
       about: {
         metaTitle: "Sobre o Cape Verde Real Estate Index",

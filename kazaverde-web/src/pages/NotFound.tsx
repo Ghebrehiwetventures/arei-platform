@@ -1,4 +1,5 @@
 import { useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import "./NotFound.css";
 
@@ -8,13 +9,14 @@ interface Props {
 }
 
 export default function NotFound({ title, message }: Props) {
+  const { t } = useTranslation();
   const navigate = useNavigate();
   const { pathname } = useLocation();
 
-  const heading = title ?? "Page not found";
+  const heading = title ?? t("notFound.title");
   const body =
     message ??
-    "The page you're looking for doesn't exist or may have been removed.";
+    t("notFound.body");
 
   useDocumentMeta(heading, body);
 
@@ -40,24 +42,24 @@ export default function NotFound({ title, message }: Props) {
       <div className="nf-actions">
         {isListing ? (
           <button className="nf-btn nf-primary" onClick={() => navigate("/listings")}>
-            Browse all listings
+            {t("common.browseAllListings")}
           </button>
         ) : (
           <button className="nf-btn nf-primary" onClick={() => navigate("/")}>
-            Go to homepage
+            {t("notFound.home")}
           </button>
         )}
         <button className="nf-btn nf-secondary" onClick={() => navigate(-1)}>
-          Go back
+          {t("notFound.back")}
         </button>
       </div>
 
       <div className="nf-links">
-        <a onClick={() => navigate("/listings")}>Listings</a>
+        <a onClick={() => navigate("/listings")}>{t("common.listings")}</a>
         <span className="nf-dot" />
-        <a onClick={() => navigate("/market")}>Market data</a>
+        <a onClick={() => navigate("/market")}>{t("common.marketData")}</a>
         <span className="nf-dot" />
-        <a onClick={() => navigate("/blog")}>Blog</a>
+        <a onClick={() => navigate("/blog")}>{t("common.guides")}</a>
       </div>
     </div>
   );

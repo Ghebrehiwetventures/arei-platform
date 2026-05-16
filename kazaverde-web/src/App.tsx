@@ -79,6 +79,7 @@ export default function App() {
           <Route path="/blog" element={<BlogList />} />
           <Route path="/guides" element={<Navigate to="/blog" replace />} />
           <Route path="/blog/:slug" element={<BlogPost />} />
+          <Route path="/guides/:slug" element={<BlogPost />} />
           <Route path="/shortlist" element={<Navigate to="/saved" replace />} />
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/cookie-policy" element={<CookiePolicy />} />
