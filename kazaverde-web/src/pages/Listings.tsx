@@ -702,7 +702,7 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-export function Card({ l }: { l: ListingCard; index?: number }) {
+export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boolean }) {
   const { i18n, t } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
   // NEW = indexed within the last 7 days (single source of truth in lib/format).
@@ -758,8 +758,14 @@ export function Card({ l }: { l: ListingCard; index?: number }) {
           </div>
         )}
         <div className="kv-lc-provenance">
-          <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
-          <span>{relTime(l.first_seen_at, isPt)}</span>
+          {bare ? (
+            <span>{formatSourceLabel(l.source_id)} · {relTime(l.first_seen_at, isPt)}</span>
+          ) : (
+            <>
+              <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
+              <span>{relTime(l.first_seen_at, isPt)}</span>
+            </>
+          )}
         </div>
       </div>
     </Link>

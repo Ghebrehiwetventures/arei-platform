@@ -113,52 +113,64 @@ function FeaturedCardSkeleton() {
    reads tidy with no orphan two-liners), then diversity across island
    and source. Falls back gracefully when data is thin. */
 function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
-  /* ~32 chars fits one line in a kv-lcard at desktop widths. Tuned
-     against current data; relax if too few candidates pass. */
-  const MAX_TITLE_LEN = 32;
-  const isShort = (c: ListingCard) => (c.title?.length ?? 99) <= MAX_TITLE_LEN;
-  const hasImage = (c: ListingCard) => !!(c.image_urls?.[0] || c.image_url);
+  const hasImage    = (c: ListingCard) => !!(c.image_urls?.[0] || c.image_url);
+  const hasPrice    = (c: ListingCard) => !!(c.price && c.price > 0);
+  const hasBedrooms = (c: ListingCard) => !!(c.bedrooms && c.bedrooms > 0);
+  const hasBaths    = (c: ListingCard) => !!(c.bathrooms && c.bathrooms > 0);
+  const isLand      = (c: ListingCard) => c.property_type?.toLowerCase() === "land";
+  const isCommercial = (c: ListingCard) => c.property_type?.toLowerCase() === "commercial";
+  const hasIsland   = (c: ListingCard) => !!c.island;
 
-  /* Hard requirement: featured cards must have an image. Empty
-     placeholder gradients on the homepage hero are worse than
-     showing fewer cards. Pipeline should ultimately filter
-     image-less listings out of the index entirely. */
-  const candidates = cards.filter(hasImage);
+  // Residential: image + price + bedrooms + bathrooms + not land/commercial + island known
+  const residential = cards.filter(
+    (c) => hasImage(c) && hasPrice(c) && hasBedrooms(c) && hasBaths(c) && !isLand(c) && !isCommercial(c) && hasIsland(c),
+  );
+  // Land: image + price + island known (no bedrooms requirement)
+  const land = cards.filter(
+    (c) => hasImage(c) && hasPrice(c) && isLand(c) && hasIsland(c),
+  );
 
   const picked: ListingCard[] = [];
   const seenIslands = new Set<string>();
   const seenSources = new Set<string>();
 
-  // Pass 1: short title + unique island + unique source
-  for (const c of candidates) {
-    if (picked.length >= n) break;
-    if (!isShort(c)) continue;
-    if (c.island && !seenIslands.has(c.island) && c.source_id && !seenSources.has(c.source_id)) {
-      picked.push(c);
-      seenIslands.add(c.island);
-      seenSources.add(c.source_id);
-    }
+  const tryAdd = (c: ListingCard) => {
+    if (picked.includes(c)) return;
+    picked.push(c);
+    if (c.island) seenIslands.add(c.island);
+    if (c.source_id) seenSources.add(c.source_id);
+  };
+
+  // Reserve last slot for one land listing (if available)
+  const landSlot = land[0] ?? null;
+  const residentialTarget = landSlot ? n - 1 : n;
+
+  // Pass 1: unique island + unique source
+  for (const c of residential) {
+    if (picked.length >= residentialTarget) break;
+    if (c.island && !seenIslands.has(c.island) && c.source_id && !seenSources.has(c.source_id))
+      tryAdd(c);
   }
-  // Pass 2: short title + unique island
-  for (const c of candidates) {
-    if (picked.length >= n) break;
-    if (picked.includes(c) || !isShort(c)) continue;
-    if (c.island && !seenIslands.has(c.island)) {
-      picked.push(c);
-      seenIslands.add(c.island);
-    }
+  // Pass 2: unique island
+  for (const c of residential) {
+    if (picked.length >= residentialTarget) break;
+    if (c.island && !seenIslands.has(c.island)) tryAdd(c);
   }
-  // Pass 3: any short title
-  for (const c of candidates) {
-    if (picked.length >= n) break;
-    if (picked.includes(c)) continue;
-    if (isShort(c)) picked.push(c);
+  // Pass 3: any clean residential
+  for (const c of residential) {
+    if (picked.length >= residentialTarget) break;
+    tryAdd(c);
   }
-  // Pass 4: anything remaining (rare fallback when few short titles)
-  for (const c of candidates) {
-    if (picked.length >= n) break;
-    if (!picked.includes(c)) picked.push(c);
+  // Pass 4: relax bathrooms
+  const relaxed = cards.filter((c) => hasImage(c) && hasPrice(c) && hasBedrooms(c) && !isLand(c) && !isCommercial(c) && hasIsland(c));
+  for (const c of relaxed) {
+    if (picked.length >= residentialTarget) break;
+    tryAdd(c);
   }
+
+  // Add the land listing last
+  if (landSlot) tryAdd(landSlot);
+
   return picked;
 }
 
@@ -251,7 +263,7 @@ export default function Landing() {
     ])
       .then(([listRes, stats]) => {
         if (cancelled) return;
-        setFeatured(pickFeatured(listRes.data, 3));
+        setFeatured(pickFeatured(listRes.data, 4));
         setTotalListings(listRes.total);
 
         const withPrice = stats.islands.filter((i) => i.median_price !== null);
@@ -426,7 +438,7 @@ export default function Landing() {
 
           <div className="kv-l-feat-grid">
             {featured.length > 0
-              ? featured.map((l) => <Card key={l.id} l={l} />)
+              ? featured.map((l) => <Card key={l.id} l={l} bare />)
               : [0, 1, 2].map((i) => <FeaturedCardSkeleton key={i} />)}
           </div>
 
