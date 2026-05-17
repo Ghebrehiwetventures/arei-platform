@@ -111,6 +111,19 @@
   color: rgba(0, 0, 0, 0.25);
 }
 
+/* Category gets a sage square instead of the dot separator — the same
+   visual marker as the Guides category icon. Purely a cue; the label
+   text carries the meaning, so there is no per-category colour system. */
+.kv-news-item-meta > .kv-news-cat::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin: 0 8px;
+  background: var(--kv-green);
+  vertical-align: middle;
+}
+
 /* High-relevance pill — sage on ink, the master-surface treatment.
    Sits inline at the end of the meta row; the dot separator before it
    is suppressed so it reads as a tag, not another meta datum. */
