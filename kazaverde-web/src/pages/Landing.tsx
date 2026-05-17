@@ -118,7 +118,7 @@ function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
   const hasBedrooms = (c: ListingCard) => !!(c.bedrooms && c.bedrooms > 0);
   const hasBaths    = (c: ListingCard) => !!(c.bathrooms && c.bathrooms > 0);
   const isNotLand   = (c: ListingCard) =>
-    !c.property_type || !["land", "lot", "terrain", "terreno"].includes(c.property_type.toLowerCase());
+    !c.property_type || !["land", "commercial"].includes(c.property_type.toLowerCase());
   const hasIsland   = (c: ListingCard) => !!c.island;
 
   // Hard requirements: image + price + bedrooms + bathrooms + not land + island known
