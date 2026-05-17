@@ -396,7 +396,91 @@
   .kv-l-feat-grid { grid-template-columns: 1fr; }
 }
 
+/* ═══════════ MARKET NEWS PREVIEW ═══════════
+   Off-white surface — distinct from Guides (white) above.
+   Cards intentionally mirror .kv-l-guide in structure and hover. */
+.kv-l-news {
+  background: var(--kv-off-white);
+  padding: 96px 0;
+}
+.kv-l-news-inner {
+  max-width: var(--kv-content-w);
+  margin: 0 auto;
+  padding: 0 var(--kv-gutter);
+}
+.kv-l-news-list {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  margin-top: 32px;
+}
+.kv-l-news-item {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-paper);
+  padding: 24px;
+  color: var(--kv-black);
+  transition: border-color var(--kv-dur) var(--kv-ease),
+              transform var(--kv-dur) var(--kv-ease);
+}
+.kv-l-news-item:hover { border-color: rgba(0, 0, 0, 0.4); transform: translateY(-2px); }
+.kv-l-news-item .kv-eyebrow { margin-bottom: 14px; }
+.kv-l-news-item-title {
+  font-family: var(--kv-mono);
+  font-size: 17px;
+  font-weight: var(--kv-fw-regular);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--kv-black);
+  text-decoration: none;
+  margin-bottom: 14px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.kv-l-news-item-title:hover { text-decoration: underline; }
+.kv-l-news-item-snippet {
+  font-family: var(--kv-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: rgba(0, 0, 0, 0.68);
+  margin-bottom: 22px;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.kv-l-news-item-foot {
+  display: flex;
+  align-items: baseline;
+  font-family: var(--kv-mono);
+  font-size: 11px;
+  color: var(--kv-gray-500);
+  letter-spacing: 0.04em;
+  min-width: 0;
+}
+.kv-l-news-item-foot-date { white-space: nowrap; flex-shrink: 0; }
+.kv-l-news-item-foot-sep { margin: 0 8px; color: rgba(0, 0, 0, 0.25); flex-shrink: 0; }
+.kv-l-news-item-foot-source {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
 /* ═══════════ RESPONSIVE ═══════════ */
+@media (max-width: 960px) {
+  .kv-l-news { padding: 64px 0; }
+  .kv-l-news-list { grid-template-columns: repeat(2, 1fr); }
+}
+@media (max-width: 640px) {
+  .kv-l-news { padding: 48px 0; }
+  .kv-l-news-list { grid-template-columns: 1fr; }
+}
+
 @media (max-width: 960px) {
   .kv-l-hero { padding: 64px 0 40px; }
   .kv-l-mmi, .kv-l-guides { padding: 64px 0; }

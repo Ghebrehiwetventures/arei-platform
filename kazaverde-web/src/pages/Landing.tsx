@@ -5,6 +5,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { BLOG_ARTICLES } from "../lib/blog-data";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
+import { useMarketNews } from "../hooks/useMarketNews";
 import { formatMedian, formatSourceLabel } from "../lib/format";
 import { PRICE_BUCKETS, type PriceBucket, type ListingCard } from "arei-sdk";
 
@@ -227,6 +228,11 @@ export default function Landing() {
 
   // Top 3 newest articles for guides preview
   const guides = BLOG_ARTICLES.slice(0, 3);
+
+  const { items: newsItems } = useMarketNews();
+  const latestNews = [...newsItems]
+    .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
+    .slice(0, 3);
 
   /* Live featured listings + total count for the CTA. Falls back to the
      hardcoded ISLANDS_COUNT/SOURCES_COUNT if Supabase isn't configured. */
@@ -634,6 +640,46 @@ export default function Landing() {
           </div>
         </div>
       </section>
+
+      {/* ═══ MARKET NEWS PREVIEW ═══ */}
+      {latestNews.length > 0 && (
+        <section className="kv-l-news">
+          <div className="kv-l-news-inner">
+            <div className="kv-l-mmi-head">
+              <div>
+                <span className="kv-l-eyebrow">{t("landing.newsEyebrow")}</span>
+                <h2>{t("landing.newsTitle")}</h2>
+                <p>{t("landing.newsSub")}</p>
+              </div>
+              <Link to="/market-news" className="kv-l-section-link">
+                {t("landing.seeAllNews")}
+              </Link>
+            </div>
+
+            <div className="kv-l-news-list">
+              {latestNews.map((item) => (
+                <article className="kv-l-news-item" key={item.id}>
+                  <span className="kv-eyebrow">{item.category}</span>
+                  <a
+                    className="kv-l-news-item-title"
+                    href={item.sourceUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                  >
+                    {item.title}
+                  </a>
+                  <p className="kv-l-news-item-snippet">{item.snippet}</p>
+                  <div className="kv-l-news-item-foot">
+                    <span className="kv-l-news-item-foot-date">{new Date(`${item.publishedAt}T00:00:00Z`).toLocaleDateString(isPt ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</span>
+                    <span className="kv-l-news-item-foot-sep" aria-hidden="true">·</span>
+                    <span className="kv-l-news-item-foot-source">{item.sourceName}</span>
+                  </div>
+                </article>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* ═══ NEWSLETTER ═══ */}
       <NewsletterCta />
