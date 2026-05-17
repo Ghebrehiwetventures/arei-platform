@@ -6,15 +6,9 @@ export default function LanguageToggle() {
   const current = normalizeLanguage(i18n.resolvedLanguage ?? i18n.language);
 
   function changeLanguage(lang: SupportedLanguage) {
+    // The i18next detector persists the choice to localStorage and i18n.ts
+    // syncs <html lang>. The toggle only needs to request the change.
     void i18n.changeLanguage(lang);
-    try {
-      window.localStorage.setItem("kv-language", lang);
-      const url = new URL(window.location.href);
-      url.searchParams.set("lang", lang);
-      window.history.replaceState(window.history.state, "", `${url.pathname}${url.search}${url.hash}`);
-    } catch {
-      // Persistence is best-effort; i18next still updates in memory.
-    }
   }
 
   return (

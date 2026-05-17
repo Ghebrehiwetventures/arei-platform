@@ -1038,8 +1038,8 @@ i18n
     nonExplicitSupportedLngs: true,
     interpolation: { escapeValue: false },
     detection: {
-      // Persisted user choice must beat stale ?lang= links. Otherwise
-      // opening /?lang=en once can override a later PT toggle on refresh.
+      // Persisted user choice must beat a stale ?lang= link. The detector
+      // owns persistence: it reads/writes localStorage under "kv-language".
       order: ["localStorage", "querystring", "navigator", "htmlTag"],
       lookupQuerystring: "lang",
       lookupLocalStorage: "kv-language",
@@ -1048,5 +1048,17 @@ i18n
     },
     returnObjects: true,
   });
+
+// Single source of truth for the <html lang> attribute. The detector
+// handles localStorage persistence; this keeps the document language tag
+// in sync on the initial resolve and on every subsequent change.
+function applyDocumentLanguage(lng?: string) {
+  if (typeof document === "undefined") return;
+  document.documentElement.lang =
+    normalizeLanguage(lng) === "pt" ? "pt-PT" : "en";
+}
+
+i18n.on("languageChanged", applyDocumentLanguage);
+applyDocumentLanguage(i18n.resolvedLanguage ?? i18n.language);
 
 export default i18n;
