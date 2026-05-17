@@ -145,10 +145,11 @@
 }
 
 /* High-relevance pill — sage on ink, the master-surface treatment.
-   No dot separator before it; the pill stands on its own. */
+   Its own block line between the meta row and the title, content-width
+   (inline-block) so it never stretches into a full-width bar. */
 .kv-news-relevance {
   display: inline-block;
-  margin-left: 10px;
+  margin: 0 0 14px;
   padding: 2px 8px;
   background: var(--kv-green);
   color: var(--kv-black);
@@ -156,10 +157,6 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-}
-.kv-news-item-meta > .kv-news-relevance::before {
-  content: none;
-  margin: 0;
 }
 
 .kv-news-item-title {
@@ -348,17 +345,7 @@
   .kv-news-item {
     padding: 32px 0;
   }
-  /* Meta wraps tight on narrow screens — drop the relevance pill to its
-     own line below source · date · category instead of crowding the row.
-     flex-basis:100% forces the line break; max-width:max-content keeps the
-     pill shrunk to its label instead of stretching into a full-width bar. */
   .kv-news-item-meta { font-size: 11px; }
-  .kv-news-relevance {
-    flex-basis: 100%;
-    max-width: max-content;
-    margin-left: 0;
-    margin-top: 6px;
-  }
   .kv-news-item-title { font-size: 19px; }
   .kv-news-disclaimer { margin-top: 40px; }
 }
