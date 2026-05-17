@@ -12,43 +12,8 @@
   background: var(--kv-white);
 }
 
-.kv-blog-head {
-  background: var(--kv-off-white);
-  border-bottom: 1px solid var(--kv-rule);
-  padding: 72px 0 56px;
-}
-.kv-blog-head-inner {
-  max-width: var(--kv-content-w);
-  margin: 0 auto;
-  padding: 0 var(--kv-gutter);
-}
-.kv-blog-eyebrow {
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--kv-gray-500);
-  margin-bottom: 16px;
-}
-.kv-blog-title {
-  font-family: var(--kv-mono);
-  font-size: clamp(28px, 4vw, 44px);
-  font-weight: var(--kv-fw-regular);
-  line-height: 1.12;
-  letter-spacing: -0.02em;
-  color: var(--kv-black);
-  max-width: 820px;
-  margin-bottom: 18px;
-  text-wrap: balance;
-}
-.kv-blog-sub {
-  font-family: var(--kv-mono);
-  font-size: 15px;
-  line-height: 1.6;
-  color: rgba(0, 0, 0, 0.7);
-  max-width: 620px;
-  margin-bottom: 28px;
-}
+/* Page header band is now the shared <PageHeader> component
+   (components/PageHeader.css). Guides only styles its own search + body. */
 
 /* ─── Search — sits inside header, after the sub paragraph ─── */
 .kv-blog-search {
@@ -302,13 +267,11 @@
 }
 
 @media (max-width: 960px) {
-  .kv-blog-head { padding: 56px 0 40px; }
   .kv-blog-body { padding: 40px var(--kv-gutter) 72px; }
   .kv-blog-grid { grid-template-columns: repeat(2, 1fr); }
   .kv-blog-section + .kv-blog-section { margin-top: 56px; padding-top: 40px; }
 }
 @media (max-width: 640px) {
-  .kv-blog-head { padding: 40px 0 32px; }
   .kv-blog-body { padding: 32px var(--kv-gutter) 56px; }
   .kv-blog-grid { grid-template-columns: 1fr; }
 

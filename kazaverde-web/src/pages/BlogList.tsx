@@ -5,6 +5,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { BLOG_ARTICLES } from "../lib/blog-data";
 import { FAQ_ENTRIES, type FaqEntry } from "../lib/faq-data";
 import NewsletterCta from "../components/NewsletterCta";
+import PageHeader from "../components/PageHeader";
 import "./BlogList.css";
 
 function fmtDate(iso: string, locale = "en-GB"): string {
@@ -247,53 +248,47 @@ export default function BlogList() {
   return (
     <div className="kv-blog">
       {/* Off-white header band — quieter than the main hero */}
-      <header className="kv-blog-head">
-        <div className="kv-blog-head-inner">
-          <div className="kv-blog-eyebrow">{t("blog.eyebrow")}</div>
-          <h1 className="kv-blog-title">
-            {t("blog.title")}
-          </h1>
-          <p className="kv-blog-sub">
-            {t("blog.sub")}
-          </p>
-
-          <form
-            className="kv-blog-search"
-            onSubmit={(e) => e.preventDefault()}
-            role="search"
-          >
-            <span className="kv-blog-search-icon" aria-hidden="true">⌕</span>
-            <input
-              type="search"
-              className="kv-blog-search-input"
-              placeholder={t("blog.placeholder")}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label={t("blog.searchLabel")}
-            />
-            {isSearching && (
-              <button
-                type="button"
-                className="kv-blog-search-clear"
-                onClick={() => setQuery("")}
-                aria-label={t("blog.clearSearch")}
-              >
-                ×
-              </button>
-            )}
-          </form>
-
+      <PageHeader
+        eyebrow={t("blog.eyebrow")}
+        title={t("blog.title")}
+        sub={t("blog.sub")}
+      >
+        <form
+          className="kv-blog-search"
+          onSubmit={(e) => e.preventDefault()}
+          role="search"
+        >
+          <span className="kv-blog-search-icon" aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            className="kv-blog-search-input"
+            placeholder={t("blog.placeholder")}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label={t("blog.searchLabel")}
+          />
           {isSearching && (
-            <div className="kv-blog-search-meta">
-              <b>{totalHits}</b> {totalHits === 1 ? t("common.result") : t("common.results")}
-              {" · "}
-              {filteredArticles.length} {filteredArticles.length === 1 ? t("blog.guide") : t("blog.guides")}
-              {" · "}
-              {filteredFaq.length} FAQ
-            </div>
+            <button
+              type="button"
+              className="kv-blog-search-clear"
+              onClick={() => setQuery("")}
+              aria-label={t("blog.clearSearch")}
+            >
+              ×
+            </button>
           )}
-        </div>
-      </header>
+        </form>
+
+        {isSearching && (
+          <div className="kv-blog-search-meta">
+            <b>{totalHits}</b> {totalHits === 1 ? t("common.result") : t("common.results")}
+            {" · "}
+            {filteredArticles.length} {filteredArticles.length === 1 ? t("blog.guide") : t("blog.guides")}
+            {" · "}
+            {filteredFaq.length} FAQ
+          </div>
+        )}
+      </PageHeader>
 
       <section className="kv-blog-body">
         {/* Articles — hide block when searching narrows it to zero */}

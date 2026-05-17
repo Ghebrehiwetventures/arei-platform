@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
+import PageHeader from "../components/PageHeader";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useMarketNews } from "../hooks/useMarketNews";
 import type { MarketNewsItem } from "../lib/market-news-data";
@@ -109,39 +110,37 @@ export default function MarketNews() {
 
   return (
     <div className="kv-news">
-      <header className="kv-news-head">
-        <div className="kv-news-head-inner">
-          <div className="kv-news-eyebrow">{t("marketNews.eyebrow")}</div>
-          <h1 className="kv-news-title">{t("marketNews.metaTitle")}</h1>
-          <p className="kv-news-sub">{t("marketNews.description")}</p>
-
-          <form
-            className="kv-news-search"
-            onSubmit={(event) => event.preventDefault()}
-            role="search"
-          >
-            <span className="kv-news-search-icon" aria-hidden="true">⌕</span>
-            <input
-              type="search"
-              className="kv-news-search-input"
-              placeholder={t("marketNews.searchPlaceholder")}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label={t("marketNews.searchLabel")}
-            />
-            {query && (
-              <button
-                type="button"
-                className="kv-news-search-clear"
-                onClick={() => setQuery("")}
-                aria-label={t("marketNews.clearSearch")}
-              >
-                ×
-              </button>
-            )}
-          </form>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow={t("marketNews.eyebrow")}
+        title={t("marketNews.metaTitle")}
+        sub={t("marketNews.description")}
+      >
+        <form
+          className="kv-news-search"
+          onSubmit={(event) => event.preventDefault()}
+          role="search"
+        >
+          <span className="kv-news-search-icon" aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            className="kv-news-search-input"
+            placeholder={t("marketNews.searchPlaceholder")}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label={t("marketNews.searchLabel")}
+          />
+          {query && (
+            <button
+              type="button"
+              className="kv-news-search-clear"
+              onClick={() => setQuery("")}
+              aria-label={t("marketNews.clearSearch")}
+            >
+              ×
+            </button>
+          )}
+        </form>
+      </PageHeader>
 
       <main className="kv-news-body">
         <section className="kv-news-section">
