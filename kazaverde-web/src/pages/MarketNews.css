@@ -345,7 +345,16 @@
   .kv-news-item {
     padding: 32px 0;
   }
-  .kv-news-item-meta { font-size: 11px; }
+  /* Stack meta vertically on mobile. The inline "·" separators (added via
+     ::before) drop to the start of a wrapped line and read as broken when
+     a long source name wraps — so kill them and give each datum its row. */
+  .kv-news-item-meta {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2px;
+    font-size: 11px;
+  }
+  .kv-news-item-meta > * + *::before { content: none; }
   .kv-news-item-title { font-size: 19px; }
   .kv-news-disclaimer { margin-top: 40px; }
 }
