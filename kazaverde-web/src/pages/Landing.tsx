@@ -607,11 +607,56 @@ export default function Landing() {
           </div>
           <div className="kv-coming kv-coming-slim">
             <div className="kv-coming-content" aria-hidden="true">
-              <ul>
-                <li><span className="kv-l-mmi-tag">Median</span> {t("landing.comingMedian")}</li>
-                <li><span className="kv-l-mmi-tag">Velocity</span> {t("landing.comingVelocity")}</li>
-                <li><span className="kv-l-mmi-tag">Segments</span> {t("landing.comingSegments")}</li>
-              </ul>
+              {/* Decorative chart — static SVG rendered behind the blur overlay
+                  to suggest real price/velocity data is being obscured. */}
+              <svg
+                viewBox="0 0 800 120"
+                width="100%"
+                height="120"
+                preserveAspectRatio="none"
+                style={{ display: "block" }}
+              >
+                {/* horizontal grid rules */}
+                <line x1="0" y1="22" x2="800" y2="22" stroke="#C8C4BC" strokeWidth="0.6" />
+                <line x1="0" y1="55" x2="800" y2="55" stroke="#C8C4BC" strokeWidth="0.6" />
+                <line x1="0" y1="88" x2="800" y2="88" stroke="#C8C4BC" strokeWidth="0.6" />
+                {/* y-axis labels */}
+                <text x="6" y="20" fontSize="8" fill="#888888" fontFamily="monospace">€440k</text>
+                <text x="6" y="53" fontSize="8" fill="#888888" fontFamily="monospace">€390k</text>
+                <text x="6" y="86" fontSize="8" fill="#888888" fontFamily="monospace">€340k</text>
+                {/* month ticks */}
+                <text x="48"  y="114" fontSize="8" fill="#888888" fontFamily="monospace">Jun</text>
+                <text x="168" y="114" fontSize="8" fill="#888888" fontFamily="monospace">Aug</text>
+                <text x="288" y="114" fontSize="8" fill="#888888" fontFamily="monospace">Oct</text>
+                <text x="408" y="114" fontSize="8" fill="#888888" fontFamily="monospace">Dec</text>
+                <text x="528" y="114" fontSize="8" fill="#888888" fontFamily="monospace">Feb</text>
+                <text x="648" y="114" fontSize="8" fill="#888888" fontFamily="monospace">Apr</text>
+                {/* area fill under asking-price line */}
+                <path
+                  d="M 0,82 C 80,76 150,64 240,60 C 330,56 400,46 490,40 C 570,34 660,28 800,20 L 800,120 L 0,120 Z"
+                  fill="#8ECFBF"
+                  fillOpacity="0.18"
+                />
+                {/* asking-price line — sage */}
+                <path
+                  d="M 0,82 C 80,76 150,64 240,60 C 330,56 400,46 490,40 C 570,34 660,28 800,20"
+                  fill="none"
+                  stroke="#8ECFBF"
+                  strokeWidth="2.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                {/* indexed volume / velocity line — sage deep, dashed */}
+                <path
+                  d="M 0,100 C 70,96 120,90 195,94 C 265,98 315,85 385,82 C 455,79 515,88 585,84 C 645,80 720,73 800,70"
+                  fill="none"
+                  stroke="#2D4A42"
+                  strokeWidth="1.5"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeDasharray="5 3"
+                />
+              </svg>
             </div>
             <div className="kv-coming-overlay">
               <span className="kv-pill">{t("common.comingMay")}</span>

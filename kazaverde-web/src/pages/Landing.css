@@ -201,9 +201,9 @@
   width: 210px;
   height: 13px;
 }
-/* Slim modifier for the coming-soon block under live notes — shorter
-   min-height since the placeholder content is just three lines. */
-.kv-coming-slim { min-height: 160px; margin-top: 12px; }
+/* Slim modifier for the coming-soon block under live notes. Taller than
+   the original 3-line list to give the decorative chart enough room. */
+.kv-coming-slim { min-height: 190px; margin-top: 12px; }
 
 /* Heading + intro that sit ABOVE the coming-soon block. Lives outside
    the blur so visitors can read what's coming before they see the
@@ -532,5 +532,5 @@
   .kv-l-mmi-coming-head { margin-top: 24px; }
   .kv-l-mmi-coming-head h3 { font-size: 16px; }
   .kv-l-mmi-coming-head p { font-size: 12px; }
-  .kv-coming-slim { min-height: 140px; }
+  .kv-coming-slim { min-height: 170px; }
 }
