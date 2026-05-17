@@ -426,7 +426,7 @@ export default function Landing() {
 
           <div className="kv-l-feat-grid">
             {featured.length > 0
-              ? featured.map((l) => <Card key={l.id} l={l} />)
+              ? featured.map((l) => <Card key={l.id} l={l} bare />)
               : [0, 1, 2].map((i) => <FeaturedCardSkeleton key={i} />)}
           </div>
 
