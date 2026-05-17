@@ -322,6 +322,7 @@ const resources = {
       },
       marketNews: {
         eyebrow: "Market News",
+        relevanceBadge: "High relevance",
         metaTitle: "Cape Verde Market News",
         description:
           "Curated economic, tourism, investment and policy news relevant to Cape Verde's property market.",
@@ -835,6 +836,7 @@ const resources = {
       },
       marketNews: {
         eyebrow: "Notícias de Mercado",
+        relevanceBadge: "Alta relevância",
         metaTitle: "Notícias do mercado de Cabo Verde",
         description:
           "Notícias selecionadas sobre economia, turismo, investimento e políticas relevantes para o mercado imobiliário de Cabo Verde.",

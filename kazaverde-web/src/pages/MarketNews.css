@@ -144,6 +144,24 @@
   color: rgba(0, 0, 0, 0.25);
 }
 
+/* High-relevance pill — sage on ink, the master-surface treatment.
+   No dot separator before it; the pill stands on its own. */
+.kv-news-relevance {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 8px;
+  background: var(--kv-green);
+  color: var(--kv-black);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+.kv-news-item-meta > .kv-news-relevance::before {
+  content: none;
+  margin: 0;
+}
+
 .kv-news-item-title {
   display: inline-flex;
   align-items: baseline;

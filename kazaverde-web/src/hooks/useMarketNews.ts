@@ -33,6 +33,7 @@ function toMarketNewsItem(row: MarketNewsRow): MarketNewsItem {
     signalTags: row.signal_tags ?? undefined,
     affectedRegions: row.affected_regions ?? undefined,
     addedAt: isoToDate(row.created_at),
+    relevance: row.relevance,
   };
 }
 
