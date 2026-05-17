@@ -109,6 +109,7 @@ export default function MarketNews() {
     <div className="kv-news">
       <header className="kv-news-head">
         <div className="kv-news-head-inner">
+          <div className="kv-news-eyebrow">{t("marketNews.eyebrow")}</div>
           <h1 className="kv-news-title">{t("marketNews.metaTitle")}</h1>
           <p className="kv-news-sub">{t("marketNews.description")}</p>
 
