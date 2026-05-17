@@ -132,7 +132,7 @@ const resources = {
         browseAll: "Browse all listings →",
         readIndex: "Read this month's index →",
         featuredEyebrow: "Featured this week · Week of {{week}}",
-        featuredTitle: "Three listings worth a closer look.",
+        featuredTitle: "Four listings worth a closer look.",
         featuredSub:
           "Hand-picked from this week's listings — across the archipelago. Every card links back to the original source.",
         seeAllListings: "See all {{count}} listings →",
@@ -643,7 +643,7 @@ const resources = {
         browseAll: "Ver todos os anúncios →",
         readIndex: "Ler o índice deste mês →",
         featuredEyebrow: "Em destaque esta semana · Semana de {{week}}",
-        featuredTitle: "Três anúncios que merecem atenção.",
+        featuredTitle: "Quatro anúncios que merecem atenção.",
         featuredSub:
           "Selecionados dos anúncios desta semana em todo o arquipélago. Cada cartão liga à fonte original.",
         seeAllListings: "Ver os {{count}} anúncios →",

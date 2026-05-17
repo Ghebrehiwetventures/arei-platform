@@ -251,7 +251,7 @@ export default function Landing() {
     ])
       .then(([listRes, stats]) => {
         if (cancelled) return;
-        setFeatured(pickFeatured(listRes.data, 3));
+        setFeatured(pickFeatured(listRes.data, 4));
         setTotalListings(listRes.total);
 
         const withPrice = stats.islands.filter((i) => i.median_price !== null);
