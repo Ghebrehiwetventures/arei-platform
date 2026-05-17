@@ -179,12 +179,6 @@ export default function MarketNews() {
                       <span aria-hidden="true">↗</span>
                     </a>
 
-                    {item.originalTitle && (
-                      <p className="kv-news-item-original">
-                        {t("marketNews.sourceTitle")} {item.originalTitle}
-                      </p>
-                    )}
-
                     <p className="kv-news-item-snippet">{item.snippet}</p>
 
                     {item.whyItMatters && (

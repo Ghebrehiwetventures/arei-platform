@@ -164,16 +164,6 @@
 }
 .kv-news-item-title:hover span { color: var(--kv-green-deep); }
 
-.kv-news-item-original {
-  font-family: var(--kv-mono);
-  font-size: 11px;
-  line-height: 1.5;
-  color: var(--kv-gray-500);
-  max-width: 700px;
-  margin-top: 8px;
-  font-style: italic;
-}
-
 .kv-news-item-snippet {
   font-family: var(--kv-sans);
   font-size: 15px;
