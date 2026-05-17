@@ -670,8 +670,9 @@ export default function Landing() {
                   </a>
                   <p className="kv-l-news-item-snippet">{item.snippet}</p>
                   <div className="kv-l-news-item-foot">
-                    <span>{new Date(`${item.publishedAt}T00:00:00Z`).toLocaleDateString(isPt ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</span>
-                    <span>{item.sourceName}</span>
+                    <span className="kv-l-news-item-foot-date">{new Date(`${item.publishedAt}T00:00:00Z`).toLocaleDateString(isPt ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</span>
+                    <span className="kv-l-news-item-foot-sep" aria-hidden="true">·</span>
+                    <span className="kv-l-news-item-foot-source">{item.sourceName}</span>
                   </div>
                 </article>
               ))}
