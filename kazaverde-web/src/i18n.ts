@@ -321,6 +321,7 @@ const resources = {
           "Live Cape Verde real estate market data from tracked public listings: medians, source coverage, island mix, and methodology.",
       },
       marketNews: {
+        eyebrow: "Market News",
         metaTitle: "Cape Verde Market News",
         description:
           "Curated economic, tourism, investment and policy news relevant to Cape Verde's property market.",
@@ -833,6 +834,7 @@ const resources = {
           "Dados em direto do mercado imobiliário de Cabo Verde a partir de anúncios públicos acompanhados: medianas, cobertura de fontes, composição por ilha e metodologia.",
       },
       marketNews: {
+        eyebrow: "Notícias de Mercado",
         metaTitle: "Notícias do mercado de Cabo Verde",
         description:
           "Notícias selecionadas sobre economia, turismo, investimento e políticas relevantes para o mercado imobiliário de Cabo Verde.",
