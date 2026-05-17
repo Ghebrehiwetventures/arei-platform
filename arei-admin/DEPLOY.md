@@ -55,7 +55,7 @@ Market News social drafting / publishing:
 | `INSTAGRAM_DEFAULT_IMAGE_URL` | Optional. Public image URL used when an Instagram feed draft has no media URL. |
 | `ADMIN_SESSION_SECRET` | Optional legacy fallback for server-session cookie access. Not required for the normal Supabase Auth Market Social path. |
 
-Before deployed Market Social E2E, apply `migrations/024_market_news_social_drafts.sql` and verify RLS/no public policies using the checklist in `docs/03-product/social-agent-market-intelligence-implementation.md`.
+Before deployed Market Social E2E, apply `migrations/040_market_news_social_drafts.sql` and verify RLS/no public policies using the checklist in `docs/03-product/social-agent-market-intelligence-implementation.md`.
 
 ## 3. Deploy
 

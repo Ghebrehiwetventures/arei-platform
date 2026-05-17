@@ -20,7 +20,7 @@ const api = read("api/social-market-news.js");
 const client = read("socialMarketNews.ts");
 const app = read("app.tsx");
 const view = read("MarketNewsSocialAgentView.tsx");
-const migration = fs.readFileSync(path.resolve(root, "../migrations/024_market_news_social_drafts.sql"), "utf8");
+const migration = fs.readFileSync(path.resolve(root, "../migrations/040_market_news_social_drafts.sql"), "utf8");
 
 assert(api.includes("OPENAI_API_KEY"), "server API supports OpenAI configuration");
 assert(api.includes("ANTHROPIC_API_KEY"), "server API supports Anthropic configuration");

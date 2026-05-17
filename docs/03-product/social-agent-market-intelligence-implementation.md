@@ -37,7 +37,7 @@ Editing an approved draft resets approval before publishing unless the text is u
 
 Migration:
 
-- `migrations/024_market_news_social_drafts.sql`
+- `migrations/040_market_news_social_drafts.sql`
 
 New table:
 
@@ -160,25 +160,25 @@ This allows manual go-live even before Instagram credentials and Meta app setup 
 - A Facebook Page connected to the Instagram account.
 - A long-lived or managed access token suitable for publishing.
 - A public image URL for Instagram feed publishing.
-- Supabase migration `024_market_news_social_drafts.sql` applied.
+- Supabase migration `040_market_news_social_drafts.sql` applied.
 - Existing `market_news` table available with usable Cape Verde items and required source fields.
 
 ## Migration application checklist
 
-Apply `migrations/024_market_news_social_drafts.sql` from the Supabase SQL editor or an authenticated Supabase/Postgres CLI session. Do not run it from a browser client.
+Apply `migrations/040_market_news_social_drafts.sql` from the Supabase SQL editor or an authenticated Supabase/Postgres CLI session. Do not run it from a browser client.
 
 Supabase SQL editor steps:
 
 1. Open Supabase project.
 2. Go to SQL Editor.
-3. Paste the full contents of `migrations/024_market_news_social_drafts.sql`.
+3. Paste the full contents of `migrations/040_market_news_social_drafts.sql`.
 4. Run the script once.
 5. Run the verification queries below.
 
 CLI option:
 
 ```bash
-psql "$DATABASE_URL" -f migrations/024_market_news_social_drafts.sql
+psql "$DATABASE_URL" -f migrations/040_market_news_social_drafts.sql
 ```
 
 Confirm table exists:
