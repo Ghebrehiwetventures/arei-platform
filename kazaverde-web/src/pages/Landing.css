@@ -389,8 +389,6 @@
 
 @media (max-width: 960px) {
   .kv-l-feat { padding: 56px 0; }
-}
-@media (max-width: 768px) {
   .kv-l-feat-grid { grid-template-columns: 1fr; }
   .kv-l-guide-grid { grid-template-columns: 1fr; }
 }
@@ -476,8 +474,6 @@
 /* ═══════════ RESPONSIVE ═══════════ */
 @media (max-width: 960px) {
   .kv-l-news { padding: 64px 0; }
-}
-@media (max-width: 768px) {
   .kv-l-news-list { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
