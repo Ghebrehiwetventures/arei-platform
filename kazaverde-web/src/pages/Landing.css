@@ -389,11 +389,12 @@
 
 @media (max-width: 960px) {
   .kv-l-feat { padding: 56px 0; }
-  .kv-l-feat-grid { grid-template-columns: 1fr; }
+  .kv-l-feat-grid { grid-template-columns: repeat(2, 1fr); }
   .kv-l-guide-grid { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
   .kv-l-feat { padding: 44px 0; }
+  .kv-l-feat-grid { grid-template-columns: 1fr; }
 }
 
 /* ═══════════ MARKET NEWS PREVIEW ═══════════
