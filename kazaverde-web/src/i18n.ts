@@ -71,7 +71,7 @@ const resources = {
         eyebrow: "Market updates",
         title: "Get Cape Verde property market updates.",
         description:
-          "Source-linked updates on listings data, price shifts, island activity, source coverage, and market news affecting Cape Verde's property market.",
+          "Don't miss what's moving in Cape Verde property. Price shifts, new listings, island activity, buyer interest, market signals and more.",
         placeholder: "Email address",
         submit: "Subscribe",
         submitting: "Subscribing…",
@@ -97,7 +97,7 @@ const resources = {
         overline: "Market Brief",
         heading: "Stay ahead of Cape Verde's property market.",
         description:
-          "Monthly updates on listings data, price shifts, island activity, and market news — delivered to your inbox.",
+          "Don't miss what's moving in Cape Verde property. Price shifts, new listings, island activity, buyer interest, market signals and more.",
       },
       home: {
         metaDescription:
@@ -126,7 +126,7 @@ const resources = {
       landing: {
         metaDescription:
           "Search Cape Verde real estate listings from tracked public sources. Compare homes across Sal, Boa Vista and other islands with the Cape Verde Real Estate Index, published by AREI.",
-        heroTitle: "Cape Verde real estate, aggregated in one place",
+        heroTitle: "Every home for sale in Cape Verde, in one place.",
         heroSub:
           "An independent property search and data platform — listings aggregated from local agencies, portals and property websites across the archipelago.",
         browseAll: "Browse all listings →",
@@ -189,9 +189,8 @@ const resources = {
         metaDescription:
           "Browse Cape Verde real estate listings from tracked public sources across Sal, Boa Vista, Santiago and more.",
         eyebrow: "Cape Verde property index",
-        title: "Search tracked property listings.",
-        sub:
-          "Browse source-linked homes, apartments, villas and land across Cape Verde. Filters use the current public index feed.",
+        title: "The full Cape Verde index.",
+        sub: "Browse every listing, cleaned and indexed.",
         searchPlaceholder: "Search by island, city, source or title",
         searchLabel: "Search listings",
         filters: "Filters",
