@@ -416,9 +416,20 @@ When the source post is short or thin:
   invent data.
 
 OUTPUT FORMAT
-Return as JSON matching the existing draft schema in the API contract.
-Do not add new fields. Do not remove fields. Each platform's draft goes
-into its existing slot.`;
+Return only valid JSON. Do not wrap in markdown. Do not include commentary
+outside the JSON. Use exactly these top-level field names:
+
+{
+  "instagram_feed_caption": "string",
+  "instagram_story_outline": "string with three labeled frames",
+  "instagram_carousel_outline": "string with four labeled slides",
+  "linkedin_post": "string",
+  "x_post": "string"
+}
+
+All five fields are required. Do not add new fields. Do not rename fields.
+Each value must be a string because the API stores each platform draft as
+editable text.`;
 }
 
 function generationUserPrompt(item) {
