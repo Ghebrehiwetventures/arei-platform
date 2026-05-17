@@ -113,51 +113,51 @@ function FeaturedCardSkeleton() {
    reads tidy with no orphan two-liners), then diversity across island
    and source. Falls back gracefully when data is thin. */
 function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
-  /* ~32 chars fits one line in a kv-lcard at desktop widths. Tuned
-     against current data; relax if too few candidates pass. */
-  const MAX_TITLE_LEN = 32;
-  const isShort = (c: ListingCard) => (c.title?.length ?? 99) <= MAX_TITLE_LEN;
-  const hasImage = (c: ListingCard) => !!(c.image_urls?.[0] || c.image_url);
+  const hasImage    = (c: ListingCard) => !!(c.image_urls?.[0] || c.image_url);
+  const hasPrice    = (c: ListingCard) => !!(c.price && c.price > 0);
+  const hasBedrooms = (c: ListingCard) => !!(c.bedrooms && c.bedrooms > 0);
+  const hasBaths    = (c: ListingCard) => !!(c.bathrooms && c.bathrooms > 0);
+  const isNotLand   = (c: ListingCard) =>
+    !c.property_type || !["land", "lot", "terrain", "terreno"].includes(c.property_type.toLowerCase());
+  const hasIsland   = (c: ListingCard) => !!c.island;
 
-  /* Hard requirement: featured cards must have an image. Empty
-     placeholder gradients on the homepage hero are worse than
-     showing fewer cards. Pipeline should ultimately filter
-     image-less listings out of the index entirely. */
-  const candidates = cards.filter(hasImage);
+  // Hard requirements: image + price + bedrooms + bathrooms + not land + island known
+  const candidates = cards.filter(
+    (c) => hasImage(c) && hasPrice(c) && hasBedrooms(c) && hasBaths(c) && isNotLand(c) && hasIsland(c),
+  );
 
   const picked: ListingCard[] = [];
   const seenIslands = new Set<string>();
   const seenSources = new Set<string>();
 
-  // Pass 1: short title + unique island + unique source
+  const tryAdd = (c: ListingCard) => {
+    if (picked.length >= n || picked.includes(c)) return;
+    picked.push(c);
+    if (c.island) seenIslands.add(c.island);
+    if (c.source_id) seenSources.add(c.source_id);
+  };
+
+  // Pass 1: unique island + unique source (best diversity)
   for (const c of candidates) {
     if (picked.length >= n) break;
-    if (!isShort(c)) continue;
-    if (c.island && !seenIslands.has(c.island) && c.source_id && !seenSources.has(c.source_id)) {
-      picked.push(c);
-      seenIslands.add(c.island);
-      seenSources.add(c.source_id);
-    }
+    if (c.island && !seenIslands.has(c.island) && c.source_id && !seenSources.has(c.source_id))
+      tryAdd(c);
   }
-  // Pass 2: short title + unique island
+  // Pass 2: unique island (relax source constraint)
   for (const c of candidates) {
     if (picked.length >= n) break;
-    if (picked.includes(c) || !isShort(c)) continue;
-    if (c.island && !seenIslands.has(c.island)) {
-      picked.push(c);
-      seenIslands.add(c.island);
-    }
+    if (c.island && !seenIslands.has(c.island)) tryAdd(c);
   }
-  // Pass 3: any short title
+  // Pass 3: any clean listing (all hard requirements met)
   for (const c of candidates) {
     if (picked.length >= n) break;
-    if (picked.includes(c)) continue;
-    if (isShort(c)) picked.push(c);
+    tryAdd(c);
   }
-  // Pass 4: anything remaining (rare fallback when few short titles)
-  for (const c of candidates) {
+  // Pass 4: relax bathrooms — last resort so we always hit n
+  const relaxed = cards.filter((c) => hasImage(c) && hasPrice(c) && hasBedrooms(c) && isNotLand(c) && hasIsland(c));
+  for (const c of relaxed) {
     if (picked.length >= n) break;
-    if (!picked.includes(c)) picked.push(c);
+    tryAdd(c);
   }
   return picked;
 }
