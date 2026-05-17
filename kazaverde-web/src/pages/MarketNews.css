@@ -145,11 +145,11 @@
 }
 
 /* High-relevance pill — sage on ink, the master-surface treatment.
-   Its own block line between the meta row and the title, content-width
-   (inline-block) so it never stretches into a full-width bar. */
+   Sits inline at the end of the meta row; the dot separator before it
+   is suppressed so it reads as a tag, not another meta datum. */
 .kv-news-relevance {
   display: inline-block;
-  margin: 0 0 14px;
+  margin-left: 10px;
   padding: 2px 8px;
   background: var(--kv-green);
   color: var(--kv-black);
@@ -157,6 +157,10 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
+}
+.kv-news-item-meta > .kv-news-relevance::before {
+  content: none;
+  margin: 0;
 }
 
 .kv-news-item-title {
@@ -345,16 +349,6 @@
   .kv-news-item {
     padding: 32px 0;
   }
-  /* Stack meta vertically on mobile. The inline "·" separators (added via
-     ::before) drop to the start of a wrapped line and read as broken when
-     a long source name wraps — so kill them and give each datum its row. */
-  .kv-news-item-meta {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 2px;
-    font-size: 11px;
-  }
-  .kv-news-item-meta > * + *::before { content: none; }
   .kv-news-item-title { font-size: 19px; }
   .kv-news-disclaimer { margin-top: 40px; }
 }

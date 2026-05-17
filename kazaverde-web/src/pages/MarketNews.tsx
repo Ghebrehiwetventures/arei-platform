@@ -169,13 +169,12 @@ export default function MarketNews() {
                       <span>{item.sourceName}</span>
                       <span>{fmtDate(item.publishedAt)}</span>
                       <span>{item.category}</span>
+                      {item.relevance === "high" && (
+                        <span className="kv-news-relevance">
+                          {t("marketNews.relevanceBadge")}
+                        </span>
+                      )}
                     </div>
-
-                    {item.relevance === "high" && (
-                      <div className="kv-news-relevance">
-                        {t("marketNews.relevanceBadge")}
-                      </div>
-                    )}
 
                     <a
                       className="kv-news-item-title"
