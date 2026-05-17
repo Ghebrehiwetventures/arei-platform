@@ -2890,6 +2890,7 @@ function MarketNewsEditPanel({
   const [category, setCategory] = React.useState(item.category);
   const [affectedRegions, setAffectedRegions] = React.useState(arrToText(item.affected_regions));
   const [signalTags, setSignalTags] = React.useState(arrToText(item.signal_tags));
+  const [relevance, setRelevance] = React.useState<"high" | "standard">(item.relevance);
 
   const [enrichState, setEnrichState] = React.useState<EnrichState>("idle");
   const [enrichError, setEnrichError] = React.useState<string | null>(null);
@@ -2901,7 +2902,8 @@ function MarketNewsEditPanel({
     whyItMatters !== (item.why_it_matters ?? "") ||
     category !== item.category ||
     affectedRegions !== arrToText(item.affected_regions) ||
-    signalTags !== arrToText(item.signal_tags);
+    signalTags !== arrToText(item.signal_tags) ||
+    relevance !== item.relevance;
 
   const handleSave = async () => {
     await onSave(item.id, {
@@ -2911,6 +2913,7 @@ function MarketNewsEditPanel({
       category: category.trim() || item.category,
       affected_regions: textToArr(affectedRegions),
       signal_tags: textToArr(signalTags),
+      relevance,
     });
   };
 
@@ -3044,6 +3047,40 @@ function MarketNewsEditPanel({
             />
           </div>
         </div>
+      </div>
+
+      {/* Newsletter relevance — binary editorial tier. High = eligible for
+          the newsletter digest. AI score is decision support only. */}
+      <div className="space-y-1">
+        <div className="flex items-center gap-3 flex-wrap">
+          <span className="text-[11px] text-foreground-subtle">Relevance</span>
+          <div className="inline-flex rounded border border-border overflow-hidden">
+            {(["high", "standard"] as const).map((tier) => (
+              <button
+                key={tier}
+                type="button"
+                onClick={() => setRelevance(tier)}
+                className={`px-3 py-1 text-xs font-medium transition-colors ${
+                  relevance === tier
+                    ? tier === "high"
+                      ? "bg-accent text-accent-foreground"
+                      : "bg-surface-3 text-foreground"
+                    : "bg-surface-1 text-foreground-muted hover:bg-surface-2"
+                }`}
+              >
+                {tier === "high" ? "High" : "Standard"}
+              </button>
+            ))}
+          </div>
+          {suggestion && (
+            <span className="text-[10px] text-foreground-subtle">
+              AI: {suggestion.relevance_score}/100
+            </span>
+          )}
+        </div>
+        <p className="text-[10px] text-foreground-subtle">
+          High = eligible for the newsletter digest.
+        </p>
       </div>
 
       {/* Save */}
@@ -3336,13 +3373,14 @@ function MarketNewsView() {
       {!loading && items.length > 0 && (
         <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
           {/* Table header */}
-          <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_120px_80px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
+          <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_120px_80px_64px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
             <span>Title</span>
             <span>Source</span>
             <span>Published</span>
             <span>Category</span>
             <span>Ingest</span>
             <span>Status</span>
+            <span>Rel</span>
             <span />
           </div>
 
@@ -3358,7 +3396,7 @@ function MarketNewsView() {
                 <button
                   type="button"
                   onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                  className="w-full grid grid-cols-1 md:grid-cols-[1fr_160px_100px_120px_120px_80px_32px] gap-2 md:gap-3 items-center px-4 py-3 text-left hover:bg-surface-2 transition-colors"
+                  className="w-full grid grid-cols-1 md:grid-cols-[1fr_160px_100px_120px_120px_80px_64px_32px] gap-2 md:gap-3 items-center px-4 py-3 text-left hover:bg-surface-2 transition-colors"
                 >
                   <span className="text-sm font-medium text-foreground line-clamp-1 min-w-0">
                     {item.title}
@@ -3377,6 +3415,13 @@ function MarketNewsView() {
                   </span>
                   <span className="hidden md:block">
                     <MarketNewsStatusBadge status={item.status} />
+                  </span>
+                  <span className="hidden md:block">
+                    {item.relevance === "high" && (
+                      <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-accent-muted text-deep-green">
+                        High
+                      </span>
+                    )}
                   </span>
                   <span className={"text-foreground-subtle text-xs transition-transform duration-150 " + (isExpanded ? "rotate-180" : "")}>
                     ▼

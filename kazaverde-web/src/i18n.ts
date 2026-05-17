@@ -322,6 +322,7 @@ const resources = {
       },
       marketNews: {
         eyebrow: "Market News",
+        relevanceBadge: "High relevance",
         metaTitle: "Cape Verde Market News",
         description:
           "Curated economic, tourism, investment and policy news relevant to Cape Verde's property market.",
@@ -330,7 +331,6 @@ const resources = {
         clearSearch: "Clear search",
         loading: "Loading market news…",
         empty: "No market news matches <1>\"{{query}}\"</1>.",
-        sourceTitle: "Source title:",
         whyItMatters: "Why it matters",
         signals: "Signals",
         readAt: "Read at {{source}} →",
@@ -835,6 +835,7 @@ const resources = {
       },
       marketNews: {
         eyebrow: "Notícias de Mercado",
+        relevanceBadge: "Alta relevância",
         metaTitle: "Notícias do mercado de Cabo Verde",
         description:
           "Notícias selecionadas sobre economia, turismo, investimento e políticas relevantes para o mercado imobiliário de Cabo Verde.",
@@ -843,7 +844,6 @@ const resources = {
         clearSearch: "Limpar pesquisa",
         loading: "A carregar notícias de mercado…",
         empty: "Nenhuma notícia de mercado corresponde a <1>\"{{query}}\"</1>.",
-        sourceTitle: "Título da fonte:",
         whyItMatters: "Porque importa",
         signals: "Sinais",
         readAt: "Ler em {{source}} →",

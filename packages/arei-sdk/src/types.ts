@@ -187,6 +187,7 @@ export interface MarketNewsRow {
   snippet: string;
   why_it_matters: string | null;
   status: string;
+  relevance: "high" | "standard";
   canonical_url: string | null;
   language: string | null;
   country_code: string;

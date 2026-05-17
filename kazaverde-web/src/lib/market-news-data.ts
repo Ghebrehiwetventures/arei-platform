@@ -13,7 +13,7 @@
  *   category        → category        (text, FK or enum)
  *   snippet         → snippet         (text)
  *   why_it_matters  → whyItMatters    (text, nullable)
- *   featured        → featured        (boolean, default false)
+ *   relevance       → relevance       ("high" | "standard", default "standard")
  *   status          → (not in Phase 1) "published" | "hidden" | "archived" | "candidate"
  *
  * Phase 2 public query:
@@ -54,7 +54,7 @@ export type MarketNewsItem = {
   signalTags?: string[];
   affectedRegions?: string[];
   addedAt: string;
-  featured?: boolean;
+  relevance: "high" | "standard";
 };
 
 export const MARKET_NEWS_CATEGORIES: MarketNewsCategory[] = [
@@ -86,7 +86,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Direct airlift affects tourism flows, diaspora access, investor visits and the relative appeal of Santiago as a connected property market.",
     addedAt: "2026-05-12",
-    featured: true,
+    relevance: "high",
   },
   {
     id: "unemployment-low-2026-04-28",
@@ -102,6 +102,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Employment and household income shape local housing demand, mortgage capacity and the resilience of domestic rental markets.",
     addedAt: "2026-05-12",
+    relevance: "standard",
   },
   {
     id: "swissport-cabo-verde-handling-2026-04-28",
@@ -117,6 +118,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Ground-handling capacity is part of the air-connectivity stack that supports tourism growth and confidence in the airport concession model.",
     addedAt: "2026-05-12",
+    relevance: "standard",
   },
   {
     id: "administrative-procedure-code-2026-04-24",
@@ -132,6 +134,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Clearer administrative procedures can matter for permits, disputes, public decisions and the wider confidence investors place in state processes.",
     addedAt: "2026-05-12",
+    relevance: "standard",
   },
   {
     id: "marriott-four-points-sao-vicente-2026-03-30",
@@ -146,6 +149,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "International hotel brands can change destination visibility, support conference demand and strengthen the investment case beyond Sal and Boa Vista.",
     addedAt: "2026-05-12",
+    relevance: "standard",
   },
   {
     id: "agua-hotels-sal-2026-03-03",
@@ -161,6 +165,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Hotel-apartment supply is directly adjacent to the holiday-home market and can influence rental expectations, local jobs and construction demand.",
     addedAt: "2026-05-12",
+    relevance: "standard",
   },
   {
     id: "brookings-blue-economy-2026-02-17",
@@ -175,6 +180,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "The long-term property story depends on whether tourism is complemented by logistics, energy and services that broaden demand across islands.",
     addedAt: "2026-05-12",
+    relevance: "standard",
   },
   {
     id: "housing-credit-bonification-2026-02-12",
@@ -189,6 +195,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Credit subsidies can affect local buyer affordability, especially for permanent housing, construction and renovation activity.",
     addedAt: "2026-05-12",
+    relevance: "standard",
   },
   {
     id: "imf-article-iv-2026-02-07",
@@ -203,7 +210,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Macro stability, debt risk and external reserves shape confidence in the CVE peg, financing conditions and the risk premium buyers attach to the market.",
     addedAt: "2026-05-12",
-    featured: true,
+    relevance: "high",
   },
   {
     id: "property-tax-reform-2026-01-07",
@@ -219,7 +226,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Transfer tax, annual property tax and valuation mechanics change buyer costs, holding costs and transaction structuring for Cape Verde property.",
     addedAt: "2026-05-12",
-    featured: true,
+    relevance: "high",
   },
   {
     id: "santiago-pumped-storage-2025-12-12",
@@ -233,6 +240,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Reliable electricity and water infrastructure are practical constraints on housing, hospitality and investor confidence outside pure resort zones.",
     addedAt: "2026-05-12",
+    relevance: "standard",
   },
   {
     id: "tourism-budget-2026-2025-11-21",
@@ -248,5 +256,6 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     whyItMatters:
       "Tourism policy and connectivity spending are core inputs for rental demand, employment and island-level property liquidity.",
     addedAt: "2026-05-12",
+    relevance: "standard",
   },
 ];
