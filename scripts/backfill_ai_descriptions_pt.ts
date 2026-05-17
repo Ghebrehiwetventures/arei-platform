@@ -1,4 +1,8 @@
 /**
+ * @deprecated Use backfill_ai_descriptions_for_language.ts instead:
+ *   pnpm tsx scripts/backfill_ai_descriptions_for_language.ts pt
+ * This file is kept for reference only and is not wired into any automated flow.
+ *
  * Backfill Portuguese (pt-PT) listing title + description into
  * listings.ai_descriptions.pt from existing listings.ai_descriptions.en.
  *
