@@ -90,7 +90,7 @@ function useTheme() {
 
   return [dark, () => setDark((d) => !d)] as const;
 }
-import { Market, Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
+import { Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
 import { supabaseAuth } from "./supabase";
 import { PropertyChatLabView } from "./PropertyChatLab";
 import { SourceHealthReport, buildReportHtml, loadSnapshots, saveSnapshot, summarize, SourceSnapshot } from "./sourceHealthReport";
@@ -98,6 +98,7 @@ import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, 
 import { AgencyConsoleView } from "./AgencyConsoleView";
 import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
 import { BrokerPilotView } from "./BrokerPilotView";
+import { MarketNewsSocialAgentView } from "./MarketNewsSocialAgentView";
 
 // ============================================
 // D · LAYERS MARK — AREI brand mark (SVG)
@@ -2208,7 +2209,7 @@ function SourcesView() {
 // MARKET OVERVIEW (legacy – kept for optional use)
 // ============================================
 
-function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
+export function MarketOverview({ onSelect }: { onSelect: (id: string) => void }) {
   const markets = getMarkets();
   return (
     <div>
@@ -2724,7 +2725,7 @@ function ListingsGrid({
 // MARKET DETAIL (filters + grid + detail)
 // ============================================
 
-function MarketDetail({
+export function MarketDetail({
   marketId,
   onBack,
 }: {
@@ -3401,7 +3402,7 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "notifications";
+type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "market-social" | "notifications";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
@@ -3409,6 +3410,7 @@ const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "sources",       label: "Sources"       },
   { key: "agents",        label: "Agents"        },
   { key: "market-news",   label: "Market News"   },
+  { key: "market-social", label: "Market Social" },
   { key: "notifications", label: "Notifications" },
 ];
 
@@ -3694,6 +3696,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "agency-data" && <AgencyDataConsoleView />}
             {tab === "broker-pilot" && <BrokerPilotView />}
             {tab === "market-news" && <MarketNewsView />}
+            {tab === "market-social" && <MarketNewsSocialAgentView />}
             {tab === "notifications" && (
               <NotificationsView onCountChange={handleNotificationCountChange} />
             )}

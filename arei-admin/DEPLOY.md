@@ -33,9 +33,29 @@ In Vercel: Project → Settings → Environment Variables. Add:
 | `VITE_SUPABASE_ANON_KEY` | Supabase anon/public key |
 | `VITE_ADMIN_PROTECTED` | Optional. Set to `false` only if you intentionally want to disable protection. Production should remain protected. |
 
+AREI Admin uses Supabase Auth. Market Social API requests send the logged-in admin user's Supabase access token in an `Authorization: Bearer ...` header. The server verifies the token and confirms the user exists in `admin_users` before allowing access.
+
 Optional:
 
 - `VITE_GITHUB_ACTIONS_URL` — link to GitHub Actions for "Open GitHub Actions" on Dashboard.
+
+Market News social drafting / publishing:
+
+| Variable | Description |
+|----------|-------------|
+| `SUPABASE_URL` | Supabase project URL for server-side admin API access |
+| `SUPABASE_SERVICE_ROLE_KEY` | Server-side Supabase service-role key. Never expose to browser clients. |
+| `OPENAI_API_KEY` | Optional. Enables OpenAI/ChatGPT social draft generation. |
+| `OPENAI_MODEL` | Optional. Defaults to `gpt-4o-mini`. |
+| `ANTHROPIC_API_KEY` | Optional. Enables Claude social draft generation. |
+| `ANTHROPIC_MODEL` | Optional. Defaults to `claude-3-5-sonnet-latest`. |
+| `INSTAGRAM_ACCESS_TOKEN` or `META_ACCESS_TOKEN` | Optional. Enables server-side Instagram publishing. |
+| `INSTAGRAM_BUSINESS_ACCOUNT_ID`, `INSTAGRAM_IG_USER_ID`, or `META_INSTAGRAM_BUSINESS_ACCOUNT_ID` | Optional. Instagram professional account ID used by Graph API publishing. |
+| `INSTAGRAM_GRAPH_API_VERSION` | Optional. Defaults to `v20.0`. |
+| `INSTAGRAM_DEFAULT_IMAGE_URL` | Optional. Public image URL used when an Instagram feed draft has no media URL. |
+| `ADMIN_SESSION_SECRET` | Optional legacy fallback for server-session cookie access. Not required for the normal Supabase Auth Market Social path. |
+
+Before deployed Market Social E2E, apply `migrations/040_market_news_social_drafts.sql` and verify RLS/no public policies using the checklist in `docs/03-product/social-agent-market-intelligence-implementation.md`.
 
 ## 3. Deploy
 
@@ -65,7 +85,7 @@ If you deploy from inside `arei-admin` while the Vercel project also has **Root 
 
 **From Git:** Push to main or trigger deploy in the Vercel dashboard. Keep **Root Directory = `arei-admin`** in project settings.
 
-The build runs `npm run build` and serves the `dist` folder. Authentication is handled client-side via Supabase Auth (no serverless functions required). On Vercel, `../artifacts` is not available, so the build uses `public/` as fallback; the app still works (sync report will show "no report" until you add one via another channel).
+The build runs `npm run build` and serves the `dist` folder. The `/api/auth` route is a serverless function for login. On Vercel, `../artifacts` is not available, so the build uses `public/` as fallback; the app still works (sync report will show "no report" until you add one via another channel).
 
 **If the main URL doesn’t work:** In Vercel → Deployments, open the latest production deployment and use the deployment URL (e.g. `…-ghebrehiwetventures.vercel.app`) to test. Ensure the project’s production domain is set (Settings → Domains). Redeploy after any `vercel.json` or build fix.
 
@@ -93,10 +113,9 @@ The repo root has a separate [`vercel.json`](/Users/ghebrehiwet/morabesa/vercel.
 - Treat any rename from `arei-admin` as a Vercel project-settings change, not just a git rename.
 - Do not treat the Vercel project identifier as public branding. `AREI Admin` remains the canonical product name.
 
-## 5. Authentication
+## 5. Password protection
 
 - Outside local development, the admin is protected by default unless `VITE_ADMIN_PROTECTED=false` is set explicitly.
-- Authentication uses **Supabase Auth** (email + password).
-- Only users listed in the `admin_users` table can access the panel.
-- To add a new admin: invite user in Supabase Dashboard → Authentication → Users → "Invite User", then insert a row in `admin_users` with their `user_id`, email, and role (`admin` or `editor`).
-- Old env vars `ADMIN_PASSWORD` and `ADMIN_SESSION_SECRET` are no longer used and can be removed from Vercel.
+- When protection is enabled, the first screen is a login form; after a correct password, a cookie is set and the admin is shown.
+
+**Yes, we need a password (or similar)** when the admin is public. Use the env vars above so only people with `ADMIN_PASSWORD` can access.
