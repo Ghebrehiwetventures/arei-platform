@@ -349,10 +349,13 @@
     padding: 32px 0;
   }
   /* Meta wraps tight on narrow screens — drop the relevance pill to its
-     own line below source · date · category instead of crowding the row. */
+     own line below source · date · category instead of crowding the row.
+     flex-basis:100% forces the line break; max-width:max-content keeps the
+     pill shrunk to its label instead of stretching into a full-width bar. */
   .kv-news-item-meta { font-size: 11px; }
   .kv-news-relevance {
     flex-basis: 100%;
+    max-width: max-content;
     margin-left: 0;
     margin-top: 6px;
   }
