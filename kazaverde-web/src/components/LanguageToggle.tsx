@@ -13,16 +13,19 @@ export default function LanguageToggle() {
 
   return (
     <div className="lang-toggle" role="group" aria-label={t("common.languageToggleLabel")}>
-      {SUPPORTED_LANGUAGES.map((lang) => (
-        <button
-          key={lang}
-          type="button"
-          className={`lang-toggle-btn${current === lang ? " on" : ""}`}
-          onClick={() => changeLanguage(lang)}
-          aria-pressed={current === lang}
-        >
-          {lang === "pt" ? "PT" : "EN"}
-        </button>
+      {SUPPORTED_LANGUAGES.map((lang, i) => (
+        <>
+          {i > 0 && <span key={`sep-${lang}`} className="lang-sep" aria-hidden="true">/</span>}
+          <button
+            key={lang}
+            type="button"
+            className={`lang-toggle-btn${current === lang ? " on" : ""}`}
+            onClick={() => changeLanguage(lang)}
+            aria-pressed={current === lang}
+          >
+            {lang === "pt" ? "PT" : "EN"}
+          </button>
+        </>
       ))}
     </div>
   );
