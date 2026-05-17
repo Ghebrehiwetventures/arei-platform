@@ -110,10 +110,12 @@
 .kv-news-feed {
   display: flex;
   flex-direction: column;
+  border-top: 1px solid var(--kv-rule);
 }
 
 /* ── Article item ── */
 .kv-news-item {
+  border-bottom: 1px solid var(--kv-rule);
   padding: 40px 0;
 }
 
@@ -172,12 +174,13 @@
   margin-top: 14px;
 }
 
-/* Why it matters — left rule only, no background box */
+/* Why it matters — off-white bg + sage border, distinct without heavy contrast */
 .kv-news-why {
   max-width: 700px;
   margin-top: 20px;
-  padding-left: 16px;
-  border-left: 2px solid var(--kv-green);
+  padding: 12px 16px 14px;
+  background: #F2F0EC;
+  border-left: 3px solid var(--kv-green);
 }
 .kv-news-why span {
   display: block;
