@@ -117,13 +117,17 @@ function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
   const hasPrice    = (c: ListingCard) => !!(c.price && c.price > 0);
   const hasBedrooms = (c: ListingCard) => !!(c.bedrooms && c.bedrooms > 0);
   const hasBaths    = (c: ListingCard) => !!(c.bathrooms && c.bathrooms > 0);
-  const isNotLand   = (c: ListingCard) =>
-    !c.property_type || !["land", "commercial"].includes(c.property_type.toLowerCase());
+  const isLand      = (c: ListingCard) => c.property_type?.toLowerCase() === "land";
+  const isCommercial = (c: ListingCard) => c.property_type?.toLowerCase() === "commercial";
   const hasIsland   = (c: ListingCard) => !!c.island;
 
-  // Hard requirements: image + price + bedrooms + bathrooms + not land + island known
-  const candidates = cards.filter(
-    (c) => hasImage(c) && hasPrice(c) && hasBedrooms(c) && hasBaths(c) && isNotLand(c) && hasIsland(c),
+  // Residential: image + price + bedrooms + bathrooms + not land/commercial + island known
+  const residential = cards.filter(
+    (c) => hasImage(c) && hasPrice(c) && hasBedrooms(c) && hasBaths(c) && !isLand(c) && !isCommercial(c) && hasIsland(c),
+  );
+  // Land: image + price + island known (no bedrooms requirement)
+  const land = cards.filter(
+    (c) => hasImage(c) && hasPrice(c) && isLand(c) && hasIsland(c),
   );
 
   const picked: ListingCard[] = [];
@@ -131,34 +135,42 @@ function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
   const seenSources = new Set<string>();
 
   const tryAdd = (c: ListingCard) => {
-    if (picked.length >= n || picked.includes(c)) return;
+    if (picked.includes(c)) return;
     picked.push(c);
     if (c.island) seenIslands.add(c.island);
     if (c.source_id) seenSources.add(c.source_id);
   };
 
-  // Pass 1: unique island + unique source (best diversity)
-  for (const c of candidates) {
-    if (picked.length >= n) break;
+  // Reserve last slot for one land listing (if available)
+  const landSlot = land[0] ?? null;
+  const residentialTarget = landSlot ? n - 1 : n;
+
+  // Pass 1: unique island + unique source
+  for (const c of residential) {
+    if (picked.length >= residentialTarget) break;
     if (c.island && !seenIslands.has(c.island) && c.source_id && !seenSources.has(c.source_id))
       tryAdd(c);
   }
-  // Pass 2: unique island (relax source constraint)
-  for (const c of candidates) {
-    if (picked.length >= n) break;
+  // Pass 2: unique island
+  for (const c of residential) {
+    if (picked.length >= residentialTarget) break;
     if (c.island && !seenIslands.has(c.island)) tryAdd(c);
   }
-  // Pass 3: any clean listing (all hard requirements met)
-  for (const c of candidates) {
-    if (picked.length >= n) break;
+  // Pass 3: any clean residential
+  for (const c of residential) {
+    if (picked.length >= residentialTarget) break;
     tryAdd(c);
   }
-  // Pass 4: relax bathrooms — last resort so we always hit n
-  const relaxed = cards.filter((c) => hasImage(c) && hasPrice(c) && hasBedrooms(c) && isNotLand(c) && hasIsland(c));
+  // Pass 4: relax bathrooms
+  const relaxed = cards.filter((c) => hasImage(c) && hasPrice(c) && hasBedrooms(c) && !isLand(c) && !isCommercial(c) && hasIsland(c));
   for (const c of relaxed) {
-    if (picked.length >= n) break;
+    if (picked.length >= residentialTarget) break;
     tryAdd(c);
   }
+
+  // Add the land listing last
+  if (landSlot) tryAdd(landSlot);
+
   return picked;
 }
 
