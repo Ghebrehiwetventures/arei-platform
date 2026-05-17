@@ -183,6 +183,11 @@ const resources = {
         buying: "Buying",
         legal: "Legal",
         tax: "Tax",
+        newsEyebrow: "Market News",
+        newsTitle: "Latest from the Cape Verde market.",
+        newsSub: "Curated economic, tourism and policy news relevant to property buyers and investors.",
+        seeAllNews: "See all market news →",
+        market: "Market",
       },
       listings: {
         metaTitle: "Cape Verde property listings",
@@ -689,6 +694,11 @@ const resources = {
         buying: "Compra",
         legal: "Legal",
         tax: "Fiscal",
+        newsEyebrow: "Notícias do mercado",
+        newsTitle: "Últimas notícias sobre o mercado de Cabo Verde.",
+        newsSub: "Notícias económicas, turísticas e políticas relevantes para compradores e investidores imobiliários.",
+        seeAllNews: "Ver todas as notícias →",
+        market: "Mercado",
       },
       listings: {
         metaTitle: "Anúncios imobiliários em Cabo Verde",
