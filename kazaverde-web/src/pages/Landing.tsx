@@ -659,10 +659,7 @@ export default function Landing() {
             <div className="kv-l-news-list">
               {latestNews.map((item) => (
                 <article className="kv-l-news-item" key={item.id}>
-                  <div className="kv-l-news-item-meta">
-                    <span>{item.category}</span>
-                    <span>{new Date(`${item.publishedAt}T00:00:00Z`).toLocaleDateString(isPt ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</span>
-                  </div>
+                  <span className="kv-eyebrow">{item.category}</span>
                   <a
                     className="kv-l-news-item-title"
                     href={item.sourceUrl}
@@ -672,14 +669,10 @@ export default function Landing() {
                     {item.title}
                   </a>
                   <p className="kv-l-news-item-snippet">{item.snippet}</p>
-                  <a
-                    className="kv-l-news-item-read"
-                    href={item.sourceUrl}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    {item.sourceName} ↗
-                  </a>
+                  <div className="kv-l-news-item-foot">
+                    <span>{new Date(`${item.publishedAt}T00:00:00Z`).toLocaleDateString(isPt ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</span>
+                    <span>{item.sourceName}</span>
+                  </div>
                 </article>
               ))}
             </div>
