@@ -7,7 +7,6 @@ import NotFound from "./pages/NotFound";
 import CookieBanner from "./components/CookieBanner";
 import NewsletterPopup from "./components/NewsletterPopup";
 import GoogleAnalytics from "./components/GoogleAnalytics";
-import LanguagePersistence from "./components/LanguagePersistence";
 import Landing from "./pages/Landing";
 
 // Phase A live: / (landing), /listings (grid), /listing/:id, /saved,
@@ -59,7 +58,6 @@ export default function App() {
   return (
     <div className="ctn">
       <ScrollToTop />
-      <LanguagePersistence />
       <Navbar />
       <Suspense fallback={null}>
         <Routes>
