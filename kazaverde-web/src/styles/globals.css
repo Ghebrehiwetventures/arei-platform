@@ -38,11 +38,23 @@
   --kv-green-deep:  #2d4a42;  /* dark editorial teal — for accent text, eyebrow dots, etc. */
   --kv-green-tint:  rgba(142, 207, 191, 0.18);
 
-  /* Article-category accents — green/ocean/lavender for editorial
-     differentiation per archive. Matched intensity to --kv-green so
-     dots in eyebrows read as a coherent palette. */
-  --kv-accent-ocean:    #8eb4cf;
-  --kv-accent-lavender: #b48ecf;
+  /* Data-series palette — canonical brand scale (docs/brand/source/bg/
+     foundations.jsx → COLOR_DATA). Different hues, all muted to the same
+     low-saturation tone so they read as one family. The brand-sanctioned
+     way to differentiate categorical series. */
+  --kv-accent-ocean:    #8eb4cf;  /* Series 2 · neutral */
+  --kv-accent-lavender: #b48ecf;  /* Series 3 · qualitative */
+  --kv-accent-amber:    #cfb48e;  /* Series 4 · pending */
+  --kv-accent-coral:    #cf8e8e;  /* Series 5 · alert */
+
+  /* Category scale = the data-series palette, in series order. Shared by
+     Guides (4 categories) and News (5). The marker square and the filter
+     active underline use the SAME step per category, so they match. */
+  --kv-cat-1: var(--kv-green-deep);      /* Series 1 */
+  --kv-cat-2: var(--kv-accent-ocean);    /* Series 2 */
+  --kv-cat-3: var(--kv-accent-lavender); /* Series 3 */
+  --kv-cat-4: var(--kv-accent-amber);    /* Series 4 */
+  --kv-cat-5: var(--kv-accent-coral);    /* Series 5 */
 
   /* ── Hover (universal calm gray fill — no black hovers) ── */
   --kv-hover:      #ececea;   /* neutral tint for outlined / chrome hovers */
@@ -359,10 +371,13 @@ ul { list-style: none; }
   background: var(--kv-green);
   flex-shrink: 0;
 }
-.kv-eyebrow-cat[data-cat="market"]::before { background: var(--kv-accent-ocean); }
-.kv-eyebrow-cat[data-cat="legal"]::before { background: var(--kv-accent-lavender); }
-.kv-eyebrow-cat[data-cat="buying"]::before { background: var(--kv-green); }
-.kv-eyebrow-cat[data-cat="tax"]::before { background: var(--kv-accent-lavender); }
+/* Per-category colour — data-series palette, in the same order the Guides
+   filter lists them (market · buying · legal · tax). The filter active
+   underline uses the matching series so marker and underline always agree. */
+.kv-eyebrow-cat[data-cat="market"]::before { background: var(--kv-cat-1); }
+.kv-eyebrow-cat[data-cat="buying"]::before { background: var(--kv-cat-2); }
+.kv-eyebrow-cat[data-cat="legal"]::before  { background: var(--kv-cat-3); }
+.kv-eyebrow-cat[data-cat="tax"]::before    { background: var(--kv-cat-4); }
 
 /* ══════════════════════════════════════════════════════════
    BUTTON SYSTEM (KV)

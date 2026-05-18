@@ -1,8 +1,9 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
 import PageHeader from "../components/PageHeader";
 import CategoryFilter from "../components/CategoryFilter";
+import SectionHead from "../components/SectionHead";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useMarketNews } from "../hooks/useMarketNews";
 import { MARKET_NEWS_CATEGORIES, type MarketNewsItem } from "../lib/market-news-data";
@@ -65,6 +66,16 @@ export default function MarketNews() {
   const { t } = useTranslation();
   useDocumentMeta(t("marketNews.metaTitle"), t("marketNews.description"));
 
+  const catLabel = (c: string) =>
+    t(`marketNews.categories.${c}`, { defaultValue: c });
+
+  // Each category → its step on the shared sage tonal scale, by canonical
+  // order. Same value drives the marker square and the filter underline.
+  const catTone = (c: string) => {
+    const i = MARKET_NEWS_CATEGORIES.indexOf(c as (typeof MARKET_NEWS_CATEGORIES)[number]);
+    return `var(--kv-cat-${i >= 0 ? i + 1 : 1})`;
+  };
+
   const { items, loading, error } = useMarketNews();
 
   const [query, setQuery] = useState("");
@@ -109,9 +120,11 @@ export default function MarketNews() {
     const present = new Set(items.map((i) => i.category));
     return MARKET_NEWS_CATEGORIES.filter((c) => present.has(c)).map((c) => ({
       value: c,
-      label: c,
+      label: catLabel(c),
+      tone: catTone(c),
     }));
-  }, [items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, t]);
 
   const filteredItems = useMemo(
     () =>
@@ -124,7 +137,6 @@ export default function MarketNews() {
   );
 
   const isSearching = query.trim().length > 0;
-  const isFiltering = isSearching || activeCat !== null;
 
   return (
     <div className="kv-news">
@@ -169,12 +181,17 @@ export default function MarketNews() {
 
       <main className="kv-news-body">
         <section className="kv-news-section">
-          {isFiltering && (
+          {isSearching && (
             <div className="kv-news-result-meta">
               <b>{filteredItems.length}</b>{" "}
               {filteredItems.length === 1 ? t("common.result") : t("common.results")}
             </div>
           )}
+
+          <SectionHead
+            eyebrow={t("marketNews.sectionEyebrow")}
+            title={t("marketNews.sectionTitle")}
+          />
 
           <div className="kv-news-layout">
             <div className="kv-news-feed">
@@ -192,7 +209,12 @@ export default function MarketNews() {
                     <div className="kv-news-item-meta">
                       <span>{item.sourceName}</span>
                       <span>{fmtDate(item.publishedAt)}</span>
-                      <span className="kv-news-cat">{item.category}</span>
+                      <span
+                        className="kv-news-cat"
+                        style={{ "--cat-tone": catTone(item.category) } as CSSProperties}
+                      >
+                        {catLabel(item.category)}
+                      </span>
                       {item.relevance === "high" && (
                         <span className="kv-news-relevance">
                           {t("marketNews.relevanceBadge")}

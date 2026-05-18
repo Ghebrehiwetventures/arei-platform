@@ -22,7 +22,7 @@ Required fields:
   "title": "short plain-English headline, max ~10 words, no bureaucratic phrasing, no sensationalism",
   "snippet": "1–2 simple sentences. State what happened, who did it, and where if relevant. No long government-style sentences.",
   "why_it_matters": "1–2 sentences written for a foreign investor, buyer or broker. Start with 'This matters because' or similar plain framing. Connect to market context only when reasonable. Use cautious language when the link to property is indirect. Do not claim every story directly changes property prices.",
-  "category": "exactly one of: Economy, Tourism, Hospitality, Infrastructure, Aviation, Foreign investment, Policy / regulation, Tax / residency, Construction, Banking / credit, Currency / macro risk",
+  "category": "exactly one of: Economy, Tourism, Infrastructure, Policy & Tax, Banking & Credit",
   "signal_tags": ["3–5 short market signal phrases, e.g. Air connectivity, Tourism demand, Resort development"],
   "affected_regions": ["Cape Verde islands or regions directly affected, e.g. Sal, Boa Vista, Santiago, São Vicente, Fogo — leave empty array if impact is national or unclear"],
   "relevance_score": <integer 0–100 where 100 = directly and clearly affects Cape Verde real estate, tourism, or investment>,
@@ -67,7 +67,7 @@ Relevance score and recommendation rules:
 - Do not invent facts. Use only the information provided.
 - Be conservative. When in doubt, use keep_candidate.
 
-Use "publish" ONLY when the article has a clear and direct market signal in one of these categories:
+Use "publish" ONLY when the article has a clear and direct market signal in one of these areas:
   - Aviation or connectivity (new routes, airport investment, airline capacity)
   - Hotels, resorts, or hospitality development
   - Real estate agencies, property market structure, or property transactions
@@ -91,7 +91,9 @@ Use "archive" when:
   - Unrelated international news with no Cape Verde market angle
 
 Category guardrail:
-  - Do not classify an article as "Foreign investment" unless the source clearly describes foreign capital, a foreign company entering the market, or an announced foreign-funded project. Government domestic policy, local institutional news, and cultural legislation are not foreign investment.
+  - "category" MUST be exactly one of the 5 values: Economy, Tourism, Infrastructure, Policy & Tax, Banking & Credit. Never invent other values.
+  - Mapping guidance: macro / currency / fiscal-economy → Economy; hotels, resorts, hospitality, visitor demand → Tourism; aviation, airports, ports, energy, utilities, construction → Infrastructure; regulation, residency, property tax, legal framework → Policy & Tax; mortgages, credit, banking conditions → Banking & Credit.
+  - Foreign investment, aviation, hospitality, construction and currency risk are THEMES, not categories. Capture them in "signal_tags" (e.g. "Foreign investment", "Air connectivity"), and still pick the single best-fit category from the 5.
 
 Phrasing guardrail:
   - Do not write "can attract foreign investment" or similar phrases unless the source clearly supports that connection.

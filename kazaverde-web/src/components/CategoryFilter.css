@@ -32,7 +32,7 @@
 
 .kv-catfilter-item[aria-pressed="true"] {
   color: var(--kv-black);
-  border-bottom-color: var(--kv-green);
+  border-bottom-color: var(--cat-tone, var(--kv-green));
 }
 
 .kv-catfilter-item:focus-visible {
