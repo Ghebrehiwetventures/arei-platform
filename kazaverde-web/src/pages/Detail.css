@@ -480,7 +480,6 @@
   border-top: 1px solid var(--kv-rule-soft, var(--kv-rule));
   font-family: var(--kv-mono);
   font-size: 12px;
-  font-style: italic;
   color: var(--kv-gray-500);
   line-height: 1.55;
   max-width: 62ch;
