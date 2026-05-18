@@ -1412,12 +1412,16 @@ function KvSimilar({ cards }: { cards: ListingCard[] }) {
   const scroll = (dir: -1 | 1) => {
     const el = ref.current;
     if (!el) return;
-    // Use the actual rendered card width + gap so the scroll lands one
-    // card over on every viewport. Hard-coding 380px overshot on mobile
-    // (cards are ~85vw there) and made the next card disappear left.
     const firstCard = el.querySelector<HTMLElement>(".kv-d-sim-card");
-    const step = firstCard ? firstCard.offsetWidth + 20 : 380;
-    el.scrollBy({ left: dir * step, behavior: "smooth" });
+    if (!firstCard) return;
+    // Compute step from actual rendered card width + gap. Then derive the
+    // current index by rounding (tolerates any residual snap drift), and
+    // jump to the exact snap position for the next/prev card. Using
+    // scrollTo instead of scrollBy avoids accumulated rounding error and
+    // prevents mandatory-snap from snapping to the wrong card.
+    const cardStep = firstCard.offsetWidth + 20;
+    const currentIndex = Math.round(el.scrollLeft / cardStep);
+    el.scrollTo({ left: (currentIndex + dir) * cardStep, behavior: "smooth" });
   };
 
   return (
