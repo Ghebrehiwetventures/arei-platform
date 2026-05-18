@@ -203,6 +203,8 @@
 [data-theme="dark"] .nlp-card,
 [data-theme="dark"] .nav {
   --kv-black:       #0a0a0a;
+  --kv-white:       #fafafa;  /* needed so kv-btn-solid text stays light on dark button */
+  --kv-paper:       #ffffff;
   --kv-ink-700:     rgba(0, 0, 0, 0.78);
   --kv-ink-600:     rgba(0, 0, 0, 0.62);
   --kv-ink-500:     rgba(0, 0, 0, 0.52);
