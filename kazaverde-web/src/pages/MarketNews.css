@@ -117,25 +117,17 @@
   color: var(--kv-ink-300);
 }
 
-/* Category gets a sage square — same visual marker as the Guides
-   category icon. Shared across news feed and landing cards. */
-.kv-news-cat {
-  display: inline-flex;
-  align-items: center;
-}
-.kv-news-cat::before {
+/* Category gets a sage square instead of the dot separator — the same
+   visual marker as the Guides category icon. Purely a cue; the label
+   text carries the meaning, so there is no per-category colour system. */
+.kv-news-item-meta > .kv-news-cat::before {
   content: "";
   display: inline-block;
   width: 8px;
   height: 8px;
-  margin-right: 8px;
+  margin: 0 8px;
   background: var(--cat-tone, var(--kv-green));
-  flex-shrink: 0;
-}
-/* In the meta row the separator dot precedes the cat span — suppress the
-   square's left margin so spacing comes from the dot alone. */
-.kv-news-item-meta > .kv-news-cat::before {
-  margin-left: 0;
+  vertical-align: middle;
 }
 
 /* High-relevance pill — sage on ink, the master-surface treatment.
