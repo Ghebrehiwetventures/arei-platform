@@ -41,6 +41,14 @@ set category = 'Policy & Tax'
 where ingestion_source = 'gnews-cv-property'
   and title ilike '%property code%';
 
+-- 3. Manual editorial move (done by hand in prod): the Cape Verde
+--    Handling / Swissport privatisation is a state-asset / regulatory
+--    story, not generic economy. Keyed on canonical_url (immutable).
+update public.market_news
+set category = 'Policy & Tax'
+where canonical_url =
+  'https://www.governo.cv/governo-formaliza-privatizacao-da-cabo-verde-handling-com-a-swissport/';
+
 do $$
 declare
   remaining integer;
