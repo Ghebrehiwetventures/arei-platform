@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, type CSSProperties } from "react";
 import { Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
@@ -6,6 +6,7 @@ import { BLOG_ARTICLES } from "../lib/blog-data";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
 import { useMarketNews } from "../hooks/useMarketNews";
+import { MARKET_NEWS_CATEGORIES } from "../lib/market-news-data";
 import { formatMedian, formatSourceLabel } from "../lib/format";
 import { PRICE_BUCKETS, type PriceBucket, type ListingCard } from "arei-sdk";
 
@@ -245,6 +246,18 @@ export default function Landing() {
   const latestNews = [...newsItems]
     .sort((a, b) => b.publishedAt.localeCompare(a.publishedAt))
     .slice(0, 3);
+
+  const catTone = (c: string) => {
+    const i = MARKET_NEWS_CATEGORIES.indexOf(c as (typeof MARKET_NEWS_CATEGORIES)[number]);
+    return `var(--kv-cat-${i >= 0 ? i + 1 : 1})`;
+  };
+
+  const GUIDE_CAT_TONE: Record<string, string> = {
+    market: "var(--kv-cat-1)",
+    legal: "var(--kv-cat-2)",
+    buying: "var(--kv-cat-3)",
+    tax: "var(--kv-cat-4)",
+  };
 
   /* Live featured listings + total count for the CTA. Falls back to the
      hardcoded ISLANDS_COUNT/SOURCES_COUNT if Supabase isn't configured. */
@@ -684,7 +697,10 @@ export default function Landing() {
                   const cat = categoryFor(a.tags);
                   return (
                     <Link key={a.slug} to={`/blog/${a.slug}`} className="kv-l-guide">
-                  <span className="kv-eyebrow">{t(`landing.${cat}`)}</span>
+                  <span
+                    className="kv-l-guide-cat"
+                    style={{ "--cat-tone": GUIDE_CAT_TONE[cat] ?? "var(--kv-cat-1)" } as CSSProperties}
+                  >{t(`landing.${cat}`)}</span>
                   <div className="kv-l-guide-title">{isPt ? GUIDE_TEASER_PT[a.slug]?.title ?? a.title : a.title}</div>
                   <div className="kv-l-guide-excerpt">{isPt ? GUIDE_TEASER_PT[a.slug]?.description ?? a.description : a.description}</div>
                   <div className="kv-l-guide-foot">
@@ -716,7 +732,12 @@ export default function Landing() {
             <div className="kv-l-news-list">
               {latestNews.map((item) => (
                 <article className="kv-l-news-item" key={item.id}>
-                  <span className="kv-eyebrow">{item.category}</span>
+                  <span
+                    className="kv-l-news-item-cat"
+                    style={{ "--cat-tone": catTone(item.category) } as CSSProperties}
+                  >
+                    {item.category}
+                  </span>
                   <a
                     className="kv-l-news-item-title"
                     href={item.sourceUrl}
