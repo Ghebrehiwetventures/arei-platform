@@ -471,16 +471,14 @@
 }
 
 /* AI-rewrite caption — appears as a footnote under the description body.
-   The badge in the heading is the primary signal; this catches readers
-   who scrolled past the badge. Mono italic, dim, separated from the
-   prose with a hairline rule so it reads as metadata, not body copy. */
+   Matches the site-wide .kv-disclaimer treatment: mono, dim, non-italic.
+   Separated from the prose with a hairline rule so it reads as metadata. */
 .kv-d-ai-caption {
   margin-top: 18px;
   padding-top: 12px;
   border-top: 1px solid var(--kv-rule-soft, var(--kv-rule));
   font-family: var(--kv-mono);
   font-size: 11px;
-  font-style: italic;
   letter-spacing: 0.04em;
   color: var(--kv-gray-500);
   line-height: 1.55;
