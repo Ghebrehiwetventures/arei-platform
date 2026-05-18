@@ -94,6 +94,12 @@
   border-bottom: 1px solid var(--kv-rule);
   padding: 40px 0;
 }
+/* First item has nothing above it to separate from — drop the top
+   padding so the section-head → content gap is just the SectionHead
+   margin (28px), matching the Guides grid. */
+.kv-news-feed > .kv-news-item:first-child {
+  padding-top: 0;
+}
 
 .kv-news-item-meta {
   display: flex;
