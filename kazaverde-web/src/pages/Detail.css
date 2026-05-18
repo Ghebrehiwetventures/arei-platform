@@ -487,7 +487,7 @@
   max-width: 62ch;
 }
 
-.kv-d-block p,
+.kv-d-block p:not(.kv-d-ai-caption),
 .kv-d-html {
   font-family: var(--kv-mono);
   font-size: 15px;
