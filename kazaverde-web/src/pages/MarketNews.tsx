@@ -2,9 +2,10 @@ import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
 import PageHeader from "../components/PageHeader";
+import CategoryFilter from "../components/CategoryFilter";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useMarketNews } from "../hooks/useMarketNews";
-import type { MarketNewsItem } from "../lib/market-news-data";
+import { MARKET_NEWS_CATEGORIES, type MarketNewsItem } from "../lib/market-news-data";
 import "./MarketNews.css";
 
 const MARKET_NEWS_DESCRIPTION =
@@ -67,6 +68,7 @@ export default function MarketNews() {
   const { items, loading, error } = useMarketNews();
 
   const [query, setQuery] = useState("");
+  const [activeCat, setActiveCat] = useState<string | null>(null);
 
   useEffect(() => {
     if (!items.length) return;
@@ -101,12 +103,28 @@ export default function MarketNews() {
   }, [items]);
 
   const sortedItems = useMemo(() => [...items].sort(sortNews), [items]);
+
+  // Only categories that actually have items, in canonical order.
+  const presentCategories = useMemo(() => {
+    const present = new Set(items.map((i) => i.category));
+    return MARKET_NEWS_CATEGORIES.filter((c) => present.has(c)).map((c) => ({
+      value: c,
+      label: c,
+    }));
+  }, [items]);
+
   const filteredItems = useMemo(
-    () => sortedItems.filter((item) => matches(query, item)),
-    [query, sortedItems],
+    () =>
+      sortedItems.filter(
+        (item) =>
+          (activeCat === null || item.category === activeCat) &&
+          matches(query, item),
+      ),
+    [query, activeCat, sortedItems],
   );
 
   const isSearching = query.trim().length > 0;
+  const isFiltering = isSearching || activeCat !== null;
 
   return (
     <div className="kv-news">
@@ -140,11 +158,18 @@ export default function MarketNews() {
             </button>
           )}
         </form>
+
+        <CategoryFilter
+          allLabel={t("common.allCategories")}
+          options={presentCategories}
+          active={activeCat}
+          onChange={setActiveCat}
+        />
       </PageHeader>
 
       <main className="kv-news-body">
         <section className="kv-news-section">
-          {isSearching && (
+          {isFiltering && (
             <div className="kv-news-result-meta">
               <b>{filteredItems.length}</b>{" "}
               {filteredItems.length === 1 ? t("common.result") : t("common.results")}
