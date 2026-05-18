@@ -324,6 +324,8 @@ const resources = {
       marketNews: {
         eyebrow: "Market News",
         relevanceBadge: "High relevance",
+        sectionEyebrow: "News",
+        sectionTitle: "Latest stories",
         categories: {
           Economy: "Economy",
           Tourism: "Tourism",
@@ -845,6 +847,8 @@ const resources = {
       marketNews: {
         eyebrow: "Notícias de Mercado",
         relevanceBadge: "Alta relevância",
+        sectionEyebrow: "Notícias",
+        sectionTitle: "Histórias recentes",
         categories: {
           Economy: "Economia",
           Tourism: "Turismo",

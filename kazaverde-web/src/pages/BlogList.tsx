@@ -7,6 +7,7 @@ import { FAQ_ENTRIES, type FaqEntry } from "../lib/faq-data";
 import NewsletterCta from "../components/NewsletterCta";
 import PageHeader from "../components/PageHeader";
 import CategoryFilter from "../components/CategoryFilter";
+import SectionHead from "../components/SectionHead";
 import "./BlogList.css";
 
 function fmtDate(iso: string, locale = "en-GB"): string {
@@ -331,12 +332,10 @@ export default function BlogList() {
         {/* Articles — hide block when searching narrows it to zero */}
         {(displayedArticles.length > 0 || !isSearching) && (
           <div className="kv-blog-section">
-            <div className="kv-blog-section-head">
-              <div className="kv-blog-section-eyebrow">{t("blog.sectionGuides")}</div>
-              <h2 className="kv-blog-section-title">
-                {t("blog.longForm")}
-              </h2>
-            </div>
+            <SectionHead
+              eyebrow={t("blog.sectionGuides")}
+              title={t("blog.longForm")}
+            />
 
             {displayedArticles.length === 0 ? (
               <div className="kv-blog-empty">
@@ -378,13 +377,7 @@ export default function BlogList() {
         {activeCat === null &&
           (filteredFaq.length > 0 || !isSearching || displayedArticles.length === 0) && (
           <div className="kv-blog-section kv-blog-faq-section">
-            <div className="kv-blog-section-head">
-              <div className="kv-blog-section-eyebrow">FAQ</div>
-              <h2 className="kv-blog-section-title">{t("blog.faqTitle")}</h2>
-              <p className="kv-blog-section-sub">
-                {t("blog.faqSub")}
-              </p>
-            </div>
+            <SectionHead eyebrow="FAQ" title={t("blog.faqTitle")} sub={t("blog.faqSub")} />
 
             {filteredFaq.length === 0 ? (
               <div className="kv-blog-empty">
