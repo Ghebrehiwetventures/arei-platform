@@ -1,16 +1,16 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useLayoutEffect, useEffect, lazy, Suspense } from "react";
+import { useLayoutEffect, useEffect, useState, lazy, Suspense } from "react";
 
 function OverflowDebug() {
+  const { pathname } = useLocation();
+  const [hits, setHits] = useState<{ selector: string; right: number; width: number; position: string }[]>([]);
+
   useEffect(() => {
     function scan() {
       const vw = window.innerWidth;
+      const found: typeof hits = [];
       document.querySelectorAll<HTMLElement>("*").forEach((el) => {
-        el.style.removeProperty("outline");
-        el.style.removeProperty("outline-offset");
-      });
-      const found: { selector: string; right: number; width: number }[] = [];
-      document.querySelectorAll<HTMLElement>("*").forEach((el) => {
+        if (el.id === "__od__") return;
         const r = el.getBoundingClientRect();
         if (r.right > vw + 1) {
           const tag = el.tagName.toLowerCase();
@@ -18,24 +18,42 @@ function OverflowDebug() {
           const cls = el.className && typeof el.className === "string"
             ? "." + el.className.trim().split(/\s+/).slice(0, 3).join(".")
             : "";
-          el.style.outline = "2px solid red";
-          el.style.outlineOffset = "-2px";
-          found.push({ selector: `${tag}${id}${cls}`, right: Math.round(r.right), width: Math.round(r.width) });
+          const position = getComputedStyle(el).position;
+          found.push({ selector: `${tag}${id}${cls}`, right: Math.round(r.right), width: Math.round(r.width), position });
         }
       });
+      setHits(found);
       if (found.length) {
-        console.group(`[overflow-debug] vw=${vw} — ${found.length} element(s) exceed viewport`);
-        found.forEach((f) => console.log(`  ${f.selector}  right=${f.right}  width=${f.width}`));
+        console.group(`[overflow-debug] ${pathname} vw=${vw} — ${found.length} offender(s)`);
+        found.forEach((f) => console.log(`  ${f.selector}  right=${f.right}  width=${f.width}  pos=${f.position}`));
         console.groupEnd();
       } else {
-        console.log(`[overflow-debug] vw=${vw} — no overflow found`);
+        console.log(`[overflow-debug] ${pathname} vw=${vw} — clean`);
       }
     }
-    scan();
+    // small delay to let route render settle
+    const t = setTimeout(scan, 300);
     window.addEventListener("resize", scan);
-    return () => window.removeEventListener("resize", scan);
-  }, []);
-  return null;
+    return () => { clearTimeout(t); window.removeEventListener("resize", scan); };
+  }, [pathname]);
+
+  if (!hits.length) return null;
+
+  return (
+    <div id="__od__" style={{
+      position: "fixed", bottom: 0, left: 0, right: 0, zIndex: 99999,
+      background: "rgba(180,0,0,0.92)", color: "#fff",
+      fontFamily: "monospace", fontSize: "11px", padding: "8px 12px",
+      maxHeight: "40vh", overflowY: "auto",
+    }}>
+      <strong style={{ display: "block", marginBottom: 4 }}>
+        OVERFLOW ({hits.length}) — vw={window.innerWidth}px
+      </strong>
+      {hits.map((h, i) => (
+        <div key={i}>{h.selector} · right={h.right} · w={h.width} · {h.position}</div>
+      ))}
+    </div>
+  );
 }
 import { Analytics } from "@vercel/analytics/react";
 import Navbar from "./components/Navbar";
