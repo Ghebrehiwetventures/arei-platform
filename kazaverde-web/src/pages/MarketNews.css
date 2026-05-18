@@ -130,9 +130,10 @@
 .kv-news-relevance {
   display: inline-block;
   margin-left: 10px;
-  padding: 2px 8px;
-  background: var(--kv-green);
-  color: var(--kv-black);
+  padding: 1px 7px;
+  background: transparent;
+  color: var(--kv-green-deep);
+  border: 1px solid var(--kv-green);
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.12em;

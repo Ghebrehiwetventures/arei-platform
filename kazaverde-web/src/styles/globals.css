@@ -359,10 +359,9 @@ ul { list-style: none; }
   background: var(--kv-green);
   flex-shrink: 0;
 }
-.kv-eyebrow-cat[data-cat="market"]::before { background: var(--kv-accent-ocean); }
-.kv-eyebrow-cat[data-cat="legal"]::before { background: var(--kv-accent-lavender); }
-.kv-eyebrow-cat[data-cat="buying"]::before { background: var(--kv-green); }
-.kv-eyebrow-cat[data-cat="tax"]::before { background: var(--kv-accent-lavender); }
+/* Category marker is a single sage square across all categories — matches
+   the News marker and the filter active state. Per-category accent colours
+   (ocean / lavender) were a brand-system divergence and are removed. */
 
 /* ══════════════════════════════════════════════════════════
    BUTTON SYSTEM (KV)
