@@ -255,7 +255,13 @@ export default function BlogList() {
     const present = new Set(BLOG_ARTICLES.map((a) => categoryFor(a.tags)));
     return order
       .filter((c) => present.has(c))
-      .map((c) => ({ value: c, label: isPt ? categoryLabelPt(c) : categoryLabel(c) }));
+      .map((c) => ({
+        value: c,
+        label: isPt ? categoryLabelPt(c) : categoryLabel(c),
+        // Same step the marker uses in globals.css (market·buying·legal·tax
+        // → --kv-cat-1..4), so the filter underline matches the card dot.
+        tone: `var(--kv-cat-${order.indexOf(c) + 1})`,
+      }));
   }, [isPt]);
 
   const displayedArticles = useMemo(

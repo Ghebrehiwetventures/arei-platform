@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
 import PageHeader from "../components/PageHeader";
@@ -68,6 +68,13 @@ export default function MarketNews() {
   const catLabel = (c: string) =>
     t(`marketNews.categories.${c}`, { defaultValue: c });
 
+  // Each category → its step on the shared sage tonal scale, by canonical
+  // order. Same value drives the marker square and the filter underline.
+  const catTone = (c: string) => {
+    const i = MARKET_NEWS_CATEGORIES.indexOf(c as (typeof MARKET_NEWS_CATEGORIES)[number]);
+    return `var(--kv-cat-${i >= 0 ? i + 1 : 1})`;
+  };
+
   const { items, loading, error } = useMarketNews();
 
   const [query, setQuery] = useState("");
@@ -113,6 +120,7 @@ export default function MarketNews() {
     return MARKET_NEWS_CATEGORIES.filter((c) => present.has(c)).map((c) => ({
       value: c,
       label: catLabel(c),
+      tone: catTone(c),
     }));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [items, t]);
@@ -196,7 +204,12 @@ export default function MarketNews() {
                     <div className="kv-news-item-meta">
                       <span>{item.sourceName}</span>
                       <span>{fmtDate(item.publishedAt)}</span>
-                      <span className="kv-news-cat">{catLabel(item.category)}</span>
+                      <span
+                        className="kv-news-cat"
+                        style={{ "--cat-tone": catTone(item.category) } as CSSProperties}
+                      >
+                        {catLabel(item.category)}
+                      </span>
                       {item.relevance === "high" && (
                         <span className="kv-news-relevance">
                           {t("marketNews.relevanceBadge")}

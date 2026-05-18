@@ -1,6 +1,9 @@
+import type { CSSProperties } from "react";
 import "./CategoryFilter.css";
 
-export type CategoryOption = { value: string; label: string };
+// `tone` is a CSS colour (usually a var like "var(--kv-cat-2)"). The active
+// underline uses it so the filter matches that category's marker square.
+export type CategoryOption = { value: string; label: string; tone?: string };
 
 /* Quiet single-select category row. Shared by Guides and News so the
    filter looks and behaves identically. Render only the categories that
@@ -35,6 +38,7 @@ export default function CategoryFilter({
           type="button"
           className="kv-catfilter-item"
           aria-pressed={active === o.value}
+          style={o.tone ? ({ "--cat-tone": o.tone } as CSSProperties) : undefined}
           onClick={() => onChange(active === o.value ? null : o.value)}
         >
           {o.label}
