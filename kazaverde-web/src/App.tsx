@@ -1,5 +1,42 @@
 import { Routes, Route, Navigate, useLocation } from "react-router-dom";
-import { useLayoutEffect, lazy, Suspense } from "react";
+import { useLayoutEffect, useEffect, lazy, Suspense } from "react";
+
+function OverflowDebug() {
+  useEffect(() => {
+    function scan() {
+      const vw = window.innerWidth;
+      document.querySelectorAll<HTMLElement>("*").forEach((el) => {
+        el.style.removeProperty("outline");
+        el.style.removeProperty("outline-offset");
+      });
+      const found: { selector: string; right: number; width: number }[] = [];
+      document.querySelectorAll<HTMLElement>("*").forEach((el) => {
+        const r = el.getBoundingClientRect();
+        if (r.right > vw + 1) {
+          const tag = el.tagName.toLowerCase();
+          const id = el.id ? `#${el.id}` : "";
+          const cls = el.className && typeof el.className === "string"
+            ? "." + el.className.trim().split(/\s+/).slice(0, 3).join(".")
+            : "";
+          el.style.outline = "2px solid red";
+          el.style.outlineOffset = "-2px";
+          found.push({ selector: `${tag}${id}${cls}`, right: Math.round(r.right), width: Math.round(r.width) });
+        }
+      });
+      if (found.length) {
+        console.group(`[overflow-debug] vw=${vw} — ${found.length} element(s) exceed viewport`);
+        found.forEach((f) => console.log(`  ${f.selector}  right=${f.right}  width=${f.width}`));
+        console.groupEnd();
+      } else {
+        console.log(`[overflow-debug] vw=${vw} — no overflow found`);
+      }
+    }
+    scan();
+    window.addEventListener("resize", scan);
+    return () => window.removeEventListener("resize", scan);
+  }, []);
+  return null;
+}
 import { Analytics } from "@vercel/analytics/react";
 import Navbar from "./components/Navbar";
 import Footer from "./components/Footer";
@@ -57,6 +94,7 @@ function ScrollToTop() {
 export default function App() {
   return (
     <div className="ctn">
+      <OverflowDebug />
       <ScrollToTop />
       <Navbar />
       <Suspense fallback={null}>
