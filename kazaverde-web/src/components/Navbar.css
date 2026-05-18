@@ -175,9 +175,10 @@
 }
 .nav-theme-btn:hover { opacity: 1; }
 
-/* Drawer variant — sits beside the LanguageToggle row, white icon */
+/* Drawer variant — inherits color from .nav-drawer so it stays visible
+   in both light and dark mode without token conflicts */
 .nav-theme-btn--drawer {
-  color: var(--kv-white);
+  color: inherit;
   opacity: 0.55;
   width: 32px;
   height: 32px;
