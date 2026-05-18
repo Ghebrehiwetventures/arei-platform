@@ -89,6 +89,7 @@ const DETAIL_COLUMNS_FALLBACK = DETAIL_COLUMNS_BASE.join(",");
 // ---------------------------------------------------------------------------
 export class AREIClient {
   private sb: SupabaseClient;
+  private view: string;
 
   constructor(config: AREIConfig);
   constructor(client: SupabaseClient);
@@ -96,8 +97,10 @@ export class AREIClient {
     const config = configOrClient as AREIConfig;
     if (config && "supabaseUrl" in config && "supabaseAnonKey" in config) {
       this.sb = createClient(config.supabaseUrl, config.supabaseAnonKey);
+      this.view = config.feedView ?? VIEW;
     } else {
       this.sb = configOrClient as SupabaseClient;
+      this.view = VIEW;
     }
   }
 
@@ -112,7 +115,7 @@ export class AREIClient {
     const to = from + pageSize - 1;
 
     let query = this.sb
-      .from(VIEW)
+      .from(this.view)
       .select(CARD_COLUMNS, { count: "exact" });
 
     // Island filter
@@ -170,7 +173,7 @@ export class AREIClient {
   // =========================================================================
   async getListing(id: string): Promise<ListingDetail | null> {
     let { data, error } = await this.sb
-      .from(VIEW)
+      .from(this.view)
       .select(DETAIL_COLUMNS)
       .eq("id", id)
       .single();
@@ -178,7 +181,7 @@ export class AREIClient {
     // Retry without optional columns if the DB doesn't have them yet (42703 = column not found)
     if (error && error.code === "42703") {
       ({ data, error } = await this.sb
-        .from(VIEW)
+        .from(this.view)
         .select(DETAIL_COLUMNS_FALLBACK)
         .eq("id", id)
         .single());
@@ -202,7 +205,7 @@ export class AREIClient {
     // island values and count client-side. With 377 rows this is fine.
 
     const { data, error } = await this.sb
-      .from(VIEW)
+      .from(this.view)
       .select("island");
 
     if (error) throw new Error(`getIslandOptions failed: ${error.message}`);
@@ -290,7 +293,7 @@ export class AREIClient {
 
     for (const strategy of strategies) {
       let query = this.sb
-        .from(VIEW)
+        .from(this.view)
         .select(CARD_COLUMNS)
         .eq("island", listing.island)
         .gt("price", 0)
@@ -349,7 +352,7 @@ export class AREIClient {
     // With ~400 rows this is efficient. For larger feeds, move to an RPC.
 
     const { data, error } = await this.sb
-      .from(VIEW)
+      .from(this.view)
       .select("island, price, source_id");
 
     if (error) throw new Error(`getMarketStats failed: ${error.message}`);
@@ -404,7 +407,7 @@ export class AREIClient {
     listingPrice: number | null
   ): Promise<IslandContext> {
     const { data, error } = await this.sb
-      .from(VIEW)
+      .from(this.view)
       .select("price, property_size_sqm, last_seen_at")
       .eq("island", island);
 

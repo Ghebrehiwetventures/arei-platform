@@ -222,14 +222,17 @@ sources:
   # ============================================
   # CCORE INVESTMENTS
   # CasafariCRM / Proppy CRM - server-side rendered, no headless needed
-  # Listing URL: /lista-propriedades?page=N
-  # Detail URL:  /detalhe-propriedade/{slug}/{id}
+  # Listing URL: /en/list?page=N   (English variant — list cards are translated)
+  # Detail URL:  /property-detail/{slug}/{id}
+  # The trailing numeric segment of the detail URL is the stable Proppy id —
+  # we use id_url_pattern so the same listing resolves to the same row id
+  # regardless of PT vs EN slug.
   # DOM: each listing is <a class="propertyItemStyle11"> - container IS the link
   # Images served from cdn.proppy.app CDN (no lazy loading, in HTML directly)
   # ============================================
   - id: cv_ccoreinvestments
     name: "CCore Investments"
-    url: https://www.ccoreinvestments.com/lista-propriedades
+    url: https://www.ccoreinvestments.com/en/list
     type: html
     lifecycleOverride: IN
     fetch_method: http  # Server-rendered HTML, no JS rendering required
@@ -263,14 +266,31 @@ sources:
       decimal_separator: ","
 
     id_prefix: "ccore"
+    id_url_pattern: '/(\d+)(?:[/?#]|$)'
+    # The /en/list cards link to /property-detail/ (Portuguese page); the actual
+    # English detail page lives at /en/property-detail/. Rewrite to pin enrichment
+    # to the English variant — descriptions land in English, bathroom counts
+    # become regex-extractable ("1 Bathroom" vs PT "1 Casa de banho").
+    detail_url_rewrite:
+      from: '/property-detail/'
+      to: '/en/property-detail/'
 
     detail:
       enabled: true
       policy: always
       delay_ms: 2500
       selectors:
-        description: ".description, [class*='description'] p, .observations p, p"
-        images: "img[src*='cdn.proppy.app'], img[src*='propertyphotos'], .gallery img, .slider img"
+        description: ".contentText, .js-cmsContent"
+        # Target the dedicated property gallery only — avoids related-listing thumbnails
+        # (`img.item__img`) and header logos elsewhere on the page.
+        images: "#js-gallery__list img, .gallery__img"
+        # detailsBar has bedrooms/bathrooms behind icons (no text labels), so the
+        # body-text regex can't find them. Target the <span> next to each icon.
+        # Single-unit pages show both; development pages show "Units: N" instead
+        # and the selector simply doesn't match — bathrooms stays null, which is
+        # the right answer for a project that spans multiple unit types.
+        bedrooms: ".detailsBar__list i.fa-bed + span"
+        bathrooms: ".detailsBar__list i.fa-shower + span"
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"

@@ -21,7 +21,8 @@ function getClient(): AREIClient {
     console.info("[arei] AREIClient initialized with VITE_SUPABASE_URL");
   }
 
-  _client = new AREIClient({ supabaseUrl: url, supabaseAnonKey: key });
+  const feedView = (import.meta.env.VITE_AREI_FEED_VIEW ?? "").trim() || undefined;
+  _client = new AREIClient({ supabaseUrl: url, supabaseAnonKey: key, feedView });
   return _client;
 }
 

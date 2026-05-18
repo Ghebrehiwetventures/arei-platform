@@ -56,13 +56,32 @@ const INVALID_IMAGE_PATTERNS = [
   /wp-includes/i,
 ];
 
-// Size patterns in URLs that indicate small images
+// Element class/alt patterns identifying site chrome (header/footer/branding).
+// Catches logos whose URL is a CDN-served UUID with no "logo" substring.
+const CHROME_ELEMENT_PATTERNS = [
+  /\b(?:header|footer|nav|brand)[_-]/i,
+  /\blogo\b/i,
+  /\bicon\b/i,
+  /favicon/i,
+];
+
+function isChromeElement(classAttr: string | undefined, altAttr: string | undefined): boolean {
+  for (const p of CHROME_ELEMENT_PATTERNS) {
+    if (classAttr && p.test(classAttr)) return true;
+    if (altAttr && p.test(altAttr)) return true;
+  }
+  return false;
+}
+
+// Size patterns in URLs that indicate small images (true thumbnails, <200px)
+// Width/w bounded to 1-199; -NxN and /NxN/ unchanged because dimension pairs ≥1000px
+// are routinely written as `1200x800` which already escapes \d{2,3}.
 const SMALL_IMAGE_PATTERNS = [
   /-\d{2,3}x\d{2,3}\./i,
   /\/\d{2,3}x\d{2,3}\//i,
-  /size=\d{2,3}/i,
-  /width=\d{2,3}(?!\d)/i,
-  /w=\d{2,3}(?!\d)/i,
+  /[?&]size=\d{1,3}(?!\d)/i,
+  /[?&]width=(?:[1-9]\d?|1\d{2})(?!\d)/i,
+  /[?&]w=(?:[1-9]\d?|1\d{2})(?!\d)/i,
 ];
 
 // Negation words for amenity detection
@@ -349,6 +368,7 @@ export function createGenericDetailPlugin(
         $(imgSelector).each((_, el) => {
           const tagName = (el as any).tagName?.toLowerCase();
           if (tagName === "img") {
+            if (isChromeElement($(el).attr("class"), $(el).attr("alt"))) return;
             const src = $(el).attr("src") || $(el).attr("data-src") || $(el).attr("data-lazy");
             if (src) addImage(src);
             const srcset = $(el).attr("srcset") || $(el).attr("data-srcset");
@@ -363,11 +383,13 @@ export function createGenericDetailPlugin(
             if (href) addImage(href);
           } else {
             // Maybe a div with background-image
+            if (isChromeElement($(el).attr("class"), $(el).attr("aria-label"))) return;
             const style = $(el).attr("style") || "";
             const bgMatch = style.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/i);
             if (bgMatch?.[1]) addImage(bgMatch[1]);
             // Check for img children
             $(el).find("img").each((_, img) => {
+              if (isChromeElement($(img).attr("class"), $(img).attr("alt"))) return;
               const src = $(img).attr("src") || $(img).attr("data-src");
               if (src) addImage(src);
             });
@@ -385,12 +407,14 @@ export function createGenericDetailPlugin(
 
         // Try slideshow/carousel images
         $(".swiper-slide img, .slick-slide img, .gallery img, .carousel img").each((_, el) => {
+          if (isChromeElement($(el).attr("class"), $(el).attr("alt"))) return;
           const src = $(el).attr("src") || $(el).attr("data-src");
           if (src) addImage(src);
         });
 
         // Try all images with uploads path (WordPress)
         $("img[src*='uploads'], img[data-src*='uploads']").each((_, el) => {
+          if (isChromeElement($(el).attr("class"), $(el).attr("alt"))) return;
           const src = $(el).attr("src") || $(el).attr("data-src");
           if (src) addImage(src);
         });
@@ -400,6 +424,7 @@ export function createGenericDetailPlugin(
       if (imageUrls.length < 3) {
         $("img").each((_, el) => {
           const $img = $(el);
+          if (isChromeElement($img.attr("class"), $img.attr("alt"))) return;
           const src = $img.attr("src") || $img.attr("data-src");
           const width = parseInt($img.attr("width") || "0", 10);
           const height = parseInt($img.attr("height") || "0", 10);
@@ -418,9 +443,20 @@ export function createGenericDetailPlugin(
 
       const bodyText = $("body").text();
 
+      if (detailConfig.selectors?.bedrooms) {
+        const text = $(detailConfig.selectors.bedrooms).first().text().trim();
+        const match = text.match(/\b(\d{1,2})\b/);
+        if (match) bedrooms = parseInt(match[1], 10);
+      }
+      if (detailConfig.selectors?.bathrooms) {
+        const text = $(detailConfig.selectors.bathrooms).first().text().trim();
+        const match = text.match(/\b(\d{1,2})\b/);
+        if (match) bathrooms = parseInt(match[1], 10);
+      }
+
       if (detailConfig.spec_patterns) {
-        // Bedrooms
-        if (detailConfig.spec_patterns.bedrooms) {
+        // Structured selector values are more trustworthy than prose when both exist.
+        if (bedrooms === null && detailConfig.spec_patterns.bedrooms) {
           for (const patternStr of detailConfig.spec_patterns.bedrooms) {
             const regex = new RegExp(patternStr, "i");
             const match = bodyText.match(regex);
@@ -431,8 +467,7 @@ export function createGenericDetailPlugin(
           }
         }
 
-        // Bathrooms
-        if (detailConfig.spec_patterns.bathrooms) {
+        if (bathrooms === null && detailConfig.spec_patterns.bathrooms) {
           for (const patternStr of detailConfig.spec_patterns.bathrooms) {
             const regex = new RegExp(patternStr, "i");
             const match = bodyText.match(regex);
@@ -466,18 +501,6 @@ export function createGenericDetailPlugin(
             }
           }
         }
-      }
-
-      // Fallback: bedrooms/bathrooms from selectors
-      if (bedrooms === null && detailConfig.selectors?.bedrooms) {
-        const text = $(detailConfig.selectors.bedrooms).first().text().trim();
-        const match = text.match(/\b(\d{1,2})\b/);
-        if (match) bedrooms = parseInt(match[1], 10);
-      }
-      if (bathrooms === null && detailConfig.selectors?.bathrooms) {
-        const text = $(detailConfig.selectors.bathrooms).first().text().trim();
-        const match = text.match(/\b(\d{1,2})\b/);
-        if (match) bathrooms = parseInt(match[1], 10);
       }
 
       // ========================================
