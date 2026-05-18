@@ -15,6 +15,16 @@
 
 begin;
 
+-- Manual editorial move applied by hand in prod (Cape Verde Handling /
+-- Swissport privatisation → Policy & Tax). It was NOT captured in the
+-- merged 042 (042 merged before that line was added, and a merged
+-- migration is append-only). Recorded here, before the CHECK, so a
+-- fresh DB rebuild reproduces production. Keyed on immutable canonical_url.
+update public.market_news
+set category = 'Policy & Tax'
+where canonical_url =
+  'https://www.governo.cv/governo-formaliza-privatizacao-da-cabo-verde-handling-com-a-swissport/';
+
 do $$
 declare
   bad integer;
