@@ -45,7 +45,7 @@
   font-size: 22px;
   line-height: 1;
   font-family: var(--kv-mono);
-  color: rgba(0, 0, 0, 0.4);
+  color: var(--kv-ink-400);
   background: transparent;
   border: none;
   cursor: pointer;
@@ -59,7 +59,7 @@
   font-weight: 600;
   letter-spacing: 0.18em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--kv-ink-500);
   margin-bottom: 18px;
 }
 
@@ -76,7 +76,7 @@
 
 .nlp-desc {
   font-size: var(--kv-t-sm);
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--kv-ink-700);
   line-height: 1.65;
   margin-bottom: 28px;
 }
@@ -90,7 +90,7 @@
 .nlp-input {
   width: 100%;
   padding: 13px 15px;
-  border: 1px solid rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--kv-rule-strong);
   background: transparent;
   font-family: var(--kv-mono);
   font-size: var(--kv-t-base);
@@ -150,7 +150,7 @@
   margin-top: 20px;
   font-size: 11px;
   letter-spacing: 0.04em;
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--kv-ink-500);
 }
 
 @media (max-width: 540px) {

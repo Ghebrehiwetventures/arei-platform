@@ -28,7 +28,7 @@
   font-weight: 600;
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--kv-ink-500);
   margin-bottom: 14px;
 }
 .kv-hero-slim h1 {
@@ -48,7 +48,7 @@
 .kv-hero-sub {
   font-family: var(--kv-mono);
   font-size: var(--kv-t-lg);
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--kv-ink-600);
   line-height: 1.55;
   max-width: 620px;
   margin-bottom: 24px;
@@ -60,11 +60,11 @@
   flex-wrap: wrap;
   font-family: var(--kv-mono);
   font-size: var(--kv-t-sm);
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--kv-ink-500);
   letter-spacing: var(--kv-ls-meta);
   text-transform: uppercase;
   padding-top: 16px;
-  border-top: 1px solid rgba(0, 0, 0, 0.15);
+  border-top: 1px solid var(--kv-rule);
 }
 .kv-hero-meta b {
   color: var(--kv-black);
@@ -194,7 +194,7 @@
   font-family: var(--kv-mono);
   font-size: 12px;
   cursor: pointer;
-  color: rgba(0, 0, 0, 0.75);
+  color: var(--kv-ink-700);
 }
 .kv-pop-opt:hover { color: var(--kv-black); }
 .kv-pop-opt.sel {
@@ -327,7 +327,7 @@
   transition: border-color 0.2s, transform 0.2s;
 }
 .kv-lcard:hover {
-  border-color: rgba(0, 0, 0, 0.4);
+  border-color: var(--kv-ink-400);
   transform: translateY(-2px);
 }
 
@@ -377,7 +377,7 @@
   font-weight: var(--kv-fw-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--kv-ink-400);
   margin-bottom: 10px;
 }
 .kv-lc-loc { color: var(--kv-gray-500); }
@@ -396,7 +396,7 @@
   font-family: var(--kv-mono);
   font-size: var(--kv-t-base);
   font-weight: var(--kv-fw-regular);
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--kv-ink-700);
   line-height: 1.5;
   margin-bottom: 14px;
   display: -webkit-box;
@@ -424,7 +424,7 @@
   justify-content: space-between;
   font-family: var(--kv-mono);
   font-size: var(--kv-t-xs);
-  color: rgba(0, 0, 0, 0.40);
+  color: var(--kv-ink-400);
   letter-spacing: 0.1em;
   text-transform: uppercase;
   padding-top: 10px;
@@ -496,7 +496,7 @@
   padding: 60px 20px;
   text-align: center;
   border: 1px dashed var(--kv-rule);
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--kv-ink-500);
   font-family: var(--kv-mono);
   font-size: 13px;
 }
@@ -598,7 +598,7 @@
   .kv-hero-meta > * + *::before {
     content: "·";
     margin: 0 10px;
-    color: rgba(0, 0, 0, 0.3);
+    color: var(--kv-ink-300);
   }
   /* Hide "Last updated" stamp on phones — the date is low-signal next
      to listings/islands counts and pushes the strip to a second row. */
@@ -793,7 +793,7 @@
   transition: border-color 0.2s, background 0.2s;
 }
 .kv-list-row:hover {
-  border-color: rgba(0, 0, 0, 0.4);
+  border-color: var(--kv-ink-400);
   background: var(--kv-green-tint);
 }
 
@@ -836,13 +836,13 @@
   font-weight: var(--kv-fw-semibold);
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--kv-ink-400);
 }
 
 .kv-list-row-title {
   font-family: var(--kv-mono);
   font-size: var(--kv-t-base);
-  color: rgba(0, 0, 0, 0.75);
+  color: var(--kv-ink-700);
   line-height: 1.4;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -874,7 +874,7 @@
   gap: 14px;
   font-family: var(--kv-mono);
   font-size: var(--kv-t-xs);
-  color: rgba(0, 0, 0, 0.40);
+  color: var(--kv-ink-400);
   letter-spacing: 0.1em;
   text-transform: uppercase;
 }

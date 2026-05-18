@@ -118,12 +118,12 @@
 .footer-copy {
   font-family: var(--kv-mono);
   font-size: 10px;
-  color: rgba(0, 0, 0, 0.45);
+  color: var(--kv-ink-400);
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 .footer-poweredby {
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--kv-ink-500);
   transition: color var(--kv-dur) var(--kv-ease);
 }
 .footer-poweredby:hover { color: var(--kv-black); }
@@ -132,7 +132,7 @@
   font-family: var(--kv-mono);
   font-size: clamp(40px, 6vw, 64px);
   font-weight: 300;
-  color: rgba(0, 0, 0, 0.06);
+  color: var(--kv-rule-soft);
   line-height: 1;
   letter-spacing: 0;
 }

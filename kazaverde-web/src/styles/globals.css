@@ -23,6 +23,7 @@
   --kv-black:      #0a0a0a;   /* primary text */
   --kv-ink-700:    rgba(0, 0, 0, 0.78);
   --kv-ink-600:    rgba(0, 0, 0, 0.62);
+  --kv-ink-500:    rgba(0, 0, 0, 0.52);  /* mid — between 400 and 600 */
   --kv-gray-500:   #888888;   /* meta / labels */
   --kv-ink-400:    rgba(0, 0, 0, 0.45);
   --kv-ink-300:    rgba(0, 0, 0, 0.30);
@@ -118,6 +119,9 @@
   --kv-dur-fast: 0.15s;
   --kv-dur:      0.22s;
 
+  /* ── Focus outline ── */
+  --kv-focus-outline: rgba(0, 0, 0, 0.4);
+
   /* ══════════════════════════════════════════════════════
      LEGACY tokens (chocolate + lime).
      Used only by archived routes that currently redirect to /
@@ -149,6 +153,92 @@
 }
 
 /* ══════════════════════════════════════════════════════════
+   DARK THEME — toggle-activated via [data-theme="dark"] on <html>.
+   Only surface, ink, rule and hover tokens are overridden;
+   accent greens (sage on dark ink) are the master-surface treatment
+   and remain unchanged.
+   ══════════════════════════════════════════════════════════ */
+[data-theme="dark"] {
+  color-scheme: dark;
+
+  /* Surface */
+  --kv-white:     #0d0d0d;   /* page background */
+  --kv-paper:     #161616;   /* raised surface (cards, inputs) */
+  --kv-off-white: #1c1c1c;   /* warm tint */
+
+  /* Ink (inverted) */
+  --kv-black:     #f0f0f0;   /* primary text */
+  --kv-ink-700:   rgba(255, 255, 255, 0.78);
+  --kv-ink-600:   rgba(255, 255, 255, 0.62);
+  --kv-ink-500:   rgba(255, 255, 255, 0.52);
+  --kv-gray-500:  #7a7a7a;   /* slightly dimmed on dark surface */
+  --kv-ink-400:   rgba(255, 255, 255, 0.45);
+  --kv-ink-300:   rgba(255, 255, 255, 0.28);
+
+  /* Hover */
+  --kv-black-hover: #d4d4d4;
+  --kv-hover:       #222222;  /* outlined/chrome hover fill */
+
+  /* Rules */
+  --kv-rule:        rgba(255, 255, 255, 0.12);
+  --kv-rule-strong: rgba(255, 255, 255, 0.25);
+  --kv-rule-soft:   rgba(255, 255, 255, 0.06);
+
+  /* Selection */
+  --kv-green-tint: rgba(142, 207, 191, 0.14);
+
+  /* Accent — sage-deep becomes mid-sage so it's readable on dark surfaces */
+  --kv-green-deep: #5fa899;
+
+  /* Focus */
+  --kv-focus-outline: rgba(255, 255, 255, 0.4);
+}
+
+/* Sage-background sections always use dark ink — the green surface is a
+   brand constant that doesn't invert. Re-scope every ink token locally
+   so all child elements (text, borders, buttons) stay dark on green. */
+[data-theme="dark"] .kv-l-hero,
+[data-theme="dark"] .kv-hero,
+[data-theme="dark"] .nl-cta,
+[data-theme="dark"] .nlp-card,
+[data-theme="dark"] .nav {
+  --kv-black:       #0a0a0a;
+  --kv-ink-700:     rgba(0, 0, 0, 0.78);
+  --kv-ink-600:     rgba(0, 0, 0, 0.62);
+  --kv-ink-500:     rgba(0, 0, 0, 0.52);
+  --kv-ink-400:     rgba(0, 0, 0, 0.45);
+  --kv-ink-300:     rgba(0, 0, 0, 0.30);
+  --kv-rule:        rgba(0, 0, 0, 0.15);
+  --kv-rule-strong: rgba(0, 0, 0, 0.30);
+  --kv-rule-soft:   rgba(0, 0, 0, 0.08);
+  --kv-hover:       rgba(0, 0, 0, 0.08);
+  --kv-focus-outline: rgba(0, 0, 0, 0.4);
+}
+
+/* "Why it matters" box — hardcoded off-white bg + deep-green label,
+   needs explicit dark overrides since it doesn't use CSS variables. */
+[data-theme="dark"] .kv-news-why {
+  background: var(--kv-paper);
+  border-left-color: var(--kv-green);
+}
+[data-theme="dark"] .kv-news-why span {
+  color: var(--kv-green);
+}
+
+/* Mobile drawer — always dark regardless of theme (intentional full-screen
+   overlay). Re-pin all colours that use --kv-black / --kv-white tokens. */
+[data-theme="dark"] .nav-drawer                { background: #0a0a0a; color: #f0f0f0; }
+[data-theme="dark"] .nav-drawer-link           { color: #f0f0f0; }
+[data-theme="dark"] .nav-drawer-link:hover,
+[data-theme="dark"] .nav-drawer-link.on        { color: var(--kv-green); }
+[data-theme="dark"] .nav-drawer-close          { color: #f0f0f0; }
+[data-theme="dark"] .nav-drawer-cta {
+  background: #1e1e1e;
+  color: var(--kv-green);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+}
+
+/* ══════════════════════════════════════════════════════════
    RESET
    ══════════════════════════════════════════════════════════ */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -170,7 +260,7 @@ ul { list-style: none; }
 
 *:focus { outline: none; }
 *:focus-visible {
-  outline: 1px solid rgba(0, 0, 0, 0.4);
+  outline: 1px solid var(--kv-focus-outline);
   outline-offset: 2px;
 }
 

@@ -40,6 +40,14 @@
     </noscript>
   </head>
   <body>
+    <!-- Anti-flash: apply saved theme before React mounts so there's no
+         white flash when a user returns in dark mode. Runs synchronously. -->
+    <script>
+      (function () {
+        var t = localStorage.getItem("kv-theme");
+        if (t === "dark") document.documentElement.setAttribute("data-theme", "dark");
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

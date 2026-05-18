@@ -90,7 +90,7 @@
   font-family: var(--kv-mono);
   font-size: 14px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--kv-ink-700);
   border: 1px dashed var(--kv-rule);
   background: var(--kv-paper);
   padding: 24px;
@@ -156,7 +156,7 @@
   font-family: var(--kv-sans);
   font-size: 14px;
   line-height: 1.7;
-  color: rgba(0, 0, 0, 0.78);
+  color: var(--kv-ink-700);
   max-width: 720px;
   /* Prevent width from contributing to horizontal layout shifts. */
   box-sizing: border-box;
@@ -219,7 +219,7 @@
   font-family: var(--kv-sans);
   font-size: 14px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.68);
+  color: var(--kv-ink-600);
   margin-bottom: 22px;
   flex: 1;
   display: -webkit-box;
@@ -238,7 +238,7 @@
 .kv-blog-card-foot > * + *::before {
   content: "·";
   margin-right: 8px;
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--kv-ink-300);
 }
 
 @media (max-width: 960px) {

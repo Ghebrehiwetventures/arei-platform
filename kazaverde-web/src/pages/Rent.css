@@ -47,7 +47,7 @@
   font-family: var(--kv-mono);
   font-size: 15px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--kv-ink-700);
   max-width: 720px;
   margin-bottom: 32px;
 }
@@ -118,7 +118,7 @@
   font-family: var(--kv-mono);
   font-size: 13px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--kv-ink-600);
   margin: 0 0 18px;
 }
 
@@ -194,7 +194,7 @@
   font-family: var(--kv-mono);
   font-size: 13px;
   line-height: 1.5;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--kv-ink-600);
 }
 .kv-rent-form-success-sub b { color: var(--kv-black); font-weight: 500; }
 
@@ -226,7 +226,7 @@
 .kv-rent-meta > * + *::before {
   content: "·";
   margin-right: 8px;
-  color: rgba(0, 0, 0, 0.3);
+  color: var(--kv-ink-300);
 }
 
 /* ─── Body band — white surface, intent-aware content ─── */
@@ -263,7 +263,7 @@
   font-family: var(--kv-mono);
   font-size: 14px;
   line-height: 1.65;
-  color: rgba(0, 0, 0, 0.68);
+  color: var(--kv-ink-600);
   max-width: 660px;
 }
 
@@ -290,7 +290,7 @@
   font-family: var(--kv-mono);
   font-size: 13px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.78);
+  color: var(--kv-ink-700);
   padding: 14px 0;
   border-bottom: 1px solid var(--kv-rule-soft);
 }

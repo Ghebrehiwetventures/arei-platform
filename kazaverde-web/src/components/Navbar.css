@@ -143,13 +143,55 @@
   font-weight: 500;
   letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: rgba(0, 0, 0, 0.5);
+  color: var(--kv-ink-500);
   padding: 4px 0;
   text-decoration: none;
   transition: color 0.2s;
 }
 .nav-a:hover,
 .nav-a.on { color: var(--kv-black); }
+
+/* ── Desktop controls group (lang + theme) ── */
+.nav-controls {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ── Theme toggle ── */
+.nav-theme-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background: transparent;
+  border: none;
+  color: var(--kv-black);
+  cursor: pointer;
+  opacity: 0.5;
+  transition: opacity 0.15s;
+  padding: 0;
+}
+.nav-theme-btn:hover { opacity: 1; }
+
+/* Drawer variant — sits beside the LanguageToggle row, white icon */
+.nav-theme-btn--drawer {
+  color: var(--kv-white);
+  opacity: 0.55;
+  width: 32px;
+  height: 32px;
+}
+.nav-theme-btn--drawer:hover { opacity: 1; }
+
+/* ── Drawer bottom row (lang toggle + theme btn) ── */
+.nav-drawer-bottom {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 0;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+}
 
 /* ── Burger (mobile) ── 3 spans → X on .open. cv-listing pattern. */
 .nav-burger {
@@ -185,7 +227,7 @@
   inset: 0;
   background: var(--kv-black);
   color: var(--kv-white);
-  padding: 80px 28px 48px;
+  padding: 72px 24px 40px;
   transform: translateX(100%);
   transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   z-index: 210;
@@ -226,10 +268,10 @@
 .nav-drawer-link {
   color: var(--kv-white);
   display: block;
-  padding: 20px 0;
+  padding: 16px 0;
   border-bottom: 1px solid rgba(255, 255, 255, 0.12);
   font-family: var(--kv-mono);
-  font-size: 18px;
+  font-size: 17px;
   font-weight: 400;
   letter-spacing: -0.005em;
   text-decoration: none;
@@ -238,9 +280,10 @@
 .nav-drawer-link:hover,
 .nav-drawer-link.on { color: var(--kv-green); }
 
+/* lang-toggle is now inside .nav-drawer-bottom which owns the border/padding */
 .nav-drawer .lang-toggle {
-  padding: 20px 0;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.12);
+  padding: 0;
+  border-bottom: none;
 }
 
 .nav-drawer-cta {

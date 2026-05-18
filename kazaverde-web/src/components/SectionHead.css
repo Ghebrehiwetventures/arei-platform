@@ -31,7 +31,7 @@
   font-family: var(--kv-mono);
   font-size: 14px;
   line-height: 1.65;
-  color: rgba(0, 0, 0, 0.68);
+  color: var(--kv-ink-600);
   margin: 0;
   max-width: 600px;
 }

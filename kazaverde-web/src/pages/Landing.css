@@ -36,7 +36,7 @@
 .kv-l-hero-sub {
   font-family: var(--kv-mono);
   font-size: clamp(15px, 1.4vw, 17px);
-  color: rgba(0, 0, 0, 0.72);
+  color: var(--kv-ink-700);
   line-height: 1.55;
   max-width: 700px;
   margin-bottom: 36px;
@@ -48,7 +48,7 @@
   flex-wrap: wrap;
   align-items: center;
   font-size: 11px;
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--kv-ink-500);
   letter-spacing: 0.08em;
   text-transform: uppercase;
   font-variant-numeric: tabular-nums;
@@ -57,7 +57,7 @@
 .kv-l-hero-meta > * + *::before {
   content: "·";
   margin: 0 10px;
-  color: rgba(0, 0, 0, 0.3);
+  color: var(--kv-ink-300);
 }
 
 .kv-l-hero-cta {
@@ -73,7 +73,7 @@
   letter-spacing: 0.04em;
   color: var(--kv-black);
   text-decoration: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid var(--kv-ink-300);
   padding-bottom: 2px;
   transition: border-color var(--kv-dur-fast) var(--kv-ease);
 }
@@ -122,7 +122,7 @@
 .kv-l-mmi-head p {
   font-family: var(--kv-mono);
   font-size: 14px;
-  color: rgba(0, 0, 0, 0.65);
+  color: var(--kv-ink-600);
   line-height: 1.6;
   max-width: 580px;
 }
@@ -132,7 +132,7 @@
   letter-spacing: 0.04em;
   color: var(--kv-black);
   text-decoration: none;
-  border-bottom: 1px solid rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid var(--kv-ink-300);
   padding-bottom: 2px;
   white-space: nowrap;
   flex-shrink: 0;
@@ -252,7 +252,7 @@
   font-family: var(--kv-mono);
   font-size: 13px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.78);
+  color: var(--kv-ink-700);
   padding: 12px 0;
   border-bottom: 1px solid var(--kv-rule-soft);
   display: flex;
@@ -334,7 +334,7 @@
   font-family: var(--kv-sans);
   font-size: 14px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.68);
+  color: var(--kv-ink-600);
   margin-bottom: 22px;
   flex: 1;
   display: -webkit-box;
@@ -446,7 +446,7 @@
   font-family: var(--kv-sans);
   font-size: 14px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.68);
+  color: var(--kv-ink-600);
   margin-bottom: 22px;
   flex: 1;
   display: -webkit-box;

@@ -47,7 +47,7 @@
 
 .ck-text {
   font-size: 12px;
-  color: rgba(0, 0, 0, 0.7);
+  color: var(--kv-ink-700);
   line-height: 1.6;
   max-width: 32ch;
   font-family: var(--kv-mono);
