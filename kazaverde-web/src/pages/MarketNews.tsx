@@ -13,6 +13,8 @@ const MARKET_NEWS_DESCRIPTION =
   "Curated economic, tourism, investment and policy news relevant to Cape Verde's property market.";
 
 const MAX_VISIBLE_TAGS = 3;
+const INITIAL_COUNT = 10;
+const LOAD_MORE_STEP = 10;
 
 function fmtDate(iso: string): string {
   return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
@@ -80,6 +82,11 @@ export default function MarketNews() {
 
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string | null>(null);
+  const [visibleCount, setVisibleCount] = useState(INITIAL_COUNT);
+
+  useEffect(() => {
+    setVisibleCount(INITIAL_COUNT);
+  }, [query, activeCat]);
 
   useEffect(() => {
     if (!items.length) return;
@@ -137,6 +144,8 @@ export default function MarketNews() {
   );
 
   const isSearching = query.trim().length > 0;
+  const visibleItems = filteredItems.slice(0, visibleCount);
+  const canLoadMore = visibleCount < filteredItems.length;
 
   return (
     <div className="kv-news">
@@ -204,7 +213,7 @@ export default function MarketNews() {
                   <Trans i18nKey="marketNews.empty" values={{ query }} components={{ 1: <b /> }} />
                 </div>
               ) : (
-                filteredItems.map((item) => (
+                visibleItems.map((item) => (
                   <article className="kv-news-item" key={item.id}>
                     <div className="kv-news-item-meta">
                       <span>{item.sourceName}</span>
@@ -256,6 +265,22 @@ export default function MarketNews() {
                   </article>
                 ))
               )}
+            {!loading && !error && filteredItems.length > 0 && (
+              <div className="kv-news-pager">
+                <div>
+                  <b>1–{visibleItems.length}</b> of <b>{filteredItems.length}</b>
+                </div>
+                {canLoadMore && (
+                  <button
+                    type="button"
+                    className="kv-pager-btn"
+                    onClick={() => setVisibleCount((c) => c + LOAD_MORE_STEP)}
+                  >
+                    Load more [↓]
+                  </button>
+                )}
+              </div>
+            )}
             </div>
 
             <aside className="kv-news-side" aria-label={t("marketNews.editorialCriteria")}>
