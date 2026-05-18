@@ -187,8 +187,11 @@
   /* Selection */
   --kv-green-tint: rgba(142, 207, 191, 0.14);
 
-  /* Accent — sage-deep becomes mid-sage so it's readable on dark surfaces */
-  --kv-green-deep: #5fa899;
+  /* Accent — muted teal for dark surfaces; original stays in sage sections */
+  --kv-green:       #5ca89a;
+  --kv-green-soft:  #3d7d70;
+  --kv-green-hover: #4d9789;
+  --kv-green-deep:  #5fa899;
 
   /* Focus */
   --kv-focus-outline: rgba(255, 255, 255, 0.4);
@@ -205,6 +208,10 @@
   --kv-black:       #0a0a0a;
   --kv-white:       #fafafa;  /* needed so kv-btn-solid text stays light on dark button */
   --kv-paper:       #ffffff;
+  /* Restore brand teal on sage surfaces — backgrounds should stay #8ecfbf */
+  --kv-green:       #8ecfbf;
+  --kv-green-soft:  #b6dfd2;
+  --kv-green-hover: #7ec0b0;
   --kv-ink-700:     rgba(0, 0, 0, 0.78);
   --kv-ink-600:     rgba(0, 0, 0, 0.62);
   --kv-ink-500:     rgba(0, 0, 0, 0.52);
