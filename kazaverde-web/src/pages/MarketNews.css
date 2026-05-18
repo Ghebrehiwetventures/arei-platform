@@ -312,9 +312,8 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-top: 48px;
+  margin-top: 0;
   padding-top: 28px;
-  border-top: 1px solid var(--kv-rule);
   font-family: var(--kv-mono);
   font-size: 11px;
   letter-spacing: 0.1em;
