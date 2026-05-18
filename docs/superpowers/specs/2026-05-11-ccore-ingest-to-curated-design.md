@@ -156,6 +156,10 @@ All skipped rows are printed at the end with the reason.
 
 ## Upsert behaviour
 
+The upsert is **status-gated**: it only modifies rows where the existing
+`publish_status='needs_review'`. Already-published rows are immutable from
+the pipeline — a re-run is a no-op for them.
+
 ```sql
 INSERT INTO kv_curated.listings (...)
 VALUES (...)
@@ -164,14 +168,41 @@ ON CONFLICT (id) DO UPDATE SET
   description = EXCLUDED.description,
   description_html = EXCLUDED.description_html,
   price = EXCLUDED.price,
-  -- ... all fields except publish_status and first_published_at
+  -- ... all fields except publish_status, first_seen_at, first_published_at
   -- publish_status is NOT overwritten (preserve manual promotions)
   -- first_seen_at is NOT overwritten (preserve original timestamp)
   updated_at = now()
+WHERE kv_curated.listings.publish_status = 'needs_review'
 ```
 
-`publish_status` and `first_published_at` are never overwritten by a re-run.
-`first_seen_at` is set only on first insert.
+- `publish_status`, `first_published_at` are never overwritten by a re-run.
+- `first_seen_at` is set only on first insert.
+- The WHERE clause makes the upsert a no-op when the existing row is already
+  `published`. Production content is protected from accidental pipeline overwrites.
+
+Before AI generation and write, the script pre-fetches `publish_status` for all
+candidate ids and filters out the already-published ones. This:
+
+- avoids wasting Anthropic / OpenAI credits on rows that won't be written
+- makes the summary output reflect what the run actually did
+
+The WHERE clause on the upsert itself is the postgres-level guarantee
+(defense-in-depth against a row being promoted between pre-fetch and write).
+
+### Re-enriching a published listing
+
+To bring a promoted listing back into the pipeline's scope, demote it
+explicitly:
+
+```sql
+UPDATE kv_curated.listings
+SET publish_status = 'needs_review'
+WHERE id = '...';
+```
+
+Then re-run the ingest. The row will be picked up, re-enriched, and
+re-promoted manually when satisfied. The friction is intentional: editing a
+`published` row is a production change and should require a conscious step.
 
 ## Verification output
 

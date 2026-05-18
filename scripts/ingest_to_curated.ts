@@ -84,10 +84,11 @@ function loadEnv(): { marketId: string; sourceId: string; dryRun: boolean } {
 
   if (!marketId) { console.error("ERROR: MARKET_ID is required"); process.exit(1); }
   if (!sourceId) { console.error("ERROR: SOURCE_ID is required"); process.exit(1); }
+  // Always required — the status pre-check runs in dry-run mode too.
+  if (!process.env.DATABASE_URL) { console.error("ERROR: DATABASE_URL is required"); process.exit(1); }
   if (!dryRun) {
     if (!process.env.ANTHROPIC_API_KEY) { console.error("ERROR: ANTHROPIC_API_KEY is required (or set DRY_RUN=1)"); process.exit(1); }
     if (!process.env.OPENAI_API_KEY)    { console.error("ERROR: OPENAI_API_KEY is required (or set DRY_RUN=1)"); process.exit(1); }
-    if (!process.env.DATABASE_URL)      { console.error("ERROR: DATABASE_URL is required"); process.exit(1); }
   }
 
   return { marketId, sourceId, dryRun };
@@ -351,7 +352,8 @@ async function generateAiDescription(
 function printSummary(
   fetched: number,
   rows: CuratedRow[],
-  skipped: Array<{ id: string; reason: string }>
+  skipped: Array<{ id: string; reason: string }>,
+  skippedPublished: number = 0
 ): void {
   const byIsland: Record<string, number> = {};
   let withPrice = 0, withBedrooms = 0, withBathrooms = 0, withImages = 0, withAi = 0;
@@ -371,6 +373,9 @@ function printSummary(
   console.log(`\n=== kv_curated insert summary ===`);
   console.log(`Total fetched:     ${fetched}`);
   skipped.forEach(s => console.log(`  Skipped (${s.reason}): 1`));
+  if (skippedPublished > 0) {
+    console.log(`Skipped (already published, untouched): ${skippedPublished}`);
+  }
   console.log(`Inserted/updated:  ${n}`);
   console.log(`\nBy island:`);
   Object.entries(byIsland).sort().forEach(([isl, cnt]) => console.log(`  ${isl.padEnd(20)} ${cnt}`));
@@ -390,13 +395,13 @@ INSERT INTO kv_curated.listings (
   price, currency, price_period, country, island, city,
   bedrooms, bathrooms, property_type, property_size_sqm, land_area_sqm,
   image_urls, source_id_primary, source_url_primary, first_seen_at,
-  publish_status, seeded_from_raw_listing_id
+  last_verified_at, publish_status, seeded_from_raw_listing_id
 ) VALUES (
   $1,  $2,  $3,  $4,  $5,
   $6,  $7,  $8,  $9,  $10, $11,
   $12, $13, $14, $15, $16,
   $17, $18, $19, $20,
-  $21, $22
+  $21, $22, $23
 )
 ON CONFLICT (id) DO UPDATE SET
   title                      = EXCLUDED.title,
@@ -418,49 +423,94 @@ ON CONFLICT (id) DO UPDATE SET
   land_area_sqm              = EXCLUDED.land_area_sqm,
   image_urls                 = EXCLUDED.image_urls,
   source_url_primary         = EXCLUDED.source_url_primary,
+  last_verified_at           = EXCLUDED.last_verified_at,
   seeded_from_raw_listing_id = EXCLUDED.seeded_from_raw_listing_id,
   updated_at                 = now()
+WHERE kv_curated.listings.publish_status = 'needs_review'
 `;
+// Status-gated: the WHERE clause makes the upsert a no-op for already-published
+// rows. To re-enrich a published listing, demote it first:
+//   UPDATE kv_curated.listings SET publish_status='needs_review' WHERE id='...';
 // publish_status, first_seen_at, first_published_at are NOT updated on conflict.
+
+interface ExistingRowMeta {
+  status: string;
+  hasAi: boolean;
+}
+
+async function fetchExistingRowMeta(ids: string[]): Promise<Map<string, ExistingRowMeta>> {
+  if (ids.length === 0) return new Map();
+  const client = createPostgresClient();
+  await client.connect();
+  try {
+    const result = await client.query<{ id: string; publish_status: string; has_ai: boolean }>(
+      `SELECT id, publish_status, (ai_descriptions IS NOT NULL) AS has_ai
+         FROM kv_curated.listings
+        WHERE id = ANY($1::text[])`,
+      [ids]
+    );
+    return new Map(result.rows.map(r => [r.id, { status: r.publish_status, hasAi: r.has_ai }]));
+  } finally {
+    await client.end();
+  }
+}
+
+export function buildKvCuratedUpsertQuery(row: CuratedRow, verifiedAt: string): { text: string; values: unknown[] } {
+  return {
+    text: INSERT_SQL,
+    values: [
+      row.id,                          // $1
+      row.title,                       // $2
+      row.description,                 // $3
+      row.description_html,            // $4  null
+      row.ai_descriptions              // $5  jsonb
+        ? JSON.stringify(row.ai_descriptions)
+        : null,
+      row.price,                       // $6
+      row.currency,                    // $7
+      row.price_period,                // $8
+      row.country,                     // $9
+      row.island,                      // $10
+      row.city,                        // $11
+      row.bedrooms,                    // $12
+      row.bathrooms,                   // $13
+      row.property_type,               // $14
+      row.property_size_sqm,           // $15
+      row.land_area_sqm,               // $16
+      row.image_urls,                  // $17  text[]
+      row.source_id_primary,           // $18
+      row.source_url_primary,          // $19
+      row.first_seen_at,               // $20
+      verifiedAt,                      // $21
+      row.publish_status,              // $22
+      row.seeded_from_raw_listing_id,  // $23
+    ],
+  };
+}
 
 async function writeToKvCurated(rows: CuratedRow[]): Promise<void> {
   if (rows.length === 0) { console.log("[Write] Nothing to write."); return; }
 
   const client = createPostgresClient();
   await client.connect();
+  const verifiedAt = new Date().toISOString();
 
   let inserted = 0;
-  let failed   = 0;
+  let raceSkipped = 0;
+  let failed = 0;
 
   for (const row of rows) {
     try {
-      await client.query(INSERT_SQL, [
-        row.id,                          // $1
-        row.title,                       // $2
-        row.description,                 // $3
-        row.description_html,            // $4  null
-        row.ai_descriptions              // $5  jsonb
-          ? JSON.stringify(row.ai_descriptions)
-          : null,
-        row.price,                       // $6
-        row.currency,                    // $7
-        row.price_period,                // $8
-        row.country,                     // $9
-        row.island,                      // $10
-        row.city,                        // $11
-        row.bedrooms,                    // $12
-        row.bathrooms,                   // $13
-        row.property_type,               // $14
-        row.property_size_sqm,           // $15
-        row.land_area_sqm,               // $16
-        row.image_urls,                  // $17  text[]
-        row.source_id_primary,           // $18
-        row.source_url_primary,          // $19
-        row.first_seen_at,               // $20
-        row.publish_status,              // $21
-        row.seeded_from_raw_listing_id,  // $22
-      ]);
-      inserted++;
+      const query = buildKvCuratedUpsertQuery(row, verifiedAt);
+      const result = await client.query(query.text, query.values);
+      if (result.rowCount === 0) {
+        // Pre-filter caught all known published rows. A 0 here means the row
+        // was promoted between the pre-check and the write — rare but possible.
+        raceSkipped++;
+        console.warn(`[Write] ⊘ ${row.id}: WHERE skipped (promoted mid-run?)`);
+      } else {
+        inserted++;
+      }
     } catch (err) {
       failed++;
       console.error(`[Write] ✗ ${row.id}: ${err instanceof Error ? err.message : String(err)}`);
@@ -468,7 +518,8 @@ async function writeToKvCurated(rows: CuratedRow[]): Promise<void> {
   }
 
   await client.end();
-  console.log(`[Write] ${inserted} upserted, ${failed} failed`);
+  const raceNote = raceSkipped > 0 ? `, ${raceSkipped} race-skipped` : "";
+  console.log(`[Write] ${inserted} upserted${raceNote}, ${failed} failed`);
 }
 
 // ─── Location hooks ───────────────────────────────────────────────────────────
@@ -638,39 +689,71 @@ async function main(): Promise<void> {
     skipped.forEach(s => console.log(`  ${s.id}: ${s.reason}`));
   }
 
-  if (!dryRun) {
-    const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
-    const openai    = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+  // Status-gating: published rows are immutable from the pipeline. Pre-filter
+  // them so we don't waste AI calls and so the summary reflects reality.
+  // Also pre-fetch ai_descriptions presence so we can skip AI generation for
+  // rows that already have one — the upsert preserves existing ai_descriptions,
+  // so re-generating would just burn API credits with no effect.
+  const existingMeta = await fetchExistingRowMeta(rows.map(r => r.id));
+  const publishedIds = new Set(
+    [...existingMeta.entries()]
+      .filter(([, m]) => m.status === "published")
+      .map(([id]) => id)
+  );
+  const haveAiIds = new Set(
+    [...existingMeta.entries()]
+      .filter(([, m]) => m.hasAi)
+      .map(([id]) => id)
+  );
+  if (publishedIds.size > 0) {
+    console.log(`\n[Status-gate] ${publishedIds.size} listings already published — skipping (untouched):`);
+    for (const id of publishedIds) console.log(`  ⊘ ${id}`);
+    console.log(`  (to re-enrich one: UPDATE kv_curated.listings SET publish_status='needs_review' WHERE id='...';)`);
+  }
+  const writable = rows.filter(r => !publishedIds.has(r.id));
+  console.log(`\nRows to process: ${writable.length}`);
 
-    console.log(`\n[AI] Generating descriptions for ${rows.length} rows...`);
+  if (!dryRun) {
+    const needsAi = writable.filter(r => !haveAiIds.has(r.id));
+    const aiSkippedExisting = writable.length - needsAi.length;
+    if (aiSkippedExisting > 0) {
+      console.log(`\n[AI-gate] ${aiSkippedExisting}/${writable.length} rows already have ai_descriptions — skipping generation (upsert preserves existing).`);
+    }
+
     let aiOk = 0;
-    let aiSkipped = 0;
+    let aiSkippedShort = 0;
     let aiFailed = 0;
 
-    for (const row of rows) {
-      const ai = await generateAiDescription(row, anthropic, openai);
-      if (ai) {
-        row.ai_descriptions = ai;
-        aiOk++;
-        console.log(`[AI] ✓ ${row.id}`);
-      } else if (!row.description || row.description.length < MIN_DESC_LENGTH) {
-        aiSkipped++;
-      } else {
-        aiFailed++;
+    if (needsAi.length > 0) {
+      const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
+      const openai    = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+
+      console.log(`\n[AI] Generating descriptions for ${needsAi.length} rows...`);
+      for (const row of needsAi) {
+        const ai = await generateAiDescription(row, anthropic, openai);
+        if (ai) {
+          row.ai_descriptions = ai;
+          aiOk++;
+          console.log(`[AI] ✓ ${row.id}`);
+        } else if (!row.description || row.description.length < MIN_DESC_LENGTH) {
+          aiSkippedShort++;
+        } else {
+          aiFailed++;
+        }
       }
     }
 
-    console.log(`[AI] Complete: ${aiOk} generated, ${aiSkipped} skipped (short desc), ${aiFailed} failed`);
+    console.log(`[AI] Complete: ${aiOk} generated, ${aiSkippedExisting} skipped (already in DB), ${aiSkippedShort} skipped (short desc), ${aiFailed} failed`);
   }
 
   if (dryRun) {
-    printSummary(listings.length, rows, skipped);
+    printSummary(listings.length, writable, skipped, publishedIds.size);
     console.log(`\n[DRY_RUN] No rows written.`);
     return;
   }
 
-  await writeToKvCurated(rows);
-  printSummary(listings.length, rows, skipped);
+  await writeToKvCurated(writable);
+  printSummary(listings.length, writable, skipped, publishedIds.size);
   console.log(`\nNext step: verify rows then run promotion SQL (see spec).`);
 }
 
