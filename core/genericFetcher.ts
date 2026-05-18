@@ -186,6 +186,15 @@ export interface SourceFetchConfig {
   /** ID prefix for generated listing IDs */
   id_prefix?: string;
 
+  /** Regex (with one capture group) extracting a stable id from the detail URL.
+   *  Use this when the site has the same listing under multiple URL slugs
+   *  (e.g. language variants) so the same row resolves to the same id. */
+  id_url_pattern?: string;
+
+  /** Regex substitution applied to detail URLs after extraction (one-shot).
+   *  Use when the listing card hrefs point at the wrong language variant. */
+  detail_url_rewrite?: { from: string; to: string };
+
   /** CMS type for selector fallbacks (auto-detected if not specified) */
   cms_type?: CMSType;
 
@@ -263,6 +272,33 @@ function generateListingId(prefix: string, title: string, price: number | undefi
   const input = `${title || ""}|${price || ""}|${url}`;
   const hash = crypto.createHash("md5").update(input).digest("hex").slice(0, 12);
   return `${prefix}_${hash}`;
+}
+
+/** Extract a stable id from the URL using the configured regex (one capture group).
+ *  Returns undefined when no pattern is configured or the URL doesn't match —
+ *  callers fall back to the title+price+url hash. */
+function extractIdFromUrl(url: string, pattern: string | undefined): string | undefined {
+  if (!pattern || !url) return undefined;
+  try {
+    const m = url.match(new RegExp(pattern));
+    return m?.[1];
+  } catch {
+    return undefined;
+  }
+}
+
+/** Apply the configured detail URL rewrite. Returns the input unchanged when
+ *  no rewrite is configured or the pattern doesn't match. */
+function applyDetailUrlRewrite(
+  url: string,
+  rewrite: { from: string; to: string } | undefined
+): string {
+  if (!rewrite || !url) return url;
+  try {
+    return url.replace(new RegExp(rewrite.from), rewrite.to);
+  } catch {
+    return url;
+  }
 }
 
 function makeAbsoluteUrl(url: string, baseUrl: string): string {
@@ -632,11 +668,14 @@ function mapJsonItem(
   }
   imageUrls = dedupeImageUrls(imageUrls).slice(0, map.images?.limit ?? 10);
 
-  // ID fallback chain: explicit id path → MLSID-like → detailUrl hash
+  // ID fallback chain: explicit id path → url pattern → title+price+url hash
   let id: string | undefined;
   if (map.id) {
     const raw = getByPath(item, map.id);
     if (raw != null) id = String(raw);
+  }
+  if (!id && detailUrl) {
+    id = extractIdFromUrl(detailUrl, config.id_url_pattern);
   }
   const idPrefix = config.id_prefix || config.id.replace(/^cv_/, "");
   const listingId = id
@@ -896,6 +935,8 @@ function parseListingsFromHtml(
       if (title.toLowerCase() === "en" || title.toLowerCase() === "pt") return;
 
       const idPrefix = config.id_prefix || config.id.replace(/^cv_/, "");
+      const urlId = extractIdFromUrl(absoluteUrl, config.id_url_pattern);
+      const rewrittenUrl = applyDetailUrlRewrite(absoluteUrl, config.detail_url_rewrite);
 
       const projectMetadata = deriveProjectMetadata({
         title,
@@ -904,7 +945,7 @@ function parseListingsFromHtml(
       });
 
       listings.push({
-        id: generateListingId(idPrefix, title, price, absoluteUrl),
+        id: urlId ? `${idPrefix}_${urlId}` : generateListingId(idPrefix, title, price, rewrittenUrl),
         sourceId: config.id,
         sourceName: config.name,
         source_ref: projectMetadata.source_ref,
@@ -916,7 +957,7 @@ function parseListingsFromHtml(
         description: undefined, // Usually not available on list pages
         imageUrls: dedupeImageUrls(imageUrls).slice(0, 10),
         location: location || undefined,
-        detailUrl: absoluteUrl?.replace(/\/+$/, "") || absoluteUrl,
+        detailUrl: rewrittenUrl?.replace(/\/+$/, "") || rewrittenUrl,
         createdAt: now,
       });
         processedUrls.add(absoluteUrl);
@@ -2018,6 +2059,8 @@ export function buildFetchConfigFromYaml(
     price_format: yamlSource.price_format,
     location_patterns: yamlSource.location_patterns || [],
     id_prefix: yamlSource.id_prefix,
+    id_url_pattern: yamlSource.id_url_pattern,
+    detail_url_rewrite: yamlSource.detail_url_rewrite,
     item_map: yamlSource.item_map,
     ...overrides,
   };

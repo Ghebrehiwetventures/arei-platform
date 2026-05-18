@@ -140,6 +140,13 @@ export interface SourceConfig {
   price_format?: PriceFormatConfig;
   location_patterns?: string[];
   id_prefix?: string;
+  /** Regex (with one capture group) extracting a stable id from the detail URL.
+   *  When set, takes precedence over the title+price+url hash so the same listing
+   *  resolves to the same id across language variants of the same site. */
+  id_url_pattern?: string;
+  /** Regex substitution applied to detail URLs after extraction. Use when the
+   *  listing card hrefs point at the wrong language variant of the same page. */
+  detail_url_rewrite?: { from: string; to: string };
   detail?: DetailConfig;
 
   selectors?: SelectorsConfig;
