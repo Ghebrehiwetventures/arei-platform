@@ -197,21 +197,15 @@
   --kv-focus-outline: rgba(255, 255, 255, 0.4);
 }
 
-/* Sage-background sections always use dark ink — the green surface is a
-   brand constant that doesn't invert. Re-scope every ink token locally
-   so all child elements (text, borders, buttons) stay dark on green. */
+/* Shared ink re-scope for all sage-background sections — keeps text dark. */
 [data-theme="dark"] .kv-l-hero,
 [data-theme="dark"] .kv-hero,
 [data-theme="dark"] .nl-cta,
 [data-theme="dark"] .nlp-card,
 [data-theme="dark"] .nav {
   --kv-black:       #0a0a0a;
-  --kv-white:       #fafafa;  /* needed so kv-btn-solid text stays light on dark button */
+  --kv-white:       #fafafa;
   --kv-paper:       #ffffff;
-  /* Restore brand teal on sage surfaces — backgrounds should stay #8ecfbf */
-  --kv-green:       #8ecfbf;
-  --kv-green-soft:  #b6dfd2;
-  --kv-green-hover: #7ec0b0;
   --kv-ink-700:     rgba(0, 0, 0, 0.78);
   --kv-ink-600:     rgba(0, 0, 0, 0.62);
   --kv-ink-500:     rgba(0, 0, 0, 0.52);
@@ -222,6 +216,18 @@
   --kv-rule-soft:   rgba(0, 0, 0, 0.08);
   --kv-hover:       rgba(0, 0, 0, 0.08);
   --kv-focus-outline: rgba(0, 0, 0, 0.4);
+}
+
+/* Hero / CTA backgrounds keep original brand teal — these big surfaces
+   are a brand constant. Nav intentionally uses the muted dark-mode teal
+   so the colour shift is visible when toggling. */
+[data-theme="dark"] .kv-l-hero,
+[data-theme="dark"] .kv-hero,
+[data-theme="dark"] .nl-cta,
+[data-theme="dark"] .nlp-card {
+  --kv-green:       #8ecfbf;
+  --kv-green-soft:  #b6dfd2;
+  --kv-green-hover: #7ec0b0;
 }
 
 /* "Why it matters" box — hardcoded off-white bg + deep-green label,
