@@ -19,25 +19,6 @@ function isoToDate(iso: string): string {
   return iso.slice(0, 10);
 }
 
-// Safety net: map any legacy 11-category value to the consolidated 5 so the
-// UI is correct even before migration 041 normalises the stored data. Remove
-// this once 041 has run in prod and the CHECK constraint is in place.
-const LEGACY_CATEGORY: Record<string, MarketNewsCategory> = {
-  "Currency / macro risk": "Economy",
-  "Foreign investment": "Economy",
-  Hospitality: "Tourism",
-  Aviation: "Infrastructure",
-  Construction: "Infrastructure",
-  "Policy / regulation": "Policy & Tax",
-  "Tax / residency": "Policy & Tax",
-  "Banking / credit": "Banking & Credit",
-  Property: "Economy",
-  Other: "Economy",
-};
-
-function normalizeCategory(raw: string): MarketNewsCategory {
-  return LEGACY_CATEGORY[raw] ?? (raw as MarketNewsCategory);
-}
 
 function toMarketNewsItem(row: MarketNewsRow): MarketNewsItem {
   return {
@@ -47,7 +28,7 @@ function toMarketNewsItem(row: MarketNewsRow): MarketNewsItem {
     sourceName: row.source_name,
     sourceUrl: row.source_url,
     publishedAt: row.published_at ? isoToDate(row.published_at) : isoToDate(row.created_at),
-    category: normalizeCategory(row.category),
+    category: row.category as MarketNewsCategory,
     snippet: row.snippet,
     whyItMatters: row.why_it_matters ?? undefined,
     signalTags: row.signal_tags ?? undefined,
