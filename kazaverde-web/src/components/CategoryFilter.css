@@ -1,0 +1,41 @@
+/* Shared category filter row — quiet mono, brand-restrained.
+   No "·" separators (they orphan on wrap); spacing + a sage underline
+   on the active item carry the structure. Sage is the only colour. */
+
+.kv-catfilter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px 18px;
+  margin-top: 22px;
+}
+
+.kv-catfilter-item {
+  appearance: none;
+  border: none;
+  background: none;
+  padding: 0 0 3px;
+  font-family: var(--kv-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  cursor: pointer;
+  border-bottom: 2px solid transparent;
+  transition: color var(--kv-dur-fast) var(--kv-ease),
+              border-color var(--kv-dur-fast) var(--kv-ease);
+}
+
+.kv-catfilter-item:hover {
+  color: var(--kv-black);
+}
+
+.kv-catfilter-item[aria-pressed="true"] {
+  color: var(--kv-black);
+  border-bottom-color: var(--kv-green);
+}
+
+.kv-catfilter-item:focus-visible {
+  outline: 2px solid var(--kv-green);
+  outline-offset: 3px;
+}

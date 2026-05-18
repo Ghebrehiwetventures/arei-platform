@@ -1,9 +1,11 @@
 import { useEffect, useMemo, useState } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
+import PageHeader from "../components/PageHeader";
+import CategoryFilter from "../components/CategoryFilter";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useMarketNews } from "../hooks/useMarketNews";
-import type { MarketNewsItem } from "../lib/market-news-data";
+import { MARKET_NEWS_CATEGORIES, type MarketNewsItem } from "../lib/market-news-data";
 import "./MarketNews.css";
 
 const MARKET_NEWS_DESCRIPTION =
@@ -66,6 +68,7 @@ export default function MarketNews() {
   const { items, loading, error } = useMarketNews();
 
   const [query, setQuery] = useState("");
+  const [activeCat, setActiveCat] = useState<string | null>(null);
 
   useEffect(() => {
     if (!items.length) return;
@@ -100,52 +103,73 @@ export default function MarketNews() {
   }, [items]);
 
   const sortedItems = useMemo(() => [...items].sort(sortNews), [items]);
+
+  // Only categories that actually have items, in canonical order.
+  const presentCategories = useMemo(() => {
+    const present = new Set(items.map((i) => i.category));
+    return MARKET_NEWS_CATEGORIES.filter((c) => present.has(c)).map((c) => ({
+      value: c,
+      label: c,
+    }));
+  }, [items]);
+
   const filteredItems = useMemo(
-    () => sortedItems.filter((item) => matches(query, item)),
-    [query, sortedItems],
+    () =>
+      sortedItems.filter(
+        (item) =>
+          (activeCat === null || item.category === activeCat) &&
+          matches(query, item),
+      ),
+    [query, activeCat, sortedItems],
   );
 
   const isSearching = query.trim().length > 0;
+  const isFiltering = isSearching || activeCat !== null;
 
   return (
     <div className="kv-news">
-      <header className="kv-news-head">
-        <div className="kv-news-head-inner">
-          <div className="kv-news-eyebrow">{t("marketNews.eyebrow")}</div>
-          <h1 className="kv-news-title">{t("marketNews.metaTitle")}</h1>
-          <p className="kv-news-sub">{t("marketNews.description")}</p>
+      <PageHeader
+        eyebrow={t("marketNews.eyebrow")}
+        title={t("marketNews.metaTitle")}
+        sub={t("marketNews.description")}
+      >
+        <form
+          className="kv-news-search"
+          onSubmit={(event) => event.preventDefault()}
+          role="search"
+        >
+          <span className="kv-news-search-icon" aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            className="kv-news-search-input"
+            placeholder={t("marketNews.searchPlaceholder")}
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            aria-label={t("marketNews.searchLabel")}
+          />
+          {query && (
+            <button
+              type="button"
+              className="kv-news-search-clear"
+              onClick={() => setQuery("")}
+              aria-label={t("marketNews.clearSearch")}
+            >
+              ×
+            </button>
+          )}
+        </form>
 
-          <form
-            className="kv-news-search"
-            onSubmit={(event) => event.preventDefault()}
-            role="search"
-          >
-            <span className="kv-news-search-icon" aria-hidden="true">⌕</span>
-            <input
-              type="search"
-              className="kv-news-search-input"
-              placeholder={t("marketNews.searchPlaceholder")}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              aria-label={t("marketNews.searchLabel")}
-            />
-            {query && (
-              <button
-                type="button"
-                className="kv-news-search-clear"
-                onClick={() => setQuery("")}
-                aria-label={t("marketNews.clearSearch")}
-              >
-                ×
-              </button>
-            )}
-          </form>
-        </div>
-      </header>
+        <CategoryFilter
+          allLabel={t("common.allCategories")}
+          options={presentCategories}
+          active={activeCat}
+          onChange={setActiveCat}
+        />
+      </PageHeader>
 
       <main className="kv-news-body">
         <section className="kv-news-section">
-          {isSearching && (
+          {isFiltering && (
             <div className="kv-news-result-meta">
               <b>{filteredItems.length}</b>{" "}
               {filteredItems.length === 1 ? t("common.result") : t("common.results")}
@@ -168,7 +192,7 @@ export default function MarketNews() {
                     <div className="kv-news-item-meta">
                       <span>{item.sourceName}</span>
                       <span>{fmtDate(item.publishedAt)}</span>
-                      <span>{item.category}</span>
+                      <span className="kv-news-cat">{item.category}</span>
                       {item.relevance === "high" && (
                         <span className="kv-news-relevance">
                           {t("marketNews.relevanceBadge")}

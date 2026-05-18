@@ -5,6 +5,8 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { BLOG_ARTICLES } from "../lib/blog-data";
 import { FAQ_ENTRIES, type FaqEntry } from "../lib/faq-data";
 import NewsletterCta from "../components/NewsletterCta";
+import PageHeader from "../components/PageHeader";
+import CategoryFilter from "../components/CategoryFilter";
 import "./BlogList.css";
 
 function fmtDate(iso: string, locale = "en-GB"): string {
@@ -191,6 +193,7 @@ export default function BlogList() {
   );
 
   const [query, setQuery] = useState("");
+  const [activeCat, setActiveCat] = useState<string | null>(null);
   const [openFaq, setOpenFaq] = useState<number | null>(null);
 
   /* Inject FAQPage JSON-LD built from the same FAQ_ENTRIES rendered on
@@ -241,63 +244,86 @@ export default function BlogList() {
     [query],
   );
 
+  // Only article categories that actually exist, in a fixed order.
+  const presentCategories = useMemo(() => {
+    const order: Array<"market" | "buying" | "legal" | "tax"> = [
+      "market",
+      "buying",
+      "legal",
+      "tax",
+    ];
+    const present = new Set(BLOG_ARTICLES.map((a) => categoryFor(a.tags)));
+    return order
+      .filter((c) => present.has(c))
+      .map((c) => ({ value: c, label: isPt ? categoryLabelPt(c) : categoryLabel(c) }));
+  }, [isPt]);
+
+  const displayedArticles = useMemo(
+    () =>
+      activeCat === null
+        ? filteredArticles
+        : filteredArticles.filter((a) => categoryFor(a.tags) === activeCat),
+    [filteredArticles, activeCat],
+  );
+
   const isSearching = query.trim().length > 0;
   const totalHits = filteredArticles.length + filteredFaq.length;
 
   return (
     <div className="kv-blog">
       {/* Off-white header band — quieter than the main hero */}
-      <header className="kv-blog-head">
-        <div className="kv-blog-head-inner">
-          <div className="kv-blog-eyebrow">{t("blog.eyebrow")}</div>
-          <h1 className="kv-blog-title">
-            {t("blog.title")}
-          </h1>
-          <p className="kv-blog-sub">
-            {t("blog.sub")}
-          </p>
-
-          <form
-            className="kv-blog-search"
-            onSubmit={(e) => e.preventDefault()}
-            role="search"
-          >
-            <span className="kv-blog-search-icon" aria-hidden="true">⌕</span>
-            <input
-              type="search"
-              className="kv-blog-search-input"
-              placeholder={t("blog.placeholder")}
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              aria-label={t("blog.searchLabel")}
-            />
-            {isSearching && (
-              <button
-                type="button"
-                className="kv-blog-search-clear"
-                onClick={() => setQuery("")}
-                aria-label={t("blog.clearSearch")}
-              >
-                ×
-              </button>
-            )}
-          </form>
-
+      <PageHeader
+        eyebrow={t("blog.eyebrow")}
+        title={t("blog.title")}
+        sub={t("blog.sub")}
+      >
+        <form
+          className="kv-blog-search"
+          onSubmit={(e) => e.preventDefault()}
+          role="search"
+        >
+          <span className="kv-blog-search-icon" aria-hidden="true">⌕</span>
+          <input
+            type="search"
+            className="kv-blog-search-input"
+            placeholder={t("blog.placeholder")}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            aria-label={t("blog.searchLabel")}
+          />
           {isSearching && (
-            <div className="kv-blog-search-meta">
-              <b>{totalHits}</b> {totalHits === 1 ? t("common.result") : t("common.results")}
-              {" · "}
-              {filteredArticles.length} {filteredArticles.length === 1 ? t("blog.guide") : t("blog.guides")}
-              {" · "}
-              {filteredFaq.length} FAQ
-            </div>
+            <button
+              type="button"
+              className="kv-blog-search-clear"
+              onClick={() => setQuery("")}
+              aria-label={t("blog.clearSearch")}
+            >
+              ×
+            </button>
           )}
-        </div>
-      </header>
+        </form>
+
+        <CategoryFilter
+          allLabel={t("common.allCategories")}
+          options={presentCategories}
+          active={activeCat}
+          onChange={setActiveCat}
+        />
+
+        {isSearching && (
+          <div className="kv-blog-search-meta">
+            <b>{totalHits}</b> {totalHits === 1 ? t("common.result") : t("common.results")}
+            {" · "}
+            {filteredArticles.length} {filteredArticles.length === 1 ? t("blog.guide") : t("blog.guides")}
+            {" · "}
+            {filteredFaq.length} FAQ
+          </div>
+        )}
+      </PageHeader>
 
       <section className="kv-blog-body">
         {/* Articles — hide block when searching narrows it to zero */}
-        {(filteredArticles.length > 0 || !isSearching) && (
+        {(displayedArticles.length > 0 || !isSearching) && (
           <div className="kv-blog-section">
             <div className="kv-blog-section-head">
               <div className="kv-blog-section-eyebrow">{t("blog.sectionGuides")}</div>
@@ -306,13 +332,13 @@ export default function BlogList() {
               </h2>
             </div>
 
-            {filteredArticles.length === 0 ? (
+            {displayedArticles.length === 0 ? (
               <div className="kv-blog-empty">
                 <Trans i18nKey="blog.noGuides" values={{ query }} components={{ 1: <b /> }} />
               </div>
             ) : (
               <div className="kv-blog-grid">
-                {filteredArticles.map((a, i) => {
+                {displayedArticles.map((a, i) => {
                   const cat = categoryFor(a.tags);
                   return (
                     <Link
@@ -339,10 +365,12 @@ export default function BlogList() {
           </div>
         )}
 
-        {/* FAQ — accordion. Hide block entirely if search filters it to zero
-            AND there are guide hits, so the page doesn't show an empty FAQ
-            section beneath a populated guide grid. */}
-        {(filteredFaq.length > 0 || !isSearching || filteredArticles.length === 0) && (
+        {/* FAQ — accordion. Hidden while a category filter is active (the
+            category is an article-grid concept; FAQ has its own taxonomy).
+            Otherwise hide if search filters it to zero AND there are guide
+            hits, so the page doesn't show an empty FAQ below a full grid. */}
+        {activeCat === null &&
+          (filteredFaq.length > 0 || !isSearching || displayedArticles.length === 0) && (
           <div className="kv-blog-section kv-blog-faq-section">
             <div className="kv-blog-section-head">
               <div className="kv-blog-section-eyebrow">FAQ</div>
