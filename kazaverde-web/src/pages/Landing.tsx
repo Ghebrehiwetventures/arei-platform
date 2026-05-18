@@ -252,6 +252,13 @@ export default function Landing() {
     return `var(--kv-cat-${i >= 0 ? i + 1 : 1})`;
   };
 
+  const GUIDE_CAT_TONE: Record<string, string> = {
+    market: "var(--kv-cat-1)",
+    legal: "var(--kv-cat-2)",
+    buying: "var(--kv-cat-3)",
+    tax: "var(--kv-cat-4)",
+  };
+
   /* Live featured listings + total count for the CTA. Falls back to the
      hardcoded ISLANDS_COUNT/SOURCES_COUNT if Supabase isn't configured. */
   const [featured, setFeatured] = useState<ListingCard[]>([]);
@@ -690,7 +697,10 @@ export default function Landing() {
                   const cat = categoryFor(a.tags);
                   return (
                     <Link key={a.slug} to={`/blog/${a.slug}`} className="kv-l-guide">
-                  <span className="kv-eyebrow">{t(`landing.${cat}`)}</span>
+                  <span
+                    className="kv-l-guide-cat"
+                    style={{ "--cat-tone": GUIDE_CAT_TONE[cat] ?? "var(--kv-cat-1)" } as CSSProperties}
+                  >{t(`landing.${cat}`)}</span>
                   <div className="kv-l-guide-title">{isPt ? GUIDE_TEASER_PT[a.slug]?.title ?? a.title : a.title}</div>
                   <div className="kv-l-guide-excerpt">{isPt ? GUIDE_TEASER_PT[a.slug]?.description ?? a.description : a.description}</div>
                   <div className="kv-l-guide-foot">

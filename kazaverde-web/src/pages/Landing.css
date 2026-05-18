@@ -316,7 +316,26 @@
 }
 .kv-l-guide:hover { border-color: rgba(0, 0, 0, 0.4); transform: translateY(-2px); }
 
-.kv-l-guide .kv-eyebrow { margin-bottom: 14px; }
+.kv-l-guide-cat {
+  display: inline-flex;
+  align-items: center;
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  margin-bottom: 14px;
+}
+.kv-l-guide-cat::before {
+  content: "";
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  margin-right: 8px;
+  background: var(--cat-tone, var(--kv-green));
+  flex-shrink: 0;
+}
 .kv-l-guide-title {
   font-family: var(--kv-mono);
   font-size: 17px;
