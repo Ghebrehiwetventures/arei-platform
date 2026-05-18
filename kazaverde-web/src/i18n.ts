@@ -755,7 +755,7 @@ const resources = {
         verified: "Com ligação à fonte",
         description: "Descrição",
         aiBadge: "Reescrita por IA",
-        aiCaption: "Descrição do anúncio reescrita com IA.",
+        aiCaption: "Descrição do anúncio reescrita com AI.",
         originalDescription: "Descrição original da fonte",
         noDescription: "Não existe descrição disponível para este anúncio.",
         indexRecord: "Registo do índice",
