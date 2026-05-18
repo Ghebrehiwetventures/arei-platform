@@ -520,14 +520,8 @@ export default function Detail() {
             burying first/last-seen in the sidebar. */}
         <div className="kv-d-verified">
           <span className="kv-d-verified-dot" aria-hidden="true" />
-          <span className="kv-d-verified-lbl">{t("detail.lastChecked")}</span>
-          <span className="kv-d-verified-val">{fmtVerifiedTime(detail.last_seen_at)}</span>
-          {detail.first_seen_at && (
-            <>
-              <span className="kv-d-verified-sep" aria-hidden="true">·</span>
-              <span className="kv-d-verified-val">Indexed {fmtDaysAgo(detail.first_seen_at)}</span>
-            </>
-          )}
+          <span className="kv-d-verified-lbl">{t("detail.firstIndexed")}</span>
+          <span className="kv-d-verified-val">{fmtVerifiedTime(detail.first_seen_at)}</span>
         </div>
       </header>
 

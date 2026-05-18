@@ -242,8 +242,7 @@ const resources = {
         verified: "Source-linked",
         description: "Description",
         aiBadge: "AI rewrite",
-        aiCaption:
-          "Description rewritten from the source record using AREI's existing listing translation pipeline.",
+        aiCaption: "Listing description rewritten with AI.",
         originalDescription: "Original source description",
         noDescription: "No description is available for this listing.",
         indexRecord: "Index record",
@@ -764,9 +763,8 @@ const resources = {
         sourceRecord: "Registo da fonte",
         verified: "Com ligação à fonte",
         description: "Descrição",
-        aiBadge: "Reescrita por IA",
-        aiCaption:
-          "Descrição reescrita a partir do registo da fonte usando o pipeline de tradução de anúncios existente da AREI.",
+        aiBadge: "Reescrita por AI",
+        aiCaption: "Descrição do anúncio reescrita com AI.",
         originalDescription: "Descrição original da fonte",
         noDescription: "Não existe descrição disponível para este anúncio.",
         indexRecord: "Registo do índice",
