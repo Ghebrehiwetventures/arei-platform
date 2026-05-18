@@ -218,17 +218,6 @@
   --kv-focus-outline: rgba(0, 0, 0, 0.4);
 }
 
-/* Hero / CTA backgrounds keep original brand teal — these big surfaces
-   are a brand constant. Nav intentionally uses the muted dark-mode teal
-   so the colour shift is visible when toggling. */
-[data-theme="dark"] .kv-l-hero,
-[data-theme="dark"] .kv-hero,
-[data-theme="dark"] .nl-cta,
-[data-theme="dark"] .nlp-card {
-  --kv-green:       #8ecfbf;
-  --kv-green-soft:  #b6dfd2;
-  --kv-green-hover: #7ec0b0;
-}
 
 /* "Why it matters" box — hardcoded off-white bg + deep-green label,
    needs explicit dark overrides since it doesn't use CSS variables. */
