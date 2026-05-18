@@ -2858,17 +2858,9 @@ type EnrichState = "idle" | "loading" | "done" | "error";
 const MARKET_NEWS_CATEGORIES = [
   "Economy",
   "Tourism",
-  "Hospitality",
   "Infrastructure",
-  "Aviation",
-  "Foreign investment",
-  "Policy / regulation",
-  "Tax / residency",
-  "Construction",
-  "Banking / credit",
-  "Currency / macro risk",
-  "Property",
-  "Other",
+  "Policy & Tax",
+  "Banking & Credit",
 ];
 
 function MarketNewsEditPanel({

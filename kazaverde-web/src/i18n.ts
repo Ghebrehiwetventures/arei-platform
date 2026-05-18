@@ -324,6 +324,13 @@ const resources = {
       marketNews: {
         eyebrow: "Market News",
         relevanceBadge: "High relevance",
+        categories: {
+          Economy: "Economy",
+          Tourism: "Tourism",
+          Infrastructure: "Infrastructure",
+          "Policy & Tax": "Policy & Tax",
+          "Banking & Credit": "Banking & Credit",
+        },
         metaTitle: "Cape Verde Market News",
         description:
           "Curated economic, tourism, investment and policy news relevant to Cape Verde's property market.",
@@ -838,6 +845,13 @@ const resources = {
       marketNews: {
         eyebrow: "Notícias de Mercado",
         relevanceBadge: "Alta relevância",
+        categories: {
+          Economy: "Economia",
+          Tourism: "Turismo",
+          Infrastructure: "Infraestrutura",
+          "Policy & Tax": "Política & Fiscal",
+          "Banking & Credit": "Banca & Crédito",
+        },
         metaTitle: "Notícias do mercado de Cabo Verde",
         description:
           "Notícias selecionadas sobre economia, turismo, investimento e políticas relevantes para o mercado imobiliário de Cabo Verde.",

@@ -65,6 +65,9 @@ export default function MarketNews() {
   const { t } = useTranslation();
   useDocumentMeta(t("marketNews.metaTitle"), t("marketNews.description"));
 
+  const catLabel = (c: string) =>
+    t(`marketNews.categories.${c}`, { defaultValue: c });
+
   const { items, loading, error } = useMarketNews();
 
   const [query, setQuery] = useState("");
@@ -109,9 +112,10 @@ export default function MarketNews() {
     const present = new Set(items.map((i) => i.category));
     return MARKET_NEWS_CATEGORIES.filter((c) => present.has(c)).map((c) => ({
       value: c,
-      label: c,
+      label: catLabel(c),
     }));
-  }, [items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items, t]);
 
   const filteredItems = useMemo(
     () =>
@@ -192,7 +196,7 @@ export default function MarketNews() {
                     <div className="kv-news-item-meta">
                       <span>{item.sourceName}</span>
                       <span>{fmtDate(item.publishedAt)}</span>
-                      <span className="kv-news-cat">{item.category}</span>
+                      <span className="kv-news-cat">{catLabel(item.category)}</span>
                       {item.relevance === "high" && (
                         <span className="kv-news-relevance">
                           {t("marketNews.relevanceBadge")}

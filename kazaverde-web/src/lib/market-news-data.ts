@@ -31,15 +31,9 @@
 export type MarketNewsCategory =
   | "Economy"
   | "Tourism"
-  | "Hospitality"
   | "Infrastructure"
-  | "Aviation"
-  | "Foreign investment"
-  | "Policy / regulation"
-  | "Tax / residency"
-  | "Construction"
-  | "Banking / credit"
-  | "Currency / macro risk";
+  | "Policy & Tax"
+  | "Banking & Credit";
 
 export type MarketNewsItem = {
   id: string;
@@ -60,15 +54,9 @@ export type MarketNewsItem = {
 export const MARKET_NEWS_CATEGORIES: MarketNewsCategory[] = [
   "Economy",
   "Tourism",
-  "Hospitality",
   "Infrastructure",
-  "Aviation",
-  "Foreign investment",
-  "Policy / regulation",
-  "Tax / residency",
-  "Construction",
-  "Banking / credit",
-  "Currency / macro risk",
+  "Policy & Tax",
+  "Banking & Credit",
 ];
 
 export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
@@ -80,7 +68,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     sourceUrl:
       "https://www.governo.cv/cabo-verde-airlines-expande-rota-internacional-com-novos-voos-praia-providence-e-praia-recife/",
     publishedAt: "2026-05-06",
-    category: "Aviation",
+    category: "Infrastructure",
     snippet:
       "Cabo Verde Airlines added weekly Praia-Providence and Praia-Recife services, restoring direct links with the United States and Brazil from the capital.",
     whyItMatters:
@@ -112,7 +100,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     sourceUrl:
       "https://www.governo.cv/governo-formaliza-privatizacao-da-cabo-verde-handling-com-a-swissport/",
     publishedAt: "2026-04-28",
-    category: "Foreign investment",
+    category: "Economy",
     snippet:
       "The government formalized the sale of a majority stake in Cabo Verde Handling to Swissport, alongside a planned investment program for airport services.",
     whyItMatters:
@@ -128,7 +116,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     sourceUrl:
       "https://www.governo.cv/publicacao-do-novo-codigo-do-processo-administrativo-no-boletim-oficial/",
     publishedAt: "2026-04-24",
-    category: "Policy / regulation",
+    category: "Policy & Tax",
     snippet:
       "Cape Verde published a new Administrative Procedure Code that is scheduled to enter into force in January 2027.",
     whyItMatters:
@@ -143,7 +131,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     sourceUrl:
       "https://marriott.pressarea.com/en/news/marriott-international-makes-its-entry-into-cape-verde-with-the-opening-of-four-points-by-sheraton-so-vicente-resort/30032026",
     publishedAt: "2026-03-30",
-    category: "Hospitality",
+    category: "Tourism",
     snippet:
       "Marriott announced its Cape Verde debut with Four Points by Sheraton Sao Vicente Resort above Laginha Beach in Mindelo.",
     whyItMatters:
@@ -159,7 +147,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     sourceUrl:
       "https://diarioimobiliario.pt/Agua-Hotels-investe-12-milhoes-de-euros-em-novo-projecto-na-Ilha-do-Sal",
     publishedAt: "2026-03-03",
-    category: "Construction",
+    category: "Infrastructure",
     snippet:
       "Agua Hotels presented a planned four-star tourist-apartment project in Santa Maria, Sal, with an estimated investment of EUR 12 million.",
     whyItMatters:
@@ -189,7 +177,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     sourceName: "Ministério das Finanças",
     sourceUrl: "https://www.mf.gov.cv/web/dgt/bonifica%C3%A7%C3%A3o",
     publishedAt: "2026-02-12",
-    category: "Banking / credit",
+    category: "Banking & Credit",
     snippet:
       "The Treasury's housing-credit support page details subsidized mortgage-interest regimes, including young-buyer and general access tracks.",
     whyItMatters:
@@ -204,7 +192,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     sourceUrl:
       "https://www.imf.org/en/news/articles/2026/02/07/pr26036-cabo-verde-imf-concl-2025-aiv-consultation-7th-rev-under-ecf-and-3rd-rev-under-rsf",
     publishedAt: "2026-02-07",
-    category: "Currency / macro risk",
+    category: "Economy",
     snippet:
       "The IMF highlighted strong tourism-led activity, stable inflation, reserves above program targets and continuing risks from external shocks and state-owned enterprises.",
     whyItMatters:
@@ -220,7 +208,7 @@ export const MARKET_NEWS_ITEMS: MarketNewsItem[] = [
     sourceUrl:
       "https://www.pwc.pt/pt/pwcinforfisco/flash/cabo-verde/reforma-tributacao-patrimonio-novos-codigos-fiscais.html",
     publishedAt: "2026-01-07",
-    category: "Tax / residency",
+    category: "Policy & Tax",
     snippet:
       "PwC summarizes the new IPI and ITI property-tax codes that entered into force on 1 January 2026, replacing the prior IUP framework.",
     whyItMatters:
