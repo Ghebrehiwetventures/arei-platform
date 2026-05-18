@@ -114,7 +114,7 @@
 .kv-news-item-meta > * + *::before {
   content: "·";
   margin: 0 8px;
-  color: rgba(0, 0, 0, 0.25);
+  color: var(--kv-ink-300);
 }
 
 /* Category gets a sage square instead of the dot separator — the same
@@ -173,7 +173,7 @@
   font-family: var(--kv-sans);
   font-size: 15px;
   line-height: 1.72;
-  color: rgba(0, 0, 0, 0.72);
+  color: var(--kv-ink-700);
   max-width: 700px;
   margin-top: 14px;
 }
@@ -199,7 +199,7 @@
   font-family: var(--kv-mono);
   font-size: 13px;
   line-height: 1.65;
-  color: rgba(0, 0, 0, 0.72);
+  color: var(--kv-ink-700);
 }
 
 /* ── Signal tags — quiet institutional row, not social-media hashtags ── */
@@ -226,7 +226,7 @@
   margin-right: 2px;
 }
 .kv-news-signals-items {
-  color: rgba(0, 0, 0, 0.55);
+  color: var(--kv-ink-500);
 }
 .kv-news-signals-more {
   color: var(--kv-gray-500);
@@ -247,7 +247,7 @@
 }
 .kv-news-item-read:hover {
   color: var(--kv-black);
-  border-color: rgba(0, 0, 0, 0.4);
+  border-color: var(--kv-ink-400);
 }
 
 /* ── Sidebar ── */
@@ -272,7 +272,7 @@
   font-family: var(--kv-sans);
   font-size: 14px;
   line-height: 1.72;
-  color: rgba(0, 0, 0, 0.70);
+  color: var(--kv-ink-700);
   margin: 0;
 }
 
@@ -292,7 +292,7 @@
   font-family: var(--kv-mono);
   font-size: 13px;
   line-height: 1.6;
-  color: rgba(0, 0, 0, 0.6);
+  color: var(--kv-ink-600);
   border: 1px dashed var(--kv-rule);
   padding: 28px 24px;
   max-width: 560px;
