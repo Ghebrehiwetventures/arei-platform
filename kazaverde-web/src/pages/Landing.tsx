@@ -723,7 +723,7 @@ export default function Landing() {
               {latestNews.map((item) => (
                 <article className="kv-l-news-item" key={item.id}>
                   <span
-                    className="kv-news-cat kv-l-news-item-cat"
+                    className="kv-l-news-item-cat"
                     style={{ "--cat-tone": catTone(item.category) } as CSSProperties}
                   >
                     {item.category}
