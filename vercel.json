@@ -1,7 +1,0 @@
-{
-  "buildCommand": "cd packages/arei-sdk && npm install && npm run build && cd ../../kazaverde-web && npm install && npm run build",
-  "outputDirectory": "kazaverde-web/dist",
-  "rewrites": [
-    { "source": "/(.*)", "destination": "/spa-fallback/index.html" }
-  ]
-}
