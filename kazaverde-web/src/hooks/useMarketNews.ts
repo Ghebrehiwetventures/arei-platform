@@ -25,7 +25,7 @@ function toMarketNewsItem(row: MarketNewsRow): MarketNewsItem {
     id: row.id,
     title: row.title,
     originalTitle: row.original_title ?? undefined,
-    sourceName: row.source_name,
+    sourceName: row.source_name ?? "Unknown",
     sourceUrl: row.source_url,
     publishedAt: row.published_at ? isoToDate(row.published_at) : isoToDate(row.created_at),
     category: row.category as MarketNewsCategory,
