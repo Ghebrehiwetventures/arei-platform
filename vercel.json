@@ -1,0 +1,8 @@
+{
+  "buildCommand": "cd packages/arei-sdk && npm install && npm run build && cd ../../kazaverde-web && npm install && npm run build",
+  "ignoreCommand": "git diff --quiet HEAD^ HEAD -- kazaverde-web packages/arei-sdk",
+  "outputDirectory": "kazaverde-web/dist",
+  "rewrites": [
+    { "source": "/(.*)", "destination": "/spa-fallback/index.html" }
+  ]
+}
