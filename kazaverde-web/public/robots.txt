@@ -2,5 +2,3 @@ User-agent: *
 Allow: /
 
 Sitemap: https://capeverderealestateindex.com/sitemap.xml
-
-# verify ci build trigger
