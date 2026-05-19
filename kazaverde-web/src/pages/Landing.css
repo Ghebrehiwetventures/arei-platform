@@ -516,7 +516,7 @@
   .kv-l-news-list { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .kv-l-news { padding: 48px 0; }
+  .kv-l-news { padding: 48px 0; background: var(--kv-white); }
 }
 
 @media (max-width: 960px) {
