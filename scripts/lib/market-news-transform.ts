@@ -45,7 +45,8 @@ export interface RawFeedItem {
   guid: string;
   pubDate: string;
   description: string;
-  sourceAttrib: string; // <source> element text (Google News only)
+  sourceAttrib: string;    // <source> element text (Google News only)
+  sourceAttribUrl: string; // <source url="..."> attribute (Google News only)
 }
 
 // ── HTML / entity helpers ──────────────────────────────────────────────────
@@ -116,6 +117,7 @@ export function parseFeedItems(xml: string): RawFeedItem[] {
       pubDate: $(el).find("pubDate").first().text().trim(),
       description: $(el).find("description").first().text(),
       sourceAttrib: $(el).find("source").first().text().trim(),
+      sourceAttribUrl: $(el).find("source").first().attr("url")?.trim() ?? "",
     });
   });
 
@@ -142,10 +144,15 @@ export function transformFeedItem(
   const canonical = normalizeUrl(rawUrl);
   const title = cleanText(raw.title) || "[Untitled]";
 
+  const sourceName =
+    source.type === "google_news_rss" && raw.sourceAttrib
+      ? raw.sourceAttrib
+      : source.name;
+
   return {
     title,
     original_title: raw.title.trim() !== title ? raw.title.trim() : null,
-    source_name: source.name,
+    source_name: sourceName,
     source_url: rawUrl,
     canonical_url: canonical,
     published_at: parsePubDate(raw.pubDate),
