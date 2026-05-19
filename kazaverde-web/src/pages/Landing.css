@@ -441,6 +441,7 @@
   background: var(--kv-paper);
   padding: 24px;
   color: var(--kv-black);
+  min-width: 0;
   overflow: hidden;
   transition: border-color var(--kv-dur) var(--kv-ease),
               transform var(--kv-dur) var(--kv-ease);
