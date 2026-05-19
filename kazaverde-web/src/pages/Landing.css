@@ -441,6 +441,8 @@
   background: var(--kv-paper);
   padding: 24px;
   color: var(--kv-black);
+  min-width: 0;
+  overflow: hidden;
   transition: border-color var(--kv-dur) var(--kv-ease),
               transform var(--kv-dur) var(--kv-ease);
 }
@@ -516,7 +518,7 @@
   .kv-l-news-list { grid-template-columns: 1fr; }
 }
 @media (max-width: 640px) {
-  .kv-l-news { padding: 48px 0; }
+  .kv-l-news { padding: 48px 0; background: var(--kv-white); }
 }
 
 @media (max-width: 960px) {
