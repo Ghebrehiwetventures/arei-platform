@@ -10,13 +10,8 @@ import type {
   ListingCard,
   IslandContext,
 } from "arei-sdk";
-import {
-  formatPrice,
-  formatLocation,
-  formatSourceLabel,
-  formatMedian,
-  formatPricePerSqm,
-} from "../lib/format";
+import { formatLocation, formatSourceLabel } from "../lib/format";
+import { formatPrice, formatMedian, formatPricePerSqm, formatNumber, toLocale } from "../lib/formatters";
 import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
 import { getLocalizedDescription, getLocalizedTitle } from "../lib/i18n-listings";
 // Italian-runtime-translation helper removed: descriptions are now
@@ -58,49 +53,39 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-function relTime(iso: string | null | undefined): string {
-  if (!iso) return "recently";
-  const t = new Date(iso).getTime();
-  if (Number.isNaN(t)) return "recently";
-  const days = Math.max(0, Math.round((Date.now() - t) / 86_400_000));
-  if (days === 0) return "today";
-  if (days === 1) return "1d ago";
-  return `${days}d ago`;
-}
-
-function fmtShortDate(iso: string | null | undefined): string {
+function fmtShortDate(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
-  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
+  return d.toLocaleDateString(locale, { day: "2-digit", month: "short", year: "numeric" }).toUpperCase();
 }
 
-function fmtDateTime(iso: string | null | undefined): string {
+function fmtDateTime(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   return (
-    d.toLocaleDateString("en-GB", { day: "2-digit", month: "short" }).toUpperCase() +
+    d.toLocaleDateString(locale, { day: "2-digit", month: "short" }).toUpperCase() +
     " " +
-    d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" })
+    d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" })
   );
 }
 
 /** Friendly "Today, 06:14" / "Yesterday, 14:22" / "12 Apr, 09:30" for
  *  the inline verified strip — feels alive vs raw timestamps. */
-function fmtVerifiedTime(iso: string | null | undefined): string {
+function fmtVerifiedTime(iso: string | null | undefined, locale: string): string {
   if (!iso) return "—";
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return "—";
   const now = new Date();
   const diffMs = now.getTime() - d.getTime();
   const diffH = diffMs / 3_600_000;
-  const time = d.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  const time = d.toLocaleTimeString(locale, { hour: "2-digit", minute: "2-digit" });
   if (diffH < 24 && now.getDate() === d.getDate()) return `Today, ${time}`;
   const yesterday = new Date(now);
   yesterday.setDate(now.getDate() - 1);
   if (yesterday.toDateString() === d.toDateString()) return `Yesterday, ${time}`;
-  return d.toLocaleDateString("en-GB", { day: "numeric", month: "short" }) + `, ${time}`;
+  return d.toLocaleDateString(locale, { day: "numeric", month: "short" }) + `, ${time}`;
 }
 
 /** "48 days ago" / "2 days ago" — for first-seen freshness. */
@@ -118,11 +103,11 @@ function fmtDaysAgo(iso: string | null | undefined): string {
  *  ~14 m² (urban infill) up to multi-hectare rural land, so a fixed
  *  decimal count either rounds tiny plots to "0.00" (reads as empty)
  *  or wastes precision on large ones. Pick the format from the value. */
-function fmtHectares(sqm: number): string {
+function fmtHectares(sqm: number, locale: string): string {
   const ha = sqm / 10_000;
-  if (ha >= 10) return ha.toLocaleString("en", { maximumFractionDigits: 0 });
-  if (ha >= 1) return ha.toLocaleString("en", { maximumFractionDigits: 1 });
-  if (ha >= 0.01) return ha.toLocaleString("en", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+  if (ha >= 10) return ha.toLocaleString(locale, { maximumFractionDigits: 0 });
+  if (ha >= 1) return ha.toLocaleString(locale, { maximumFractionDigits: 1 });
+  if (ha >= 0.01) return ha.toLocaleString(locale, { minimumFractionDigits: 2, maximumFractionDigits: 2 });
   return "<0.01";
 }
 
@@ -173,12 +158,12 @@ function buildListingCanonicalUrl(id: string): string {
   return new URL(`/listing/${id}`, SITE_URL).toString();
 }
 
-function buildListingMetaDescription(detail: ListingDetailType, title: string): string {
+function buildListingMetaDescription(detail: ListingDetailType, title: string, locale: string): string {
   const location = `${detail.city ? `${detail.city}, ` : ""}${detail.island}, Cape Verde`;
   const parts = [`${title} in ${location}.`];
 
   if (detail.price) {
-    parts.push(`Asking price ${formatPrice(detail.price, detail.currency)}.`);
+    parts.push(`Asking price ${formatPrice(detail.price, locale, detail.currency ?? undefined)}.`);
   }
 
   if (detail.property_type) {
@@ -213,6 +198,7 @@ function sourceSlug(sourceId: string): string {
 
 export default function Detail() {
   const { i18n, t } = useTranslation();
+  const locale = toLocale(i18n.language);
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const { toggle, isSaved } = useSaved();
@@ -233,7 +219,7 @@ export default function Detail() {
   useDocumentMeta(
     detail ? displayTitle : error ? t("detail.notFound") : t("common.property"),
     detail
-      ? buildListingMetaDescription(detail, displayTitle)
+      ? buildListingMetaDescription(detail, displayTitle, locale)
       : t("detail.loading"),
     detail
       ? { image: images[0], url: listingCanonicalUrl }
@@ -487,7 +473,7 @@ export default function Detail() {
           </div>
           <h1 className="kv-d-title">{displayTitle}</h1>
           <div className="kv-d-price-block">
-            <div className="kv-d-price">{formatPrice(detail.price, detail.currency)}</div>
+            <div className="kv-d-price">{formatPrice(detail.price, locale, detail.currency ?? undefined)}</div>
           </div>
           <div className="kv-d-subline">
             {!isLand && detail.bedrooms != null && (
@@ -504,14 +490,14 @@ export default function Detail() {
             {effectiveArea != null && (
               <>
                 {" · "}
-                <b>{effectiveArea.toLocaleString()}</b> m²
+                <b>{formatNumber(effectiveArea, locale)}</b> m²
               </>
             )}
           </div>
           {/* Always rendered to reserve vertical space; empty when €/m² unknown.
               Format mirrors listing-v1.html .ppm: bold value + " per m²". */}
           <div className="kv-d-price-cve">
-            {pricePerSqm ? <><b>€{pricePerSqm.toLocaleString()}</b> / m²</> : ""}
+            {pricePerSqm ? <><b>€{formatNumber(pricePerSqm, locale)}</b> / m²</> : ""}
           </div>
         </div>
 
@@ -521,7 +507,7 @@ export default function Detail() {
         <div className="kv-d-verified">
           <span className="kv-d-verified-dot" aria-hidden="true" />
           <span className="kv-d-verified-lbl">{t("detail.firstIndexed")}</span>
-          <span className="kv-d-verified-val">{fmtVerifiedTime(detail.first_seen_at)}</span>
+          <span className="kv-d-verified-val">{fmtVerifiedTime(detail.first_seen_at, locale)}</span>
         </div>
       </header>
 
@@ -602,7 +588,7 @@ export default function Detail() {
               <div className="kv-d-fact-v">
                 {landArea != null ? (
                   <>
-                    {landArea.toLocaleString()}
+                    {formatNumber(landArea, locale)}
                     <small>m²</small>
                   </>
                 ) : (
@@ -615,7 +601,7 @@ export default function Detail() {
               <div className="kv-d-fact-v">
                 {landArea != null ? (
                   <>
-                    {fmtHectares(landArea)}
+                    {fmtHectares(landArea, locale)}
                     <small>ha</small>
                   </>
                 ) : (
@@ -625,7 +611,7 @@ export default function Detail() {
             </div>
             <div className="kv-d-fact">
               <div className="kv-d-fact-k">{t("detail.price")} / m²</div>
-              <div className="kv-d-fact-v">{pricePerSqm ? `€${pricePerSqm.toLocaleString()}` : "—"}</div>
+              <div className="kv-d-fact-v">{pricePerSqm ? `€${formatNumber(pricePerSqm, locale)}` : "—"}</div>
             </div>
             <div className="kv-d-fact">
               <div className="kv-d-fact-k">{t("detail.location")}</div>
@@ -655,7 +641,7 @@ export default function Detail() {
               <div className="kv-d-fact-v">
                 {effectiveArea != null ? (
                   <>
-                    {effectiveArea.toLocaleString()}
+                    {formatNumber(effectiveArea, locale)}
                     <small>m²</small>
                   </>
                 ) : (
@@ -665,7 +651,7 @@ export default function Detail() {
             </div>
             <div className="kv-d-fact">
               <div className="kv-d-fact-k">{t("detail.price")} / m²</div>
-              <div className="kv-d-fact-v">{pricePerSqm ? `€${pricePerSqm.toLocaleString()}` : "—"}</div>
+              <div className="kv-d-fact-v">{pricePerSqm ? `€${formatNumber(pricePerSqm, locale)}` : "—"}</div>
             </div>
           </>
         )}
@@ -732,10 +718,10 @@ export default function Detail() {
               rows.push({ k: "Bathrooms", v: detail.bathrooms });
             }
             if (detail.property_size_sqm != null) {
-              rows.push({ k: "Living area", v: <>{detail.property_size_sqm.toLocaleString()} m²</> });
+              rows.push({ k: "Living area", v: <>{formatNumber(detail.property_size_sqm, locale)} m²</> });
             }
             if (detail.land_area_sqm != null) {
-              rows.push({ k: "Plot area", v: <>{detail.land_area_sqm.toLocaleString()} m²</> });
+              rows.push({ k: "Plot area", v: <>{formatNumber(detail.land_area_sqm, locale)} m²</> });
             }
             if (detail.city) {
               rows.push({ k: "Location", v: formatLocation(detail.city, detail.island) });
@@ -793,12 +779,12 @@ export default function Detail() {
               {detail.price && (
                 <div className="kv-d-card-price-block">
                   <div className="kv-d-card-price">
-                    {formatPrice(detail.price, detail.currency)}
+                    {formatPrice(detail.price, locale, detail.currency ?? undefined)}
                   </div>
                   <div className="kv-d-card-subline">
                     {pricePerSqm != null && (
                       <>
-                        <b>€{pricePerSqm.toLocaleString()}</b>/m²
+                        <b>€{formatNumber(pricePerSqm, locale)}</b>/m²
                         <span className="kv-d-card-subline-sep"> · </span>
                       </>
                     )}
@@ -867,7 +853,7 @@ export default function Detail() {
                 </div>
                 <div className="kv-d-meta-table-row">
                   <div className="kv-d-meta-table-k">{t("detail.firstIndexed")}</div>
-                  <div className="kv-d-meta-table-v">{fmtShortDate(detail.first_seen_at)}</div>
+                  <div className="kv-d-meta-table-v">{fmtShortDate(detail.first_seen_at, locale)}</div>
                 </div>
                 <div className="kv-d-meta-table-row">
                   <div className="kv-d-meta-table-k">{t("detail.daysOnIndex")}</div>
@@ -875,12 +861,12 @@ export default function Detail() {
                 </div>
                 <div className="kv-d-meta-table-row">
                   <div className="kv-d-meta-table-k">Last verified</div>
-                  <div className="kv-d-meta-table-v">{fmtDateTime(detail.last_seen_at)}</div>
+                  <div className="kv-d-meta-table-v">{fmtDateTime(detail.last_seen_at, locale)}</div>
                 </div>
                 {marketCtx?.medianPrice != null && (
                   <div className="kv-d-meta-table-row">
                     <div className="kv-d-meta-table-k">{detail.island} median</div>
-                    <div className="kv-d-meta-table-v">{formatMedian(marketCtx.medianPrice)}</div>
+                    <div className="kv-d-meta-table-v">{formatMedian(marketCtx.medianPrice, locale)}</div>
                   </div>
                 )}
                 {vsMed && (
@@ -945,7 +931,7 @@ export default function Detail() {
         <div className="kv-d-mcta" role="region" aria-label={t("detail.listingActions")}>
           <div className="kv-d-mcta-info">
             {detail.price && (
-              <div className="kv-d-mcta-price">{formatPrice(detail.price, detail.currency)}</div>
+              <div className="kv-d-mcta-price">{formatPrice(detail.price, locale, detail.currency ?? undefined)}</div>
             )}
             <div className="kv-d-mcta-source">{t("listings.source")} {formatSourceLabel(detail.source_id)}</div>
           </div>
@@ -1061,15 +1047,6 @@ function GalleryMosaic({
    Monthly Cost Estimate
 ──────────────────────────────────────────────────────────── */
 
-function fmtEur(n: number, decimals = 0): string {
-  return n.toLocaleString("en-US", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: decimals,
-    maximumFractionDigits: decimals,
-  });
-}
-
 function parseNum(raw: string, allowDecimal = false): number {
   const cleaned = allowDecimal
     ? raw.replace(/[^0-9.]/g, "").replace(/(\..*)\./g, "$1")
@@ -1078,7 +1055,10 @@ function parseNum(raw: string, allowDecimal = false): number {
 }
 
 function KvMortgage({ price }: { price: number }) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = toLocale(i18n.language);
+  const fmtEur = (n: number, decimals = 0) =>
+    new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", minimumFractionDigits: decimals, maximumFractionDigits: decimals }).format(n);
   const [input, setInput] = useState<MortgageInput>({
     totalAmount: price,
     downPaymentPct: 20,
@@ -1305,6 +1285,7 @@ function formatDaysIndexed(iso: string | undefined, t: (key: string, options?: R
 
 function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; island: string; firstSeenAt?: string }) {
   const { t, i18n } = useTranslation();
+  const locale = toLocale(i18n.language);
   const cards: {
     value: string;
     label: string;
@@ -1314,14 +1295,14 @@ function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; isl
 
   if (ctx.medianPrice !== null) {
     cards.push({
-      value: formatMedian(ctx.medianPrice),
+      value: formatMedian(ctx.medianPrice, locale),
       label: t("detail.median", { island }),
       note: t("detail.pricedListings", { count: ctx.activeListings }),
     });
   }
   if (ctx.medianPricePerSqm !== null) {
     cards.push({
-      value: formatPricePerSqm(ctx.medianPricePerSqm),
+      value: formatPricePerSqm(ctx.medianPricePerSqm, locale),
       label: t("detail.medianPerSqm"),
       note: t("detail.withSizeData", { count: ctx.nSqmListings }),
     });
@@ -1386,6 +1367,7 @@ function KvMarketContext({ ctx, island, firstSeenAt }: { ctx: IslandContext; isl
 
 function KvSimilar({ cards }: { cards: ListingCard[] }) {
   const { i18n, t } = useTranslation();
+  const locale = toLocale(i18n.language);
   const ref = useRef<HTMLDivElement>(null);
   const [canPrev, setCanPrev] = useState(false);
   const [canNext, setCanNext] = useState(false);
@@ -1471,7 +1453,7 @@ function KvSimilar({ cards }: { cards: ListingCard[] }) {
                   <span>{l.property_type ? capitalize(l.property_type) : ""}</span>
                   {loc && <span className="kv-d-sim-loc">{loc}</span>}
                 </div>
-                <div className="kv-d-sim-price">{formatPrice(l.price, l.currency)}</div>
+                <div className="kv-d-sim-price">{formatPrice(l.price, locale, l.currency ?? undefined)}</div>
                 <div className="kv-d-sim-title">{normalizeListingDisplayTitle(getLocalizedTitle(l, i18n.language).title)}</div>
               </div>
             </Link>
