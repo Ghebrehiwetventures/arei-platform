@@ -1,6 +1,9 @@
 /**
  * Formatting helpers — match the v1 UI wiring contract.
  * These are pure functions, no SDK dependency.
+ *
+ * Locale-aware numeric/date formatters have moved to formatters.ts.
+ * Remaining exports: non-locale string helpers + isNewListing.
  */
 
 const NEW_LISTING_DAYS = 7;
@@ -21,27 +24,6 @@ const SOURCE_LABELS: Record<string, string> = {
   cv_greenacres: "Green Acres",
 };
 
-export function formatPrice(
-  price: number | null,
-  currency: string | null | undefined = "EUR",
-): string {
-  if (!price || price <= 0) return "Price on request";
-  const symbol = currency === "CVE" ? "CVE " : "€";
-  return symbol + price.toLocaleString("en-US");
-}
-
-export function formatCompactPrice(price: number | null, currency = "EUR"): string {
-  if (!price || price <= 0) return "Price on request";
-
-  const symbol = currency === "CVE" ? "CVE " : "€";
-
-  if (price >= 1_000_000) {
-    return `${symbol}${(price / 1_000_000).toFixed(1).replace(/\.0$/, "")}M`;
-  }
-
-  return symbol + price.toLocaleString("en-US");
-}
-
 export function formatLocation(city: string | null, island: string): string {
   return city ? `${city}, ${island}` : island;
 }
@@ -61,17 +43,6 @@ export function isNewListing(firstSeenAt: string | null): boolean {
   if (!firstSeenAt) return false;
   const diff = Date.now() - new Date(firstSeenAt).getTime();
   return diff < NEW_LISTING_DAYS * 86400000;
-}
-
-export function formatMedian(value: number | null): string {
-  if (value === null) return "—";
-  if (value >= 1000) return `€${Math.round(value / 1000)}K`;
-  return `€${value.toLocaleString("en-US")}`;
-}
-
-export function formatPricePerSqm(value: number | null): string {
-  if (value === null) return "—";
-  return `€${Math.round(value).toLocaleString("en-US")}`;
 }
 
 export function formatSourceLabel(sourceId: string | null | undefined): string {
