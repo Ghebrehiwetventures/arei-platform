@@ -10,9 +10,19 @@ export function toLocale(lang: string): string {
   return lang.startsWith("pt") ? "pt-PT" : "en-GB";
 }
 
+/**
+ * Replace digit-flanked narrow/no-break spaces (PT thousands separator) with dots.
+ * Only matches spaces between digits, so the non-breaking space before a currency
+ * symbol (e.g. "300.000 €") is left untouched.
+ */
+function ptThousands(s: string, locale: string): string {
+  if (!locale.startsWith("pt")) return s;
+  return s.replace(/(\d)[  ](\d)/g, "$1.$2");
+}
+
 /** Plain integer or decimal: "1,234" / "1.234" */
 export function formatNumber(value: number, locale: string): string {
-  return value.toLocaleString(locale);
+  return ptThousands(value.toLocaleString(locale), locale);
 }
 
 /**
@@ -26,17 +36,19 @@ export function formatPrice(
   currency = "EUR",
 ): string {
   if (!value || value <= 0) return "Price on request";
-  return new Intl.NumberFormat(locale, {
-    style: "currency",
-    currency,
-    maximumFractionDigits: 0,
-  }).format(value);
+  return ptThousands(
+    new Intl.NumberFormat(locale, {
+      style: "currency",
+      currency,
+      maximumFractionDigits: 0,
+    }).format(value),
+    locale,
+  );
 }
 
 /**
- * Compact price for cards and tight UI: €300K / €1.2M.
+ * Compact price for cards and tight UI: €300K / €1.2M  |  300K € / 1,2M €
  * Returns "Price on request" for null/zero.
- * The K/M suffix is locale-neutral; the number respects the locale's decimal separator.
  */
 export function formatCompactPrice(
   value: number | null,
@@ -44,31 +56,46 @@ export function formatCompactPrice(
   currency = "EUR",
 ): string {
   if (!value || value <= 0) return "Price on request";
-  const symbol = currency === "CVE" ? "CVE " : "€";
+  const isPt = locale.startsWith("pt");
+  const symbol = currency === "CVE" ? "CVE" : "€";
   if (value >= 1_000_000) {
     const m = value / 1_000_000;
-    const formatted = m.toLocaleString(locale, { maximumFractionDigits: 1 });
-    return `${symbol}${formatted.replace(/[,.]0$/, "")}M`;
+    const formatted = ptThousands(
+      m.toLocaleString(locale, { maximumFractionDigits: 1 }).replace(/[,.]0$/, ""),
+      locale,
+    );
+    return isPt ? `${formatted}M ${symbol}` : `${symbol}${formatted}M`;
   }
-  return `${symbol}${value.toLocaleString(locale, { maximumFractionDigits: 0 })}`;
+  const formatted = ptThousands(
+    value.toLocaleString(locale, { maximumFractionDigits: 0 }),
+    locale,
+  );
+  return isPt ? `${formatted} ${symbol}` : `${symbol}${formatted}`;
 }
 
 /**
- * Median price display: "€180K" compact, "€800" plain, "—" for null.
- * Used in market context stat cards.
+ * Median price display: compact K suffix, "—" for null.
+ * EN: "€180K" / "€800"   PT: "180K €" / "800 €"
  */
 export function formatMedian(value: number | null, locale: string): string {
   if (value === null) return "—";
-  if (value >= 1000) return `€${Math.round(value / 1000).toLocaleString(locale)}K`;
-  return `€${value.toLocaleString(locale)}`;
+  const isPt = locale.startsWith("pt");
+  if (value >= 1000) {
+    const k = ptThousands(Math.round(value / 1000).toLocaleString(locale), locale);
+    return isPt ? `${k}K €` : `€${k}K`;
+  }
+  const n = ptThousands(value.toLocaleString(locale), locale);
+  return isPt ? `${n} €` : `€${n}`;
 }
 
 /**
- * Price per square metre: "€2,500" / "€2.500", "—" for null.
+ * Price per square metre: "€2,500" / "2.500 €", "—" for null.
  */
 export function formatPricePerSqm(value: number | null, locale: string): string {
   if (value === null) return "—";
-  return `€${Math.round(value).toLocaleString(locale)}`;
+  const isPt = locale.startsWith("pt");
+  const n = ptThousands(Math.round(value).toLocaleString(locale), locale);
+  return isPt ? `${n} €` : `€${n}`;
 }
 
 /**
@@ -76,7 +103,7 @@ export function formatPricePerSqm(value: number | null, locale: string): string 
  */
 export function formatArea(sqm: number | null, locale: string): string {
   if (sqm === null || sqm === undefined) return "—";
-  return `${sqm.toLocaleString(locale, { maximumFractionDigits: 1 })} m²`;
+  return `${ptThousands(sqm.toLocaleString(locale, { maximumFractionDigits: 1 }), locale)} m²`;
 }
 
 /**

@@ -497,7 +497,7 @@ export default function Detail() {
           {/* Always rendered to reserve vertical space; empty when €/m² unknown.
               Format mirrors listing-v1.html .ppm: bold value + " per m²". */}
           <div className="kv-d-price-cve">
-            {pricePerSqm ? <><b>€{formatNumber(pricePerSqm, locale)}</b> / m²</> : ""}
+            {pricePerSqm ? <><b>{formatPricePerSqm(pricePerSqm, locale)}</b> / m²</> : ""}
           </div>
         </div>
 
@@ -611,7 +611,7 @@ export default function Detail() {
             </div>
             <div className="kv-d-fact">
               <div className="kv-d-fact-k">{t("detail.price")} / m²</div>
-              <div className="kv-d-fact-v">{pricePerSqm ? `€${formatNumber(pricePerSqm, locale)}` : "—"}</div>
+              <div className="kv-d-fact-v">{pricePerSqm ? formatPricePerSqm(pricePerSqm, locale) : "—"}</div>
             </div>
             <div className="kv-d-fact">
               <div className="kv-d-fact-k">{t("detail.location")}</div>
@@ -651,7 +651,7 @@ export default function Detail() {
             </div>
             <div className="kv-d-fact">
               <div className="kv-d-fact-k">{t("detail.price")} / m²</div>
-              <div className="kv-d-fact-v">{pricePerSqm ? `€${formatNumber(pricePerSqm, locale)}` : "—"}</div>
+              <div className="kv-d-fact-v">{pricePerSqm ? formatPricePerSqm(pricePerSqm, locale) : "—"}</div>
             </div>
           </>
         )}
@@ -784,7 +784,7 @@ export default function Detail() {
                   <div className="kv-d-card-subline">
                     {pricePerSqm != null && (
                       <>
-                        <b>€{formatNumber(pricePerSqm, locale)}</b>/m²
+                        <b>{formatPricePerSqm(pricePerSqm, locale)}</b>/m²
                         <span className="kv-d-card-subline-sep"> · </span>
                       </>
                     )}
@@ -809,7 +809,7 @@ export default function Detail() {
                   )}
                   {(detail.property_size_sqm ?? detail.land_area_sqm) != null && (
                     <span className="kv-d-spec-token">
-                      <b>{detail.property_size_sqm ?? detail.land_area_sqm}</b> m²
+                      <b>{formatNumber(detail.property_size_sqm ?? detail.land_area_sqm ?? 0, locale)}</b> m²
                     </span>
                   )}
                 </div>
