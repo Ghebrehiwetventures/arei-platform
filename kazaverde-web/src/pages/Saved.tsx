@@ -7,6 +7,7 @@ import { arei } from "../lib/arei";
 import NewsletterCta from "../components/NewsletterCta";
 import type { ListingCard as ListingCardType } from "arei-sdk";
 import { Card } from "./Listings";
+import { formatNumber, toLocale } from "../lib/formatters";
 import "./Saved.css";
 
 /** Project a ListingDetail to ListingCard so the Listings <Card> works.
@@ -33,11 +34,6 @@ function detailToCard(d: NonNullable<Awaited<ReturnType<typeof arei.getListing>>
   } as ListingCardType;
 }
 
-function fmtPrice(n: number | null | undefined): string {
-  if (n == null) return "—";
-  return new Intl.NumberFormat("en", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-}
-
 function fmtPct(n: number): string {
   const sign = n > 0 ? "+" : "";
   return `${sign}${n.toFixed(0)}%`;
@@ -55,6 +51,9 @@ interface IslandStat {
 export default function Saved() {
   const { i18n, t } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
+  const locale = toLocale(i18n.language);
+  const fmtPrice = (n: number | null | undefined) =>
+    n == null ? "—" : new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
   useDocumentMeta(
     t("common.shortlist"),
     isPt ? "Imóveis guardados neste dispositivo." : "Properties you've saved on this device. A read-only index of public Cape Verde listings.",
@@ -352,7 +351,7 @@ export default function Saved() {
                 <div className="kv-saved-coverage">
                   <div className="kv-saved-coverage-row">
                     <span className="kv-saved-coverage-k">{isPt ? "Total indexado" : "Indexed total"}</span>
-                    <span className="kv-saved-coverage-v">{indexCoverage.indexTotal.toLocaleString()}</span>
+                    <span className="kv-saved-coverage-v">{formatNumber(indexCoverage.indexTotal, locale)}</span>
                   </div>
                   <div className="kv-saved-coverage-row">
                     <span className="kv-saved-coverage-k">{isPt ? "As suas ilhas" : "Your islands"}</span>
