@@ -3,6 +3,9 @@
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- .",
   "outputDirectory": "dist",
   "framework": null,
+  "functions": {
+    "api/social-listing.js": { "maxDuration": 300 }
+  },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
   ],

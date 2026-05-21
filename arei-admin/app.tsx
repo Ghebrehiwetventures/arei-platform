@@ -99,6 +99,7 @@ import { AgencyConsoleView } from "./AgencyConsoleView";
 import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
 import { BrokerPilotView } from "./BrokerPilotView";
 import { MarketNewsSocialAgentView } from "./MarketNewsSocialAgentView";
+import { ListingSocialView } from "./ListingSocialView";
 
 // ============================================
 // D · LAYERS MARK — AREI brand mark (SVG)
@@ -3520,15 +3521,16 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "market-social" | "notifications";
+type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "market-social" | "listing-social" | "notifications";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
   { key: "listings",      label: "Listings"      },
   { key: "sources",       label: "Sources"       },
   { key: "agents",        label: "Agents"        },
-  { key: "market-news",   label: "Market News"   },
-  { key: "market-social", label: "Market Social" },
+  { key: "market-news",    label: "Market News"    },
+  { key: "listing-social", label: "Listing Social" },
+  { key: "market-social",  label: "Market Social"  },
   { key: "notifications", label: "Notifications" },
 ];
 
@@ -3814,6 +3816,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "agency-data" && <AgencyDataConsoleView />}
             {tab === "broker-pilot" && <BrokerPilotView />}
             {tab === "market-news" && <MarketNewsView />}
+            {tab === "listing-social" && <ListingSocialView />}
             {tab === "market-social" && <MarketNewsSocialAgentView />}
             {tab === "notifications" && (
               <NotificationsView onCountChange={handleNotificationCountChange} />
