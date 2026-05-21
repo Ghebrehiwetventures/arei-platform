@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useSaved } from "../hooks/useSaved";
 import type { DemoListing } from "../lib/demo-data";
 import { formatLocation, formatBedrooms, formatBathrooms, isNewListing } from "../lib/format";
-import { formatPrice, toLocale } from "../lib/formatters";
+import { formatPrice, toLocale, labelPropertyType } from "../lib/formatters";
 import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
 import "./PropertyCard.css";
 
@@ -150,7 +150,7 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid", di
       <div className="pcb">
         <div className="pcl">
           {listing.property_type && (
-            <div className="pc-type">{listing.property_type}</div>
+            <div className="pc-type">{labelPropertyType(listing.property_type, t)}</div>
           )}
           <div className="pct">{displayTitle}</div>
           <div className="pca">{formatLocation(listing.city, listing.island)}</div>

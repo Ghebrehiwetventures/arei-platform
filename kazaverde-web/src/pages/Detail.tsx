@@ -11,7 +11,7 @@ import type {
   IslandContext,
 } from "arei-sdk";
 import { formatLocation, formatSourceLabel } from "../lib/format";
-import { formatPrice, formatMedian, formatPricePerSqm, formatNumber, toLocale } from "../lib/formatters";
+import { formatPrice, formatMedian, formatPricePerSqm, formatNumber, toLocale, labelPropertyType } from "../lib/formatters";
 import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
 import { getLocalizedDescription, getLocalizedTitle } from "../lib/i18n-listings";
 // Italian-runtime-translation helper removed: descriptions are now
@@ -438,7 +438,7 @@ export default function Detail() {
 
   // Build facts strip: Type / Bedrooms / Bathrooms / Interior / Price per m²
   // For land: Type / Land / Price per m² (bed/bath omitted as "—")
-  const typeLabel = detail.property_type ? capitalize(detail.property_type) : "—";
+  const typeLabel = detail.property_type ? labelPropertyType(detail.property_type, t) : "—";
 
   return (
     <div className="kv-d">
@@ -1455,7 +1455,7 @@ function KvSimilar({ cards }: { cards: ListingCard[] }) {
               </div>
               <div className="kv-d-sim-body">
                 <div className="kv-d-sim-top">
-                  <span>{l.property_type ? capitalize(l.property_type) : ""}</span>
+                  <span>{l.property_type ? labelPropertyType(l.property_type, t) : ""}</span>
                   {loc && <span className="kv-d-sim-loc">{loc}</span>}
                 </div>
                 <div className="kv-d-sim-price">{formatPrice(l.price, locale, l.currency ?? undefined)}</div>
