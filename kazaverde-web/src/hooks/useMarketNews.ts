@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import type { MarketNewsRow } from "arei-sdk";
 import { arei } from "../lib/arei";
 import {
@@ -11,6 +12,7 @@ export type UseMarketNewsResult = {
   items: MarketNewsItem[];
   loading: boolean;
   error: string | null;
+  uiLang: string;
 };
 
 // published_at / created_at arrive as ISO timestamptz strings from Supabase.
@@ -48,6 +50,8 @@ function toMarketNewsItem(row: MarketNewsRow): MarketNewsItem {
  * MarketNews.tsx does not need to change.
  */
 export function useMarketNews(): UseMarketNewsResult {
+  const { i18n } = useTranslation();
+  const uiLang = i18n.language.split("-")[0];
   const [items, setItems] = useState<MarketNewsItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -75,5 +79,5 @@ export function useMarketNews(): UseMarketNewsResult {
     };
   }, []);
 
-  return { items, loading, error };
+  return { items, loading, error, uiLang };
 }
