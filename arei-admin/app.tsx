@@ -2851,6 +2851,10 @@ type EnrichSuggestion = {
   relevance_score: number;
   recommendation: "publish" | "keep_candidate" | "archive";
   reasoning: string;
+  title_pt?: string | null;
+  snippet_pt?: string | null;
+  why_it_matters_pt?: string | null;
+  _pt_translation_error?: string;
 };
 
 type EnrichState = "idle" | "loading" | "done" | "error";
@@ -2883,6 +2887,9 @@ function MarketNewsEditPanel({
   const [affectedRegions, setAffectedRegions] = React.useState(arrToText(item.affected_regions));
   const [signalTags, setSignalTags] = React.useState(arrToText(item.signal_tags));
   const [relevance, setRelevance] = React.useState<"high" | "standard">(item.relevance);
+  const [titlePt, setTitlePt] = React.useState(item.title_pt ?? "");
+  const [snippetPt, setSnippetPt] = React.useState(item.snippet_pt ?? "");
+  const [whyItMattersPt, setWhyItMattersPt] = React.useState(item.why_it_matters_pt ?? "");
 
   const [enrichState, setEnrichState] = React.useState<EnrichState>("idle");
   const [enrichError, setEnrichError] = React.useState<string | null>(null);
@@ -2895,7 +2902,10 @@ function MarketNewsEditPanel({
     category !== item.category ||
     affectedRegions !== arrToText(item.affected_regions) ||
     signalTags !== arrToText(item.signal_tags) ||
-    relevance !== item.relevance;
+    relevance !== item.relevance ||
+    titlePt !== (item.title_pt ?? "") ||
+    snippetPt !== (item.snippet_pt ?? "") ||
+    whyItMattersPt !== (item.why_it_matters_pt ?? "");
 
   const handleSave = async () => {
     await onSave(item.id, {
@@ -2906,6 +2916,9 @@ function MarketNewsEditPanel({
       affected_regions: textToArr(affectedRegions),
       signal_tags: textToArr(signalTags),
       relevance,
+      title_pt: titlePt.trim() || null,
+      snippet_pt: snippetPt.trim() || null,
+      why_it_matters_pt: whyItMattersPt.trim() || null,
     });
   };
 
@@ -2950,6 +2963,9 @@ function MarketNewsEditPanel({
     setCategory(suggestion.category);
     setAffectedRegions(arrToText(suggestion.affected_regions));
     setSignalTags(arrToText(suggestion.signal_tags));
+    if (suggestion.title_pt) setTitlePt(suggestion.title_pt);
+    if (suggestion.snippet_pt) setSnippetPt(suggestion.snippet_pt);
+    if (suggestion.why_it_matters_pt) setWhyItMattersPt(suggestion.why_it_matters_pt);
     setSuggestion(null);
     setEnrichState("idle");
   };
@@ -3003,6 +3019,42 @@ function MarketNewsEditPanel({
             className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y placeholder:text-foreground-subtle"
           />
         </div>
+
+        {/* PT Translation */}
+        <div className="pt-2 border-t border-border space-y-3">
+          <span className="text-[10px] font-semibold text-foreground-subtle uppercase tracking-wider">PT Translation</span>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Title (PT)</label>
+            <input
+              type="text"
+              value={titlePt}
+              onChange={(e) => setTitlePt(e.target.value)}
+              placeholder="Título em português…"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-foreground-subtle"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Snippet (PT)</label>
+            <textarea
+              value={snippetPt}
+              onChange={(e) => setSnippetPt(e.target.value)}
+              rows={3}
+              placeholder="Resumo em português…"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y placeholder:text-foreground-subtle"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Why it matters (PT) <span className="text-foreground-subtle">(optional)</span></label>
+            <textarea
+              value={whyItMattersPt}
+              onChange={(e) => setWhyItMattersPt(e.target.value)}
+              rows={2}
+              placeholder="Contexto editorial em português…"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y placeholder:text-foreground-subtle"
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Category</label>
@@ -3158,6 +3210,35 @@ function MarketNewsEditPanel({
                   <span className="block text-foreground-subtle mb-0.5">Why it matters</span>
                   <span className="text-foreground-muted leading-relaxed">{suggestion.why_it_matters}</span>
                 </div>
+                {(suggestion.title_pt || suggestion._pt_translation_error) && (
+                  <div className="pt-2 border-t border-border space-y-2">
+                    <span className="block text-[10px] font-semibold text-foreground-subtle uppercase tracking-wider">PT Translation</span>
+                    {suggestion._pt_translation_error ? (
+                      <span className="text-xs text-amber-600">Translation failed: {suggestion._pt_translation_error}</span>
+                    ) : (
+                      <>
+                        {suggestion.title_pt && (
+                          <div>
+                            <span className="block text-foreground-subtle mb-0.5">Title (PT)</span>
+                            <span className="text-foreground font-medium leading-snug">{suggestion.title_pt}</span>
+                          </div>
+                        )}
+                        {suggestion.snippet_pt && (
+                          <div>
+                            <span className="block text-foreground-subtle mb-0.5">Snippet (PT)</span>
+                            <span className="text-foreground-muted leading-relaxed">{suggestion.snippet_pt}</span>
+                          </div>
+                        )}
+                        {suggestion.why_it_matters_pt && (
+                          <div>
+                            <span className="block text-foreground-subtle mb-0.5">Why it matters (PT)</span>
+                            <span className="text-foreground-muted leading-relaxed">{suggestion.why_it_matters_pt}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
                   <div>
                     <span className="block text-foreground-subtle mb-0.5">Category</span>
