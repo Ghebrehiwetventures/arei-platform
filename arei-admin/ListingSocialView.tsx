@@ -183,6 +183,7 @@ export function ListingSocialView() {
           </div>
 
           {selected && (
+          <>
             <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono border-t border-border pt-3">
               <div><span className="text-foreground-muted">Source</span><br />{selected.source_name}</div>
               <div><span className="text-foreground-muted">Island</span><br />{selected.island}</div>
@@ -219,6 +220,7 @@ export function ListingSocialView() {
                 </a>
               )}
             </div>
+          </>
           )}
         </div>
 
