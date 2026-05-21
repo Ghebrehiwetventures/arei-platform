@@ -82,9 +82,9 @@ export function ListingSocialView() {
     setPermalink("");
     setError("");
     setNotice("");
-    // Select all images by default when listing changes
+    // Auto-select first 10 images (Instagram carousel max)
     const listing = listings.find((l) => l.id === selectedId);
-    setSelectedImages(listing?.image_urls || []);
+    setSelectedImages((listing?.image_urls || []).slice(0, 10));
 
     setCaptionLoading(true);
     apiFetch<{ caption: string }>("POST", { action: "generate_caption", listingId: selectedId })
@@ -94,9 +94,11 @@ export function ListingSocialView() {
   }, [selectedId]);
 
   const toggleImage = (url: string) => {
-    setSelectedImages((prev) =>
-      prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
-    );
+    setSelectedImages((prev) => {
+      if (prev.includes(url)) return prev.filter((u) => u !== url);
+      if (prev.length >= 10) return prev; // hard cap at Instagram limit
+      return [...prev, url];
+    });
   };
 
   const handlePublish = async () => {
@@ -226,16 +228,16 @@ export function ListingSocialView() {
           {allImages.length > 0 && (
             <div className="surface-1 rounded border border-border p-4">
               <div className="flex items-center justify-between mb-3">
-                <div className="label-style">
-                  Images — {selectedImages.length} selected / {allImages.length} total
+                <div className="text-xs font-mono text-foreground-muted">
+                  <span className="text-foreground">{selectedImages.length}</span> / {allImages.length} selected · max 10
                 </div>
-                <div className="flex gap-3 text-xs font-mono">
+                <div className="flex gap-3 text-[11px] font-mono">
                   <button
                     type="button"
-                    onClick={() => setSelectedImages([...allImages])}
+                    onClick={() => setSelectedImages(allImages.slice(0, 10))}
                     className="text-foreground-muted hover:text-foreground"
                   >
-                    Select all
+                    Select 10
                   </button>
                   <button
                     type="button"
@@ -246,7 +248,7 @@ export function ListingSocialView() {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-5 gap-2">
+              <div className="grid grid-cols-8 gap-1">
                 {allImages.map((url, i) => {
                   const active = selectedImages.includes(url);
                   return (
@@ -254,25 +256,21 @@ export function ListingSocialView() {
                       key={i}
                       type="button"
                       onClick={() => toggleImage(url)}
-                      className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
-                        active ? "border-green opacity-100" : "border-transparent opacity-30"
-                      }`}
+                      className="relative aspect-square overflow-hidden rounded-sm focus:outline-none"
                     >
-                      <img src={url} alt="" className="w-full h-full object-cover" />
-                      <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] font-mono px-1 rounded leading-tight">
-                        {i + 1}
-                      </span>
-                      {active && (
-                        <span className="absolute top-1 right-1 bg-green text-black text-[10px] font-mono px-1 rounded leading-tight">
-                          ✓
-                        </span>
-                      )}
+                      <img
+                        src={url}
+                        alt=""
+                        className={`w-full h-full object-cover transition-all ${
+                          active ? "" : "grayscale opacity-25"
+                        }`}
+                      />
                     </button>
                   );
                 })}
               </div>
               {selectedImages.length < 2 && (
-                <p className="text-amber text-xs font-mono mt-2">Select at least 2 images for a carousel.</p>
+                <p className="text-amber text-[11px] font-mono mt-2">Select at least 2 images.</p>
               )}
             </div>
           )}
