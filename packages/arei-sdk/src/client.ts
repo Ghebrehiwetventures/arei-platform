@@ -516,13 +516,14 @@ export class AREIClient {
   // getMarketNews — published market news items for public display
   // RLS on public.market_news ensures only status = 'published' is returned.
   // =========================================================================
-  async getMarketNews(): Promise<MarketNewsRow[]> {
-    const { data, error } = await this.sb
+  async getMarketNews(language?: string): Promise<MarketNewsRow[]> {
+    let q = this.sb
       .from("market_news")
       .select("*")
       .eq("status", "published")
       .order("published_at", { ascending: false });
-
+    if (language) q = q.eq("language", language);
+    const { data, error } = await q;
     if (error) throw new Error(`getMarketNews failed: ${error.message}`);
     return (data ?? []) as MarketNewsRow[];
   }
