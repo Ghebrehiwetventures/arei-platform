@@ -1128,6 +1128,9 @@ export interface MarketNewsRow {
   ingestion_source: string | null;
   created_at: string;
   updated_at: string;
+  title_pt: string | null;
+  snippet_pt: string | null;
+  why_it_matters_pt: string | null;
 }
 
 export interface MarketNewsFieldUpdate {
@@ -1138,12 +1141,15 @@ export interface MarketNewsFieldUpdate {
   affected_regions?: string[] | null;
   signal_tags?: string[] | null;
   relevance?: "high" | "standard";
+  title_pt?: string | null;
+  snippet_pt?: string | null;
+  why_it_matters_pt?: string | null;
 }
 
 export async function getMarketNewsQueue(status: MarketNewsStatus): Promise<MarketNewsRow[]> {
   const { data, error } = await supabaseAuth
     .from("market_news")
-    .select("id,title,original_title,source_name,source_url,canonical_url,published_at,category,snippet,why_it_matters,status,relevance,language,country_code,affected_regions,signal_tags,ingestion_source,created_at,updated_at")
+    .select("id,title,original_title,source_name,source_url,canonical_url,published_at,category,snippet,why_it_matters,status,relevance,language,country_code,affected_regions,signal_tags,ingestion_source,created_at,updated_at,title_pt,snippet_pt,why_it_matters_pt")
     .eq("status", status)
     .order("created_at", { ascending: false });
 

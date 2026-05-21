@@ -230,4 +230,7 @@ export interface MarketNewsRow {
   ingestion_source: string | null;
   created_at: string;
   updated_at: string;
+  title_pt: string | null;
+  snippet_pt: string | null;
+  why_it_matters_pt: string | null;
 }

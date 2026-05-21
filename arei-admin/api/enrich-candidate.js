@@ -2,8 +2,10 @@
  * POST /api/enrich-candidate
  *
  * Calls OpenAI with a raw market news candidate and returns structured
- * editorial suggestions. Never reads or writes the database.
- * Uses OPENAI_API_KEY from the server environment — never from the browser.
+ * editorial suggestions, then calls Claude (Anthropic) to translate the
+ * three key fields into European Portuguese.
+ * Never reads or writes the database.
+ * Uses OPENAI_API_KEY and ANTHROPIC_API_KEY from the server environment.
  */
 
 const SYSTEM_PROMPT = `You are an editorial assistant for the Cape Verde Real Estate Index (AREI). \
@@ -224,5 +226,121 @@ export default async function handler(req, res) {
   // Coerce score to a safe integer before returning
   suggestion.relevance_score = Math.round(Number(suggestion.relevance_score));
 
+  // ── PT translation via Claude API ─────────────────────────────────────────
+  // Only translate if the article is worth showing (not archive).
+  // Soft failure: if translation fails the enrich response still goes through.
+  if (suggestion.recommendation !== "archive") {
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    if (anthropicKey) {
+      try {
+        const ptResult = await translateToPt(anthropicKey, {
+          title: suggestion.title,
+          snippet: suggestion.snippet,
+          why_it_matters: suggestion.why_it_matters ?? null,
+        });
+        suggestion.title_pt = ptResult.title_pt;
+        suggestion.snippet_pt = ptResult.snippet_pt;
+        suggestion.why_it_matters_pt = ptResult.why_it_matters_pt;
+      } catch (err) {
+        // Non-fatal: log warning, return EN-only enrichment
+        suggestion._pt_translation_error = err?.message ?? String(err);
+      }
+    }
+  }
+
   return send(res, 200, suggestion);
+}
+
+// ── PT translation ─────────────────────────────────────────────────────────
+
+const PT_SYSTEM_PROMPT = `You are a professional Portuguese translator specialising in business and real estate content for Cape Verde.
+
+Translate the provided English text into European Portuguese (Portugal standard, pt-PT).
+Use clear, natural language suited for property investors and market observers.
+
+Rules:
+- Translate meaning faithfully. Do not add, omit, or editorialize.
+- Use European Portuguese spelling and vocabulary (not Brazilian).
+  Prefer: "imóvel" not "imóveil", "apartamento", "vivenda", "terreno".
+- Preserve proper nouns unchanged: Cape Verde, Sal, Boa Vista, Santiago,
+  São Vicente, Fogo, Mindelo, Santa Maria, Praia, AREI.
+- Preserve numbers, currencies, percentages, and dates exactly as written.
+- Do not use gerunds as verbal forms (Brazilian pattern) — use infinitive
+  or finite verb constructions.
+- If why_it_matters source is null or "(none)", return null for
+  why_it_matters_pt — do not invent content.
+
+Output ONLY a single JSON object. No markdown. No preamble.
+
+{
+  "title_pt":          "translated headline",
+  "snippet_pt":        "translated snippet",
+  "why_it_matters_pt": "translated why it matters, or null if source was null"
+}`;
+
+function buildPtUserMessage({ title, snippet, why_it_matters }) {
+  return [
+    `title: ${title || "(none)"}`,
+    `snippet: ${snippet || "(none)"}`,
+    `why_it_matters: ${why_it_matters || "(none)"}`,
+  ].join("\n");
+}
+
+const PT_REQUIRED_FIELDS = ["title_pt", "snippet_pt", "why_it_matters_pt"];
+
+function validatePtSuggestion(obj) {
+  for (const field of PT_REQUIRED_FIELDS) {
+    if (!(field in obj)) return `Missing required field: ${field}`;
+  }
+  if (obj.title_pt !== null && typeof obj.title_pt !== "string") return "title_pt must be string or null";
+  if (obj.snippet_pt !== null && typeof obj.snippet_pt !== "string") return "snippet_pt must be string or null";
+  if (obj.why_it_matters_pt !== null && typeof obj.why_it_matters_pt !== "string") return "why_it_matters_pt must be string or null";
+  return null;
+}
+
+async function translateToPt(apiKey, { title, snippet, why_it_matters }) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 600,
+      temperature: 0.1,
+      system: PT_SYSTEM_PROMPT,
+      messages: [
+        { role: "user", content: buildPtUserMessage({ title, snippet, why_it_matters }) },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => "");
+    throw new Error(`Anthropic PT request failed (HTTP ${response.status}): ${errText.slice(0, 200)}`);
+  }
+
+  const data = await response.json();
+  const text = (data.content || [])
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n");
+
+  if (!text) throw new Error("Empty content in Anthropic PT response");
+
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("Anthropic PT response did not contain JSON");
+    parsed = JSON.parse(match[0]);
+  }
+
+  const validationError = validatePtSuggestion(parsed);
+  if (validationError) throw new Error(`PT response failed validation: ${validationError}`);
+
+  return parsed;
 }
