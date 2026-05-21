@@ -26,7 +26,7 @@
   font-family: var(--kv-mono);
   font-size: clamp(32px, 5.5vw, 56px);
   font-weight: var(--kv-fw-regular);
-  line-height: 1.1;
+  line-height: 1.15;
   letter-spacing: -0.02em;
   color: var(--kv-black);
   max-width: 920px;
@@ -37,7 +37,7 @@
   font-family: var(--kv-mono);
   font-size: clamp(15px, 1.4vw, 17px);
   color: var(--kv-ink-700);
-  line-height: 1.55;
+  line-height: 1.6;
   max-width: 700px;
   margin-bottom: 36px;
 }
