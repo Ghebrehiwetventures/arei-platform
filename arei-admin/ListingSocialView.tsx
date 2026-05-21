@@ -15,6 +15,8 @@ interface Listing {
   description: string | null;
   image_urls: string[];
   cover_image_url: string | null;
+  source_url: string | null;
+  listing_url: string;
 }
 
 async function authHeaders(): Promise<HeadersInit> {
@@ -194,6 +196,26 @@ export function ListingSocialView() {
                   selected.area_sqm ? `${Math.round(selected.area_sqm)}m²` : null,
                 ].filter(Boolean).join(" · ") || "—"}
               </div>
+            </div>
+            <div className="flex flex-col gap-1 text-xs font-mono border-t border-border pt-3">
+              <a
+                href={selected.listing_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-green truncate hover:underline"
+              >
+                ↗ capeverderealestateindex.com
+              </a>
+              {selected.source_url && (
+                <a
+                  href={selected.source_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-foreground-muted truncate hover:underline hover:text-foreground"
+                >
+                  ↗ {selected.source_name}
+                </a>
+              )}
             </div>
           )}
         </div>

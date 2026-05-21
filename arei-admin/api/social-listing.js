@@ -160,7 +160,7 @@ function getInstagramConfig() {
 async function listListings(sb) {
   const { data, error } = await sb
     .from("v1_feed_cv")
-    .select("id, source_id, title, price, price_period, island, bedrooms, bathrooms, area_sqm, description, image_urls, cover_image_url")
+    .select("id, source_id, title, price, price_period, island, bedrooms, bathrooms, area_sqm, description, image_urls, cover_image_url, source_url")
     .eq("has_valid_images", true)
     .order("id", { ascending: false })
     .limit(200);
@@ -170,6 +170,7 @@ async function listListings(sb) {
     source_name: sourceName(row.source_id),
     image_urls: [...new Set((row.image_urls || []).map(resolveImageUrl).filter(Boolean))],
     cover_image_url: resolveImageUrl(row.cover_image_url),
+    listing_url: `https://www.capeverderealestateindex.com/listing/${row.id}`,
   }));
 }
 
