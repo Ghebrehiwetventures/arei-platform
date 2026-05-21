@@ -17,7 +17,7 @@ export function toLocale(lang: string): string {
  */
 function ptThousands(s: string, locale: string): string {
   if (!locale.startsWith("pt")) return s;
-  return s.replace(/(\d)[  ](\d)/g, "$1.$2");
+  return s.replace(/(\d)[  ](\d)/g, "$1.$2").replace(/ €/g, "€");
 }
 
 /** Plain integer or decimal: "1,234" / "1.234" */
@@ -47,7 +47,7 @@ export function formatPrice(
 }
 
 /**
- * Compact price for cards and tight UI: €300K / €1.2M  |  300K € / 1,2M €
+ * Compact price for cards and tight UI: €300K / €1.2M  |  300K€ / 1,2M€
  * Returns "Price on request" for null/zero.
  */
 export function formatCompactPrice(
@@ -64,38 +64,38 @@ export function formatCompactPrice(
       m.toLocaleString(locale, { maximumFractionDigits: 1 }).replace(/[,.]0$/, ""),
       locale,
     );
-    return isPt ? `${formatted}M ${symbol}` : `${symbol}${formatted}M`;
+    return isPt ? `${formatted}M${symbol}` : `${symbol}${formatted}M`;
   }
   const formatted = ptThousands(
     value.toLocaleString(locale, { maximumFractionDigits: 0 }),
     locale,
   );
-  return isPt ? `${formatted} ${symbol}` : `${symbol}${formatted}`;
+  return isPt ? `${formatted}${symbol}` : `${symbol}${formatted}`;
 }
 
 /**
  * Median price display: compact K suffix, "—" for null.
- * EN: "€180K" / "€800"   PT: "180K €" / "800 €"
+ * EN: "€180K" / "€800"   PT: "180K€" / "800€"
  */
 export function formatMedian(value: number | null, locale: string): string {
   if (value === null) return "—";
   const isPt = locale.startsWith("pt");
   if (value >= 1000) {
     const k = ptThousands(Math.round(value / 1000).toLocaleString(locale), locale);
-    return isPt ? `${k}K €` : `€${k}K`;
+    return isPt ? `${k}K€` : `€${k}K`;
   }
   const n = ptThousands(value.toLocaleString(locale), locale);
-  return isPt ? `${n} €` : `€${n}`;
+  return isPt ? `${n}€` : `€${n}`;
 }
 
 /**
- * Price per square metre: "€2,500" / "2.500 €", "—" for null.
+ * Price per square metre: "€2,500" / "2.500€", "—" for null.
  */
 export function formatPricePerSqm(value: number | null, locale: string): string {
   if (value === null) return "—";
   const isPt = locale.startsWith("pt");
   const n = ptThousands(Math.round(value).toLocaleString(locale), locale);
-  return isPt ? `${n} €` : `€${n}`;
+  return isPt ? `${n}€` : `€${n}`;
 }
 
 /**
