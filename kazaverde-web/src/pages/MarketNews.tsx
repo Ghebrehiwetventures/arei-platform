@@ -72,7 +72,7 @@ export default function MarketNews() {
     return `var(--kv-cat-${i >= 0 ? i + 1 : 1})`;
   };
 
-  const { items, loading, error } = useMarketNews();
+  const { items, loading, error, uiLang } = useMarketNews();
 
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string | null>(null);
@@ -207,7 +207,12 @@ export default function MarketNews() {
                   <Trans i18nKey="marketNews.empty" values={{ query }} components={{ 1: <b /> }} />
                 </div>
               ) : (
-                visibleItems.map((item) => (
+                visibleItems.map((item) => {
+                  const pt = uiLang === "pt";
+                  const title = (pt && item.titlePt) ? item.titlePt : item.title;
+                  const snippet = (pt && item.snippetPt) ? item.snippetPt : item.snippet;
+                  const whyItMatters = (pt && item.whyItMattersPt) ? item.whyItMattersPt : item.whyItMatters;
+                  return (
                   <article className="kv-news-item" key={item.id}>
                     <div className="kv-news-item-meta">
                       <span>{item.sourceName}</span>
@@ -231,16 +236,16 @@ export default function MarketNews() {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {item.title}
+                      {title}
                       <span aria-hidden="true">↗</span>
                     </a>
 
-                    <p className="kv-news-item-snippet">{item.snippet}</p>
+                    <p className="kv-news-item-snippet">{snippet}</p>
 
-                    {item.whyItMatters && (
+                    {whyItMatters && (
                       <div className="kv-news-why">
                         <span>{t("marketNews.whyItMatters")}</span>
-                        <p>{item.whyItMatters}</p>
+                        <p>{whyItMatters}</p>
                       </div>
                     )}
 
@@ -257,7 +262,8 @@ export default function MarketNews() {
                       {t("marketNews.readAt", { source: item.sourceName })}
                     </a>
                   </article>
-                ))
+                  );
+                })
               )}
             {!loading && !error && filteredItems.length > 0 && (
               <div className="kv-news-pager">
