@@ -165,20 +165,42 @@ function getInstagramConfig() {
 }
 
 async function listListings(sb) {
+  const [listingsRes, postsRes] = await Promise.all([
+    sb
+      .from("v1_feed_cv")
+      .select("id, source_id, title, price, price_period, island, bedrooms, bathrooms, area_sqm, description, image_urls, cover_image_url, source_url")
+      .eq("has_valid_images", true)
+      .order("id", { ascending: false })
+      .limit(200),
+    sb
+      .from("social_listing_posts")
+      .select("listing_id")
+      .eq("platform", "instagram"),
+  ]);
+  if (listingsRes.error) throw new Error(`Could not load listings: ${listingsRes.error.message}`);
+  const publishedIds = new Set((postsRes.data || []).map((r) => r.listing_id));
+  return (listingsRes.data || [])
+    .filter((row) => !publishedIds.has(row.id))
+    .map((row) => ({
+      ...row,
+      source_name: sourceName(row.source_id),
+      image_urls: [...new Set((row.image_urls || []).map(resolveImageUrl).filter(Boolean))],
+      cover_image_url: resolveImageUrl(row.cover_image_url),
+      listing_url: `https://www.capeverderealestateindex.com/listing/${row.id}`,
+    }));
+}
+
+async function listPublishedPosts(sb) {
   const { data, error } = await sb
-    .from("v1_feed_cv")
-    .select("id, source_id, title, price, price_period, island, bedrooms, bathrooms, area_sqm, description, image_urls, cover_image_url, source_url")
-    .eq("has_valid_images", true)
-    .order("id", { ascending: false })
-    .limit(200);
-  if (error) throw new Error(`Could not load listings: ${error.message}`);
-  return (data || []).map((row) => ({
-    ...row,
-    source_name: sourceName(row.source_id),
-    image_urls: [...new Set((row.image_urls || []).map(resolveImageUrl).filter(Boolean))],
-    cover_image_url: resolveImageUrl(row.cover_image_url),
-    listing_url: `https://www.capeverderealestateindex.com/listing/${row.id}`,
-  }));
+    .from("social_listing_posts")
+    .select("id, listing_id, external_post_id, permalink, caption, image_urls, published_at")
+    .order("published_at", { ascending: false })
+    .limit(50);
+  if (error) {
+    // Table may not exist yet — non-fatal
+    return [];
+  }
+  return data || [];
 }
 
 async function publishCarousel(sb, body) {
@@ -259,6 +281,17 @@ async function publishCarousel(sb, body) {
     permalink = pl.permalink || "";
   }
 
+  // Step 5: log the publish in social_listing_posts (non-fatal if it fails)
+  const { error: logErr } = await sb.from("social_listing_posts").insert({
+    listing_id: listingId,
+    platform: "instagram",
+    external_post_id: publishData.id,
+    permalink: permalink || null,
+    caption: caption.trim(),
+    image_urls: images,
+  });
+  if (logErr) console.error("[social-listing] Could not log publish:", logErr.message);
+
   return { postId: publishData.id, permalink };
 }
 
@@ -279,9 +312,9 @@ export default async function handler(req, res) {
     }
 
     if (req.method === "GET") {
-      const listings = await listListings(sb);
+      const [listings, published] = await Promise.all([listListings(sb), listPublishedPosts(sb)]);
       const ig = getInstagramConfig();
-      send(res, 200, { listings, instagram: { configured: ig.configured } });
+      send(res, 200, { listings, published, instagram: { configured: ig.configured } });
       return;
     }
 

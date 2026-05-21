@@ -39,8 +39,19 @@ async function apiFetch<T>(method: string, body?: Record<string, unknown>): Prom
   return data as T;
 }
 
+interface PublishedPost {
+  id: string;
+  listing_id: string;
+  external_post_id: string;
+  permalink: string | null;
+  caption: string;
+  image_urls: string[];
+  published_at: string;
+}
+
 export function ListingSocialView() {
   const [listings, setListings] = useState<Listing[]>([]);
+  const [published, setPublished] = useState<PublishedPost[]>([]);
   const [igConfigured, setIgConfigured] = useState(false);
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState("");
@@ -65,15 +76,25 @@ export function ListingSocialView() {
       )
     : listings;
 
-  useEffect(() => {
-    apiFetch<{ listings: Listing[]; instagram: { configured: boolean } }>("GET")
-      .then(({ listings: ls, instagram }) => {
+  const loadState = () => {
+    return apiFetch<{ listings: Listing[]; published: PublishedPost[]; instagram: { configured: boolean } }>("GET")
+      .then(({ listings: ls, published: ps, instagram }) => {
         setListings(ls);
+        setPublished(ps || []);
         setIgConfigured(instagram.configured);
-        if (ls.length > 0) setSelectedId(ls[0].id);
-      })
+        if (ls.length > 0 && !ls.find((l) => l.id === selectedId)) {
+          setSelectedId(ls[0].id);
+        } else if (ls.length === 0) {
+          setSelectedId("");
+        }
+      });
+  };
+
+  useEffect(() => {
+    loadState()
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -115,6 +136,7 @@ export function ListingSocialView() {
       });
       setPermalink(result.permalink);
       setNotice("Published to Instagram.");
+      await loadState();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
@@ -310,6 +332,43 @@ export function ListingSocialView() {
           </div>
         </div>
       </section>
+
+      {published.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold text-foreground font-mono">Published ({published.length})</h3>
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
+            {published.map((post) => (
+              <div key={post.id} className="surface-1 border border-border rounded p-3 text-xs font-mono space-y-2">
+                <div className="flex items-start justify-between gap-2">
+                  <div className="text-foreground truncate flex-1" title={post.listing_id}>{post.listing_id}</div>
+                  <div className="text-foreground-muted whitespace-nowrap">
+                    {new Date(post.published_at).toLocaleDateString()}
+                  </div>
+                </div>
+                {post.image_urls?.[0] && (
+                  <img src={post.image_urls[0]} alt="" className="w-full aspect-square object-cover rounded" />
+                )}
+                <div className="text-foreground-muted line-clamp-2">{post.caption.split("\n")[0]}</div>
+                <div className="flex items-center gap-3 pt-1">
+                  {post.permalink && (
+                    <a href={post.permalink} target="_blank" rel="noopener noreferrer" className="text-green hover:underline">
+                      ↗ Instagram
+                    </a>
+                  )}
+                  <a
+                    href={`https://www.capeverderealestateindex.com/listing/${post.listing_id}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground-muted hover:text-foreground hover:underline"
+                  >
+                    ↗ Listing
+                  </a>
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   );
 }
