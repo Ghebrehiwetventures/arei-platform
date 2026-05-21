@@ -908,7 +908,7 @@ const resources = {
       propertyType: {
         house: "casa",
         apartment: "apartamento",
-        villa: "moradia",
+        villa: "vivenda",
         // townhouse: "casa em banda" — incerto, pode ser "moradia em banda"
         townhouse: "casa em banda",
         penthouse: "penthouse",
@@ -922,7 +922,7 @@ const resources = {
       propertyTypePlural: {
         house: "casas",
         apartment: "apartamentos",
-        villa: "moradias",
+        villa: "vivendas",
         townhouse: "casas em banda",
         penthouse: "penthouses",
         land: "terrenos",
