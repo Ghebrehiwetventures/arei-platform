@@ -149,6 +149,22 @@
   margin: 0;
 }
 
+.kv-news-lang-badge {
+  display: inline-block;
+  margin-left: 10px;
+  padding: 2px 6px;
+  background: transparent;
+  border: 1px solid var(--kv-gray, #888888);
+  color: var(--kv-gray, #888888);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+}
+.kv-news-item-meta > .kv-news-lang-badge::before {
+  content: none;
+  margin: 0;
+}
+
 .kv-news-item-title {
   display: inline-flex;
   align-items: baseline;

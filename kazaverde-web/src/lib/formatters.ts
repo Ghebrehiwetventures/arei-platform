@@ -5,7 +5,8 @@
  * Derive it in React components: const locale = toLocale(i18n.language)
  */
 
-/** Maps an i18n language code to a BCP-47 locale tag. */
+/** Maps an i18n language code to a BCP-47 locale tag.
+ * Utöka här vid nytt språk — mappar i18n.language till BCP-47. */
 export function toLocale(lang: string): string {
   return lang.startsWith("pt") ? "pt-PT" : "en-GB";
 }

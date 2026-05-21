@@ -72,7 +72,7 @@ export default function MarketNews() {
     return `var(--kv-cat-${i >= 0 ? i + 1 : 1})`;
   };
 
-  const { items, loading, error } = useMarketNews();
+  const { items, loading, error, uiLang } = useMarketNews();
 
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string | null>(null);
@@ -222,6 +222,9 @@ export default function MarketNews() {
                         <span className="kv-news-relevance">
                           {t("marketNews.relevanceBadge")}
                         </span>
+                      )}
+                      {item.language && item.language !== uiLang && (
+                        <span className="kv-news-lang-badge">{item.language.toUpperCase()}</span>
                       )}
                     </div>
 
