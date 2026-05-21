@@ -201,18 +201,22 @@ export function ListingSocialView() {
                 </div>
               </div>
 
-              {/* Image strip */}
+              {/* Image grid */}
               {images.length > 0 && (
                 <div>
-                  <div className="label-style mb-1">{images.length} image{images.length !== 1 ? "s" : ""} — carousel</div>
-                  <div className="flex gap-1 overflow-x-auto pb-1">
+                  <div className="label-style mb-2">{images.length} image{images.length !== 1 ? "s" : ""} — carousel</div>
+                  <div className="grid grid-cols-4 gap-1.5">
                     {images.map((url, i) => (
-                      <img
-                        key={i}
-                        src={url}
-                        alt=""
-                        className="h-16 w-16 object-cover rounded flex-shrink-0 border border-border"
-                      />
+                      <div key={i} className="relative aspect-square">
+                        <img
+                          src={url}
+                          alt=""
+                          className="w-full h-full object-cover rounded border border-border"
+                        />
+                        <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] font-mono px-1 rounded">
+                          {i + 1}
+                        </span>
+                      </div>
                     ))}
                   </div>
                   {images.length < 2 && (

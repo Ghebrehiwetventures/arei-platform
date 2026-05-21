@@ -81,6 +81,21 @@ function formatPrice(price, pricePeriod) {
   return pricePeriod === "rent" ? `${formatted}/month` : formatted;
 }
 
+function truncateDescription(desc, maxSentences = 3, maxChars = 400) {
+  if (!desc) return "";
+  const clean = desc.trim().replace(/\s+/g, " ");
+  const sentences = clean.match(/[^.!?]+[.!?]+/g) || [];
+  if (sentences.length > 0) {
+    let result = "";
+    for (const s of sentences.slice(0, maxSentences)) {
+      result += s;
+      if (result.length >= maxChars) break;
+    }
+    return result.trim() + (result.trim().length < clean.length ? "..." : "");
+  }
+  return clean.length > maxChars ? clean.substring(0, maxChars).trimEnd() + "..." : clean;
+}
+
 function buildCaption(listing) {
   const agency = sourceName(listing.source_id);
   const price = formatPrice(listing.price, listing.price_period);
@@ -94,8 +109,8 @@ function buildCaption(listing) {
 
   lines.push("");
 
-  // Description
-  const desc = (listing.description || "").trim();
+  // Description — first 3 sentences only
+  const desc = truncateDescription(listing.description);
   if (desc) {
     lines.push(desc);
     lines.push("");
