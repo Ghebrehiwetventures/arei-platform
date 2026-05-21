@@ -103,9 +103,9 @@ export function ListingSocialView() {
     setPermalink("");
     setError("");
     setNotice("");
-    // Auto-select first 10 images (Instagram carousel max)
-    const listing = listings.find((l) => l.id === selectedId);
-    setSelectedImages((listing?.image_urls || []).slice(0, 10));
+    // Start with nothing selected — user clicks images in the order
+    // they want them in the carousel.
+    setSelectedImages([]);
 
     setCaptionLoading(true);
     apiFetch<{ caption: string }>("POST", { action: "generate_caption", listingId: selectedId })
