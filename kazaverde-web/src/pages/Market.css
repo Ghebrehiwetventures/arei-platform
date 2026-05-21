@@ -328,7 +328,7 @@
 }
 .kv-m-bar-row {
   display: grid;
-  grid-template-columns: 120px 1fr 56px;
+  grid-template-columns: 160px 1fr 56px;
   align-items: center;
   gap: 16px;
   min-width: 0;
@@ -339,6 +339,7 @@
   font-weight: var(--kv-fw-medium);
   letter-spacing: 0.04em;
   color: var(--kv-black);
+  white-space: nowrap;
   min-width: 0;
 }
 .kv-m-bar-track { min-width: 0; }
@@ -499,7 +500,7 @@
      bars line up across both charts. */
   .kv-m-bars { padding: 14px 14px; }
   .kv-m-bar-row {
-    grid-template-columns: 104px 1fr 32px;
+    grid-template-columns: 126px 1fr 32px;
     gap: 10px;
   }
   .kv-m-bar-label {
