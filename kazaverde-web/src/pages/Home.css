@@ -4,7 +4,7 @@
   padding: 72px 0 88px;
 }
 .hero h1 {
-  font-family: var(--fd);
+  font-family: var(--kv-mono);
   font-weight: 400;
   font-size: clamp(3.5rem, 8vw, 7.5rem);
   line-height: 0.95;
@@ -12,7 +12,6 @@
 }
 .hero h1 .ac {
   color: var(--ac);
-  font-style: italic;
   font-weight: 400;
 }
 .hero-sub {
