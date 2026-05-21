@@ -576,6 +576,6 @@ export class AREIClient {
       throw new Error(`getMarketReportSnapshot failed: ${error.message}`);
     }
 
-    return (data ?? []) as MarketReportRow[];
+    return (data ?? []) as unknown as MarketReportRow[];
   }
 }
