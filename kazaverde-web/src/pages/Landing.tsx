@@ -519,10 +519,7 @@ export default function Landing() {
                     <li>
                       <span className="kv-l-mmi-tag">{mmi.topIslandByInflow.name}</span>
                       <span className="kv-l-mmi-body">
-                        {t("landing.largestInflow", {
-                          count: mmi.topIslandByInflow.count,
-                          label: mmi.topIslandByInflow.count === 1 ? t("landing.listing") : t("landing.listings"),
-                        })}
+                        {t("landing.largestInflow", { count: mmi.topIslandByInflow.count })}
                       </span>
                     </li>
                   )}

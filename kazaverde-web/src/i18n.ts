@@ -153,8 +153,8 @@ const resources = {
         verifiedPriceCoverage: "Verified-price coverage",
         havePublicPrice: "Have a public asking price",
         activityHead: "This month's index activity",
-        largestInflow:
-          "Largest inflow this month — {{count}} new {{label}} since the 1st.",
+        largestInflow_one: "Largest inflow this month — 1 new listing since the 1st.",
+        largestInflow_other: "Largest inflow this month — {{count}} new listings since the 1st.",
         listing: "listing",
         listings: "listings",
         sources: "Sources",
@@ -166,8 +166,8 @@ const resources = {
         mix: "Mix",
         mixBody: "{{name}} dominate at {{pct}}% of typed inventory ({{count}} listings).",
         layout: "Layout",
-        layoutBody:
-          "Most common layout is <1>{{count}}-bedroom</1> — {{pct}}% of bedroom-tagged listings ({{n}}).",
+        layoutBody_one: "Most common layout is <1>1-bedroom</1> — {{pct}}% of bedroom-tagged listings ({{n}}).",
+        layoutBody_other: "Most common layout is <1>{{count}}-bedroom</1> — {{pct}}% of bedroom-tagged listings ({{n}}).",
         liveCountsFoot: "Live counts from the index · Updated daily as crawlers complete",
         noActivity:
           "Activity notes appear here once there is enough monthly movement to summarize.",
@@ -721,8 +721,8 @@ const resources = {
         verifiedPriceCoverage: "Cobertura de preço verificado",
         havePublicPrice: "Têm preço pedido público",
         activityHead: "Atividade do índice este mês",
-        largestInflow:
-          "Maior entrada este mês — {{count}} novo(s) {{label}} desde dia 1.",
+        largestInflow_one: "Maior entrada este mês — 1 novo anúncio desde dia 1.",
+        largestInflow_other: "Maior entrada este mês — {{count}} novos anúncios desde dia 1.",
         listing: "anúncio",
         listings: "anúncios",
         sources: "Fontes",
@@ -734,8 +734,8 @@ const resources = {
         mix: "Composição",
         mixBody: "{{name}} dominam com {{pct}}% do inventário tipificado ({{count}} anúncios).",
         layout: "Tipologia",
-        layoutBody:
-          "A tipologia mais comum é <1>{{count}} quarto(s)</1> — {{pct}}% dos anúncios com quartos indicados ({{n}}).",
+        layoutBody_one: "A tipologia mais comum é <1>1 quarto</1> — {{pct}}% dos anúncios com quartos indicados ({{n}}).",
+        layoutBody_other: "A tipologia mais comum é <1>{{count}} quartos</1> — {{pct}}% dos anúncios com quartos indicados ({{n}}).",
         liveCountsFoot: "Contagens em direto do índice · Atualizado diariamente após a conclusão dos crawlers",
         noActivity:
           "As notas de atividade aparecem aqui quando houver movimento mensal suficiente para resumir.",
