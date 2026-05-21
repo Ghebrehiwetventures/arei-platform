@@ -67,6 +67,13 @@ function resolveImageUrl(url) {
     .replace(/\.webp$/, "");
 }
 
+// Wrap image through wsrv.nl proxy to crop to 1:1 square (1080x1080 JPEG)
+// Instagram requires aspect 1:1 - 1.91:1 and consistent ratios in carousels.
+function squareCrop(url) {
+  if (!url) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1080&fit=cover&output=jpg`;
+}
+
 function sourceName(sourceId) {
   return SOURCE_NAMES[sourceId] || sourceId || "Unknown agency";
 }
@@ -202,11 +209,11 @@ async function publishCarousel(sb, body) {
 
   const graphBase = `https://graph.instagram.com/${ig.apiVersion}/${ig.accountId}`;
 
-  // Step 1: create a media container for each image
+  // Step 1: create a media container for each image (square-cropped via proxy)
   const containerIds = [];
   for (const imageUrl of images) {
     const params = new URLSearchParams({
-      image_url: imageUrl,
+      image_url: squareCrop(imageUrl),
       is_carousel_item: "true",
       access_token: ig.accessToken,
     });
