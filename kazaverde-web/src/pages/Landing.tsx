@@ -8,7 +8,7 @@ import { arei } from "../lib/arei";
 import { useMarketNews } from "../hooks/useMarketNews";
 import { MARKET_NEWS_CATEGORIES } from "../lib/market-news-data";
 import { formatSourceLabel } from "../lib/format";
-import { formatMedian, formatNumber, formatDate, toLocale } from "../lib/formatters";
+import { formatMedian, formatNumber, formatDate, toLocale, labelPropertyType } from "../lib/formatters";
 import { PRICE_BUCKETS, type PriceBucket, type ListingCard } from "arei-sdk";
 
 const BUCKET_LABEL: Record<PriceBucket, string> = {
@@ -51,20 +51,11 @@ interface MmiSnapshot {
      statements. Each is null when its source data is too thin. */
   topIslandByInflow: { name: string; count: number } | null;
   topSourcesByInflow: { id: string; label: string; count: number }[];
-  topType: { name: string; count: number; pct: number } | null;
+  topType: { slug: string; count: number; pct: number } | null;
   topBedroom: { count: number; pct: number; n: number } | null;
   topPriceBand: { label: string; count: number; pct: number } | null;
 }
 
-/* Title-case a property_type slug for display ("apartment" → "Apartments"). */
-function pluralizeType(t: string): string {
-  const cleaned = t.replace(/[_-]+/g, " ").trim().toLowerCase();
-  if (!cleaned) return "Listings";
-  const cap = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-  if (cap.endsWith("s")) return cap;
-  if (cap.endsWith("y")) return cap.slice(0, -1) + "ies";
-  return cap + "s";
-}
 
 /* ────────────────────────────────────────────────────────────
    Landing — brand surface for /. Adopted from archive
@@ -327,7 +318,7 @@ export default function Landing() {
         const topType =
           topTypeEntry && typedTotal > 0
             ? {
-                name: pluralizeType(topTypeEntry[0]),
+                slug: topTypeEntry[0],
                 count: topTypeEntry[1],
                 pct: Math.round((topTypeEntry[1] / typedTotal) * 100),
               }
@@ -559,7 +550,7 @@ export default function Landing() {
                     <li>
                       <span className="kv-l-mmi-tag">{t("landing.mix")}</span>
                       <span className="kv-l-mmi-body">
-                        {t("landing.mixBody", { name: mmi.topType.name, pct: mmi.topType.pct, count: formatNumber(mmi.topType.count, locale) })}
+                        {t("landing.mixBody", { name: labelPropertyType(mmi.topType.slug, t, true), pct: mmi.topType.pct, count: formatNumber(mmi.topType.count, locale) })}
                       </span>
                     </li>
                   )}
