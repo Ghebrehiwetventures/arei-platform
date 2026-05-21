@@ -150,3 +150,23 @@ export function formatRelTime(iso: string | null | undefined, locale: string): s
   if (days === 1) return isPt ? "indexado há 1 dia" : "indexed 1d ago";
   return isPt ? `indexado há ${days} dias` : `indexed ${days}d ago`;
 }
+
+/**
+ * Translate a raw property_type slug to the display label for the active locale.
+ * Uses the propertyType / propertyTypePlural i18n blocks with capitalize fallback
+ * for unknown slugs (e.g. "locali commerciali" from mis-ingested sources).
+ *
+ * Pass plural=true for the Landing stats sentence ("Apartments dominate…").
+ */
+export function labelPropertyType(
+  rawType: string | null | undefined,
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  t: (key: string, opts?: Record<string, unknown>) => string,
+  plural = false,
+): string {
+  if (!rawType) return "";
+  const key = rawType.trim().toLowerCase().replace(/[_-]+/g, "");
+  const block = plural ? "propertyTypePlural" : "propertyType";
+  const fallback = rawType.trim().replace(/[_-]+/g, " ").replace(/\b\w/g, (c) => c.toUpperCase());
+  return t(`${block}.${key}`, { defaultValue: fallback });
+}
