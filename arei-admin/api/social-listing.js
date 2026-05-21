@@ -168,7 +168,7 @@ async function listListings(sb) {
   return (data || []).map((row) => ({
     ...row,
     source_name: sourceName(row.source_id),
-    image_urls: (row.image_urls || []).map(resolveImageUrl).filter(Boolean),
+    image_urls: [...new Set((row.image_urls || []).map(resolveImageUrl).filter(Boolean))],
     cover_image_url: resolveImageUrl(row.cover_image_url),
   }));
 }
@@ -189,9 +189,7 @@ async function publishCarousel(sb, body) {
   const ig = getInstagramConfig();
   if (!ig.configured) throw new Error("Instagram not configured. Set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID.");
 
-  const images = (listing.image_urls || [])
-    .map(resolveImageUrl)
-    .filter(Boolean)
+  const images = [...new Set((listing.image_urls || []).map(resolveImageUrl).filter(Boolean))]
     .slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
 
   if (images.length < 2) throw new Error("Carousel requires at least 2 images. This listing has fewer.");
