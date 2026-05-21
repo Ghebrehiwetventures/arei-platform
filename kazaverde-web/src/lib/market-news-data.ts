@@ -49,6 +49,9 @@ export type MarketNewsItem = {
   affectedRegions?: string[];
   addedAt: string;
   relevance: "high" | "standard";
+  titlePt?: string;
+  snippetPt?: string;
+  whyItMattersPt?: string;
 };
 
 export const MARKET_NEWS_CATEGORIES: MarketNewsCategory[] = [
