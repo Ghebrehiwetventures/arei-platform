@@ -177,6 +177,38 @@ export const MIN_MEDIAN_SAMPLE = 5;
 export const PRICE_FLOOR = 10_000;
 export const PRICE_CEILING = 5_000_000;
 
+/**
+ * One row from market_report_snapshots for a single island (or 'ALL').
+ * Only published rows are returned — the SDK query and RLS both enforce
+ * status = 'published' AND published_at IS NOT NULL.
+ */
+export interface MarketReportRow {
+  /** ISO date string: YYYY-MM-DD */
+  snapshot_date: string;
+  /** Island name, or 'ALL' for the cross-island aggregate */
+  island: string;
+  /** Tier 2 — screened / monitored listings visible in the public feed */
+  listing_count: number;
+  /** Distinct source_ids in the screened population */
+  source_count: number;
+  /** Tier 3 — methodology-eligible records (sale, EUR, price in range, not superseded) */
+  index_eligible_count: number;
+  /** Median asking price (EUR) of eligible records. Null when eligible < 5. */
+  median_price_eur: number | null;
+  /** Mean EUR per sqm of eligible records with valid floor area. Null when sample < 5. */
+  avg_eur_per_sqm: number | null;
+  /** % of eligible records that have valid floor area data */
+  sqm_coverage_pct: number | null;
+  /** % of screened records that are methodology-eligible (have valid sale price) */
+  price_coverage_pct: number | null;
+  /** Snapshot methodology version, e.g. 'v1' */
+  methodology_version: string;
+  /** ISO timestamp when this snapshot was published */
+  published_at: string;
+  /** ISO timestamp of last data update */
+  last_updated: string;
+}
+
 /** Raw row returned by the public.market_news table (snake_case DB shape) */
 export interface MarketNewsRow {
   id: string;
