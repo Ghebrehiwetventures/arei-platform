@@ -137,12 +137,18 @@
   letter-spacing: 0;
 }
 
+/* Desktop: FOLLOW column hidden, social links visible inside CONNECT */
+.footer-col-follow { display: none; }
+
 @media (max-width: 960px) {
   .fg { grid-template-columns: 1fr 1fr 1fr; gap: 32px; }
   .footer-brand { grid-column: 1 / -1; }
 }
 @media (max-width: 720px) {
   .fg { grid-template-columns: 1fr 1fr; gap: 28px; }
+  /* Mobile: split social into its own FOLLOW column, hide from CONNECT */
+  .footer-col-follow { display: block; }
+  .ft-social { display: none; }
 }
 @media (max-width: 768px) {
   /* Extra bottom on mobile so the © row clears the Detail-page

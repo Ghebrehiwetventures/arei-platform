@@ -49,11 +49,18 @@ export default function Footer() {
             <h4>{t("footer.connect")}</h4>
             <a href="mailto:info@africarealestateindex.com">{t("common.contact")}</a>
             <a href="https://www.africarealestateindex.com/" target="_blank" rel="noopener noreferrer">AREI</a>
+            <a className="ft-social" href="https://www.linkedin.com/company/africa-real-estate-index/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
+            <a className="ft-social" href="https://www.instagram.com/africarealestateindex/" target="_blank" rel="noopener noreferrer">Instagram</a>
+            <a className="ft-social" href="https://x.com/arei_data" target="_blank" rel="noopener noreferrer">X / Twitter</a>
+            <Link to="/privacy">{t("common.privacy")}</Link>
+            <Link to="/cookie-policy">{t("common.cookies")}</Link>
+          </div>
+
+          <div className="footer-col footer-col-follow">
+            <h4>{t("footer.follow")}</h4>
             <a href="https://www.linkedin.com/company/africa-real-estate-index/" target="_blank" rel="noopener noreferrer">LinkedIn</a>
             <a href="https://www.instagram.com/africarealestateindex/" target="_blank" rel="noopener noreferrer">Instagram</a>
             <a href="https://x.com/arei_data" target="_blank" rel="noopener noreferrer">X / Twitter</a>
-            <Link to="/privacy">{t("common.privacy")}</Link>
-            <Link to="/cookie-policy">{t("common.cookies")}</Link>
           </div>
         </div>
 
