@@ -326,7 +326,8 @@ export function ListingSocialView() {
                       <img
                         src={url}
                         alt=""
-                        className={`w-full h-full object-cover transition-all ${
+                        draggable={false}
+                        className={`w-full h-full object-cover transition-all pointer-events-none ${
                           active ? "" : "grayscale opacity-25"
                         }`}
                       />
