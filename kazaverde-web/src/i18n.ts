@@ -909,8 +909,7 @@ const resources = {
         house: "casa",
         apartment: "apartamento",
         villa: "vivenda",
-        // townhouse: "casa em banda" — incerto, pode ser "moradia em banda"
-        townhouse: "casa em banda",
+        townhouse: "moradia em banda",
         penthouse: "penthouse",
         land: "terreno",
         commercial: "imóvel comercial",
@@ -923,7 +922,7 @@ const resources = {
         house: "casas",
         apartment: "apartamentos",
         villa: "vivendas",
-        townhouse: "casas em banda",
+        townhouse: "moradias em banda",
         penthouse: "penthouses",
         land: "terrenos",
         commercial: "imóveis comerciais",
