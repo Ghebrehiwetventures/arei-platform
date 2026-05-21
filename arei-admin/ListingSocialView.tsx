@@ -122,36 +122,18 @@ export function ListingSocialView() {
     });
   };
 
-  const [dragUrl, setDragUrl] = useState<string | null>(null);
-
-  const handleDragStart = (url: string) => (e: React.DragEvent) => {
-    setDragUrl(url);
-    e.dataTransfer.effectAllowed = "move";
-    e.dataTransfer.setData("text/plain", url); // Safari/Firefox require this
-  };
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    e.dataTransfer.dropEffect = "move";
-  };
-  const handleDrop = (targetUrl: string) => (e: React.DragEvent) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!dragUrl || dragUrl === targetUrl) {
-      setDragUrl(null);
-      return;
-    }
+  const moveImage = (url: string, delta: number) => {
     setSelectedImages((prev) => {
-      const from = prev.indexOf(dragUrl);
-      const to = prev.indexOf(targetUrl);
-      if (from < 0 || to < 0) return prev;
+      const from = prev.indexOf(url);
+      if (from < 0) return prev;
+      const to = Math.max(0, Math.min(prev.length - 1, from + delta));
+      if (to === from) return prev;
       const next = [...prev];
       const [moved] = next.splice(from, 1);
       next.splice(to, 0, moved);
       return next;
     });
-    setDragUrl(null);
   };
-  const handleDragEnd = () => setDragUrl(null);
 
   const handlePublish = async () => {
     if (!selectedId || !caption.trim() || selectedImages.length < 2) return;
@@ -310,31 +292,41 @@ export function ListingSocialView() {
                   return (
                     <div
                       key={i}
-                      draggable={active}
-                      onDragStart={active ? handleDragStart(url) : undefined}
-                      onDragOver={active ? handleDragOver : undefined}
-                      onDrop={active ? handleDrop(url) : undefined}
-                      onDragEnd={active ? handleDragEnd : undefined}
-                      onClick={() => {
-                        if (dragUrl) return; // suppress click while dragging
-                        toggleImage(url);
-                      }}
-                      className={`relative aspect-square overflow-hidden rounded-sm ${
-                        active ? "cursor-move" : "cursor-pointer"
-                      } ${dragUrl === url ? "opacity-50" : ""}`}
+                      className="relative aspect-square overflow-hidden rounded-sm group"
                     >
                       <img
                         src={url}
                         alt=""
                         draggable={false}
-                        className={`w-full h-full object-cover transition-all pointer-events-none ${
+                        onClick={() => toggleImage(url)}
+                        className={`w-full h-full object-cover transition-all cursor-pointer ${
                           active ? "" : "grayscale opacity-25"
                         }`}
                       />
                       {active && (
-                        <span className="absolute top-1 left-1 bg-green text-black text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded leading-tight">
-                          {position + 1}
-                        </span>
+                        <>
+                          <span className="absolute top-1 left-1 bg-green text-black text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded leading-tight pointer-events-none">
+                            {position + 1}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); moveImage(url, -1); }}
+                            disabled={position === 0}
+                            className="absolute bottom-1 left-1 bg-black/70 hover:bg-black text-white text-[10px] font-mono w-5 h-5 rounded leading-none disabled:opacity-30 flex items-center justify-center"
+                            title="Move left"
+                          >
+                            ◀
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => { e.stopPropagation(); moveImage(url, 1); }}
+                            disabled={position === selectedImages.length - 1}
+                            className="absolute bottom-1 right-1 bg-black/70 hover:bg-black text-white text-[10px] font-mono w-5 h-5 rounded leading-none disabled:opacity-30 flex items-center justify-center"
+                            title="Move right"
+                          >
+                            ▶
+                          </button>
+                        </>
                       )}
                     </div>
                   );
@@ -344,7 +336,7 @@ export function ListingSocialView() {
                 <p className="text-amber text-[11px] font-mono mt-2">Select at least 2 images.</p>
               )}
               {selectedImages.length >= 2 && (
-                <p className="text-foreground-muted text-[11px] font-mono mt-2">Drag selected images to reorder · number = carousel position.</p>
+                <p className="text-foreground-muted text-[11px] font-mono mt-2">Use ◀ ▶ on each image to reorder · number = carousel position.</p>
               )}
             </div>
           )}
