@@ -122,6 +122,31 @@ export function ListingSocialView() {
     });
   };
 
+  const [dragUrl, setDragUrl] = useState<string | null>(null);
+
+  const handleDragStart = (url: string) => (e: React.DragEvent) => {
+    setDragUrl(url);
+    e.dataTransfer.effectAllowed = "move";
+  };
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = "move";
+  };
+  const handleDrop = (targetUrl: string) => (e: React.DragEvent) => {
+    e.preventDefault();
+    if (!dragUrl || dragUrl === targetUrl) return;
+    setSelectedImages((prev) => {
+      const from = prev.indexOf(dragUrl);
+      const to = prev.indexOf(targetUrl);
+      if (from < 0 || to < 0) return prev;
+      const next = [...prev];
+      const [moved] = next.splice(from, 1);
+      next.splice(to, 0, moved);
+      return next;
+    });
+    setDragUrl(null);
+  };
+
   const handlePublish = async () => {
     if (!selectedId || !caption.trim() || selectedImages.length < 2) return;
     setPublishing(true);
@@ -274,13 +299,19 @@ export function ListingSocialView() {
               </div>
               <div className="grid grid-cols-8 gap-1">
                 {allImages.map((url, i) => {
-                  const active = selectedImages.includes(url);
+                  const position = selectedImages.indexOf(url);
+                  const active = position >= 0;
                   return (
-                    <button
+                    <div
                       key={i}
-                      type="button"
+                      draggable={active}
+                      onDragStart={active ? handleDragStart(url) : undefined}
+                      onDragOver={active ? handleDragOver : undefined}
+                      onDrop={active ? handleDrop(url) : undefined}
                       onClick={() => toggleImage(url)}
-                      className="relative aspect-square overflow-hidden rounded-sm focus:outline-none"
+                      className={`relative aspect-square overflow-hidden rounded-sm cursor-pointer ${
+                        active ? "cursor-move" : ""
+                      } ${dragUrl === url ? "opacity-50" : ""}`}
                     >
                       <img
                         src={url}
@@ -289,12 +320,20 @@ export function ListingSocialView() {
                           active ? "" : "grayscale opacity-25"
                         }`}
                       />
-                    </button>
+                      {active && (
+                        <span className="absolute top-1 left-1 bg-green text-black text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded leading-tight">
+                          {position + 1}
+                        </span>
+                      )}
+                    </div>
                   );
                 })}
               </div>
               {selectedImages.length < 2 && (
                 <p className="text-amber text-[11px] font-mono mt-2">Select at least 2 images.</p>
+              )}
+              {selectedImages.length >= 2 && (
+                <p className="text-foreground-muted text-[11px] font-mono mt-2">Drag selected images to reorder · number = carousel position.</p>
               )}
             </div>
           )}
