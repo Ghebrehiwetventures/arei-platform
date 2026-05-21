@@ -73,6 +73,13 @@ export interface SocialAgentConfig {
   };
 }
 
+export interface ListingMatch {
+  id: string;
+  source_id: string;
+  title: string;
+  imageUrl: string;
+}
+
 export interface SocialAgentState {
   items: MarketNewsItem[];
   drafts: MarketNewsSocialDraft[];
@@ -115,6 +122,12 @@ async function postAction<T>(body: Record<string, unknown>): Promise<T> {
     body: JSON.stringify(body),
   });
   return parseApiResponse<T>(response);
+}
+
+export async function fetchListingsForItem(
+  itemId: string
+): Promise<{ listings: ListingMatch[] }> {
+  return postAction({ action: "get_listings_for_item", itemId });
 }
 
 export async function generateMarketNewsSocialDrafts(input: {

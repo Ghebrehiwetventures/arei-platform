@@ -134,6 +134,44 @@ function validateSourceItem(item) {
   return missing;
 }
 
+function resolveImageUrl(url) {
+  if (!url || !url.endsWith(".webp")) return url;
+  return url
+    .replace("/wp-content/webp-express/webp-images/uploads/", "/wp-content/uploads/")
+    .replace(/\.webp$/, "");
+}
+
+function normalizeForSourceMatch(name) {
+  return name
+    .toLowerCase()
+    .replace(/\bcape\s+verde\b/g, "")
+    .replace(/\bcabo\s+verde\b/g, "")
+    .replace(/\b(property|properties|real estate|investments?|realty|group)\b/g, "")
+    .replace(/[^a-z0-9]/g, "")
+    .trim();
+}
+
+async function getListingsForItem(sb, itemId) {
+  const item = await loadItemById(sb, itemId);
+  const normalized = normalizeForSourceMatch(item.sourceName);
+  if (!normalized) return [];
+
+  const { data, error } = await sb
+    .from("v1_feed_cv")
+    .select("id, source_id, cover_image_url, title")
+    .eq("has_valid_images", true)
+    .ilike("source_id", `%${normalized}%`)
+    .limit(10);
+
+  if (error) throw new Error(`Could not query listings: ${error.message}`);
+  return (data || []).map((row) => ({
+    id: row.id,
+    source_id: row.source_id,
+    title: row.title || row.id,
+    imageUrl: resolveImageUrl(row.cover_image_url),
+  }));
+}
+
 async function listMarketNewsItems(sb) {
   const { data, error } = await sb.from("market_news").select("*");
   if (error) {
@@ -805,6 +843,12 @@ export default async function handler(req, res) {
 
     const body = req.body && typeof req.body === "object" ? req.body : {};
     const action = cleanText(body.action);
+
+    if (action === "get_listings_for_item") {
+      const listings = await getListingsForItem(sb, body.itemId);
+      send(res, 200, { listings });
+      return;
+    }
 
     if (action === "generate") {
       const item = await loadItemById(sb, body.itemId);

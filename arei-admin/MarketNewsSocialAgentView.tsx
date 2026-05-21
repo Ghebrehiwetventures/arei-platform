@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import {
   approveMarketNewsSocialDraft,
+  fetchListingsForItem,
   fetchMarketNewsSocialState,
   generateMarketNewsSocialDrafts,
   publishInstagramSocialDraft,
@@ -8,6 +9,7 @@ import {
   resetMarketNewsSocialDraft,
   updateMarketNewsSocialDraft,
   upsertDraft,
+  type ListingMatch,
   type MarketNewsItem,
   type MarketNewsSocialDraft,
   type SocialAgentConfig,
@@ -105,6 +107,8 @@ export function MarketNewsSocialAgentView() {
   const [selectedItemId, setSelectedItemId] = useState("");
   const [provider, setProvider] = useState<"openai" | "anthropic" | "">("");
   const [mediaUrl, setMediaUrl] = useState("");
+  const [listingMatches, setListingMatches] = useState<ListingMatch[]>([]);
+  const [matchLoading, setMatchLoading] = useState(false);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState("");
   const [error, setError] = useState("");
@@ -135,6 +139,32 @@ export function MarketNewsSocialAgentView() {
       cancelled = true;
     };
   }, []);
+
+  useEffect(() => {
+    if (!selectedItemId) return;
+    let cancelled = false;
+    setMatchLoading(true);
+    setListingMatches([]);
+    fetchListingsForItem(selectedItemId)
+      .then(({ listings }) => {
+        if (cancelled) return;
+        setListingMatches(listings);
+        if (listings.length > 0) {
+          setMediaUrl(listings[0].imageUrl);
+        } else {
+          setMediaUrl("");
+        }
+      })
+      .catch(() => {
+        if (!cancelled) setListingMatches([]);
+      })
+      .finally(() => {
+        if (!cancelled) setMatchLoading(false);
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedItemId]);
 
   const replaceDraft = (draft: MarketNewsSocialDraft) => {
     setDrafts((current) => upsertDraft(current, draft));
@@ -384,11 +414,48 @@ export function MarketNewsSocialAgentView() {
                 </select>
               </div>
               <div>
-                <label className="label-style block mb-1">Instagram media URL</label>
+                <label className="label-style block mb-1">
+                  Instagram image
+                  {matchLoading && (
+                    <span className="ml-2 text-foreground-muted font-normal normal-case tracking-normal">searching...</span>
+                  )}
+                  {!matchLoading && listingMatches.length > 0 && (
+                    <span className="ml-2 text-green font-normal normal-case tracking-normal">auto-matched</span>
+                  )}
+                  {!matchLoading && listingMatches.length === 0 && selectedItemId && (
+                    <span className="ml-2 text-amber font-normal normal-case tracking-normal">no listing found</span>
+                  )}
+                </label>
+                {listingMatches.length > 1 && (
+                  <select
+                    value={mediaUrl}
+                    onChange={(event) => setMediaUrl(event.target.value)}
+                    className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded mb-1"
+                  >
+                    {listingMatches.map((match) => (
+                      <option key={match.id} value={match.imageUrl}>
+                        {match.title}
+                      </option>
+                    ))}
+                  </select>
+                )}
+                {listingMatches.length === 1 && (
+                  <div className="text-xs font-mono text-foreground-muted truncate mb-1 px-1">
+                    {listingMatches[0].title}
+                  </div>
+                )}
                 <input
                   value={mediaUrl}
                   onChange={(event) => setMediaUrl(event.target.value)}
-                  placeholder={config.instagram.hasDefaultImageUrl ? "Using default image if blank" : "Public image URL required to publish"}
+                  placeholder={
+                    matchLoading
+                      ? "Searching..."
+                      : listingMatches.length > 0
+                        ? "Override image URL"
+                        : config.instagram.hasDefaultImageUrl
+                          ? "Using default image if blank"
+                          : "No match — paste public image URL"
+                  }
                   className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
                 />
               </div>
