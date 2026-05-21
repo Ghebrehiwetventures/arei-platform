@@ -37,6 +37,7 @@ function toMarketNewsItem(row: MarketNewsRow): MarketNewsItem {
     affectedRegions: row.affected_regions ?? undefined,
     addedAt: isoToDate(row.created_at),
     relevance: row.relevance,
+    language: row.language ?? undefined,
   };
 }
 
