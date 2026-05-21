@@ -1,7 +1,7 @@
 import { useEffect, useState, useRef, useMemo } from "react";
 import { createPortal } from "react-dom";
 import { Link, useParams, useNavigate } from "react-router-dom";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useSaved } from "../hooks/useSaved";
 import { arei } from "../lib/arei";
@@ -122,13 +122,13 @@ function daysSince(iso: string | null | undefined): number {
 /** ±N% string for "vs median" cell. Returns null when the comparison
  *  isn't meaningful — e.g. land priced against an overall house median
  *  produces 1000%+ noise; bail out and let the row be hidden. */
-function priceVsMedian(price: number | null, median: number | null): { pct: number; label: string } | null {
+function priceVsMedian(price: number | null, median: number | null, onMedianLabel: string): { pct: number; label: string } | null {
   if (price == null || median == null || median <= 0) return null;
   const pct = Math.round(((price - median) / median) * 100);
   // Above this band the comparison is almost certainly cross-category
   // (land vs house, hotel vs apartment) — better to hide than to lie.
   if (Math.abs(pct) > 200) return null;
-  if (pct === 0) return { pct: 0, label: "On median" };
+  if (pct === 0) return { pct: 0, label: onMedianLabel };
   const sign = pct > 0 ? "+" : "−";
   return { pct, label: `${sign}${Math.abs(pct)}%` };
 }
@@ -463,7 +463,7 @@ export default function Detail() {
         <div className="kv-d-top-grid">
           <div className="kv-d-eyebrow">
             <span className={`kv-d-tag${detail.is_new ? " kv-d-tag-new" : ""}`}>
-              {detail.is_new ? t("listings.new") : "Indexed"}
+              {detail.is_new ? t("listings.new") : t("detail.indexed")}
             </span>
             {detail.property_type && <b>{typeLabel}</b>}
             <span className="kv-d-eyebrow-dot" aria-hidden="true" />
@@ -478,13 +478,13 @@ export default function Detail() {
           <div className="kv-d-subline">
             {!isLand && detail.bedrooms != null && (
               <>
-                <b>{detail.bedrooms === 0 ? t("listings.studio") : detail.bedrooms}</b> bed
+                <b>{detail.bedrooms === 0 ? t("listings.studio") : detail.bedrooms}</b> {detail.bedrooms === 1 ? t("detail.bed") : t("detail.beds")}
               </>
             )}
             {!isLand && detail.bathrooms != null && detail.bathrooms > 0 && (
               <>
                 {" · "}
-                <b>{detail.bathrooms}</b> bath
+                <b>{detail.bathrooms}</b> {detail.bathrooms === 1 ? t("detail.bath") : t("detail.baths")}
               </>
             )}
             {effectiveArea != null && (
@@ -597,7 +597,7 @@ export default function Detail() {
               </div>
             </div>
             <div className="kv-d-fact">
-              <div className="kv-d-fact-k">In hectares</div>
+              <div className="kv-d-fact-k">{t("detail.inHectares")}</div>
               <div className="kv-d-fact-v">
                 {landArea != null ? (
                   <>
@@ -710,26 +710,26 @@ export default function Detail() {
               pipeline starts extracting them. */}
           {(() => {
             const rows: { k: string; v: React.ReactNode }[] = [];
-            if (detail.property_type) rows.push({ k: "Type", v: typeLabel });
+            if (detail.property_type) rows.push({ k: t("listings.type"), v: typeLabel });
             if (!isLand && detail.bedrooms != null) {
-              rows.push({ k: "Bedrooms", v: detail.bedrooms === 0 ? "Studio" : detail.bedrooms });
+              rows.push({ k: t("detail.bedrooms"), v: detail.bedrooms === 0 ? t("listings.studio") : detail.bedrooms });
             }
             if (!isLand && detail.bathrooms != null && detail.bathrooms > 0) {
-              rows.push({ k: "Bathrooms", v: detail.bathrooms });
+              rows.push({ k: t("detail.bathrooms"), v: detail.bathrooms });
             }
             if (detail.property_size_sqm != null) {
-              rows.push({ k: "Living area", v: <>{formatNumber(detail.property_size_sqm, locale)} m²</> });
+              rows.push({ k: t("detail.livingArea"), v: <>{formatNumber(detail.property_size_sqm, locale)} m²</> });
             }
             if (detail.land_area_sqm != null) {
-              rows.push({ k: "Plot area", v: <>{formatNumber(detail.land_area_sqm, locale)} m²</> });
+              rows.push({ k: t("detail.plotArea"), v: <>{formatNumber(detail.land_area_sqm, locale)} m²</> });
             }
             if (detail.city) {
-              rows.push({ k: "Location", v: formatLocation(detail.city, detail.island) });
+              rows.push({ k: t("detail.location"), v: formatLocation(detail.city, detail.island) });
             }
             if (rows.length < 4) return null;
             return (
               <div className="kv-d-table-block">
-                <div className="kv-d-table-eyebrow">Property details</div>
+                <div className="kv-d-table-eyebrow">{t("detail.propertyDetails")}</div>
                 <div className="kv-d-table">
                   {rows.map((r) => (
                     <div className="kv-d-table-row" key={r.k}>
@@ -745,13 +745,13 @@ export default function Detail() {
           {/* Map placeholder — location context without geocoding.
               Matches the cv-listing.html Location section pattern. */}
           <div className="kv-d-map-block">
-            <div className="kv-d-table-eyebrow">Location</div>
+            <div className="kv-d-table-eyebrow">{t("detail.location")}</div>
             <div className="kv-d-map-placeholder">
               <div className="kv-d-map-pin" aria-hidden="true">⊙</div>
               <div className="kv-d-map-location">
                 {[detail.city, detail.island].filter(Boolean).join(", ")}
               </div>
-              <span className="kv-pill">Map coming soon</span>
+              <span className="kv-pill">{t("detail.mapComingSoon")}</span>
             </div>
           </div>
 
@@ -799,12 +799,12 @@ export default function Detail() {
                 <div className="kv-d-spec-row">
                   {!isLand && detail.bedrooms != null && (
                     <span className="kv-d-spec-token">
-                      <b>{detail.bedrooms === 0 ? "Studio" : detail.bedrooms}</b> {detail.bedrooms === 1 ? "bed" : "beds"}
+                      <b>{detail.bedrooms === 0 ? t("listings.studio") : detail.bedrooms}</b> {detail.bedrooms === 1 ? t("detail.bed") : t("detail.beds")}
                     </span>
                   )}
                   {!isLand && detail.bathrooms != null && detail.bathrooms > 0 && (
                     <span className="kv-d-spec-token">
-                      <b>{detail.bathrooms}</b> {detail.bathrooms === 1 ? "bath" : "baths"}
+                      <b>{detail.bathrooms}</b> {detail.bathrooms === 1 ? t("detail.bath") : t("detail.baths")}
                     </span>
                   )}
                   {(detail.property_size_sqm ?? detail.land_area_sqm) != null && (
@@ -832,7 +832,7 @@ export default function Detail() {
                 onClick={() => toggle(detail.id)}
                 aria-pressed={isSaved(detail.id)}
               >
-                <span>{isSaved(detail.id) ? "✓ Saved to shortlist" : "Save to shortlist"}</span>
+                <span>{isSaved(detail.id) ? t("detail.savedToShortlist") : t("detail.saveToShortlist")}</span>
                 <span aria-hidden="true">↗</span>
               </button>
             </div>
@@ -844,7 +844,7 @@ export default function Detail() {
               header — the data IS the section. */}
           {(() => {
             const days = daysSince(detail.first_seen_at);
-            const vsMed = priceVsMedian(detail.price, marketCtx?.medianPrice ?? null);
+            const vsMed = priceVsMedian(detail.price, marketCtx?.medianPrice ?? null, t("detail.onMedian"));
             return (
               <div className="kv-d-meta-table">
                 <div className="kv-d-meta-table-row">
@@ -857,21 +857,21 @@ export default function Detail() {
                 </div>
                 <div className="kv-d-meta-table-row">
                   <div className="kv-d-meta-table-k">{t("detail.daysOnIndex")}</div>
-                  <div className="kv-d-meta-table-v">{days} {days === 1 ? "day" : "days"}</div>
+                  <div className="kv-d-meta-table-v">{days === 1 ? t("detail.oneDay") : t("detail.days", { count: days })}</div>
                 </div>
                 <div className="kv-d-meta-table-row">
-                  <div className="kv-d-meta-table-k">Last verified</div>
+                  <div className="kv-d-meta-table-k">{t("detail.lastVerified")}</div>
                   <div className="kv-d-meta-table-v">{fmtDateTime(detail.last_seen_at, locale)}</div>
                 </div>
                 {marketCtx?.medianPrice != null && (
                   <div className="kv-d-meta-table-row">
-                    <div className="kv-d-meta-table-k">{detail.island} median</div>
+                    <div className="kv-d-meta-table-k">{t("detail.islandMedian", { island: detail.island })}</div>
                     <div className="kv-d-meta-table-v">{formatMedian(marketCtx.medianPrice, locale)}</div>
                   </div>
                 )}
                 {vsMed && (
                   <div className="kv-d-meta-table-row">
-                    <div className="kv-d-meta-table-k">vs median</div>
+                    <div className="kv-d-meta-table-k">{t("detail.vsMedian")}</div>
                     <div className={`kv-d-meta-table-v${vsMed.pct < 0 ? " is-lower" : vsMed.pct > 0 ? " is-higher" : ""}`}>
                       {vsMed.label}
                     </div>
@@ -896,17 +896,22 @@ export default function Detail() {
               </a>
             )}
             <p className="kv-d-source-disc">
-              This index reproduces public listing data only. We have no affiliation with the
-              source agent or the seller. Contact the agent directly for viewings, offers, and
-              legal advice — or see our <Link to="/blog">buying guide</Link> for the basics.
+              <Trans
+                i18nKey="detail.sourceDisclaimer"
+                components={{ link: <Link to="/blog" /> }}
+              />
             </p>
             <p className="kv-d-source-disc">
-              Explore more: <Link to="/listings">all Cape Verde listings</Link>,{" "}
-              <Link to={`/listings?island=${encodeURIComponent(detail.island)}`}>
-                {detail.island} listings
-              </Link>,{" "}
-              <Link to="/market">market data</Link>, or{" "}
-              <Link to="/about">how the Cape Verde Real Estate Index works</Link>.
+              <Trans
+                i18nKey="detail.exploreParagraph"
+                values={{ island: detail.island }}
+                components={{
+                  link1: <Link to="/listings" />,
+                  link2: <Link to={`/listings?island=${encodeURIComponent(detail.island)}`} />,
+                  link3: <Link to="/market" />,
+                  link4: <Link to="/about" />,
+                }}
+              />
             </p>
           </div>
         </aside>
