@@ -18,6 +18,7 @@ import type {
   ListingDetail,
   PriceBucket,
   MarketNewsRow,
+  MarketReportRow,
 } from "./types.js";
 import {
   PRICE_BUCKETS,
@@ -525,5 +526,56 @@ export class AREIClient {
 
     if (error) throw new Error(`getMarketNews failed: ${error.message}`);
     return (data ?? []) as MarketNewsRow[];
+  }
+
+  // =========================================================================
+  // getMarketReportSnapshot — latest published market report stats
+  //
+  // Returns one row per island plus the 'ALL' aggregate row, from the most
+  // recent snapshot where status = 'published' AND published_at IS NOT NULL.
+  //
+  // Both conditions are checked here and enforced by RLS — belt-and-suspenders.
+  // Draft snapshots are invisible to this method regardless of snapshot_date.
+  //
+  // Returns an empty array if no published snapshot exists yet.
+  // =========================================================================
+  async getMarketReportSnapshot(): Promise<MarketReportRow[]> {
+    // Supabase JS does not support a correlated subquery in .eq(), so we fetch
+    // the latest published date in one round-trip, then fetch the rows.
+    const { data: dateData, error: dateError } = await this.sb
+      .from("market_report_snapshots")
+      .select("snapshot_date")
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("snapshot_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (dateError) {
+      throw new Error(`getMarketReportSnapshot (date lookup) failed: ${dateError.message}`);
+    }
+
+    if (!dateData) return [];
+
+    const latestDate = (dateData as { snapshot_date: string }).snapshot_date;
+
+    const { data, error } = await this.sb
+      .from("market_report_snapshots")
+      .select(
+        "snapshot_date, island, listing_count, source_count, " +
+        "index_eligible_count, median_price_eur, avg_eur_per_sqm, " +
+        "sqm_coverage_pct, price_coverage_pct, methodology_version, " +
+        "published_at, last_updated"
+      )
+      .eq("snapshot_date", latestDate)
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("island");
+
+    if (error) {
+      throw new Error(`getMarketReportSnapshot failed: ${error.message}`);
+    }
+
+    return (data ?? []) as MarketReportRow[];
   }
 }
