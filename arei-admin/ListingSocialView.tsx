@@ -127,6 +127,7 @@ export function ListingSocialView() {
   const handleDragStart = (url: string) => (e: React.DragEvent) => {
     setDragUrl(url);
     e.dataTransfer.effectAllowed = "move";
+    e.dataTransfer.setData("text/plain", url); // Safari/Firefox require this
   };
   const handleDragOver = (e: React.DragEvent) => {
     e.preventDefault();
@@ -134,7 +135,11 @@ export function ListingSocialView() {
   };
   const handleDrop = (targetUrl: string) => (e: React.DragEvent) => {
     e.preventDefault();
-    if (!dragUrl || dragUrl === targetUrl) return;
+    e.stopPropagation();
+    if (!dragUrl || dragUrl === targetUrl) {
+      setDragUrl(null);
+      return;
+    }
     setSelectedImages((prev) => {
       const from = prev.indexOf(dragUrl);
       const to = prev.indexOf(targetUrl);
@@ -146,6 +151,7 @@ export function ListingSocialView() {
     });
     setDragUrl(null);
   };
+  const handleDragEnd = () => setDragUrl(null);
 
   const handlePublish = async () => {
     if (!selectedId || !caption.trim() || selectedImages.length < 2) return;
@@ -308,9 +314,13 @@ export function ListingSocialView() {
                       onDragStart={active ? handleDragStart(url) : undefined}
                       onDragOver={active ? handleDragOver : undefined}
                       onDrop={active ? handleDrop(url) : undefined}
-                      onClick={() => toggleImage(url)}
-                      className={`relative aspect-square overflow-hidden rounded-sm cursor-pointer ${
-                        active ? "cursor-move" : ""
+                      onDragEnd={active ? handleDragEnd : undefined}
+                      onClick={() => {
+                        if (dragUrl) return; // suppress click while dragging
+                        toggleImage(url);
+                      }}
+                      className={`relative aspect-square overflow-hidden rounded-sm ${
+                        active ? "cursor-move" : "cursor-pointer"
                       } ${dragUrl === url ? "opacity-50" : ""}`}
                     >
                       <img
