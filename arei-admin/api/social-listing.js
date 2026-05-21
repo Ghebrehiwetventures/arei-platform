@@ -247,6 +247,27 @@ async function publishCarousel(sb, body) {
     containerIds.push(data.id);
   }
 
+  // Step 1b: poll each container until status_code === FINISHED.
+  // Instagram processes media asynchronously; referencing an IN_PROGRESS
+  // container in the carousel step yields "Media ID is not available".
+  async function waitUntilReady(containerId, maxAttempts = 20, delayMs = 1500) {
+    for (let attempt = 0; attempt < maxAttempts; attempt++) {
+      const r = await fetch(
+        `https://graph.instagram.com/${ig.apiVersion}/${containerId}?fields=status_code&access_token=${encodeURIComponent(ig.accessToken)}`
+      );
+      const d = await r.json().catch(() => ({}));
+      if (d.status_code === "FINISHED") return;
+      if (d.status_code === "ERROR" || d.status_code === "EXPIRED") {
+        throw new Error(`Container ${containerId} ended in status ${d.status_code}`);
+      }
+      await new Promise((resolve) => setTimeout(resolve, delayMs));
+    }
+    throw new Error(`Container ${containerId} did not finish processing in time`);
+  }
+  for (const id of containerIds) {
+    await waitUntilReady(id);
+  }
+
   // Step 2: create carousel container
   const carouselParams = new URLSearchParams({
     media_type: "CAROUSEL",
@@ -259,6 +280,9 @@ async function publishCarousel(sb, body) {
   if (!carouselRes.ok || !carouselData.id) {
     throw new Error(carouselData.error?.message || `Failed to create carousel container: HTTP ${carouselRes.status}`);
   }
+
+  // Wait for the carousel container itself before publishing
+  await waitUntilReady(carouselData.id);
 
   // Step 3: publish
   const publishParams = new URLSearchParams({
