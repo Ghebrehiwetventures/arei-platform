@@ -576,6 +576,8 @@ export class AREIClient {
       throw new Error(`getMarketReportSnapshot failed: ${error.message}`);
     }
 
-    return (data ?? []) as MarketReportRow[];
+    // TODO: ta bort dubbel-cast när migration 044 körts och
+    // Supabase-typerna regenererats — då härleds MarketReportRow korrekt
+    return (data ?? []) as unknown as MarketReportRow[];
   }
 }
