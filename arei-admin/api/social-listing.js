@@ -153,7 +153,7 @@ function getInstagramConfig() {
     configured: Boolean(accessToken && accountId),
     accessToken,
     accountId,
-    apiVersion: process.env.INSTAGRAM_GRAPH_API_VERSION || "v20.0",
+    apiVersion: process.env.INSTAGRAM_GRAPH_API_VERSION || "v21.0",
   };
 }
 
@@ -200,7 +200,7 @@ async function publishCarousel(sb, body) {
 
   if (images.length < 2) throw new Error("Carousel requires at least 2 images. This listing has fewer.");
 
-  const graphBase = `https://graph.facebook.com/${ig.apiVersion}/${ig.accountId}`;
+  const graphBase = `https://graph.instagram.com/${ig.apiVersion}/${ig.accountId}`;
 
   // Step 1: create a media container for each image
   const containerIds = [];
@@ -245,7 +245,7 @@ async function publishCarousel(sb, body) {
   // Step 4: get permalink
   let permalink = "";
   const permalinkRes = await fetch(
-    `https://graph.facebook.com/${ig.apiVersion}/${publishData.id}?fields=permalink&access_token=${encodeURIComponent(ig.accessToken)}`
+    `https://graph.instagram.com/${ig.apiVersion}/${publishData.id}?fields=permalink&access_token=${encodeURIComponent(ig.accessToken)}`
   );
   if (permalinkRes.ok) {
     const pl = await permalinkRes.json().catch(() => ({}));
