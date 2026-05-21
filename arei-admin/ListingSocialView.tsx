@@ -43,6 +43,7 @@ export function ListingSocialView() {
   const [search, setSearch] = useState("");
   const [selectedId, setSelectedId] = useState("");
   const [caption, setCaption] = useState("");
+  const [selectedImages, setSelectedImages] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [captionLoading, setCaptionLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -51,6 +52,7 @@ export function ListingSocialView() {
   const [notice, setNotice] = useState("");
 
   const selected = listings.find((l) => l.id === selectedId) || null;
+  const allImages = selected?.image_urls || [];
 
   const filtered = search.trim()
     ? listings.filter(
@@ -78,6 +80,10 @@ export function ListingSocialView() {
     setPermalink("");
     setError("");
     setNotice("");
+    // Select all images by default when listing changes
+    const listing = listings.find((l) => l.id === selectedId);
+    setSelectedImages(listing?.image_urls || []);
+
     setCaptionLoading(true);
     apiFetch<{ caption: string }>("POST", { action: "generate_caption", listingId: selectedId })
       .then(({ caption: c }) => setCaption(c))
@@ -85,8 +91,14 @@ export function ListingSocialView() {
       .finally(() => setCaptionLoading(false));
   }, [selectedId]);
 
+  const toggleImage = (url: string) => {
+    setSelectedImages((prev) =>
+      prev.includes(url) ? prev.filter((u) => u !== url) : [...prev, url]
+    );
+  };
+
   const handlePublish = async () => {
-    if (!selectedId || !caption.trim()) return;
+    if (!selectedId || !caption.trim() || selectedImages.length < 2) return;
     setPublishing(true);
     setError("");
     setNotice("");
@@ -94,6 +106,7 @@ export function ListingSocialView() {
       const result = await apiFetch<{ postId: string; permalink: string }>("POST", {
         action: "publish_carousel",
         listingId: selectedId,
+        imageUrls: selectedImages,
         caption: caption.trim(),
       });
       setPermalink(result.permalink);
@@ -109,16 +122,15 @@ export function ListingSocialView() {
     return <div className="py-12 text-foreground-muted font-mono">Loading listings...</div>;
   }
 
-  const images = selected?.image_urls?.slice(0, 10) || [];
-  const canPublish = igConfigured && selectedId && caption.trim() && images.length >= 2 && !publishing;
+  const canPublish = igConfigured && selectedId && caption.trim() && selectedImages.length >= 2 && !publishing;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       <section>
-        <div className="label-style mb-2">Market Intelligence &gt; Listing Social</div>
+        <div className="label-style mb-1">Market Intelligence &gt; Listing Social</div>
         <h2 className="text-2xl font-semibold text-foreground font-mono mb-1">Listing Social</h2>
-        <p className="text-sm text-foreground-muted max-w-3xl">
-          Pick a listing, review the auto-generated caption, and post the listing images as an Instagram carousel.
+        <p className="text-sm text-foreground-muted">
+          Pick a listing, select images, and publish as an Instagram carousel.
         </p>
       </section>
 
@@ -138,132 +150,141 @@ export function ListingSocialView() {
         </section>
       )}
 
-      <section className="grid grid-cols-1 xl:grid-cols-[0.9fr_1.1fr] gap-6">
+      <section className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
         {/* Left: listing picker */}
-        <div className="surface-1 rounded border border-border p-4 space-y-4">
+        <div className="surface-1 rounded border border-border p-4 space-y-3">
           <div>
-            <div className="label-style mb-1">Search listings</div>
+            <div className="label-style mb-1">Search</div>
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Title, island, or agency..."
+              placeholder="Title, island, agency..."
               className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
             />
           </div>
           <div>
-            <div className="label-style mb-1">
-              Listing ({filtered.length}{filtered.length !== listings.length ? ` of ${listings.length}` : ""})
-            </div>
+            <div className="label-style mb-1">Listing ({filtered.length} of {listings.length})</div>
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
-              size={8}
-              className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
+              size={10}
+              className="bg-background border border-border text-foreground px-2 py-1 text-xs font-mono w-full rounded"
             >
               {filtered.map((l) => (
                 <option key={l.id} value={l.id}>
-                  {l.title || l.id} — {l.island}
+                  {l.title || l.id}
                 </option>
               ))}
             </select>
           </div>
 
           {selected && (
-            <div className="space-y-3 text-sm">
-              <div className="grid grid-cols-2 gap-2 text-xs font-mono">
-                <div>
-                  <div className="label-style mb-0.5">Source</div>
-                  <div className="text-foreground">{selected.source_name}</div>
-                </div>
-                <div>
-                  <div className="label-style mb-0.5">Island</div>
-                  <div className="text-foreground">{selected.island}</div>
-                </div>
-                <div>
-                  <div className="label-style mb-0.5">Price</div>
-                  <div className="text-foreground">
-                    {selected.price
-                      ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(selected.price)
-                      : "POA"}
-                  </div>
-                </div>
-                <div>
-                  <div className="label-style mb-0.5">Specs</div>
-                  <div className="text-foreground">
-                    {[
-                      selected.bedrooms ? `${selected.bedrooms}bd` : null,
-                      selected.bathrooms ? `${selected.bathrooms}ba` : null,
-                      selected.area_sqm ? `${Math.round(selected.area_sqm)}m²` : null,
-                    ]
-                      .filter(Boolean)
-                      .join(" · ") || "-"}
-                  </div>
-                </div>
+            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono border-t border-border pt-3">
+              <div><span className="text-foreground-muted">Source</span><br />{selected.source_name}</div>
+              <div><span className="text-foreground-muted">Island</span><br />{selected.island}</div>
+              <div><span className="text-foreground-muted">Price</span><br />
+                {selected.price
+                  ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(selected.price)
+                  : "POA"}
               </div>
-
-              {/* Image grid */}
-              {images.length > 0 && (
-                <div>
-                  <div className="label-style mb-2">{images.length} image{images.length !== 1 ? "s" : ""} — carousel</div>
-                  <div className="grid grid-cols-4 gap-1.5">
-                    {images.map((url, i) => (
-                      <div key={i} className="relative aspect-square">
-                        <img
-                          src={url}
-                          alt=""
-                          className="w-full h-full object-cover rounded border border-border"
-                        />
-                        <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] font-mono px-1 rounded">
-                          {i + 1}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
-                  {images.length < 2 && (
-                    <p className="text-amber text-xs font-mono mt-1">Need at least 2 images for a carousel.</p>
-                  )}
-                </div>
-              )}
+              <div><span className="text-foreground-muted">Specs</span><br />
+                {[
+                  selected.bedrooms ? `${selected.bedrooms}bd` : null,
+                  selected.bathrooms ? `${selected.bathrooms}ba` : null,
+                  selected.area_sqm ? `${Math.round(selected.area_sqm)}m²` : null,
+                ].filter(Boolean).join(" · ") || "—"}
+              </div>
             </div>
           )}
         </div>
 
-        {/* Right: caption + publish */}
-        <div className="surface-1 rounded border border-border p-4 space-y-4">
-          <div>
-            <div className="label-style mb-1">
+        {/* Right: images + caption + publish */}
+        <div className="space-y-4">
+          {/* Image selection */}
+          {allImages.length > 0 && (
+            <div className="surface-1 rounded border border-border p-4">
+              <div className="flex items-center justify-between mb-3">
+                <div className="label-style">
+                  Images — {selectedImages.length} selected / {allImages.length} total
+                </div>
+                <div className="flex gap-3 text-xs font-mono">
+                  <button
+                    type="button"
+                    onClick={() => setSelectedImages([...allImages])}
+                    className="text-foreground-muted hover:text-foreground"
+                  >
+                    Select all
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelectedImages([])}
+                    className="text-foreground-muted hover:text-foreground"
+                  >
+                    Clear
+                  </button>
+                </div>
+              </div>
+              <div className="grid grid-cols-5 gap-2">
+                {allImages.map((url, i) => {
+                  const active = selectedImages.includes(url);
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      onClick={() => toggleImage(url)}
+                      className={`relative aspect-square rounded overflow-hidden border-2 transition-all ${
+                        active ? "border-green opacity-100" : "border-transparent opacity-30"
+                      }`}
+                    >
+                      <img src={url} alt="" className="w-full h-full object-cover" />
+                      <span className="absolute top-1 left-1 bg-black/60 text-white text-[10px] font-mono px-1 rounded leading-tight">
+                        {i + 1}
+                      </span>
+                      {active && (
+                        <span className="absolute top-1 right-1 bg-green text-black text-[10px] font-mono px-1 rounded leading-tight">
+                          ✓
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+              {selectedImages.length < 2 && (
+                <p className="text-amber text-xs font-mono mt-2">Select at least 2 images for a carousel.</p>
+              )}
+            </div>
+          )}
+
+          {/* Caption + publish */}
+          <div className="surface-1 rounded border border-border p-4 space-y-3">
+            <div className="label-style">
               Caption
               {captionLoading && <span className="ml-2 text-foreground-muted font-normal normal-case">generating...</span>}
             </div>
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              rows={18}
+              rows={12}
               className="w-full bg-background border border-border text-foreground p-3 text-sm font-mono leading-relaxed rounded"
-              placeholder={captionLoading ? "Generating caption..." : "Select a listing to generate caption"}
+              placeholder={captionLoading ? "Generating caption..." : "Select a listing"}
             />
-          </div>
-
-          <div className="space-y-2">
-            <button
-              type="button"
-              onClick={handlePublish}
-              disabled={!canPublish}
-              className="w-full px-4 py-3 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
-            >
-              {publishing ? "Publishing..." : `Publish carousel to Instagram (${images.length} images)`}
-            </button>
-
-            <div className="grid grid-cols-2 gap-3 text-xs font-mono text-foreground-muted">
-              <div>Instagram: {igConfigured ? <span className="text-green">configured</span> : <span className="text-red">not configured</span>}</div>
-              <div>Images: {images.length} / 10 max</div>
+            <div className="flex items-center gap-4">
+              <button
+                type="button"
+                onClick={handlePublish}
+                disabled={!canPublish}
+                className="flex-1 px-4 py-2.5 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
+              >
+                {publishing
+                  ? "Publishing..."
+                  : `Publish to Instagram (${selectedImages.length} images)`}
+              </button>
+              <div className="text-xs font-mono text-foreground-muted whitespace-nowrap">
+                Instagram: {igConfigured
+                  ? <span className="text-green">configured</span>
+                  : <span className="text-red">not configured</span>}
+              </div>
             </div>
-
-            {!igConfigured && (
-              <p className="text-amber text-xs font-mono">
-                Set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID in Vercel to enable publishing.
-              </p>
-            )}
           </div>
         </div>
       </section>

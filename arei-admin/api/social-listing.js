@@ -163,7 +163,7 @@ async function listListings(sb) {
     .select("id, source_id, title, price, price_period, island, bedrooms, bathrooms, area_sqm, description, image_urls, cover_image_url")
     .eq("has_valid_images", true)
     .order("id", { ascending: false })
-    .limit(60);
+    .limit(200);
   if (error) throw new Error(`Could not load listings: ${error.message}`);
   return (data || []).map((row) => ({
     ...row,
@@ -174,23 +174,28 @@ async function listListings(sb) {
 }
 
 async function publishCarousel(sb, body) {
-  const { listingId, caption } = body;
+  const { listingId, caption, imageUrls } = body;
   if (!listingId) throw new Error("listingId required");
   if (!caption || !caption.trim()) throw new Error("caption required");
-
-  const { data: listing, error: dbErr } = await sb
-    .from("v1_feed_cv")
-    .select("id, source_id, title, image_urls")
-    .eq("id", listingId)
-    .maybeSingle();
-  if (dbErr) throw new Error(`DB error: ${dbErr.message}`);
-  if (!listing) throw new Error(`Listing not found: ${listingId}`);
 
   const ig = getInstagramConfig();
   if (!ig.configured) throw new Error("Instagram not configured. Set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID.");
 
-  const images = [...new Set((listing.image_urls || []).map(resolveImageUrl).filter(Boolean))]
-    .slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
+  // Use client-selected images if provided, otherwise fall back to DB
+  let images;
+  if (Array.isArray(imageUrls) && imageUrls.length > 0) {
+    images = imageUrls.slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
+  } else {
+    const { data: listing, error: dbErr } = await sb
+      .from("v1_feed_cv")
+      .select("image_urls")
+      .eq("id", listingId)
+      .maybeSingle();
+    if (dbErr) throw new Error(`DB error: ${dbErr.message}`);
+    if (!listing) throw new Error(`Listing not found: ${listingId}`);
+    images = [...new Set((listing.image_urls || []).map(resolveImageUrl).filter(Boolean))]
+      .slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
+  }
 
   if (images.length < 2) throw new Error("Carousel requires at least 2 images. This listing has fewer.");
 
