@@ -286,7 +286,10 @@ export function ListingSocialView() {
                 </div>
               </div>
               <div className="grid grid-cols-8 gap-1">
-                {allImages.map((url, i) => {
+                {[
+                  ...selectedImages,
+                  ...allImages.filter((u) => !selectedImages.includes(u)),
+                ].map((url, i) => {
                   const position = selectedImages.indexOf(url);
                   const active = position >= 0;
                   return (
