@@ -1,7 +1,8 @@
 import { useEffect, useState } from "react";
+import { useTranslation } from "react-i18next";
 import { arei } from "../lib/arei";
 import type { IslandContext } from "arei-sdk";
-import { formatMedian, formatPricePerSqm } from "../lib/format";
+import { formatMedian, formatPricePerSqm, formatShortDate, toLocale } from "../lib/formatters";
 import "./MarketContext.css";
 
 interface Props {
@@ -16,16 +17,9 @@ interface StatCard {
   percentile?: number; // 0-100, for visual bar
 }
 
-function formatShortDate(value: string): string {
-  const date = new Date(value);
-  if (Number.isNaN(date.getTime())) return "Recent";
-  return new Intl.DateTimeFormat("en-GB", {
-    day: "numeric",
-    month: "short",
-  }).format(date);
-}
-
 export default function MarketContext({ island, price }: Props) {
+  const { i18n } = useTranslation();
+  const locale = toLocale(i18n.language);
   const [ctx, setCtx] = useState<IslandContext | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -55,7 +49,7 @@ export default function MarketContext({ island, price }: Props) {
 
   if (ctx.medianPrice !== null) {
     cards.push({
-      value: formatMedian(ctx.medianPrice),
+      value: formatMedian(ctx.medianPrice, locale),
       label: `${island} Median`,
       note: `Based on ${ctx.activeListings} priced listings`,
     });
@@ -71,7 +65,7 @@ export default function MarketContext({ island, price }: Props) {
 
   if (ctx.medianPricePerSqm !== null) {
     cards.push({
-      value: formatPricePerSqm(ctx.medianPricePerSqm),
+      value: formatPricePerSqm(ctx.medianPricePerSqm, locale),
       label: "Median €/m²",
       note: `${ctx.nSqmListings} listings with size data`,
     });
@@ -99,7 +93,7 @@ export default function MarketContext({ island, price }: Props) {
 
   if (cards.length < 4 && ctx.lastUpdated) {
     cards.push({
-      value: formatShortDate(ctx.lastUpdated),
+      value: formatShortDate(ctx.lastUpdated, locale),
       label: "Last Seen",
       note: "Latest tracked update",
     });

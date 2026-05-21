@@ -6,6 +6,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
 import { formatSourceLabel, isNewListing } from "../lib/format";
+import { formatNumber, formatPrice, formatDate, formatRelTime, toLocale } from "../lib/formatters";
 import { getLocalizedTitle } from "../lib/i18n-listings";
 import type { ListingCard, PriceBucket } from "arei-sdk";
 import "./Listings.css";
@@ -82,24 +83,10 @@ function readInitialView(searchParams: URLSearchParams): ViewMode {
   return "grid";
 }
 
-function fmtPrice(n: number | null | undefined): string {
-  if (n == null) return "Price on request";
-  return new Intl.NumberFormat("en", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
-}
-
-function relTime(iso: string | null | undefined, isPt: boolean): string {
-  if (!iso) return isPt ? "indexado recentemente" : "indexed recently";
-  const t = new Date(iso).getTime();
-  if (Number.isNaN(t)) return isPt ? "indexado recentemente" : "indexed recently";
-  const days = Math.max(0, Math.round((Date.now() - t) / 86_400_000));
-  if (days === 0) return isPt ? "indexado hoje" : "indexed today";
-  if (days === 1) return isPt ? "indexado há 1 dia" : "indexed 1d ago";
-  return isPt ? `indexado há ${days} dias` : `indexed ${days}d ago`;
-}
-
 export default function Listings() {
   const { i18n, t } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
+  const locale = toLocale(i18n.language);
   useDocumentMeta(
     t("listings.metaTitle"),
     t("listings.metaDescription")
@@ -237,11 +224,7 @@ export default function Listings() {
   const visible = applyClientSort(cards, sort);
 
   // Meta stats for the hero
-  const lastUpdated = new Date().toLocaleDateString(isPt ? "pt-PT" : "en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
+  const lastUpdated = formatDate(new Date().toISOString(), locale);
 
   const hasAnyFilter = island || type || beds > 0 || priceBucket;
 
@@ -278,7 +261,7 @@ export default function Listings() {
           <div className="kv-hero-eyebrow">{t("common.allListings")}</div>
           <h1>{t("listings.title")}</h1>
           <div className="kv-hero-meta">
-            <div><b>{(indexTotal || total).toLocaleString(i18n.language === "pt" ? "pt-PT" : "en")}</b>&nbsp; {t("common.listings")}</div>
+            <div><b>{formatNumber(indexTotal || total, locale)}</b>&nbsp; {t("common.listings")}</div>
             <div><b>{Math.max(islands.length, 1)}</b>&nbsp; {t("home.islands")}</div>
             <div className="kv-hero-meta-updated">{t("detail.lastChecked")} <b>{lastUpdated}</b></div>
           </div>
@@ -564,7 +547,7 @@ export default function Listings() {
         {!error && total > 0 && (
           <div className="kv-pager">
             <div>
-              {t("listings.showing", { count: visible.length ? `1–${visible.length}` : "0", total: total.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") })}
+              {t("listings.showing", { count: visible.length ? `1–${visible.length}` : "0", total: formatNumber(total, locale) })}
             </div>
             {canLoadMore && (
               <button
@@ -705,6 +688,7 @@ function capitalize(str: string): string {
 export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boolean }) {
   const { i18n, t } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
+  const locale = toLocale(i18n.language);
   // NEW = indexed within the last 7 days (single source of truth in lib/format).
   // Drops the previous "first two cards always look new" hack.
   const isNew = l.is_new || isNewListing(l.first_seen_at);
@@ -746,7 +730,7 @@ export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boole
           <span>{typeLabel}</span>
           {location && <span className="kv-lc-loc">{location}</span>}
         </div>
-        <div className="kv-lc-price">{l.price == null ? t("detail.price") : fmtPrice(l.price)}</div>
+        <div className="kv-lc-price">{l.price == null ? t("detail.price") : formatPrice(l.price, locale)}</div>
         <div className="kv-lc-title">{localizedTitle}</div>
         {specs.length > 0 && (
           <div className="kv-lc-specs">
@@ -759,11 +743,11 @@ export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boole
         )}
         <div className="kv-lc-provenance">
           {bare ? (
-            <span>{formatSourceLabel(l.source_id)} · {relTime(l.first_seen_at, isPt)}</span>
+            <span>{formatSourceLabel(l.source_id)} · {formatRelTime(l.first_seen_at, locale)}</span>
           ) : (
             <>
               <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
-              <span>{relTime(l.first_seen_at, isPt)}</span>
+              <span>{formatRelTime(l.first_seen_at, locale)}</span>
             </>
           )}
         </div>
@@ -777,6 +761,7 @@ export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boole
 function ListingRow({ l }: { l: ListingCard }) {
   const { i18n, t } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
+  const locale = toLocale(i18n.language);
   const isNew = l.is_new || isNewListing(l.first_seen_at);
   const typeKey = l.property_type?.toLowerCase();
   const typeLabel = typeKey ? t(`listings.${typeKey}`, { defaultValue: TYPES[typeKey] || capitalize(l.property_type || "") }) : "";
@@ -810,7 +795,7 @@ function ListingRow({ l }: { l: ListingCard }) {
       </div>
       <div className="kv-list-row-body">
         <div className="kv-list-row-head">
-          <div className="kv-list-row-price">{l.price == null ? t("detail.price") : fmtPrice(l.price)}</div>
+          <div className="kv-list-row-price">{l.price == null ? t("detail.price") : formatPrice(l.price, locale)}</div>
           {typeLabel && <div className="kv-list-row-type">{typeLabel}</div>}
         </div>
         <div className="kv-list-row-title">{localizedTitle}</div>
@@ -826,7 +811,7 @@ function ListingRow({ l }: { l: ListingCard }) {
         )}
         <div className="kv-list-row-meta">
           <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
-          <span>{relTime(l.first_seen_at, isPt)}</span>
+          <span>{formatRelTime(l.first_seen_at, locale)}</span>
         </div>
       </div>
     </Link>

@@ -1,5 +1,7 @@
 import { useState, useMemo } from "react";
+import { useTranslation } from "react-i18next";
 import { calcMortgage, type MortgageInput } from "../lib/calcMortgage";
+import { toLocale } from "../lib/formatters";
 import "./MortgageCalculator.css";
 
 interface Props {
@@ -17,24 +19,6 @@ const DEFAULTS: MortgageInput = {
   maintenanceMonthly: 50,
   utilitiesMonthly: 0,
 };
-
-function fmt(n: number): string {
-  return n.toLocaleString("en-US", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  });
-}
-
-function fmtDecimal(n: number): string {
-  return n.toLocaleString("en-US", {
-    style: "currency",
-    currency: "EUR",
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  });
-}
 
 /** Parse numeric string, allowing decimals */
 function parseNum(raw: string, allowDecimal = false): number {
@@ -90,6 +74,13 @@ function DonutChart({ segments }: { segments: DonutSegment[] }) {
 }
 
 export default function MortgageCalculator({ price }: Props) {
+  const { i18n } = useTranslation();
+  const locale = toLocale(i18n.language);
+  const fmt = (n: number) =>
+    new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(n);
+  const fmtDecimal = (n: number) =>
+    new Intl.NumberFormat(locale, { style: "currency", currency: "EUR", minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(n);
+
   const [input, setInput] = useState<MortgageInput>(() => ({
     ...DEFAULTS,
     totalAmount: price ?? DEFAULTS.totalAmount,

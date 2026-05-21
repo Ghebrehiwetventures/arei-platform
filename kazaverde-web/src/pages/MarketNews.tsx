@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { formatDate, toLocale } from "../lib/formatters";
 import NewsletterCta from "../components/NewsletterCta";
 import PageHeader from "../components/PageHeader";
 import CategoryFilter from "../components/CategoryFilter";
@@ -16,14 +17,6 @@ const MAX_VISIBLE_TAGS = 3;
 const INITIAL_COUNT = 10;
 const LOAD_MORE_STEP = 10;
 
-function fmtDate(iso: string): string {
-  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 function matches(query: string, item: MarketNewsItem): boolean {
   const q = query.trim().toLowerCase();
@@ -65,7 +58,8 @@ function SignalTags({ tags }: { tags: string[] }) {
 }
 
 export default function MarketNews() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = toLocale(i18n.language);
   useDocumentMeta(t("marketNews.metaTitle"), t("marketNews.description"));
 
   const catLabel = (c: string) =>
@@ -217,7 +211,7 @@ export default function MarketNews() {
                   <article className="kv-news-item" key={item.id}>
                     <div className="kv-news-item-meta">
                       <span>{item.sourceName}</span>
-                      <span>{fmtDate(item.publishedAt)}</span>
+                      <span>{formatDate(item.publishedAt, locale, true)}</span>
                       <span
                         className="kv-news-cat"
                         style={{ "--cat-tone": catTone(item.category) } as CSSProperties}

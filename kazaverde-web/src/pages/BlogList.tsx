@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
 import { Trans, useTranslation } from "react-i18next";
+import { formatDate, toLocale } from "../lib/formatters";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { BLOG_ARTICLES } from "../lib/blog-data";
 import { FAQ_ENTRIES, type FaqEntry } from "../lib/faq-data";
@@ -10,13 +11,6 @@ import CategoryFilter from "../components/CategoryFilter";
 import SectionHead from "../components/SectionHead";
 import "./BlogList.css";
 
-function fmtDate(iso: string, locale = "en-GB"): string {
-  return new Date(iso).toLocaleDateString(locale, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function categoryFor(tags: string[]): "buying" | "market" | "legal" | "tax" {
   const t = tags.map((s) => s.toLowerCase());
@@ -188,6 +182,7 @@ function matches(query: string, ...fields: string[]): boolean {
 export default function BlogList() {
   const { t, i18n } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
+  const locale = toLocale(i18n.language);
   useDocumentMeta(
     t("blog.metaTitle"),
     t("blog.metaDescription"),
@@ -359,7 +354,7 @@ export default function BlogList() {
                       <div className="kv-blog-card-title">{isPt ? ARTICLE_PT[a.slug]?.title ?? a.title : a.title}</div>
                       <div className="kv-blog-card-excerpt">{isPt ? ARTICLE_PT[a.slug]?.description ?? a.description : a.description}</div>
                       <div className="kv-blog-card-foot">
-                        <span>{fmtDate(a.date, isPt ? "pt-PT" : "en-GB")}</span>
+                        <span>{formatDate(a.date, locale)}</span>
                         <span>{isPt ? a.readTime.replace("min read", "min de leitura") : a.readTime}</span>
                       </div>
                     </Link>
