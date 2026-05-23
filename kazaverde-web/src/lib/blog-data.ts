@@ -14,117 +14,92 @@ const _ALL_BLOG_ARTICLES = [
     slug: "best-real-estate-agents-cape-verde",
     title: "Best Real Estate Agents in Cape Verde 2026 — Complete Guide",
     description:
-      "An independent overview of the Cape Verde estate agents and brokers tracked by the Cape Verde Real Estate Index — by island focus, orientation, and specialism. Not a ranking.",
+      "An independent overview of the Cape Verde estate agents tracked by the Cape Verde Real Estate Index, with verified detail from broker interviews. Not a ranking, not an endorsement.",
     date: "2026-05-23",
-    readTime: "11 min read",
+    readTime: "6 min read",
     tags: ["Buying", "Agents", "Guide"],
     content: `<p><em>Last updated: May 2026</em></p>
-<p>Search for the best real estate agent in Cape Verde and the results are almost entirely agencies describing themselves as the best. That is not an answer to the question. An agency promoting itself is doing exactly what an agency is supposed to do — but it cannot be the neutral source a buyer needs at the research stage.</p>
-<p>The <a href="/listings">Cape Verde Real Estate Index</a> is an independent property data platform. We aggregate listings from across the Cape Verde market into a single searchable index. We are not an agent, we do not sell property, we take no referral fees, and we have no commercial relationship with any agency named on this page. We track the listings. You decide who to work with.</p>
-<blockquote><p>This guide covers the agencies and portals whose listings the Cape Verde Real Estate Index currently tracks. It is <strong>not a ranking</strong> and not an endorsement. Coverage is publicly available listing data, not a verdict on service quality, professional conduct, or client outcomes. Always conduct your own due diligence and instruct an independent lawyer before acting.</p></blockquote>
+<p>Search for the best real estate agent in Cape Verde and you mostly find agencies calling themselves the best. That is what agencies are meant to do — but it is not the neutral answer a buyer needs while researching.</p>
+<p>The <a href="/listings">Cape Verde Real Estate Index</a> is an independent property data platform. We aggregate listings from across the market into one searchable index. We are not an agent, we sell nothing, we take no referral fees, and we have no commercial relationship with any agency named here. We track the listings; you decide who to work with.</p>
+<blockquote><p>This guide covers the agencies whose listings the index currently tracks. It is <strong>not a ranking</strong> and not an endorsement. Always do your own due diligence and instruct an independent lawyer before acting.</p></blockquote>
 <hr>
 <h2>How we approached this</h2>
-<p>Most "best agents" lists are either self-promotion or thin directories that rank agencies by how many listings they appear to hold. Both are misleading. So we did something narrower and more honest: we describe the agents the index actually monitors, and we describe them by attributes a buyer can verify.</p>
-<p>Three principles shape this page:</p>
+<p>We describe only the agents the index actually monitors, and only by facts you can check.</p>
 <ul>
-<li><strong>We only cover agents we track.</strong> If an established Cape Verde agency is missing from this page, it means the index has not yet onboarded their listings — not that they are unimportant. Coverage expands continuously, and this article is reviewed periodically as sources are added.</li>
-<li><strong>We do not rank.</strong> Ranking agencies one-to-five without verified client-satisfaction data would be inventing an opinion we cannot defend. The whole value of an independent index is that it does not pretend to have a view it has not earned.</li>
-<li><strong>We describe coverage, not point-in-time counts.</strong> A raw listing count is wrong the day after you publish it, and it quietly rewards portals that syndicate the same stock many times over. So instead of "this agency has 30 listings," we describe each agent's apparent island focus and market orientation — which are stable and checkable.</li>
+<li><strong>We only cover agents we track.</strong> If an established Cape Verde agency is missing here, the index has not onboarded their listings yet — it is not a judgment. Coverage expands continuously.</li>
+<li><strong>We do not rank.</strong> Ranking agencies without verified client-outcome data would invent an opinion we cannot defend.</li>
+<li><strong>We describe coverage, not point-in-time counts.</strong> A raw listing count is wrong the next day and rewards portals that syndicate the same stock. The live figures on <a href="/market">/market</a> and <a href="/listings">/listings</a> are always authoritative.</li>
 </ul>
-<p>For the live picture of how much inventory the index holds across the archipelago, the figures on <a href="/market">/market</a> and the per-island grids on <a href="/listings">/listings</a> are always the authoritative version. For methodology and source coverage, see <a href="/about">/about</a>.</p>
+<p>Where we have spoken with an agency directly, we note what they told us. Everything else is limited to what the index can verify. For methodology and source coverage, see <a href="/about">/about</a>.</p>
 <hr>
-<h2>Sal and Santa Maria specialists</h2>
-<p>Sal carries the deepest tracked sample on the index by a wide margin — direct international flights and the Santa Maria resort cluster anchor most of the foreign-buyer activity. Unsurprisingly, several of the agencies the index tracks are Sal-focused.</p>
-<ul>
-<li><strong>Cabo House Property</strong> (<a href="https://www.cabohouseproperty.com">cabohouseproperty.com</a>) — A Santa Maria, Sal-focused agency. Inventory on the index appears weighted toward the Santa Maria resort and residential market.</li>
-<li><strong>Ocean Property 24</strong> (<a href="https://www.oceanproperty24.com">oceanproperty24.com</a>) — Sal-focused, with apartment and resort stock making up much of what the index tracks.</li>
-<li><strong>Cape Verde Property 24</strong> (<a href="https://capeverdeproperty24.com">capeverdeproperty24.com</a>) — Presents an investment orientation with its primary inventory on Sal. Offers an English-language site alongside Portuguese.</li>
-<li><strong>Homes Casa Verde</strong> (<a href="https://www.homescasaverde.com">homescasaverde.com</a>) — Sal-based but with listings the index sees across several islands, including Santa Maria, Boa Vista, Santiago, and Mindelo.</li>
-</ul>
-<p>If Sal is your shortlist, the <a href="/blog/sal-vs-santiago-property">Sal vs Santiago</a> comparison and the <a href="/blog/cape-verde-property-prices-by-island">prices by island</a> snapshot are the natural next reads.</p>
+<h2>Agents we have spoken with</h2>
+<h3>CCore Investments</h3>
+<p><a href="https://www.ccoreinvestments.com">ccoreinvestments.com</a>. From our interview: CCore is active on all four main islands — Sal, Boa Vista, Santiago, and São Vicente — and is Portuguese-speaking and locally rooted. They describe a strong local network on each island, with working relationships among promoters, construction companies, lawyers, and rental companies. Their commission is a fixed 5%, with no markup above the asking price. Asked what they offer international buyers, they describe knowing "who to trust" as the most valuable thing.</p>
+<h3>RE/MAX (Sal)</h3>
+<p><a href="https://www.remax.cv">remax.cv</a>. From our interview: the office has been based on Sal for two and a half years, working with a local Cape Verdean business partner for local-market access. They serve English- and German-speaking buyers, and note that German buyers are the second-largest nationality among purchasers on Sal. They are expanding into Santo Antão listings.</p>
 <hr>
-<h2>Multi-island agents</h2>
-<p>A smaller group of tracked agents list across more than one island. These are useful if you have not settled on a location and want to compare stock without switching between single-island specialists.</p>
+<h2>Other agents the index tracks</h2>
+<p>The following agencies' listings are tracked by the index. We have not interviewed them, so the detail below is limited to what the index can verify.</p>
 <ul>
-<li><strong>Terra Cabo Verde</strong> (<a href="https://terracaboverde.com">terracaboverde.com</a>) — Lists across multiple islands; one of the more established multi-island presences the index tracks.</li>
-<li><strong>Estate CV</strong> (<a href="https://estatecv.com">estatecv.com</a>) — A multi-language platform with multi-island coverage including Santiago, Sal, and Boa Vista.</li>
-<li><strong>REMAX Cape Verde</strong> (<a href="https://www.remax.cv">remax.cv</a>) — The Cape Verde arm of the international REMAX franchise network, with listings across islands. The familiar brand and standardized listing format make it an easy reference point, though brand recognition is not the same as local depth.</li>
-</ul>
-<hr>
-<h2>Overseas-facing specialists</h2>
-<p>Some agencies are oriented primarily toward foreign — often UK — buyers, with strong English-language support and established developer relationships. The trade-off is usually less direct access to the local resale market.</p>
-<ul>
-<li><strong>Simply Cape Verde</strong> (<a href="https://simplycapeverde.com">simplycapeverde.com</a>) — Oriented toward overseas holiday-home and starter-unit buyers, with inventory the index sees concentrated on Sal and Boa Vista.</li>
-</ul>
-<p>A common and sensible pattern for foreign buyers is to combine an overseas-facing specialist for English-language support with an independent local lawyer for the legal and administrative process. See the <a href="/blog/buying-property-cape-verde-guide">step-by-step buying guide</a> for how that process works.</p>
-<hr>
-<h2>Local Cape Verde portals and CRM-based agents</h2>
-<p>Finally, the index tracks sources that are local in character — either Cape Verdean classifieds portals or agencies running on local property CRM platforms. These tend to surface stock that overseas-facing sites do not.</p>
-<ul>
-<li><strong>NhaKaza</strong> (<a href="https://nhakaza.cv">nhakaza.cv</a>) — A Cape Verdean property classifieds portal. Listings are local in character and often priced in Cape Verdean escudos (the index normalizes pricing to euros). Useful for seeing stock beyond the foreign-buyer resort segment.</li>
-<li><strong>CCore Investments</strong> (<a href="https://www.ccoreinvestments.com">ccoreinvestments.com</a>) — Runs on a property CRM platform with English and Portuguese listing pages.</li>
+<li><strong>Terra Cabo Verde</strong> (<a href="https://terracaboverde.com">terracaboverde.com</a>) — listings tracked across multiple islands.</li>
+<li><strong>Estate CV</strong> (<a href="https://estatecv.com">estatecv.com</a>) — multi-island listings, including Santiago, Sal, and Boa Vista.</li>
+<li><strong>Homes Casa Verde</strong> (<a href="https://www.homescasaverde.com">homescasaverde.com</a>) — Sal-based, with listings tracked across several islands.</li>
+<li><strong>Cabo House Property</strong> (<a href="https://www.cabohouseproperty.com">cabohouseproperty.com</a>) — listings tracked on Sal (Santa Maria).</li>
+<li><strong>Ocean Property 24</strong> (<a href="https://www.oceanproperty24.com">oceanproperty24.com</a>) — listings tracked on Sal.</li>
+<li><strong>Cape Verde Property 24</strong> (<a href="https://capeverdeproperty24.com">capeverdeproperty24.com</a>) — listings tracked across the islands.</li>
+<li><strong>Simply Cape Verde</strong> (<a href="https://simplycapeverde.com">simplycapeverde.com</a>) — listings tracked by the index.</li>
+<li><strong>NhaKaza</strong> (<a href="https://nhakaza.cv">nhakaza.cv</a>) — a Cape Verdean classifieds portal; listings often priced in escudos, which the index normalizes to euros.</li>
 </ul>
 <hr>
-<h2>The agents the index tracks</h2>
-<p>A consolidated reference of the agencies and portals whose listings the Cape Verde Real Estate Index currently monitors. Apparent focus and orientation are drawn from each source's own site as tracked by the index; verify current detail directly with the agent.</p>
+<h2>At a glance</h2>
 <table>
 <thead>
 <tr>
 <th>Agency / portal</th>
 <th>Website</th>
-<th>Apparent island focus</th>
-<th>Orientation</th>
+<th>Islands (as tracked by the index)</th>
 </tr>
 </thead>
 <tbody>
-<tr><td><strong>Cabo House Property</strong></td><td>cabohouseproperty.com</td><td>Sal (Santa Maria)</td><td>Resort &amp; residential specialist</td></tr>
-<tr><td><strong>Ocean Property 24</strong></td><td>oceanproperty24.com</td><td>Sal</td><td>Apartments &amp; resort stock</td></tr>
-<tr><td><strong>Cape Verde Property 24</strong></td><td>capeverdeproperty24.com</td><td>Sal (primary)</td><td>Investment focus; EN/PT</td></tr>
-<tr><td><strong>Homes Casa Verde</strong></td><td>homescasaverde.com</td><td>Sal-based, multi-island</td><td>General sales</td></tr>
-<tr><td><strong>Terra Cabo Verde</strong></td><td>terracaboverde.com</td><td>Multi-island</td><td>General sales</td></tr>
-<tr><td><strong>Estate CV</strong></td><td>estatecv.com</td><td>Multi-island (Santiago, Sal, Boa Vista)</td><td>Multi-language platform</td></tr>
-<tr><td><strong>REMAX Cape Verde</strong></td><td>remax.cv</td><td>Multi-island</td><td>International franchise brand</td></tr>
-<tr><td><strong>Simply Cape Verde</strong></td><td>simplycapeverde.com</td><td>Sal &amp; Boa Vista</td><td>Overseas / holiday-home buyers</td></tr>
-<tr><td><strong>NhaKaza</strong></td><td>nhakaza.cv</td><td>Multi-island (local)</td><td>Local classifieds portal</td></tr>
-<tr><td><strong>CCore Investments</strong></td><td>ccoreinvestments.com</td><td>Multi-island</td><td>CRM-based agency; EN/PT</td></tr>
+<tr><td><strong>CCore Investments</strong></td><td>ccoreinvestments.com</td><td>Sal, Boa Vista, Santiago, São Vicente</td></tr>
+<tr><td><strong>RE/MAX (Sal)</strong></td><td>remax.cv</td><td>Sal (expanding to Santo Antão)</td></tr>
+<tr><td><strong>Terra Cabo Verde</strong></td><td>terracaboverde.com</td><td>Multiple islands</td></tr>
+<tr><td><strong>Estate CV</strong></td><td>estatecv.com</td><td>Santiago, Sal, Boa Vista</td></tr>
+<tr><td><strong>Homes Casa Verde</strong></td><td>homescasaverde.com</td><td>Sal-based, multi-island</td></tr>
+<tr><td><strong>Cabo House Property</strong></td><td>cabohouseproperty.com</td><td>Sal (Santa Maria)</td></tr>
+<tr><td><strong>Ocean Property 24</strong></td><td>oceanproperty24.com</td><td>Sal</td></tr>
+<tr><td><strong>Cape Verde Property 24</strong></td><td>capeverdeproperty24.com</td><td>Multiple islands</td></tr>
+<tr><td><strong>Simply Cape Verde</strong></td><td>simplycapeverde.com</td><td>Tracked on the index</td></tr>
+<tr><td><strong>NhaKaza</strong></td><td>nhakaza.cv</td><td>Multiple islands (local portal)</td></tr>
 </tbody>
 </table>
 <p><em>This list reflects sources tracked as of May 2026 and changes as the index onboards new agents. If an established Cape Verde agency is not here, the index has not yet added them rather than judged them.</em></p>
 <hr>
 <h2>What to look for in a Cape Verde estate agent</h2>
-<p>Whichever agent you approach, a few checks matter more in Cape Verde than they might at home:</p>
 <ul>
-<li><strong>Local versus overseas-based.</strong> An overseas-based specialist can still do a good job, but ask specifically how they access local legal and administrative processes, and who handles them on the ground.</li>
 <li><strong>Registered in Cape Verde.</strong> Ask for the agency's Cape Verdean NIF (tax registration number) and confirm they are a registered company.</li>
-<li><strong>Who they work for.</strong> Most agents in Cape Verde represent the seller — a developer or private vendor. Buyer's agents exist but are rare. Assume the agent is vendor-side unless told otherwise.</li>
-<li><strong>Language.</strong> Most agents serving foreign buyers speak English. If you are buying in Santiago or São Vicente, Portuguese capability matters more.</li>
-<li><strong>Fees.</strong> Commission in Cape Verde is typically paid by the seller, not the buyer — but verify this in writing before you proceed.</li>
-<li><strong>Inspection trips.</strong> Reputable agents offer structured island visits. Be cautious of any pressure to commit during a trip.</li>
-<li><strong>Track record with foreign buyers.</strong> Ask for examples of completed transactions with buyers from your country, and whether they have in-house or recommended independent legal support.</li>
+<li><strong>Who they work for.</strong> Most agents represent the seller — a developer or private vendor. Buyer's agents are rare; assume the agent is vendor-side unless told otherwise.</li>
+<li><strong>Fees.</strong> Commission is typically paid by the seller, not the buyer — but verify this in writing before you proceed.</li>
+<li><strong>Language.</strong> Most agents serving foreign buyers speak English; in Santiago or São Vicente, Portuguese capability matters more.</li>
+<li><strong>Independent legal advice.</strong> Whoever you use, instruct your own Cape Verdean lawyer. See <a href="/blog/mistakes-buying-property-cape-verde">7 expensive mistakes to avoid</a> and, for new-builds, the <a href="/blog/off-plan-property-cape-verde-risks">off-plan risks guide</a>.</li>
 </ul>
-<p>For the mistakes that catch foreign buyers most often, see <a href="/blog/mistakes-buying-property-cape-verde">7 expensive mistakes to avoid</a>. If you are considering a new-build, the <a href="/blog/off-plan-property-cape-verde-risks">off-plan risks guide</a> is essential reading, and <a href="/blog/financing-property-cape-verde">how to finance a purchase</a> covers payment in practice.</p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>Do I need a real estate agent to buy property in Cape Verde?</h3>
-<p>Technically no — you can buy directly from a developer or private vendor. In practice, most foreign buyers use an agent for local knowledge, language, and help navigating the process. Regardless of whether you use an agent, an independent local lawyer is essential.</p>
+<p>Technically no — you can buy directly from a developer or vendor. In practice, most foreign buyers use an agent for local knowledge and language, but an independent local lawyer is essential either way.</p>
 <h3>How is a Cape Verde agent different from a UK or EU agent?</h3>
-<p>Regulation is lighter. There is no RICS equivalent, no mandatory professional indemnity insurance, and no government-backed redress scheme. Due diligence on the agent is part of due diligence on the transaction.</p>
-<h3>Can I use an overseas-based agent or do I need someone on the ground?</h3>
-<p>Many buyers use overseas-based Cape Verde specialists, who tend to offer strong English-language support and established developer relationships. The trade-off is less direct access to local and resale-market listings. A combination — an overseas specialist plus an independent local lawyer — is common and works well.</p>
-<h3>Should I use the developer's own sales team for a new-build?</h3>
-<p>The developer's sales team works for the developer. They can answer questions about the project, but they are not acting in your interest. Instruct an independent lawyer regardless. See the <a href="/blog/off-plan-property-cape-verde-risks">off-plan guide</a>.</p>
+<p>Regulation is lighter — no RICS equivalent, no mandatory indemnity insurance, no government-backed redress scheme. Due diligence on the agent is part of due diligence on the transaction.</p>
 <h3>Does the Cape Verde Real Estate Index recommend a specific agent?</h3>
-<p>No. The index is independent, takes no referral fees, and does not endorse any agent. This page describes the agents whose listings we track so you can compare them yourself. The decision, and the due diligence, are yours.</p>
+<p>No. The index is independent, takes no referral fees, and endorses no agent. This page describes the agents whose listings we track so you can compare them yourself. The decision, and the due diligence, are yours.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — The full step-by-step process for foreign buyers</li>
 <li><a href="/blog/mistakes-buying-property-cape-verde">7 Expensive Mistakes to Avoid</a> — What catches foreign buyers most often</li>
 <li><a href="/blog/cape-verde-property-prices-by-island">Cape Verde Property Prices by Island</a> — What the index currently shows</li>
-<li><a href="/blog/off-plan-property-cape-verde-risks">Buying Off-Plan in Cape Verde</a> — Risks, protections, and what to check</li>
 </ul>
 <hr>
-<p><strong>Independence statement:</strong> Coverage on this page is based on publicly available listing data monitored by the Cape Verde Real Estate Index as of May 2026. This page is not sponsored or paid for by any agent named above. CVREI does not receive referral fees, commissions, or any other payment from agencies. This is not a recommendation or endorsement of any specific agent, and coverage data does not reflect service quality or professional conduct.</p>
+<p><strong>Independence statement:</strong> Coverage on this page is based on publicly available listing data monitored by the Cape Verde Real Estate Index as of May 2026, and on direct interviews where noted. This page is not sponsored or paid for by any agent named above. CVREI does not receive referral fees, commissions, or any other payment from agencies. This is not a recommendation or endorsement of any specific agent, and coverage data does not reflect service quality or professional conduct.</p>
 <p><em>This article is for informational purposes only and does not constitute legal or financial advice. Always verify an agent's credentials and instruct an independent Cape Verdean lawyer before completing any property transaction.</em></p>
 `,
   },
