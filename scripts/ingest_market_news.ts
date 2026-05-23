@@ -15,12 +15,21 @@
  *   npx ts-node --transpile-only scripts/ingest_market_news.ts --commit
  *     → writes candidates to public.market_news (status = 'candidate')
  *
+ *   npx ts-node --transpile-only scripts/ingest_market_news.ts --commit --enrich
+ *     → inserts candidates AND runs EN enrichment + PT translation via AI.
+ *       Enriched fields (title, snippet, why_it_matters, category, signal_tags,
+ *       affected_regions, title_pt, snippet_pt, why_it_matters_pt) are written
+ *       back to the candidate row. Curator only needs to Publish or Archive.
+ *       Requires OPENAI_API_KEY and ANTHROPIC_API_KEY in .env.
+ *
  * Per-source cap: at most MAX_PER_SOURCE new candidates are inserted per
  * source per run. Items beyond the cap are skipped and counted separately.
  *
  * Required env (loaded from repo root .env):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
+ *   OPENAI_API_KEY      (required when --enrich is passed)
+ *   ANTHROPIC_API_KEY   (required when --enrich is passed)
  *
  * Exit codes:
  *   0  success (or dry-run completed)
@@ -35,6 +44,7 @@ import { MARKET_NEWS_SOURCES, MarketNewsSource } from "./lib/market-news-sources
 import { parseFeedItems, transformFeedItem, MarketNewsInsert } from "./lib/market-news-transform";
 import { loadExistingKeys, isDuplicate } from "./lib/market-news-dedup";
 import { insertAdminNotification } from "./lib/notifications";
+import { enrichCandidate, translateToPt } from "./lib/market-news-enrich";
 
 // Load from repo root .env. Matches the pattern in snapshot_source_health.ts —
 // tries the conventional relative path first, then a known absolute fallback
@@ -49,6 +59,8 @@ for (const p of [
 // Dry-run is the default. Real inserts require an explicit --commit flag.
 const COMMIT = process.argv.includes("--commit");
 const DRY_RUN = !COMMIT;
+// --enrich: after each insert, run EN enrichment (OpenAI) + PT translation (Anthropic).
+const ENRICH = process.argv.includes("--enrich");
 const MAX_PER_SOURCE = 20;
 const FETCH_TIMEOUT_MS = 15_000;
 const USER_AGENT =
@@ -93,16 +105,19 @@ async function fetchFeed(source: MarketNewsSource): Promise<string> {
 async function insertCandidate(
   sb: SupabaseClient,
   row: MarketNewsInsert
-): Promise<void> {
-  const { error } = await sb
+): Promise<string | null> {
+  const { data, error } = await sb
     .from("market_news")
-    .insert(row);
+    .insert(row)
+    .select("id")
+    .single();
 
   if (error) {
     // Unique constraint violation means a concurrent run beat us to it — safe to ignore.
-    if (error.code === "23505") return;
+    if (error.code === "23505") return null;
     throw new Error(error.message);
   }
+  return (data as { id: string } | null)?.id ?? null;
 }
 
 // ── Admin notification emit ────────────────────────────────────────────────
@@ -154,6 +169,7 @@ interface SourceResult {
   source: MarketNewsSource;
   fetched: number;
   inserted: number;
+  enriched: number;
   skippedDup: number;
   skippedCap: number;
   error: string | null;
@@ -163,12 +179,15 @@ async function processSource(
   sb: SupabaseClient,
   source: MarketNewsSource,
   existingKeys: Set<string>,
-  dryRun: boolean
+  dryRun: boolean,
+  openaiKey: string | null,
+  anthropicKey: string | null,
 ): Promise<SourceResult> {
   const result: SourceResult = {
     source,
     fetched: 0,
     inserted: 0,
+    enriched: 0,
     skippedDup: 0,
     skippedCap: 0,
     error: null,
@@ -209,14 +228,78 @@ async function processSource(
       existingKeys.add(row.canonical_url);
       result.inserted++;
     } else {
+      let insertedId: string | null = null;
       try {
-        await insertCandidate(sb, row);
+        insertedId = await insertCandidate(sb, row);
+        if (insertedId === null) {
+          // Concurrent insert beat us (unique constraint) — treat as dup
+          result.skippedDup++;
+          continue;
+        }
         existingKeys.add(row.canonical_url);
         existingKeys.add(row.source_url);
         result.inserted++;
       } catch (err) {
         log(`  [error] insert failed: ${err instanceof Error ? err.message : String(err)}`);
         result.skippedDup++;
+        continue;
+      }
+
+      // ── Auto-enrich ─────────────────────────────────────────────────────
+      if (ENRICH && openaiKey && anthropicKey && insertedId) {
+        try {
+          const enrichInput = {
+            title:            row.title,
+            original_title:   row.original_title ?? null,
+            snippet:          row.snippet ?? "",
+            source_name:      row.source_name,
+            source_url:       row.source_url,
+            category:         row.category ?? "Economy",
+            published_at:     row.published_at ?? null,
+            language:         row.language ?? null,
+            ingestion_source: row.ingestion_source ?? null,
+          };
+          const enriched = await enrichCandidate(enrichInput, openaiKey);
+
+          // Only write columns that exist in the schema.
+          // relevance_score and recommendation are AI hints — not stored in DB.
+          const update: Record<string, unknown> = {
+            title:            enriched.title,
+            snippet:          enriched.snippet,
+            why_it_matters:   enriched.why_it_matters,
+            category:         enriched.category,
+            signal_tags:      enriched.signal_tags,
+            affected_regions: enriched.affected_regions,
+          };
+
+          // PT translation — skip for archive-recommended items
+          if (enriched.recommendation !== "archive" && anthropicKey) {
+            try {
+              const pt = await translateToPt(
+                { title: enriched.title, snippet: enriched.snippet, why_it_matters: enriched.why_it_matters },
+                anthropicKey,
+              );
+              update.title_pt          = pt.title_pt;
+              update.snippet_pt        = pt.snippet_pt;
+              update.why_it_matters_pt = pt.why_it_matters_pt;
+            } catch (ptErr) {
+              log(`  [warn] PT translation failed for "${enriched.title.slice(0, 60)}": ${ptErr instanceof Error ? ptErr.message : String(ptErr)}`);
+            }
+          }
+
+          const { error: updateErr } = await sb
+            .from("market_news")
+            .update(update)
+            .eq("id", insertedId);
+
+          if (updateErr) {
+            log(`  [warn] Enrich update failed for id=${insertedId}: ${updateErr.message}`);
+          } else {
+            result.enriched++;
+          }
+        } catch (enrichErr) {
+          log(`  [warn] Enrichment failed for "${row.title.slice(0, 60)}": ${enrichErr instanceof Error ? enrichErr.message : String(enrichErr)}`);
+        }
       }
     }
   }
@@ -234,11 +317,18 @@ async function main() {
     (DRY_RUN ? "  ⚠  DRY RUN — pass --commit to write" : "  ✎  COMMIT MODE")
   );
 
-  const url = process.env.SUPABASE_URL?.trim();
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const url         = process.env.SUPABASE_URL?.trim();
+  const key         = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const openaiKey   = process.env.OPENAI_API_KEY?.trim() ?? null;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY?.trim() ?? null;
 
   if (!url || !key) {
     log("Error: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.");
+    process.exit(1);
+  }
+
+  if (ENRICH && (!openaiKey || !anthropicKey)) {
+    log("Error: --enrich requires OPENAI_API_KEY and ANTHROPIC_API_KEY to be set.");
     process.exit(1);
   }
 
@@ -271,7 +361,7 @@ async function main() {
     log(`\nSource: ${source.name} [${source.id}]`);
     log(`  URL: ${source.url.slice(0, 90)}…`);
 
-    const result = await processSource(sb, source, existingKeys, DRY_RUN);
+    const result = await processSource(sb, source, existingKeys, DRY_RUN, openaiKey, anthropicKey);
     results.push(result);
 
     if (result.error) {
@@ -279,6 +369,9 @@ async function main() {
     } else {
       log(`  Fetched:  ${result.fetched} items`);
       log(`  Inserted: ${result.inserted} candidates${result.inserted >= MAX_PER_SOURCE ? ` (cap: ${MAX_PER_SOURCE})` : ""}`);
+      if (ENRICH && !DRY_RUN) {
+        log(`  Enriched: ${result.enriched} / ${result.inserted}`);
+      }
       log(`  Skipped:  ${result.skippedDup} duplicates / no URL`);
       if (result.skippedCap > 0) {
         log(`  Capped:   ${result.skippedCap} items beyond per-source limit of ${MAX_PER_SOURCE}`);
@@ -290,6 +383,7 @@ async function main() {
 
   const totalFetched  = results.reduce((n, r) => n + r.fetched, 0);
   const totalInserted = results.reduce((n, r) => n + r.inserted, 0);
+  const totalEnriched = results.reduce((n, r) => n + r.enriched, 0);
   const totalDup      = results.reduce((n, r) => n + r.skippedDup, 0);
   const totalCapped   = results.reduce((n, r) => n + r.skippedCap, 0);
   const totalErrors   = results.filter((r) => r.error !== null).length;
@@ -299,6 +393,9 @@ async function main() {
   log(`Sources disabled:     ${disabledSources.length}`);
   log(`Items seen:           ${totalFetched}`);
   log(`Candidates inserted:  ${totalInserted}${DRY_RUN ? " (dry-run, not written)" : ""}`);
+  if (ENRICH && !DRY_RUN) {
+    log(`Enriched:             ${totalEnriched} / ${totalInserted}`);
+  }
   log(`Skipped (dup/no URL): ${totalDup}`);
   log(`Skipped (cap):        ${totalCapped}`);
   log(`Source errors:        ${totalErrors}`);
