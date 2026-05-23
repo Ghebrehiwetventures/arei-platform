@@ -530,11 +530,29 @@ export default async function handler(req, res) {
     if (body.action === "list_queue") {
       const { data, error } = await sb
         .from("social_listing_queue")
-        .select("id, listing_id, listing_title, scheduled_at, status, permalink, story_published, error_message, image_urls")
+        .select("id, listing_id, listing_title, caption, scheduled_at, status, permalink, story_published, error_message, image_urls")
         .order("scheduled_at", { ascending: true })
         .limit(50);
       if (error) throw new Error(error.message);
       send(res, 200, { items: data || [] });
+      return;
+    }
+
+    if (body.action === "update_queue") {
+      const queueId = body.queueId || body.id;
+      if (!queueId) { send(res, 400, { error: "queueId required" }); return; }
+      const patch = {};
+      if (body.listingId) patch.listing_id = body.listingId;
+      if (typeof body.caption === "string") patch.caption = body.caption.trim();
+      if (Array.isArray(body.imageUrls)) patch.image_urls = body.imageUrls;
+      if (body.scheduledAt) patch.scheduled_at = body.scheduledAt;
+      const { error } = await sb
+        .from("social_listing_queue")
+        .update(patch)
+        .eq("id", queueId)
+        .eq("status", "pending");
+      if (error) throw new Error(error.message);
+      send(res, 200, { updated: true });
       return;
     }
 
