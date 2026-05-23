@@ -25,12 +25,6 @@ async function authHeaders(): Promise<HeadersInit> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-const PUBLISH_STAGES = [
-  "Uploading images…",
-  "Building carousel…",
-  "Publishing to Instagram…",
-];
-
 type SchedulePattern = "1_per_day" | "2_per_day" | "3_per_week";
 
 const SCHEDULE_PATTERNS: { value: SchedulePattern; label: string; desc: string }[] = [
@@ -136,7 +130,6 @@ export function ListingSocialView() {
   const [loading, setLoading] = useState(true);
   const [captionLoading, setCaptionLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
-  const [publishStage, setPublishStage] = useState(0);
   const [permalink, setPermalink] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -244,34 +237,27 @@ export function ListingSocialView() {
     setDropIndex(null);
   };
 
+  // "Publish now" enqueues for immediate background sending (scheduled_at = now)
+  // and returns instantly — the cron picks it up within ~a minute. No 20-30s wait.
   const handlePublish = async () => {
     if (!selectedId || !caption.trim() || selectedImages.length < 2) return;
     setPublishing(true);
     setError("");
     setNotice("");
-    // Carousel publish is a multi-step Instagram flow (~20-30s): upload each
-    // image, build the carousel, publish, then post the story. Walk the label
-    // through those stages so the button doesn't look frozen.
-    setPublishStage(0);
-    let stage = 0;
-    const interval = setInterval(() => {
-      stage = Math.min(stage + 1, PUBLISH_STAGES.length - 1);
-      setPublishStage(stage);
-    }, 6000);
     try {
-      const result = await apiFetch<{ postId: string; permalink: string; storyPublished: boolean }>("POST", {
-        action: "publish_carousel",
+      await apiFetch("POST", {
+        action: "queue_carousel",
         listingId: selectedId,
         imageUrls: selectedImages,
         caption: caption.trim(),
+        scheduledAt: new Date().toISOString(),
+        listingTitle: selected?.title || null,
       });
-      setPermalink(result.permalink);
-      setNotice("Published to Instagram.");
+      setNotice("Sending in the background — it'll appear in Published within a minute. You can keep working.");
       await loadState();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
-      clearInterval(interval);
       setPublishing(false);
     }
   };
@@ -569,7 +555,7 @@ export function ListingSocialView() {
                 className="flex-1 min-w-[160px] px-4 py-2.5 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
               >
                 {publishing
-                  ? PUBLISH_STAGES[publishStage]
+                  ? "Sending…"
                   : `Publish now (${selectedImages.length})`}
               </button>
               <button
