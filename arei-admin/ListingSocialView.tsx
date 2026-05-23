@@ -25,6 +25,50 @@ async function authHeaders(): Promise<HeadersInit> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+type SchedulePattern = "1_per_day" | "2_per_day" | "3_per_week";
+
+const SCHEDULE_PATTERNS: { value: SchedulePattern; label: string; desc: string }[] = [
+  { value: "1_per_day",   label: "1 / day",    desc: "Every day at 10:00" },
+  { value: "2_per_day",   label: "2 / day",    desc: "Daily at 10:00 & 19:00" },
+  { value: "3_per_week",  label: "3 / week",   desc: "Mon · Wed · Fri at 10:00" },
+];
+
+function nextSlot(pattern: SchedulePattern, takenISO: string[]): Date {
+  const taken = new Set(takenISO.map((s) => new Date(s).toISOString().slice(0, 16)));
+  const now = new Date();
+
+  for (let day = 0; day <= 30; day++) {
+    const base = new Date(now);
+    base.setDate(base.getDate() + day);
+
+    let hours: number[] = [];
+    if (pattern === "1_per_day") {
+      hours = [10];
+    } else if (pattern === "2_per_day") {
+      hours = [10, 19];
+    } else {
+      const dow = base.getDay(); // 0=Sun
+      if (dow !== 1 && dow !== 3 && dow !== 5) continue;
+      hours = [10];
+    }
+
+    for (const h of hours) {
+      const candidate = new Date(base);
+      candidate.setHours(h, 0, 0, 0);
+      if (candidate <= now) continue;
+      const key = candidate.toISOString().slice(0, 16);
+      if (!taken.has(key)) return candidate;
+    }
+  }
+  // fallback: 24h from now
+  return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+}
+
+function toDatetimeLocal(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 async function apiFetch<T>(method: string, body?: Record<string, unknown>): Promise<T> {
   const headers: Record<string, string> = { ...(await authHeaders()) as Record<string, string> };
   if (body) headers["Content-Type"] = "application/json";
@@ -75,6 +119,9 @@ export function ListingSocialView() {
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
   const didDragRef = useRef(false);
   const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [schedulePattern, setSchedulePattern] = useState<SchedulePattern>(
+    () => (localStorage.getItem("ig_schedule_pattern") as SchedulePattern) || "1_per_day"
+  );
   const [scheduleTime, setScheduleTime] = useState("");
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduling, setScheduling] = useState(false);
@@ -230,14 +277,15 @@ export function ListingSocialView() {
     }
   };
 
-  const quickSchedule = (offsetHours: number) => {
-    const d = new Date();
-    d.setHours(d.getHours() + offsetHours, 0, 0, 0);
-    // datetime-local format: "YYYY-MM-DDTHH:mm"
-    const pad = (n: number) => String(n).padStart(2, "0");
-    setScheduleTime(
-      `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:00`
-    );
+  const applyNextSlot = (pattern: SchedulePattern) => {
+    const taken = queue.filter((q) => q.status === "pending").map((q) => q.scheduled_at);
+    setScheduleTime(toDatetimeLocal(nextSlot(pattern, taken)));
+  };
+
+  const handlePatternChange = (p: SchedulePattern) => {
+    setSchedulePattern(p);
+    localStorage.setItem("ig_schedule_pattern", p);
+    applyNextSlot(p);
   };
 
   if (loading) {
@@ -454,7 +502,10 @@ export function ListingSocialView() {
               </button>
               <button
                 type="button"
-                onClick={() => setShowSchedule((v) => !v)}
+                onClick={() => {
+                  if (!showSchedule) applyNextSlot(schedulePattern);
+                  setShowSchedule((v) => !v);
+                }}
                 disabled={selectedImages.length < 2 || !caption.trim()}
                 className="px-4 py-2.5 text-sm font-semibold rounded border border-border text-foreground hover:bg-surface-1 transition-all disabled:opacity-40 font-mono"
               >
@@ -467,19 +518,34 @@ export function ListingSocialView() {
               </div>
             </div>
             {showSchedule && (
-              <div className="border border-border rounded p-3 space-y-2 bg-background">
-                <div className="label-style">Schedule publish time</div>
-                <div className="flex gap-2 flex-wrap">
-                  <button type="button" onClick={() => quickSchedule(24)} className="text-[11px] font-mono px-2 py-1 border border-border rounded hover:bg-surface-1">+24h</button>
-                  <button type="button" onClick={() => quickSchedule(48)} className="text-[11px] font-mono px-2 py-1 border border-border rounded hover:bg-surface-1">+48h</button>
-                  <button type="button" onClick={() => quickSchedule(72)} className="text-[11px] font-mono px-2 py-1 border border-border rounded hover:bg-surface-1">+72h</button>
+              <div className="border border-border rounded p-3 space-y-3 bg-background">
+                <div className="label-style">Post frequency</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {SCHEDULE_PATTERNS.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => handlePatternChange(p.value)}
+                      className={`px-2 py-2 text-[11px] font-mono rounded border text-left transition-all ${
+                        schedulePattern === p.value
+                          ? "border-foreground text-foreground bg-surface-1"
+                          : "border-border text-foreground-muted hover:border-foreground/40"
+                      }`}
+                    >
+                      <div className="font-semibold">{p.label}</div>
+                      <div className="text-foreground-muted mt-0.5 text-[10px]">{p.desc}</div>
+                    </button>
+                  ))}
                 </div>
-                <input
-                  type="datetime-local"
-                  value={scheduleTime}
-                  onChange={(e) => setScheduleTime(e.target.value)}
-                  className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono rounded w-full"
-                />
+                <div>
+                  <div className="label-style mb-1">Next slot <span className="font-normal normal-case text-foreground-muted">(override if needed)</span></div>
+                  <input
+                    type="datetime-local"
+                    value={scheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono rounded w-full"
+                  />
+                </div>
                 <button
                   type="button"
                   onClick={handleSchedule}
