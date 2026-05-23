@@ -3346,6 +3346,12 @@ function MarketNewsView() {
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
 
+  // ── Add URL ──────────────────────────────────────────────────────────────
+  const [addUrlOpen, setAddUrlOpen] = React.useState(false);
+  const [addUrlInput, setAddUrlInput] = React.useState("");
+  const [addUrlLoading, setAddUrlLoading] = React.useState(false);
+  const [addUrlError, setAddUrlError] = React.useState<string | null>(null);
+
   const load = React.useCallback(async (status: MarketNewsStatus) => {
     setLoading(true);
     setExpandedId(null);
@@ -3392,16 +3398,90 @@ function MarketNewsView() {
     }
   };
 
+  const handleAddUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = addUrlInput.trim();
+    if (!url) return;
+    setAddUrlLoading(true);
+    setAddUrlError(null);
+    try {
+      const res = await fetch("/api/fetch-url-candidate", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 409) {
+          setAddUrlError(`Already exists in queue (${data.existing_status ?? "candidate"}).`);
+        } else {
+          throw new Error(data.error ?? `Request failed (${res.status})`);
+        }
+        return;
+      }
+      // Prepend to list if on candidate tab
+      if (statusTab === "candidate" && data.candidate) {
+        setItems((prev) => [data.candidate as MarketNewsRow, ...prev]);
+      }
+      setAddUrlInput("");
+      setAddUrlOpen(false);
+    } catch (err) {
+      setAddUrlError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAddUrlLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-          Market News Queue
-        </h1>
-        <p className="text-sm text-foreground-muted mt-1">
-          Review imported market-news candidates before they appear publicly.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
+              Market News Queue
+            </h1>
+            <p className="text-sm text-foreground-muted mt-1">
+              Review imported market-news candidates before they appear publicly.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setAddUrlOpen((v) => !v); setAddUrlError(null); }}
+            className="shrink-0 mt-1 px-3 py-1.5 text-[12px] font-mono font-medium rounded border border-border bg-surface-2 text-foreground hover:bg-surface-3 transition-colors"
+          >
+            + Add URL
+          </button>
+        </div>
+
+        {/* ── Inline Add URL form ──────────────────────────────── */}
+        {addUrlOpen && (
+          <div className="mt-4 p-4 rounded border border-border bg-surface-1">
+            <p className="text-[12px] text-foreground-muted mb-3 font-mono">
+              Paste a news article URL — it will be fetched, enriched, and added as a candidate.
+            </p>
+            <form onSubmit={handleAddUrl} className="flex gap-2">
+              <input
+                type="url"
+                value={addUrlInput}
+                onChange={(e) => setAddUrlInput(e.target.value)}
+                placeholder="https://…"
+                disabled={addUrlLoading}
+                className="flex-1 px-3 py-1.5 text-sm rounded border border-border bg-surface-2 text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={addUrlLoading || !addUrlInput.trim()}
+                className="px-4 py-1.5 text-[12px] font-mono font-medium rounded bg-accent text-deep-green hover:opacity-90 transition-opacity disabled:opacity-40"
+              >
+                {addUrlLoading ? "Fetching…" : "Fetch & add"}
+              </button>
+            </form>
+            {addUrlError && (
+              <p className="mt-2 text-[12px] text-red">{addUrlError}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Status tabs ─────────────────────────────────────────── */}
