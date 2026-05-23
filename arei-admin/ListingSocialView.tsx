@@ -25,6 +25,12 @@ async function authHeaders(): Promise<HeadersInit> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+const PUBLISH_STAGES = [
+  "Uploading images…",
+  "Building carousel…",
+  "Publishing to Instagram…",
+];
+
 type SchedulePattern = "1_per_day" | "2_per_day" | "3_per_week";
 
 const SCHEDULE_PATTERNS: { value: SchedulePattern; label: string; desc: string }[] = [
@@ -130,6 +136,7 @@ export function ListingSocialView() {
   const [loading, setLoading] = useState(true);
   const [captionLoading, setCaptionLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
+  const [publishStage, setPublishStage] = useState(0);
   const [permalink, setPermalink] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
@@ -242,6 +249,15 @@ export function ListingSocialView() {
     setPublishing(true);
     setError("");
     setNotice("");
+    // Carousel publish is a multi-step Instagram flow (~20-30s): upload each
+    // image, build the carousel, publish, then post the story. Walk the label
+    // through those stages so the button doesn't look frozen.
+    setPublishStage(0);
+    let stage = 0;
+    const interval = setInterval(() => {
+      stage = Math.min(stage + 1, PUBLISH_STAGES.length - 1);
+      setPublishStage(stage);
+    }, 6000);
     try {
       const result = await apiFetch<{ postId: string; permalink: string; storyPublished: boolean }>("POST", {
         action: "publish_carousel",
@@ -250,11 +266,12 @@ export function ListingSocialView() {
         caption: caption.trim(),
       });
       setPermalink(result.permalink);
-      setNotice(result.storyPublished ? "Published to Instagram + story." : "Published to Instagram.");
+      setNotice("Published to Instagram.");
       await loadState();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     } finally {
+      clearInterval(interval);
       setPublishing(false);
     }
   };
@@ -552,7 +569,7 @@ export function ListingSocialView() {
                 className="flex-1 min-w-[160px] px-4 py-2.5 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
               >
                 {publishing
-                  ? "Publishing..."
+                  ? PUBLISH_STAGES[publishStage]
                   : `Publish now (${selectedImages.length})`}
               </button>
               <button
