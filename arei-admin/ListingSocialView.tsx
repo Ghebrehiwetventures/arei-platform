@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { supabaseAuth } from "./supabase";
 
 interface Listing {
@@ -192,7 +192,7 @@ export function ListingSocialView() {
     });
   };
 
-  const handleDragMove = (e: PointerEvent) => {
+  const handleDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (dragIndex === null) return;
     let closest = dragIndex;
     let closestDist = Infinity;

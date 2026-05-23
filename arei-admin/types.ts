@@ -122,21 +122,6 @@ export interface DashboardStats {
 
 export type IngestRunPhase = "post_fetch_snapshot" | "final_post_enrichment";
 
-export type ContentDraftStatus = "pending" | "approved" | "rejected" | "revision_requested";
-
-export interface ContentDraft {
-  id: string;
-  sourceListingId: string;
-  listingTitle: string;
-  selectedImage: string;
-  suggestedCaption: string;
-  suggestedHashtags: string[];
-  suggestedChannel: "instagram" | "facebook" | "linkedin";
-  createdAt: string;
-  status: ContentDraftStatus;
-  statusNote?: string;
-}
-
 // ============================================================
 // AGENCY CONSOLE TYPES
 // Two-layer model: agencies (broker-safe) + agency_relationships (internal only)
