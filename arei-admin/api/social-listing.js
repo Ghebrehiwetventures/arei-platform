@@ -386,18 +386,30 @@ async function publishCarousel(sb, body) {
     : null;
   if (locationId) console.log("[social-listing] location_id", locationId, "for island", listingRow.island);
 
-  const carouselParams = new URLSearchParams({
-    media_type: "CAROUSEL",
-    caption: caption.trim(),
-    children: containerIds.join(","),
-    access_token: ig.accessToken,
-  });
-  if (locationId) carouselParams.set("location_id", locationId);
-  const carouselRes = await fetch(`${graphBase}/media`, { method: "POST", body: carouselParams });
-  const carouselData = await carouselRes.json().catch(() => ({}));
-  if (!carouselRes.ok || !carouselData.id) {
-    throw new Error(carouselData.error?.message || `Failed to create carousel container: HTTP ${carouselRes.status}`);
+  const createCarousel = async (withLocation) => {
+    const params = new URLSearchParams({
+      media_type: "CAROUSEL",
+      caption: caption.trim(),
+      children: containerIds.join(","),
+      access_token: ig.accessToken,
+    });
+    if (withLocation && locationId) params.set("location_id", locationId);
+    const res = await fetch(`${graphBase}/media`, { method: "POST", body: params });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok && Boolean(data.id), status: res.status, data };
+  };
+
+  // Location tagging must never block a publish: if Instagram rejects the
+  // location_id (our Place IDs are unverified estimates), retry without it.
+  let carousel = await createCarousel(true);
+  if (!carousel.ok && locationId) {
+    console.error("[social-listing] carousel with location_id failed, retrying without:", carousel.data.error?.message);
+    carousel = await createCarousel(false);
   }
+  if (!carousel.ok) {
+    throw new Error(carousel.data.error?.message || `Failed to create carousel container: HTTP ${carousel.status}`);
+  }
+  const carouselData = carousel.data;
 
   await waitUntilReady(ig, carouselData.id);
 
