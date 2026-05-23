@@ -72,18 +72,37 @@ function resolveImageUrl(url) {
     .replace(/\.webp$/, "");
 }
 
-// Filter only GENUINELY small thumbnails. Real-estate full images often carry a
-// dimension suffix (e.g. -1024x768.jpg), so we must not drop those — only drop
-// when the largest dimension is small (<=400px) or the name is an explicit thumb.
-function isLikelyThumbnail(url) {
-  if (!url) return true;
-  if (/[_-](thumbnail|thumb)\b/i.test(url)) return true;
-  const m = url.match(/-(\d{2,4})x(\d{2,4})(?:[._-]|$|\?)/);
-  if (m) {
-    const max = Math.max(parseInt(m[1], 10), parseInt(m[2], 10));
-    if (max <= 400) return true;
+// Source feeds often contain several size variants of the same photo
+// (foo-768x512.jpg, foo-1024x768.jpg, foo.jpg). Collapse them to one image per
+// base, keeping the largest variant — this removes duplicates AND guarantees the
+// highest resolution, without a fragile thumbnail filter.
+
+// Strip the -WxH size suffix + extension to get the base identity of an image.
+function imageBaseKey(url) {
+  return url
+    .split("?")[0]
+    .replace(/-\d{2,4}x\d{2,4}(?=\.[a-z]+$)/i, "")
+    .replace(/\.(webp|jpe?g|png|gif)$/i, "")
+    .toLowerCase();
+}
+
+// Pixel area of a variant; the no-suffix original counts as largest.
+function imagePixelArea(url) {
+  const m = url.split("?")[0].match(/-(\d{2,4})x(\d{2,4})(?=\.[a-z]+$)/i);
+  return m ? parseInt(m[1], 10) * parseInt(m[2], 10) : Number.POSITIVE_INFINITY;
+}
+
+// Dedupe by base image, keeping the largest variant. Preserves first-seen order.
+function dedupeImages(urls) {
+  const best = new Map();
+  for (const url of urls) {
+    if (!url) continue;
+    const key = imageBaseKey(url);
+    const area = imagePixelArea(url);
+    const cur = best.get(key);
+    if (!cur || area > cur.area) best.set(key, { url, area });
   }
-  return false;
+  return [...best.values()].map((v) => v.url);
 }
 
 // 1:1 square for carousel items — high quality
@@ -427,7 +446,7 @@ async function listListings(sb) {
     .map((row) => ({
       ...row,
       source_name: sourceName(row.source_id),
-      image_urls: [...new Set((row.image_urls || []).map(resolveImageUrl).filter((u) => u && !isLikelyThumbnail(u)))],
+      image_urls: dedupeImages((row.image_urls || []).map(resolveImageUrl).filter(Boolean)),
       cover_image_url: resolveImageUrl(row.cover_image_url),
       listing_url: `https://www.capeverderealestateindex.com/listing/${row.id}`,
     }));
@@ -465,7 +484,7 @@ async function publishCarousel(sb, body) {
 
   const images = (Array.isArray(imageUrls) && imageUrls.length > 0)
     ? imageUrls.slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES)
-    : [...new Set((listingRow.image_urls || []).map(resolveImageUrl).filter((u) => u && !isLikelyThumbnail(u)))].slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
+    : dedupeImages((listingRow.image_urls || []).map(resolveImageUrl).filter(Boolean)).slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
 
   if (images.length < 2) throw new Error("Carousel requires at least 2 images. This listing has fewer.");
 
