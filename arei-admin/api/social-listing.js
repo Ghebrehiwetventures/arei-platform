@@ -604,11 +604,30 @@ export async function processQueueOnce(sb) {
     .from("social_listing_queue")
     .select("*")
     .eq("status", "pending")
+    .is("post_id", null)
     .lte("scheduled_at", new Date().toISOString())
     .order("scheduled_at", { ascending: true })
     .limit(1);
   const item = (items || [])[0];
   if (!item) return { processed: 0 };
+
+  // Atomic claim: flip post_id from NULL -> a claim marker, conditional on the
+  // row still being unclaimed. If a concurrent cron run already claimed it, this
+  // updates 0 rows and we bail — preventing the same post being published twice
+  // (which produced duplicate IG posts when a publish ran longer than the cron
+  // interval). No migration needed; we reuse post_id (overwritten on success).
+  const claimMarker = `CLAIM:${Date.now()}`;
+  const { data: claimed } = await sb
+    .from("social_listing_queue")
+    .update({ post_id: claimMarker })
+    .eq("id", item.id)
+    .eq("status", "pending")
+    .is("post_id", null)
+    .select("id");
+  if (!claimed || claimed.length === 0) {
+    return { processed: 0, note: "already claimed by another run" };
+  }
+
   try {
     const result = await publishCarousel(sb, {
       listingId: item.listing_id,
@@ -624,8 +643,10 @@ export async function processQueueOnce(sb) {
     console.log("[social-listing] queue published", item.id);
     return { processed: 1, id: item.id, status: "published" };
   } catch (err) {
+    // Clear the claim marker so the item isn't left holding a fake post_id.
     await sb.from("social_listing_queue").update({
       status: "failed",
+      post_id: null,
       error_message: err.message,
     }).eq("id", item.id);
     console.error("[social-listing] queue publish failed", item.id, err.message);
