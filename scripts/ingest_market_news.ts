@@ -65,7 +65,7 @@ const COMMIT = process.argv.includes("--commit");
 const DRY_RUN = !COMMIT;
 // --enrich: after each insert, run EN enrichment (OpenAI) + PT translation (Anthropic).
 const ENRICH = process.argv.includes("--enrich");
-const MAX_PER_SOURCE = 20;
+const MAX_PER_SOURCE = 50;
 const FETCH_TIMEOUT_MS = 15_000;
 const USER_AGENT =
   "AREI-MarketNewsBot/1.0 (+https://capeverderealestateindex.com)";
