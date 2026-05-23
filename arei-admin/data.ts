@@ -862,6 +862,9 @@ export interface MarketNewsRow {
   title_pt: string | null;
   snippet_pt: string | null;
   why_it_matters_pt: string | null;
+  enriched_at: string | null;
+  relevance_score: number | null;
+  enrich_recommendation: "publish" | "keep_candidate" | "archive" | null;
 }
 
 export interface MarketNewsFieldUpdate {
@@ -878,11 +881,21 @@ export interface MarketNewsFieldUpdate {
 }
 
 export async function getMarketNewsQueue(status: MarketNewsStatus): Promise<MarketNewsRow[]> {
-  const { data, error } = await supabaseAuth
+  let query = supabaseAuth
     .from("market_news")
-    .select("id,title,original_title,source_name,source_url,canonical_url,published_at,category,snippet,why_it_matters,status,relevance,language,country_code,affected_regions,signal_tags,ingestion_source,created_at,updated_at,title_pt,snippet_pt,why_it_matters_pt")
-    .eq("status", status)
-    .order("created_at", { ascending: false });
+    .select("id,title,original_title,source_name,source_url,canonical_url,published_at,category,snippet,why_it_matters,status,relevance,language,country_code,affected_regions,signal_tags,ingestion_source,created_at,updated_at,title_pt,snippet_pt,why_it_matters_pt,enriched_at,relevance_score,enrich_recommendation")
+    .eq("status", status);
+
+  if (status === "candidate") {
+    // Highest-scored items first; unscored (null) items fall to the bottom
+    query = query
+      .order("relevance_score", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("[Admin] getMarketNewsQueue failed:", error.message);
