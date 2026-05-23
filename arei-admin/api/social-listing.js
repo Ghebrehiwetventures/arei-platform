@@ -231,6 +231,13 @@ async function publishCarousel(sb, body) {
 
   const graphBase = `https://graph.instagram.com/${ig.apiVersion}/${ig.accountId}`;
 
+  console.log("[social-listing] publish start", {
+    accountId: ig.accountId,
+    tokenPrefix: ig.accessToken.slice(0, 20),
+    apiVersion: ig.apiVersion,
+    imageCount: images.length,
+  });
+
   // Step 1: create a media container for each image (square-cropped via proxy)
   const containerIds = [];
   for (const imageUrl of images) {
@@ -241,6 +248,7 @@ async function publishCarousel(sb, body) {
     });
     const res = await fetch(`${graphBase}/media`, { method: "POST", body: params });
     const data = await res.json().catch(() => ({}));
+    console.log("[social-listing] container create", { status: res.status, data });
     if (!res.ok || !data.id) {
       throw new Error(data.error?.message || `Failed to create media container for ${imageUrl}: HTTP ${res.status}`);
     }
