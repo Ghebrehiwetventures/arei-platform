@@ -3,6 +3,11 @@ import { createClient } from "@supabase/supabase-js";
 const COOKIE_NAME = "admin_session";
 const INSTAGRAM_MAX_CAROUSEL_IMAGES = 10;
 
+// The only market + channel live today. Stored on every content row so the
+// same engine scales to other markets/channels without a schema change.
+const DEFAULT_MARKET_ID = "cv";
+const DEFAULT_PLATFORM = "instagram";
+
 const SOURCE_NAMES = {
   cv_homescasaverde: "Homes Casa Verde",
   cv_remax: "REMAX Cape Verde",
@@ -430,7 +435,8 @@ async function publishCarousel(sb, body) {
   // Step 6: log the publish in social_listing_posts (non-fatal if it fails)
   const { error: logErr } = await sb.from("social_listing_posts").insert({
     listing_id: listingId,
-    platform: "instagram",
+    platform: DEFAULT_PLATFORM,
+    market_id: DEFAULT_MARKET_ID,
     external_post_id: publishData.id,
     permalink: permalink || null,
     caption: caption.trim(),
@@ -501,6 +507,8 @@ export default async function handler(req, res) {
         caption: caption.trim(),
         image_urls: imageUrls,
         scheduled_at: scheduledAt,
+        market_id: body.marketId || DEFAULT_MARKET_ID,
+        platform: body.platform || DEFAULT_PLATFORM,
       }).select("id, scheduled_at").single();
       if (error) throw new Error(error.message);
       send(res, 200, { queued: true, id: data.id, scheduledAt: data.scheduled_at });

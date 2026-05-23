@@ -297,10 +297,10 @@ export function ListingSocialView() {
   return (
     <div className="space-y-6">
       <section>
-        <div className="label-style mb-1">Market Intelligence &gt; Listing Social</div>
-        <h2 className="text-2xl font-semibold text-foreground font-mono mb-1">Listing Social</h2>
+        <div className="label-style mb-1">Marketing &gt; Instagram</div>
+        <h2 className="text-2xl font-semibold text-foreground font-mono mb-1">Marketing</h2>
         <p className="text-sm text-foreground-muted">
-          Pick a listing, select images, and publish as an Instagram carousel.
+          Pick a listing, select images, and publish or schedule an Instagram carousel.
         </p>
       </section>
 

@@ -8,9 +8,6 @@ import {
   getListings,
   getListingById,
   getMarketIds,
-  getContentDrafts,
-  generateContentDrafts,
-  updateContentDraftStatus,
   getMarketNewsQueue,
   updateMarketNewsStatus,
   updateMarketNewsFields,
@@ -90,7 +87,7 @@ function useTheme() {
 
   return [dark, () => setDark((d) => !d)] as const;
 }
-import { Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
+import { Source, Listing, SourceStatus, DashboardStats, SourceQualityRow } from "./types";
 import { supabaseAuth } from "./supabase";
 import { PropertyChatLabView } from "./PropertyChatLab";
 import { SourceHealthReport, buildReportHtml, loadSnapshots, saveSnapshot, summarize, SourceSnapshot } from "./sourceHealthReport";
@@ -98,7 +95,6 @@ import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, 
 import { AgencyConsoleView } from "./AgencyConsoleView";
 import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
 import { BrokerPilotView } from "./BrokerPilotView";
-import { MarketNewsSocialAgentView } from "./MarketNewsSocialAgentView";
 import { ListingSocialView } from "./ListingSocialView";
 
 // ============================================
@@ -396,288 +392,6 @@ function GradeBadge({ grade }: { grade: "A" | "B" | "C" | "D" }) {
     <span className={`inline-flex items-center justify-center w-7 h-6 text-xs font-mono font-semibold rounded ${classes[grade] ?? "bg-surface-3 text-foreground-muted"}`}>
       {grade}
     </span>
-  );
-}
-
-function DraftStatusBadge({ status }: { status: ContentDraftStatus }) {
-  const labels: Record<ContentDraftStatus, string> = {
-    pending: "Pending",
-    approved: "Approved",
-    rejected: "Rejected",
-    revision_requested: "Revision",
-  };
-  const classes: Record<ContentDraftStatus, string> = {
-    pending: "bg-amber-muted text-amber",
-    approved: "bg-green-muted text-green",
-    rejected: "bg-red-muted text-red",
-    revision_requested: "bg-surface-3 text-foreground-muted",
-  };
-
-  return (
-    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded ${classes[status]}`}>
-      {labels[status]}
-    </span>
-  );
-}
-
-function AgentsApprovalsView() {
-  const [drafts, setDrafts] = useState<ContentDraft[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<ContentDraftStatus | "all">("all");
-  const [typeFilter, setTypeFilter] = useState<"all" | "content_draft">("content_draft");
-
-  useEffect(() => {
-    let cancelled = false;
-    getContentDrafts().then((items) => {
-      if (!cancelled) {
-        setDrafts(items);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      const next = await generateContentDrafts();
-      setDrafts(next);
-    } finally {
-      setGenerating(false);
-      setLoading(false);
-    }
-  };
-
-  const handleStatusUpdate = async (draftId: string, status: ContentDraftStatus) => {
-    const note =
-      status === "revision_requested"
-        ? window.prompt("What should be revised before this draft can be approved?", "") ?? ""
-        : "";
-    const next = await updateContentDraftStatus(draftId, status, note);
-    setDrafts(next);
-  };
-
-  const filteredDrafts = drafts.filter((draft) => {
-    if (typeFilter !== "all" && typeFilter !== "content_draft") return false;
-    if (statusFilter !== "all" && draft.status !== statusFilter) return false;
-    return true;
-  });
-
-  const pendingCount = drafts.filter((draft) => draft.status === "pending").length;
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const toggleExpand = (id: string) =>
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-
-  return (
-    <div className="space-y-6">
-      {/* ── Page header ─────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Content Drafts
-          </h1>
-          <p className="text-sm text-foreground-muted mt-1">
-            Review and approve AI-generated content before publishing. Nothing is published automatically.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={generating}
-          className="px-5 py-2.5 text-sm font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
-        >
-          {generating ? "Generating…" : "Generate drafts"}
-        </button>
-      </div>
-
-      {/* ── Stats row ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
-          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Total drafts</div>
-          <div className="text-xl sm:text-3xl font-bold tabular-nums tracking-tight font-mono">{drafts.length}</div>
-        </div>
-        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
-          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Pending</div>
-          <div className="text-xl sm:text-3xl font-bold text-amber tabular-nums tracking-tight font-mono">{pendingCount}</div>
-        </div>
-        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
-          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Publishing</div>
-          <div className="text-xs sm:text-sm font-medium text-foreground-muted mt-0.5 sm:mt-1">Manual only</div>
-        </div>
-      </div>
-
-      {/* ── Filters ─────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-3 items-end">
-        <div>
-          <label className="text-[11px] text-foreground-subtle block mb-1">Queue</label>
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as "all" | "content_draft")}
-            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded"
-          >
-            <option value="content_draft">Content drafts</option>
-            <option value="all">All items</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-[11px] text-foreground-subtle block mb-1">Status</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as ContentDraftStatus | "all")}
-            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded"
-          >
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="revision_requested">Revision requested</option>
-          </select>
-        </div>
-      </div>
-
-      {/* ── Draft list ──────────────────────────────────────────── */}
-      {loading && <p className="text-foreground-muted text-sm py-8">Loading drafts…</p>}
-
-      {!loading && filteredDrafts.length === 0 && (
-        <div className="surface-1 rounded border border-border border-dashed p-14 text-center">
-          <div className="w-12 h-12 rounded-full bg-accent-muted flex items-center justify-center mx-auto mb-4">
-            <span className="text-accent text-lg">◉</span>
-          </div>
-          <h3 className="text-base font-semibold text-foreground font-mono mb-1.5">No drafts yet</h3>
-          <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
-            Generate drafts to pull candidates from live listings. Each draft goes through review before anything is published.
-          </p>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={generating}
-            className="mt-5 px-5 py-2.5 text-sm font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
-          >
-            {generating ? "Generating…" : "Generate drafts"}
-          </button>
-        </div>
-      )}
-
-      <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
-        {filteredDrafts.map((draft) => {
-          const isExpanded = expandedIds.has(draft.id);
-          return (
-            <article key={draft.id}>
-              {/* ── Compact row ── */}
-              <button
-                type="button"
-                onClick={() => toggleExpand(draft.id)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-2 transition-colors"
-              >
-                {/* Thumbnail */}
-                {draft.selectedImage ? (
-                  <img
-                    src={draft.selectedImage}
-                    alt=""
-                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-surface-3 flex items-center justify-center flex-shrink-0 text-foreground-subtle text-xs">
-                    —
-                  </div>
-                )}
-
-                {/* Title + meta */}
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-foreground truncate">{draft.listingTitle}</div>
-                  <div className="text-[11px] text-foreground-subtle mt-0.5">
-                    <span className="capitalize">{draft.suggestedChannel}</span>
-                    <span className="mx-1.5">·</span>
-                    {new Date(draft.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-
-                {/* Status badge */}
-                <DraftStatusBadge status={draft.status} />
-
-                {/* Chevron */}
-                <span className={"text-foreground-subtle text-xs transition-transform duration-150 " + (isExpanded ? "rotate-180" : "")}>
-                  ▼
-                </span>
-              </button>
-
-              {/* ── Expanded details ── */}
-              {isExpanded && (
-                <div className="px-4 pb-4 pt-1 border-t border-border bg-surface-2/50">
-                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
-                    <div className="space-y-3">
-                      <div>
-                        <div className="text-[11px] text-foreground-subtle mb-1">Caption</div>
-                        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap m-0">
-                          {draft.suggestedCaption}
-                        </p>
-                      </div>
-                      <div>
-                        <div className="text-[11px] text-foreground-subtle mb-1">Hashtags</div>
-                        <p className="text-sm text-foreground-muted m-0 font-mono">
-                          {draft.suggestedHashtags.map((tag) => `#${tag}`).join(" ")}
-                        </p>
-                      </div>
-                      {draft.statusNote && (
-                        <div className="rounded-md p-3 bg-amber-muted">
-                          <div className="text-[11px] text-amber mb-1">Revision note</div>
-                          <p className="text-sm text-foreground whitespace-pre-wrap m-0">{draft.statusNote}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Larger image preview */}
-                    {draft.selectedImage && (
-                      <div className="w-full lg:w-[240px] flex-shrink-0">
-                        <img
-                          src={draft.selectedImage}
-                          alt={draft.listingTitle}
-                          className="w-full rounded-lg object-cover max-h-[200px]"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-border">
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(draft.id, "approved")}
-                      className="px-3 py-1.5 text-xs font-medium rounded-md bg-green-muted text-green hover:bg-green hover:text-primary-foreground transition-colors"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(draft.id, "rejected")}
-                      className="px-3 py-1.5 text-xs font-medium rounded-md bg-red-muted text-red hover:bg-red hover:text-primary-foreground transition-colors"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(draft.id, "revision_requested")}
-                      className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
-                    >
-                      Request revision
-                    </button>
-                  </div>
-                </div>
-              )}
-            </article>
-          );
-        })}
-      </div>
-    </div>
   );
 }
 
@@ -3525,16 +3239,14 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "market-social" | "listing-social" | "notifications";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
   { key: "listings",      label: "Listings"      },
   { key: "sources",       label: "Sources"       },
-  { key: "agents",        label: "Agents"        },
-  { key: "market-news",    label: "Market News"    },
-  { key: "listing-social", label: "Listing Social" },
-  { key: "market-social",  label: "Market Social"  },
+  { key: "market-news",   label: "Market News"   },
+  { key: "marketing",     label: "Marketing"     },
   { key: "notifications", label: "Notifications" },
 ];
 
@@ -3638,11 +3350,6 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
                 }
               >
                 {label}
-                {key === "agents" && (
-                  <span className="text-[9px] font-mono font-medium bg-green-muted text-green px-1.5 py-0.5 rounded uppercase tracking-wider">
-                    NEW
-                  </span>
-                )}
                 {key === "notifications" && unreadCount > 0 && (
                   <span className="text-[9px] font-mono font-semibold bg-[#C44A3A]/10 text-[#C44A3A] px-1.5 py-0.5 rounded tabular-nums">
                     {unreadCount > 99 ? "99+" : unreadCount}
@@ -3814,14 +3521,12 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "dashboard" && <DashboardView />}
             {tab === "listings" && <ListingsTabView />}
             {tab === "sources" && <SourcesView />}
-            {tab === "agents" && <AgentsApprovalsView />}
             {tab === "chatlab" && <PropertyChatLabView />}
             {tab === "agencies" && <AgencyConsoleView />}
             {tab === "agency-data" && <AgencyDataConsoleView />}
             {tab === "broker-pilot" && <BrokerPilotView />}
             {tab === "market-news" && <MarketNewsView />}
-            {tab === "listing-social" && <ListingSocialView />}
-            {tab === "market-social" && <MarketNewsSocialAgentView />}
+            {tab === "marketing" && <ListingSocialView />}
             {tab === "notifications" && (
               <NotificationsView onCountChange={handleNotificationCountChange} />
             )}
