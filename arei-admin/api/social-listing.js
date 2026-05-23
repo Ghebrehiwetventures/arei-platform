@@ -41,7 +41,7 @@ function getBearerToken(req) {
   return match?.[1]?.trim() || "";
 }
 
-function getSupabase() {
+export function getSupabase() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) throw new Error("SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY required");
@@ -593,6 +593,46 @@ async function publishCarousel(sb, body) {
   return { postId: publishData.id, permalink, storyPublished };
 }
 
+// Publish ONE due queued post. A single carousel publish (with parallel image
+// polling) finishes well under the function timeout, so the status update always
+// runs — items never get stuck "pending". Running the cron every minute drains
+// the queue one post at a time; each publish finishes before the next cron fires,
+// so overlapping runs don't double-publish. Called directly by the cron handler
+// (no internal HTTP hop) and by the process_queue action.
+export async function processQueueOnce(sb) {
+  const { data: items } = await sb
+    .from("social_listing_queue")
+    .select("*")
+    .eq("status", "pending")
+    .lte("scheduled_at", new Date().toISOString())
+    .order("scheduled_at", { ascending: true })
+    .limit(1);
+  const item = (items || [])[0];
+  if (!item) return { processed: 0 };
+  try {
+    const result = await publishCarousel(sb, {
+      listingId: item.listing_id,
+      caption: item.caption,
+      imageUrls: item.image_urls,
+    });
+    await sb.from("social_listing_queue").update({
+      status: "published",
+      post_id: result.postId,
+      permalink: result.permalink,
+      story_published: result.storyPublished,
+    }).eq("id", item.id);
+    console.log("[social-listing] queue published", item.id);
+    return { processed: 1, id: item.id, status: "published" };
+  } catch (err) {
+    await sb.from("social_listing_queue").update({
+      status: "failed",
+      error_message: err.message,
+    }).eq("id", item.id);
+    console.error("[social-listing] queue publish failed", item.id, err.message);
+    return { processed: 1, id: item.id, status: "failed", error: err.message };
+  }
+}
+
 export default async function handler(req, res) {
   let sb;
   try {
@@ -717,43 +757,8 @@ export default async function handler(req, res) {
         send(res, 401, { error: "Unauthorized" });
         return;
       }
-      // Process ONE item per run. A single carousel publish (with parallel image
-      // polling) finishes well under the function timeout, so the status update
-      // always runs — items never get stuck "pending". Running the cron every
-      // minute drains the queue one post at a time. Because each publish finishes
-      // before the next cron fires, overlapping runs don't double-publish.
-      const { data: items } = await sb
-        .from("social_listing_queue")
-        .select("*")
-        .eq("status", "pending")
-        .lte("scheduled_at", new Date().toISOString())
-        .order("scheduled_at", { ascending: true })
-        .limit(1);
-      const item = (items || [])[0];
-      if (!item) {
-        send(res, 200, { processed: 0 });
-        return;
-      }
-      try {
-        const result = await publishCarousel(sb, {
-          listingId: item.listing_id,
-          caption: item.caption,
-          imageUrls: item.image_urls,
-        });
-        await sb.from("social_listing_queue").update({
-          status: "published",
-          post_id: result.postId,
-          permalink: result.permalink,
-          story_published: result.storyPublished,
-        }).eq("id", item.id);
-        send(res, 200, { processed: 1, id: item.id, status: "published" });
-      } catch (err) {
-        await sb.from("social_listing_queue").update({
-          status: "failed",
-          error_message: err.message,
-        }).eq("id", item.id);
-        send(res, 200, { processed: 1, id: item.id, status: "failed", error: err.message });
-      }
+      const result = await processQueueOnce(sb);
+      send(res, 200, result);
       return;
     }
 
