@@ -140,17 +140,6 @@ const ISLAND_HASHTAGS = {
   "São Nicolau": ["#SaoNicolau", "#SaoNicolauCapeVerde"],
 };
 
-// Facebook Place IDs for Cape Verde islands (used for Instagram location tagging)
-const ISLAND_LOCATION_IDS = {
-  "Sal":         "109315372423960",
-  "Santiago":    "109924729019790",
-  "Boa Vista":   "110373705643399",
-  "São Vicente": "109207629098195",
-  "Santo Antão": "107680032590497",
-  "Fogo":        "107897969224870",
-  "Maio":        "108230932539302",
-};
-
 function buildHashtags(listing) {
   const island = listing.island || "";
   const title = (listing.title || "").toLowerCase();
@@ -184,22 +173,33 @@ function buildHashtags(listing) {
   return [...new Set(tags)].join(" ");
 }
 
-async function findLocationId(island, accessToken, apiVersion) {
-  const id = ISLAND_LOCATION_IDS[island];
-  if (id) return id;
-  // Dynamic fallback: search Facebook Places
+// Resolve a Facebook Place ID for the listing's location at publish time.
+// We no longer hardcode IDs — earlier guesses were rejected by Instagram
+// ("Param location_id is not a valid location page ID"). The place search
+// only works if the access token has the Facebook Places permissions; if it
+// doesn't (e.g. a pure Instagram Login token), this returns null and the
+// carousel publishes without a location tag.
+async function findLocationId(city, island, accessToken, apiVersion) {
+  const query = [city, island, "Cape Verde"].filter(Boolean).join(", ");
+  if (!query) return null;
   try {
     const res = await fetch(
-      `https://graph.facebook.com/${apiVersion}/search?type=place&q=${encodeURIComponent(island + " Cape Verde")}&fields=id,name&limit=1&access_token=${encodeURIComponent(accessToken)}`
+      `https://graph.facebook.com/${apiVersion}/search?type=place&q=${encodeURIComponent(query)}&fields=id,name&limit=1&access_token=${encodeURIComponent(accessToken)}`
     );
     const data = await res.json().catch(() => ({}));
+    if (data?.error) {
+      console.error("[social-listing] place search failed:", data.error.message);
+      return null;
+    }
     return data?.data?.[0]?.id || null;
-  } catch {
+  } catch (err) {
+    console.error("[social-listing] place search error:", err?.message);
     return null;
   }
 }
 
-function buildCaption(listing) {
+// Deterministic fallback caption (used if the LLM is unavailable or errors).
+function buildTemplateCaption(listing) {
   const agency = sourceName(listing.source_id);
   const price = formatPrice(listing.price, listing.price_period);
   const island = listing.island || "Cape Verde";
@@ -240,6 +240,75 @@ function buildCaption(listing) {
   lines.push("");
 
   return lines.join("\n");
+}
+
+const CAPTION_SYSTEM_PROMPT = `Write a short Instagram caption for a Cape Verde property listing. Maximum 150 words. Factual, calm, no hype.
+
+Structure:
+1. Hook: price + location, max 10 words
+2. One factual sentence about the property
+3. Key facts on separate lines:
+   Price · €X
+   Size · X m²
+   Bedrooms · X
+   Location · city, island
+   (skip missing fields, never invent)
+4. Source · [source_name]
+5. Follow @capeverderealestateindex for Cape Verde property data.
+6. Max 5 hashtags: always #CapeVerde #AREI, add 1-3 from: #Sal #BoaVista #Santiago #SãoVicente #CapeVerdeRealEstate #CaboVerde
+
+Rules: no emoji, no exclamation marks, never copy the broker description, never use: exclusive, stunning, luxury, paradise, dream, sought-after
+
+Return caption text only.`;
+
+function buildCaptionUserMessage(listing) {
+  const fields = {
+    title: listing.title ?? null,
+    price: listing.price ?? null,
+    bedrooms: listing.bedrooms ?? null,
+    bathrooms: listing.bathrooms ?? null,
+    property_size_sqm: listing.area_sqm ?? listing.property_size_sqm ?? null,
+    island: listing.island ?? null,
+    city: listing.city ?? null,
+    source_name: sourceName(listing.source_id),
+    description: listing.description ?? null,
+  };
+  return JSON.stringify(fields, null, 2);
+}
+
+// AI-written Instagram caption. Falls back to the deterministic template if the
+// OpenAI key is missing or the call fails, so caption generation never breaks.
+async function buildCaption(listing) {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return buildTemplateCaption(listing);
+  try {
+    const response = await fetch("https://api.openai.com/v1/chat/completions", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
+      },
+      body: JSON.stringify({
+        model: "gpt-4o-mini",
+        messages: [
+          { role: "system", content: CAPTION_SYSTEM_PROMPT },
+          { role: "user", content: buildCaptionUserMessage(listing) },
+        ],
+        temperature: 0.4,
+        max_tokens: 400,
+      }),
+    });
+    if (!response.ok) {
+      console.error("[social-listing] caption LLM failed:", response.status, await response.text().catch(() => ""));
+      return buildTemplateCaption(listing);
+    }
+    const data = await response.json();
+    const text = data?.choices?.[0]?.message?.content?.trim();
+    return text || buildTemplateCaption(listing);
+  } catch (err) {
+    console.error("[social-listing] caption LLM error (fallback to template):", err?.message);
+    return buildTemplateCaption(listing);
+  }
 }
 
 function getInstagramConfig() {
@@ -304,10 +373,10 @@ async function publishCarousel(sb, body) {
   const ig = getInstagramConfig();
   if (!ig.configured) throw new Error("Instagram not configured. Set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID.");
 
-  // Always fetch listing metadata (island for location tagging + image fallback)
+  // Always fetch listing metadata (city/island for location tagging + image fallback)
   const { data: listingRow, error: dbErr } = await sb
     .from("v1_feed_cv")
-    .select("image_urls, island")
+    .select("image_urls, island, city")
     .eq("id", listingId)
     .maybeSingle();
   if (dbErr) throw new Error(`DB error: ${dbErr.message}`);
@@ -351,10 +420,10 @@ async function publishCarousel(sb, body) {
   }
 
   // Step 2: create carousel container
-  const locationId = listingRow.island
-    ? await findLocationId(listingRow.island, ig.accessToken, ig.apiVersion)
+  const locationId = (listingRow.city || listingRow.island)
+    ? await findLocationId(listingRow.city, listingRow.island, ig.accessToken, ig.apiVersion)
     : null;
-  if (locationId) console.log("[social-listing] location_id", locationId, "for island", listingRow.island);
+  if (locationId) console.log("[social-listing] location_id", locationId, "for", listingRow.city, listingRow.island);
 
   const createCarousel = async (withLocation) => {
     const params = new URLSearchParams({
@@ -458,12 +527,12 @@ export default async function handler(req, res) {
     if (body.action === "generate_caption") {
       const { data: listing, error } = await sb
         .from("v1_feed_cv")
-        .select("id, source_id, title, price, price_period, island, bedrooms, bathrooms, area_sqm, description")
+        .select("id, source_id, title, price, price_period, island, city, bedrooms, bathrooms, area_sqm, description")
         .eq("id", body.listingId)
         .maybeSingle();
       if (error) throw new Error(error.message);
       if (!listing) throw new Error("Listing not found");
-      send(res, 200, { caption: buildCaption(listing) });
+      send(res, 200, { caption: await buildCaption(listing) });
       return;
     }
 
