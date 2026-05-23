@@ -484,6 +484,88 @@ export default async function handler(req, res) {
       return;
     }
 
+    if (body.action === "queue_carousel") {
+      const { listingId, caption, imageUrls, scheduledAt, listingTitle } = body;
+      if (!listingId || !caption || !imageUrls?.length || !scheduledAt) {
+        send(res, 400, { error: "listingId, caption, imageUrls, scheduledAt required" });
+        return;
+      }
+      const { data, error } = await sb.from("social_listing_queue").insert({
+        listing_id: listingId,
+        listing_title: listingTitle || null,
+        caption: caption.trim(),
+        image_urls: imageUrls,
+        scheduled_at: scheduledAt,
+      }).select("id, scheduled_at").single();
+      if (error) throw new Error(error.message);
+      send(res, 200, { queued: true, id: data.id, scheduledAt: data.scheduled_at });
+      return;
+    }
+
+    if (body.action === "list_queue") {
+      const { data, error } = await sb
+        .from("social_listing_queue")
+        .select("id, listing_id, listing_title, scheduled_at, status, permalink, story_published, error_message, image_urls")
+        .order("scheduled_at", { ascending: true })
+        .limit(50);
+      if (error) throw new Error(error.message);
+      send(res, 200, { queue: data || [] });
+      return;
+    }
+
+    if (body.action === "remove_from_queue") {
+      const { id } = body;
+      if (!id) { send(res, 400, { error: "id required" }); return; }
+      const { error } = await sb
+        .from("social_listing_queue")
+        .delete()
+        .eq("id", id)
+        .eq("status", "pending");
+      if (error) throw new Error(error.message);
+      send(res, 200, { removed: true });
+      return;
+    }
+
+    if (body.action === "process_queue") {
+      const cronSecret = process.env.CRON_SECRET;
+      const auth = req.headers?.authorization || "";
+      if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
+        send(res, 401, { error: "Unauthorized" });
+        return;
+      }
+      const { data: items } = await sb
+        .from("social_listing_queue")
+        .select("*")
+        .eq("status", "pending")
+        .lte("scheduled_at", new Date().toISOString())
+        .order("scheduled_at", { ascending: true });
+      const results = [];
+      for (const item of items || []) {
+        try {
+          const result = await publishCarousel(sb, {
+            listingId: item.listing_id,
+            caption: item.caption,
+            imageUrls: item.image_urls,
+          });
+          await sb.from("social_listing_queue").update({
+            status: "published",
+            post_id: result.postId,
+            permalink: result.permalink,
+            story_published: result.storyPublished,
+          }).eq("id", item.id);
+          results.push({ id: item.id, status: "published" });
+        } catch (err) {
+          await sb.from("social_listing_queue").update({
+            status: "failed",
+            error_message: err.message,
+          }).eq("id", item.id);
+          results.push({ id: item.id, status: "failed", error: err.message });
+        }
+      }
+      send(res, 200, { processed: results.length, results });
+      return;
+    }
+
     send(res, 400, { error: "Unknown action" });
   } catch (err) {
     send(res, 500, { error: err?.message || String(err) });

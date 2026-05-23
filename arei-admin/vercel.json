@@ -3,8 +3,12 @@
   "ignoreCommand": "git diff --quiet HEAD^ HEAD -- .",
   "outputDirectory": "dist",
   "framework": null,
+  "crons": [
+    { "path": "/api/social-listing-cron", "schedule": "0 * * * *" }
+  ],
   "functions": {
-    "api/social-listing.js": { "maxDuration": 300 }
+    "api/social-listing.js": { "maxDuration": 300 },
+    "api/social-listing-cron.js": { "maxDuration": 300 }
   },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
