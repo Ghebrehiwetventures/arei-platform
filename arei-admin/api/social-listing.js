@@ -242,32 +242,36 @@ function buildTemplateCaption(listing) {
   return lines.join("\n");
 }
 
-const CAPTION_SYSTEM_PROMPT = `Write a short Instagram caption for a Cape Verde property listing. Maximum 150 words. Factual, calm, no hype.
+// The LLM writes only the creative opening (hook + 2-3 editorial sentences).
+// Everything below it — specs line, attribution, follow line, hashtags, and the
+// blank-line spacing — is assembled in code so Instagram formatting is reliable
+// (LLMs are unreliable at exact whitespace, rounding, and hashtag discipline).
+const CAPTION_SYSTEM_PROMPT = `Write two parts for an Instagram caption about a Cape Verde property listing.
 
-Structure:
-1. Hook: price + location, max 10 words
-2. One factual sentence about the property
-3. Key facts on separate lines:
-   Price · €X
-   Size · X m²
-   Bedrooms · X
-   Location · city, island
-   (skip missing fields, never invent)
-4. Source · [source_name]
-5. Follow @capeverderealestateindex for Cape Verde property data.
-6. Max 5 hashtags: always #CapeVerde #AREI, add 1-3 from: #Sal #BoaVista #Santiago #SãoVicente #CapeVerdeRealEstate #CaboVerde
+Part 1 — Hook (max 10 words):
+Location + price. Example: 'Santa Maria, Sal — €110,000.'
 
-Rules: no emoji, no exclamation marks, never copy the broker description, never use: exclusive, stunning, luxury, paradise, dream, sought-after
+Part 2 — Description (2-3 sentences):
+Describe the property using specific details from the listing. Focus on: size, layout, location context, construction stage, views, key features. Plain english. Professional tone. No hype.
 
-Return caption text only.`;
+Rules:
+- No emoji
+- No exclamation marks
+- No words: exclusive, stunning, luxury, paradise, dream, sought-after, exceptional, prestigious
+- Never copy the broker description — extract facts and rewrite
+- If a detail is missing, omit it. Never guess.
+
+Return only Part 1 and Part 2 as plain text. No labels, no JSON, no other sections.`;
 
 function buildCaptionUserMessage(listing) {
   const fields = {
     title: listing.title ?? null,
-    price: listing.price ?? null,
+    price: listing.price ? formatPrice(listing.price, listing.price_period) : null,
     bedrooms: listing.bedrooms ?? null,
     bathrooms: listing.bathrooms ?? null,
-    property_size_sqm: listing.area_sqm ?? listing.property_size_sqm ?? null,
+    property_size_sqm: (listing.area_sqm ?? listing.property_size_sqm) != null
+      ? Math.round(listing.area_sqm ?? listing.property_size_sqm)
+      : null,
     island: listing.island ?? null,
     city: listing.city ?? null,
     source_name: sourceName(listing.source_id),
@@ -276,8 +280,70 @@ function buildCaptionUserMessage(listing) {
   return JSON.stringify(fields, null, 2);
 }
 
-// AI-written Instagram caption. Falls back to the deterministic template if the
-// OpenAI key is missing or the call fails, so caption generation never breaks.
+const ISLAND_HASHTAG = {
+  "Sal": "#Sal",
+  "Boa Vista": "#BoaVista",
+  "Santiago": "#Santiago",
+  "São Vicente": "#SãoVicente",
+  "Santo Antão": "#SantoAntao",
+  "Fogo": "#Fogo",
+  "Maio": "#Maio",
+  "Brava": "#Brava",
+  "São Nicolau": "#SaoNicolau",
+};
+
+// #CapeVerde #AREI #CapeVerdeRealEstate + island tag + a few general tags. Max 10.
+function buildCaptionHashtags(listing) {
+  const tags = ["#CapeVerde", "#AREI", "#CapeVerdeRealEstate"];
+  const islandTag = ISLAND_HASHTAG[listing.island];
+  if (islandTag) tags.push(islandTag);
+  tags.push("#CaboVerde", "#PropertyForSale", "#IslandProperty");
+  return [...new Set(tags)].slice(0, 10).join(" ");
+}
+
+// Assemble the final caption deterministically around the AI hook + description.
+function assembleCaption(hook, description, listing) {
+  const agency = sourceName(listing.source_id);
+  const size = listing.area_sqm ?? listing.property_size_sqm;
+  const lines = [];
+
+  if (hook) lines.push(hook.trim());
+  if (description) { lines.push(""); lines.push(description.trim()); }
+
+  // Specs line: [X] bed · [Y] bath · [Z] m² · [island]
+  const specs = [
+    listing.bedrooms ? `${listing.bedrooms} bed` : null,
+    listing.bathrooms ? `${listing.bathrooms} bath` : null,
+    size ? `${Math.round(size)} m²` : null,
+    listing.island || null,
+  ].filter(Boolean);
+  if (specs.length) { lines.push(""); lines.push(specs.join(" · ")); }
+
+  lines.push("");
+  lines.push(`Listing Rep: ${agency}`);
+  lines.push(`Photos courtesy of ${agency}`);
+  lines.push("");
+  lines.push("Follow @capeverderealestateindex for Cape Verde property data.");
+  lines.push("");
+  lines.push(buildCaptionHashtags(listing));
+
+  return lines.join("\n");
+}
+
+// Split the LLM's plain-text reply into hook (first block) + description (rest).
+function parseHookAndDescription(text) {
+  const clean = (text || "").trim();
+  if (!clean) return { hook: "", description: "" };
+  const blocks = clean.split(/\n\s*\n/);
+  if (blocks.length >= 2) {
+    return { hook: blocks[0].trim(), description: blocks.slice(1).join("\n\n").trim() };
+  }
+  const nl = clean.split("\n");
+  return { hook: nl[0].trim(), description: nl.slice(1).join(" ").trim() };
+}
+
+// AI-written hook + description + deterministic structure. Falls back to the old
+// template if the OpenAI key is missing or the call fails.
 async function buildCaption(listing) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return buildTemplateCaption(listing);
@@ -295,7 +361,7 @@ async function buildCaption(listing) {
           { role: "user", content: buildCaptionUserMessage(listing) },
         ],
         temperature: 0.4,
-        max_tokens: 400,
+        max_tokens: 300,
       }),
     });
     if (!response.ok) {
@@ -303,8 +369,10 @@ async function buildCaption(listing) {
       return buildTemplateCaption(listing);
     }
     const data = await response.json();
-    const text = data?.choices?.[0]?.message?.content?.trim();
-    return text || buildTemplateCaption(listing);
+    const content = data?.choices?.[0]?.message?.content;
+    const { hook, description } = parseHookAndDescription(content);
+    if (!hook) return buildTemplateCaption(listing);
+    return assembleCaption(hook, description, listing);
   } catch (err) {
     console.error("[social-listing] caption LLM error (fallback to template):", err?.message);
     return buildTemplateCaption(listing);
