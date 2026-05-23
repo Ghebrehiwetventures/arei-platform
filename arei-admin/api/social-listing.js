@@ -294,7 +294,7 @@ async function listListings(sb) {
       .select("id, source_id, title, price, price_period, island, bedrooms, bathrooms, area_sqm, description, image_urls, cover_image_url, source_url")
       .eq("has_valid_images", true)
       .order("id", { ascending: false })
-      .limit(200),
+      .limit(2000),
     sb
       .from("social_listing_posts")
       .select("listing_id")
