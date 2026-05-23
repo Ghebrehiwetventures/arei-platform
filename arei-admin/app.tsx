@@ -3221,6 +3221,10 @@ function MarketNewsView() {
   const [error, setError] = React.useState<string | null>(null);
   const [showArchiveRecs, setShowArchiveRecs] = React.useState(false);
 
+  // ── Candidate filter + sort ───────────────────────────────────────────────
+  const [candidateSort, setCandidateSort] = React.useState<"score" | "date_new" | "date_old">("score");
+  const [candidateCategory, setCandidateCategory] = React.useState<string>("all");
+
   // ── Add URL ──────────────────────────────────────────────────────────────
   const [addUrlOpen, setAddUrlOpen] = React.useState(false);
   const [addUrlInput, setAddUrlInput] = React.useState("");
@@ -3409,10 +3413,64 @@ function MarketNewsView() {
           {statusTab === "candidate" ? (
             // ── Card view for candidates ───────────────────────────
             (() => {
-              const mainItems    = items.filter((r) => r.enrich_recommendation !== "archive");
-              const archiveItems = items.filter((r) => r.enrich_recommendation === "archive");
+              // Available categories from current items
+              const categories = Array.from(new Set(items.map((r) => r.category).filter(Boolean))).sort();
+
+              // Filter
+              const filtered = items.filter((r) =>
+                candidateCategory === "all" || r.category === candidateCategory
+              );
+
+              // Sort
+              const sorted = [...filtered].sort((a, b) => {
+                if (candidateSort === "score") {
+                  return (b.relevance_score ?? -1) - (a.relevance_score ?? -1);
+                }
+                const da = a.published_at ?? a.created_at ?? "";
+                const db = b.published_at ?? b.created_at ?? "";
+                return candidateSort === "date_new" ? db.localeCompare(da) : da.localeCompare(db);
+              });
+
+              const mainItems    = sorted.filter((r) => r.enrich_recommendation !== "archive");
+              const archiveItems = sorted.filter((r) => r.enrich_recommendation === "archive");
               return (
                 <>
+                  {/* Filter + sort bar */}
+                  <div className="flex flex-wrap items-center gap-2 pb-1">
+                    <select
+                      value={candidateSort}
+                      onChange={(e) => setCandidateSort(e.target.value as typeof candidateSort)}
+                      className="text-xs rounded border border-border bg-surface-2 px-2 py-1 text-foreground-muted focus:outline-none"
+                    >
+                      <option value="score">Sort: Score ↓</option>
+                      <option value="date_new">Sort: Newest first</option>
+                      <option value="date_old">Sort: Oldest first</option>
+                    </select>
+                    <select
+                      value={candidateCategory}
+                      onChange={(e) => setCandidateCategory(e.target.value)}
+                      className="text-xs rounded border border-border bg-surface-2 px-2 py-1 text-foreground-muted focus:outline-none"
+                    >
+                      <option value="all">All categories</option>
+                      {categories.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    {(candidateCategory !== "all") && (
+                      <button
+                        type="button"
+                        onClick={() => setCandidateCategory("all")}
+                        className="text-xs text-foreground-subtle hover:text-foreground transition-colors"
+                      >
+                        ✕ Clear
+                      </button>
+                    )}
+                    <span className="ml-auto text-[11px] text-foreground-subtle">
+                      {mainItems.length} item{mainItems.length !== 1 ? "s" : ""}
+                      {archiveItems.length > 0 ? ` · ${archiveItems.length} archive rec` : ""}
+                    </span>
+                  </div>
+
                   <div className="space-y-3">
                     {mainItems.map((item) => (
                       <MarketNewsCard
