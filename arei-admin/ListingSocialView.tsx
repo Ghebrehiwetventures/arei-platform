@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabaseAuth } from "./supabase";
 
 interface Listing {
@@ -25,6 +25,50 @@ async function authHeaders(): Promise<HeadersInit> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+type SchedulePattern = "1_per_day" | "2_per_day" | "3_per_week";
+
+const SCHEDULE_PATTERNS: { value: SchedulePattern; label: string; desc: string }[] = [
+  { value: "1_per_day",   label: "1 / day",    desc: "Every day at 10:00" },
+  { value: "2_per_day",   label: "2 / day",    desc: "Daily at 10:00 & 19:00" },
+  { value: "3_per_week",  label: "3 / week",   desc: "Mon · Wed · Fri at 10:00" },
+];
+
+function nextSlot(pattern: SchedulePattern, takenISO: string[]): Date {
+  const taken = new Set(takenISO.map((s) => new Date(s).toISOString().slice(0, 16)));
+  const now = new Date();
+
+  for (let day = 0; day <= 30; day++) {
+    const base = new Date(now);
+    base.setDate(base.getDate() + day);
+
+    let hours: number[] = [];
+    if (pattern === "1_per_day") {
+      hours = [10];
+    } else if (pattern === "2_per_day") {
+      hours = [10, 19];
+    } else {
+      const dow = base.getDay(); // 0=Sun
+      if (dow !== 1 && dow !== 3 && dow !== 5) continue;
+      hours = [10];
+    }
+
+    for (const h of hours) {
+      const candidate = new Date(base);
+      candidate.setHours(h, 0, 0, 0);
+      if (candidate <= now) continue;
+      const key = candidate.toISOString().slice(0, 16);
+      if (!taken.has(key)) return candidate;
+    }
+  }
+  // fallback: 24h from now
+  return new Date(now.getTime() + 24 * 60 * 60 * 1000);
+}
+
+function toDatetimeLocal(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, "0");
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
 async function apiFetch<T>(method: string, body?: Record<string, unknown>): Promise<T> {
   const headers: Record<string, string> = { ...(await authHeaders()) as Record<string, string> };
   if (body) headers["Content-Type"] = "application/json";
@@ -37,6 +81,19 @@ async function apiFetch<T>(method: string, body?: Record<string, unknown>): Prom
   const data = await res.json().catch(() => ({}));
   if (!res.ok) throw new Error(data.error || `Request failed ${res.status}`);
   return data as T;
+}
+
+interface QueueItem {
+  id: string;
+  listing_id: string;
+  listing_title: string | null;
+  caption: string;
+  image_urls: string[];
+  scheduled_at: string;
+  status: "pending" | "published" | "failed";
+  error_message: string | null;
+  post_id: string | null;
+  permalink: string | null;
 }
 
 interface PublishedPost {
@@ -57,6 +114,17 @@ export function ListingSocialView() {
   const [selectedId, setSelectedId] = useState("");
   const [caption, setCaption] = useState("");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const didDragRef = useRef(false);
+  const [queue, setQueue] = useState<QueueItem[]>([]);
+  const [schedulePattern, setSchedulePattern] = useState<SchedulePattern>(
+    () => (localStorage.getItem("ig_schedule_pattern") as SchedulePattern) || "1_per_day"
+  );
+  const [scheduleTime, setScheduleTime] = useState("");
+  const [showSchedule, setShowSchedule] = useState(false);
+  const [scheduling, setScheduling] = useState(false);
   const [loading, setLoading] = useState(true);
   const [captionLoading, setCaptionLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -77,17 +145,20 @@ export function ListingSocialView() {
     : listings;
 
   const loadState = () => {
-    return apiFetch<{ listings: Listing[]; published: PublishedPost[]; instagram: { configured: boolean } }>("GET")
-      .then(({ listings: ls, published: ps, instagram }) => {
-        setListings(ls);
-        setPublished(ps || []);
-        setIgConfigured(instagram.configured);
-        if (ls.length > 0 && !ls.find((l) => l.id === selectedId)) {
-          setSelectedId(ls[0].id);
-        } else if (ls.length === 0) {
-          setSelectedId("");
-        }
-      });
+    return Promise.all([
+      apiFetch<{ listings: Listing[]; published: PublishedPost[]; instagram: { configured: boolean } }>("GET"),
+      apiFetch<{ items: QueueItem[] }>("POST", { action: "list_queue" }),
+    ]).then(([{ listings: ls, published: ps, instagram }, { items }]) => {
+      setListings(ls);
+      setPublished(ps || []);
+      setIgConfigured(instagram.configured);
+      setQueue(items || []);
+      if (ls.length > 0 && !ls.find((l) => l.id === selectedId)) {
+        setSelectedId(ls[0].id);
+      } else if (ls.length === 0) {
+        setSelectedId("");
+      }
+    });
   };
 
   useEffect(() => {
@@ -103,9 +174,9 @@ export function ListingSocialView() {
     setPermalink("");
     setError("");
     setNotice("");
-    // Auto-select first 10 images (Instagram carousel max)
-    const listing = listings.find((l) => l.id === selectedId);
-    setSelectedImages((listing?.image_urls || []).slice(0, 10));
+    // Start with nothing selected — user clicks images in the order
+    // they want them in the carousel.
+    setSelectedImages([]);
 
     setCaptionLoading(true);
     apiFetch<{ caption: string }>("POST", { action: "generate_caption", listingId: selectedId })
@@ -122,17 +193,34 @@ export function ListingSocialView() {
     });
   };
 
-  const moveImage = (url: string, delta: number) => {
-    setSelectedImages((prev) => {
-      const from = prev.indexOf(url);
-      if (from < 0) return prev;
-      const to = Math.max(0, Math.min(prev.length - 1, from + delta));
-      if (to === from) return prev;
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return next;
+  const handleDragMove = (e: PointerEvent) => {
+    if (dragIndex === null) return;
+    let closest = dragIndex;
+    let closestDist = Infinity;
+    selectedImages.forEach((_, idx) => {
+      const el = cellRefs.current[idx];
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dist = Math.abs(e.clientX - cx) + Math.abs(e.clientY - cy);
+      if (dist < closestDist) { closestDist = dist; closest = idx; }
     });
+    if (closest !== dragIndex) didDragRef.current = true;
+    setDropIndex(closest);
+  };
+
+  const handleDragEnd = () => {
+    if (dragIndex !== null && dropIndex !== null && dragIndex !== dropIndex) {
+      setSelectedImages((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(dragIndex, 1);
+        next.splice(dropIndex, 0, moved);
+        return next;
+      });
+    }
+    setDragIndex(null);
+    setDropIndex(null);
   };
 
   const handlePublish = async () => {
@@ -141,14 +229,14 @@ export function ListingSocialView() {
     setError("");
     setNotice("");
     try {
-      const result = await apiFetch<{ postId: string; permalink: string }>("POST", {
+      const result = await apiFetch<{ postId: string; permalink: string; storyPublished: boolean }>("POST", {
         action: "publish_carousel",
         listingId: selectedId,
         imageUrls: selectedImages,
         caption: caption.trim(),
       });
       setPermalink(result.permalink);
-      setNotice("Published to Instagram.");
+      setNotice(result.storyPublished ? "Published to Instagram + story." : "Published to Instagram.");
       await loadState();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
@@ -157,11 +245,55 @@ export function ListingSocialView() {
     }
   };
 
+  const handleSchedule = async () => {
+    if (!selectedId || !caption.trim() || selectedImages.length < 2 || !scheduleTime) return;
+    setScheduling(true);
+    setError("");
+    setNotice("");
+    try {
+      await apiFetch("POST", {
+        action: "queue_carousel",
+        listingId: selectedId,
+        imageUrls: selectedImages,
+        caption: caption.trim(),
+        scheduledAt: new Date(scheduleTime).toISOString(),
+      });
+      setNotice("Added to queue.");
+      setShowSchedule(false);
+      await loadState();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setScheduling(false);
+    }
+  };
+
+  const handleRemoveFromQueue = async (id: string) => {
+    try {
+      await apiFetch("POST", { action: "remove_from_queue", queueId: id });
+      setQueue((prev) => prev.filter((q) => q.id !== id));
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    }
+  };
+
+  const applyNextSlot = (pattern: SchedulePattern) => {
+    const taken = queue.filter((q) => q.status === "pending").map((q) => q.scheduled_at);
+    setScheduleTime(toDatetimeLocal(nextSlot(pattern, taken)));
+  };
+
+  const handlePatternChange = (p: SchedulePattern) => {
+    setSchedulePattern(p);
+    localStorage.setItem("ig_schedule_pattern", p);
+    applyNextSlot(p);
+  };
+
   if (loading) {
     return <div className="py-12 text-foreground-muted font-mono">Loading listings...</div>;
   }
 
   const canPublish = igConfigured && selectedId && caption.trim() && selectedImages.length >= 2 && !publishing;
+  const canSchedule = selectedId && caption.trim() && selectedImages.length >= 2 && scheduleTime && !scheduling;
 
   return (
     <div className="space-y-6">
@@ -285,51 +417,51 @@ export function ListingSocialView() {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-8 gap-1">
+              <div
+                className="grid grid-cols-8 gap-1"
+                onPointerMove={handleDragMove}
+                onPointerUp={handleDragEnd}
+              >
                 {[
                   ...selectedImages,
                   ...allImages.filter((u) => !selectedImages.includes(u)),
-                ].map((url, i) => {
+                ].map((url) => {
                   const position = selectedImages.indexOf(url);
                   const active = position >= 0;
+                  const isDragging = dragIndex === position && active;
+                  const isDropTarget = dropIndex === position && dragIndex !== null && dragIndex !== position && active;
                   return (
                     <div
-                      key={i}
-                      className="relative aspect-square overflow-hidden rounded-sm group"
+                      key={url}
+                      ref={active ? (el) => { cellRefs.current[position] = el; } : undefined}
+                      className={`relative aspect-square overflow-hidden rounded-sm ${
+                        active ? "cursor-grab" : ""
+                      } ${isDragging ? "opacity-40 ring-2 ring-foreground" : ""} ${
+                        isDropTarget ? "ring-2 ring-green" : ""
+                      }`}
+                      onPointerDown={active ? (e) => {
+                        e.preventDefault();
+                        didDragRef.current = false;
+                        setDragIndex(position);
+                        setDropIndex(position);
+                      } : undefined}
                     >
                       <img
                         src={url}
                         alt=""
                         draggable={false}
-                        onClick={() => toggleImage(url)}
-                        className={`w-full h-full object-cover transition-all cursor-pointer ${
+                        onClick={() => {
+                          if (didDragRef.current) { didDragRef.current = false; return; }
+                          toggleImage(url);
+                        }}
+                        className={`w-full h-full object-cover transition-opacity cursor-pointer select-none ${
                           active ? "" : "grayscale opacity-25"
                         }`}
                       />
                       {active && (
-                        <>
-                          <span className="absolute top-1 left-1 bg-green text-black text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded leading-tight pointer-events-none">
-                            {position + 1}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); moveImage(url, -1); }}
-                            disabled={position === 0}
-                            className="absolute bottom-1 left-1 bg-black/70 hover:bg-black text-white text-[10px] font-mono w-5 h-5 rounded leading-none disabled:opacity-30 flex items-center justify-center"
-                            title="Move left"
-                          >
-                            ◀
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); moveImage(url, 1); }}
-                            disabled={position === selectedImages.length - 1}
-                            className="absolute bottom-1 right-1 bg-black/70 hover:bg-black text-white text-[10px] font-mono w-5 h-5 rounded leading-none disabled:opacity-30 flex items-center justify-center"
-                            title="Move right"
-                          >
-                            ▶
-                          </button>
-                        </>
+                        <span className="absolute top-1 left-1 bg-green text-black text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded leading-tight pointer-events-none">
+                          {position + 1}
+                        </span>
                       )}
                     </div>
                   );
@@ -339,7 +471,7 @@ export function ListingSocialView() {
                 <p className="text-amber text-[11px] font-mono mt-2">Select at least 2 images.</p>
               )}
               {selectedImages.length >= 2 && (
-                <p className="text-foreground-muted text-[11px] font-mono mt-2">Use ◀ ▶ on each image to reorder · number = carousel position.</p>
+                <p className="text-foreground-muted text-[11px] font-mono mt-2">Drag selected images to reorder · number = carousel position.</p>
               )}
             </div>
           )}
@@ -357,26 +489,118 @@ export function ListingSocialView() {
               className="w-full bg-background border border-border text-foreground p-3 text-sm font-mono leading-relaxed rounded"
               placeholder={captionLoading ? "Generating caption..." : "Select a listing"}
             />
-            <div className="flex items-center gap-4">
+            <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={handlePublish}
                 disabled={!canPublish}
-                className="flex-1 px-4 py-2.5 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
+                className="flex-1 min-w-[160px] px-4 py-2.5 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
               >
                 {publishing
                   ? "Publishing..."
-                  : `Publish to Instagram (${selectedImages.length} images)`}
+                  : `Publish now (${selectedImages.length})`}
               </button>
-              <div className="text-xs font-mono text-foreground-muted whitespace-nowrap">
+              <button
+                type="button"
+                onClick={() => {
+                  if (!showSchedule) applyNextSlot(schedulePattern);
+                  setShowSchedule((v) => !v);
+                }}
+                disabled={selectedImages.length < 2 || !caption.trim()}
+                className="px-4 py-2.5 text-sm font-semibold rounded border border-border text-foreground hover:bg-surface-1 transition-all disabled:opacity-40 font-mono"
+              >
+                Schedule
+              </button>
+              <div className="text-xs font-mono text-foreground-muted whitespace-nowrap ml-auto">
                 Instagram: {igConfigured
                   ? <span className="text-green">configured</span>
                   : <span className="text-red">not configured</span>}
               </div>
             </div>
+            {showSchedule && (
+              <div className="border border-border rounded p-3 space-y-3 bg-background">
+                <div className="label-style">Post frequency</div>
+                <div className="grid grid-cols-3 gap-2">
+                  {SCHEDULE_PATTERNS.map((p) => (
+                    <button
+                      key={p.value}
+                      type="button"
+                      onClick={() => handlePatternChange(p.value)}
+                      className={`px-2 py-2 text-[11px] font-mono rounded border text-left transition-all ${
+                        schedulePattern === p.value
+                          ? "border-foreground text-foreground bg-surface-1"
+                          : "border-border text-foreground-muted hover:border-foreground/40"
+                      }`}
+                    >
+                      <div className="font-semibold">{p.label}</div>
+                      <div className="text-foreground-muted mt-0.5 text-[10px]">{p.desc}</div>
+                    </button>
+                  ))}
+                </div>
+                <div>
+                  <div className="label-style mb-1">Next slot <span className="font-normal normal-case text-foreground-muted">(override if needed)</span></div>
+                  <input
+                    type="datetime-local"
+                    value={scheduleTime}
+                    onChange={(e) => setScheduleTime(e.target.value)}
+                    className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono rounded w-full"
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleSchedule}
+                  disabled={!canSchedule}
+                  className="w-full px-4 py-2 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
+                >
+                  {scheduling ? "Adding..." : "Add to queue"}
+                </button>
+              </div>
+            )}
           </div>
         </div>
       </section>
+
+      {queue.length > 0 && (
+        <section className="space-y-3">
+          <h3 className="text-lg font-semibold text-foreground font-mono">Queue ({queue.length})</h3>
+          <div className="space-y-2">
+            {queue.map((item) => (
+              <div key={item.id} className="surface-1 border border-border rounded p-3 text-xs font-mono flex items-start justify-between gap-4">
+                <div className="flex gap-3 items-start min-w-0">
+                  {item.image_urls?.[0] && (
+                    <img src={item.image_urls[0]} alt="" className="w-12 h-12 object-cover rounded flex-shrink-0" />
+                  )}
+                  <div className="min-w-0">
+                    <div className="text-foreground truncate">{item.listing_title || item.listing_id}</div>
+                    <div className="text-foreground-muted mt-0.5">
+                      {new Date(item.scheduled_at).toLocaleString()} · {item.image_urls.length} images
+                    </div>
+                    {item.status === "failed" && item.error_message && (
+                      <div className="text-red mt-0.5 truncate">{item.error_message}</div>
+                    )}
+                  </div>
+                </div>
+                <div className="flex items-center gap-2 flex-shrink-0">
+                  <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${
+                    item.status === "pending" ? "bg-amber/20 text-amber" :
+                    item.status === "published" ? "bg-green/20 text-green" :
+                    "bg-red/20 text-red"
+                  }`}>{item.status}</span>
+                  {item.status === "pending" && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFromQueue(item.id)}
+                      className="text-foreground-muted hover:text-red transition-colors"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              </div>
+            ))}
+          </div>
+        </section>
+      )}
 
       {published.length > 0 && (
         <section className="space-y-3">

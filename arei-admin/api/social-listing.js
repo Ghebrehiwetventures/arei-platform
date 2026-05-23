@@ -67,11 +67,56 @@ function resolveImageUrl(url) {
     .replace(/\.webp$/, "");
 }
 
-// Wrap image through wsrv.nl proxy to crop to 1:1 square (1080x1080 JPEG)
-// Instagram requires aspect 1:1 - 1.91:1 and consistent ratios in carousels.
+// 1:1 square for carousel items
 function squareCrop(url) {
   if (!url) return url;
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1080&fit=cover&output=jpg`;
+}
+
+// 9:16 vertical for stories
+function storyCrop(url) {
+  if (!url) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1920&fit=cover&output=jpg`;
+}
+
+async function waitUntilReady(ig, containerId, maxAttempts = 20, delayMs = 1500) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const r = await fetch(
+      `https://graph.instagram.com/${ig.apiVersion}/${containerId}?fields=status_code&access_token=${encodeURIComponent(ig.accessToken)}`
+    );
+    const d = await r.json().catch(() => ({}));
+    if (d.status_code === "FINISHED") return;
+    if (d.status_code === "ERROR" || d.status_code === "EXPIRED") {
+      throw new Error(`Container ${containerId} ended in status ${d.status_code}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  throw new Error(`Container ${containerId} did not finish processing in time`);
+}
+
+async function publishStory(ig, imageUrl) {
+  const graphBase = `https://graph.instagram.com/${ig.apiVersion}/${ig.accountId}`;
+  const params = new URLSearchParams({
+    image_url: storyCrop(imageUrl),
+    media_type: "STORIES",
+    access_token: ig.accessToken,
+  });
+  const containerRes = await fetch(`${graphBase}/media`, { method: "POST", body: params });
+  const containerData = await containerRes.json().catch(() => ({}));
+  if (!containerRes.ok || !containerData.id) {
+    throw new Error(containerData.error?.message || `Story container failed: HTTP ${containerRes.status}`);
+  }
+  await waitUntilReady(ig, containerData.id);
+  const publishParams = new URLSearchParams({
+    creation_id: containerData.id,
+    access_token: ig.accessToken,
+  });
+  const publishRes = await fetch(`${graphBase}/media_publish`, { method: "POST", body: publishParams });
+  const publishData = await publishRes.json().catch(() => ({}));
+  if (!publishRes.ok || !publishData.id) {
+    throw new Error(publishData.error?.message || `Story publish failed: HTTP ${publishRes.status}`);
+  }
+  return publishData.id;
 }
 
 function sourceName(sourceId) {
@@ -101,6 +146,77 @@ function truncateDescription(desc, maxSentences = 3, maxChars = 400) {
     return result.trim() + (result.trim().length < clean.length ? "..." : "");
   }
   return clean.length > maxChars ? clean.substring(0, maxChars).trimEnd() + "..." : clean;
+}
+
+const ISLAND_HASHTAGS = {
+  "Sal":         ["#Sal", "#SantaMaria", "#SalIsland", "#SalCapeVerde", "#SantaMariaSal", "#SalBeach"],
+  "Santiago":    ["#Santiago", "#Praia", "#SantiagoCapeVerde", "#PraiaCapeVerde"],
+  "Boa Vista":   ["#BoaVista", "#BoaVistaIsland", "#BoaVistaCapeVerde", "#BoaVistaBeach"],
+  "São Vicente": ["#SaoVicente", "#Mindelo", "#MindeloCapeVerde", "#SaoVicenteCapeVerde"],
+  "Santo Antão": ["#SantoAntao", "#SantoAntaoCapeVerde"],
+  "Fogo":        ["#Fogo", "#FogoCapeVerde", "#PicoDoFogo"],
+  "Maio":        ["#Maio", "#MaioCapeVerde"],
+  "Brava":       ["#Brava", "#BravaCapeVerde"],
+  "São Nicolau": ["#SaoNicolau", "#SaoNicolauCapeVerde"],
+};
+
+// Facebook Place IDs for Cape Verde islands (used for Instagram location tagging)
+const ISLAND_LOCATION_IDS = {
+  "Sal":         "109315372423960",
+  "Santiago":    "109924729019790",
+  "Boa Vista":   "110373705643399",
+  "São Vicente": "109207629098195",
+  "Santo Antão": "107680032590497",
+  "Fogo":        "107897969224870",
+  "Maio":        "108230932539302",
+};
+
+function buildHashtags(listing) {
+  const island = listing.island || "";
+  const title = (listing.title || "").toLowerCase();
+  const tags = [];
+
+  // Core Cape Verde real estate
+  tags.push("#CapeVerde", "#CaboVerde", "#CapeVerdeRealEstate", "#CaboVerdeProperty");
+  tags.push("#CapeVerdeProperty", "#CapeVerdeIslands", "#BuyInCapeVerde", "#InvestInCapeVerde");
+
+  // AREI / Africa
+  tags.push("#AREI", "#AfricaRealEstate", "#AfricaRealEstateIndex", "#AfricanProperty");
+
+  // General real estate
+  tags.push("#RealEstate", "#PropertyForSale", "#RealEstateInvestment", "#LuxuryRealEstate");
+  tags.push("#IslandProperty", "#IslandLife", "#OceanView", "#TropicalLiving");
+
+  // Island-specific
+  const islandTags = ISLAND_HASHTAGS[island];
+  if (islandTags) tags.push(...islandTags);
+
+  // Property-type hints from title
+  if (title.includes("villa")) tags.push("#Villa", "#VillaForSale", "#LuxuryVilla");
+  else if (title.includes("apartment") || title.includes("flat")) tags.push("#Apartment", "#ApartmentForSale");
+  else if (title.includes("townhouse") || title.includes("moradia")) tags.push("#Townhouse", "#HouseForSale");
+  else if (title.includes("land") || title.includes("plot") || title.includes("terrain")) tags.push("#LandForSale", "#BuildingPlot");
+  else tags.push("#PropertyInvestment", "#DreamHome");
+
+  // Price tier
+  if (listing.price && listing.price >= 500000) tags.push("#LuxuryProperty", "#HighEndRealEstate");
+
+  return [...new Set(tags)].join(" ");
+}
+
+async function findLocationId(island, accessToken, apiVersion) {
+  const id = ISLAND_LOCATION_IDS[island];
+  if (id) return id;
+  // Dynamic fallback: search Facebook Places
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/${apiVersion}/search?type=place&q=${encodeURIComponent(island + " Cape Verde")}&fields=id,name&limit=1&access_token=${encodeURIComponent(accessToken)}`
+    );
+    const data = await res.json().catch(() => ({}));
+    return data?.data?.[0]?.id || null;
+  } catch {
+    return null;
+  }
 }
 
 function buildCaption(listing) {
@@ -138,13 +254,10 @@ function buildCaption(listing) {
   lines.push(`Source · ${agency}`);
   lines.push(`Photos courtesy of ${agency}`);
   lines.push("");
-  lines.push("Follow @africarealestateindex for the latest in Cape Verde real estate.");
+  lines.push("Follow @capeverderealestateindex for the latest in Cape Verde real estate.");
   lines.push("");
-
-  const hashtags = ["#CapeVerde", "#AREI", "#CapeVerdeRealEstate"];
-  const islandTag = island.replace(/\s+/g, "");
-  if (islandTag && islandTag !== "CapeVerde") hashtags.push(`#${islandTag}`);
-  lines.push(hashtags.join(" "));
+  lines.push(buildHashtags(listing));
+  lines.push("");
 
   return lines.join("\n");
 }
@@ -211,25 +324,29 @@ async function publishCarousel(sb, body) {
   const ig = getInstagramConfig();
   if (!ig.configured) throw new Error("Instagram not configured. Set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID.");
 
-  // Use client-selected images if provided, otherwise fall back to DB
-  let images;
-  if (Array.isArray(imageUrls) && imageUrls.length > 0) {
-    images = imageUrls.slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
-  } else {
-    const { data: listing, error: dbErr } = await sb
-      .from("v1_feed_cv")
-      .select("image_urls")
-      .eq("id", listingId)
-      .maybeSingle();
-    if (dbErr) throw new Error(`DB error: ${dbErr.message}`);
-    if (!listing) throw new Error(`Listing not found: ${listingId}`);
-    images = [...new Set((listing.image_urls || []).map(resolveImageUrl).filter(Boolean))]
-      .slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
-  }
+  // Always fetch listing metadata (island for location tagging + image fallback)
+  const { data: listingRow, error: dbErr } = await sb
+    .from("v1_feed_cv")
+    .select("image_urls, island")
+    .eq("id", listingId)
+    .maybeSingle();
+  if (dbErr) throw new Error(`DB error: ${dbErr.message}`);
+  if (!listingRow) throw new Error(`Listing not found: ${listingId}`);
+
+  const images = (Array.isArray(imageUrls) && imageUrls.length > 0)
+    ? imageUrls.slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES)
+    : [...new Set((listingRow.image_urls || []).map(resolveImageUrl).filter(Boolean))].slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
 
   if (images.length < 2) throw new Error("Carousel requires at least 2 images. This listing has fewer.");
 
   const graphBase = `https://graph.instagram.com/${ig.apiVersion}/${ig.accountId}`;
+
+  console.log("[social-listing] publish start", {
+    accountId: ig.accountId,
+    tokenPrefix: ig.accessToken.slice(0, 20),
+    apiVersion: ig.apiVersion,
+    imageCount: images.length,
+  });
 
   // Step 1: create a media container for each image (square-cropped via proxy)
   const containerIds = [];
@@ -241,48 +358,38 @@ async function publishCarousel(sb, body) {
     });
     const res = await fetch(`${graphBase}/media`, { method: "POST", body: params });
     const data = await res.json().catch(() => ({}));
+    console.log("[social-listing] container create", { status: res.status, data });
     if (!res.ok || !data.id) {
       throw new Error(data.error?.message || `Failed to create media container for ${imageUrl}: HTTP ${res.status}`);
     }
     containerIds.push(data.id);
   }
 
-  // Step 1b: poll each container until status_code === FINISHED.
-  // Instagram processes media asynchronously; referencing an IN_PROGRESS
-  // container in the carousel step yields "Media ID is not available".
-  async function waitUntilReady(containerId, maxAttempts = 20, delayMs = 1500) {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const r = await fetch(
-        `https://graph.instagram.com/${ig.apiVersion}/${containerId}?fields=status_code&access_token=${encodeURIComponent(ig.accessToken)}`
-      );
-      const d = await r.json().catch(() => ({}));
-      if (d.status_code === "FINISHED") return;
-      if (d.status_code === "ERROR" || d.status_code === "EXPIRED") {
-        throw new Error(`Container ${containerId} ended in status ${d.status_code}`);
-      }
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-    throw new Error(`Container ${containerId} did not finish processing in time`);
-  }
+  // Step 1b: poll each container until FINISHED
   for (const id of containerIds) {
-    await waitUntilReady(id);
+    await waitUntilReady(ig, id);
   }
 
   // Step 2: create carousel container
+  const locationId = listingRow.island
+    ? await findLocationId(listingRow.island, ig.accessToken, ig.apiVersion)
+    : null;
+  if (locationId) console.log("[social-listing] location_id", locationId, "for island", listingRow.island);
+
   const carouselParams = new URLSearchParams({
     media_type: "CAROUSEL",
     caption: caption.trim(),
     children: containerIds.join(","),
     access_token: ig.accessToken,
   });
+  if (locationId) carouselParams.set("location_id", locationId);
   const carouselRes = await fetch(`${graphBase}/media`, { method: "POST", body: carouselParams });
   const carouselData = await carouselRes.json().catch(() => ({}));
   if (!carouselRes.ok || !carouselData.id) {
     throw new Error(carouselData.error?.message || `Failed to create carousel container: HTTP ${carouselRes.status}`);
   }
 
-  // Wait for the carousel container itself before publishing
-  await waitUntilReady(carouselData.id);
+  await waitUntilReady(ig, carouselData.id);
 
   // Step 3: publish
   const publishParams = new URLSearchParams({
@@ -305,7 +412,17 @@ async function publishCarousel(sb, body) {
     permalink = pl.permalink || "";
   }
 
-  // Step 5: log the publish in social_listing_posts (non-fatal if it fails)
+  // Step 5: publish story using first carousel image (non-fatal)
+  let storyPublished = false;
+  try {
+    await publishStory(ig, images[0]);
+    storyPublished = true;
+    console.log("[social-listing] story published after carousel");
+  } catch (storyErr) {
+    console.error("[social-listing] story failed (non-fatal):", storyErr.message);
+  }
+
+  // Step 6: log the publish in social_listing_posts (non-fatal if it fails)
   const { error: logErr } = await sb.from("social_listing_posts").insert({
     listing_id: listingId,
     platform: "instagram",
@@ -316,7 +433,7 @@ async function publishCarousel(sb, body) {
   });
   if (logErr) console.error("[social-listing] Could not log publish:", logErr.message);
 
-  return { postId: publishData.id, permalink };
+  return { postId: publishData.id, permalink, storyPublished };
 }
 
 export default async function handler(req, res) {
@@ -364,6 +481,88 @@ export default async function handler(req, res) {
     if (body.action === "publish_carousel") {
       const result = await publishCarousel(sb, body);
       send(res, 200, result);
+      return;
+    }
+
+    if (body.action === "queue_carousel") {
+      const { listingId, caption, imageUrls, scheduledAt, listingTitle } = body;
+      if (!listingId || !caption || !imageUrls?.length || !scheduledAt) {
+        send(res, 400, { error: "listingId, caption, imageUrls, scheduledAt required" });
+        return;
+      }
+      const { data, error } = await sb.from("social_listing_queue").insert({
+        listing_id: listingId,
+        listing_title: listingTitle || null,
+        caption: caption.trim(),
+        image_urls: imageUrls,
+        scheduled_at: scheduledAt,
+      }).select("id, scheduled_at").single();
+      if (error) throw new Error(error.message);
+      send(res, 200, { queued: true, id: data.id, scheduledAt: data.scheduled_at });
+      return;
+    }
+
+    if (body.action === "list_queue") {
+      const { data, error } = await sb
+        .from("social_listing_queue")
+        .select("id, listing_id, listing_title, scheduled_at, status, permalink, story_published, error_message, image_urls")
+        .order("scheduled_at", { ascending: true })
+        .limit(50);
+      if (error) throw new Error(error.message);
+      send(res, 200, { queue: data || [] });
+      return;
+    }
+
+    if (body.action === "remove_from_queue") {
+      const { id } = body;
+      if (!id) { send(res, 400, { error: "id required" }); return; }
+      const { error } = await sb
+        .from("social_listing_queue")
+        .delete()
+        .eq("id", id)
+        .eq("status", "pending");
+      if (error) throw new Error(error.message);
+      send(res, 200, { removed: true });
+      return;
+    }
+
+    if (body.action === "process_queue") {
+      const cronSecret = process.env.CRON_SECRET;
+      const auth = req.headers?.authorization || "";
+      if (!cronSecret || auth !== `Bearer ${cronSecret}`) {
+        send(res, 401, { error: "Unauthorized" });
+        return;
+      }
+      const { data: items } = await sb
+        .from("social_listing_queue")
+        .select("*")
+        .eq("status", "pending")
+        .lte("scheduled_at", new Date().toISOString())
+        .order("scheduled_at", { ascending: true });
+      const results = [];
+      for (const item of items || []) {
+        try {
+          const result = await publishCarousel(sb, {
+            listingId: item.listing_id,
+            caption: item.caption,
+            imageUrls: item.image_urls,
+          });
+          await sb.from("social_listing_queue").update({
+            status: "published",
+            post_id: result.postId,
+            permalink: result.permalink,
+            story_published: result.storyPublished,
+          }).eq("id", item.id);
+          results.push({ id: item.id, status: "published" });
+        } catch (err) {
+          await sb.from("social_listing_queue").update({
+            status: "failed",
+            error_message: err.message,
+          }).eq("id", item.id);
+          results.push({ id: item.id, status: "failed", error: err.message });
+        }
+      }
+      send(res, 200, { processed: results.length, results });
       return;
     }
 
