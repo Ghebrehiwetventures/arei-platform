@@ -3280,9 +3280,13 @@ function MarketNewsView() {
     setAddUrlLoading(true);
     setAddUrlError(null);
     try {
+      const { data: { session } } = await supabaseAuth.auth.getSession();
       const res = await fetch("/api/fetch-url-candidate", {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
         body: JSON.stringify({ url }),
       });
       const data = await res.json();
