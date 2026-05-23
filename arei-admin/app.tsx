@@ -3075,6 +3075,143 @@ function MarketNewsEditPanel({
   );
 }
 
+function MarketNewsCard({
+  item,
+  onStatusChange,
+  onSave,
+  saving,
+  isExpanded,
+  onToggleExpand,
+}: {
+  item: MarketNewsRow;
+  onStatusChange: (id: string, status: MarketNewsStatus) => Promise<void>;
+  onSave: (id: string, fields: MarketNewsFieldUpdate) => Promise<void>;
+  saving: boolean;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}) {
+  const recColor =
+    item.enrich_recommendation === "publish"
+      ? "bg-emerald-100 text-emerald-700"
+      : item.enrich_recommendation === "archive"
+        ? "bg-gray-100 text-gray-500"
+        : "bg-amber-100 text-amber-700";
+
+  const scoreColor =
+    item.relevance_score === null
+      ? "bg-surface-3 text-foreground-subtle"
+      : item.relevance_score >= 70
+        ? "bg-emerald-100 text-emerald-700"
+        : item.relevance_score >= 40
+          ? "bg-amber-100 text-amber-700"
+          : "bg-surface-3 text-foreground-subtle";
+
+  const pubDate = item.published_at
+    ? new Date(item.published_at).toLocaleDateString()
+    : null;
+
+  return (
+    <article className="rounded border border-border bg-surface-1 overflow-hidden">
+      <div className="p-4 space-y-3">
+        {/* Top row */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            {item.relevance_score !== null && (
+              <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-semibold ${scoreColor}`}>
+                {item.relevance_score}
+              </span>
+            )}
+            {item.enrich_recommendation && (
+              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${recColor}`}>
+                {item.enrich_recommendation.replace("_", " ")}
+              </span>
+            )}
+          </div>
+          <span className="text-[11px] text-foreground-subtle">
+            {item.source_name}{pubDate ? ` · ${pubDate}` : ""}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-sm font-semibold text-foreground leading-snug">
+          {item.title}
+        </h3>
+
+        {/* Snippet */}
+        {item.snippet && (
+          <p className="text-[13px] text-foreground-muted leading-relaxed line-clamp-3">
+            {item.snippet}
+          </p>
+        )}
+
+        {/* Why it matters */}
+        {item.why_it_matters && (
+          <p className="text-[12px] text-foreground-subtle leading-relaxed border-l-2 border-accent pl-3">
+            {item.why_it_matters}
+          </p>
+        )}
+
+        {/* Signal tags */}
+        {item.signal_tags && item.signal_tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {item.signal_tags.map((tag) => (
+              <span key={tag} className="px-2 py-0.5 rounded-full bg-surface-3 text-[10px] text-foreground-muted">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "published")}
+            disabled={saving}
+            className="px-4 py-1.5 text-xs font-semibold rounded-md bg-green-muted text-green hover:bg-green hover:text-primary-foreground transition-colors disabled:opacity-50"
+          >
+            Publish
+          </button>
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "archived")}
+            disabled={saving}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-50"
+          >
+            Archive
+          </button>
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            className="ml-auto px-3 py-1.5 text-xs font-medium rounded border border-border text-foreground-subtle hover:text-foreground hover:bg-surface-2 transition-colors"
+          >
+            {isExpanded ? "Close edit" : "Edit ↗"}
+          </button>
+          <a
+            href={item.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-2 py-1.5 text-xs text-foreground-subtle hover:text-foreground transition-colors"
+          >
+            ↗
+          </a>
+        </div>
+      </div>
+
+      {/* Expanded edit panel */}
+      {isExpanded && (
+        <MarketNewsEditPanel
+          item={item}
+          onSave={onSave}
+          onClose={onToggleExpand}
+          onStatusChange={onStatusChange}
+          saving={saving}
+        />
+      )}
+    </article>
+  );
+}
+
 function MarketNewsView() {
   const [statusTab, setStatusTab] = React.useState<MarketNewsStatus>("candidate");
   const [items, setItems] = React.useState<MarketNewsRow[]>([]);
@@ -3264,119 +3401,111 @@ function MarketNewsView() {
 
       {!loading && items.length > 0 && (
         <>
-        {/* Split archive-recommended items off the candidate list */}
-        {(() => {
-          const isArchiveRec = (r: MarketNewsRow) =>
-            statusTab === "candidate" && r.enrich_recommendation === "archive";
-          const mainItems   = items.filter((r) => !isArchiveRec(r));
-          const archiveItems = items.filter(isArchiveRec);
-
-          const renderRow = (item: MarketNewsRow) => {
-            const isExpanded = expandedId === item.id;
-            const pubDate = item.published_at
-              ? new Date(item.published_at).toLocaleDateString()
-              : "—";
-            return (
-              <article key={item.id}>
-                {/* ── Row ── */}
-                <button
-                  type="button"
-                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                  className="w-full grid grid-cols-1 md:grid-cols-[1fr_160px_100px_120px_120px_80px_64px_32px] gap-2 md:gap-3 items-center px-4 py-3 text-left hover:bg-surface-2 transition-colors"
-                >
-                  <span className="text-sm font-medium text-foreground line-clamp-1 min-w-0">
-                    {item.title}
-                  </span>
-                  <span className="text-[11px] text-foreground-muted truncate hidden md:block">
-                    {item.source_name}
-                  </span>
-                  <span className="text-[11px] text-foreground-subtle hidden md:block">
-                    {pubDate}
-                  </span>
-                  <span className="text-[11px] text-foreground-muted truncate hidden md:block">
-                    {item.category}
-                  </span>
-                  <span className="text-[11px] text-foreground-subtle font-mono truncate hidden md:block">
-                    {item.ingestion_source ?? "—"}
-                  </span>
-                  <span className="hidden md:block">
-                    <MarketNewsStatusBadge status={item.status} />
-                  </span>
-                  <span className="hidden md:block">
-                    {item.relevance_score !== null ? (
-                      <span className={`inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded ${
-                        item.relevance_score >= 70
-                          ? "bg-emerald-100 text-emerald-700"
-                          : item.relevance_score >= 40
-                            ? "bg-amber-100 text-amber-700"
-                            : "bg-surface-3 text-foreground-subtle"
-                      }`}>
-                        {item.relevance_score}
-                      </span>
-                    ) : item.relevance === "high" ? (
-                      <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-accent-muted text-deep-green">
-                        High
-                      </span>
-                    ) : (
-                      <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-surface-3 text-foreground-subtle">
-                        Std
-                      </span>
-                    )}
-                  </span>
-                  <span className={"text-foreground-subtle text-xs transition-transform duration-150 " + (isExpanded ? "rotate-180" : "")}>
-                    ▼
-                  </span>
-                </button>
-                {isExpanded && (
-                  <MarketNewsEditPanel
-                    item={item}
-                    onSave={handleSaveFields}
-                    onClose={() => setExpandedId(null)}
-                    onStatusChange={handleStatusChange}
-                    saving={saving}
-                  />
-                )}
-              </article>
-            );
-          };
-
-          return (
-            <>
-        <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
-          {/* Table header */}
-          <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_120px_80px_64px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
-            <span>Title</span>
-            <span>Source</span>
-            <span>Published</span>
-            <span>Category</span>
-            <span>Ingest</span>
-            <span>Status</span>
-            <span>Score</span>
-            <span />
-          </div>
-
-          {mainItems.map(renderRow)}
-        </div>
-
-        {archiveItems.length > 0 && (
-          <div className="mt-2">
-            <button
-              type="button"
-              onClick={() => setShowArchiveRecs((v) => !v)}
-              className="text-[11px] text-foreground-subtle hover:text-foreground-muted transition-colors"
-            >
-              {showArchiveRecs ? "▲" : "▼"} {showArchiveRecs ? "Hide" : "Show"} {archiveItems.length} archive recommendation{archiveItems.length !== 1 ? "s" : ""}
-            </button>
-            {showArchiveRecs && (
-              <div className="mt-2 surface-1 rounded border border-border overflow-hidden divide-y divide-border opacity-60">
-                {archiveItems.map(renderRow)}
+          {statusTab === "candidate" ? (
+            // ── Card view for candidates ───────────────────────────
+            (() => {
+              const mainItems    = items.filter((r) => r.enrich_recommendation !== "archive");
+              const archiveItems = items.filter((r) => r.enrich_recommendation === "archive");
+              return (
+                <>
+                  <div className="space-y-3">
+                    {mainItems.map((item) => (
+                      <MarketNewsCard
+                        key={item.id}
+                        item={item}
+                        onStatusChange={handleStatusChange}
+                        onSave={handleSaveFields}
+                        saving={saving}
+                        isExpanded={expandedId === item.id}
+                        onToggleExpand={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                      />
+                    ))}
+                  </div>
+                  {archiveItems.length > 0 && (
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowArchiveRecs((v) => !v)}
+                        className="text-[11px] text-foreground-subtle hover:text-foreground-muted transition-colors"
+                      >
+                        {showArchiveRecs ? "▲ Hide" : "▼ Show"} {archiveItems.length} archive recommendation{archiveItems.length !== 1 ? "s" : ""}
+                      </button>
+                      {showArchiveRecs && (
+                        <div className="mt-2 space-y-3 opacity-60">
+                          {archiveItems.map((item) => (
+                            <MarketNewsCard
+                              key={item.id}
+                              item={item}
+                              onStatusChange={handleStatusChange}
+                              onSave={handleSaveFields}
+                              saving={saving}
+                              isExpanded={expandedId === item.id}
+                              onToggleExpand={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+            })()
+          ) : (
+            // ── Table view for published / hidden / archived ───────
+            <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
+              <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_80px_64px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
+                <span>Title</span>
+                <span>Source</span>
+                <span>Published</span>
+                <span>Category</span>
+                <span>Status</span>
+                <span>Score</span>
+                <span />
               </div>
-            )}
-          </div>
-        )}
-            </>
-          );
-        })()}
+              {items.map((item) => {
+                const isExpanded = expandedId === item.id;
+                const pubDate = item.published_at
+                  ? new Date(item.published_at).toLocaleDateString()
+                  : "—";
+                return (
+                  <article key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                      className="w-full grid grid-cols-1 md:grid-cols-[1fr_160px_100px_120px_80px_64px_32px] gap-2 md:gap-3 items-center px-4 py-3 text-left hover:bg-surface-2 transition-colors"
+                    >
+                      <span className="text-sm font-medium text-foreground line-clamp-1 min-w-0">{item.title}</span>
+                      <span className="text-[11px] text-foreground-muted truncate hidden md:block">{item.source_name}</span>
+                      <span className="text-[11px] text-foreground-subtle hidden md:block">{pubDate}</span>
+                      <span className="text-[11px] text-foreground-muted truncate hidden md:block">{item.category}</span>
+                      <span className="hidden md:block"><MarketNewsStatusBadge status={item.status} /></span>
+                      <span className="hidden md:block">
+                        {item.relevance_score !== null ? (
+                          <span className={`inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded ${item.relevance_score >= 70 ? "bg-emerald-100 text-emerald-700" : item.relevance_score >= 40 ? "bg-amber-100 text-amber-700" : "bg-surface-3 text-foreground-subtle"}`}>
+                            {item.relevance_score}
+                          </span>
+                        ) : (
+                          <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-surface-3 text-foreground-subtle">
+                            {item.relevance === "high" ? "High" : "Std"}
+                          </span>
+                        )}
+                      </span>
+                      <span className={"text-foreground-subtle text-xs transition-transform duration-150 " + (isExpanded ? "rotate-180" : "")}>▼</span>
+                    </button>
+                    {isExpanded && (
+                      <MarketNewsEditPanel
+                        item={item}
+                        onSave={handleSaveFields}
+                        onClose={() => setExpandedId(null)}
+                        onStatusChange={handleStatusChange}
+                        saving={saving}
+                      />
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
         </>
       )}
     </div>
