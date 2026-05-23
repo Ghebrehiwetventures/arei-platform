@@ -125,6 +125,8 @@ export function ListingSocialView() {
   const [scheduleTime, setScheduleTime] = useState("");
   const [showSchedule, setShowSchedule] = useState(false);
   const [scheduling, setScheduling] = useState(false);
+  const [editingQueueId, setEditingQueueId] = useState<string | null>(null);
+  const editLoadRef = useRef<QueueItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [captionLoading, setCaptionLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -170,10 +172,23 @@ export function ListingSocialView() {
 
   useEffect(() => {
     if (!selectedId) return;
-    setCaption("");
     setPermalink("");
     setError("");
     setNotice("");
+
+    // Loading a queued post for editing — use its saved caption/images
+    // instead of regenerating.
+    const edit = editLoadRef.current;
+    if (edit && edit.listing_id === selectedId) {
+      setCaption(edit.caption);
+      setSelectedImages(edit.image_urls.slice(0, 10));
+      editLoadRef.current = null;
+      return;
+    }
+
+    // Manual listing pick — not editing anything.
+    setEditingQueueId(null);
+    setCaption("");
     const imgs = listings.find((l) => l.id === selectedId)?.image_urls || [];
     setSelectedImages(imgs.slice(0, 10));
 
@@ -250,14 +265,27 @@ export function ListingSocialView() {
     setError("");
     setNotice("");
     try {
-      await apiFetch("POST", {
-        action: "queue_carousel",
-        listingId: selectedId,
-        imageUrls: selectedImages,
-        caption: caption.trim(),
-        scheduledAt: new Date(scheduleTime).toISOString(),
-      });
-      setNotice("Added to queue.");
+      if (editingQueueId) {
+        await apiFetch("POST", {
+          action: "update_queue",
+          queueId: editingQueueId,
+          listingId: selectedId,
+          imageUrls: selectedImages,
+          caption: caption.trim(),
+          scheduledAt: new Date(scheduleTime).toISOString(),
+        });
+        setNotice("Queue item updated.");
+        setEditingQueueId(null);
+      } else {
+        await apiFetch("POST", {
+          action: "queue_carousel",
+          listingId: selectedId,
+          imageUrls: selectedImages,
+          caption: caption.trim(),
+          scheduledAt: new Date(scheduleTime).toISOString(),
+        });
+        setNotice("Added to queue.");
+      }
       setShowSchedule(false);
       await loadState();
     } catch (err) {
@@ -267,10 +295,34 @@ export function ListingSocialView() {
     }
   };
 
+  const handleEditQueueItem = (item: QueueItem) => {
+    setEditingQueueId(item.id);
+    setScheduleTime(toDatetimeLocal(new Date(item.scheduled_at)));
+    setShowSchedule(true);
+    setError("");
+    setNotice("");
+    if (selectedId === item.listing_id) {
+      // Same listing already selected — the [selectedId] effect won't fire.
+      setCaption(item.caption);
+      setSelectedImages(item.image_urls.slice(0, 10));
+    } else {
+      editLoadRef.current = item;
+      setSelectedId(item.listing_id);
+    }
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
+  const cancelEdit = () => {
+    setEditingQueueId(null);
+    setShowSchedule(false);
+    setNotice("");
+  };
+
   const handleRemoveFromQueue = async (id: string) => {
     try {
       await apiFetch("POST", { action: "remove_from_queue", queueId: id });
       setQueue((prev) => prev.filter((q) => q.id !== id));
+      if (editingQueueId === id) setEditingQueueId(null);
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
     }
@@ -486,6 +538,12 @@ export function ListingSocialView() {
               className="w-full bg-background border border-border text-foreground p-3 text-sm font-mono leading-relaxed rounded"
               placeholder={captionLoading ? "Generating caption..." : "Select a listing"}
             />
+            {editingQueueId && (
+              <div className="flex items-center justify-between gap-3 border border-green/40 bg-green/10 text-green px-3 py-2 text-[11px] font-mono rounded">
+                <span>Editing a queued post — make changes, then Save changes below.</span>
+                <button type="button" onClick={cancelEdit} className="underline hover:no-underline">Cancel</button>
+              </div>
+            )}
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
@@ -543,14 +601,27 @@ export function ListingSocialView() {
                     className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono rounded w-full"
                   />
                 </div>
-                <button
-                  type="button"
-                  onClick={handleSchedule}
-                  disabled={!canSchedule}
-                  className="w-full px-4 py-2 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
-                >
-                  {scheduling ? "Adding..." : "Add to queue"}
-                </button>
+                <div className="flex items-center gap-3">
+                  <button
+                    type="button"
+                    onClick={handleSchedule}
+                    disabled={!canSchedule}
+                    className="flex-1 px-4 py-2 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
+                  >
+                    {scheduling
+                      ? "Saving..."
+                      : editingQueueId ? "Save changes" : "Add to queue"}
+                  </button>
+                  {editingQueueId && (
+                    <button
+                      type="button"
+                      onClick={cancelEdit}
+                      className="text-[11px] font-mono text-foreground-muted hover:text-foreground"
+                    >
+                      Cancel
+                    </button>
+                  )}
+                </div>
               </div>
             )}
           </div>
@@ -584,13 +655,22 @@ export function ListingSocialView() {
                     "bg-red/20 text-red"
                   }`}>{item.status}</span>
                   {item.status === "pending" && (
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveFromQueue(item.id)}
-                      className="text-foreground-muted hover:text-red transition-colors"
-                    >
-                      ✕
-                    </button>
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => handleEditQueueItem(item)}
+                        className={`transition-colors ${editingQueueId === item.id ? "text-green" : "text-foreground-muted hover:text-foreground"}`}
+                      >
+                        Edit
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleRemoveFromQueue(item.id)}
+                        className="text-foreground-muted hover:text-red transition-colors"
+                      >
+                        ✕
+                      </button>
+                    </>
                   )}
                 </div>
               </div>

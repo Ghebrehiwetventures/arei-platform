@@ -386,18 +386,30 @@ async function publishCarousel(sb, body) {
     : null;
   if (locationId) console.log("[social-listing] location_id", locationId, "for island", listingRow.island);
 
-  const carouselParams = new URLSearchParams({
-    media_type: "CAROUSEL",
-    caption: caption.trim(),
-    children: containerIds.join(","),
-    access_token: ig.accessToken,
-  });
-  if (locationId) carouselParams.set("location_id", locationId);
-  const carouselRes = await fetch(`${graphBase}/media`, { method: "POST", body: carouselParams });
-  const carouselData = await carouselRes.json().catch(() => ({}));
-  if (!carouselRes.ok || !carouselData.id) {
-    throw new Error(carouselData.error?.message || `Failed to create carousel container: HTTP ${carouselRes.status}`);
+  const createCarousel = async (withLocation) => {
+    const params = new URLSearchParams({
+      media_type: "CAROUSEL",
+      caption: caption.trim(),
+      children: containerIds.join(","),
+      access_token: ig.accessToken,
+    });
+    if (withLocation && locationId) params.set("location_id", locationId);
+    const res = await fetch(`${graphBase}/media`, { method: "POST", body: params });
+    const data = await res.json().catch(() => ({}));
+    return { ok: res.ok && Boolean(data.id), status: res.status, data };
+  };
+
+  // Location tagging must never block a publish: if Instagram rejects the
+  // location_id (our Place IDs are unverified estimates), retry without it.
+  let carousel = await createCarousel(true);
+  if (!carousel.ok && locationId) {
+    console.error("[social-listing] carousel with location_id failed, retrying without:", carousel.data.error?.message);
+    carousel = await createCarousel(false);
   }
+  if (!carousel.ok) {
+    throw new Error(carousel.data.error?.message || `Failed to create carousel container: HTTP ${carousel.status}`);
+  }
+  const carouselData = carousel.data;
 
   await waitUntilReady(ig, carouselData.id);
 
@@ -518,11 +530,29 @@ export default async function handler(req, res) {
     if (body.action === "list_queue") {
       const { data, error } = await sb
         .from("social_listing_queue")
-        .select("id, listing_id, listing_title, scheduled_at, status, permalink, story_published, error_message, image_urls")
+        .select("id, listing_id, listing_title, caption, scheduled_at, status, permalink, story_published, error_message, image_urls")
         .order("scheduled_at", { ascending: true })
         .limit(50);
       if (error) throw new Error(error.message);
       send(res, 200, { items: data || [] });
+      return;
+    }
+
+    if (body.action === "update_queue") {
+      const queueId = body.queueId || body.id;
+      if (!queueId) { send(res, 400, { error: "queueId required" }); return; }
+      const patch = {};
+      if (body.listingId) patch.listing_id = body.listingId;
+      if (typeof body.caption === "string") patch.caption = body.caption.trim();
+      if (Array.isArray(body.imageUrls)) patch.image_urls = body.imageUrls;
+      if (body.scheduledAt) patch.scheduled_at = body.scheduledAt;
+      const { error } = await sb
+        .from("social_listing_queue")
+        .update(patch)
+        .eq("id", queueId)
+        .eq("status", "pending");
+      if (error) throw new Error(error.message);
+      send(res, 200, { updated: true });
       return;
     }
 
