@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { supabaseAuth } from "./supabase";
 
 interface Listing {
@@ -174,9 +174,8 @@ export function ListingSocialView() {
     setPermalink("");
     setError("");
     setNotice("");
-    // Start with nothing selected — user clicks images in the order
-    // they want them in the carousel.
-    setSelectedImages([]);
+    const imgs = listings.find((l) => l.id === selectedId)?.image_urls || [];
+    setSelectedImages(imgs.slice(0, 10));
 
     setCaptionLoading(true);
     apiFetch<{ caption: string }>("POST", { action: "generate_caption", listingId: selectedId })
@@ -193,7 +192,7 @@ export function ListingSocialView() {
     });
   };
 
-  const handleDragMove = (e: PointerEvent) => {
+  const handleDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (dragIndex === null) return;
     let closest = dragIndex;
     let closestDist = Infinity;
@@ -298,10 +297,10 @@ export function ListingSocialView() {
   return (
     <div className="space-y-6">
       <section>
-        <div className="label-style mb-1">Market Intelligence &gt; Listing Social</div>
-        <h2 className="text-2xl font-semibold text-foreground font-mono mb-1">Listing Social</h2>
+        <div className="label-style mb-1">Marketing &gt; Instagram</div>
+        <h2 className="text-2xl font-semibold text-foreground font-mono mb-1">Marketing</h2>
         <p className="text-sm text-foreground-muted">
-          Pick a listing, select images, and publish as an Instagram carousel.
+          Pick a listing, select images, and publish or schedule an Instagram carousel.
         </p>
       </section>
 
@@ -459,9 +458,7 @@ export function ListingSocialView() {
                         }`}
                       />
                       {active && (
-                        <span className="absolute top-1 left-1 bg-green text-black text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded leading-tight pointer-events-none">
-                          {position + 1}
-                        </span>
+                        <div className="absolute inset-0 ring-2 ring-inset ring-green pointer-events-none rounded-sm" />
                       )}
                     </div>
                   );
