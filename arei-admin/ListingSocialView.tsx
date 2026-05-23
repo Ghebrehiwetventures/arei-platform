@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { supabaseAuth } from "./supabase";
 
 interface Listing {
@@ -57,6 +57,10 @@ export function ListingSocialView() {
   const [selectedId, setSelectedId] = useState("");
   const [caption, setCaption] = useState("");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dropIndex, setDropIndex] = useState<number | null>(null);
+  const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const didDragRef = useRef(false);
   const [loading, setLoading] = useState(true);
   const [captionLoading, setCaptionLoading] = useState(false);
   const [publishing, setPublishing] = useState(false);
@@ -122,17 +126,34 @@ export function ListingSocialView() {
     });
   };
 
-  const moveImage = (url: string, delta: number) => {
-    setSelectedImages((prev) => {
-      const from = prev.indexOf(url);
-      if (from < 0) return prev;
-      const to = Math.max(0, Math.min(prev.length - 1, from + delta));
-      if (to === from) return prev;
-      const next = [...prev];
-      const [moved] = next.splice(from, 1);
-      next.splice(to, 0, moved);
-      return next;
+  const handleDragMove = (e: PointerEvent) => {
+    if (dragIndex === null) return;
+    let closest = dragIndex;
+    let closestDist = Infinity;
+    selectedImages.forEach((_, idx) => {
+      const el = cellRefs.current[idx];
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cx = rect.left + rect.width / 2;
+      const cy = rect.top + rect.height / 2;
+      const dist = Math.abs(e.clientX - cx) + Math.abs(e.clientY - cy);
+      if (dist < closestDist) { closestDist = dist; closest = idx; }
     });
+    if (closest !== dragIndex) didDragRef.current = true;
+    setDropIndex(closest);
+  };
+
+  const handleDragEnd = () => {
+    if (dragIndex !== null && dropIndex !== null && dragIndex !== dropIndex) {
+      setSelectedImages((prev) => {
+        const next = [...prev];
+        const [moved] = next.splice(dragIndex, 1);
+        next.splice(dropIndex, 0, moved);
+        return next;
+      });
+    }
+    setDragIndex(null);
+    setDropIndex(null);
   };
 
   const handlePublish = async () => {
@@ -285,51 +306,51 @@ export function ListingSocialView() {
                   </button>
                 </div>
               </div>
-              <div className="grid grid-cols-8 gap-1">
+              <div
+                className="grid grid-cols-8 gap-1"
+                onPointerMove={handleDragMove}
+                onPointerUp={handleDragEnd}
+              >
                 {[
                   ...selectedImages,
                   ...allImages.filter((u) => !selectedImages.includes(u)),
-                ].map((url, i) => {
+                ].map((url) => {
                   const position = selectedImages.indexOf(url);
                   const active = position >= 0;
+                  const isDragging = dragIndex === position && active;
+                  const isDropTarget = dropIndex === position && dragIndex !== null && dragIndex !== position && active;
                   return (
                     <div
-                      key={i}
-                      className="relative aspect-square overflow-hidden rounded-sm group"
+                      key={url}
+                      ref={active ? (el) => { cellRefs.current[position] = el; } : undefined}
+                      className={`relative aspect-square overflow-hidden rounded-sm ${
+                        active ? "cursor-grab" : ""
+                      } ${isDragging ? "opacity-40 ring-2 ring-foreground" : ""} ${
+                        isDropTarget ? "ring-2 ring-green" : ""
+                      }`}
+                      onPointerDown={active ? (e) => {
+                        e.preventDefault();
+                        didDragRef.current = false;
+                        setDragIndex(position);
+                        setDropIndex(position);
+                      } : undefined}
                     >
                       <img
                         src={url}
                         alt=""
                         draggable={false}
-                        onClick={() => toggleImage(url)}
-                        className={`w-full h-full object-cover transition-all cursor-pointer ${
+                        onClick={() => {
+                          if (didDragRef.current) { didDragRef.current = false; return; }
+                          toggleImage(url);
+                        }}
+                        className={`w-full h-full object-cover transition-opacity cursor-pointer select-none ${
                           active ? "" : "grayscale opacity-25"
                         }`}
                       />
                       {active && (
-                        <>
-                          <span className="absolute top-1 left-1 bg-green text-black text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded leading-tight pointer-events-none">
-                            {position + 1}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); moveImage(url, -1); }}
-                            disabled={position === 0}
-                            className="absolute bottom-1 left-1 bg-black/70 hover:bg-black text-white text-[10px] font-mono w-5 h-5 rounded leading-none disabled:opacity-30 flex items-center justify-center"
-                            title="Move left"
-                          >
-                            ◀
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => { e.stopPropagation(); moveImage(url, 1); }}
-                            disabled={position === selectedImages.length - 1}
-                            className="absolute bottom-1 right-1 bg-black/70 hover:bg-black text-white text-[10px] font-mono w-5 h-5 rounded leading-none disabled:opacity-30 flex items-center justify-center"
-                            title="Move right"
-                          >
-                            ▶
-                          </button>
-                        </>
+                        <span className="absolute top-1 left-1 bg-green text-black text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded leading-tight pointer-events-none">
+                          {position + 1}
+                        </span>
                       )}
                     </div>
                   );
@@ -339,7 +360,7 @@ export function ListingSocialView() {
                 <p className="text-amber text-[11px] font-mono mt-2">Select at least 2 images.</p>
               )}
               {selectedImages.length >= 2 && (
-                <p className="text-foreground-muted text-[11px] font-mono mt-2">Use ◀ ▶ on each image to reorder · number = carousel position.</p>
+                <p className="text-foreground-muted text-[11px] font-mono mt-2">Drag selected images to reorder · number = carousel position.</p>
               )}
             </div>
           )}
