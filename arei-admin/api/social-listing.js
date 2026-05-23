@@ -260,6 +260,7 @@ Rules:
 - No words: exclusive, stunning, luxury, paradise, dream, sought-after, exceptional, prestigious
 - Never copy the broker description — extract facts and rewrite
 - If a detail is missing, omit it. Never guess.
+- Never state a completion date, year, or timeline unless it appears word-for-word in the listing description. If unsure, omit it.
 
 Return only Part 1 and Part 2 as plain text. No labels, no JSON, no other sections.`;
 
@@ -311,8 +312,11 @@ function assembleCaption(hook, description, listing) {
   if (description) { lines.push(""); lines.push(description.trim()); }
 
   // Specs line: [X] bed · [Y] bath · [Z] m² · [island]
+  // Studios (property_type contains "studio" or bedrooms = 0) show "Studio".
+  const isStudio = listing.bedrooms === 0 || /studio/i.test(listing.property_type || "");
+  const bedSpec = isStudio ? "Studio" : (listing.bedrooms ? `${listing.bedrooms} bed` : null);
   const specs = [
-    listing.bedrooms ? `${listing.bedrooms} bed` : null,
+    bedSpec,
     listing.bathrooms ? `${listing.bathrooms} bath` : null,
     size ? `${Math.round(size)} m²` : null,
     listing.island || null,
@@ -595,7 +599,7 @@ export default async function handler(req, res) {
     if (body.action === "generate_caption") {
       const { data: listing, error } = await sb
         .from("v1_feed_cv")
-        .select("id, source_id, title, price, price_period, island, city, bedrooms, bathrooms, area_sqm, description")
+        .select("id, source_id, title, price, price_period, island, city, property_type, bedrooms, bathrooms, area_sqm, description")
         .eq("id", body.listingId)
         .maybeSingle();
       if (error) throw new Error(error.message);
