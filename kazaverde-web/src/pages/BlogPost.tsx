@@ -74,6 +74,11 @@ const TAG_PT: Record<string, string> = {
 };
 
 const ARTICLE_PT: Record<string, { title: string; description: string }> = {
+  "best-real-estate-agents-cape-verde": {
+    title: "Melhores agentes imobiliários em Cabo Verde 2026 — guia completo",
+    description:
+      "Uma visão independente das agências imobiliárias de Cabo Verde acompanhadas pelo Cape Verde Real Estate Index — por ilha, orientação e especialização. Não é um ranking.",
+  },
   "cape-verde-property-prices-by-island": {
     title: "Preços de imóveis em Cabo Verde por ilha: o que o Cape Verde Real Estate Index mostra atualmente",
     description:
