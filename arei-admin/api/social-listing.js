@@ -67,11 +67,56 @@ function resolveImageUrl(url) {
     .replace(/\.webp$/, "");
 }
 
-// Wrap image through wsrv.nl proxy to crop to 1:1 square (1080x1080 JPEG)
-// Instagram requires aspect 1:1 - 1.91:1 and consistent ratios in carousels.
+// 1:1 square for carousel items
 function squareCrop(url) {
   if (!url) return url;
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1080&fit=cover&output=jpg`;
+}
+
+// 9:16 vertical for stories
+function storyCrop(url) {
+  if (!url) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1920&fit=cover&output=jpg`;
+}
+
+async function waitUntilReady(ig, containerId, maxAttempts = 20, delayMs = 1500) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const r = await fetch(
+      `https://graph.instagram.com/${ig.apiVersion}/${containerId}?fields=status_code&access_token=${encodeURIComponent(ig.accessToken)}`
+    );
+    const d = await r.json().catch(() => ({}));
+    if (d.status_code === "FINISHED") return;
+    if (d.status_code === "ERROR" || d.status_code === "EXPIRED") {
+      throw new Error(`Container ${containerId} ended in status ${d.status_code}`);
+    }
+    await new Promise((resolve) => setTimeout(resolve, delayMs));
+  }
+  throw new Error(`Container ${containerId} did not finish processing in time`);
+}
+
+async function publishStory(ig, imageUrl) {
+  const graphBase = `https://graph.instagram.com/${ig.apiVersion}/${ig.accountId}`;
+  const params = new URLSearchParams({
+    image_url: storyCrop(imageUrl),
+    media_type: "STORIES",
+    access_token: ig.accessToken,
+  });
+  const containerRes = await fetch(`${graphBase}/media`, { method: "POST", body: params });
+  const containerData = await containerRes.json().catch(() => ({}));
+  if (!containerRes.ok || !containerData.id) {
+    throw new Error(containerData.error?.message || `Story container failed: HTTP ${containerRes.status}`);
+  }
+  await waitUntilReady(ig, containerData.id);
+  const publishParams = new URLSearchParams({
+    creation_id: containerData.id,
+    access_token: ig.accessToken,
+  });
+  const publishRes = await fetch(`${graphBase}/media_publish`, { method: "POST", body: publishParams });
+  const publishData = await publishRes.json().catch(() => ({}));
+  if (!publishRes.ok || !publishData.id) {
+    throw new Error(publishData.error?.message || `Story publish failed: HTTP ${publishRes.status}`);
+  }
+  return publishData.id;
 }
 
 function sourceName(sourceId) {
@@ -320,25 +365,9 @@ async function publishCarousel(sb, body) {
     containerIds.push(data.id);
   }
 
-  // Step 1b: poll each container until status_code === FINISHED.
-  // Instagram processes media asynchronously; referencing an IN_PROGRESS
-  // container in the carousel step yields "Media ID is not available".
-  async function waitUntilReady(containerId, maxAttempts = 20, delayMs = 1500) {
-    for (let attempt = 0; attempt < maxAttempts; attempt++) {
-      const r = await fetch(
-        `https://graph.instagram.com/${ig.apiVersion}/${containerId}?fields=status_code&access_token=${encodeURIComponent(ig.accessToken)}`
-      );
-      const d = await r.json().catch(() => ({}));
-      if (d.status_code === "FINISHED") return;
-      if (d.status_code === "ERROR" || d.status_code === "EXPIRED") {
-        throw new Error(`Container ${containerId} ended in status ${d.status_code}`);
-      }
-      await new Promise((resolve) => setTimeout(resolve, delayMs));
-    }
-    throw new Error(`Container ${containerId} did not finish processing in time`);
-  }
+  // Step 1b: poll each container until FINISHED
   for (const id of containerIds) {
-    await waitUntilReady(id);
+    await waitUntilReady(ig, id);
   }
 
   // Step 2: create carousel container
@@ -360,8 +389,7 @@ async function publishCarousel(sb, body) {
     throw new Error(carouselData.error?.message || `Failed to create carousel container: HTTP ${carouselRes.status}`);
   }
 
-  // Wait for the carousel container itself before publishing
-  await waitUntilReady(carouselData.id);
+  await waitUntilReady(ig, carouselData.id);
 
   // Step 3: publish
   const publishParams = new URLSearchParams({
@@ -384,7 +412,17 @@ async function publishCarousel(sb, body) {
     permalink = pl.permalink || "";
   }
 
-  // Step 5: log the publish in social_listing_posts (non-fatal if it fails)
+  // Step 5: publish story using first carousel image (non-fatal)
+  let storyPublished = false;
+  try {
+    await publishStory(ig, images[0]);
+    storyPublished = true;
+    console.log("[social-listing] story published after carousel");
+  } catch (storyErr) {
+    console.error("[social-listing] story failed (non-fatal):", storyErr.message);
+  }
+
+  // Step 6: log the publish in social_listing_posts (non-fatal if it fails)
   const { error: logErr } = await sb.from("social_listing_posts").insert({
     listing_id: listingId,
     platform: "instagram",
@@ -395,7 +433,7 @@ async function publishCarousel(sb, body) {
   });
   if (logErr) console.error("[social-listing] Could not log publish:", logErr.message);
 
-  return { postId: publishData.id, permalink };
+  return { postId: publishData.id, permalink, storyPublished };
 }
 
 export default async function handler(req, res) {

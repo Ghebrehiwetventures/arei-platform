@@ -162,14 +162,14 @@ export function ListingSocialView() {
     setError("");
     setNotice("");
     try {
-      const result = await apiFetch<{ postId: string; permalink: string }>("POST", {
+      const result = await apiFetch<{ postId: string; permalink: string; storyPublished: boolean }>("POST", {
         action: "publish_carousel",
         listingId: selectedId,
         imageUrls: selectedImages,
         caption: caption.trim(),
       });
       setPermalink(result.permalink);
-      setNotice("Published to Instagram.");
+      setNotice(result.storyPublished ? "Published to Instagram + story." : "Published to Instagram.");
       await loadState();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
