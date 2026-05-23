@@ -103,6 +103,77 @@ function truncateDescription(desc, maxSentences = 3, maxChars = 400) {
   return clean.length > maxChars ? clean.substring(0, maxChars).trimEnd() + "..." : clean;
 }
 
+const ISLAND_HASHTAGS = {
+  "Sal":         ["#Sal", "#SantaMaria", "#SalIsland", "#SalCapeVerde", "#SantaMariaSal", "#SalBeach"],
+  "Santiago":    ["#Santiago", "#Praia", "#SantiagoCapeVerde", "#PraiaCapeVerde"],
+  "Boa Vista":   ["#BoaVista", "#BoaVistaIsland", "#BoaVistaCapeVerde", "#BoaVistaBeach"],
+  "São Vicente": ["#SaoVicente", "#Mindelo", "#MindeloCapeVerde", "#SaoVicenteCapeVerde"],
+  "Santo Antão": ["#SantoAntao", "#SantoAntaoCapeVerde"],
+  "Fogo":        ["#Fogo", "#FogoCapeVerde", "#PicoDoFogo"],
+  "Maio":        ["#Maio", "#MaioCapeVerde"],
+  "Brava":       ["#Brava", "#BravaCapeVerde"],
+  "São Nicolau": ["#SaoNicolau", "#SaoNicolauCapeVerde"],
+};
+
+// Facebook Place IDs for Cape Verde islands (used for Instagram location tagging)
+const ISLAND_LOCATION_IDS = {
+  "Sal":         "109315372423960",
+  "Santiago":    "109924729019790",
+  "Boa Vista":   "110373705643399",
+  "São Vicente": "109207629098195",
+  "Santo Antão": "107680032590497",
+  "Fogo":        "107897969224870",
+  "Maio":        "108230932539302",
+};
+
+function buildHashtags(listing) {
+  const island = listing.island || "";
+  const title = (listing.title || "").toLowerCase();
+  const tags = [];
+
+  // Core Cape Verde real estate
+  tags.push("#CapeVerde", "#CaboVerde", "#CapeVerdeRealEstate", "#CaboVerdeProperty");
+  tags.push("#CapeVerdeProperty", "#CapeVerdeIslands", "#BuyInCapeVerde", "#InvestInCapeVerde");
+
+  // AREI / Africa
+  tags.push("#AREI", "#AfricaRealEstate", "#AfricaRealEstateIndex", "#AfricanProperty");
+
+  // General real estate
+  tags.push("#RealEstate", "#PropertyForSale", "#RealEstateInvestment", "#LuxuryRealEstate");
+  tags.push("#IslandProperty", "#IslandLife", "#OceanView", "#TropicalLiving");
+
+  // Island-specific
+  const islandTags = ISLAND_HASHTAGS[island];
+  if (islandTags) tags.push(...islandTags);
+
+  // Property-type hints from title
+  if (title.includes("villa")) tags.push("#Villa", "#VillaForSale", "#LuxuryVilla");
+  else if (title.includes("apartment") || title.includes("flat")) tags.push("#Apartment", "#ApartmentForSale");
+  else if (title.includes("townhouse") || title.includes("moradia")) tags.push("#Townhouse", "#HouseForSale");
+  else if (title.includes("land") || title.includes("plot") || title.includes("terrain")) tags.push("#LandForSale", "#BuildingPlot");
+  else tags.push("#PropertyInvestment", "#DreamHome");
+
+  // Price tier
+  if (listing.price && listing.price >= 500000) tags.push("#LuxuryProperty", "#HighEndRealEstate");
+
+  return [...new Set(tags)].join(" ");
+}
+
+async function findLocationId(island, accessToken, apiVersion) {
+  const id = ISLAND_LOCATION_IDS[island];
+  if (id) return id;
+  // Dynamic fallback: search Facebook Places
+  try {
+    const res = await fetch(
+      `https://graph.facebook.com/${apiVersion}/search?type=place&q=${encodeURIComponent(island + " Cape Verde")}&fields=id,name&limit=1&access_token=${encodeURIComponent(accessToken)}`
+    );
+    const data = await res.json().catch(() => ({}));
+    return data?.data?.[0]?.id || null;
+  } catch {
+    return null;
+  }
+}
+
 function buildCaption(listing) {
   const agency = sourceName(listing.source_id);
   const price = formatPrice(listing.price, listing.price_period);
@@ -138,13 +209,10 @@ function buildCaption(listing) {
   lines.push(`Source · ${agency}`);
   lines.push(`Photos courtesy of ${agency}`);
   lines.push("");
-  lines.push("Follow @africarealestateindex for the latest in Cape Verde real estate.");
+  lines.push("Follow @capeverderealestateindex for the latest in Cape Verde real estate.");
   lines.push("");
-
-  const hashtags = ["#CapeVerde", "#AREI", "#CapeVerdeRealEstate"];
-  const islandTag = island.replace(/\s+/g, "");
-  if (islandTag && islandTag !== "CapeVerde") hashtags.push(`#${islandTag}`);
-  lines.push(hashtags.join(" "));
+  lines.push(buildHashtags(listing));
+  lines.push("");
 
   return lines.join("\n");
 }
@@ -211,21 +279,18 @@ async function publishCarousel(sb, body) {
   const ig = getInstagramConfig();
   if (!ig.configured) throw new Error("Instagram not configured. Set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID.");
 
-  // Use client-selected images if provided, otherwise fall back to DB
-  let images;
-  if (Array.isArray(imageUrls) && imageUrls.length > 0) {
-    images = imageUrls.slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
-  } else {
-    const { data: listing, error: dbErr } = await sb
-      .from("v1_feed_cv")
-      .select("image_urls")
-      .eq("id", listingId)
-      .maybeSingle();
-    if (dbErr) throw new Error(`DB error: ${dbErr.message}`);
-    if (!listing) throw new Error(`Listing not found: ${listingId}`);
-    images = [...new Set((listing.image_urls || []).map(resolveImageUrl).filter(Boolean))]
-      .slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
-  }
+  // Always fetch listing metadata (island for location tagging + image fallback)
+  const { data: listingRow, error: dbErr } = await sb
+    .from("v1_feed_cv")
+    .select("image_urls, island")
+    .eq("id", listingId)
+    .maybeSingle();
+  if (dbErr) throw new Error(`DB error: ${dbErr.message}`);
+  if (!listingRow) throw new Error(`Listing not found: ${listingId}`);
+
+  const images = (Array.isArray(imageUrls) && imageUrls.length > 0)
+    ? imageUrls.slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES)
+    : [...new Set((listingRow.image_urls || []).map(resolveImageUrl).filter(Boolean))].slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
 
   if (images.length < 2) throw new Error("Carousel requires at least 2 images. This listing has fewer.");
 
@@ -277,12 +342,18 @@ async function publishCarousel(sb, body) {
   }
 
   // Step 2: create carousel container
+  const locationId = listingRow.island
+    ? await findLocationId(listingRow.island, ig.accessToken, ig.apiVersion)
+    : null;
+  if (locationId) console.log("[social-listing] location_id", locationId, "for island", listingRow.island);
+
   const carouselParams = new URLSearchParams({
     media_type: "CAROUSEL",
     caption: caption.trim(),
     children: containerIds.join(","),
     access_token: ig.accessToken,
   });
+  if (locationId) carouselParams.set("location_id", locationId);
   const carouselRes = await fetch(`${graphBase}/media`, { method: "POST", body: carouselParams });
   const carouselData = await carouselRes.json().catch(() => ({}));
   if (!carouselRes.ok || !carouselData.id) {
