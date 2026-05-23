@@ -3491,9 +3491,13 @@ function MarketNewsView() {
                     <MarketNewsStatusBadge status={item.status} />
                   </span>
                   <span className="hidden md:block">
-                    {item.relevance === "high" && (
+                    {item.relevance === "high" ? (
                       <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-accent-muted text-deep-green">
                         High
+                      </span>
+                    ) : (
+                      <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-surface-3 text-foreground-subtle">
+                        Standard
                       </span>
                     )}
                   </span>
