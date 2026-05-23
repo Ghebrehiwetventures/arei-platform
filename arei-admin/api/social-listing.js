@@ -242,24 +242,17 @@ function buildTemplateCaption(listing) {
   return lines.join("\n");
 }
 
-const CAPTION_SYSTEM_PROMPT = `Write a short Instagram caption for a Cape Verde property listing. Maximum 150 words. Factual, calm, no hype.
+// The LLM writes only the creative opening (hook + one factual sentence).
+// Everything below it — the facts block, source, follow line, hashtags, and the
+// blank-line spacing — is assembled in code so Instagram formatting is reliable
+// (LLMs are unreliable at exact whitespace and number rounding).
+const CAPTION_SYSTEM_PROMPT = `You write the opening of an Instagram caption for a Cape Verde property listing.
 
-Structure:
-1. Hook: price + location, max 10 words
-2. One factual sentence about the property
-3. Key facts on separate lines:
-   Price · €X
-   Size · X m²
-   Bedrooms · X
-   Location · city, island
-   (skip missing fields, never invent)
-4. Source · [source_name]
-5. Follow @capeverderealestateindex for Cape Verde property data.
-6. Max 5 hashtags: always #CapeVerde #AREI, add 1-3 from: #Sal #BoaVista #Santiago #SãoVicente #CapeVerdeRealEstate #CaboVerde
+Return JSON: {"hook": "...", "sentence": "..."}
+- hook: price + location, max 10 words. Format price like €200,700.
+- sentence: one short factual sentence about the property. Never copy the broker description verbatim. State only what the data supports — never invent features.
 
-Rules: no emoji, no exclamation marks, never copy the broker description, never use: exclusive, stunning, luxury, paradise, dream, sought-after
-
-Return caption text only.`;
+Rules: factual and calm, no hype, no emoji, no exclamation marks. Never use: exclusive, stunning, luxury, paradise, dream, sought-after.`;
 
 function buildCaptionUserMessage(listing) {
   const fields = {
@@ -276,8 +269,51 @@ function buildCaptionUserMessage(listing) {
   return JSON.stringify(fields, null, 2);
 }
 
-// AI-written Instagram caption. Falls back to the deterministic template if the
-// OpenAI key is missing or the call fails, so caption generation never breaks.
+// Max 5 hashtags: always #CapeVerde #AREI, then island + general, capped.
+function buildShortHashtags(listing) {
+  const tags = ["#CapeVerde", "#AREI"];
+  const islandTag = {
+    "Sal": "#Sal",
+    "Boa Vista": "#BoaVista",
+    "Santiago": "#Santiago",
+    "São Vicente": "#SãoVicente",
+    "Santo Antão": "#SantoAntao",
+    "Fogo": "#Fogo",
+    "Maio": "#Maio",
+  }[listing.island];
+  if (islandTag) tags.push(islandTag);
+  tags.push("#CapeVerdeRealEstate");
+  return [...new Set(tags)].slice(0, 5).join(" ");
+}
+
+// Assemble the final caption deterministically around the AI hook + sentence.
+function assembleCaption(hook, sentence, listing) {
+  const size = listing.area_sqm ?? listing.property_size_sqm;
+  const location = [listing.city, listing.island].filter(Boolean).join(", ");
+  const lines = [];
+
+  if (hook) lines.push(hook.trim());
+  if (sentence) { lines.push(""); lines.push(sentence.trim()); }
+
+  const facts = [];
+  if (listing.price) facts.push(`Price · ${formatPrice(listing.price, listing.price_period)}`);
+  if (size) facts.push(`Size · ${Math.round(size)} m²`);
+  if (listing.bedrooms) facts.push(`Bedrooms · ${listing.bedrooms}`);
+  if (location) facts.push(`Location · ${location}`);
+  if (facts.length) { lines.push(""); lines.push(...facts); }
+
+  lines.push("");
+  lines.push(`Source · ${sourceName(listing.source_id)}`);
+  lines.push("");
+  lines.push("Follow @capeverderealestateindex for Cape Verde property data.");
+  lines.push("");
+  lines.push(buildShortHashtags(listing));
+
+  return lines.join("\n");
+}
+
+// AI-written caption opening + deterministic structure. Falls back to the old
+// template if the OpenAI key is missing or the call fails.
 async function buildCaption(listing) {
   const apiKey = process.env.OPENAI_API_KEY;
   if (!apiKey) return buildTemplateCaption(listing);
@@ -295,7 +331,8 @@ async function buildCaption(listing) {
           { role: "user", content: buildCaptionUserMessage(listing) },
         ],
         temperature: 0.4,
-        max_tokens: 400,
+        max_tokens: 200,
+        response_format: { type: "json_object" },
       }),
     });
     if (!response.ok) {
@@ -303,8 +340,10 @@ async function buildCaption(listing) {
       return buildTemplateCaption(listing);
     }
     const data = await response.json();
-    const text = data?.choices?.[0]?.message?.content?.trim();
-    return text || buildTemplateCaption(listing);
+    const content = data?.choices?.[0]?.message?.content;
+    const parsed = content ? JSON.parse(content) : {};
+    if (!parsed.hook) return buildTemplateCaption(listing);
+    return assembleCaption(parsed.hook, parsed.sentence, listing);
   } catch (err) {
     console.error("[social-listing] caption LLM error (fallback to template):", err?.message);
     return buildTemplateCaption(listing);
