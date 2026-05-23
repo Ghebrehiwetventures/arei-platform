@@ -83,12 +83,6 @@ function squareCrop(url) {
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1080&fit=cover&output=jpg&q=92&sharp=1`;
 }
 
-// 9:16 vertical for stories — high quality
-function storyCrop(url) {
-  if (!url) return url;
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1920&fit=cover&output=jpg&q=92&sharp=1`;
-}
-
 async function waitUntilReady(ig, containerId, maxAttempts = 20, delayMs = 1500) {
   for (let attempt = 0; attempt < maxAttempts; attempt++) {
     const r = await fetch(
@@ -104,30 +98,6 @@ async function waitUntilReady(ig, containerId, maxAttempts = 20, delayMs = 1500)
   throw new Error(`Container ${containerId} did not finish processing in time`);
 }
 
-async function publishStory(ig, imageUrl) {
-  const graphBase = `https://graph.instagram.com/${ig.apiVersion}/${ig.accountId}`;
-  const params = new URLSearchParams({
-    image_url: storyCrop(imageUrl),
-    media_type: "STORIES",
-    access_token: ig.accessToken,
-  });
-  const containerRes = await fetch(`${graphBase}/media`, { method: "POST", body: params });
-  const containerData = await containerRes.json().catch(() => ({}));
-  if (!containerRes.ok || !containerData.id) {
-    throw new Error(containerData.error?.message || `Story container failed: HTTP ${containerRes.status}`);
-  }
-  await waitUntilReady(ig, containerData.id);
-  const publishParams = new URLSearchParams({
-    creation_id: containerData.id,
-    access_token: ig.accessToken,
-  });
-  const publishRes = await fetch(`${graphBase}/media_publish`, { method: "POST", body: publishParams });
-  const publishData = await publishRes.json().catch(() => ({}));
-  if (!publishRes.ok || !publishData.id) {
-    throw new Error(publishData.error?.message || `Story publish failed: HTTP ${publishRes.status}`);
-  }
-  return publishData.id;
-}
 
 function sourceName(sourceId) {
   return SOURCE_NAMES[sourceId] || sourceId || "Unknown agency";
@@ -434,17 +404,13 @@ async function publishCarousel(sb, body) {
     permalink = pl.permalink || "";
   }
 
-  // Step 5: publish story using first carousel image (non-fatal)
-  let storyPublished = false;
-  try {
-    await publishStory(ig, images[0]);
-    storyPublished = true;
-    console.log("[social-listing] story published after carousel");
-  } catch (storyErr) {
-    console.error("[social-listing] story failed (non-fatal):", storyErr.message);
-  }
+  // Auto-story is intentionally disabled: Instagram's API can only publish a
+  // standalone image as a story — it cannot re-share the feed post with a
+  // tappable link back to it (that's an app-only feature). Share the post to
+  // story manually in the Instagram app to get the linked version.
+  const storyPublished = false;
 
-  // Step 6: log the publish in social_listing_posts (non-fatal if it fails)
+  // Step 5: log the publish in social_listing_posts (non-fatal if it fails)
   const { error: logErr } = await sb.from("social_listing_posts").insert({
     listing_id: listingId,
     platform: DEFAULT_PLATFORM,

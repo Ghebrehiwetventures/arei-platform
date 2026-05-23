@@ -29,7 +29,6 @@ const PUBLISH_STAGES = [
   "Uploading images…",
   "Building carousel…",
   "Publishing to Instagram…",
-  "Posting story…",
 ];
 
 type SchedulePattern = "1_per_day" | "2_per_day" | "3_per_week";
@@ -267,7 +266,7 @@ export function ListingSocialView() {
         caption: caption.trim(),
       });
       setPermalink(result.permalink);
-      setNotice(result.storyPublished ? "Published to Instagram + story." : "Published to Instagram.");
+      setNotice("Published to Instagram.");
       await loadState();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
