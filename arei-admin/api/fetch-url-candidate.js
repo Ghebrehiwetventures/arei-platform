@@ -487,12 +487,15 @@ export default async function handler(req, res) {
     title_pt:         pt.title_pt,
     snippet_pt:       pt.snippet_pt,
     why_it_matters_pt: pt.why_it_matters_pt,
+    enriched_at:           new Date().toISOString(),
+    relevance_score:       enriched.relevance_score ?? null,
+    enrich_recommendation: enriched.recommendation ?? null,
   };
 
   const { data: inserted, error: insertErr } = await sb
     .from("market_news")
     .insert(row)
-    .select("id,title,original_title,source_name,source_url,canonical_url,published_at,category,snippet,why_it_matters,status,relevance,language,country_code,affected_regions,signal_tags,ingestion_source,created_at,title_pt,snippet_pt,why_it_matters_pt")
+    .select("id,title,original_title,source_name,source_url,canonical_url,published_at,category,snippet,why_it_matters,status,relevance,language,country_code,affected_regions,signal_tags,ingestion_source,created_at,title_pt,snippet_pt,why_it_matters_pt,enriched_at,relevance_score,enrich_recommendation")
     .single();
 
   if (insertErr) {
