@@ -101,7 +101,75 @@ Phrasing guardrail:
   - Do not write "can attract foreign investment" or similar phrases unless the source clearly supports that connection.
   - For indirect items, use language like: "This is indirect context for investors" or "The link to the property market is not direct."`;
 
-function buildUserMessage(body) {
+// ── Article body fetcher ───────────────────────────────────────────────────
+// Fetches the source URL and extracts readable article text so OpenAI has
+// the full article content rather than just the RSS snippet.
+// Non-fatal: returns null on any error.
+
+const ARTICLE_FETCH_TIMEOUT = 10_000;
+const ARTICLE_MAX_BYTES = 200 * 1024; // 200 KB
+const USER_AGENT = "AREI-MarketNewsBot/1.0 (+https://capeverderealestateindex.com)";
+
+function stripTags(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function extractArticleText(html) {
+  // Pull text from <p> tags — reasonable proxy for article body on most news sites
+  const paragraphs = [];
+  const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+  let m;
+  while ((m = pRe.exec(html)) !== null) {
+    const text = stripTags(m[1]).trim();
+    if (text.length > 40) paragraphs.push(text);
+  }
+  const body = paragraphs.join(" ").slice(0, 3000); // cap at ~3000 chars
+  return body || null;
+}
+
+async function fetchArticleBody(url) {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ARTICLE_FETCH_TIMEOUT);
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": USER_AGENT, Accept: "text/html,*/*" },
+        signal: controller.signal,
+      });
+      if (!res.ok) return null;
+      const reader = res.body?.getReader();
+      if (!reader) return null;
+      const chunks = [];
+      let total = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done || !value) break;
+        chunks.push(value);
+        total += value.length;
+        if (total >= ARTICLE_MAX_BYTES) { reader.cancel().catch(() => {}); break; }
+      }
+      const bytes = new Uint8Array(total);
+      let off = 0;
+      for (const c of chunks) { bytes.set(c, off); off += c.length; }
+      const html = new TextDecoder().decode(bytes);
+      return extractArticleText(html);
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch {
+    return null;
+  }
+}
+
+function buildUserMessage(body, articleBody) {
   const lines = [
     `Title: ${body.title || "(none)"}`,
     `Original title: ${body.original_title || "(none)"}`,
@@ -113,6 +181,9 @@ function buildUserMessage(body) {
     `Language: ${body.language || "(unknown)"}`,
     `Ingestion source: ${body.ingestion_source || "(unknown)"}`,
   ];
+  if (articleBody) {
+    lines.push(`\nArticle body (extracted from source URL):\n${articleBody}`);
+  }
   return `Candidate:\n${lines.join("\n")}`;
 }
 
@@ -166,6 +237,9 @@ export default async function handler(req, res) {
     return send(res, 400, { error: "title is required" });
   }
 
+  // ── Fetch article body (non-fatal) ─────────────────────────────────────────
+  const articleBody = body.source_url ? await fetchArticleBody(body.source_url) : null;
+
   // ── Call OpenAI ────────────────────────────────────────────────────────────
 
   let aiResponse;
@@ -180,7 +254,7 @@ export default async function handler(req, res) {
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: buildUserMessage(body) },
+          { role: "user", content: buildUserMessage(body, articleBody) },
         ],
         temperature: 0.3,
         max_tokens: 800,
