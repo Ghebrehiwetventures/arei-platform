@@ -514,10 +514,9 @@ async function publishCarousel(sb, body) {
     containerIds.push(data.id);
   }
 
-  // Step 1b: poll each container until FINISHED
-  for (const id of containerIds) {
-    await waitUntilReady(ig, id);
-  }
+  // Step 1b: poll all containers concurrently until FINISHED (sequential polling
+  // of 7 images could exceed the function timeout).
+  await Promise.all(containerIds.map((id) => waitUntilReady(ig, id)));
 
   // Step 2: create carousel container
   const locationId = (listingRow.city || listingRow.island)
@@ -718,36 +717,43 @@ export default async function handler(req, res) {
         send(res, 401, { error: "Unauthorized" });
         return;
       }
+      // Process ONE item per run. A single carousel publish (with parallel image
+      // polling) finishes well under the function timeout, so the status update
+      // always runs — items never get stuck "pending". Running the cron every
+      // minute drains the queue one post at a time. Because each publish finishes
+      // before the next cron fires, overlapping runs don't double-publish.
       const { data: items } = await sb
         .from("social_listing_queue")
         .select("*")
         .eq("status", "pending")
         .lte("scheduled_at", new Date().toISOString())
-        .order("scheduled_at", { ascending: true });
-      const results = [];
-      for (const item of items || []) {
-        try {
-          const result = await publishCarousel(sb, {
-            listingId: item.listing_id,
-            caption: item.caption,
-            imageUrls: item.image_urls,
-          });
-          await sb.from("social_listing_queue").update({
-            status: "published",
-            post_id: result.postId,
-            permalink: result.permalink,
-            story_published: result.storyPublished,
-          }).eq("id", item.id);
-          results.push({ id: item.id, status: "published" });
-        } catch (err) {
-          await sb.from("social_listing_queue").update({
-            status: "failed",
-            error_message: err.message,
-          }).eq("id", item.id);
-          results.push({ id: item.id, status: "failed", error: err.message });
-        }
+        .order("scheduled_at", { ascending: true })
+        .limit(1);
+      const item = (items || [])[0];
+      if (!item) {
+        send(res, 200, { processed: 0 });
+        return;
       }
-      send(res, 200, { processed: results.length, results });
+      try {
+        const result = await publishCarousel(sb, {
+          listingId: item.listing_id,
+          caption: item.caption,
+          imageUrls: item.image_urls,
+        });
+        await sb.from("social_listing_queue").update({
+          status: "published",
+          post_id: result.postId,
+          permalink: result.permalink,
+          story_published: result.storyPublished,
+        }).eq("id", item.id);
+        send(res, 200, { processed: 1, id: item.id, status: "published" });
+      } catch (err) {
+        await sb.from("social_listing_queue").update({
+          status: "failed",
+          error_message: err.message,
+        }).eq("id", item.id);
+        send(res, 200, { processed: 1, id: item.id, status: "failed", error: err.message });
+      }
       return;
     }
 
