@@ -2695,8 +2695,31 @@ function MarketNewsEditPanel({
     ? new Date(item.published_at).toLocaleDateString()
     : "—";
 
+  const isAutoEnriched = !!item.enriched_at;
+
   return (
     <div className="px-4 pb-5 pt-2 border-t border-border bg-surface-2/50 space-y-4">
+      {/* Auto-enriched banner */}
+      {isAutoEnriched && (
+        <div className="flex items-center gap-3 px-3 py-2 rounded border border-border bg-surface-2 text-[11px]">
+          <span className="text-foreground-subtle">Auto-enriched</span>
+          {item.relevance_score !== null && (
+            <span className="font-mono text-foreground-muted">{item.relevance_score}/100</span>
+          )}
+          {item.enrich_recommendation && (
+            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${
+              item.enrich_recommendation === "publish"
+                ? "bg-emerald-100 text-emerald-700"
+                : item.enrich_recommendation === "archive"
+                  ? "bg-gray-100 text-gray-500"
+                  : "bg-amber-100 text-amber-700"
+            }`}>
+              {item.enrich_recommendation.replace("_", " ")}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Meta */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-foreground-subtle pt-1">
         <span>Source: <span className="text-foreground-muted">{item.source_name}</span></span>
@@ -2865,7 +2888,7 @@ function MarketNewsEditPanel({
               onClick={handleEnrich}
               className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
             >
-              Rewrite / Enrich
+              {isAutoEnriched ? "Re-enrich" : "Rewrite / Enrich"}
             </button>
           )}
 
@@ -3059,6 +3082,7 @@ function MarketNewsView() {
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [showArchiveRecs, setShowArchiveRecs] = React.useState(false);
 
   // ── Add URL ──────────────────────────────────────────────────────────────
   const [addUrlOpen, setAddUrlOpen] = React.useState(false);
@@ -3239,25 +3263,19 @@ function MarketNewsView() {
       )}
 
       {!loading && items.length > 0 && (
-        <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
-          {/* Table header */}
-          <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_120px_80px_64px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
-            <span>Title</span>
-            <span>Source</span>
-            <span>Published</span>
-            <span>Category</span>
-            <span>Ingest</span>
-            <span>Status</span>
-            <span>Rel</span>
-            <span />
-          </div>
+        <>
+        {/* Split archive-recommended items off the candidate list */}
+        {(() => {
+          const isArchiveRec = (r: MarketNewsRow) =>
+            statusTab === "candidate" && r.enrich_recommendation === "archive";
+          const mainItems   = items.filter((r) => !isArchiveRec(r));
+          const archiveItems = items.filter(isArchiveRec);
 
-          {items.map((item) => {
+          const renderRow = (item: MarketNewsRow) => {
             const isExpanded = expandedId === item.id;
             const pubDate = item.published_at
               ? new Date(item.published_at).toLocaleDateString()
               : "—";
-
             return (
               <article key={item.id}>
                 {/* ── Row ── */}
@@ -3285,13 +3303,23 @@ function MarketNewsView() {
                     <MarketNewsStatusBadge status={item.status} />
                   </span>
                   <span className="hidden md:block">
-                    {item.relevance === "high" ? (
+                    {item.relevance_score !== null ? (
+                      <span className={`inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded ${
+                        item.relevance_score >= 70
+                          ? "bg-emerald-100 text-emerald-700"
+                          : item.relevance_score >= 40
+                            ? "bg-amber-100 text-amber-700"
+                            : "bg-surface-3 text-foreground-subtle"
+                      }`}>
+                        {item.relevance_score}
+                      </span>
+                    ) : item.relevance === "high" ? (
                       <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-accent-muted text-deep-green">
                         High
                       </span>
                     ) : (
                       <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-surface-3 text-foreground-subtle">
-                        Standard
+                        Std
                       </span>
                     )}
                   </span>
@@ -3299,8 +3327,6 @@ function MarketNewsView() {
                     ▼
                   </span>
                 </button>
-
-                {/* ── Expanded edit panel ── */}
                 {isExpanded && (
                   <MarketNewsEditPanel
                     item={item}
@@ -3312,8 +3338,46 @@ function MarketNewsView() {
                 )}
               </article>
             );
-          })}
+          };
+
+          return (
+            <>
+        <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
+          {/* Table header */}
+          <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_120px_80px_64px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
+            <span>Title</span>
+            <span>Source</span>
+            <span>Published</span>
+            <span>Category</span>
+            <span>Ingest</span>
+            <span>Status</span>
+            <span>Score</span>
+            <span />
+          </div>
+
+          {mainItems.map(renderRow)}
         </div>
+
+        {archiveItems.length > 0 && (
+          <div className="mt-2">
+            <button
+              type="button"
+              onClick={() => setShowArchiveRecs((v) => !v)}
+              className="text-[11px] text-foreground-subtle hover:text-foreground-muted transition-colors"
+            >
+              {showArchiveRecs ? "▲" : "▼"} {showArchiveRecs ? "Hide" : "Show"} {archiveItems.length} archive recommendation{archiveItems.length !== 1 ? "s" : ""}
+            </button>
+            {showArchiveRecs && (
+              <div className="mt-2 surface-1 rounded border border-border overflow-hidden divide-y divide-border opacity-60">
+                {archiveItems.map(renderRow)}
+              </div>
+            )}
+          </div>
+        )}
+            </>
+          );
+        })()}
+        </>
       )}
     </div>
   );
