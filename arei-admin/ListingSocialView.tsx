@@ -174,9 +174,8 @@ export function ListingSocialView() {
     setPermalink("");
     setError("");
     setNotice("");
-    // Start with nothing selected — user clicks images in the order
-    // they want them in the carousel.
-    setSelectedImages([]);
+    const imgs = listings.find((l) => l.id === selectedId)?.image_urls || [];
+    setSelectedImages(imgs.slice(0, 10));
 
     setCaptionLoading(true);
     apiFetch<{ caption: string }>("POST", { action: "generate_caption", listingId: selectedId })
@@ -459,9 +458,7 @@ export function ListingSocialView() {
                         }`}
                       />
                       {active && (
-                        <span className="absolute top-1 left-1 bg-green text-black text-[10px] font-mono font-semibold px-1.5 py-0.5 rounded leading-tight pointer-events-none">
-                          {position + 1}
-                        </span>
+                        <div className="absolute inset-0 ring-2 ring-inset ring-green pointer-events-none rounded-sm" />
                       )}
                     </div>
                   );
