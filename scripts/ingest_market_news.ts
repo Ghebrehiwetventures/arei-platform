@@ -18,9 +18,11 @@
  *   npx ts-node --transpile-only scripts/ingest_market_news.ts --commit --enrich
  *     → inserts candidates AND runs EN enrichment + PT translation via AI.
  *       Enriched fields (title, snippet, why_it_matters, category, signal_tags,
- *       affected_regions, title_pt, snippet_pt, why_it_matters_pt) are written
- *       back to the candidate row. Curator only needs to Publish or Archive.
- *       Requires OPENAI_API_KEY and ANTHROPIC_API_KEY in .env.
+ *       affected_regions, relevance_score, enrich_recommendation, enriched_at,
+ *       title_pt, snippet_pt, why_it_matters_pt) are written back to the row.
+ *       Curator only needs to review and Publish or Archive.
+ *
+ * Dry-run with --enrich logs which items would be enriched but never calls APIs.
  *
  * Per-source cap: at most MAX_PER_SOURCE new candidates are inserted per
  * source per run. Items beyond the cap are skipped and counted separately.
@@ -28,8 +30,10 @@
  * Required env (loaded from repo root .env):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
- *   OPENAI_API_KEY      (required when --enrich is passed)
- *   ANTHROPIC_API_KEY   (required when --enrich is passed)
+ *
+ * Required when --enrich is passed:
+ *   OPENAI_API_KEY
+ *   ANTHROPIC_API_KEY   (optional — PT translation skipped if absent)
  *
  * Exit codes:
  *   0  success (or dry-run completed)
@@ -44,7 +48,7 @@ import { MARKET_NEWS_SOURCES, MarketNewsSource } from "./lib/market-news-sources
 import { parseFeedItems, transformFeedItem, MarketNewsInsert } from "./lib/market-news-transform";
 import { loadExistingKeys, isDuplicate } from "./lib/market-news-dedup";
 import { insertAdminNotification } from "./lib/notifications";
-import { enrichCandidate, translateToPt } from "./lib/market-news-enrich";
+import { enrichAndTranslate } from "./lib/market-news-enrich";
 
 // Load from repo root .env. Matches the pattern in snapshot_source_health.ts —
 // tries the conventional relative path first, then a known absolute fallback
@@ -102,6 +106,7 @@ async function fetchFeed(source: MarketNewsSource): Promise<string> {
 
 // ── Insert ─────────────────────────────────────────────────────────────────
 
+// Returns the inserted row's id, or null if it was a duplicate (23505).
 async function insertCandidate(
   sb: SupabaseClient,
   row: MarketNewsInsert
@@ -117,7 +122,65 @@ async function insertCandidate(
     if (error.code === "23505") return null;
     throw new Error(error.message);
   }
+
   return (data as { id: string } | null)?.id ?? null;
+}
+
+async function enrichAndUpdate(
+  sb: SupabaseClient,
+  id: string,
+  row: MarketNewsInsert,
+  openaiKey: string,
+  anthropicKey: string | null
+): Promise<{ ok: boolean; recommendation?: string; ptError?: string; error?: string }> {
+  let result;
+  try {
+    result = await enrichAndTranslate(
+      {
+        title:            row.title,
+        original_title:   row.original_title ?? null,
+        snippet:          row.snippet,
+        source_name:      row.source_name,
+        source_url:       row.source_url,
+        category:         row.category,
+        published_at:     row.published_at ?? null,
+        language:         row.language ?? null,
+        ingestion_source: row.ingestion_source ?? null,
+      },
+      openaiKey,
+      anthropicKey
+    );
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+
+  const { error: updateError } = await sb
+    .from("market_news")
+    .update({
+      title:                 result.title,
+      snippet:               result.snippet,
+      why_it_matters:        result.why_it_matters,
+      category:              result.category,
+      signal_tags:           result.signal_tags,
+      affected_regions:      result.affected_regions,
+      relevance_score:       result.relevance_score,
+      enrich_recommendation: result.enrich_recommendation,
+      enriched_at:           new Date().toISOString(),
+      title_pt:              result.title_pt,
+      snippet_pt:            result.snippet_pt,
+      why_it_matters_pt:     result.why_it_matters_pt,
+    })
+    .eq("id", id);
+
+  if (updateError) {
+    return { ok: false, error: `DB update failed: ${updateError.message}` };
+  }
+
+  return {
+    ok: true,
+    recommendation: result.enrich_recommendation,
+    ptError: result._pt_error,
+  };
 }
 
 // ── Admin notification emit ────────────────────────────────────────────────
@@ -169,9 +232,10 @@ interface SourceResult {
   source: MarketNewsSource;
   fetched: number;
   inserted: number;
-  enriched: number;
   skippedDup: number;
   skippedCap: number;
+  enriched: number;
+  enrichFailed: number;
   error: string | null;
 }
 
@@ -181,15 +245,16 @@ async function processSource(
   existingKeys: Set<string>,
   dryRun: boolean,
   openaiKey: string | null,
-  anthropicKey: string | null,
+  anthropicKey: string | null
 ): Promise<SourceResult> {
   const result: SourceResult = {
     source,
     fetched: 0,
     inserted: 0,
-    enriched: 0,
     skippedDup: 0,
     skippedCap: 0,
+    enriched: 0,
+    enrichFailed: 0,
     error: null,
   };
 
@@ -224,6 +289,9 @@ async function processSource(
 
     if (dryRun) {
       log(`  [dry-run] would insert: ${row.title.slice(0, 80)}`);
+      if (ENRICH) {
+        log(`  [dry-run] would enrich: ${row.title.slice(0, 80)}`);
+      }
       // Add to set so dry-run dedup works consistently across sources
       existingKeys.add(row.canonical_url);
       result.inserted++;
@@ -245,60 +313,18 @@ async function processSource(
         continue;
       }
 
-      // ── Auto-enrich ─────────────────────────────────────────────────────
-      if (ENRICH && openaiKey && anthropicKey && insertedId) {
-        try {
-          const enrichInput = {
-            title:            row.title,
-            original_title:   row.original_title ?? null,
-            snippet:          row.snippet ?? "",
-            source_name:      row.source_name,
-            source_url:       row.source_url,
-            category:         row.category ?? "Economy",
-            published_at:     row.published_at ?? null,
-            language:         row.language ?? null,
-            ingestion_source: row.ingestion_source ?? null,
-          };
-          const enriched = await enrichCandidate(enrichInput, openaiKey);
-
-          // Only write columns that exist in the schema.
-          // relevance_score and recommendation are AI hints — not stored in DB.
-          const update: Record<string, unknown> = {
-            title:            enriched.title,
-            snippet:          enriched.snippet,
-            why_it_matters:   enriched.why_it_matters,
-            category:         enriched.category,
-            signal_tags:      enriched.signal_tags,
-            affected_regions: enriched.affected_regions,
-          };
-
-          // PT translation — skip for archive-recommended items
-          if (enriched.recommendation !== "archive" && anthropicKey) {
-            try {
-              const pt = await translateToPt(
-                { title: enriched.title, snippet: enriched.snippet, why_it_matters: enriched.why_it_matters },
-                anthropicKey,
-              );
-              update.title_pt          = pt.title_pt;
-              update.snippet_pt        = pt.snippet_pt;
-              update.why_it_matters_pt = pt.why_it_matters_pt;
-            } catch (ptErr) {
-              log(`  [warn] PT translation failed for "${enriched.title.slice(0, 60)}": ${ptErr instanceof Error ? ptErr.message : String(ptErr)}`);
-            }
-          }
-
-          const { error: updateErr } = await sb
-            .from("market_news")
-            .update(update)
-            .eq("id", insertedId);
-
-          if (updateErr) {
-            log(`  [warn] Enrich update failed for id=${insertedId}: ${updateErr.message}`);
+      if (ENRICH && openaiKey && insertedId) {
+        const enrichOut = await enrichAndUpdate(sb, insertedId, row, openaiKey, anthropicKey);
+        if (enrichOut.ok) {
+          result.enriched++;
+          if (enrichOut.ptError) {
+            log(`  [warn] PT translation failed for "${row.title.slice(0, 60)}": ${enrichOut.ptError}`);
           } else {
-            result.enriched++;
+            log(`  [enrich] ${enrichOut.recommendation} — ${row.title.slice(0, 70)}`);
           }
-        } catch (enrichErr) {
-          log(`  [warn] Enrichment failed for "${row.title.slice(0, 60)}": ${enrichErr instanceof Error ? enrichErr.message : String(enrichErr)}`);
+        } else {
+          result.enrichFailed++;
+          log(`  [error] enrich failed for "${row.title.slice(0, 60)}": ${enrichOut.error}`);
         }
       }
     }
@@ -312,14 +338,16 @@ async function processSource(
 async function main() {
   const started = new Date().toISOString();
 
-  banner(
-    `[ingest-market-news] ${started}` +
-    (DRY_RUN ? "  ⚠  DRY RUN — pass --commit to write" : "  ✎  COMMIT MODE")
-  );
+  const modeLabel = [
+    DRY_RUN ? "DRY RUN — pass --commit to write" : "COMMIT MODE",
+    ENRICH   ? "+ ENRICH" : "",
+  ].filter(Boolean).join(" ");
 
-  const url         = process.env.SUPABASE_URL?.trim();
-  const key         = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
-  const openaiKey   = process.env.OPENAI_API_KEY?.trim() ?? null;
+  banner(`[ingest-market-news] ${started}  ${DRY_RUN ? "⚠" : "✎"}  ${modeLabel}`);
+
+  const url          = process.env.SUPABASE_URL?.trim();
+  const key          = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const openaiKey    = process.env.OPENAI_API_KEY?.trim() ?? null;
   const anthropicKey = process.env.ANTHROPIC_API_KEY?.trim() ?? null;
 
   if (!url || !key) {
@@ -327,9 +355,13 @@ async function main() {
     process.exit(1);
   }
 
-  if (ENRICH && (!openaiKey || !anthropicKey)) {
-    log("Error: --enrich requires OPENAI_API_KEY and ANTHROPIC_API_KEY to be set.");
+  if (ENRICH && !openaiKey) {
+    log("Error: --enrich requires OPENAI_API_KEY to be set.");
     process.exit(1);
+  }
+
+  if (ENRICH && !anthropicKey) {
+    log("Warning: ANTHROPIC_API_KEY not set — PT translation will be skipped.");
   }
 
   const sb = createClient(url, key);
@@ -344,7 +376,7 @@ async function main() {
     process.exit(1);
   }
 
-  const activeSources = MARKET_NEWS_SOURCES.filter((s) => s.active !== false);
+  const activeSources  = MARKET_NEWS_SOURCES.filter((s) => s.active !== false);
   const enabledSources = activeSources.filter((s) => s.enabled !== false);
   const disabledSources = activeSources.filter((s) => s.enabled === false);
 
@@ -381,25 +413,32 @@ async function main() {
 
   // ── Summary ──────────────────────────────────────────────────────────────
 
-  const totalFetched  = results.reduce((n, r) => n + r.fetched, 0);
-  const totalInserted = results.reduce((n, r) => n + r.inserted, 0);
-  const totalEnriched = results.reduce((n, r) => n + r.enriched, 0);
-  const totalDup      = results.reduce((n, r) => n + r.skippedDup, 0);
-  const totalCapped   = results.reduce((n, r) => n + r.skippedCap, 0);
-  const totalErrors   = results.filter((r) => r.error !== null).length;
+  const totalFetched      = results.reduce((n, r) => n + r.fetched, 0);
+  const totalInserted     = results.reduce((n, r) => n + r.inserted, 0);
+  const totalEnriched     = results.reduce((n, r) => n + r.enriched, 0);
+  const totalEnrichFailed = results.reduce((n, r) => n + r.enrichFailed, 0);
+  const totalDup          = results.reduce((n, r) => n + r.skippedDup, 0);
+  const totalCapped       = results.reduce((n, r) => n + r.skippedCap, 0);
+  const totalErrors       = results.filter((r) => r.error !== null).length;
 
   banner("Summary");
   log(`Sources enabled:      ${enabledSources.length}`);
   log(`Sources disabled:     ${disabledSources.length}`);
   log(`Items seen:           ${totalFetched}`);
   log(`Candidates inserted:  ${totalInserted}${DRY_RUN ? " (dry-run, not written)" : ""}`);
-  if (ENRICH && !DRY_RUN) {
-    log(`Enriched:             ${totalEnriched} / ${totalInserted}`);
+  if (ENRICH) {
+    log(`Enriched:             ${totalEnriched}${DRY_RUN ? " (dry-run, not written)" : ""}`);
+    if (totalEnrichFailed > 0) {
+      log(`Enrich failed:        ${totalEnrichFailed}`);
+    }
   }
   log(`Skipped (dup/no URL): ${totalDup}`);
   log(`Skipped (cap):        ${totalCapped}`);
   log(`Source errors:        ${totalErrors}`);
-  if (DRY_RUN) log("\n⚠  DRY RUN — pass --commit to write candidates to the database.");
+  if (DRY_RUN) {
+    const enrichHint = !ENRICH ? " Combine with --enrich to also auto-enrich each candidate." : "";
+    log(`\n⚠  DRY RUN — pass --commit to write candidates to the database.${enrichHint}`);
+  }
 
   if (totalErrors === enabledSources.length && enabledSources.length > 0) {
     log("\nAll sources failed.");

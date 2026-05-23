@@ -233,4 +233,7 @@ export interface MarketNewsRow {
   title_pt: string | null;
   snippet_pt: string | null;
   why_it_matters_pt: string | null;
+  enriched_at: string | null;
+  relevance_score: number | null;
+  enrich_recommendation: "publish" | "keep_candidate" | "archive" | null;
 }
