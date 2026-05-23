@@ -72,9 +72,18 @@ function resolveImageUrl(url) {
     .replace(/\.webp$/, "");
 }
 
+// Filter only GENUINELY small thumbnails. Real-estate full images often carry a
+// dimension suffix (e.g. -1024x768.jpg), so we must not drop those — only drop
+// when the largest dimension is small (<=400px) or the name is an explicit thumb.
 function isLikelyThumbnail(url) {
   if (!url) return true;
-  return /-\d{2,4}x\d{2,4}(\.|$)/.test(url) || /[_-](thumb|thumbnail|small|tiny|xs|sm)\b/i.test(url);
+  if (/[_-](thumbnail|thumb)\b/i.test(url)) return true;
+  const m = url.match(/-(\d{2,4})x(\d{2,4})(?:[._-]|$|\?)/);
+  if (m) {
+    const max = Math.max(parseInt(m[1], 10), parseInt(m[2], 10));
+    if (max <= 400) return true;
+  }
+  return false;
 }
 
 // 1:1 square for carousel items — high quality
