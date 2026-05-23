@@ -904,10 +904,17 @@ export async function getMarketNewsQueue(status: MarketNewsStatus): Promise<Mark
   return (data ?? []) as MarketNewsRow[];
 }
 
-export async function updateMarketNewsStatus(id: string, status: MarketNewsStatus): Promise<void> {
+export async function updateMarketNewsStatus(id: string, status: MarketNewsStatus, currentPublishedAt?: string | null): Promise<void> {
+  // When publishing, stamp published_at = now() if it's missing or in the past.
+  // This ensures newly published articles sort to the top of the public feed.
+  const extra: Record<string, unknown> = {};
+  if (status === "published" && !currentPublishedAt) {
+    extra.published_at = new Date().toISOString();
+  }
+
   const { error } = await supabaseAuth
     .from("market_news")
-    .update({ status })
+    .update({ status, ...extra })
     .eq("id", id);
 
   if (error) {

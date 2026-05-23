@@ -3244,7 +3244,8 @@ function MarketNewsView() {
     setSaving(true);
     setError(null);
     try {
-      await updateMarketNewsStatus(id, status);
+      const item = items.find((r) => r.id === id);
+      await updateMarketNewsStatus(id, status, item?.published_at);
       // Remove from current list and close panel
       setItems((prev) => prev.filter((r) => r.id !== id));
       setExpandedId(null);

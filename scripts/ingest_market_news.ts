@@ -66,6 +66,8 @@ const DRY_RUN = !COMMIT;
 // --enrich: after each insert, run EN enrichment (OpenAI) + PT translation (Anthropic).
 const ENRICH = process.argv.includes("--enrich");
 const MAX_PER_SOURCE = 50;
+// Articles older than this are skipped — stale news has no value for investors.
+const MAX_AGE_DAYS = 90;
 const FETCH_TIMEOUT_MS = 15_000;
 const USER_AGENT =
   "AREI-MarketNewsBot/1.0 (+https://capeverderealestateindex.com)";
@@ -234,6 +236,7 @@ interface SourceResult {
   inserted: number;
   skippedDup: number;
   skippedCap: number;
+  skippedOld: number;
   enriched: number;
   enrichFailed: number;
   error: string | null;
@@ -253,6 +256,7 @@ async function processSource(
     inserted: 0,
     skippedDup: 0,
     skippedCap: 0,
+    skippedOld: 0,
     enriched: 0,
     enrichFailed: 0,
     error: null,
@@ -279,6 +283,15 @@ async function processSource(
     if (isDuplicate(row.canonical_url, row.source_url, existingKeys)) {
       result.skippedDup++;
       continue;
+    }
+
+    // Age filter: skip articles older than MAX_AGE_DAYS
+    if (row.published_at) {
+      const ageMs = Date.now() - new Date(row.published_at).getTime();
+      if (ageMs > MAX_AGE_DAYS * 24 * 60 * 60 * 1000) {
+        result.skippedOld++;
+        continue;
+      }
     }
 
     // Per-source cap: stop inserting once MAX_PER_SOURCE is reached
@@ -405,6 +418,9 @@ async function main() {
         log(`  Enriched: ${result.enriched} / ${result.inserted}`);
       }
       log(`  Skipped:  ${result.skippedDup} duplicates / no URL`);
+      if (result.skippedOld > 0) {
+        log(`  Old:      ${result.skippedOld} articles older than ${MAX_AGE_DAYS} days`);
+      }
       if (result.skippedCap > 0) {
         log(`  Capped:   ${result.skippedCap} items beyond per-source limit of ${MAX_PER_SOURCE}`);
       }
@@ -418,6 +434,7 @@ async function main() {
   const totalEnriched     = results.reduce((n, r) => n + r.enriched, 0);
   const totalEnrichFailed = results.reduce((n, r) => n + r.enrichFailed, 0);
   const totalDup          = results.reduce((n, r) => n + r.skippedDup, 0);
+  const totalOld          = results.reduce((n, r) => n + r.skippedOld, 0);
   const totalCapped       = results.reduce((n, r) => n + r.skippedCap, 0);
   const totalErrors       = results.filter((r) => r.error !== null).length;
 
@@ -433,6 +450,7 @@ async function main() {
     }
   }
   log(`Skipped (dup/no URL): ${totalDup}`);
+  log(`Skipped (too old):    ${totalOld}`);
   log(`Skipped (cap):        ${totalCapped}`);
   log(`Source errors:        ${totalErrors}`);
   if (DRY_RUN) {
