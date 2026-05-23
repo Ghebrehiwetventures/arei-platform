@@ -67,16 +67,21 @@ function resolveImageUrl(url) {
     .replace(/\.webp$/, "");
 }
 
-// 1:1 square for carousel items
-function squareCrop(url) {
-  if (!url) return url;
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1080&fit=cover&output=jpg`;
+function isLikelyThumbnail(url) {
+  if (!url) return true;
+  return /-\d{2,4}x\d{2,4}(\.|$)/.test(url) || /[_-](thumb|thumbnail|small|tiny|xs|sm)\b/i.test(url);
 }
 
-// 9:16 vertical for stories
+// 1:1 square for carousel items — high quality
+function squareCrop(url) {
+  if (!url) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1080&fit=cover&output=jpg&q=92&sharp=1`;
+}
+
+// 9:16 vertical for stories — high quality
 function storyCrop(url) {
   if (!url) return url;
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1920&fit=cover&output=jpg`;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1920&fit=cover&output=jpg&q=92&sharp=1`;
 }
 
 async function waitUntilReady(ig, containerId, maxAttempts = 20, delayMs = 1500) {
@@ -297,7 +302,7 @@ async function listListings(sb) {
     .map((row) => ({
       ...row,
       source_name: sourceName(row.source_id),
-      image_urls: [...new Set((row.image_urls || []).map(resolveImageUrl).filter(Boolean))],
+      image_urls: [...new Set((row.image_urls || []).map(resolveImageUrl).filter((u) => u && !isLikelyThumbnail(u)))],
       cover_image_url: resolveImageUrl(row.cover_image_url),
       listing_url: `https://www.capeverderealestateindex.com/listing/${row.id}`,
     }));
@@ -335,7 +340,7 @@ async function publishCarousel(sb, body) {
 
   const images = (Array.isArray(imageUrls) && imageUrls.length > 0)
     ? imageUrls.slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES)
-    : [...new Set((listingRow.image_urls || []).map(resolveImageUrl).filter(Boolean))].slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
+    : [...new Set((listingRow.image_urls || []).map(resolveImageUrl).filter((u) => u && !isLikelyThumbnail(u)))].slice(0, INSTAGRAM_MAX_CAROUSEL_IMAGES);
 
   if (images.length < 2) throw new Error("Carousel requires at least 2 images. This listing has fewer.");
 
@@ -509,12 +514,12 @@ export default async function handler(req, res) {
         .order("scheduled_at", { ascending: true })
         .limit(50);
       if (error) throw new Error(error.message);
-      send(res, 200, { queue: data || [] });
+      send(res, 200, { items: data || [] });
       return;
     }
 
     if (body.action === "remove_from_queue") {
-      const { id } = body;
+      const id = body.id || body.queueId;
       if (!id) { send(res, 400, { error: "id required" }); return; }
       const { error } = await sb
         .from("social_listing_queue")
@@ -523,6 +528,13 @@ export default async function handler(req, res) {
         .eq("status", "pending");
       if (error) throw new Error(error.message);
       send(res, 200, { removed: true });
+      return;
+    }
+
+    if (body.action === "clear_published") {
+      const { error } = await sb.from("social_listing_posts").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (error) throw new Error(error.message);
+      send(res, 200, { cleared: true });
       return;
     }
 

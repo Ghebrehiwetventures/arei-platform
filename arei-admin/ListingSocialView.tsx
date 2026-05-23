@@ -604,7 +604,24 @@ export function ListingSocialView() {
 
       {published.length > 0 && (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-foreground font-mono">Published ({published.length})</h3>
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold text-foreground font-mono">Published ({published.length})</h3>
+            <button
+              type="button"
+              onClick={async () => {
+                if (!confirm("Clear all published history? Listings will reappear in the picker.")) return;
+                try {
+                  await apiFetch("POST", { action: "clear_published" });
+                  await loadState();
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : String(err));
+                }
+              }}
+              className="text-[11px] font-mono text-foreground-muted hover:text-red transition-colors"
+            >
+              Reset history
+            </button>
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3">
             {published.map((post) => (
               <div key={post.id} className="surface-1 border border-border rounded p-3 text-xs font-mono space-y-2">
