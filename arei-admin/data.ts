@@ -955,6 +955,231 @@ export interface AdminNotification {
   created_at: string;
 }
 
+export type AdminSignalTone = "ok" | "info" | "warning" | "critical";
+
+export interface AdminSignalMetric {
+  key: string;
+  label: string;
+  value: string;
+  detail: string;
+  tone: AdminSignalTone;
+}
+
+export interface AdminSignalEvent {
+  id: string;
+  category: string;
+  title: string;
+  body: string;
+  at: string;
+  tone: AdminSignalTone;
+  href?: string;
+}
+
+export interface AdminSignalDigest {
+  generatedAt: string;
+  metrics: AdminSignalMetric[];
+  events: AdminSignalEvent[];
+}
+
+interface FeedSignalRow {
+  id: string;
+  title: string | null;
+  source_id: string | null;
+  price: number | null;
+  island: string | null;
+  image_urls: string[] | null;
+  has_valid_images: boolean | null;
+  first_seen_at: string | null;
+  updated_at: string | null;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function sinceIso(days: number): string {
+  return new Date(Date.now() - days * DAY_MS).toISOString();
+}
+
+function shortDate(iso: string | null | undefined): string {
+  if (!iso) return "No timestamp";
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+function pct(part: number, total: number): number {
+  if (!total) return 0;
+  return Math.round((part / total) * 100);
+}
+
+export async function getAdminSignalDigest(): Promise<AdminSignalDigest> {
+  const now = new Date().toISOString();
+  const sevenDaysAgo = sinceIso(7);
+  const thirtyDaysAgo = sinceIso(30);
+
+  const [
+    stats,
+    publishedNewsCountResult,
+    candidateNewsCountResult,
+    latestPublishedNewsResult,
+    recentlyUpdatedNewsResult,
+    feedRowsResult,
+  ] = await Promise.all([
+    getDashboardStats(),
+    supabaseAuth
+      .from("market_news")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published")
+      .gte("updated_at", sevenDaysAgo),
+    supabaseAuth
+      .from("market_news")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "candidate"),
+    supabaseAuth
+      .from("market_news")
+      .select("id,title,source_name,published_at,updated_at,source_url")
+      .eq("status", "published")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabaseAuth
+      .from("market_news")
+      .select("id,title,status,source_name,published_at,updated_at,source_url")
+      .gte("updated_at", sevenDaysAgo)
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("v1_feed_cv")
+      .select("id,title,source_id,price,island,image_urls,has_valid_images,first_seen_at,updated_at")
+      .order("first_seen_at", { ascending: false, nullsFirst: false })
+      .limit(2000),
+  ]);
+
+  if (publishedNewsCountResult.error) {
+    console.error("[Admin] published news signal failed:", publishedNewsCountResult.error.message);
+  }
+  if (candidateNewsCountResult.error) {
+    console.error("[Admin] candidate news signal failed:", candidateNewsCountResult.error.message);
+  }
+  if (latestPublishedNewsResult.error) {
+    console.error("[Admin] latest published news signal failed:", latestPublishedNewsResult.error.message);
+  }
+  if (recentlyUpdatedNewsResult.error) {
+    console.error("[Admin] updated news signal failed:", recentlyUpdatedNewsResult.error.message);
+  }
+  if (feedRowsResult.error) {
+    console.error("[Admin] feed signal failed:", feedRowsResult.error.message);
+  }
+
+  const feedRows = (feedRowsResult.data ?? []) as FeedSignalRow[];
+  const newListings7d = feedRows.filter((r) => r.first_seen_at && r.first_seen_at >= sevenDaysAgo);
+  const newListings30d = feedRows.filter((r) => r.first_seen_at && r.first_seen_at >= thirtyDaysAgo);
+  const withImages = feedRows.filter((r) => r.has_valid_images || (r.image_urls?.length ?? 0) > 0).length;
+  const withPrice = feedRows.filter((r) => Number(r.price ?? 0) > 0).length;
+  const sourceIds = new Set(feedRows.map((r) => r.source_id).filter(Boolean));
+  const nonStubSourceRows = stats.sourceRows.filter((r) => !r.isStub && r.marketId === "cv");
+  const weakSources = nonStubSourceRows.filter((r) => r.grade === "D" || r.feed_conversion_pct < 70);
+  const staleSources = nonStubSourceRows.filter((r) => {
+    if (!r.last_updated_at) return true;
+    return new Date(r.last_updated_at).getTime() < Date.now() - 7 * DAY_MS;
+  });
+  const sourceIssueIds = new Set([...weakSources, ...staleSources].map((r) => r.source_id));
+
+  const publishedNews7d = publishedNewsCountResult.count ?? 0;
+  const candidateNews = candidateNewsCountResult.count ?? 0;
+  const latestPublishedNews = latestPublishedNewsResult.data?.[0] ?? null;
+  const latestListing = feedRows[0] ?? null;
+  const healthTone: AdminSignalTone =
+    weakSources.length > 0 || staleSources.length > 0 ? "warning" : "ok";
+
+  const metrics: AdminSignalMetric[] = [
+    {
+      key: "news",
+      label: "News activity",
+      value: String(publishedNews7d),
+      detail: `published/updated · ${candidateNews} candidates · latest ${shortDate(latestPublishedNews?.updated_at ?? latestPublishedNews?.published_at)}`,
+      tone: publishedNews7d > 0 ? "ok" : "info",
+    },
+    {
+      key: "new-listings",
+      label: "New listings",
+      value: String(newListings7d.length),
+      detail: `${newListings30d.length} in 30d · latest ${shortDate(latestListing?.first_seen_at)}`,
+      tone: newListings7d.length > 0 ? "ok" : "info",
+    },
+    {
+      key: "feed",
+      label: "Live feed",
+      value: String(stats.liveFeedTotal || feedRows.length),
+      detail: `${sourceIds.size} sources · ${pct(withImages, feedRows.length)}% photos · ${pct(withPrice, feedRows.length)}% price`,
+      tone: "ok",
+    },
+    {
+      key: "health",
+      label: "Data health",
+      value: sourceIssueIds.size === 0 ? "OK" : String(sourceIssueIds.size),
+      detail: sourceIssueIds.size === 0
+        ? "No weak or stale source signals"
+        : `${weakSources.length} weak · ${staleSources.length} stale · ${nonStubSourceRows.length} CV sources`,
+      tone: healthTone,
+    },
+  ];
+
+  const events: AdminSignalEvent[] = [];
+
+  for (const item of latestPublishedNewsResult.data ?? []) {
+    events.push({
+      id: `news-published-${item.id}`,
+      category: "Article published",
+      title: item.title,
+      body: item.source_name || "Market News",
+      at: item.updated_at ?? item.published_at ?? now,
+      tone: "ok",
+      href: item.source_url ?? undefined,
+    });
+  }
+
+  for (const item of recentlyUpdatedNewsResult.data ?? []) {
+    if (item.status === "published") continue;
+    events.push({
+      id: `news-updated-${item.id}`,
+      category: "Article changed",
+      title: item.title,
+      body: `${item.status} · ${item.source_name || "Market News"}`,
+      at: item.updated_at ?? item.published_at ?? now,
+      tone: item.status === "archived" ? "info" : "warning",
+      href: item.source_url ?? undefined,
+    });
+  }
+
+  for (const item of newListings30d.slice(0, 5)) {
+    events.push({
+      id: `listing-new-${item.id}`,
+      category: "New listing indexed",
+      title: item.title || item.id,
+      body: [sourceIdToName(item.source_id || ""), item.island].filter(Boolean).join(" · "),
+      at: item.first_seen_at ?? item.updated_at ?? now,
+      tone: "info",
+      href: `https://capeverderealestateindex.com/listing/${item.id}`,
+    });
+  }
+
+  for (const source of weakSources.slice(0, 3)) {
+    events.push({
+      id: `source-health-${source.source_id}`,
+      category: "Data health",
+      title: `${source.sourceName} needs attention`,
+      body: `Grade ${source.grade} · ${source.feed_conversion_pct}% feed conversion · ${source.public_feed_count_n} live`,
+      at: source.last_updated_at ?? now,
+      tone: "warning",
+    });
+  }
+
+  events.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
+  return {
+    generatedAt: now,
+    metrics,
+    events: events.slice(0, 12),
+  };
+}
+
 export async function getAdminNotifications(): Promise<AdminNotification[]> {
   const { data, error } = await supabaseAuth
     .from("admin_notifications")

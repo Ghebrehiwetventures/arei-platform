@@ -465,6 +465,63 @@ async function listPublishedPosts(sb) {
   return data || [];
 }
 
+async function getMarketingSummary(sb) {
+  const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
+  const [
+    posts7d,
+    latestPosts,
+    pendingQueue,
+    failedQueue,
+    latestQueue,
+  ] = await Promise.all([
+    sb
+      .from("social_listing_posts")
+      .select("id", { count: "exact", head: true })
+      .eq("market_id", DEFAULT_MARKET_ID)
+      .eq("platform", DEFAULT_PLATFORM)
+      .gte("published_at", sevenDaysAgo),
+    sb
+      .from("social_listing_posts")
+      .select("id, listing_id, permalink, image_urls, published_at")
+      .eq("market_id", DEFAULT_MARKET_ID)
+      .eq("platform", DEFAULT_PLATFORM)
+      .order("published_at", { ascending: false })
+      .limit(5),
+    sb
+      .from("social_listing_queue")
+      .select("id", { count: "exact", head: true })
+      .eq("market_id", DEFAULT_MARKET_ID)
+      .eq("platform", DEFAULT_PLATFORM)
+      .eq("status", "pending"),
+    sb
+      .from("social_listing_queue")
+      .select("id", { count: "exact", head: true })
+      .eq("market_id", DEFAULT_MARKET_ID)
+      .eq("platform", DEFAULT_PLATFORM)
+      .eq("status", "failed"),
+    sb
+      .from("social_listing_queue")
+      .select("id, listing_id, listing_title, scheduled_at, status, permalink, error_message, image_urls")
+      .eq("market_id", DEFAULT_MARKET_ID)
+      .eq("platform", DEFAULT_PLATFORM)
+      .order("scheduled_at", { ascending: false })
+      .limit(5),
+  ]);
+
+  const firstError = [posts7d, latestPosts, pendingQueue, failedQueue, latestQueue].find((r) => r.error)?.error;
+  if (firstError) throw new Error(firstError.message);
+
+  return {
+    platform: DEFAULT_PLATFORM,
+    marketId: DEFAULT_MARKET_ID,
+    posts7d: posts7d.count ?? 0,
+    pending: pendingQueue.count ?? 0,
+    failed: failedQueue.count ?? 0,
+    latestPosts: latestPosts.data || [],
+    latestQueue: latestQueue.data || [],
+  };
+}
+
 async function publishCarousel(sb, body) {
   const { listingId, caption, imageUrls } = body;
   if (!listingId) throw new Error("listingId required");
@@ -683,6 +740,11 @@ export default async function handler(req, res) {
     }
 
     const body = req.body && typeof req.body === "object" ? req.body : {};
+
+    if (body.action === "summary") {
+      send(res, 200, await getMarketingSummary(sb));
+      return;
+    }
 
     if (body.action === "generate_caption") {
       const { data: listing, error } = await sb
