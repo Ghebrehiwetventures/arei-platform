@@ -69,6 +69,11 @@ function toDatetimeLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function previewImageUrl(url: string, size = 220): string {
+  if (!url) return url;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=cover&output=jpg&q=82`;
+}
+
 async function apiFetch<T>(method: string, body?: Record<string, unknown>): Promise<T> {
   const headers: Record<string, string> = { ...(await authHeaders()) as Record<string, string> };
   if (body) headers["Content-Type"] = "application/json";
@@ -515,9 +520,10 @@ export function ListingSocialView() {
                       } : undefined}
                     >
                       <img
-                        src={url}
+                        src={previewImageUrl(url)}
                         alt=""
                         draggable={false}
+                        referrerPolicy="no-referrer"
                         onClick={() => {
                           if (didDragRef.current) { didDragRef.current = false; return; }
                           toggleImage(url);
@@ -653,7 +659,12 @@ export function ListingSocialView() {
               <div key={item.id} className="surface-1 border border-border rounded p-3 text-xs font-mono flex items-start justify-between gap-4">
                 <div className="flex gap-3 items-start min-w-0">
                   {item.image_urls?.[0] && (
-                    <img src={item.image_urls[0]} alt="" className="w-12 h-12 object-cover rounded flex-shrink-0" />
+                    <img
+                      src={previewImageUrl(item.image_urls[0], 96)}
+                      alt=""
+                      referrerPolicy="no-referrer"
+                      className="w-12 h-12 object-cover rounded flex-shrink-0"
+                    />
                   )}
                   <div className="min-w-0">
                     <div className="text-foreground truncate">{item.listing_title || item.listing_id}</div>
@@ -726,7 +737,12 @@ export function ListingSocialView() {
                   </div>
                 </div>
                 {post.image_urls?.[0] && (
-                  <img src={post.image_urls[0]} alt="" className="w-full aspect-square object-cover rounded" />
+                  <img
+                    src={previewImageUrl(post.image_urls[0], 360)}
+                    alt=""
+                    referrerPolicy="no-referrer"
+                    className="w-full aspect-square object-cover rounded"
+                  />
                 )}
                 <div className="text-foreground-muted line-clamp-2">{post.caption.split("\n")[0]}</div>
                 <div className="flex items-center gap-3 pt-1">
