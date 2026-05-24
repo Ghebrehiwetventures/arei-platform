@@ -62,10 +62,10 @@ const resources = {
       footer: {
         description:
           "An independent, read-only index of public property listings across Cape Verde. We aggregate from local agents, clean the data, and publish it in one searchable place. Published by AREI.",
-        index: "Index",
+        index: "Explore",
         resources: "Resources",
         connect: "Connect",
-        follow: "Follow",
+        follow: "Socials",
         guidesFaq: "Guides & FAQ",
         buyingGuide: "Buying guide",
         methodology: "Methodology",
@@ -631,10 +631,10 @@ const resources = {
       footer: {
         description:
           "Um índice independente e apenas de leitura de anúncios imobiliários públicos em Cabo Verde. Agregamos dados de agentes locais, limpamos a informação e publicamo-la num só local pesquisável. Publicado pela AREI.",
-        index: "Índice",
+        index: "Explorar",
         resources: "Recursos",
         connect: "Contacto",
-        follow: "Seguir",
+        follow: "Redes",
         guidesFaq: "Guias e FAQ",
         buyingGuide: "Guia de compra",
         methodology: "Metodologia",
