@@ -1006,9 +1006,21 @@ const LISTINGS_COLUMNS: { key: ListingsSortKey | "photo" | "grade" | "action"; l
   { key: "action", label: "" },
 ];
 
-function ListingsTabView() {
+interface ListingsTabViewProps {
+  embedded?: boolean;
+  fixedMarketId?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+function ListingsTabView({
+  embedded = false,
+  fixedMarketId,
+  title = "Listings",
+  subtitle = "Browse and filter across all markets",
+}: ListingsTabViewProps = {}) {
   const [markets, setMarkets] = useState<{ id: string; name: string }[]>([]);
-  const [marketId, setMarketId] = useState("all");
+  const [marketIdState, setMarketIdState] = useState(fixedMarketId ?? "all");
   const [sourceOptions, setSourceOptions] = useState<{ id: string; name: string }[]>([]);
   const [gradeBySourceId, setGradeBySourceId] = useState<Map<string, "A" | "B" | "C" | "D">>(new Map());
   const [filters, setFilters] = useState<ListingsFilters>({});
@@ -1024,9 +1036,18 @@ function ListingsTabView() {
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("original");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const marketId = fixedMarketId ?? marketIdState;
+
   useEffect(() => {
     getMarketIds().then(setMarkets);
   }, []);
+
+  useEffect(() => {
+    if (!fixedMarketId) return;
+    setMarketIdState(fixedMarketId);
+    setFilters((f) => ({ ...f, sourceId: undefined }));
+    setPage(1);
+  }, [fixedMarketId]);
 
   useEffect(() => {
     getDashboardStats().then((s) => {
@@ -1106,14 +1127,18 @@ function ListingsTabView() {
   const inputCls = "bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded w-full";
 
   return (
-    <div>
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div className={embedded ? "space-y-4" : ""}>
+      <div className={"flex flex-wrap items-start justify-between gap-4 " + (embedded ? "" : "mb-6")}>
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Listings
-          </h1>
+          {embedded ? (
+            <h2 className="text-sm font-semibold text-foreground font-mono">{title}</h2>
+          ) : (
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
+              {title}
+            </h1>
+          )}
           <p className="text-sm text-foreground-muted mt-1">
-            Browse and filter across all markets
+            {subtitle}
           </p>
         </div>
         <div className="flex gap-2">
@@ -1164,7 +1189,7 @@ function ListingsTabView() {
         </div>
       </div>
 
-      <div className="surface-1 rounded border border-border p-4 mb-6">
+      <div className={"surface-1 rounded border border-border p-4 " + (embedded ? "" : "mb-6")}>
         <button
           type="button"
           onClick={() => setFiltersOpen((o) => !o)}
@@ -1181,24 +1206,26 @@ function ListingsTabView() {
         </button>
         <div className="hidden sm:block text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
         <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 ${filtersOpen ? "mt-3" : "hidden sm:grid sm:mt-0"}`}>
-          <div>
-            <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
-            <select
-              value={marketId}
-              onChange={(e) => {
-                setMarketId(e.target.value);
-                setPage(1);
-              }}
-              className={inputCls}
-            >
-              <option value="all">All markets</option>
-              {markets.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.id})
-                </option>
-              ))}
-            </select>
-          </div>
+          {!fixedMarketId && (
+            <div>
+              <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
+              <select
+                value={marketId}
+                onChange={(e) => {
+                  setMarketIdState(e.target.value);
+                  setPage(1);
+                }}
+                className={inputCls}
+              >
+                <option value="all">All markets</option>
+                {markets.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Source</label>
             <select
@@ -1769,10 +1796,10 @@ function SourcesView() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Sources
+            Listings
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
-            Pipeline Source Health Report — visual overview, then detail tables · scoped to selected market
+            Pick a country first. Data health comes first; individual listing rows are below.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
@@ -1802,18 +1829,46 @@ function SourcesView() {
             >
               Print / PDF
             </button>
+            <a
+              href="#listing-rows"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
+            >
+              Listing rows
+            </a>
           </div>
         </div>
       </div>
 
+      <section className="surface-1 rounded border border-border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground font-mono">
+              {selectedMarket.name} data health
+            </h2>
+            <p className="text-xs text-foreground-muted mt-1">
+              This page answers whether source data is being cleaned into usable, public inventory.
+            </p>
+          </div>
+          <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-surface-3 text-foreground-muted font-mono">
+            {STATUS_LABEL[selectedMarket.status]}
+          </span>
+        </div>
+      </section>
+
       <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} snapshots={snapshots} />
 
-      <div>
-        <h2 className="text-sm font-semibold text-foreground font-mono mb-3 mt-2">Source detail tables</h2>
-        <p className="text-xs text-foreground-muted mb-3">Full data per market — secondary to the visual report above.</p>
-      </div>
-
-      {marketIds.map((marketId) => {
+      <details className="surface-1 rounded border border-border shadow-sm">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-foreground font-mono hover:bg-surface-2 transition-colors">
+          Source drill-down
+          <span className="ml-2 text-xs font-normal text-foreground-muted">
+            Full source table for the selected country
+          </span>
+        </summary>
+        <div className="px-4 pb-4">
+          <p className="text-xs text-foreground-muted mb-3">
+            Operational detail for debugging specific publishers after the overview has shown where the problem is.
+          </p>
+          {marketIds.map((marketId) => {
         const rows = byMarket.get(marketId)!;
         const marketName = marketNameById.get(marketId) ?? marketId;
         const totalListings = rows.reduce((acc, r) => acc + Number(r.listing_count), 0);
@@ -1898,7 +1953,18 @@ function SourcesView() {
             </div>
           </section>
         );
-      })}
+          })}
+        </div>
+      </details>
+
+      <section id="listing-rows" className="surface-1 rounded border border-border p-4 shadow-sm scroll-mt-6">
+        <ListingsTabView
+          embedded
+          fixedMarketId={selectedMarketId}
+          title="Individual listing rows"
+          subtitle={`Raw listing browser for ${selectedMarket.name}. Use this after the health overview points to a source or data-quality issue.`}
+        />
+      </section>
 
       {scopedRows.length === 0 && (
         selectedMarket.status !== "active" ? (
@@ -3579,8 +3645,7 @@ type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agen
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
-  { key: "listings",      label: "Listings"      },
-  { key: "sources",       label: "Sources"       },
+  { key: "sources",       label: "Listings"      },
   { key: "market-news",   label: "Market News"   },
   { key: "marketing",     label: "Marketing"     },
   { key: "notifications", label: "Notifications" },
