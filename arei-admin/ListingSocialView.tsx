@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { supabaseAuth } from "./supabase";
 
 interface Listing {
@@ -137,14 +137,17 @@ export function ListingSocialView() {
   const selected = listings.find((l) => l.id === selectedId) || null;
   const allImages = selected?.image_urls || [];
 
-  const filtered = search.trim()
-    ? listings.filter(
-        (l) =>
-          l.title?.toLowerCase().includes(search.toLowerCase()) ||
-          l.island?.toLowerCase().includes(search.toLowerCase()) ||
-          l.source_name?.toLowerCase().includes(search.toLowerCase())
-      )
-    : listings;
+  const filtered = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return listings;
+
+    return listings.filter(
+      (l) =>
+        l.title?.toLowerCase().includes(q) ||
+        l.island?.toLowerCase().includes(q) ||
+        l.source_name?.toLowerCase().includes(q)
+    );
+  }, [listings, search]);
 
   const loadState = () => {
     return Promise.all([
@@ -169,6 +172,17 @@ export function ListingSocialView() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    if (filtered.length === 0) {
+      if (selectedId) setSelectedId("");
+      return;
+    }
+
+    if (!filtered.some((l) => l.id === selectedId)) {
+      setSelectedId(filtered[0].id);
+    }
+  }, [filtered, selectedId]);
 
   useEffect(() => {
     if (!selectedId) return;
