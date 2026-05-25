@@ -1629,7 +1629,16 @@
   .kv-d-mctx-2 .kv-d-mctx-card { border-right: none; border-bottom: 1px solid var(--kv-rule); }
   .kv-d-mctx-3 .kv-d-mctx-card:last-child,
   .kv-d-mctx-2 .kv-d-mctx-card:last-child { border-bottom: none; }
-  .kv-d-sim-scroll { grid-auto-columns: 85%; }
+  .kv-d-sim-scroll {
+    grid-auto-columns: 85%;
+    scroll-snap-type: x mandatory;
+  }
+  .kv-d-sim-card {
+    scroll-snap-stop: always;
+  }
+  .kv-d-sim-card:last-child {
+    scroll-snap-align: end;
+  }
 }
 
 /* Empty/loading */
