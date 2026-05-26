@@ -605,16 +605,14 @@ export function ListingSocialView() {
                           if (didDragRef.current) { didDragRef.current = false; return; }
                           toggleImage(url);
                         }}
-                        className={`w-full h-full object-cover transition-opacity cursor-pointer select-none ${
-                          active ? "" : "grayscale opacity-25"
-                        }`}
+                        className="w-full h-full object-cover cursor-pointer select-none"
                       />
+                      {!active && (
+                        <div className="absolute inset-0 bg-background/40 pointer-events-none rounded" />
+                      )}
                       {active && (
                         <>
                           <div className="absolute inset-0 ring-2 ring-inset ring-green pointer-events-none rounded" />
-                          <div className="absolute left-1.5 top-1.5 min-w-6 h-6 px-1.5 rounded bg-green text-background text-xs font-bold font-mono flex items-center justify-center pointer-events-none">
-                            {position + 1}
-                          </div>
                           <div className="absolute inset-x-1.5 bottom-1.5 grid grid-cols-2 gap-1 sm:hidden">
                             <button
                               type="button"
