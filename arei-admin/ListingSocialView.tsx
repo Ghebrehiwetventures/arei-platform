@@ -26,11 +26,21 @@ async function authHeaders(): Promise<HeadersInit> {
 }
 
 type SchedulePattern = "1_per_day" | "2_per_day" | "3_per_week";
+type ListingSortKey = "latest" | "title_asc" | "price_asc" | "price_desc" | "images_desc" | "source_asc";
 
 const SCHEDULE_PATTERNS: { value: SchedulePattern; label: string; desc: string }[] = [
   { value: "1_per_day",   label: "1 / day",    desc: "Every day at 10:00" },
   { value: "2_per_day",   label: "2 / day",    desc: "Daily at 10:00 & 19:00" },
   { value: "3_per_week",  label: "3 / week",   desc: "Mon · Wed · Fri at 10:00" },
+];
+
+const LISTING_SORT_OPTIONS: { value: ListingSortKey; label: string }[] = [
+  { value: "latest",      label: "Newest" },
+  { value: "title_asc",   label: "Title A-Z" },
+  { value: "price_asc",   label: "Price low-high" },
+  { value: "price_desc",  label: "Price high-low" },
+  { value: "images_desc", label: "Most images" },
+  { value: "source_asc",  label: "Agency A-Z" },
 ];
 
 function nextSlot(pattern: SchedulePattern, takenISO: string[]): Date {
@@ -69,6 +79,26 @@ function toDatetimeLocal(d: Date): string {
   return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
+function compareNullablePrice(a: Listing, b: Listing, dir: "asc" | "desc"): number {
+  const aMissing = a.price == null;
+  const bMissing = b.price == null;
+  if (aMissing && bMissing) return 0;
+  if (aMissing) return 1;
+  if (bMissing) return -1;
+  return dir === "asc" ? a.price! - b.price! : b.price! - a.price!;
+}
+
+function sortListings(listings: Listing[], sortBy: ListingSortKey): Listing[] {
+  return [...listings].sort((a, b) => {
+    if (sortBy === "title_asc") return (a.title || a.id).localeCompare(b.title || b.id);
+    if (sortBy === "price_asc") return compareNullablePrice(a, b, "asc");
+    if (sortBy === "price_desc") return compareNullablePrice(a, b, "desc");
+    if (sortBy === "images_desc") return (b.image_urls?.length || 0) - (a.image_urls?.length || 0);
+    if (sortBy === "source_asc") return (a.source_name || a.source_id).localeCompare(b.source_name || b.source_id);
+    return b.id.localeCompare(a.id);
+  });
+}
+
 function previewImageUrl(url: string, size = 220): string {
   if (!url) return url;
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=cover&output=jpg&q=82`;
@@ -99,6 +129,7 @@ interface QueueItem {
   error_message: string | null;
   post_id: string | null;
   permalink: string | null;
+  channels: string[] | null;
 }
 
 interface PublishedPost {
@@ -115,7 +146,10 @@ export function ListingSocialView() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [published, setPublished] = useState<PublishedPost[]>([]);
   const [igConfigured, setIgConfigured] = useState(false);
+  const [ttConfigured, setTtConfigured] = useState(false);
+  const [channels, setChannels] = useState<string[]>(["instagram"]);
   const [search, setSearch] = useState("");
+  const [listingSort, setListingSort] = useState<ListingSortKey>("latest");
   const [selectedId, setSelectedId] = useState("");
   const [caption, setCaption] = useState("");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -144,24 +178,26 @@ export function ListingSocialView() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return listings;
-
-    return listings.filter(
-      (l) =>
-        l.title?.toLowerCase().includes(q) ||
-        l.island?.toLowerCase().includes(q) ||
-        l.source_name?.toLowerCase().includes(q)
-    );
-  }, [listings, search]);
+    const matching = !q
+      ? listings
+      : listings.filter(
+          (l) =>
+            l.title?.toLowerCase().includes(q) ||
+            l.island?.toLowerCase().includes(q) ||
+            l.source_name?.toLowerCase().includes(q)
+        );
+    return sortListings(matching, listingSort);
+  }, [listings, search, listingSort]);
 
   const loadState = () => {
     return Promise.all([
-      apiFetch<{ listings: Listing[]; published: PublishedPost[]; instagram: { configured: boolean } }>("GET"),
+      apiFetch<{ listings: Listing[]; published: PublishedPost[]; instagram: { configured: boolean }; tiktok: { configured: boolean } }>("GET"),
       apiFetch<{ items: QueueItem[] }>("POST", { action: "list_queue" }),
-    ]).then(([{ listings: ls, published: ps, instagram }, { items }]) => {
+    ]).then(([{ listings: ls, published: ps, instagram, tiktok }, { items }]) => {
       setListings(ls);
       setPublished(ps || []);
       setIgConfigured(instagram.configured);
+      setTtConfigured(tiktok?.configured ?? false);
       setQueue(items || []);
       if (ls.length > 0 && !ls.find((l) => l.id === selectedId)) {
         setSelectedId(ls[0].id);
@@ -226,6 +262,16 @@ export function ListingSocialView() {
     });
   };
 
+  const moveSelectedImage = (position: number, direction: -1 | 1) => {
+    setSelectedImages((prev) => {
+      const nextIndex = position + direction;
+      if (position < 0 || nextIndex < 0 || nextIndex >= prev.length) return prev;
+      const next = [...prev];
+      [next[position], next[nextIndex]] = [next[nextIndex], next[position]];
+      return next;
+    });
+  };
+
   const handleDragMove = (e: ReactPointerEvent<HTMLDivElement>) => {
     if (dragIndex === null) return;
     let closest = dragIndex;
@@ -271,6 +317,7 @@ export function ListingSocialView() {
         caption: caption.trim(),
         scheduledAt: new Date().toISOString(),
         listingTitle: selected?.title || null,
+        channels,
       });
       setNotice("Sending in the background — it'll appear in Published within a minute. You can keep working.");
       await loadState();
@@ -305,6 +352,7 @@ export function ListingSocialView() {
           imageUrls: selectedImages,
           caption: caption.trim(),
           scheduledAt: new Date(scheduleTime).toISOString(),
+          channels,
         });
         setNotice("Added to queue.");
       }
@@ -365,8 +413,11 @@ export function ListingSocialView() {
     return <div className="py-12 text-foreground-muted font-mono">Loading listings...</div>;
   }
 
-  const canPublish = igConfigured && selectedId && caption.trim() && selectedImages.length >= 2 && !publishing;
-  const canSchedule = selectedId && caption.trim() && selectedImages.length >= 2 && scheduleTime && !scheduling;
+  const channelIsConfigured = channels.some((c) =>
+    c === "instagram" ? igConfigured : c === "tiktok" ? ttConfigured : false
+  );
+  const canPublish = channelIsConfigured && channels.length > 0 && selectedId && caption.trim() && selectedImages.length >= 2 && !publishing;
+  const canSchedule = channels.length > 0 && selectedId && caption.trim() && selectedImages.length >= 2 && scheduleTime && !scheduling;
 
   return (
     <div className="space-y-6">
@@ -397,22 +448,47 @@ export function ListingSocialView() {
       <section className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
         {/* Left: listing picker */}
         <div className="surface-1 rounded border border-border p-4 space-y-3">
-          <div>
-            <div className="label-style mb-1">Search</div>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Title, island, agency..."
-              className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
+            <div>
+              <div className="label-style mb-1">Search</div>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Title, island, agency..."
+                className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
+              />
+            </div>
+            <div>
+              <div className="label-style mb-1">Sort</div>
+              <select
+                value={listingSort}
+                onChange={(e) => setListingSort(e.target.value as ListingSortKey)}
+                className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
+              >
+                {LISTING_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div>
             <div className="label-style mb-1">Listing ({filtered.length} of {listings.length})</div>
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
+              className="md:hidden bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
+            >
+              {filtered.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.title || l.id}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
               size={10}
-              className="bg-background border border-border text-foreground px-2 py-1 text-xs font-mono w-full rounded"
+              className="hidden md:block bg-background border border-border text-foreground px-2 py-1 text-xs font-mono w-full rounded"
             >
               {filtered.map((l) => (
                 <option key={l.id} value={l.id}>
@@ -468,32 +544,33 @@ export function ListingSocialView() {
         <div className="space-y-4">
           {/* Image selection */}
           {allImages.length > 0 && (
-            <div className="surface-1 rounded border border-border p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-xs font-mono text-foreground-muted">
+            <div className="surface-1 rounded border border-border p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                <div className="text-sm sm:text-xs font-mono text-foreground-muted">
                   <span className="text-foreground">{selectedImages.length}</span> / {allImages.length} selected · max 10
                 </div>
-                <div className="flex gap-3 text-[11px] font-mono">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3 text-xs sm:text-[11px] font-mono">
                   <button
                     type="button"
                     onClick={() => setSelectedImages(allImages.slice(0, 10))}
-                    className="text-foreground-muted hover:text-foreground"
+                    className="min-h-10 rounded border border-border px-3 text-foreground-muted hover:text-foreground hover:bg-surface-2 sm:min-h-0 sm:border-0 sm:p-0"
                   >
                     Select 10
                   </button>
                   <button
                     type="button"
                     onClick={() => setSelectedImages([])}
-                    className="text-foreground-muted hover:text-foreground"
+                    className="min-h-10 rounded border border-border px-3 text-foreground-muted hover:text-foreground hover:bg-surface-2 sm:min-h-0 sm:border-0 sm:p-0"
                   >
                     Clear
                   </button>
                 </div>
               </div>
               <div
-                className="grid grid-cols-8 gap-1"
+                className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-1.5 touch-none"
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}
+                onPointerCancel={handleDragEnd}
               >
                 {[
                   ...selectedImages,
@@ -507,7 +584,7 @@ export function ListingSocialView() {
                     <div
                       key={url}
                       ref={active ? (el) => { cellRefs.current[position] = el; } : undefined}
-                      className={`relative aspect-square overflow-hidden rounded-sm ${
+                      className={`relative aspect-square overflow-hidden rounded ${
                         active ? "cursor-grab" : ""
                       } ${isDragging ? "opacity-40 ring-2 ring-foreground" : ""} ${
                         isDropTarget ? "ring-2 ring-green" : ""
@@ -533,7 +610,30 @@ export function ListingSocialView() {
                         }`}
                       />
                       {active && (
-                        <div className="absolute inset-0 ring-2 ring-inset ring-green pointer-events-none rounded-sm" />
+                        <>
+                          <div className="absolute inset-0 ring-2 ring-inset ring-green pointer-events-none rounded" />
+                          <div className="absolute left-1.5 top-1.5 min-w-6 h-6 px-1.5 rounded bg-green text-background text-xs font-bold font-mono flex items-center justify-center pointer-events-none">
+                            {position + 1}
+                          </div>
+                          <div className="absolute inset-x-1.5 bottom-1.5 grid grid-cols-2 gap-1 sm:hidden">
+                            <button
+                              type="button"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onClick={(e) => { e.stopPropagation(); moveSelectedImage(position, -1); }}
+                              disabled={position === 0}
+                              className="h-8 rounded bg-background/90 text-foreground text-base font-mono disabled:opacity-35"
+                              aria-label="Move image earlier"
+                            >‹</button>
+                            <button
+                              type="button"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onClick={(e) => { e.stopPropagation(); moveSelectedImage(position, 1); }}
+                              disabled={position === selectedImages.length - 1}
+                              className="h-8 rounded bg-background/90 text-foreground text-base font-mono disabled:opacity-35"
+                              aria-label="Move image later"
+                            >›</button>
+                          </div>
+                        </>
                       )}
                     </div>
                   );
@@ -543,7 +643,7 @@ export function ListingSocialView() {
                 <p className="text-amber text-[11px] font-mono mt-2">Select at least 2 images.</p>
               )}
               {selectedImages.length >= 2 && (
-                <p className="text-foreground-muted text-[11px] font-mono mt-2">Drag selected images to reorder · number = carousel position.</p>
+                <p className="text-foreground-muted text-[11px] font-mono mt-2">Drag to reorder on desktop · use ‹ › on mobile.</p>
               )}
             </div>
           )}
@@ -567,6 +667,50 @@ export function ListingSocialView() {
                 <button type="button" onClick={cancelEdit} className="underline hover:no-underline">Cancel</button>
               </div>
             )}
+
+            {/* Channel selector */}
+            <div>
+              <div className="label-style mb-2">Channels</div>
+              <div className="flex flex-wrap gap-2">
+                {[
+                  { id: "instagram", label: "Instagram", configured: igConfigured },
+                  { id: "tiktok",    label: "TikTok",    configured: ttConfigured },
+                ].map(({ id, label, configured }) => {
+                  const checked = channels.includes(id);
+                  return (
+                    <label
+                      key={id}
+                      className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded border text-[11px] font-mono cursor-pointer select-none transition-colors ${
+                        checked
+                          ? "border-foreground text-foreground bg-surface-1"
+                          : "border-border text-foreground-muted hover:border-foreground/40"
+                      }`}
+                    >
+                      <input
+                        type="checkbox"
+                        className="sr-only"
+                        checked={checked}
+                        onChange={() =>
+                          setChannels((prev) =>
+                            prev.includes(id)
+                              ? prev.filter((c) => c !== id)
+                              : [...prev, id]
+                          )
+                        }
+                      />
+                      <span>{label}</span>
+                      <span className={configured ? "text-green" : "text-foreground-muted opacity-50"}>
+                        {configured ? "●" : "○"}
+                      </span>
+                    </label>
+                  );
+                })}
+              </div>
+              {channels.length === 0 && (
+                <p className="text-amber text-[11px] font-mono mt-1.5">Select at least one channel.</p>
+              )}
+            </div>
+
             <div className="flex items-center gap-2 flex-wrap">
               <button
                 type="button"
@@ -584,16 +728,11 @@ export function ListingSocialView() {
                   if (!showSchedule) applyNextSlot(schedulePattern);
                   setShowSchedule((v) => !v);
                 }}
-                disabled={selectedImages.length < 2 || !caption.trim()}
+                disabled={selectedImages.length < 2 || !caption.trim() || channels.length === 0}
                 className="px-4 py-2.5 text-sm font-semibold rounded border border-border text-foreground hover:bg-surface-1 transition-all disabled:opacity-40 font-mono"
               >
                 Schedule
               </button>
-              <div className="text-xs font-mono text-foreground-muted whitespace-nowrap ml-auto">
-                Instagram: {igConfigured
-                  ? <span className="text-green">configured</span>
-                  : <span className="text-red">not configured</span>}
-              </div>
             </div>
             {showSchedule && (
               <div className="border border-border rounded p-3 space-y-3 bg-background">
@@ -668,8 +807,11 @@ export function ListingSocialView() {
                   )}
                   <div className="min-w-0">
                     <div className="text-foreground truncate">{item.listing_title || item.listing_id}</div>
-                    <div className="text-foreground-muted mt-0.5">
-                      {new Date(item.scheduled_at).toLocaleString()} · {item.image_urls.length} images
+                    <div className="text-foreground-muted mt-0.5 flex items-center gap-2 flex-wrap">
+                      <span>{new Date(item.scheduled_at).toLocaleString()} · {item.image_urls.length} images</span>
+                      {(item.channels ?? ["instagram"]).map((ch) => (
+                        <span key={ch} className="px-1 py-0.5 rounded bg-surface-2 text-[10px] text-foreground-muted capitalize">{ch}</span>
+                      ))}
                     </div>
                     {item.error_message && (
                       <div className={`mt-0.5 truncate ${item.status === "failed" ? "text-red" : "text-amber"}`}>

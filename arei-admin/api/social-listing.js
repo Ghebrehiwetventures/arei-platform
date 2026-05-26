@@ -426,6 +426,102 @@ function getInstagramConfig() {
   };
 }
 
+// ─── TikTok Photo Mode ────────────────────────────────────────────────────────
+
+function getTikTokConfig() {
+  const accessToken = process.env.TIKTOK_ACCESS_TOKEN || "";
+  return { configured: Boolean(accessToken), accessToken };
+}
+
+function tikTokImageUrl(url) {
+  if (!url) return url;
+  // Convert any source format to JPG via proxy; TikTok pulls server-side so
+  // CORS is not a concern, but format normalisation avoids HEIC/WEBP rejections.
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&output=jpg&q=92`;
+}
+
+async function pollTikTokStatus(accessToken, publishId, maxAttempts = 30, delayMs = 2000) {
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const res = await fetch("https://open.tiktokapis.com/v2/post/publish/status/fetch/", {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${accessToken}`,
+        "Content-Type": "application/json; charset=UTF-8",
+      },
+      body: JSON.stringify({ publish_id: publishId }),
+    });
+    const data = await res.json().catch(() => ({}));
+    const status = data?.data?.status;
+    if (status === "PUBLISH_COMPLETE") {
+      const postIds = data?.data?.publicaly_available_post_id || [];
+      return { postId: postIds[0] || publishId };
+    }
+    if (status === "FAILED") {
+      throw new Error(`TikTok publish failed: ${data?.error?.message || "FAILED status"}`);
+    }
+    await new Promise((r) => setTimeout(r, delayMs));
+  }
+  throw new Error("TikTok: publish did not complete in time");
+}
+
+async function publishToTikTok(sb, { listingId, caption, imageUrls, marketId }) {
+  const cfg = getTikTokConfig();
+  if (!cfg.configured) throw new Error("TikTok not configured. Set TIKTOK_ACCESS_TOKEN.");
+
+  const photos = imageUrls.slice(0, 35).map(tikTokImageUrl);
+  if (photos.length < 1) throw new Error("At least 1 image required for TikTok.");
+
+  const title = caption.trim().slice(0, 2200);
+
+  const initRes = await fetch("https://open.tiktokapis.com/v2/post/publish/content/init/", {
+    method: "POST",
+    headers: {
+      Authorization: `Bearer ${cfg.accessToken}`,
+      "Content-Type": "application/json; charset=UTF-8",
+    },
+    body: JSON.stringify({
+      post_info: {
+        title,
+        privacy_level: "PUBLIC_TO_EVERYONE",
+        disable_duet: false,
+        disable_comment: false,
+        disable_stitch: false,
+      },
+      source_info: {
+        source: "PULL_FROM_URL",
+        photo_images: photos,
+        photo_cover_index: 0,
+      },
+      post_mode: "DIRECT_POST",
+      media_type: "PHOTO",
+    }),
+  });
+  const initData = await initRes.json().catch(() => ({}));
+  console.log("[social-listing] tiktok init", { status: initRes.status, error: initData?.error });
+
+  if (!initRes.ok || initData?.error?.code !== "ok") {
+    throw new Error(initData?.error?.message || `TikTok init failed: HTTP ${initRes.status}`);
+  }
+
+  const publishId = initData?.data?.publish_id;
+  if (!publishId) throw new Error("TikTok: no publish_id in response");
+
+  const { postId } = await pollTikTokStatus(cfg.accessToken, publishId);
+
+  const { error: logErr } = await sb.from("social_listing_posts").insert({
+    listing_id: listingId,
+    platform: "tiktok",
+    market_id: marketId || DEFAULT_MARKET_ID,
+    external_post_id: postId,
+    permalink: null,
+    caption: caption.trim(),
+    image_urls: imageUrls,
+  });
+  if (logErr) console.error("[social-listing] tiktok log error:", logErr.message);
+
+  return { postId, permalink: null };
+}
+
 async function listListings(sb) {
   const [listingsRes, postsRes] = await Promise.all([
     sb
@@ -670,9 +766,7 @@ export async function processQueueOnce(sb) {
 
   // Atomic claim: flip post_id from NULL -> a claim marker, conditional on the
   // row still being unclaimed. If a concurrent cron run already claimed it, this
-  // updates 0 rows and we bail — preventing the same post being published twice
-  // (which produced duplicate IG posts when a publish ran longer than the cron
-  // interval). No migration needed; we reuse post_id (overwritten on success).
+  // updates 0 rows and we bail — preventing the same post being published twice.
   const claimMarker = `CLAIM:${Date.now()}`;
   const { data: claimed } = await sb
     .from("social_listing_queue")
@@ -685,46 +779,86 @@ export async function processQueueOnce(sb) {
     return { processed: 0, note: "already claimed by another run" };
   }
 
-  try {
-    const result = await publishCarousel(sb, {
-      listingId: item.listing_id,
-      caption: item.caption,
-      imageUrls: item.image_urls,
-    });
+  // Resolve channels: fall back to the legacy platform column for old rows.
+  const channels = Array.isArray(item.channels) && item.channels.length > 0
+    ? item.channels
+    : [item.platform || DEFAULT_PLATFORM];
+
+  const channelErrors = [];
+  let primaryPostId = null;
+  let primaryPermalink = null;
+
+  for (const channel of channels) {
+    try {
+      let result;
+      if (channel === "instagram") {
+        result = await publishCarousel(sb, {
+          listingId: item.listing_id,
+          caption: item.caption,
+          imageUrls: item.image_urls,
+        });
+      } else if (channel === "tiktok") {
+        result = await publishToTikTok(sb, {
+          listingId: item.listing_id,
+          caption: item.caption,
+          imageUrls: item.image_urls,
+          marketId: item.market_id,
+        });
+      } else {
+        throw new Error(`Unsupported channel: ${channel}`);
+      }
+      if (!primaryPostId) {
+        primaryPostId = result.postId;
+        primaryPermalink = result.permalink;
+      }
+      console.log(`[social-listing] ${channel} published`, item.id);
+    } catch (err) {
+      const msg = err.message || String(err);
+      channelErrors.push(`${channel}: ${msg}`);
+      console.error(`[social-listing] ${channel} failed`, item.id, msg);
+    }
+  }
+
+  // Instagram throttling: back off the whole item so the queue drains once
+  // the 25-posts/24h quota frees up.
+  const igRateLimited = channelErrors.some(
+    (e) => e.startsWith("instagram:") && /request limit|rate limit|too many requests/i.test(e)
+  );
+  if (igRateLimited) {
+    const retryAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+    await sb.from("social_listing_queue").update({
+      status: "pending",
+      post_id: null,
+      scheduled_at: retryAt,
+      error_message: "Instagram rate limit reached — will retry automatically",
+    }).eq("id", item.id);
+    console.warn("[social-listing] rate limited, backing off", item.id, "until", retryAt);
+    return { processed: 1, id: item.id, status: "rate_limited", retryAt };
+  }
+
+  if (primaryPostId) {
+    // At least one channel succeeded — mark published. Secondary channel errors
+    // are preserved in error_message for visibility without blocking the queue.
     await sb.from("social_listing_queue").update({
       status: "published",
-      post_id: result.postId,
-      permalink: result.permalink,
-      story_published: result.storyPublished,
+      post_id: primaryPostId,
+      permalink: primaryPermalink,
+      story_published: false,
+      error_message: channelErrors.length > 0 ? channelErrors.join("; ") : null,
     }).eq("id", item.id);
-    console.log("[social-listing] queue published", item.id);
-    return { processed: 1, id: item.id, status: "published" };
-  } catch (err) {
-    const msg = err.message || String(err);
-    // Instagram throttling is not a real failure — back off and retry later
-    // instead of marking failed. Keep it pending, release the claim, and push
-    // the next attempt ~1h out so the cron stops hammering. The queue then
-    // drains itself once the 25-posts/24h quota frees up.
-    if (/request limit|rate limit|too many requests/i.test(msg)) {
-      const retryAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
-      await sb.from("social_listing_queue").update({
-        status: "pending",
-        post_id: null,
-        scheduled_at: retryAt,
-        error_message: "Instagram rate limit reached — will retry automatically",
-      }).eq("id", item.id);
-      console.warn("[social-listing] rate limited, backing off", item.id, "until", retryAt);
-      return { processed: 1, id: item.id, status: "rate_limited", retryAt };
-    }
-    // Real failure: clear the claim marker and mark failed.
-    await sb.from("social_listing_queue").update({
-      status: "failed",
-      post_id: null,
-      error_message: msg,
-    }).eq("id", item.id);
-    console.error("[social-listing] queue publish failed", item.id, msg);
-    return { processed: 1, id: item.id, status: "failed", error: msg };
+    const published = channels.filter((c) => !channelErrors.some((e) => e.startsWith(`${c}:`)));
+    return { processed: 1, id: item.id, status: "published", channels: published };
   }
+
+  // All channels failed.
+  const allErrors = channelErrors.join("; ");
+  await sb.from("social_listing_queue").update({
+    status: "failed",
+    post_id: null,
+    error_message: allErrors,
+  }).eq("id", item.id);
+  console.error("[social-listing] queue all channels failed", item.id, allErrors);
+  return { processed: 1, id: item.id, status: "failed", error: allErrors };
 }
 
 export default async function handler(req, res) {
@@ -746,7 +880,13 @@ export default async function handler(req, res) {
     if (req.method === "GET") {
       const [listings, published] = await Promise.all([listListings(sb), listPublishedPosts(sb)]);
       const ig = getInstagramConfig();
-      send(res, 200, { listings, published, instagram: { configured: ig.configured } });
+      const tt = getTikTokConfig();
+      send(res, 200, {
+        listings,
+        published,
+        instagram: { configured: ig.configured },
+        tiktok: { configured: tt.configured },
+      });
       return;
     }
 
@@ -781,11 +921,14 @@ export default async function handler(req, res) {
     }
 
     if (body.action === "queue_carousel") {
-      const { listingId, caption, imageUrls, scheduledAt, listingTitle } = body;
+      const { listingId, caption, imageUrls, scheduledAt, listingTitle, channels } = body;
       if (!listingId || !caption || !imageUrls?.length || !scheduledAt) {
         send(res, 400, { error: "listingId, caption, imageUrls, scheduledAt required" });
         return;
       }
+      const resolvedChannels = Array.isArray(channels) && channels.length > 0
+        ? channels
+        : [body.platform || DEFAULT_PLATFORM];
       const { data, error } = await sb.from("social_listing_queue").insert({
         listing_id: listingId,
         listing_title: listingTitle || null,
@@ -793,7 +936,8 @@ export default async function handler(req, res) {
         image_urls: imageUrls,
         scheduled_at: scheduledAt,
         market_id: body.marketId || DEFAULT_MARKET_ID,
-        platform: body.platform || DEFAULT_PLATFORM,
+        platform: resolvedChannels[0],
+        channels: resolvedChannels,
       }).select("id, scheduled_at").single();
       if (error) throw new Error(error.message);
       send(res, 200, { queued: true, id: data.id, scheduledAt: data.scheduled_at });
