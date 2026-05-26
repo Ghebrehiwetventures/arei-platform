@@ -537,19 +537,19 @@
 
 /* ─── Island stat cards ───
    Used inside article body when an island-by-island data block reads
-   better as cards than as a wide table (e.g. the price-by-island
-   guide). Scoped under .kv-bp-body so it cannot leak.
-   Rule: never leave a lone card stranded on a half-empty row.
-   auto-fit + last-child span trick ensures the final odd card
-   stretches to fill the row rather than occupying one column cell. */
+   better as cards than as a wide table. Three columns at desktop fills
+   the row evenly. Collapses straight to single-column on narrow screens
+   (skips 2-col to avoid a lone orphan). */
 .kv-bp-body .kv-island-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 16px;
   margin: 24px 0 32px;
 }
-.kv-bp-body .kv-island-grid > .kv-island-stat:last-child:nth-child(odd) {
-  grid-column: 1 / -1;
+@media (max-width: 640px) {
+  .kv-bp-body .kv-island-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .kv-bp-body .kv-island-stat {
   border: 1px solid var(--kv-rule);
