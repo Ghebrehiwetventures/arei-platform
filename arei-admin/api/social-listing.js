@@ -700,14 +700,30 @@ export async function processQueueOnce(sb) {
     console.log("[social-listing] queue published", item.id);
     return { processed: 1, id: item.id, status: "published" };
   } catch (err) {
-    // Clear the claim marker so the item isn't left holding a fake post_id.
+    const msg = err.message || String(err);
+    // Instagram throttling is not a real failure — back off and retry later
+    // instead of marking failed. Keep it pending, release the claim, and push
+    // the next attempt ~1h out so the cron stops hammering. The queue then
+    // drains itself once the 25-posts/24h quota frees up.
+    if (/request limit|rate limit|too many requests/i.test(msg)) {
+      const retryAt = new Date(Date.now() + 60 * 60 * 1000).toISOString();
+      await sb.from("social_listing_queue").update({
+        status: "pending",
+        post_id: null,
+        scheduled_at: retryAt,
+        error_message: "Instagram rate limit reached — will retry automatically",
+      }).eq("id", item.id);
+      console.warn("[social-listing] rate limited, backing off", item.id, "until", retryAt);
+      return { processed: 1, id: item.id, status: "rate_limited", retryAt };
+    }
+    // Real failure: clear the claim marker and mark failed.
     await sb.from("social_listing_queue").update({
       status: "failed",
       post_id: null,
-      error_message: err.message,
+      error_message: msg,
     }).eq("id", item.id);
-    console.error("[social-listing] queue publish failed", item.id, err.message);
-    return { processed: 1, id: item.id, status: "failed", error: err.message };
+    console.error("[social-listing] queue publish failed", item.id, msg);
+    return { processed: 1, id: item.id, status: "failed", error: msg };
   }
 }
 

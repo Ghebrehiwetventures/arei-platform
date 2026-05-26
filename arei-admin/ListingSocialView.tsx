@@ -671,8 +671,10 @@ export function ListingSocialView() {
                     <div className="text-foreground-muted mt-0.5">
                       {new Date(item.scheduled_at).toLocaleString()} · {item.image_urls.length} images
                     </div>
-                    {item.status === "failed" && item.error_message && (
-                      <div className="text-red mt-0.5 truncate">{item.error_message}</div>
+                    {item.error_message && (
+                      <div className={`mt-0.5 truncate ${item.status === "failed" ? "text-red" : "text-amber"}`}>
+                        {item.error_message}
+                      </div>
                     )}
                   </div>
                 </div>
