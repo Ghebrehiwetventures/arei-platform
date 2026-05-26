@@ -8,12 +8,15 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig } from "../core/configLoader";
 import { genericPaginatedFetcher, GenericParsedListing, dedupeImageUrls } from "../core/genericFetcher";
-import { fetchHtml, FetchResult } from "../core/fetchHtml";
+import { fetchHtml } from "../core/fetchHtml";
 import { fetchHeadless } from "../core/fetchHeadless";
 import { parseLocation, getCurrency, getCountry } from "../core/locationMapper";
 import { createPostgresClient } from "../core/postgresClient";
 import { createGenericDetailPlugin } from "../core/detail/plugins/genericDetail";
 import { getStrategyFactory, resetStrategyFactory } from "../core/detail/strategyFactory";
+import { buildListFetchFn } from "../core/pipeline/fetchSource";
+import { loadLocationHooks, LocationHookModule } from "../core/pipeline/locationHooks";
+import { LAND_TYPES } from "../core/pipeline/propertyType";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -59,8 +62,6 @@ interface CuratedRow {
 }
 
 // ─── Property type extraction ───────────────────────────────────────────────
-
-const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
 
 function extractPropertyType(title?: string, url?: string): string {
   const text = `${title || ""} ${url || ""}`.toLowerCase();
@@ -522,24 +523,7 @@ async function writeToKvCurated(rows: CuratedRow[]): Promise<void> {
   console.log(`[Write] ${inserted} upserted${raceNote}, ${failed} failed`);
 }
 
-// ─── Location hooks ───────────────────────────────────────────────────────────
-
-interface LocationHookModule {
-  resolveLocation(input: {
-    id: string; sourceId: string;
-    title?: string | null; description?: string | null;
-    sourceUrl?: string | null; rawIsland?: string | null; rawCity?: string | null;
-  }): { island?: string; city?: string } | null;
-}
-
-function loadLocationHooks(marketId: string): LocationHookModule | null {
-  const hookPath = path.resolve(__dirname, `../markets/${marketId}/locationHooks`);
-  try {
-    const mod = require(hookPath);
-    if (typeof mod.resolveLocation === "function") return mod as LocationHookModule;
-  } catch { /* no hooks for this market */ }
-  return null;
-}
+// ─── Location resolution ─────────────────────────────────────────────────────
 
 function resolveIsland(
   listing: WorkingListing,
@@ -579,18 +563,7 @@ function resolveIsland(
 
 async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing[]> {
   const fetchConfig = sourceConfigToFetchConfig(sourceConfig);
-
-  const fetchFn = async (url: string): Promise<FetchResult> => {
-    if (fetchConfig.fetch_method === "headless") return fetchHeadless(url);
-    return fetchHtml(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Cache-Control": "no-cache",
-      },
-    });
-  };
+  const fetchFn = buildListFetchFn(fetchConfig.fetch_method);
 
   console.log(`[Fetch] Starting ${sourceConfig.fetch_method || "http"} fetch for ${sourceConfig.id}...`);
   const result = await genericPaginatedFetcher(fetchConfig, fetchFn);

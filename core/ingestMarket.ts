@@ -15,7 +15,10 @@
  */
 
 import { fetchHeadless } from "./fetchHeadless";
-import { fetchHtml, FetchResult } from "./fetchHtml";
+import { fetchHtml } from "./fetchHtml";
+import { buildListFetchFn } from "./pipeline/fetchSource";
+import { loadLocationHooks, LocationHookModule } from "./pipeline/locationHooks";
+import { LAND_TYPES } from "./pipeline/propertyType";
 import { initSourceStats, normalizeOrDrop } from "./dropReport";
 
 import * as fs from "fs";
@@ -88,9 +91,6 @@ interface IngestListing {
 // PROPERTY TYPE EXTRACTION
 // ============================================
 
-/** Canonical land/plot property types — shared across pipeline and UI */
-const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
-
 function extractPropertyType(title?: string, url?: string): string {
   const text = `${title || ""} ${url || ""}`.toLowerCase();
 
@@ -152,18 +152,6 @@ function sleep(ms: number): Promise<void> {
 // DYNAMIC PLUGIN LOADING
 // ============================================
 
-interface LocationHookModule {
-  resolveLocation(input: {
-    id: string;
-    sourceId: string;
-    title?: string | null;
-    description?: string | null;
-    sourceUrl?: string | null;
-    rawIsland?: string | null;
-    rawCity?: string | null;
-  }): { island?: string; city?: string } | null;
-}
-
 /**
  * Try to load market-specific detail plugins from markets/{marketId}/plugins/.
  * Returns an array of DetailPlugin instances found.
@@ -199,26 +187,6 @@ function loadMarketPlugins(marketId: string): DetailPlugin[] {
   return plugins;
 }
 
-/**
- * Try to load market-specific location hooks from markets/{marketId}/locationHooks.
- * Returns the module if found, null otherwise.
- */
-function loadLocationHooks(marketId: string): LocationHookModule | null {
-  const hookPath = path.resolve(__dirname, `../markets/${marketId}/locationHooks`);
-
-  try {
-    const mod = require(hookPath);
-    if (typeof mod.resolveLocation === "function") {
-      console.log(`[Hooks] Loaded location hooks for market: ${marketId}`);
-      return mod as LocationHookModule;
-    }
-  } catch {
-    // No location hooks for this market — that's fine
-  }
-
-  return null;
-}
-
 // ============================================
 // GENERIC SOURCE FETCHER
 // ============================================
@@ -233,21 +201,7 @@ async function genericFetchSource(
   console.log(`[${source.id}] Fetching via ${source.fetch_method || "http"}...`);
 
   const fetchConfig = sourceConfigToFetchConfig(source);
-
-  const fetchFn = async (url: string): Promise<FetchResult> => {
-    if (fetchConfig.fetch_method === "headless") {
-      return fetchHeadless(url);
-    }
-    return fetchHtml(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Cache-Control": "no-cache",
-      },
-    });
-  };
-
+  const fetchFn = buildListFetchFn(fetchConfig.fetch_method);
   const result = await genericPaginatedFetcher(fetchConfig, fetchFn);
 
   if (result.listings.length === 0) {
