@@ -38,12 +38,13 @@ export function deriveIssues(r: SourceQualityRow): SourceIssue[] {
   const issues: SourceIssue[] = [];
   const approved = Number(r.approved_count);
   const listing = Number(r.listing_count);
+  const hasLiveFeed = r.public_feed_count_n > 0;
   const d = daysSince(r.last_updated_at);
   if (approved > 0 && r.public_feed_count_n === 0)
     issues.push({ code: "no_feed", label: "Ingest-approved, 0 live feed", severity: "blocker" });
-  if (approved > 0 && r.trust_passed_count_n === 0)
+  if (approved > 0 && !hasLiveFeed && r.trust_passed_count_n === 0)
     issues.push({ code: "no_trust", label: "0 trust passed", severity: "blocker" });
-  if (approved > 0 && r.indexable_count_n === 0)
+  if (approved > 0 && !hasLiveFeed && r.indexable_count_n === 0)
     issues.push({ code: "no_indexable", label: "0 indexable", severity: "blocker" });
   if (d >= STALE_DAYS)
     issues.push({ code: "stale", label: Number.isFinite(d) ? `Stale ${d}d` : "No updates", severity: "warn" });
@@ -81,11 +82,12 @@ export function statusFor(r: SourceQualityRow): { label: string; tone: StatusTon
 export function priorityScore(r: SourceQualityRow): number {
   const approved = Number(r.approved_count);
   const listing = Number(r.listing_count);
+  const hasLiveFeed = r.public_feed_count_n > 0;
   const d = daysSince(r.last_updated_at);
   let s = 0;
   if (approved > 0 && r.public_feed_count_n === 0) s += 1000 + approved;
-  if (approved > 0 && r.trust_passed_count_n === 0) s += 800 + approved;
-  if (approved > 0 && r.indexable_count_n === 0) s += 600 + approved;
+  if (approved > 0 && !hasLiveFeed && r.trust_passed_count_n === 0) s += 800 + approved;
+  if (approved > 0 && !hasLiveFeed && r.indexable_count_n === 0) s += 600 + approved;
   if (d >= STALE_DAYS) s += 200 + (Number.isFinite(d) ? Math.min(d, 365) : 365);
   if (listing >= 10 && r.with_sqm_pct === 0) s += 150 + Math.floor(listing / 10);
   if (listing >= 10 && r.with_sqm_pct < 30) s += 50;
@@ -111,6 +113,7 @@ export interface PriorityAction {
 export function buildPriorityAction(r: SourceQualityRow): PriorityAction | null {
   const approved = Number(r.approved_count);
   const listing = Number(r.listing_count);
+  const hasLiveFeed = r.public_feed_count_n > 0;
   const d = daysSince(r.last_updated_at);
   const conv = Math.round(r.feed_conversion_pct);
   const days = Number.isFinite(d) ? `${d}d` : "an unknown time";
@@ -125,7 +128,7 @@ export function buildPriorityAction(r: SourceQualityRow): PriorityAction | null 
       impact: "High",
     };
   }
-  if (approved > 0 && r.trust_passed_count_n === 0) {
+  if (approved > 0 && !hasLiveFeed && r.trust_passed_count_n === 0) {
     return {
       title: r.sourceName,
       problem: `${approved.toLocaleString()} pipeline-approved listings, but none pass the trust gate.`,
@@ -134,7 +137,7 @@ export function buildPriorityAction(r: SourceQualityRow): PriorityAction | null 
       impact: "High",
     };
   }
-  if (approved > 0 && r.indexable_count_n === 0) {
+  if (approved > 0 && !hasLiveFeed && r.indexable_count_n === 0) {
     return {
       title: r.sourceName,
       problem: `${approved.toLocaleString()} pipeline-approved listings, but none are indexable.`,
@@ -196,13 +199,14 @@ export function buildPriorityAction(r: SourceQualityRow): PriorityAction | null 
 export function prioritySummary(r: SourceQualityRow): string {
   const approved = Number(r.approved_count);
   const listing = Number(r.listing_count);
+  const hasLiveFeed = r.public_feed_count_n > 0;
   const d = daysSince(r.last_updated_at);
   const parts: string[] = [];
   if (approved > 0) parts.push(`${approved} pipeline-approved`);
   else parts.push(`${listing} listings`);
   if (approved > 0 && r.public_feed_count_n === 0) parts.push("0 live feed");
-  if (approved > 0 && r.trust_passed_count_n === 0) parts.push("0 trust passed");
-  if (approved > 0 && r.indexable_count_n === 0) parts.push("0 indexable");
+  if (approved > 0 && !hasLiveFeed && r.trust_passed_count_n === 0) parts.push("0 trust passed");
+  if (approved > 0 && !hasLiveFeed && r.indexable_count_n === 0) parts.push("0 indexable");
   if (d >= STALE_DAYS && Number.isFinite(d)) parts.push(`stale ${d}d`);
   if (listing >= 10 && r.with_sqm_pct < 30) parts.push(`${r.with_sqm_pct}% sqm`);
   if (listing >= 10 && r.with_beds_pct < 30) parts.push(`${r.with_beds_pct}% beds`);
@@ -522,8 +526,8 @@ export function SourceHealthReport({ rows, marketLabel, snapshots = [] }: { rows
   const summary = summarize(productionRows);
   const issueBuckets = {
     noFeed: productionRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0),
-    noTrust: productionRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0),
-    noIndexable: productionRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0),
+    noTrust: productionRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.trust_passed_count_n === 0),
+    noIndexable: productionRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.indexable_count_n === 0),
     stale: productionRows.filter((r) => daysSince(r.last_updated_at) >= STALE_DAYS),
     lowSqm: productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_sqm_pct < 30),
     lowBeds: productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_beds_pct < 30),
@@ -747,8 +751,8 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     .filter((a): a is PriorityAction => a !== null);
   const buckets: Array<[string, SourceQualityRow[]]> = [
     ["Approved but 0 public feed", productionRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0)],
-    ["Approved but 0 trust passed", productionRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0)],
-    ["Approved but 0 indexable", productionRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0)],
+    ["Approved but 0 trust passed", productionRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.trust_passed_count_n === 0)],
+    ["Approved but 0 indexable", productionRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.indexable_count_n === 0)],
     [`Stale (≥ ${STALE_DAYS}d)`, productionRows.filter((r) => daysSince(r.last_updated_at) >= STALE_DAYS)],
     ["Sqm coverage < 30%", productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_sqm_pct < 30)],
     ["Beds coverage < 30%", productionRows.filter((r) => Number(r.listing_count) >= 10 && r.with_beds_pct < 30)],

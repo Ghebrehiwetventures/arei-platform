@@ -534,8 +534,8 @@ function DashboardView() {
   const staleSourcesCount = healthRows.filter((r) => formatFreshness(r.last_updated_at).stale && !formatFreshness(r.last_updated_at).missing).length;
   const missingSqmSources = healthRows.filter((r) => Number(r.listing_count) > 0 && Number(r.with_sqm_count ?? 0) === 0).length;
   const approvedNoFeedSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0).length;
-  const approvedNoTrustSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0).length;
-  const approvedNoIndexableSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0).length;
+  const approvedNoTrustSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.trust_passed_count_n === 0).length;
+  const approvedNoIndexableSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.indexable_count_n === 0).length;
   const lowFeedConvSources = healthRows.filter((r) => Number(r.approved_count) >= 20 && r.public_feed_count_n > 0 && r.feed_conversion_pct < 25).length;
 
   // CV-only worst/best for the top "Needs attention" / "Performing well" cards.
@@ -1006,9 +1006,21 @@ const LISTINGS_COLUMNS: { key: ListingsSortKey | "photo" | "grade" | "action"; l
   { key: "action", label: "" },
 ];
 
-function ListingsTabView() {
+interface ListingsTabViewProps {
+  embedded?: boolean;
+  fixedMarketId?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+function ListingsTabView({
+  embedded = false,
+  fixedMarketId,
+  title = "Listings",
+  subtitle = "Browse and filter across all markets",
+}: ListingsTabViewProps = {}) {
   const [markets, setMarkets] = useState<{ id: string; name: string }[]>([]);
-  const [marketId, setMarketId] = useState("all");
+  const [marketIdState, setMarketIdState] = useState(fixedMarketId ?? "all");
   const [sourceOptions, setSourceOptions] = useState<{ id: string; name: string }[]>([]);
   const [gradeBySourceId, setGradeBySourceId] = useState<Map<string, "A" | "B" | "C" | "D">>(new Map());
   const [filters, setFilters] = useState<ListingsFilters>({});
@@ -1024,9 +1036,18 @@ function ListingsTabView() {
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("original");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const marketId = fixedMarketId ?? marketIdState;
+
   useEffect(() => {
     getMarketIds().then(setMarkets);
   }, []);
+
+  useEffect(() => {
+    if (!fixedMarketId) return;
+    setMarketIdState(fixedMarketId);
+    setFilters((f) => ({ ...f, sourceId: undefined }));
+    setPage(1);
+  }, [fixedMarketId]);
 
   useEffect(() => {
     getDashboardStats().then((s) => {
@@ -1106,14 +1127,18 @@ function ListingsTabView() {
   const inputCls = "bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded w-full";
 
   return (
-    <div>
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div className={embedded ? "space-y-4" : ""}>
+      <div className={"flex flex-wrap items-start justify-between gap-4 " + (embedded ? "" : "mb-6")}>
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Listings
-          </h1>
+          {embedded ? (
+            <h2 className="text-sm font-semibold text-foreground font-mono">{title}</h2>
+          ) : (
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
+              {title}
+            </h1>
+          )}
           <p className="text-sm text-foreground-muted mt-1">
-            Browse and filter across all markets
+            {subtitle}
           </p>
         </div>
         <div className="flex gap-2">
@@ -1164,7 +1189,7 @@ function ListingsTabView() {
         </div>
       </div>
 
-      <div className="surface-1 rounded border border-border p-4 mb-6">
+      <div className={"surface-1 rounded border border-border p-4 " + (embedded ? "" : "mb-6")}>
         <button
           type="button"
           onClick={() => setFiltersOpen((o) => !o)}
@@ -1181,24 +1206,26 @@ function ListingsTabView() {
         </button>
         <div className="hidden sm:block text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
         <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 ${filtersOpen ? "mt-3" : "hidden sm:grid sm:mt-0"}`}>
-          <div>
-            <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
-            <select
-              value={marketId}
-              onChange={(e) => {
-                setMarketId(e.target.value);
-                setPage(1);
-              }}
-              className={inputCls}
-            >
-              <option value="all">All markets</option>
-              {markets.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.id})
-                </option>
-              ))}
-            </select>
-          </div>
+          {!fixedMarketId && (
+            <div>
+              <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
+              <select
+                value={marketId}
+                onChange={(e) => {
+                  setMarketIdState(e.target.value);
+                  setPage(1);
+                }}
+                className={inputCls}
+              >
+                <option value="all">All markets</option>
+                {markets.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Source</label>
             <select
@@ -1618,6 +1645,7 @@ function SourcesView() {
   const [sortKey, setSortKey] = useState<SourcesSortKey>("listing_count");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [snapshots, setSnapshots] = useState<SourceSnapshot[]>([]);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const onSort = (key: SourcesSortKey) => {
     if (key === sortKey) {
@@ -1686,6 +1714,7 @@ function SourcesView() {
   const marketIds = [...byMarket.keys()];
 
   const handleExportCsv = () => {
+    setExportOpen(false);
     const header = [
       "market_id",
       "market_name",
@@ -1743,12 +1772,14 @@ function SourcesView() {
   const reportMarketLabel = selectedMarket.name;
 
   const handleExportHtmlReport = () => {
+    setExportOpen(false);
     const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
     const date = new Date().toISOString().slice(0, 10);
     downloadTextFile(`arei-source-health-report-${date}.html`, html, "text/html;charset=utf-8");
   };
 
   const handlePrintReport = () => {
+    setExportOpen(false);
     const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
     const w = window.open("", "_blank", "noopener,noreferrer");
     if (!w) {
@@ -1769,51 +1800,100 @@ function SourcesView() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Sources
+            Listings
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
-            Pipeline Source Health Report — visual overview, then detail tables · scoped to selected market
+            Pick a country first. Data health comes first; individual listing rows are below.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <MarketSelector />
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              disabled={scopedRows.length === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setExportOpen((o) => !o)}
+                disabled={scopedRows.length === 0}
+                className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+              >
+                Export
+              </button>
+              {exportOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    aria-hidden
+                    onClick={() => setExportOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full z-20 mt-1 min-w-[210px] surface-1 border border-border rounded py-1 shadow-md">
+                    <button
+                      type="button"
+                      onClick={handleExportCsv}
+                      disabled={scopedRows.length === 0}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors disabled:opacity-40"
+                    >
+                      Source health CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportHtmlReport}
+                      disabled={reportRows.length === 0}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors disabled:opacity-40"
+                    >
+                      HTML report
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePrintReport}
+                      disabled={reportRows.length === 0}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors disabled:opacity-40"
+                    >
+                      Print / PDF
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+            <a
+              href="#listing-rows"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
             >
-              Export CSV
-            </button>
-            <button
-              type="button"
-              onClick={handleExportHtmlReport}
-              disabled={reportRows.length === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-            >
-              Export HTML report
-            </button>
-            <button
-              type="button"
-              onClick={handlePrintReport}
-              disabled={reportRows.length === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-            >
-              Print / PDF
-            </button>
+              Listing rows
+            </a>
           </div>
         </div>
       </div>
 
+      <section className="surface-1 rounded border border-border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground font-mono">
+              {selectedMarket.name} data health
+            </h2>
+            <p className="text-xs text-foreground-muted mt-1">
+              This page answers whether source data is being cleaned into usable, public inventory.
+            </p>
+          </div>
+          <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-surface-3 text-foreground-muted font-mono">
+            {STATUS_LABEL[selectedMarket.status]}
+          </span>
+        </div>
+      </section>
+
       <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} snapshots={snapshots} />
 
-      <div>
-        <h2 className="text-sm font-semibold text-foreground font-mono mb-3 mt-2">Source detail tables</h2>
-        <p className="text-xs text-foreground-muted mb-3">Full data per market — secondary to the visual report above.</p>
-      </div>
-
-      {marketIds.map((marketId) => {
+      <details className="surface-1 rounded border border-border shadow-sm">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-foreground font-mono hover:bg-surface-2 transition-colors">
+          Source drill-down
+          <span className="ml-2 text-xs font-normal text-foreground-muted">
+            Full source table for the selected country
+          </span>
+        </summary>
+        <div className="px-4 pb-4">
+          <p className="text-xs text-foreground-muted mb-3">
+            Operational detail for debugging specific publishers after the overview has shown where the problem is.
+          </p>
+          {marketIds.map((marketId) => {
         const rows = byMarket.get(marketId)!;
         const marketName = marketNameById.get(marketId) ?? marketId;
         const totalListings = rows.reduce((acc, r) => acc + Number(r.listing_count), 0);
@@ -1865,8 +1945,13 @@ function SourcesView() {
                             ? "text-amber"
                             : "text-foreground-muted";
                       const approvedN = Number(r.approved_count);
-                      const trustClass = approvedN > 0 && r.trust_passed_count_n === 0 ? "text-red" : "text-foreground-muted";
-                      const indexableClass = approvedN > 0 && r.indexable_count_n === 0 ? "text-red" : "text-foreground-muted";
+                      const hasLiveFeed = r.public_feed_count_n > 0;
+                      const trustClass = approvedN > 0 && r.trust_passed_count_n === 0
+                        ? hasLiveFeed ? "text-amber" : "text-red"
+                        : "text-foreground-muted";
+                      const indexableClass = approvedN > 0 && r.indexable_count_n === 0
+                        ? hasLiveFeed ? "text-amber" : "text-red"
+                        : "text-foreground-muted";
                       const sqmClass = Number(r.listing_count) >= 10 && Number(r.with_sqm_count ?? 0) === 0 ? "text-red" : "text-foreground-muted";
                       return (
                       <tr key={r.source_id} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
@@ -1898,7 +1983,18 @@ function SourcesView() {
             </div>
           </section>
         );
-      })}
+          })}
+        </div>
+      </details>
+
+      <section id="listing-rows" className="surface-1 rounded border border-border p-4 shadow-sm scroll-mt-6">
+        <ListingsTabView
+          embedded
+          fixedMarketId={selectedMarketId}
+          title="Individual listing rows"
+          subtitle={`Raw listing browser for ${selectedMarket.name}. Use this after the health overview points to a source or data-quality issue.`}
+        />
+      </section>
 
       {scopedRows.length === 0 && (
         selectedMarket.status !== "active" ? (
@@ -3579,8 +3675,7 @@ type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agen
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
-  { key: "listings",      label: "Listings"      },
-  { key: "sources",       label: "Sources"       },
+  { key: "sources",       label: "Listings"      },
   { key: "market-news",   label: "Market News"   },
   { key: "marketing",     label: "Marketing"     },
   { key: "notifications", label: "Notifications" },
