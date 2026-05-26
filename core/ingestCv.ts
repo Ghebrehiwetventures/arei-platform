@@ -18,9 +18,8 @@ import {
 import { fetchHtml } from "./fetchHtml";
 import { runDetailEnrichment } from "./detail/enrich";
 import { getStrategyFactory } from "./detail/strategyFactory";
-import { terraCaboVerdePlugin } from "./detail/plugins/terraCaboVerde";
-import { simplyCapeVerdePlugin } from "./detail/plugins/simplyCapeVerde";
-import { homesCasaVerdePlugin } from "./detail/plugins/homesCasaVerde";
+// Source-specific detail plugins deleted in Phase B (2026-05-26).
+// All sources now use createGenericDetailPlugin via sources.yml spec_table config.
 import { createGenericDetailPlugin } from "./detail/plugins/genericDetail";
 import { DetailEnrichmentInput, DetailExtractResult, DetailPlugin } from "./detail/types";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
@@ -1079,16 +1078,10 @@ export async function runCvIngest(): Promise<IngestReport> {
   // REGISTER DETAIL PLUGINS (source-specific + generic)
   // ============================================
   const factory = getStrategyFactory();
-  // Register source-specific plugins (Terra + Simply have custom extraction logic)
-  factory.register(terraCaboVerdePlugin);
-  factory.register(simplyCapeVerdePlugin);
-  factory.register(homesCasaVerdePlugin);
-
-  // Register generic detail plugins for all other sources with detail.enabled
-  // Pass price_format from source config for accurate price parsing
+  // Register generic detail plugins for every source with detail.enabled.
   for (const source of sources) {
     if (!source.detail?.enabled) continue;
-    if (factory.hasPlugin(source.id)) continue; // Skip if already registered (Terra/Simply)
+    if (factory.hasPlugin(source.id)) continue;
     factory.register(createGenericDetailPlugin(source.id, source.detail, source.price_format));
     console.log(`[Detail] Registered generic detail plugin for ${source.id}`);
   }
@@ -1126,11 +1119,8 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
   const detailEnrichLimit = parseInt(process.env.DETAIL_ENRICH_LIMIT || "2", 10);
 
   if (detailEnrichEnabled) {
-    // Register plugins
+    // Generic plugins were registered above; nothing source-specific to add.
     const factory = getStrategyFactory();
-    factory.register(terraCaboVerdePlugin);
-    factory.register(simplyCapeVerdePlugin);
-    factory.register(homesCasaVerdePlugin);
 
     // Build enrichment inputs from hidden listings only
     const enrichmentInputs: DetailEnrichmentInput[] = evalResult.classifications
