@@ -26,11 +26,21 @@ async function authHeaders(): Promise<HeadersInit> {
 }
 
 type SchedulePattern = "1_per_day" | "2_per_day" | "3_per_week";
+type ListingSortKey = "latest" | "title_asc" | "price_asc" | "price_desc" | "images_desc" | "source_asc";
 
 const SCHEDULE_PATTERNS: { value: SchedulePattern; label: string; desc: string }[] = [
   { value: "1_per_day",   label: "1 / day",    desc: "Every day at 10:00" },
   { value: "2_per_day",   label: "2 / day",    desc: "Daily at 10:00 & 19:00" },
   { value: "3_per_week",  label: "3 / week",   desc: "Mon · Wed · Fri at 10:00" },
+];
+
+const LISTING_SORT_OPTIONS: { value: ListingSortKey; label: string }[] = [
+  { value: "latest",      label: "Newest" },
+  { value: "title_asc",   label: "Title A-Z" },
+  { value: "price_asc",   label: "Price low-high" },
+  { value: "price_desc",  label: "Price high-low" },
+  { value: "images_desc", label: "Most images" },
+  { value: "source_asc",  label: "Agency A-Z" },
 ];
 
 function nextSlot(pattern: SchedulePattern, takenISO: string[]): Date {
@@ -72,6 +82,26 @@ function toDatetimeLocal(d: Date): string {
 function previewImageUrl(url: string, size = 220): string {
   if (!url) return url;
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=cover&output=jpg&q=82`;
+}
+
+function compareNullablePrice(a: Listing, b: Listing, dir: "asc" | "desc"): number {
+  const aMissing = a.price == null;
+  const bMissing = b.price == null;
+  if (aMissing && bMissing) return 0;
+  if (aMissing) return 1;
+  if (bMissing) return -1;
+  return dir === "asc" ? a.price! - b.price! : b.price! - a.price!;
+}
+
+function sortListings(listings: Listing[], sortBy: ListingSortKey): Listing[] {
+  return [...listings].sort((a, b) => {
+    if (sortBy === "title_asc") return (a.title || a.id).localeCompare(b.title || b.id);
+    if (sortBy === "price_asc") return compareNullablePrice(a, b, "asc");
+    if (sortBy === "price_desc") return compareNullablePrice(a, b, "desc");
+    if (sortBy === "images_desc") return (b.image_urls?.length || 0) - (a.image_urls?.length || 0);
+    if (sortBy === "source_asc") return (a.source_name || a.source_id).localeCompare(b.source_name || b.source_id);
+    return b.id.localeCompare(a.id);
+  });
 }
 
 async function apiFetch<T>(method: string, body?: Record<string, unknown>): Promise<T> {
@@ -116,6 +146,7 @@ export function ListingSocialView() {
   const [published, setPublished] = useState<PublishedPost[]>([]);
   const [igConfigured, setIgConfigured] = useState(false);
   const [search, setSearch] = useState("");
+  const [listingSort, setListingSort] = useState<ListingSortKey>("latest");
   const [selectedId, setSelectedId] = useState("");
   const [caption, setCaption] = useState("");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
@@ -144,15 +175,17 @@ export function ListingSocialView() {
 
   const filtered = useMemo(() => {
     const q = search.trim().toLowerCase();
-    if (!q) return listings;
+    const matching = !q
+      ? listings
+      : listings.filter(
+          (l) =>
+            l.title?.toLowerCase().includes(q) ||
+            l.island?.toLowerCase().includes(q) ||
+            l.source_name?.toLowerCase().includes(q)
+        );
 
-    return listings.filter(
-      (l) =>
-        l.title?.toLowerCase().includes(q) ||
-        l.island?.toLowerCase().includes(q) ||
-        l.source_name?.toLowerCase().includes(q)
-    );
-  }, [listings, search]);
+    return sortListings(matching, listingSort);
+  }, [listings, search, listingSort]);
 
   const loadState = () => {
     return Promise.all([
@@ -223,6 +256,16 @@ export function ListingSocialView() {
       if (prev.includes(url)) return prev.filter((u) => u !== url);
       if (prev.length >= 10) return prev; // hard cap at Instagram limit
       return [...prev, url];
+    });
+  };
+
+  const moveSelectedImage = (position: number, direction: -1 | 1) => {
+    setSelectedImages((prev) => {
+      const nextIndex = position + direction;
+      if (position < 0 || nextIndex < 0 || nextIndex >= prev.length) return prev;
+      const next = [...prev];
+      [next[position], next[nextIndex]] = [next[nextIndex], next[position]];
+      return next;
     });
   };
 
@@ -397,22 +440,47 @@ export function ListingSocialView() {
       <section className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
         {/* Left: listing picker */}
         <div className="surface-1 rounded border border-border p-4 space-y-3">
-          <div>
-            <div className="label-style mb-1">Search</div>
-            <input
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Title, island, agency..."
-              className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
-            />
+          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
+            <div>
+              <div className="label-style mb-1">Search</div>
+              <input
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="Title, island, agency..."
+                className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
+              />
+            </div>
+            <div>
+              <div className="label-style mb-1">Sort</div>
+              <select
+                value={listingSort}
+                onChange={(e) => setListingSort(e.target.value as ListingSortKey)}
+                className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
+              >
+                {LISTING_SORT_OPTIONS.map((option) => (
+                  <option key={option.value} value={option.value}>{option.label}</option>
+                ))}
+              </select>
+            </div>
           </div>
           <div>
             <div className="label-style mb-1">Listing ({filtered.length} of {listings.length})</div>
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
+              className="md:hidden bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
+            >
+              {filtered.map((l) => (
+                <option key={l.id} value={l.id}>
+                  {l.title || l.id}
+                </option>
+              ))}
+            </select>
+            <select
+              value={selectedId}
+              onChange={(e) => setSelectedId(e.target.value)}
               size={10}
-              className="bg-background border border-border text-foreground px-2 py-1 text-xs font-mono w-full rounded"
+              className="hidden md:block bg-background border border-border text-foreground px-2 py-1 text-xs font-mono w-full rounded"
             >
               {filtered.map((l) => (
                 <option key={l.id} value={l.id}>
@@ -468,32 +536,33 @@ export function ListingSocialView() {
         <div className="space-y-4">
           {/* Image selection */}
           {allImages.length > 0 && (
-            <div className="surface-1 rounded border border-border p-4">
-              <div className="flex items-center justify-between mb-3">
-                <div className="text-xs font-mono text-foreground-muted">
+            <div className="surface-1 rounded border border-border p-3 sm:p-4">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mb-3">
+                <div className="text-sm sm:text-xs font-mono text-foreground-muted">
                   <span className="text-foreground">{selectedImages.length}</span> / {allImages.length} selected · max 10
                 </div>
-                <div className="flex gap-3 text-[11px] font-mono">
+                <div className="grid grid-cols-2 gap-2 sm:flex sm:gap-3 text-xs sm:text-[11px] font-mono">
                   <button
                     type="button"
                     onClick={() => setSelectedImages(allImages.slice(0, 10))}
-                    className="text-foreground-muted hover:text-foreground"
+                    className="min-h-10 rounded border border-border px-3 text-foreground-muted hover:text-foreground hover:bg-surface-2 sm:min-h-0 sm:border-0 sm:p-0"
                   >
                     Select 10
                   </button>
                   <button
                     type="button"
                     onClick={() => setSelectedImages([])}
-                    className="text-foreground-muted hover:text-foreground"
+                    className="min-h-10 rounded border border-border px-3 text-foreground-muted hover:text-foreground hover:bg-surface-2 sm:min-h-0 sm:border-0 sm:p-0"
                   >
                     Clear
                   </button>
                 </div>
               </div>
               <div
-                className="grid grid-cols-8 gap-1"
+                className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-1.5 touch-none"
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}
+                onPointerCancel={handleDragEnd}
               >
                 {[
                   ...selectedImages,
@@ -507,7 +576,7 @@ export function ListingSocialView() {
                     <div
                       key={url}
                       ref={active ? (el) => { cellRefs.current[position] = el; } : undefined}
-                      className={`relative aspect-square overflow-hidden rounded-sm ${
+                      className={`relative aspect-square overflow-hidden rounded ${
                         active ? "cursor-grab" : ""
                       } ${isDragging ? "opacity-40 ring-2 ring-foreground" : ""} ${
                         isDropTarget ? "ring-2 ring-green" : ""
@@ -533,7 +602,40 @@ export function ListingSocialView() {
                         }`}
                       />
                       {active && (
-                        <div className="absolute inset-0 ring-2 ring-inset ring-green pointer-events-none rounded-sm" />
+                        <>
+                          <div className="absolute inset-0 ring-2 ring-inset ring-green pointer-events-none rounded" />
+                          <div className="absolute left-1.5 top-1.5 min-w-6 h-6 px-1.5 rounded bg-green text-background text-xs font-bold font-mono flex items-center justify-center pointer-events-none">
+                            {position + 1}
+                          </div>
+                          <div className="absolute inset-x-1.5 bottom-1.5 grid grid-cols-2 gap-1 sm:hidden">
+                            <button
+                              type="button"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveSelectedImage(position, -1);
+                              }}
+                              disabled={position === 0}
+                              className="h-8 rounded bg-background/90 text-foreground text-base font-mono disabled:opacity-35"
+                              aria-label="Move image earlier"
+                            >
+                              ‹
+                            </button>
+                            <button
+                              type="button"
+                              onPointerDown={(e) => e.stopPropagation()}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                moveSelectedImage(position, 1);
+                              }}
+                              disabled={position === selectedImages.length - 1}
+                              className="h-8 rounded bg-background/90 text-foreground text-base font-mono disabled:opacity-35"
+                              aria-label="Move image later"
+                            >
+                              ›
+                            </button>
+                          </div>
+                        </>
                       )}
                     </div>
                   );
