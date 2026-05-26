@@ -1645,6 +1645,7 @@ function SourcesView() {
   const [sortKey, setSortKey] = useState<SourcesSortKey>("listing_count");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [snapshots, setSnapshots] = useState<SourceSnapshot[]>([]);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const onSort = (key: SourcesSortKey) => {
     if (key === sortKey) {
@@ -1713,6 +1714,7 @@ function SourcesView() {
   const marketIds = [...byMarket.keys()];
 
   const handleExportCsv = () => {
+    setExportOpen(false);
     const header = [
       "market_id",
       "market_name",
@@ -1770,12 +1772,14 @@ function SourcesView() {
   const reportMarketLabel = selectedMarket.name;
 
   const handleExportHtmlReport = () => {
+    setExportOpen(false);
     const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
     const date = new Date().toISOString().slice(0, 10);
     downloadTextFile(`arei-source-health-report-${date}.html`, html, "text/html;charset=utf-8");
   };
 
   const handlePrintReport = () => {
+    setExportOpen(false);
     const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
     const w = window.open("", "_blank", "noopener,noreferrer");
     if (!w) {
@@ -1805,30 +1809,51 @@ function SourcesView() {
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <MarketSelector />
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              disabled={scopedRows.length === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-            >
-              Export CSV
-            </button>
-            <button
-              type="button"
-              onClick={handleExportHtmlReport}
-              disabled={reportRows.length === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-            >
-              Export HTML report
-            </button>
-            <button
-              type="button"
-              onClick={handlePrintReport}
-              disabled={reportRows.length === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-            >
-              Print / PDF
-            </button>
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setExportOpen((o) => !o)}
+                disabled={scopedRows.length === 0}
+                className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+              >
+                Export
+              </button>
+              {exportOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    aria-hidden
+                    onClick={() => setExportOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full z-20 mt-1 min-w-[210px] surface-1 border border-border rounded py-1 shadow-md">
+                    <button
+                      type="button"
+                      onClick={handleExportCsv}
+                      disabled={scopedRows.length === 0}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors disabled:opacity-40"
+                    >
+                      Source health CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportHtmlReport}
+                      disabled={reportRows.length === 0}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors disabled:opacity-40"
+                    >
+                      HTML report
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePrintReport}
+                      disabled={reportRows.length === 0}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors disabled:opacity-40"
+                    >
+                      Print / PDF
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
             <a
               href="#listing-rows"
               className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
