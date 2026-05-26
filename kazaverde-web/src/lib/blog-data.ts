@@ -24,7 +24,7 @@ const _ALL_BLOG_ARTICLES = [
 <blockquote><p>The figures below are <strong>asking prices from publicly listed properties the Cape Verde Real Estate Index currently tracks</strong> — not closing prices, not the full market, and not legally verified. Source coverage is still expanding. The live numbers on <a href="/listings">/listings</a> and <a href="/market">/market</a> are always the authoritative version.</p></blockquote>
 <hr>
 <h2>What the current index shows by island</h2>
-<p>As of late April 2026, the Cape Verde Real Estate Index tracks roughly four hundred publicly listed properties across the archipelago. The distribution is heavily concentrated in the three islands with the most direct foreign-buyer activity. Three islands carry enough tracked listings to support a useful median:</p>
+<p>As of late April 2026, the Cape Verde Real Estate Index tracks roughly four hundred publicly listed properties across the archipelago. Four islands now carry enough tracked listings to support a useful median:</p>
 <div class="kv-island-grid">
   <div class="kv-island-stat">
     <div class="kv-island-stat-name">Sal</div>
@@ -40,7 +40,7 @@ const _ALL_BLOG_ARTICLES = [
       <div><span>Tracked listings</span><strong>~130</strong></div>
       <div><span>Median asking</span><strong>~€238,000</strong></div>
     </div>
-    <p>Second-largest sample, and the highest median of the three. The mix appears weighted toward Praia city stock rather than resort apartments — different inventory, different median, not a "more expensive island."</p>
+    <p>Second-largest sample, and the highest median of the four. The mix appears weighted toward Praia city stock rather than resort apartments — different inventory, different median, not a "more expensive island."</p>
   </div>
   <div class="kv-island-stat">
     <div class="kv-island-stat-name">Boa Vista</div>
@@ -50,15 +50,23 @@ const _ALL_BLOG_ARTICLES = [
     </div>
     <p>Third-largest sample. Mix appears weighted toward resort apartments and off-plan stock around Sal Rei, where new-build asking prices can sit above realistic resale benchmarks.</p>
   </div>
+  <div class="kv-island-stat">
+    <div class="kv-island-stat-name">São Vicente</div>
+    <div class="kv-island-stat-figs">
+      <div><span>Tracked listings</span><strong>~40</strong></div>
+      <div><span>Median asking</span><strong>~€145,000</strong></div>
+    </div>
+    <p>Growing sample centred on Mindelo, Cape Verde's second city. Urban and residential stock rather than resort — a different buyer profile to Sal and Boa Vista.</p>
+  </div>
 </div>
-<p>For the live version of these figures, with the underlying listings, see <a href="/market">/market</a> and the per-island grids: <a href="/listings?island=Sal">Sal</a>, <a href="/listings?island=Santiago">Santiago</a>, <a href="/listings?island=Boa+Vista">Boa Vista</a>.</p>
+<p>For the live version of these figures, with the underlying listings, see <a href="/market">/market</a> and the per-island grids: <a href="/listings?island=Sal">Sal</a>, <a href="/listings?island=Santiago">Santiago</a>, <a href="/listings?island=Boa+Vista">Boa Vista</a>, <a href="/listings?island=S%C3%A3o+Vicente">São Vicente</a>.</p>
 <hr>
 <h2>The islands with too little tracked data to price</h2>
 <p>The remaining islands appear in the index but have samples too thin to support a reliable median. That may reflect genuinely thin local activity, or simply that the Cape Verde Real Estate Index has not yet onboarded the sources where listings on those islands tend to surface.</p>
 <ul>
 <li><strong>Maio</strong> — around twenty tracked listings, but the priced rows cluster at a single low value, which may reflect source or normalization effects rather than a clean market distribution.</li>
 <li><strong>São Nicolau</strong> and <strong>Fogo</strong> — under ten tracked listings each. Counts are real; medians are not yet meaningful.</li>
-<li><strong>São Vicente</strong> and <strong>Santo Antão</strong> — only a handful of tracked listings each. Too thin for the Cape Verde Real Estate Index to publish a meaningful median.</li>
+<li><strong>Santo Antão</strong> — only a handful of tracked listings. Too thin for the Cape Verde Real Estate Index to publish a meaningful median.</li>
 <li><strong>Brava</strong> — no tracked listings in the index at this snapshot.</li>
 </ul>
 <p>If you are specifically researching one of these islands, the most useful step is to look at the individual tracked listings on <a href="/listings">/listings</a> and follow the source links rather than rely on an aggregate. Coverage on these islands may deepen as new sources are added.</p>
