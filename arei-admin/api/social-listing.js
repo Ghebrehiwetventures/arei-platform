@@ -426,6 +426,11 @@ function getInstagramConfig() {
   };
 }
 
+function resolveChannels(value, fallback = DEFAULT_PLATFORM) {
+  const raw = Array.isArray(value) && value.length > 0 ? value : [fallback];
+  return [...new Set(raw.map((channel) => String(channel || "").trim()).filter(Boolean))];
+}
+
 // ─── TikTok Photo Mode ────────────────────────────────────────────────────────
 
 function getTikTokConfig() {
@@ -780,9 +785,7 @@ export async function processQueueOnce(sb) {
   }
 
   // Resolve channels: fall back to the legacy platform column for old rows.
-  const channels = Array.isArray(item.channels) && item.channels.length > 0
-    ? item.channels
-    : [item.platform || DEFAULT_PLATFORM];
+  const channels = resolveChannels(item.channels, item.platform || DEFAULT_PLATFORM);
 
   const channelErrors = [];
   let primaryPostId = null;
@@ -819,8 +822,23 @@ export async function processQueueOnce(sb) {
     }
   }
 
-  // Instagram throttling: back off the whole item so the queue drains once
-  // the 25-posts/24h quota frees up.
+  if (primaryPostId) {
+    // At least one channel succeeded. Do not retry the row after a partial
+    // success: external publish APIs are not transactional, and retrying can
+    // create duplicate posts if a later channel or logging step is throttled.
+    await sb.from("social_listing_queue").update({
+      status: "published",
+      post_id: primaryPostId,
+      permalink: primaryPermalink,
+      story_published: false,
+      error_message: channelErrors.length > 0 ? channelErrors.join("; ") : null,
+    }).eq("id", item.id);
+    const published = channels.filter((c) => !channelErrors.some((e) => e.startsWith(`${c}:`)));
+    return { processed: 1, id: item.id, status: "published", channels: published };
+  }
+
+  // Instagram throttling before any successful publish: back off the whole item
+  // so the queue drains once the 25-posts/24h quota frees up.
   const igRateLimited = channelErrors.some(
     (e) => e.startsWith("instagram:") && /request limit|rate limit|too many requests/i.test(e)
   );
@@ -834,20 +852,6 @@ export async function processQueueOnce(sb) {
     }).eq("id", item.id);
     console.warn("[social-listing] rate limited, backing off", item.id, "until", retryAt);
     return { processed: 1, id: item.id, status: "rate_limited", retryAt };
-  }
-
-  if (primaryPostId) {
-    // At least one channel succeeded — mark published. Secondary channel errors
-    // are preserved in error_message for visibility without blocking the queue.
-    await sb.from("social_listing_queue").update({
-      status: "published",
-      post_id: primaryPostId,
-      permalink: primaryPermalink,
-      story_published: false,
-      error_message: channelErrors.length > 0 ? channelErrors.join("; ") : null,
-    }).eq("id", item.id);
-    const published = channels.filter((c) => !channelErrors.some((e) => e.startsWith(`${c}:`)));
-    return { processed: 1, id: item.id, status: "published", channels: published };
   }
 
   // All channels failed.
@@ -926,9 +930,7 @@ export default async function handler(req, res) {
         send(res, 400, { error: "listingId, caption, imageUrls, scheduledAt required" });
         return;
       }
-      const resolvedChannels = Array.isArray(channels) && channels.length > 0
-        ? channels
-        : [body.platform || DEFAULT_PLATFORM];
+      const resolvedChannels = resolveChannels(channels, body.platform || DEFAULT_PLATFORM);
       const { data, error } = await sb.from("social_listing_queue").insert({
         listing_id: listingId,
         listing_title: listingTitle || null,
