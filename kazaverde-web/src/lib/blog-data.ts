@@ -16,7 +16,7 @@ const _ALL_BLOG_ARTICLES = [
     description:
       "People search for the best real estate agents in Cape Verde, but no neutral dataset proves who is best. See which Cape Verde real estate agencies and portals the index tracks.",
     date: "2026-05-23",
-    readTime: "6 min read",
+    readTime: "8 min read",
     tags: ["Buying", "Agents", "Guide"],
     content: `<p><em>Last updated: May 2026</em></p>
 <p>"Best real estate agents in Cape Verde" is one of the most common searches buyers run before they start looking at property. It is a fair question — but there is no neutral, public dataset that proves which Cape Verde real estate agents are objectively best. The agencies that rank for that phrase are usually the ones describing themselves that way.</p>
@@ -27,7 +27,7 @@ const _ALL_BLOG_ARTICLES = [
 <p>A few things worth being clear about before the list:</p>
 <ul>
 <li><strong>This is not a ranking.</strong> Listing the agencies the index tracks is not a judgment of who is best, and the order on this page carries no meaning.</li>
-<li><strong>We only cover sources we track.</strong> If an established Cape Verde agency is missing, the index has not onboarded their listings yet. Coverage expands continuously.</li>
+<li><strong>We only cover sources we track.</strong> If a Cape Verde agency you expect to see is missing, the index has not onboarded their listings yet. Coverage expands continuously.</li>
 <li><strong>Listing coverage is not market share.</strong> How many listings a source shows reflects how it publishes online, not how good it is or how much it sells. The live figures on <a href="/market">/market</a> and <a href="/listings">/listings</a> are always authoritative.</li>
 <li><strong>Interview notes are the agency's own words.</strong> Where an agency has spoken with us directly, we say so and attribute the claim to them. We have not independently verified every operational detail.</li>
 </ul>
@@ -39,21 +39,22 @@ const _ALL_BLOG_ARTICLES = [
 <h3>RE/MAX (Sal)</h3>
 <p><a href="https://www.remax.cv">remax.cv</a>. According to the agency, the RE/MAX office has been based on Sal for two and a half years and works with a local Cape Verdean business partner for local-market access. The agency told us it serves English- and German-speaking buyers — noting that German buyers are the second-largest nationality among purchasers on Sal — and that it is expanding into Santo Antão listings. These are agency-attributed details, not CVREI quality assessments.</p>
 <h3>Terra Cabo Verde</h3>
-<p><a href="https://terracaboverde.com">terracaboverde.com</a>. Listings tracked across multiple islands.</p>
+<p><a href="https://terracaboverde.com">terracaboverde.com</a>. According to its website, Terra Cabo Verde presents itself as a real estate agency based in Sal Rei, Boa Vista, offering brokerage, development, investment, and property services across Boa Vista and Sal. CVREI tracks listings from this source across multiple islands. These are agency-attributed details, not CVREI quality assessments.</p>
 <h3>Estate CV</h3>
-<p><a href="https://estatecv.com">estatecv.com</a>. Multi-island listings tracked, including Santiago, Sal, and Boa Vista.</p>
+<p><a href="https://estatecv.com">estatecv.com</a>. The site presents itself as a Cape Verde property partner that helps buyers find second homes and investment properties, with about and team content referencing real estate, investment, and technical property support for Cape Verde sales. Publicly visible listings indicate multi-island coverage, including Santiago, Sal, and Boa Vista. These are agency-attributed details, not CVREI quality assessments.</p>
 <h3>Homes Casa Verde</h3>
-<p><a href="https://www.homescasaverde.com">homescasaverde.com</a>. Sal-based, with listings tracked across several islands.</p>
+<p><a href="https://www.homescasaverde.com">homescasaverde.com</a>. According to its website, Homes Casa Verde focuses on Cape Verde property, particularly on Sal, listing apartments, villas, and land alongside investment opportunities and buyer guidance. CVREI tracks listings from this source on Sal and across several other islands. These are agency-attributed details, not CVREI quality assessments.</p>
 <h3>Cabo House Property</h3>
-<p><a href="https://www.cabohouseproperty.com">cabohouseproperty.com</a>. Listings tracked on Sal (Santa Maria).</p>
+<p><a href="https://www.cabohouseproperty.com">cabohouseproperty.com</a>. The site presents property for sale in Cape Verde and appears focused on Santa Maria, Sal, with apartments, villas, and land, plus buying guides and property-sales content. Publicly visible listings tracked by CVREI are concentrated on Sal (Santa Maria). These are agency-attributed details, not CVREI quality assessments.</p>
 <h3>Ocean Property 24</h3>
-<p><a href="https://www.oceanproperty24.com">oceanproperty24.com</a>. Listings tracked on Sal.</p>
+<p><a href="https://www.oceanproperty24.com">oceanproperty24.com</a>. According to its website, Ocean Property 24 presents properties in Cape Verde with a focus on Sal and Santa Maria, including apartments, villas, and land, with some listings marketed as luxury real estate. CVREI tracks listings from this source on Sal. These are agency-attributed details, not CVREI quality assessments.</p>
 <h3>Cape Verde Property 24</h3>
-<p><a href="https://capeverdeproperty24.com">capeverdeproperty24.com</a>. Listings tracked across the islands.</p>
+<p><a href="https://capeverdeproperty24.com">capeverdeproperty24.com</a>. The site presents itself as a property and real estate brokerage portal for Cape Verde, with search and filter tools and listings spanning sale, rent, and buying categories. CVREI tracks listings from this source across the islands. These are agency-attributed details, not CVREI quality assessments.</p>
 <h3>Simply Cape Verde</h3>
-<p><a href="https://simplycapeverde.com">simplycapeverde.com</a>. Listings tracked by the index.</p>
+<p><a href="https://simplycapeverde.com">simplycapeverde.com</a>. According to its website, Simply Cape Verde lists property for sale across Sal, Boa Vista, São Vicente, and the wider archipelago, alongside buyer and investor guidance. Its legal terms appear to reference brokerage activity and Cape Verde registration details. CVREI tracks listings from this source. These are agency-attributed details, not CVREI quality assessments.</p>
 <h3>NhaKaza</h3>
-<p><a href="https://nhakaza.cv">nhakaza.cv</a>. A Cape Verdean classifieds portal; listings are often priced in escudos, which the index normalizes to euros.</p>
+<p><a href="https://nhakaza.cv">nhakaza.cv</a>. NhaKaza appears to be a Cape Verdean property classifieds portal where users can advertise, sell, or rent apartments, houses, rooms, land, garages, commercial spaces, and similar property types. Publicly visible listings are often priced in Cape Verdean escudos, which CVREI normalizes to euros. CVREI tracks listings from this source across multiple islands.</p>
+<p><em>Descriptions are based on publicly available information from each source's own website and on CVREI's current listing coverage. They are not recommendations or quality assessments.</em></p>
 <hr>
 <h2>At a glance</h2>
 <table>
