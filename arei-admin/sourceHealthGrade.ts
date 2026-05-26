@@ -54,19 +54,19 @@ export function daysSince(ts: string | null | undefined): number {
  * Operational health grade.
  *
  * Replaces the old approval/image/price composite, which could mark a source
- * as "A" while it had 0 public feed, 0 trust pass, or stale freshness — i.e.
+ * as "A" while it had 0 public feed or stale freshness — i.e.
  * data was complete but the source was operationally broken.
  *
  * Rules — worst grade wins:
  *
  *   D  approved > 0 AND public_feed = 0          (approved listings never reach the public feed)
- *   D  approved > 0 AND trust_passed = 0         (none pass trust gate)
- *   D  approved > 0 AND indexable = 0            (none indexable)
+ *   D  approved > 0 AND live feed = 0 AND trust_passed = 0
+ *   D  approved > 0 AND live feed = 0 AND indexable = 0
  *   D  stale >= 30 days
  *   C  approved >= 20 AND feed conversion < 25%
  *   C  listing_count >= 10 AND sqm_pct = 0
  *   B  sqm_pct < 30 OR beds_pct < 30 OR baths_pct < 30
- *   A  fresh, has feed/trust/indexable, conversion >= 25%, basic coverage >= 30
+ *   A  fresh, has live feed, conversion >= 25%, basic coverage >= 30
  *
  * Sources with 0 listings (e.g. placeholder rows) get C — neither broken
  * nor functional.
@@ -88,10 +88,11 @@ export function computeHealthGrade(input: HealthGradeInput): HealthGradeResult {
   if (listing_count === 0) return { score: 50, grade: "C" };
 
   const stale = daysSince(last_updated_at) >= SOURCE_STALE_DAYS;
+  const hasLiveFeed = public_feed_count > 0;
   const isD =
     (approved_count > 0 && public_feed_count === 0) ||
-    (approved_count > 0 && trust_passed_count === 0) ||
-    (approved_count > 0 && indexable_count === 0) ||
+    (approved_count > 0 && !hasLiveFeed && trust_passed_count === 0) ||
+    (approved_count > 0 && !hasLiveFeed && indexable_count === 0) ||
     stale;
   if (isD) return { score: 25, grade: "D" };
 

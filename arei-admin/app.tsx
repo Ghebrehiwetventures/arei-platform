@@ -534,8 +534,8 @@ function DashboardView() {
   const staleSourcesCount = healthRows.filter((r) => formatFreshness(r.last_updated_at).stale && !formatFreshness(r.last_updated_at).missing).length;
   const missingSqmSources = healthRows.filter((r) => Number(r.listing_count) > 0 && Number(r.with_sqm_count ?? 0) === 0).length;
   const approvedNoFeedSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0).length;
-  const approvedNoTrustSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0).length;
-  const approvedNoIndexableSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0).length;
+  const approvedNoTrustSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.trust_passed_count_n === 0).length;
+  const approvedNoIndexableSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.indexable_count_n === 0).length;
   const lowFeedConvSources = healthRows.filter((r) => Number(r.approved_count) >= 20 && r.public_feed_count_n > 0 && r.feed_conversion_pct < 25).length;
 
   // CV-only worst/best for the top "Needs attention" / "Performing well" cards.
@@ -1920,8 +1920,13 @@ function SourcesView() {
                             ? "text-amber"
                             : "text-foreground-muted";
                       const approvedN = Number(r.approved_count);
-                      const trustClass = approvedN > 0 && r.trust_passed_count_n === 0 ? "text-red" : "text-foreground-muted";
-                      const indexableClass = approvedN > 0 && r.indexable_count_n === 0 ? "text-red" : "text-foreground-muted";
+                      const hasLiveFeed = r.public_feed_count_n > 0;
+                      const trustClass = approvedN > 0 && r.trust_passed_count_n === 0
+                        ? hasLiveFeed ? "text-amber" : "text-red"
+                        : "text-foreground-muted";
+                      const indexableClass = approvedN > 0 && r.indexable_count_n === 0
+                        ? hasLiveFeed ? "text-amber" : "text-red"
+                        : "text-foreground-muted";
                       const sqmClass = Number(r.listing_count) >= 10 && Number(r.with_sqm_count ?? 0) === 0 ? "text-red" : "text-foreground-muted";
                       return (
                       <tr key={r.source_id} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
