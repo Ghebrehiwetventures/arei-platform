@@ -134,8 +134,10 @@ function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
     if (c.source_id) seenSources.add(c.source_id);
   };
 
-  // Reserve last slot for one land listing (if available)
-  const landSlot = land[0] ?? null;
+  // Reserve last slot for one land listing (if available).
+  // Prefer land[1] over land[0] to avoid the most-recently-indexed
+  // parcel (which often carries a map/satellite thumbnail).
+  const landSlot = land[1] ?? land[0] ?? null;
   const residentialTarget = landSlot ? n - 1 : n;
 
   // Pass 1: unique island + unique source
@@ -264,12 +266,25 @@ export default function Landing() {
        us enough rows to count "added this month" from first_seen_at
        without a second round-trip. */
     Promise.all([
+      arei.getFeaturedListings(),           // admin-curated selection (may be null)
       arei.getListings({ page: 1, pageSize: 500 }),
       arei.getMarketStats(),
     ])
-      .then(([listRes, stats]) => {
+      .then(([curated, listRes, stats]) => {
         if (cancelled) return;
-        setFeatured(pickFeatured(listRes.data, 4));
+
+        if (curated && curated.length === 4) {
+          // Full admin-curated selection for this week
+          setFeatured(curated);
+        } else if (curated && curated.length > 0) {
+          // Partial curated — fill remaining slots algorithmically
+          const used = new Set(curated.map((c) => c.id));
+          const rest = listRes.data.filter((c) => !used.has(c.id));
+          setFeatured([...curated, ...pickFeatured(rest, 4 - curated.length)]);
+        } else {
+          // No published selection this week — algorithmic fallback
+          setFeatured(pickFeatured(listRes.data, 4));
+        }
         setTotalListings(listRes.total);
 
         const withPrice = stats.islands.filter((i) => i.median_price !== null);

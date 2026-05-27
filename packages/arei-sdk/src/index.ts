@@ -19,6 +19,7 @@ export type {
   AREIConfig,
   MarketNewsRow,
   MarketReportRow,
+  FeaturedSelectionRow,
 } from "./types.js";
 
 export {
