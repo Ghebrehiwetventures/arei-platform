@@ -10,14 +10,15 @@ import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig } from "../c
 import { genericPaginatedFetcher, GenericParsedListing } from "../core/genericFetcher";
 import { fetchHtml } from "../core/fetchHtml";
 import { fetchHeadless } from "../core/fetchHeadless";
-import { parseLocation, getCurrency, getCountry } from "../core/locationMapper";
+import { getCurrency, getCountry } from "../core/locationMapper";
 import { createPostgresClient } from "../core/postgresClient";
 import { createGenericDetailPlugin } from "../core/detail/plugins/genericDetail";
 import { getStrategyFactory, resetStrategyFactory } from "../core/detail/strategyFactory";
 import { buildListFetchFn } from "../core/pipeline/fetchSource";
-import { loadLocationHooks, LocationHookModule } from "../core/pipeline/locationHooks";
-import { LAND_TYPES } from "../core/pipeline/propertyType";
+import { loadLocationHooks } from "../core/pipeline/locationHooks";
+import { LAND_TYPES, extractPropertyType } from "../core/pipeline/propertyType";
 import { applyExtractResultToListing } from "../core/pipeline/enrich";
+import { resolveLocation as resolveIsland } from "../core/pipeline/locationResolver";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -60,21 +61,6 @@ interface CuratedRow {
   first_seen_at: string;
   publish_status: "needs_review";
   seeded_from_raw_listing_id: string;
-}
-
-// ─── Property type extraction ───────────────────────────────────────────────
-
-function extractPropertyType(title?: string, url?: string): string {
-  const text = `${title || ""} ${url || ""}`.toLowerCase();
-  if (/\b(villa|villas)\b/.test(text)) return "villa";
-  if (/\b(apartment|apartments|flat|flats|apt)\b/.test(text)) return "apartment";
-  if (/\b(house|houses|home|homes)\b/.test(text)) return "house";
-  if (/\b(townhouse|townhouses|town house)\b/.test(text)) return "townhouse";
-  if (/\b(penthouse|penthouses)\b/.test(text)) return "penthouse";
-  if (/\b(studio|studios|bedsitter)\b/.test(text)) return "studio";
-  if (/\b(bungalow|bungalows)\b/.test(text)) return "bungalow";
-  if (/\b(land|plot|plots|acre|acres)\b/.test(text)) return "land";
-  return "property";
 }
 
 // ─── Env + config validation ────────────────────────────────────────────────
@@ -501,42 +487,6 @@ async function writeToKvCurated(rows: CuratedRow[]): Promise<void> {
   await client.end();
   const raceNote = raceSkipped > 0 ? `, ${raceSkipped} race-skipped` : "";
   console.log(`[Write] ${inserted} upserted${raceNote}, ${failed} failed`);
-}
-
-// ─── Location resolution ─────────────────────────────────────────────────────
-
-function resolveIsland(
-  listing: WorkingListing,
-  marketId: string,
-  hooks: LocationHookModule | null
-): { island?: string; city?: string } {
-  const fromLoc = parseLocation(listing.location, marketId);
-  if (fromLoc.island) return { island: fromLoc.island, city: fromLoc.city };
-
-  if (listing.title) {
-    const fromTitle = parseLocation(listing.title, marketId);
-    if (fromTitle.island) return { island: fromTitle.island, city: fromTitle.city };
-  }
-
-  if (listing.description) {
-    const fromDesc = parseLocation(listing.description.substring(0, 500), marketId);
-    if (fromDesc.island) return { island: fromDesc.island, city: fromDesc.city };
-  }
-
-  if (hooks) {
-    const hookResult = hooks.resolveLocation({
-      id: listing.id,
-      sourceId: listing.sourceId,
-      title: listing.title ?? null,
-      description: listing.description ?? null,
-      sourceUrl: listing.detailUrl ?? null,
-      rawIsland: listing.location ?? null,
-      rawCity: null,
-    });
-    if (hookResult?.island) return hookResult;
-  }
-
-  return {};
 }
 
 // ─── Fetch ──────────────────────────────────────────────────────────────────

@@ -17,9 +17,10 @@
 import { fetchHeadless } from "./fetchHeadless";
 import { fetchHtml } from "./fetchHtml";
 import { buildListFetchFn } from "./pipeline/fetchSource";
-import { loadLocationHooks, LocationHookModule } from "./pipeline/locationHooks";
-import { LAND_TYPES } from "./pipeline/propertyType";
+import { loadLocationHooks } from "./pipeline/locationHooks";
+import { LAND_TYPES, extractPropertyType } from "./pipeline/propertyType";
 import { applyExtractResultToListing } from "./pipeline/enrich";
+import { resolveLocation as resolveListingLocation } from "./pipeline/locationResolver";
 import { initSourceStats, normalizeOrDrop } from "./dropReport";
 
 import * as fs from "fs";
@@ -36,7 +37,7 @@ import {
 } from "./batchEvaluateMarket";
 import { genericDetailExtract, DetailExtractionConfig } from "./genericDetailExtractor";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
-import { parseLocation, getCurrency, getCountry } from "./locationMapper";
+import { getCurrency, getCountry } from "./locationMapper";
 import { deriveProjectMetadata } from "./projectMetadata";
 import {
   genericPaginatedFetcher,
@@ -90,26 +91,6 @@ interface IngestListing {
 // ============================================
 // PROPERTY TYPE EXTRACTION
 // ============================================
-
-function extractPropertyType(title?: string, url?: string): string {
-  const text = `${title || ""} ${url || ""}`.toLowerCase();
-
-  if (/\b(villa|villas)\b/.test(text)) return "villa";
-  if (/\b(apartment|apartments|flat|flats|apt)\b/.test(text)) return "apartment";
-  if (/\b(house|houses|home|homes)\b/.test(text)) return "house";
-  if (/\b(townhouse|townhouses|town house)\b/.test(text)) return "townhouse";
-  if (/\b(penthouse|penthouses)\b/.test(text)) return "penthouse";
-  if (/\b(studio|studios|bedsitter)\b/.test(text)) return "studio";
-  if (/\b(bungalow|bungalows)\b/.test(text)) return "bungalow";
-  if (/\b(maisonette|maisonettes)\b/.test(text)) return "maisonette";
-  if (/\b(duplex|duplexes)\b/.test(text)) return "duplex";
-  if (/\b(land|plot|plots|acre|acres)\b/.test(text)) return "land";
-  if (/\b(commercial|office|shop|warehouse)\b/.test(text)) return "commercial";
-
-  if (/\b(for.?sale|bedroom|bed)\b/.test(text)) return "house";
-
-  return "property";
-}
 
 // ============================================
 // STUB DATA PROVIDER (for testing)
@@ -373,56 +354,6 @@ async function pluginDetailEnrichment(
   }
 
   console.log(`[DetailEnrich] Complete: ${enrichedCount} enriched, ${failedCount} failed`);
-}
-
-// ============================================
-// LOCATION RESOLUTION WITH FALLBACK CHAIN
-// ============================================
-
-function resolveListingLocation(
-  listing: { id: string; sourceId: string; title?: string; description?: string; detailUrl?: string; externalUrl?: string; location?: string; imageUrls?: string[] },
-  marketId: string,
-  locationHooks: LocationHookModule | null
-): { island?: string; city?: string } {
-  // 1. Try location field
-  const locResult = parseLocation(listing.location, marketId);
-  if (locResult.island) {
-    return { island: locResult.island, city: locResult.city };
-  }
-
-  // 2. Try title
-  if (listing.title) {
-    const titleResult = parseLocation(listing.title, marketId);
-    if (titleResult.island) {
-      return { island: titleResult.island, city: titleResult.city };
-    }
-  }
-
-  // 3. Try description (first 500 chars)
-  if (listing.description) {
-    const descResult = parseLocation(listing.description.substring(0, 500), marketId);
-    if (descResult.island) {
-      return { island: descResult.island, city: descResult.city };
-    }
-  }
-
-  // 4. Try market-specific location hooks (e.g., CV island recovery)
-  if (locationHooks) {
-    const hookResult = locationHooks.resolveLocation({
-      id: listing.id,
-      sourceId: listing.sourceId,
-      title: listing.title,
-      description: listing.description,
-      sourceUrl: listing.detailUrl || listing.externalUrl || null,
-      rawIsland: listing.location,
-      rawCity: undefined,
-    });
-    if (hookResult) {
-      return hookResult;
-    }
-  }
-
-  return {};
 }
 
 // ============================================
