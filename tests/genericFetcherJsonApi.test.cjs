@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 
 require("ts-node/register/transpile-only");
 
-const { mapJsonItem } = require("../core/genericFetcher");
+const { mapJsonItem } = require("../core/fetcher");
 
 test("json_api mapping can pick an English title from a typed description array", () => {
   const raw = {

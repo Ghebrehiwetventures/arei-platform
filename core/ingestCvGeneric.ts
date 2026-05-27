@@ -37,7 +37,7 @@ import {
   genericPaginatedFetcher,
   GenericParsedListing,
   SourceFetchConfig,
-} from "./genericFetcher";
+} from "./fetcher";
 import {
   getSourceHealthEntry,
   hasParserDiagnostics,
