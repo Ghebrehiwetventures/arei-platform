@@ -30,6 +30,20 @@ interface ListingSnippet {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
+function toSnippet(l: any): ListingSnippet {
+  return {
+    id: l.id,
+    title: l.title ?? "",
+    island: l.island ?? null,
+    city: l.city ?? null,
+    price: l.price ?? null,
+    currency: l.currency ?? null,
+    property_type: l.property_type ?? null,
+    image_url: Array.isArray(l.image_urls) ? (l.image_urls[0] ?? null) : null,
+    source_id: l.source_id ?? "",
+  };
+}
+
 function fmtPrice(price: number | null, currency: string | null): string {
   if (!price) return "—";
   const c = currency ?? "EUR";
@@ -212,27 +226,14 @@ export function FeaturedView() {
   useEffect(() => {
     const row = selections.find((s) => s.iso_week === currentWeek) ?? null;
     if (row && row.listing_ids.length > 0) {
-      // We need to fetch the listing snippets for those IDs
-      // Use getListings with a broad fetch then filter by ID
-      // (simplest approach — no dedicated endpoint needed)
-      getListings({ page: 1, pageSize: 500 }).then((res) => {
+      getListings("cv", 1, 500, {}).then((res) => {
         const byId = new Map(res.data.map((l) => [l.id, l]));
         const filled: (ListingSnippet | null)[] = [null, null, null, null];
         row.listing_ids.forEach((id, i) => {
           if (i > 3) return;
           const l = byId.get(id);
           if (l) {
-            filled[i] = {
-              id: l.id,
-              title: l.title,
-              island: l.island,
-              city: l.city ?? null,
-              price: l.price ?? null,
-              currency: l.currency ?? null,
-              property_type: l.property_type ?? null,
-              image_url: Array.isArray(l.image_urls) ? (l.image_urls[0] ?? null) : null,
-              source_id: l.source_id,
-            };
+            filled[i] = toSnippet(l);
           }
         });
         setSlots(filled);
@@ -246,32 +247,21 @@ export function FeaturedView() {
   const runSearch = useCallback(async () => {
     setSearching(true);
     try {
-      const res = await getListings({
-        page: 1,
-        pageSize: 100,
-        island: searchIsland || undefined,
-        propertyType: searchType || undefined,
-      });
-      let results = res.data as unknown as ListingSnippet[];
-      if (searchTitle.trim()) {
-        const q = searchTitle.trim().toLowerCase();
+      const filters: Record<string, unknown> = {};
+      if (searchIsland) filters.island = searchIsland;
+      if (searchTitle.trim()) filters.titleSearch = searchTitle.trim();
+
+      const res = await getListings("cv", 1, 100, filters as any);
+
+      let results = res.data;
+      // Client-side property type filter (not in ListingsFilters)
+      if (searchType) {
         results = results.filter(
-          (l) => l.title?.toLowerCase().includes(q) || l.city?.toLowerCase().includes(q)
+          (l: any) => l.property_type?.toLowerCase() === searchType.toLowerCase()
         );
       }
-      setSearchResults(
-        results.map((l: any) => ({
-          id: l.id,
-          title: l.title,
-          island: l.island,
-          city: l.city ?? null,
-          price: l.price ?? null,
-          currency: l.currency ?? null,
-          property_type: l.property_type ?? null,
-          image_url: Array.isArray(l.image_urls) ? (l.image_urls[0] ?? null) : null,
-          source_id: l.source_id,
-        }))
-      );
+
+      setSearchResults(results.map((l: any) => toSnippet(l)));
     } finally {
       setSearching(false);
     }
