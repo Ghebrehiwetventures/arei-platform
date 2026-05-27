@@ -746,7 +746,7 @@ export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boole
           <span>{typeLabel}</span>
           {location && <span className="kv-lc-loc">{location}</span>}
         </div>
-        <div className="kv-lc-price">{l.price == null ? t("detail.price") : fmtPrice(l.price)}</div>
+        <div className="kv-lc-price">{fmtPrice(l.price)}</div>
         <div className="kv-lc-title">{localizedTitle}</div>
         {specs.length > 0 && (
           <div className="kv-lc-specs">
@@ -810,7 +810,7 @@ function ListingRow({ l }: { l: ListingCard }) {
       </div>
       <div className="kv-list-row-body">
         <div className="kv-list-row-head">
-          <div className="kv-list-row-price">{l.price == null ? t("detail.price") : fmtPrice(l.price)}</div>
+          <div className="kv-list-row-price">{fmtPrice(l.price)}</div>
           {typeLabel && <div className="kv-list-row-type">{typeLabel}</div>}
         </div>
         <div className="kv-list-row-title">{localizedTitle}</div>
