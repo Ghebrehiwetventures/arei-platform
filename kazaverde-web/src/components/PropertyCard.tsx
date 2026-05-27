@@ -3,7 +3,8 @@ import { useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import { useSaved } from "../hooks/useSaved";
 import type { DemoListing } from "../lib/demo-data";
-import { formatPrice, formatLocation, formatBedrooms, formatBathrooms, isNewListing } from "../lib/format";
+import { formatLocation, formatBedrooms, formatBathrooms, isNewListing } from "../lib/format";
+import { formatPrice, toLocale, labelPropertyType } from "../lib/formatters";
 import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
 import "./PropertyCard.css";
 
@@ -16,7 +17,8 @@ interface Props {
 
 export default function PropertyCard({ listing, index = 0, viewMode = "grid", disableSwipe = false }: Props) {
   const navigate = useNavigate();
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = toLocale(i18n.language);
   const { toggle, isSaved } = useSaved();
   const isNew = isNewListing(listing.first_seen_at);
   const saved = isSaved(listing.id);
@@ -143,22 +145,22 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid", di
           </svg>
         </button>
         {isNew && <span className="tg tg-n">{t("listings.new")}</span>}
-        {!isList && <div className="pr">{formatPrice(listing.price, listing.currency)}</div>}
+        {!isList && <div className="pr">{formatPrice(listing.price, locale, listing.currency ?? undefined)}</div>}
       </div>
       <div className="pcb">
         <div className="pcl">
           {listing.property_type && (
-            <div className="pc-type">{listing.property_type}</div>
+            <div className="pc-type">{labelPropertyType(listing.property_type, t)}</div>
           )}
           <div className="pct">{displayTitle}</div>
           <div className="pca">{formatLocation(listing.city, listing.island)}</div>
-          {!isList && <div className="pc-gprice">{formatPrice(listing.price, listing.currency)}</div>}
+          {!isList && <div className="pc-gprice">{formatPrice(listing.price, locale, listing.currency ?? undefined)}</div>}
           {specs.length > 0 && (
             <div className="pcs">
               {specs.map((s, i) => <span key={i}>{s}</span>)}
             </div>
           )}
-          {isList && <div className="pc-lprice">{formatPrice(listing.price, listing.currency)}</div>}
+          {isList && <div className="pc-lprice">{formatPrice(listing.price, locale, listing.currency ?? undefined)}</div>}
         </div>
         {!isList && (
           <div className="ca">

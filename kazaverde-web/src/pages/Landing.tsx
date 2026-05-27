@@ -7,7 +7,8 @@ import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
 import { useMarketNews } from "../hooks/useMarketNews";
 import { MARKET_NEWS_CATEGORIES } from "../lib/market-news-data";
-import { formatMedian, formatSourceLabel } from "../lib/format";
+import { formatSourceLabel } from "../lib/format";
+import { formatMedian, formatNumber, formatDate, toLocale, labelPropertyType } from "../lib/formatters";
 import { PRICE_BUCKETS, type PriceBucket, type ListingCard } from "arei-sdk";
 
 const BUCKET_LABEL: Record<PriceBucket, string> = {
@@ -50,20 +51,11 @@ interface MmiSnapshot {
      statements. Each is null when its source data is too thin. */
   topIslandByInflow: { name: string; count: number } | null;
   topSourcesByInflow: { id: string; label: string; count: number }[];
-  topType: { name: string; count: number; pct: number } | null;
+  topType: { slug: string; count: number; pct: number } | null;
   topBedroom: { count: number; pct: number; n: number } | null;
   topPriceBand: { label: string; count: number; pct: number } | null;
 }
 
-/* Title-case a property_type slug for display ("apartment" → "Apartments"). */
-function pluralizeType(t: string): string {
-  const cleaned = t.replace(/[_-]+/g, " ").trim().toLowerCase();
-  if (!cleaned) return "Listings";
-  const cap = cleaned.charAt(0).toUpperCase() + cleaned.slice(1);
-  if (cap.endsWith("s")) return cap;
-  if (cap.endsWith("y")) return cap.slice(0, -1) + "ies";
-  return cap + "s";
-}
 
 /* ────────────────────────────────────────────────────────────
    Landing — brand surface for /. Adopted from archive
@@ -76,13 +68,13 @@ function pluralizeType(t: string): string {
 
 /* Format the Monday of the current week as "April 14, 2026" — used in the
    "Featured this week" eyebrow. */
-function formatWeekStart(): string {
+function formatWeekStart(locale: string): string {
   const now = new Date();
   const day = now.getDay();
   const diff = day === 0 ? -6 : 1 - day;
   const monday = new Date(now);
   monday.setDate(now.getDate() + diff);
-  return monday.toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  return monday.toLocaleDateString(locale, { month: "long", day: "numeric", year: "numeric" });
 }
 
 function FeaturedCardSkeleton() {
@@ -142,8 +134,10 @@ function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
     if (c.source_id) seenSources.add(c.source_id);
   };
 
-  // Reserve last slot for one land listing (if available)
-  const landSlot = land[0] ?? null;
+  // Reserve last slot for one land listing (if available).
+  // Prefer land[1] over land[0] to avoid the most-recently-indexed
+  // parcel (which often carries a map/satellite thumbnail).
+  const landSlot = land[1] ?? land[0] ?? null;
   const residentialTarget = landSlot ? n - 1 : n;
 
   // Pass 1: unique island + unique source
@@ -186,6 +180,7 @@ function categoryFor(tags: string[]): "buying" | "market" | "legal" | "tax" {
 export default function Landing() {
   const { i18n, t } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
+  const locale = toLocale(i18n.language);
   useDocumentMeta(
     "Cape Verde Real Estate Index",
     t("landing.metaDescription"),
@@ -271,12 +266,25 @@ export default function Landing() {
        us enough rows to count "added this month" from first_seen_at
        without a second round-trip. */
     Promise.all([
+      arei.getFeaturedListings(),           // admin-curated selection (may be null)
       arei.getListings({ page: 1, pageSize: 500 }),
       arei.getMarketStats(),
     ])
-      .then(([listRes, stats]) => {
+      .then(([curated, listRes, stats]) => {
         if (cancelled) return;
-        setFeatured(pickFeatured(listRes.data, 4));
+
+        if (curated && curated.length === 4) {
+          // Full admin-curated selection for this week
+          setFeatured(curated);
+        } else if (curated && curated.length > 0) {
+          // Partial curated — fill remaining slots algorithmically
+          const used = new Set(curated.map((c) => c.id));
+          const rest = listRes.data.filter((c) => !used.has(c.id));
+          setFeatured([...curated, ...pickFeatured(rest, 4 - curated.length)]);
+        } else {
+          // No published selection this week — algorithmic fallback
+          setFeatured(pickFeatured(listRes.data, 4));
+        }
         setTotalListings(listRes.total);
 
         const withPrice = stats.islands.filter((i) => i.median_price !== null);
@@ -325,7 +333,7 @@ export default function Landing() {
         const topType =
           topTypeEntry && typedTotal > 0
             ? {
-                name: pluralizeType(topTypeEntry[0]),
+                slug: topTypeEntry[0],
                 count: topTypeEntry[1],
                 pct: Math.round((topTypeEntry[1] / typedTotal) * 100),
               }
@@ -438,7 +446,7 @@ export default function Landing() {
         <div className="kv-l-feat-inner">
           <div className="kv-l-mmi-head">
             <div>
-              <span className="kv-l-eyebrow">{t("landing.featuredEyebrow", { week: formatWeekStart() })}</span>
+              <span className="kv-l-eyebrow">{t("landing.featuredEyebrow", { week: formatWeekStart(locale) })}</span>
               <h2>{t("landing.featuredTitle")}</h2>
               <p>
                 {t("landing.featuredSub")}
@@ -472,7 +480,7 @@ export default function Landing() {
           <div className="kv-l-mmi-head">
             <div>
               <span className="kv-l-eyebrow">
-                {t("landing.indexStatus", { date: new Date().toLocaleDateString(i18n.language === "pt" ? "pt-PT" : "en-US", { month: "long", year: "numeric" }) })}
+                {t("landing.indexStatus", { date: new Date().toLocaleDateString(locale, { month: "long", year: "numeric" }) })}
               </span>
               <h2>{t("landing.statusTitle")}</h2>
               <p>
@@ -487,17 +495,17 @@ export default function Landing() {
               <>
                 <div className="kv-l-mmi-cell">
                   <div className="kv-l-mmi-lbl">{t("landing.medianAskingPrice")}</div>
-                  <div className="kv-l-mmi-num">{formatMedian(mmi.medianPrice)}</div>
-                  <div className="kv-l-mmi-delta">{t("landing.acrossPriced", { count: mmi.pricedCount.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") })}</div>
+                  <div className="kv-l-mmi-num">{formatMedian(mmi.medianPrice, locale)}</div>
+                  <div className="kv-l-mmi-delta">{t("landing.acrossPriced", { count: formatNumber(mmi.pricedCount, locale) })}</div>
                 </div>
                 <div className="kv-l-mmi-cell">
                   <div className="kv-l-mmi-lbl">{t("landing.totalInventory")}</div>
-                  <div className="kv-l-mmi-num">{mmi.total.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en")}</div>
+                  <div className="kv-l-mmi-num">{formatNumber(mmi.total, locale)}</div>
                   <div className="kv-l-mmi-delta">{t("landing.trackedAcross")}</div>
                 </div>
                 <div className="kv-l-mmi-cell">
                   <div className="kv-l-mmi-lbl">{t("landing.addedThisMonth")}</div>
-                  <div className="kv-l-mmi-num">{mmi.addedThisMonth.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en")}</div>
+                  <div className="kv-l-mmi-num">{formatNumber(mmi.addedThisMonth, locale)}</div>
                   <div className="kv-l-mmi-delta">{t("landing.firstSeenSince")}</div>
                 </div>
                 <div className="kv-l-mmi-cell">
@@ -526,10 +534,7 @@ export default function Landing() {
                     <li>
                       <span className="kv-l-mmi-tag">{mmi.topIslandByInflow.name}</span>
                       <span className="kv-l-mmi-body">
-                        {t("landing.largestInflow", {
-                          count: mmi.topIslandByInflow.count,
-                          label: mmi.topIslandByInflow.count === 1 ? t("landing.listing") : t("landing.listings"),
-                        })}
+                        {t("landing.largestInflow", { count: mmi.topIslandByInflow.count })}
                       </span>
                     </li>
                   )}
@@ -549,7 +554,7 @@ export default function Landing() {
                     <li>
                       <span className="kv-l-mmi-tag">{t("landing.priceBand")}</span>
                       <span className="kv-l-mmi-body">
-                        <Trans i18nKey="landing.pricedInventory" values={{ label: mmi.topPriceBand.label, pct: mmi.topPriceBand.pct, count: mmi.topPriceBand.count.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") }} components={{ 1: <b /> }} />
+                        <Trans i18nKey="landing.pricedInventory" values={{ label: mmi.topPriceBand.label, pct: mmi.topPriceBand.pct, count: formatNumber(mmi.topPriceBand.count, locale) }} components={{ 1: <b /> }} />
                       </span>
                     </li>
                   )}
@@ -557,7 +562,7 @@ export default function Landing() {
                     <li>
                       <span className="kv-l-mmi-tag">{t("landing.mix")}</span>
                       <span className="kv-l-mmi-body">
-                        {t("landing.mixBody", { name: mmi.topType.name, pct: mmi.topType.pct, count: mmi.topType.count.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") })}
+                        {t("landing.mixBody", { name: labelPropertyType(mmi.topType.slug, t, true), pct: mmi.topType.pct, count: formatNumber(mmi.topType.count, locale) })}
                       </span>
                     </li>
                   )}
@@ -565,7 +570,7 @@ export default function Landing() {
                     <li>
                       <span className="kv-l-mmi-tag">{t("landing.layout")}</span>
                       <span className="kv-l-mmi-body">
-                        <Trans i18nKey="landing.layoutBody" values={{ count: mmi.topBedroom.count, pct: mmi.topBedroom.pct, n: mmi.topBedroom.n.toLocaleString(i18n.language === "pt" ? "pt-PT" : "en") }} components={{ 1: <b /> }} />
+                        <Trans i18nKey="landing.layoutBody" values={{ count: mmi.topBedroom.count, pct: mmi.topBedroom.pct, n: formatNumber(mmi.topBedroom.n, locale) }} components={{ 1: <b /> }} />
                       </span>
                     </li>
                   )}
@@ -704,7 +709,7 @@ export default function Landing() {
                   <div className="kv-l-guide-title">{isPt ? GUIDE_TEASER_PT[a.slug]?.title ?? a.title : a.title}</div>
                   <div className="kv-l-guide-excerpt">{isPt ? GUIDE_TEASER_PT[a.slug]?.description ?? a.description : a.description}</div>
                   <div className="kv-l-guide-foot">
-                    <span>{new Date(a.date).toLocaleDateString(isPt ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric" })}</span>
+                    <span>{formatDate(a.date, locale)}</span>
                     <span>{isPt ? a.readTime.replace("min read", "min de leitura") : a.readTime}</span>
                   </div>
                 </Link>
@@ -748,7 +753,7 @@ export default function Landing() {
                   </a>
                   <p className="kv-l-news-item-snippet">{item.snippet}</p>
                   <div className="kv-l-news-item-foot">
-                    <span className="kv-l-news-item-foot-date">{new Date(`${item.publishedAt}T00:00:00Z`).toLocaleDateString(isPt ? "pt-PT" : "en-GB", { day: "numeric", month: "short", year: "numeric", timeZone: "UTC" })}</span>
+                    <span className="kv-l-news-item-foot-date">{formatDate(item.publishedAt, locale, true)}</span>
                     <span className="kv-l-news-item-foot-sep" aria-hidden="true">·</span>
                     <span className="kv-l-news-item-foot-source">{item.sourceName}</span>
                   </div>

@@ -15,12 +15,25 @@
  *   npx ts-node --transpile-only scripts/ingest_market_news.ts --commit
  *     → writes candidates to public.market_news (status = 'candidate')
  *
+ *   npx ts-node --transpile-only scripts/ingest_market_news.ts --commit --enrich
+ *     → inserts candidates AND runs EN enrichment + PT translation via AI.
+ *       Enriched fields (title, snippet, why_it_matters, category, signal_tags,
+ *       affected_regions, relevance_score, enrich_recommendation, enriched_at,
+ *       title_pt, snippet_pt, why_it_matters_pt) are written back to the row.
+ *       Curator only needs to review and Publish or Archive.
+ *
+ * Dry-run with --enrich logs which items would be enriched but never calls APIs.
+ *
  * Per-source cap: at most MAX_PER_SOURCE new candidates are inserted per
  * source per run. Items beyond the cap are skipped and counted separately.
  *
  * Required env (loaded from repo root .env):
  *   SUPABASE_URL
  *   SUPABASE_SERVICE_ROLE_KEY
+ *
+ * Required when --enrich is passed:
+ *   OPENAI_API_KEY
+ *   ANTHROPIC_API_KEY   (optional — PT translation skipped if absent)
  *
  * Exit codes:
  *   0  success (or dry-run completed)
@@ -35,6 +48,7 @@ import { MARKET_NEWS_SOURCES, MarketNewsSource } from "./lib/market-news-sources
 import { parseFeedItems, transformFeedItem, MarketNewsInsert } from "./lib/market-news-transform";
 import { loadExistingKeys, isDuplicate } from "./lib/market-news-dedup";
 import { insertAdminNotification } from "./lib/notifications";
+import { enrichAndTranslate } from "./lib/market-news-enrich";
 
 // Load from repo root .env. Matches the pattern in snapshot_source_health.ts —
 // tries the conventional relative path first, then a known absolute fallback
@@ -49,7 +63,11 @@ for (const p of [
 // Dry-run is the default. Real inserts require an explicit --commit flag.
 const COMMIT = process.argv.includes("--commit");
 const DRY_RUN = !COMMIT;
-const MAX_PER_SOURCE = 20;
+// --enrich: after each insert, run EN enrichment (OpenAI) + PT translation (Anthropic).
+const ENRICH = process.argv.includes("--enrich");
+const MAX_PER_SOURCE = 50;
+// Articles older than this are skipped — stale news has no value for investors.
+const MAX_AGE_DAYS = 90;
 const FETCH_TIMEOUT_MS = 15_000;
 const USER_AGENT =
   "AREI-MarketNewsBot/1.0 (+https://capeverderealestateindex.com)";
@@ -90,19 +108,81 @@ async function fetchFeed(source: MarketNewsSource): Promise<string> {
 
 // ── Insert ─────────────────────────────────────────────────────────────────
 
+// Returns the inserted row's id, or null if it was a duplicate (23505).
 async function insertCandidate(
   sb: SupabaseClient,
   row: MarketNewsInsert
-): Promise<void> {
-  const { error } = await sb
+): Promise<string | null> {
+  const { data, error } = await sb
     .from("market_news")
-    .insert(row);
+    .insert(row)
+    .select("id")
+    .single();
 
   if (error) {
     // Unique constraint violation means a concurrent run beat us to it — safe to ignore.
-    if (error.code === "23505") return;
+    if (error.code === "23505") return null;
     throw new Error(error.message);
   }
+
+  return (data as { id: string } | null)?.id ?? null;
+}
+
+async function enrichAndUpdate(
+  sb: SupabaseClient,
+  id: string,
+  row: MarketNewsInsert,
+  openaiKey: string,
+  anthropicKey: string | null
+): Promise<{ ok: boolean; recommendation?: string; ptError?: string; error?: string }> {
+  let result;
+  try {
+    result = await enrichAndTranslate(
+      {
+        title:            row.title,
+        original_title:   row.original_title ?? null,
+        snippet:          row.snippet,
+        source_name:      row.source_name,
+        source_url:       row.source_url,
+        category:         row.category,
+        published_at:     row.published_at ?? null,
+        language:         row.language ?? null,
+        ingestion_source: row.ingestion_source ?? null,
+      },
+      openaiKey,
+      anthropicKey
+    );
+  } catch (err) {
+    return { ok: false, error: err instanceof Error ? err.message : String(err) };
+  }
+
+  const { error: updateError } = await sb
+    .from("market_news")
+    .update({
+      title:                 result.title,
+      snippet:               result.snippet,
+      why_it_matters:        result.why_it_matters,
+      category:              result.category,
+      signal_tags:           result.signal_tags,
+      affected_regions:      result.affected_regions,
+      relevance_score:       result.relevance_score,
+      enrich_recommendation: result.enrich_recommendation,
+      enriched_at:           new Date().toISOString(),
+      title_pt:              result.title_pt,
+      snippet_pt:            result.snippet_pt,
+      why_it_matters_pt:     result.why_it_matters_pt,
+    })
+    .eq("id", id);
+
+  if (updateError) {
+    return { ok: false, error: `DB update failed: ${updateError.message}` };
+  }
+
+  return {
+    ok: true,
+    recommendation: result.enrich_recommendation,
+    ptError: result._pt_error,
+  };
 }
 
 // ── Admin notification emit ────────────────────────────────────────────────
@@ -156,6 +236,9 @@ interface SourceResult {
   inserted: number;
   skippedDup: number;
   skippedCap: number;
+  skippedOld: number;
+  enriched: number;
+  enrichFailed: number;
   error: string | null;
 }
 
@@ -163,7 +246,9 @@ async function processSource(
   sb: SupabaseClient,
   source: MarketNewsSource,
   existingKeys: Set<string>,
-  dryRun: boolean
+  dryRun: boolean,
+  openaiKey: string | null,
+  anthropicKey: string | null
 ): Promise<SourceResult> {
   const result: SourceResult = {
     source,
@@ -171,6 +256,9 @@ async function processSource(
     inserted: 0,
     skippedDup: 0,
     skippedCap: 0,
+    skippedOld: 0,
+    enriched: 0,
+    enrichFailed: 0,
     error: null,
   };
 
@@ -197,6 +285,15 @@ async function processSource(
       continue;
     }
 
+    // Age filter: skip articles older than MAX_AGE_DAYS
+    if (row.published_at) {
+      const ageMs = Date.now() - new Date(row.published_at).getTime();
+      if (ageMs > MAX_AGE_DAYS * 24 * 60 * 60 * 1000) {
+        result.skippedOld++;
+        continue;
+      }
+    }
+
     // Per-source cap: stop inserting once MAX_PER_SOURCE is reached
     if (result.inserted >= MAX_PER_SOURCE) {
       result.skippedCap++;
@@ -205,18 +302,43 @@ async function processSource(
 
     if (dryRun) {
       log(`  [dry-run] would insert: ${row.title.slice(0, 80)}`);
+      if (ENRICH) {
+        log(`  [dry-run] would enrich: ${row.title.slice(0, 80)}`);
+      }
       // Add to set so dry-run dedup works consistently across sources
       existingKeys.add(row.canonical_url);
       result.inserted++;
     } else {
+      let insertedId: string | null = null;
       try {
-        await insertCandidate(sb, row);
+        insertedId = await insertCandidate(sb, row);
+        if (insertedId === null) {
+          // Concurrent insert beat us (unique constraint) — treat as dup
+          result.skippedDup++;
+          continue;
+        }
         existingKeys.add(row.canonical_url);
         existingKeys.add(row.source_url);
         result.inserted++;
       } catch (err) {
         log(`  [error] insert failed: ${err instanceof Error ? err.message : String(err)}`);
         result.skippedDup++;
+        continue;
+      }
+
+      if (ENRICH && openaiKey && insertedId) {
+        const enrichOut = await enrichAndUpdate(sb, insertedId, row, openaiKey, anthropicKey);
+        if (enrichOut.ok) {
+          result.enriched++;
+          if (enrichOut.ptError) {
+            log(`  [warn] PT translation failed for "${row.title.slice(0, 60)}": ${enrichOut.ptError}`);
+          } else {
+            log(`  [enrich] ${enrichOut.recommendation} — ${row.title.slice(0, 70)}`);
+          }
+        } else {
+          result.enrichFailed++;
+          log(`  [error] enrich failed for "${row.title.slice(0, 60)}": ${enrichOut.error}`);
+        }
       }
     }
   }
@@ -229,17 +351,30 @@ async function processSource(
 async function main() {
   const started = new Date().toISOString();
 
-  banner(
-    `[ingest-market-news] ${started}` +
-    (DRY_RUN ? "  ⚠  DRY RUN — pass --commit to write" : "  ✎  COMMIT MODE")
-  );
+  const modeLabel = [
+    DRY_RUN ? "DRY RUN — pass --commit to write" : "COMMIT MODE",
+    ENRICH   ? "+ ENRICH" : "",
+  ].filter(Boolean).join(" ");
 
-  const url = process.env.SUPABASE_URL?.trim();
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  banner(`[ingest-market-news] ${started}  ${DRY_RUN ? "⚠" : "✎"}  ${modeLabel}`);
+
+  const url          = process.env.SUPABASE_URL?.trim();
+  const key          = process.env.SUPABASE_SERVICE_ROLE_KEY?.trim();
+  const openaiKey    = process.env.OPENAI_API_KEY?.trim() ?? null;
+  const anthropicKey = process.env.ANTHROPIC_API_KEY?.trim() ?? null;
 
   if (!url || !key) {
     log("Error: SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set.");
     process.exit(1);
+  }
+
+  if (ENRICH && !openaiKey) {
+    log("Error: --enrich requires OPENAI_API_KEY to be set.");
+    process.exit(1);
+  }
+
+  if (ENRICH && !anthropicKey) {
+    log("Warning: ANTHROPIC_API_KEY not set — PT translation will be skipped.");
   }
 
   const sb = createClient(url, key);
@@ -254,7 +389,7 @@ async function main() {
     process.exit(1);
   }
 
-  const activeSources = MARKET_NEWS_SOURCES.filter((s) => s.active !== false);
+  const activeSources  = MARKET_NEWS_SOURCES.filter((s) => s.active !== false);
   const enabledSources = activeSources.filter((s) => s.enabled !== false);
   const disabledSources = activeSources.filter((s) => s.enabled === false);
 
@@ -271,7 +406,7 @@ async function main() {
     log(`\nSource: ${source.name} [${source.id}]`);
     log(`  URL: ${source.url.slice(0, 90)}…`);
 
-    const result = await processSource(sb, source, existingKeys, DRY_RUN);
+    const result = await processSource(sb, source, existingKeys, DRY_RUN, openaiKey, anthropicKey);
     results.push(result);
 
     if (result.error) {
@@ -279,7 +414,13 @@ async function main() {
     } else {
       log(`  Fetched:  ${result.fetched} items`);
       log(`  Inserted: ${result.inserted} candidates${result.inserted >= MAX_PER_SOURCE ? ` (cap: ${MAX_PER_SOURCE})` : ""}`);
+      if (ENRICH && !DRY_RUN) {
+        log(`  Enriched: ${result.enriched} / ${result.inserted}`);
+      }
       log(`  Skipped:  ${result.skippedDup} duplicates / no URL`);
+      if (result.skippedOld > 0) {
+        log(`  Old:      ${result.skippedOld} articles older than ${MAX_AGE_DAYS} days`);
+      }
       if (result.skippedCap > 0) {
         log(`  Capped:   ${result.skippedCap} items beyond per-source limit of ${MAX_PER_SOURCE}`);
       }
@@ -288,21 +429,34 @@ async function main() {
 
   // ── Summary ──────────────────────────────────────────────────────────────
 
-  const totalFetched  = results.reduce((n, r) => n + r.fetched, 0);
-  const totalInserted = results.reduce((n, r) => n + r.inserted, 0);
-  const totalDup      = results.reduce((n, r) => n + r.skippedDup, 0);
-  const totalCapped   = results.reduce((n, r) => n + r.skippedCap, 0);
-  const totalErrors   = results.filter((r) => r.error !== null).length;
+  const totalFetched      = results.reduce((n, r) => n + r.fetched, 0);
+  const totalInserted     = results.reduce((n, r) => n + r.inserted, 0);
+  const totalEnriched     = results.reduce((n, r) => n + r.enriched, 0);
+  const totalEnrichFailed = results.reduce((n, r) => n + r.enrichFailed, 0);
+  const totalDup          = results.reduce((n, r) => n + r.skippedDup, 0);
+  const totalOld          = results.reduce((n, r) => n + r.skippedOld, 0);
+  const totalCapped       = results.reduce((n, r) => n + r.skippedCap, 0);
+  const totalErrors       = results.filter((r) => r.error !== null).length;
 
   banner("Summary");
   log(`Sources enabled:      ${enabledSources.length}`);
   log(`Sources disabled:     ${disabledSources.length}`);
   log(`Items seen:           ${totalFetched}`);
   log(`Candidates inserted:  ${totalInserted}${DRY_RUN ? " (dry-run, not written)" : ""}`);
+  if (ENRICH) {
+    log(`Enriched:             ${totalEnriched}${DRY_RUN ? " (dry-run, not written)" : ""}`);
+    if (totalEnrichFailed > 0) {
+      log(`Enrich failed:        ${totalEnrichFailed}`);
+    }
+  }
   log(`Skipped (dup/no URL): ${totalDup}`);
+  log(`Skipped (too old):    ${totalOld}`);
   log(`Skipped (cap):        ${totalCapped}`);
   log(`Source errors:        ${totalErrors}`);
-  if (DRY_RUN) log("\n⚠  DRY RUN — pass --commit to write candidates to the database.");
+  if (DRY_RUN) {
+    const enrichHint = !ENRICH ? " Combine with --enrich to also auto-enrich each candidate." : "";
+    log(`\n⚠  DRY RUN — pass --commit to write candidates to the database.${enrichHint}`);
+  }
 
   if (totalErrors === enabledSources.length && enabledSources.length > 0) {
     log("\nAll sources failed.");

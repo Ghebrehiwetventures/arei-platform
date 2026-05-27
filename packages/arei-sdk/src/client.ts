@@ -18,6 +18,8 @@ import type {
   ListingDetail,
   PriceBucket,
   MarketNewsRow,
+  MarketReportRow,
+  FeaturedSelectionRow,
 } from "./types.js";
 import {
   PRICE_BUCKETS,
@@ -83,6 +85,28 @@ const DETAIL_COLUMNS_OPTIONAL = ["description_html", "ai_descriptions"];
 
 const DETAIL_COLUMNS = [...DETAIL_COLUMNS_BASE, ...DETAIL_COLUMNS_OPTIONAL].join(",");
 const DETAIL_COLUMNS_FALLBACK = DETAIL_COLUMNS_BASE.join(",");
+
+// ---------------------------------------------------------------------------
+// ISO week helper — 'YYYY-WNN' with ISO Monday-start convention
+// ---------------------------------------------------------------------------
+function currentIsoWeek(): string {
+  const d = new Date();
+  // ISO 8601: week starts Monday; day 0 = Sunday = offset -6, else 1 - day
+  const day = d.getDay();
+  const monday = new Date(d);
+  monday.setDate(d.getDate() + (day === 0 ? -6 : 1 - day));
+  monday.setHours(0, 0, 0, 0);
+
+  // ISO week number: Jan 4 is always in week 1
+  const jan4 = new Date(monday.getFullYear(), 0, 4);
+  const jan4Day = jan4.getDay() || 7; // treat Sunday as 7
+  const jan4Monday = new Date(jan4);
+  jan4Monday.setDate(jan4.getDate() - jan4Day + 1);
+  const weekNum = Math.round((monday.getTime() - jan4Monday.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+
+  const year = monday.getFullYear();
+  return `${year}-W${String(weekNum).padStart(2, "0")}`;
+}
 
 // ---------------------------------------------------------------------------
 // Client class
@@ -495,6 +519,43 @@ export class AREIClient {
   }
 
   // =========================================================================
+  // getFeaturedListings — fetch the admin-curated selection for a given ISO
+  // week (defaults to the current week). Returns null when no published
+  // selection exists — callers should fall back to algorithmic selection.
+  // =========================================================================
+  async getFeaturedListings(isoWeek?: string): Promise<ListingCard[] | null> {
+    const week = isoWeek ?? currentIsoWeek();
+
+    const { data, error } = await this.sb
+      .from("homepage_featured_selections")
+      .select("listing_ids")
+      .eq("market_id", "cv")
+      .eq("iso_week", week)
+      .eq("status", "published")
+      .maybeSingle();
+
+    if (error) throw new Error(`getFeaturedListings failed: ${error.message}`);
+    if (!data || !Array.isArray(data.listing_ids) || data.listing_ids.length === 0) {
+      return null;
+    }
+
+    const { data: rows, error: rowErr } = await this.sb
+      .from(this.view)
+      .select(CARD_COLUMNS)
+      .in("id", data.listing_ids as string[]);
+
+    if (rowErr) throw new Error(`getFeaturedListings rows failed: ${rowErr.message}`);
+
+    // Return in the order the admin pinned them
+    const byId = new Map((rows ?? []).map((r) => [r.id, r]));
+    const ordered = (data.listing_ids as string[])
+      .map((id) => byId.get(id))
+      .filter(Boolean) as ListingRow[];
+
+    return ordered.map(toListingCard);
+  }
+
+  // =========================================================================
   // subscribeNewsletter — insert email into newsletter_subscribers
   // =========================================================================
   async subscribeNewsletter(email: string): Promise<{ ok: boolean; error?: string }> {
@@ -525,5 +586,58 @@ export class AREIClient {
 
     if (error) throw new Error(`getMarketNews failed: ${error.message}`);
     return (data ?? []) as MarketNewsRow[];
+  }
+
+  // =========================================================================
+  // getMarketReportSnapshot — latest published market report stats
+  //
+  // Returns one row per island plus the 'ALL' aggregate row, from the most
+  // recent snapshot where status = 'published' AND published_at IS NOT NULL.
+  //
+  // Both conditions are checked here and enforced by RLS — belt-and-suspenders.
+  // Draft snapshots are invisible to this method regardless of snapshot_date.
+  //
+  // Returns an empty array if no published snapshot exists yet.
+  // =========================================================================
+  async getMarketReportSnapshot(): Promise<MarketReportRow[]> {
+    // Supabase JS does not support a correlated subquery in .eq(), so we fetch
+    // the latest published date in one round-trip, then fetch the rows.
+    const { data: dateData, error: dateError } = await this.sb
+      .from("market_report_snapshots")
+      .select("snapshot_date")
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("snapshot_date", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+
+    if (dateError) {
+      throw new Error(`getMarketReportSnapshot (date lookup) failed: ${dateError.message}`);
+    }
+
+    if (!dateData) return [];
+
+    const latestDate = (dateData as { snapshot_date: string }).snapshot_date;
+
+    const { data, error } = await this.sb
+      .from("market_report_snapshots")
+      .select(
+        "snapshot_date, island, listing_count, source_count, " +
+        "index_eligible_count, median_price_eur, avg_eur_per_sqm, " +
+        "sqm_coverage_pct, price_coverage_pct, methodology_version, " +
+        "published_at, last_updated"
+      )
+      .eq("snapshot_date", latestDate)
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("island");
+
+    if (error) {
+      throw new Error(`getMarketReportSnapshot failed: ${error.message}`);
+    }
+
+    // TODO: ta bort dubbel-cast när migration 044 körts och
+    // Supabase-typerna regenererats — då härleds MarketReportRow korrekt
+    return (data ?? []) as unknown as MarketReportRow[];
   }
 }

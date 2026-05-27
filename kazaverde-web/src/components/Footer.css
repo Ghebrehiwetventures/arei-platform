@@ -128,6 +128,22 @@
 }
 .footer-poweredby:hover { color: var(--kv-black); }
 
+.footer-legal {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  color: var(--kv-ink-400);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+.footer-legal a {
+  color: inherit;
+  transition: color var(--kv-dur) var(--kv-ease);
+}
+.footer-legal a:hover { color: var(--kv-black); }
+
 .footer-idx {
   font-family: var(--kv-mono);
   font-size: clamp(40px, 6vw, 64px);
@@ -154,4 +170,5 @@
   .ft { padding-top: 48px; }
   .fg { gap: 28px; }
   .footer-bottom { flex-direction: column; gap: 12px; align-items: flex-start; }
+  .footer-legal { gap: 14px; }
 }

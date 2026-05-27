@@ -537,13 +537,19 @@
 
 /* ─── Island stat cards ───
    Used inside article body when an island-by-island data block reads
-   better as cards than as a wide table (e.g. the price-by-island
-   guide). Scoped under .kv-bp-body so it cannot leak. */
+   better as cards than as a wide table. Two columns at desktop gives a
+   balanced 2×2 grid for four islands. Collapses to single-column on
+   narrow screens. */
 .kv-bp-body .kv-island-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  grid-template-columns: repeat(2, 1fr);
   gap: 16px;
   margin: 24px 0 32px;
+}
+@media (max-width: 560px) {
+  .kv-bp-body .kv-island-grid {
+    grid-template-columns: 1fr;
+  }
 }
 .kv-bp-body .kv-island-stat {
   border: 1px solid var(--kv-rule);

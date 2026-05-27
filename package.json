@@ -12,7 +12,9 @@
     "pipeline": "MARKET_ID=${MARKET_ID:?MARKET_ID required} npx ts-node --transpile-only core/preflightMarket.ts && npm run ingest && npm run report",
     "ingest": "MARKET_ID=${MARKET_ID:?MARKET_ID required} npx ts-node --transpile-only core/ingestMarket.ts",
     "report": "MARKET_ID=${MARKET_ID:?MARKET_ID required} npx ts-node --transpile-only core/reportMarket.ts",
-    "ingest:curated": "MARKET_ID=${MARKET_ID:?MARKET_ID required} SOURCE_ID=${SOURCE_ID:?SOURCE_ID required} NODE_OPTIONS='' npx ts-node --transpile-only scripts/ingest_to_curated.ts"
+    "ingest:curated": "MARKET_ID=${MARKET_ID:?MARKET_ID required} SOURCE_ID=${SOURCE_ID:?SOURCE_ID required} NODE_OPTIONS='' npx ts-node --transpile-only scripts/ingest_to_curated.ts",
+    "snapshot:market-report": "npx ts-node --transpile-only scripts/snapshot_market_report.ts",
+    "publish:market-report": "npx ts-node --transpile-only scripts/publish_market_report_snapshot.ts"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",

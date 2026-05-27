@@ -9,7 +9,7 @@ import { arei } from "../lib/arei";
 import type { DemoListing } from "../lib/demo-data";
 import { cardToDemoListing } from "../lib/transforms";
 import { selectFeaturedListings } from "../lib/featured";
-import { formatMedian } from "../lib/format";
+import { formatMedian, toLocale } from "../lib/formatters";
 import "./Home.css";
 
 /* Number of actively configured scrape sources (lifecycleOverride: IN in markets/cv/sources.yml) */
@@ -74,7 +74,8 @@ const HOMEPAGE_SCHEMA = {
 };
 
 export default function Home() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = toLocale(i18n.language);
   useDocumentMeta("Cape Verde Real Estate Index", t("home.metaDescription"));
   const navigate = useNavigate();
   const [data, setData] = useState<HomeData | null>(null);
@@ -212,7 +213,7 @@ export default function Home() {
         <div className="si"><div className="sn">{stats.total}</div><div className="sl">{t("home.activeListings")}</div></div>
         <div className="si si-desktop-only"><div className="sn">{stats.islandCount}</div><div className="sl">{t("home.islands")}</div></div>
         <div className="si"><div className="sn">{ACTIVE_SOURCE_COUNT}</div><div className="sl">{t("home.activeSources")}</div></div>
-        <div className="si"><div className="sn">{stats.medianPrice ? formatMedian(stats.medianPrice) : "—"}</div><div className="sl">{t("home.estimatedMedianPrice")}</div></div>
+        <div className="si"><div className="sn">{stats.medianPrice ? formatMedian(stats.medianPrice, locale) : "—"}</div><div className="sl">{t("home.estimatedMedianPrice")}</div></div>
       </div>
 
       {/* Island explorer */}
@@ -261,7 +262,7 @@ export default function Home() {
           <div className="mp-card" key={island.name}>
             <div className="mp-island">{island.name.toUpperCase()}</div>
             <div className="mp-price-row">
-              <div className="mp-price">{formatMedian(island.median)}</div>
+              <div className="mp-price">{formatMedian(island.median, locale)}</div>
             <div className="mp-coverage">{island.totalListings} {t("common.listings")}</div>
             </div>
             <div className="mp-note">{t("home.listingsWithVerifiedPrice", { count: island.count })}</div>

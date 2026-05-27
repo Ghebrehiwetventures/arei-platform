@@ -7,8 +7,6 @@ import {
   SourceQualityRow,
   SourceQualityRowRaw,
   IngestRunPhase,
-  ContentDraft,
-  ContentDraftStatus,
 } from "./types";
 import { supabase, supabaseAuth } from "./supabase";
 import { computeHealthGrade } from "./sourceHealthGrade";
@@ -834,273 +832,6 @@ export async function getMarketIds(): Promise<{ id: string; name: string }[]> {
 }
 
 // ============================================
-// CONTENT DRAFT AGENT V1
-// Supabase persistence for this phase; human approval stays in admin.
-// ============================================
-
-const MAX_CONTENT_DRAFTS_PER_RUN = 5;
-
-interface ContentDraftRow {
-  id: string;
-  source_listing_id: string;
-  listing_title: string;
-  selected_image: string;
-  suggested_caption: string;
-  suggested_hashtags: string[] | null;
-  suggested_channel: ContentDraft["suggestedChannel"];
-  created_at: string;
-  status: ContentDraftStatus;
-  status_note: string | null;
-}
-
-function isContentDraftStatus(value: string): value is ContentDraftStatus {
-  return value === "pending" || value === "approved" || value === "rejected" || value === "revision_requested";
-}
-
-function mapContentDraftRow(row: ContentDraftRow): ContentDraft {
-  return {
-    id: row.id,
-    sourceListingId: row.source_listing_id,
-    listingTitle: row.listing_title,
-    selectedImage: row.selected_image,
-    suggestedCaption: row.suggested_caption,
-    suggestedHashtags: Array.isArray(row.suggested_hashtags) ? row.suggested_hashtags.filter(Boolean) : [],
-    suggestedChannel: row.suggested_channel,
-    createdAt: row.created_at,
-    status: isContentDraftStatus(row.status) ? row.status : "pending",
-    statusNote: row.status_note || undefined,
-  };
-}
-
-function mapContentDraftToInsert(row: ContentDraft) {
-  return {
-    id: row.id,
-    source_listing_id: row.sourceListingId,
-    listing_title: row.listingTitle,
-    selected_image: row.selectedImage,
-    suggested_caption: row.suggestedCaption,
-    suggested_hashtags: row.suggestedHashtags,
-    suggested_channel: row.suggestedChannel,
-    created_at: row.createdAt,
-    status: row.status,
-    status_note: row.statusNote ?? null,
-  };
-}
-
-async function listStoredContentDrafts(): Promise<ContentDraft[]> {
-  const { data, error } = await supabase
-    .from("content_drafts")
-    .select("id,source_listing_id,listing_title,selected_image,suggested_caption,suggested_hashtags,suggested_channel,created_at,status,status_note")
-    .order("created_at", { ascending: false });
-
-  if (error) {
-    console.error("[Admin] Failed to load content drafts from Supabase:", error.message);
-    return [];
-  }
-
-  return ((data || []) as ContentDraftRow[]).map(mapContentDraftRow);
-}
-
-async function insertContentDrafts(drafts: ContentDraft[]): Promise<void> {
-  if (drafts.length === 0) return;
-
-  const { error } = await supabase
-    .from("content_drafts")
-    .upsert(drafts.map(mapContentDraftToInsert), { onConflict: "id", ignoreDuplicates: true });
-  if (error) {
-    throw new Error(`[Admin] Failed to persist content drafts: ${error.message}`);
-  }
-}
-
-async function updateStoredContentDraftStatus(id: string, status: ContentDraftStatus, statusNote?: string): Promise<void> {
-  const payload = {
-    status,
-    status_note: statusNote?.trim() ? statusNote.trim() : null,
-    updated_at: new Date().toISOString(),
-  };
-
-  const { error } = await supabase.from("content_drafts").update(payload).eq("id", id);
-  if (error) {
-    throw new Error(`[Admin] Failed to update content draft status: ${error.message}`);
-  }
-}
-
-function slugifyTag(value: string): string {
-  return value
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/[^a-zA-Z0-9\s]/g, " ")
-    .trim()
-    .split(/\s+/)
-    .slice(0, 3)
-    .map((part, index) => (index === 0 ? part.toLowerCase() : part.charAt(0).toUpperCase() + part.slice(1).toLowerCase()))
-    .join("");
-}
-
-function formatCompactPrice(listing: Listing): string | null {
-  if (listing.price == null) return null;
-  const currency = listing.currency || "EUR";
-  const symbol = currency === "EUR" ? "EUR " : currency === "USD" ? "$" : `${currency} `;
-  return `${symbol}${Math.round(listing.price).toLocaleString()}`;
-}
-
-function getListingLocationLabel(listing: Listing): string {
-  return [listing.city, listing.island].filter(Boolean).join(", ") || listing.location || "Cape Verde";
-}
-
-function chooseSuggestedChannel(listing: Listing): ContentDraft["suggestedChannel"] {
-  if (listing.project_flag) return "linkedin";
-  if ((listing.images?.length ?? 0) >= 4 || (listing.price ?? 0) >= 250000) return "instagram";
-  return "facebook";
-}
-
-function buildSuggestedHashtags(listing: Listing): string[] {
-  const tags = [
-    "AfricaPropertyIndex",
-    listing.island ? slugifyTag(listing.island) : null,
-    listing.city ? slugifyTag(listing.city) : null,
-    listing.property_type ? slugifyTag(listing.property_type) : "PropertyListing",
-    listing.bedrooms ? `${listing.bedrooms}Bed` : null,
-  ].filter(Boolean) as string[];
-  return Array.from(new Set(tags)).slice(0, 5);
-}
-
-function buildCaption(listing: Listing): string {
-  const title = listing.title || "Featured listing";
-  const location = getListingLocationLabel(listing);
-  const price = formatCompactPrice(listing);
-  const facts = [
-    listing.bedrooms ? `${listing.bedrooms} bed` : null,
-    listing.bathrooms ? `${listing.bathrooms} bath` : null,
-    listing.area_sqm ? `${Math.round(listing.area_sqm)} m2` : null,
-  ].filter(Boolean);
-
-  const opener = `${title} in ${location}.`;
-  const valueLine = price ? ` Asking ${price}.` : "";
-  const factsLine = facts.length > 0 ? ` Highlights: ${facts.join(" · ")}.` : "";
-  const closer = " Draft only for approval review. Not published.";
-
-  return `${opener}${valueLine}${factsLine}${closer}`.trim();
-}
-
-function scoreListingForContent(listing: Listing): number {
-  let score = 0;
-  if (listing.approved) score += 5;
-  if ((listing.images?.length ?? 0) > 0) score += Math.min(4, listing.images.length);
-  if (listing.price != null) score += 2;
-  if (listing.title) score += 2;
-  if (listing.description && listing.description.length >= 120) score += 1;
-  if (listing.bedrooms != null) score += 1;
-  if (listing.bathrooms != null) score += 1;
-  if (listing.area_sqm != null) score += 1;
-  if (listing.project_flag) score += 1;
-  return score;
-}
-
-async function getLiveContentCandidateListings(limit = 80): Promise<Listing[]> {
-  const feedSources = ["v1_feed_cv_indexable", "v1_feed_cv"] as const;
-
-  try {
-    for (const feedSource of feedSources) {
-      const { data, error } = await supabase
-        .from(feedSource)
-        .select("id,title,price,currency,source_id,source_url,island,city,bedrooms,bathrooms,property_size_sqm,image_urls,approved,property_type,description")
-        .order("updated_at", { ascending: false })
-        .limit(limit);
-
-      if (error) {
-        console.warn(`[Admin] Could not load content candidates from ${feedSource}:`, error.message);
-        continue;
-      }
-
-      const candidates = ((data || []) as SupabaseListing[])
-        .map((l) => ({
-          id: l.id,
-          title: l.title || undefined,
-          price: l.price ?? undefined,
-          currency: l.currency,
-          images: (l.image_urls || []).filter(Boolean),
-          description: l.description || undefined,
-          sourceId: l.source_id,
-          sourceName: sourceIdToName(l.source_id),
-          sourceUrl: l.source_url,
-          source_ref: l.source_ref ?? null,
-          location: [l.city, l.island].filter(Boolean).join(", ") || undefined,
-          island: l.island,
-          city: l.city,
-          bedrooms: l.bedrooms,
-          bathrooms: l.bathrooms,
-          area_sqm: l.property_size_sqm,
-          approved: l.approved,
-          project_flag: l.project_flag ?? null,
-          project_start_price: l.project_start_price ?? null,
-          property_type: l.property_type || undefined,
-        }))
-        .filter((listing) => listing.images.length > 0);
-
-      if (candidates.length > 0) {
-        console.info(`[Admin] Loaded ${candidates.length} content candidates from ${feedSource}`);
-        return candidates;
-      }
-    }
-
-    return [];
-  } catch (err) {
-    console.warn("[Admin] Failed to load live content candidates:", err);
-    return [];
-  }
-}
-
-function createDraftFromListing(listing: Listing): ContentDraft {
-  const createdAt = new Date().toISOString();
-  return {
-    id: `draft_${listing.id}_${createdAt.slice(0, 10)}`,
-    sourceListingId: listing.id,
-    listingTitle: listing.title || "Untitled listing",
-    selectedImage: listing.images[0],
-    suggestedCaption: buildCaption(listing),
-    suggestedHashtags: buildSuggestedHashtags(listing),
-    suggestedChannel: chooseSuggestedChannel(listing),
-    createdAt,
-    status: "pending",
-  };
-}
-
-export async function getContentDrafts(): Promise<ContentDraft[]> {
-  return listStoredContentDrafts();
-}
-
-export async function generateContentDrafts(): Promise<ContentDraft[]> {
-  const existingDrafts = await listStoredContentDrafts();
-  const todayKey = new Date().toISOString().slice(0, 10);
-  const existingListingIds = new Set(
-    existingDrafts
-      .filter((draft) => draft.createdAt.slice(0, 10) === todayKey)
-      .map((draft) => draft.sourceListingId)
-  );
-
-  const candidates = await getLiveContentCandidateListings();
-
-  const selected = candidates
-    .filter((listing) => !existingListingIds.has(listing.id))
-    .sort((a, b) => scoreListingForContent(b) - scoreListingForContent(a))
-    .slice(0, MAX_CONTENT_DRAFTS_PER_RUN);
-
-  const newDrafts = selected.map(createDraftFromListing);
-  await insertContentDrafts(newDrafts);
-  return listStoredContentDrafts();
-}
-
-export async function updateContentDraftStatus(
-  id: string,
-  status: ContentDraftStatus,
-  statusNote?: string
-): Promise<ContentDraft[]> {
-  await updateStoredContentDraftStatus(id, status, statusNote);
-  return listStoredContentDrafts();
-}
-
-// ============================================
 // MARKET NEWS — Admin queue helpers
 // All reads and writes use supabaseAuth so the authenticated JWT is sent.
 // Public anon reads continue to use the anon client (only published rows).
@@ -1128,6 +859,12 @@ export interface MarketNewsRow {
   ingestion_source: string | null;
   created_at: string;
   updated_at: string;
+  title_pt: string | null;
+  snippet_pt: string | null;
+  why_it_matters_pt: string | null;
+  enriched_at: string | null;
+  relevance_score: number | null;
+  enrich_recommendation: "publish" | "keep_candidate" | "archive" | null;
 }
 
 export interface MarketNewsFieldUpdate {
@@ -1138,14 +875,27 @@ export interface MarketNewsFieldUpdate {
   affected_regions?: string[] | null;
   signal_tags?: string[] | null;
   relevance?: "high" | "standard";
+  title_pt?: string | null;
+  snippet_pt?: string | null;
+  why_it_matters_pt?: string | null;
 }
 
 export async function getMarketNewsQueue(status: MarketNewsStatus): Promise<MarketNewsRow[]> {
-  const { data, error } = await supabaseAuth
+  let query = supabaseAuth
     .from("market_news")
-    .select("id,title,original_title,source_name,source_url,canonical_url,published_at,category,snippet,why_it_matters,status,relevance,language,country_code,affected_regions,signal_tags,ingestion_source,created_at,updated_at")
-    .eq("status", status)
-    .order("created_at", { ascending: false });
+    .select("id,title,original_title,source_name,source_url,canonical_url,published_at,category,snippet,why_it_matters,status,relevance,language,country_code,affected_regions,signal_tags,ingestion_source,created_at,updated_at,title_pt,snippet_pt,why_it_matters_pt,enriched_at,relevance_score,enrich_recommendation")
+    .eq("status", status);
+
+  if (status === "candidate") {
+    // Highest-scored items first; unscored (null) items fall to the bottom
+    query = query
+      .order("relevance_score", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+  } else {
+    query = query.order("created_at", { ascending: false });
+  }
+
+  const { data, error } = await query;
 
   if (error) {
     console.error("[Admin] getMarketNewsQueue failed:", error.message);
@@ -1154,10 +904,17 @@ export async function getMarketNewsQueue(status: MarketNewsStatus): Promise<Mark
   return (data ?? []) as MarketNewsRow[];
 }
 
-export async function updateMarketNewsStatus(id: string, status: MarketNewsStatus): Promise<void> {
+export async function updateMarketNewsStatus(id: string, status: MarketNewsStatus, currentPublishedAt?: string | null): Promise<void> {
+  // When publishing, stamp published_at = now() if it's missing or in the past.
+  // This ensures newly published articles sort to the top of the public feed.
+  const extra: Record<string, unknown> = {};
+  if (status === "published" && !currentPublishedAt) {
+    extra.published_at = new Date().toISOString();
+  }
+
   const { error } = await supabaseAuth
     .from("market_news")
-    .update({ status })
+    .update({ status, ...extra })
     .eq("id", id);
 
   if (error) {
@@ -1196,6 +953,231 @@ export interface AdminNotification {
   meta: Record<string, unknown>;
   read_at: string | null;
   created_at: string;
+}
+
+export type AdminSignalTone = "ok" | "info" | "warning" | "critical";
+
+export interface AdminSignalMetric {
+  key: string;
+  label: string;
+  value: string;
+  detail: string;
+  tone: AdminSignalTone;
+}
+
+export interface AdminSignalEvent {
+  id: string;
+  category: string;
+  title: string;
+  body: string;
+  at: string;
+  tone: AdminSignalTone;
+  href?: string;
+}
+
+export interface AdminSignalDigest {
+  generatedAt: string;
+  metrics: AdminSignalMetric[];
+  events: AdminSignalEvent[];
+}
+
+interface FeedSignalRow {
+  id: string;
+  title: string | null;
+  source_id: string | null;
+  price: number | null;
+  island: string | null;
+  image_urls: string[] | null;
+  has_valid_images: boolean | null;
+  first_seen_at: string | null;
+  updated_at: string | null;
+}
+
+const DAY_MS = 24 * 60 * 60 * 1000;
+
+function sinceIso(days: number): string {
+  return new Date(Date.now() - days * DAY_MS).toISOString();
+}
+
+function shortDate(iso: string | null | undefined): string {
+  if (!iso) return "No timestamp";
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short" });
+}
+
+function pct(part: number, total: number): number {
+  if (!total) return 0;
+  return Math.round((part / total) * 100);
+}
+
+export async function getAdminSignalDigest(): Promise<AdminSignalDigest> {
+  const now = new Date().toISOString();
+  const sevenDaysAgo = sinceIso(7);
+  const thirtyDaysAgo = sinceIso(30);
+
+  const [
+    stats,
+    publishedNewsCountResult,
+    candidateNewsCountResult,
+    latestPublishedNewsResult,
+    recentlyUpdatedNewsResult,
+    feedRowsResult,
+  ] = await Promise.all([
+    getDashboardStats(),
+    supabaseAuth
+      .from("market_news")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "published")
+      .gte("updated_at", sevenDaysAgo),
+    supabaseAuth
+      .from("market_news")
+      .select("id", { count: "exact", head: true })
+      .eq("status", "candidate"),
+    supabaseAuth
+      .from("market_news")
+      .select("id,title,source_name,published_at,updated_at,source_url")
+      .eq("status", "published")
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabaseAuth
+      .from("market_news")
+      .select("id,title,status,source_name,published_at,updated_at,source_url")
+      .gte("updated_at", sevenDaysAgo)
+      .order("updated_at", { ascending: false })
+      .limit(5),
+    supabase
+      .from("v1_feed_cv")
+      .select("id,title,source_id,price,island,image_urls,has_valid_images,first_seen_at,updated_at")
+      .order("first_seen_at", { ascending: false, nullsFirst: false })
+      .limit(2000),
+  ]);
+
+  if (publishedNewsCountResult.error) {
+    console.error("[Admin] published news signal failed:", publishedNewsCountResult.error.message);
+  }
+  if (candidateNewsCountResult.error) {
+    console.error("[Admin] candidate news signal failed:", candidateNewsCountResult.error.message);
+  }
+  if (latestPublishedNewsResult.error) {
+    console.error("[Admin] latest published news signal failed:", latestPublishedNewsResult.error.message);
+  }
+  if (recentlyUpdatedNewsResult.error) {
+    console.error("[Admin] updated news signal failed:", recentlyUpdatedNewsResult.error.message);
+  }
+  if (feedRowsResult.error) {
+    console.error("[Admin] feed signal failed:", feedRowsResult.error.message);
+  }
+
+  const feedRows = (feedRowsResult.data ?? []) as FeedSignalRow[];
+  const newListings7d = feedRows.filter((r) => r.first_seen_at && r.first_seen_at >= sevenDaysAgo);
+  const newListings30d = feedRows.filter((r) => r.first_seen_at && r.first_seen_at >= thirtyDaysAgo);
+  const withImages = feedRows.filter((r) => r.has_valid_images || (r.image_urls?.length ?? 0) > 0).length;
+  const withPrice = feedRows.filter((r) => Number(r.price ?? 0) > 0).length;
+  const sourceIds = new Set(feedRows.map((r) => r.source_id).filter(Boolean));
+  const nonStubSourceRows = stats.sourceRows.filter((r) => !r.isStub && r.marketId === "cv");
+  const weakSources = nonStubSourceRows.filter((r) => r.grade === "D" || r.feed_conversion_pct < 70);
+  const staleSources = nonStubSourceRows.filter((r) => {
+    if (!r.last_updated_at) return true;
+    return new Date(r.last_updated_at).getTime() < Date.now() - 7 * DAY_MS;
+  });
+  const sourceIssueIds = new Set([...weakSources, ...staleSources].map((r) => r.source_id));
+
+  const publishedNews7d = publishedNewsCountResult.count ?? 0;
+  const candidateNews = candidateNewsCountResult.count ?? 0;
+  const latestPublishedNews = latestPublishedNewsResult.data?.[0] ?? null;
+  const latestListing = feedRows[0] ?? null;
+  const healthTone: AdminSignalTone =
+    weakSources.length > 0 || staleSources.length > 0 ? "warning" : "ok";
+
+  const metrics: AdminSignalMetric[] = [
+    {
+      key: "news",
+      label: "News activity",
+      value: String(publishedNews7d),
+      detail: `published/updated · ${candidateNews} candidates · latest ${shortDate(latestPublishedNews?.updated_at ?? latestPublishedNews?.published_at)}`,
+      tone: publishedNews7d > 0 ? "ok" : "info",
+    },
+    {
+      key: "new-listings",
+      label: "New listings",
+      value: String(newListings7d.length),
+      detail: `${newListings30d.length} in 30d · latest ${shortDate(latestListing?.first_seen_at)}`,
+      tone: newListings7d.length > 0 ? "ok" : "info",
+    },
+    {
+      key: "feed",
+      label: "Live feed",
+      value: String(stats.liveFeedTotal || feedRows.length),
+      detail: `${sourceIds.size} sources · ${pct(withImages, feedRows.length)}% photos · ${pct(withPrice, feedRows.length)}% price`,
+      tone: "ok",
+    },
+    {
+      key: "health",
+      label: "Data health",
+      value: sourceIssueIds.size === 0 ? "OK" : String(sourceIssueIds.size),
+      detail: sourceIssueIds.size === 0
+        ? "No weak or stale source signals"
+        : `${weakSources.length} weak · ${staleSources.length} stale · ${nonStubSourceRows.length} CV sources`,
+      tone: healthTone,
+    },
+  ];
+
+  const events: AdminSignalEvent[] = [];
+
+  for (const item of latestPublishedNewsResult.data ?? []) {
+    events.push({
+      id: `news-published-${item.id}`,
+      category: "Article published",
+      title: item.title,
+      body: item.source_name || "Market News",
+      at: item.updated_at ?? item.published_at ?? now,
+      tone: "ok",
+      href: item.source_url ?? undefined,
+    });
+  }
+
+  for (const item of recentlyUpdatedNewsResult.data ?? []) {
+    if (item.status === "published") continue;
+    events.push({
+      id: `news-updated-${item.id}`,
+      category: "Article changed",
+      title: item.title,
+      body: `${item.status} · ${item.source_name || "Market News"}`,
+      at: item.updated_at ?? item.published_at ?? now,
+      tone: item.status === "archived" ? "info" : "warning",
+      href: item.source_url ?? undefined,
+    });
+  }
+
+  for (const item of newListings30d.slice(0, 5)) {
+    events.push({
+      id: `listing-new-${item.id}`,
+      category: "New listing indexed",
+      title: item.title || item.id,
+      body: [sourceIdToName(item.source_id || ""), item.island].filter(Boolean).join(" · "),
+      at: item.first_seen_at ?? item.updated_at ?? now,
+      tone: "info",
+      href: `https://capeverderealestateindex.com/listing/${item.id}`,
+    });
+  }
+
+  for (const source of weakSources.slice(0, 3)) {
+    events.push({
+      id: `source-health-${source.source_id}`,
+      category: "Data health",
+      title: `${source.sourceName} needs attention`,
+      body: `Grade ${source.grade} · ${source.feed_conversion_pct}% feed conversion · ${source.public_feed_count_n} live`,
+      at: source.last_updated_at ?? now,
+      tone: "warning",
+    });
+  }
+
+  events.sort((a, b) => new Date(b.at).getTime() - new Date(a.at).getTime());
+
+  return {
+    generatedAt: now,
+    metrics,
+    events: events.slice(0, 12),
+  };
 }
 
 export async function getAdminNotifications(): Promise<AdminNotification[]> {
@@ -1246,4 +1228,119 @@ export async function markAllNotificationsRead(): Promise<void> {
   if (error) {
     throw new Error(`[Admin] markAllNotificationsRead failed: ${error.message}`);
   }
+}
+
+// ============================================
+// HOMEPAGE FEATURED SELECTIONS
+// All reads/writes use supabaseAuth (authenticated JWT).
+// ============================================
+
+export interface FeaturedSelectionRow {
+  id: string;
+  market_id: string;
+  iso_week: string;
+  listing_ids: string[];
+  status: "draft" | "published";
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** ISO 8601 week string for a given date (or today). 'YYYY-WNN', Monday-start. */
+export function toIsoWeek(date: Date = new Date()): string {
+  const day = date.getDay();
+  const monday = new Date(date);
+  monday.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
+  monday.setHours(0, 0, 0, 0);
+  const jan4 = new Date(monday.getFullYear(), 0, 4);
+  const jan4Day = jan4.getDay() || 7;
+  const jan4Monday = new Date(jan4);
+  jan4Monday.setDate(jan4.getDate() - jan4Day + 1);
+  const weekNum = Math.round((monday.getTime() - jan4Monday.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+  return `${monday.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+}
+
+/** Returns the Monday date for a given ISO week string. */
+export function isoWeekToMonday(isoWeek: string): Date {
+  const m = isoWeek.match(/^(\d{4})-W(\d{2})$/);
+  if (!m) return new Date();
+  const year = parseInt(m[1], 10);
+  const week = parseInt(m[2], 10);
+  // Jan 4 is always week 1
+  const jan4 = new Date(year, 0, 4);
+  const jan4Day = jan4.getDay() || 7;
+  const jan4Monday = new Date(jan4);
+  jan4Monday.setDate(jan4.getDate() - jan4Day + 1);
+  const monday = new Date(jan4Monday.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
+  return monday;
+}
+
+/** Fetch the 6 most recent weeks of selections (includes all statuses). */
+export async function getFeaturedSelections(): Promise<FeaturedSelectionRow[]> {
+  const { data, error } = await supabaseAuth
+    .from("homepage_featured_selections")
+    .select("*")
+    .eq("market_id", "cv")
+    .order("iso_week", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    console.error("[Admin] getFeaturedSelections failed:", error.message);
+    return [];
+  }
+  return (data ?? []) as FeaturedSelectionRow[];
+}
+
+/** Upsert a selection for a given ISO week. */
+export async function saveFeaturedSelection(
+  isoWeek: string,
+  listingIds: string[],
+  status: "draft" | "published",
+  note?: string
+): Promise<void> {
+  const { data: sessionData } = await supabaseAuth.auth.getSession();
+  const createdBy = sessionData.session?.user?.email ?? null;
+
+  const { error } = await supabaseAuth
+    .from("homepage_featured_selections")
+    .upsert(
+      {
+        market_id: "cv",
+        iso_week: isoWeek,
+        listing_ids: listingIds,
+        status,
+        note: note ?? null,
+        created_by: createdBy,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "market_id,iso_week" }
+    );
+
+  if (error) throw new Error(`[Admin] saveFeaturedSelection failed: ${error.message}`);
+}
+
+/** Promote a selection to published or demote to draft. */
+export async function setFeaturedStatus(
+  isoWeek: string,
+  status: "draft" | "published"
+): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("homepage_featured_selections")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("market_id", "cv")
+    .eq("iso_week", isoWeek);
+
+  if (error) throw new Error(`[Admin] setFeaturedStatus failed: ${error.message}`);
+}
+
+/** Delete a selection row entirely. */
+export async function deleteFeaturedSelection(isoWeek: string): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("homepage_featured_selections")
+    .delete()
+    .eq("market_id", "cv")
+    .eq("iso_week", isoWeek);
+
+  if (error) throw new Error(`[Admin] deleteFeaturedSelection failed: ${error.message}`);
 }

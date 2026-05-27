@@ -4,7 +4,7 @@ import { useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
-import { formatMedian } from "../lib/format";
+import { formatMedian, formatNumber, toLocale } from "../lib/formatters";
 import { PRICE_BUCKETS, type PriceBucket } from "arei-sdk";
 import "./Detail.css"; // shares kv-d-card / kv-d-meta-row primitives
 import "./Market.css";
@@ -296,6 +296,7 @@ interface MarketData {
 export default function Market() {
   const { i18n, t } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
+  const locale = toLocale(i18n.language);
   const copy = {
     title: isPt ? "O estado do mercado imobiliário de Cabo Verde." : "The state of Cape Verde property.",
     eyebrow: isPt ? "Inteligência de mercado · abril de 2026" : "Market intelligence · April 2026",
@@ -480,8 +481,8 @@ export default function Market() {
           <h1>{copy.title}</h1>
           <p className="kv-hero-sub">
             {isPt
-              ? `Dados de índice derivados de ${data.total.toLocaleString("pt-PT")} anúncios públicos acompanhados em ${data.islandCount} ilhas. Atualizado diariamente após a conclusão dos crawlers.`
-              : `Index-level data derived from ${data.total.toLocaleString("en")} tracked public listings across ${data.islandCount} islands. Updated daily as crawlers complete.`}
+              ? `Dados de índice derivados de ${formatNumber(data.total, locale)} anúncios públicos acompanhados em ${data.islandCount} ilhas. Atualizado diariamente após a conclusão dos crawlers.`
+              : `Index-level data derived from ${formatNumber(data.total, locale)} tracked public listings across ${data.islandCount} islands. Updated daily as crawlers complete.`}
           </p>
         </div>
       </header>
@@ -559,7 +560,7 @@ export default function Market() {
               </div>
               <div className="kv-m-intro-meta-row">
                 <span className="kv-m-intro-meta-k">{isPt ? "Amostra" : "Sample"}</span>
-                <span className="kv-m-intro-meta-v">{data.total.toLocaleString(isPt ? "pt-PT" : "en")} {isPt ? "anúncios" : "listings"} · {data.islandCount} {isPt ? "ilhas" : "islands"}</span>
+                <span className="kv-m-intro-meta-v">{formatNumber(data.total, locale)} {isPt ? "anúncios" : "listings"} · {data.islandCount} {isPt ? "ilhas" : "islands"}</span>
               </div>
               <div className="kv-m-intro-meta-row">
                 <span className="kv-m-intro-meta-k">{isPt ? "Método" : "Method"}</span>
@@ -582,23 +583,23 @@ export default function Market() {
           <div className="kv-l-mmi-strip">
             <div className="kv-l-mmi-cell">
               <div className="kv-l-mmi-lbl">{isPt ? "Preço mediano estimado" : "Estimated median price"}</div>
-              <div className="kv-l-mmi-num">{formatMedian(data.medianPrice)}</div>
-              <div className="kv-l-mmi-delta">{isPt ? `Em ${data.pricedCount.toLocaleString("pt-PT")} anúncios com preço` : `Across ${data.pricedCount.toLocaleString("en")} priced listings`}</div>
+              <div className="kv-l-mmi-num">{formatMedian(data.medianPrice, locale)}</div>
+              <div className="kv-l-mmi-delta">{isPt ? `Em ${formatNumber(data.pricedCount, locale)} anúncios com preço` : `Across ${formatNumber(data.pricedCount, locale)} priced listings`}</div>
             </div>
             <div className="kv-l-mmi-cell">
               <div className="kv-l-mmi-lbl">{isPt ? "Inventário total" : "Total inventory"}</div>
-              <div className="kv-l-mmi-num">{data.total.toLocaleString(isPt ? "pt-PT" : "en")}</div>
+              <div className="kv-l-mmi-num">{formatNumber(data.total, locale)}</div>
               <div className="kv-l-mmi-delta">{isPt ? `Acompanhado em ${data.islandCount} ilhas` : `Tracked across ${data.islandCount} islands`}</div>
             </div>
             <div className="kv-l-mmi-cell">
               <div className="kv-l-mmi-lbl">{isPt ? "Adicionados este mês" : "Added this month"}</div>
-              <div className="kv-l-mmi-num">{data.addedThisMonth.toLocaleString(isPt ? "pt-PT" : "en")}</div>
+              <div className="kv-l-mmi-num">{formatNumber(data.addedThisMonth, locale)}</div>
               <div className="kv-l-mmi-delta">{isPt ? "Vistos pela primeira vez desde dia 1" : "First seen since the 1st"}</div>
             </div>
             <div className="kv-l-mmi-cell">
               <div className="kv-l-mmi-lbl">{isPt ? "Cobertura de preço verificado" : "Verified-price coverage"}</div>
               <div className="kv-l-mmi-num">{pricedPct}%</div>
-              <div className="kv-l-mmi-delta">{isPt ? `${data.pricedCount.toLocaleString("pt-PT")} de ${data.total.toLocaleString("pt-PT")} têm preço público` : `${data.pricedCount.toLocaleString("en")} of ${data.total.toLocaleString("en")} have a public price`}</div>
+              <div className="kv-l-mmi-delta">{isPt ? `${formatNumber(data.pricedCount, locale)} de ${formatNumber(data.total, locale)} têm preço público` : `${formatNumber(data.pricedCount, locale)} of ${formatNumber(data.total, locale)} have a public price`}</div>
             </div>
           </div>
         </div>
@@ -635,8 +636,8 @@ export default function Market() {
           </div>
           <p className="kv-m-disclaimer">
             {isPt
-              ? `Com base em ${data.pricedCount.toLocaleString("pt-PT")} anúncios com preço público. Anúncios com preço sob consulta excluídos.`
-              : `Based on ${data.pricedCount.toLocaleString("en")} listings with a public price. Price-on-request listings excluded.`}
+              ? `Com base em ${formatNumber(data.pricedCount, locale)} anúncios com preço público. Anúncios com preço sob consulta excluídos.`
+              : `Based on ${formatNumber(data.pricedCount, locale)} listings with a public price. Price-on-request listings excluded.`}
           </p>
         </div>
       </section>
@@ -669,9 +670,9 @@ export default function Market() {
             {data.islands.map((island) => (
               <div className="kv-m-island-row" key={island.name}>
                 <span className="kv-m-island-name">{island.name}</span>
-                <span className="kv-m-island-count">{island.totalListings.toLocaleString(isPt ? "pt-PT" : "en")}</span>
+                <span className="kv-m-island-count">{formatNumber(island.totalListings, locale)}</span>
                 <span className="kv-m-island-median">
-                  {island.median !== null ? formatMedian(island.median) : "—"}
+                  {island.median !== null ? formatMedian(island.median, locale) : "—"}
                 </span>
               </div>
             ))}

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useTranslation } from "react-i18next";
+import { formatDate, toLocale } from "../lib/formatters";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { getArticleBySlug, BLOG_ARTICLES } from "../lib/blog-data";
 import { arei } from "../lib/arei";
@@ -27,13 +28,6 @@ function splitAtFirstHr(html: string): { intro: string; rest: string } {
   return { intro, rest };
 }
 
-function fmtDate(iso: string, locale = "en-GB"): string {
-  return new Date(iso).toLocaleDateString(locale, {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-  });
-}
 
 function categoryFor(tags: string[]): "buying" | "market" | "legal" | "tax" {
   const t = tags.map((s) => s.toLowerCase());
@@ -80,6 +74,11 @@ const TAG_PT: Record<string, string> = {
 };
 
 const ARTICLE_PT: Record<string, { title: string; description: string }> = {
+  "best-real-estate-agents-cape-verde": {
+    title: "Melhores agentes imobiliários em Cabo Verde 2026? Uma visão neutra baseada no índice",
+    description:
+      "As pessoas procuram os melhores agentes imobiliários em Cabo Verde, mas não existe um conjunto de dados neutro que prove quem é o melhor. Veja que agências e portais o índice acompanha.",
+  },
   "cape-verde-property-prices-by-island": {
     title: "Preços de imóveis em Cabo Verde por ilha: o que o Cape Verde Real Estate Index mostra atualmente",
     description:
@@ -202,6 +201,7 @@ function decorateHtml(html: string): { html: string; toc: { id: string; label: s
 export default function BlogPost() {
   const { t, i18n } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
+  const locale = toLocale(i18n.language);
   const { slug } = useParams<{ slug: string }>();
   const navigate = useNavigate();
   const article = slug ? getArticleBySlug(slug) : undefined;
@@ -314,7 +314,7 @@ export default function BlogPost() {
           <h1 className="kv-bp-title">{localizedArticle?.title ?? article.title}</h1>
           <p className="kv-bp-deck">{localizedArticle?.description ?? article.description}</p>
           <div className="kv-bp-byline">
-            <span>{fmtDate(article.date, isPt ? "pt-PT" : "en-GB")}</span>
+            <span>{formatDate(article.date, locale)}</span>
             <span>{localizeReadTime(article.readTime, isPt)}</span>
             {article.tags.length > 0 && <span>{localizeTags(article.tags, isPt)}</span>}
           </div>
@@ -406,7 +406,7 @@ export default function BlogPost() {
                     </div>
                     <div className="kv-bp-rel-title">{isPt ? ARTICLE_PT[a.slug]?.title ?? a.title : a.title}</div>
                     <div className="kv-bp-rel-foot">
-                      <span>{fmtDate(a.date, isPt ? "pt-PT" : "en-GB")}</span>
+                      <span>{formatDate(a.date, locale)}</span>
                       <span>{localizeReadTime(a.readTime, isPt)}</span>
                     </div>
                   </Link>

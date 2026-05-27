@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState, type CSSProperties } from "react";
 import { Trans, useTranslation } from "react-i18next";
+import { formatDate, toLocale } from "../lib/formatters";
 import NewsletterCta from "../components/NewsletterCta";
 import PageHeader from "../components/PageHeader";
 import CategoryFilter from "../components/CategoryFilter";
@@ -16,14 +17,6 @@ const MAX_VISIBLE_TAGS = 3;
 const INITIAL_COUNT = 10;
 const LOAD_MORE_STEP = 10;
 
-function fmtDate(iso: string): string {
-  return new Date(`${iso}T00:00:00Z`).toLocaleDateString("en-GB", {
-    day: "numeric",
-    month: "short",
-    year: "numeric",
-    timeZone: "UTC",
-  });
-}
 
 function matches(query: string, item: MarketNewsItem): boolean {
   const q = query.trim().toLowerCase();
@@ -65,7 +58,8 @@ function SignalTags({ tags }: { tags: string[] }) {
 }
 
 export default function MarketNews() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
+  const locale = toLocale(i18n.language);
   useDocumentMeta(t("marketNews.metaTitle"), t("marketNews.description"));
 
   const catLabel = (c: string) =>
@@ -78,7 +72,7 @@ export default function MarketNews() {
     return `var(--kv-cat-${i >= 0 ? i + 1 : 1})`;
   };
 
-  const { items, loading, error } = useMarketNews();
+  const { items, loading, error, uiLang } = useMarketNews();
 
   const [query, setQuery] = useState("");
   const [activeCat, setActiveCat] = useState<string | null>(null);
@@ -213,11 +207,16 @@ export default function MarketNews() {
                   <Trans i18nKey="marketNews.empty" values={{ query }} components={{ 1: <b /> }} />
                 </div>
               ) : (
-                visibleItems.map((item) => (
+                visibleItems.map((item) => {
+                  const pt = uiLang === "pt";
+                  const title = (pt && item.titlePt) ? item.titlePt : item.title;
+                  const snippet = (pt && item.snippetPt) ? item.snippetPt : item.snippet;
+                  const whyItMatters = (pt && item.whyItMattersPt) ? item.whyItMattersPt : item.whyItMatters;
+                  return (
                   <article className="kv-news-item" key={item.id}>
                     <div className="kv-news-item-meta">
                       <span>{item.sourceName}</span>
-                      <span>{fmtDate(item.publishedAt)}</span>
+                      <span>{formatDate(item.publishedAt, locale, true)}</span>
                       <span
                         className="kv-news-cat"
                         style={{ "--cat-tone": catTone(item.category) } as CSSProperties}
@@ -237,16 +236,16 @@ export default function MarketNews() {
                       target="_blank"
                       rel="noopener noreferrer"
                     >
-                      {item.title}
+                      {title}
                       <span aria-hidden="true">↗</span>
                     </a>
 
-                    <p className="kv-news-item-snippet">{item.snippet}</p>
+                    <p className="kv-news-item-snippet">{snippet}</p>
 
-                    {item.whyItMatters && (
+                    {whyItMatters && (
                       <div className="kv-news-why">
                         <span>{t("marketNews.whyItMatters")}</span>
-                        <p>{item.whyItMatters}</p>
+                        <p>{whyItMatters}</p>
                       </div>
                     )}
 
@@ -263,7 +262,8 @@ export default function MarketNews() {
                       {t("marketNews.readAt", { source: item.sourceName })}
                     </a>
                   </article>
-                ))
+                  );
+                })
               )}
             {!loading && !error && filteredItems.length > 0 && (
               <div className="kv-news-pager">

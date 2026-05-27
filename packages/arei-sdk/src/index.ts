@@ -18,6 +18,8 @@ export type {
   PaginatedListings,
   AREIConfig,
   MarketNewsRow,
+  MarketReportRow,
+  FeaturedSelectionRow,
 } from "./types.js";
 
 export {

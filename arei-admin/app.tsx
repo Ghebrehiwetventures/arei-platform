@@ -8,9 +8,6 @@ import {
   getListings,
   getListingById,
   getMarketIds,
-  getContentDrafts,
-  generateContentDrafts,
-  updateContentDraftStatus,
   getMarketNewsQueue,
   updateMarketNewsStatus,
   updateMarketNewsFields,
@@ -23,6 +20,7 @@ import {
   type MarketNewsFieldUpdate,
 } from "./data";
 import { NotificationsView } from "./NotificationsView";
+import { FeaturedView } from "./FeaturedView";
 
 const SOURCE_STALE_DAYS = 30;
 
@@ -90,7 +88,7 @@ function useTheme() {
 
   return [dark, () => setDark((d) => !d)] as const;
 }
-import { Source, Listing, SourceStatus, DashboardStats, SourceQualityRow, ContentDraft, ContentDraftStatus } from "./types";
+import { Source, Listing, SourceStatus, DashboardStats, SourceQualityRow } from "./types";
 import { supabaseAuth } from "./supabase";
 import { PropertyChatLabView } from "./PropertyChatLab";
 import { SourceHealthReport, buildReportHtml, loadSnapshots, saveSnapshot, summarize, SourceSnapshot } from "./sourceHealthReport";
@@ -98,7 +96,7 @@ import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, 
 import { AgencyConsoleView } from "./AgencyConsoleView";
 import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
 import { BrokerPilotView } from "./BrokerPilotView";
-import { MarketNewsSocialAgentView } from "./MarketNewsSocialAgentView";
+import { ListingSocialView } from "./ListingSocialView";
 
 // ============================================
 // D · LAYERS MARK — AREI brand mark (SVG)
@@ -398,288 +396,6 @@ function GradeBadge({ grade }: { grade: "A" | "B" | "C" | "D" }) {
   );
 }
 
-function DraftStatusBadge({ status }: { status: ContentDraftStatus }) {
-  const labels: Record<ContentDraftStatus, string> = {
-    pending: "Pending",
-    approved: "Approved",
-    rejected: "Rejected",
-    revision_requested: "Revision",
-  };
-  const classes: Record<ContentDraftStatus, string> = {
-    pending: "bg-amber-muted text-amber",
-    approved: "bg-green-muted text-green",
-    rejected: "bg-red-muted text-red",
-    revision_requested: "bg-surface-3 text-foreground-muted",
-  };
-
-  return (
-    <span className={`inline-block px-2 py-0.5 text-[11px] font-medium rounded ${classes[status]}`}>
-      {labels[status]}
-    </span>
-  );
-}
-
-function AgentsApprovalsView() {
-  const [drafts, setDrafts] = useState<ContentDraft[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [generating, setGenerating] = useState(false);
-  const [statusFilter, setStatusFilter] = useState<ContentDraftStatus | "all">("all");
-  const [typeFilter, setTypeFilter] = useState<"all" | "content_draft">("content_draft");
-
-  useEffect(() => {
-    let cancelled = false;
-    getContentDrafts().then((items) => {
-      if (!cancelled) {
-        setDrafts(items);
-        setLoading(false);
-      }
-    });
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const handleGenerate = async () => {
-    setGenerating(true);
-    try {
-      const next = await generateContentDrafts();
-      setDrafts(next);
-    } finally {
-      setGenerating(false);
-      setLoading(false);
-    }
-  };
-
-  const handleStatusUpdate = async (draftId: string, status: ContentDraftStatus) => {
-    const note =
-      status === "revision_requested"
-        ? window.prompt("What should be revised before this draft can be approved?", "") ?? ""
-        : "";
-    const next = await updateContentDraftStatus(draftId, status, note);
-    setDrafts(next);
-  };
-
-  const filteredDrafts = drafts.filter((draft) => {
-    if (typeFilter !== "all" && typeFilter !== "content_draft") return false;
-    if (statusFilter !== "all" && draft.status !== statusFilter) return false;
-    return true;
-  });
-
-  const pendingCount = drafts.filter((draft) => draft.status === "pending").length;
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const toggleExpand = (id: string) =>
-    setExpandedIds((prev) => {
-      const next = new Set(prev);
-      next.has(id) ? next.delete(id) : next.add(id);
-      return next;
-    });
-
-  return (
-    <div className="space-y-6">
-      {/* ── Page header ─────────────────────────────────────────── */}
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Content Drafts
-          </h1>
-          <p className="text-sm text-foreground-muted mt-1">
-            Review and approve AI-generated content before publishing. Nothing is published automatically.
-          </p>
-        </div>
-        <button
-          type="button"
-          onClick={handleGenerate}
-          disabled={generating}
-          className="px-5 py-2.5 text-sm font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
-        >
-          {generating ? "Generating…" : "Generate drafts"}
-        </button>
-      </div>
-
-      {/* ── Stats row ───────────────────────────────────────────── */}
-      <div className="grid grid-cols-3 gap-2 sm:gap-4">
-        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
-          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Total drafts</div>
-          <div className="text-xl sm:text-3xl font-bold tabular-nums tracking-tight font-mono">{drafts.length}</div>
-        </div>
-        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
-          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Pending</div>
-          <div className="text-xl sm:text-3xl font-bold text-amber tabular-nums tracking-tight font-mono">{pendingCount}</div>
-        </div>
-        <div className="surface-1 rounded p-3 sm:p-5 border border-border shadow-sm">
-          <div className="text-[10px] sm:text-[11px] font-medium uppercase tracking-wide text-foreground-subtle mb-1 sm:mb-3">Publishing</div>
-          <div className="text-xs sm:text-sm font-medium text-foreground-muted mt-0.5 sm:mt-1">Manual only</div>
-        </div>
-      </div>
-
-      {/* ── Filters ─────────────────────────────────────────────── */}
-      <div className="flex flex-wrap gap-3 items-end">
-        <div>
-          <label className="text-[11px] text-foreground-subtle block mb-1">Queue</label>
-          <select
-            value={typeFilter}
-            onChange={(e) => setTypeFilter(e.target.value as "all" | "content_draft")}
-            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded"
-          >
-            <option value="content_draft">Content drafts</option>
-            <option value="all">All items</option>
-          </select>
-        </div>
-        <div>
-          <label className="text-[11px] text-foreground-subtle block mb-1">Status</label>
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value as ContentDraftStatus | "all")}
-            className="bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded"
-          >
-            <option value="all">All</option>
-            <option value="pending">Pending</option>
-            <option value="approved">Approved</option>
-            <option value="rejected">Rejected</option>
-            <option value="revision_requested">Revision requested</option>
-          </select>
-        </div>
-      </div>
-
-      {/* ── Draft list ──────────────────────────────────────────── */}
-      {loading && <p className="text-foreground-muted text-sm py-8">Loading drafts…</p>}
-
-      {!loading && filteredDrafts.length === 0 && (
-        <div className="surface-1 rounded border border-border border-dashed p-14 text-center">
-          <div className="w-12 h-12 rounded-full bg-accent-muted flex items-center justify-center mx-auto mb-4">
-            <span className="text-accent text-lg">◉</span>
-          </div>
-          <h3 className="text-base font-semibold text-foreground font-mono mb-1.5">No drafts yet</h3>
-          <p className="text-sm text-foreground-muted max-w-sm mx-auto leading-relaxed">
-            Generate drafts to pull candidates from live listings. Each draft goes through review before anything is published.
-          </p>
-          <button
-            type="button"
-            onClick={handleGenerate}
-            disabled={generating}
-            className="mt-5 px-5 py-2.5 text-sm font-medium rounded bg-accent text-accent-foreground hover:opacity-90 transition-all disabled:opacity-50"
-          >
-            {generating ? "Generating…" : "Generate drafts"}
-          </button>
-        </div>
-      )}
-
-      <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
-        {filteredDrafts.map((draft) => {
-          const isExpanded = expandedIds.has(draft.id);
-          return (
-            <article key={draft.id}>
-              {/* ── Compact row ── */}
-              <button
-                type="button"
-                onClick={() => toggleExpand(draft.id)}
-                className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-surface-2 transition-colors"
-              >
-                {/* Thumbnail */}
-                {draft.selectedImage ? (
-                  <img
-                    src={draft.selectedImage}
-                    alt=""
-                    className="w-10 h-10 rounded-lg object-cover flex-shrink-0"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                ) : (
-                  <div className="w-10 h-10 rounded-lg bg-surface-3 flex items-center justify-center flex-shrink-0 text-foreground-subtle text-xs">
-                    —
-                  </div>
-                )}
-
-                {/* Title + meta */}
-                <div className="min-w-0 flex-1">
-                  <div className="text-sm font-medium text-foreground truncate">{draft.listingTitle}</div>
-                  <div className="text-[11px] text-foreground-subtle mt-0.5">
-                    <span className="capitalize">{draft.suggestedChannel}</span>
-                    <span className="mx-1.5">·</span>
-                    {new Date(draft.createdAt).toLocaleDateString()}
-                  </div>
-                </div>
-
-                {/* Status badge */}
-                <DraftStatusBadge status={draft.status} />
-
-                {/* Chevron */}
-                <span className={"text-foreground-subtle text-xs transition-transform duration-150 " + (isExpanded ? "rotate-180" : "")}>
-                  ▼
-                </span>
-              </button>
-
-              {/* ── Expanded details ── */}
-              {isExpanded && (
-                <div className="px-4 pb-4 pt-1 border-t border-border bg-surface-2/50">
-                  <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-4">
-                    <div className="space-y-3">
-                      <div>
-                        <div className="text-[11px] text-foreground-subtle mb-1">Caption</div>
-                        <p className="text-sm text-foreground leading-relaxed whitespace-pre-wrap m-0">
-                          {draft.suggestedCaption}
-                        </p>
-                      </div>
-                      <div>
-                        <div className="text-[11px] text-foreground-subtle mb-1">Hashtags</div>
-                        <p className="text-sm text-foreground-muted m-0 font-mono">
-                          {draft.suggestedHashtags.map((tag) => `#${tag}`).join(" ")}
-                        </p>
-                      </div>
-                      {draft.statusNote && (
-                        <div className="rounded-md p-3 bg-amber-muted">
-                          <div className="text-[11px] text-amber mb-1">Revision note</div>
-                          <p className="text-sm text-foreground whitespace-pre-wrap m-0">{draft.statusNote}</p>
-                        </div>
-                      )}
-                    </div>
-
-                    {/* Larger image preview */}
-                    {draft.selectedImage && (
-                      <div className="w-full lg:w-[240px] flex-shrink-0">
-                        <img
-                          src={draft.selectedImage}
-                          alt={draft.listingTitle}
-                          className="w-full rounded-lg object-cover max-h-[200px]"
-                          onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Actions */}
-                  <div className="flex flex-wrap gap-2 mt-4 pt-3 border-t border-border">
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(draft.id, "approved")}
-                      className="px-3 py-1.5 text-xs font-medium rounded-md bg-green-muted text-green hover:bg-green hover:text-primary-foreground transition-colors"
-                    >
-                      Approve
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(draft.id, "rejected")}
-                      className="px-3 py-1.5 text-xs font-medium rounded-md bg-red-muted text-red hover:bg-red hover:text-primary-foreground transition-colors"
-                    >
-                      Reject
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => handleStatusUpdate(draft.id, "revision_requested")}
-                      className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
-                    >
-                      Request revision
-                    </button>
-                  </div>
-                </div>
-              )}
-            </article>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
 // ============================================
 // DASHBOARD VIEW — Data health + Sync + Source quality
 // ============================================
@@ -819,8 +535,8 @@ function DashboardView() {
   const staleSourcesCount = healthRows.filter((r) => formatFreshness(r.last_updated_at).stale && !formatFreshness(r.last_updated_at).missing).length;
   const missingSqmSources = healthRows.filter((r) => Number(r.listing_count) > 0 && Number(r.with_sqm_count ?? 0) === 0).length;
   const approvedNoFeedSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0).length;
-  const approvedNoTrustSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.trust_passed_count_n === 0).length;
-  const approvedNoIndexableSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.indexable_count_n === 0).length;
+  const approvedNoTrustSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.trust_passed_count_n === 0).length;
+  const approvedNoIndexableSources = healthRows.filter((r) => Number(r.approved_count) > 0 && r.public_feed_count_n === 0 && r.indexable_count_n === 0).length;
   const lowFeedConvSources = healthRows.filter((r) => Number(r.approved_count) >= 20 && r.public_feed_count_n > 0 && r.feed_conversion_pct < 25).length;
 
   // CV-only worst/best for the top "Needs attention" / "Performing well" cards.
@@ -1291,9 +1007,21 @@ const LISTINGS_COLUMNS: { key: ListingsSortKey | "photo" | "grade" | "action"; l
   { key: "action", label: "" },
 ];
 
-function ListingsTabView() {
+interface ListingsTabViewProps {
+  embedded?: boolean;
+  fixedMarketId?: string;
+  title?: string;
+  subtitle?: string;
+}
+
+function ListingsTabView({
+  embedded = false,
+  fixedMarketId,
+  title = "Listings",
+  subtitle = "Browse and filter across all markets",
+}: ListingsTabViewProps = {}) {
   const [markets, setMarkets] = useState<{ id: string; name: string }[]>([]);
-  const [marketId, setMarketId] = useState("all");
+  const [marketIdState, setMarketIdState] = useState(fixedMarketId ?? "all");
   const [sourceOptions, setSourceOptions] = useState<{ id: string; name: string }[]>([]);
   const [gradeBySourceId, setGradeBySourceId] = useState<Map<string, "A" | "B" | "C" | "D">>(new Map());
   const [filters, setFilters] = useState<ListingsFilters>({});
@@ -1309,9 +1037,18 @@ function ListingsTabView() {
   const [displayCurrency, setDisplayCurrency] = useState<DisplayCurrency>("original");
   const [filtersOpen, setFiltersOpen] = useState(false);
 
+  const marketId = fixedMarketId ?? marketIdState;
+
   useEffect(() => {
     getMarketIds().then(setMarkets);
   }, []);
+
+  useEffect(() => {
+    if (!fixedMarketId) return;
+    setMarketIdState(fixedMarketId);
+    setFilters((f) => ({ ...f, sourceId: undefined }));
+    setPage(1);
+  }, [fixedMarketId]);
 
   useEffect(() => {
     getDashboardStats().then((s) => {
@@ -1391,14 +1128,18 @@ function ListingsTabView() {
   const inputCls = "bg-surface-1 border border-border text-foreground px-3 py-1.5 text-sm rounded w-full";
 
   return (
-    <div>
-      <div className="flex flex-wrap items-start justify-between gap-4 mb-6">
+    <div className={embedded ? "space-y-4" : ""}>
+      <div className={"flex flex-wrap items-start justify-between gap-4 " + (embedded ? "" : "mb-6")}>
         <div>
-          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Listings
-          </h1>
+          {embedded ? (
+            <h2 className="text-sm font-semibold text-foreground font-mono">{title}</h2>
+          ) : (
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
+              {title}
+            </h1>
+          )}
           <p className="text-sm text-foreground-muted mt-1">
-            Browse and filter across all markets
+            {subtitle}
           </p>
         </div>
         <div className="flex gap-2">
@@ -1449,7 +1190,7 @@ function ListingsTabView() {
         </div>
       </div>
 
-      <div className="surface-1 rounded border border-border p-4 mb-6">
+      <div className={"surface-1 rounded border border-border p-4 " + (embedded ? "" : "mb-6")}>
         <button
           type="button"
           onClick={() => setFiltersOpen((o) => !o)}
@@ -1466,24 +1207,26 @@ function ListingsTabView() {
         </button>
         <div className="hidden sm:block text-[11px] text-foreground-subtle uppercase tracking-wider mb-3">Filters</div>
         <div className={`grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-5 gap-3 ${filtersOpen ? "mt-3" : "hidden sm:grid sm:mt-0"}`}>
-          <div>
-            <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
-            <select
-              value={marketId}
-              onChange={(e) => {
-                setMarketId(e.target.value);
-                setPage(1);
-              }}
-              className={inputCls}
-            >
-              <option value="all">All markets</option>
-              {markets.map((m) => (
-                <option key={m.id} value={m.id}>
-                  {m.name} ({m.id})
-                </option>
-              ))}
-            </select>
-          </div>
+          {!fixedMarketId && (
+            <div>
+              <label className="text-[11px] text-foreground-subtle block mb-1">Market</label>
+              <select
+                value={marketId}
+                onChange={(e) => {
+                  setMarketIdState(e.target.value);
+                  setPage(1);
+                }}
+                className={inputCls}
+              >
+                <option value="all">All markets</option>
+                {markets.map((m) => (
+                  <option key={m.id} value={m.id}>
+                    {m.name} ({m.id})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Source</label>
             <select
@@ -1903,6 +1646,7 @@ function SourcesView() {
   const [sortKey, setSortKey] = useState<SourcesSortKey>("listing_count");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [snapshots, setSnapshots] = useState<SourceSnapshot[]>([]);
+  const [exportOpen, setExportOpen] = useState(false);
 
   const onSort = (key: SourcesSortKey) => {
     if (key === sortKey) {
@@ -1971,6 +1715,7 @@ function SourcesView() {
   const marketIds = [...byMarket.keys()];
 
   const handleExportCsv = () => {
+    setExportOpen(false);
     const header = [
       "market_id",
       "market_name",
@@ -2028,12 +1773,14 @@ function SourcesView() {
   const reportMarketLabel = selectedMarket.name;
 
   const handleExportHtmlReport = () => {
+    setExportOpen(false);
     const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
     const date = new Date().toISOString().slice(0, 10);
     downloadTextFile(`arei-source-health-report-${date}.html`, html, "text/html;charset=utf-8");
   };
 
   const handlePrintReport = () => {
+    setExportOpen(false);
     const html = buildReportHtml(reportRows, reportMarketLabel, marketNameById);
     const w = window.open("", "_blank", "noopener,noreferrer");
     if (!w) {
@@ -2054,51 +1801,100 @@ function SourcesView() {
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
           <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-            Sources
+            Listings
           </h1>
           <p className="text-sm text-foreground-muted mt-1">
-            Pipeline Source Health Report — visual overview, then detail tables · scoped to selected market
+            Pick a country first. Data health comes first; individual listing rows are below.
           </p>
         </div>
         <div className="flex flex-col sm:flex-row sm:items-center gap-2">
           <MarketSelector />
           <div className="flex flex-wrap gap-2">
-            <button
-              type="button"
-              onClick={handleExportCsv}
-              disabled={scopedRows.length === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+            <div className="relative">
+              <button
+                type="button"
+                onClick={() => setExportOpen((o) => !o)}
+                disabled={scopedRows.length === 0}
+                className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
+              >
+                Export
+              </button>
+              {exportOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    aria-hidden
+                    onClick={() => setExportOpen(false)}
+                  />
+                  <div className="absolute right-0 top-full z-20 mt-1 min-w-[210px] surface-1 border border-border rounded py-1 shadow-md">
+                    <button
+                      type="button"
+                      onClick={handleExportCsv}
+                      disabled={scopedRows.length === 0}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors disabled:opacity-40"
+                    >
+                      Source health CSV
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleExportHtmlReport}
+                      disabled={reportRows.length === 0}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors disabled:opacity-40"
+                    >
+                      HTML report
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handlePrintReport}
+                      disabled={reportRows.length === 0}
+                      className="block w-full px-3 py-2 text-left text-sm hover:bg-surface-2 transition-colors disabled:opacity-40"
+                    >
+                      Print / PDF
+                    </button>
+                  </div>
+                </>
+              )}
+            </div>
+            <a
+              href="#listing-rows"
+              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
             >
-              Export CSV
-            </button>
-            <button
-              type="button"
-              onClick={handleExportHtmlReport}
-              disabled={reportRows.length === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-            >
-              Export HTML report
-            </button>
-            <button
-              type="button"
-              onClick={handlePrintReport}
-              disabled={reportRows.length === 0}
-              className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-40"
-            >
-              Print / PDF
-            </button>
+              Listing rows
+            </a>
           </div>
         </div>
       </div>
 
+      <section className="surface-1 rounded border border-border p-4">
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground font-mono">
+              {selectedMarket.name} data health
+            </h2>
+            <p className="text-xs text-foreground-muted mt-1">
+              This page answers whether source data is being cleaned into usable, public inventory.
+            </p>
+          </div>
+          <span className="text-[10px] uppercase tracking-wider px-2 py-1 rounded bg-surface-3 text-foreground-muted font-mono">
+            {STATUS_LABEL[selectedMarket.status]}
+          </span>
+        </div>
+      </section>
+
       <SourceHealthReport rows={reportRows} marketLabel={reportMarketLabel} snapshots={snapshots} />
 
-      <div>
-        <h2 className="text-sm font-semibold text-foreground font-mono mb-3 mt-2">Source detail tables</h2>
-        <p className="text-xs text-foreground-muted mb-3">Full data per market — secondary to the visual report above.</p>
-      </div>
-
-      {marketIds.map((marketId) => {
+      <details className="surface-1 rounded border border-border shadow-sm">
+        <summary className="cursor-pointer px-4 py-3 text-sm font-semibold text-foreground font-mono hover:bg-surface-2 transition-colors">
+          Source drill-down
+          <span className="ml-2 text-xs font-normal text-foreground-muted">
+            Full source table for the selected country
+          </span>
+        </summary>
+        <div className="px-4 pb-4">
+          <p className="text-xs text-foreground-muted mb-3">
+            Operational detail for debugging specific publishers after the overview has shown where the problem is.
+          </p>
+          {marketIds.map((marketId) => {
         const rows = byMarket.get(marketId)!;
         const marketName = marketNameById.get(marketId) ?? marketId;
         const totalListings = rows.reduce((acc, r) => acc + Number(r.listing_count), 0);
@@ -2150,8 +1946,13 @@ function SourcesView() {
                             ? "text-amber"
                             : "text-foreground-muted";
                       const approvedN = Number(r.approved_count);
-                      const trustClass = approvedN > 0 && r.trust_passed_count_n === 0 ? "text-red" : "text-foreground-muted";
-                      const indexableClass = approvedN > 0 && r.indexable_count_n === 0 ? "text-red" : "text-foreground-muted";
+                      const hasLiveFeed = r.public_feed_count_n > 0;
+                      const trustClass = approvedN > 0 && r.trust_passed_count_n === 0
+                        ? hasLiveFeed ? "text-amber" : "text-red"
+                        : "text-foreground-muted";
+                      const indexableClass = approvedN > 0 && r.indexable_count_n === 0
+                        ? hasLiveFeed ? "text-amber" : "text-red"
+                        : "text-foreground-muted";
                       const sqmClass = Number(r.listing_count) >= 10 && Number(r.with_sqm_count ?? 0) === 0 ? "text-red" : "text-foreground-muted";
                       return (
                       <tr key={r.source_id} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
@@ -2183,7 +1984,18 @@ function SourcesView() {
             </div>
           </section>
         );
-      })}
+          })}
+        </div>
+      </details>
+
+      <section id="listing-rows" className="surface-1 rounded border border-border p-4 shadow-sm scroll-mt-6">
+        <ListingsTabView
+          embedded
+          fixedMarketId={selectedMarketId}
+          title="Individual listing rows"
+          subtitle={`Raw listing browser for ${selectedMarket.name}. Use this after the health overview points to a source or data-quality issue.`}
+        />
+      </section>
 
       {scopedRows.length === 0 && (
         selectedMarket.status !== "active" ? (
@@ -2851,6 +2663,10 @@ type EnrichSuggestion = {
   relevance_score: number;
   recommendation: "publish" | "keep_candidate" | "archive";
   reasoning: string;
+  title_pt?: string | null;
+  snippet_pt?: string | null;
+  why_it_matters_pt?: string | null;
+  _pt_translation_error?: string;
 };
 
 type EnrichState = "idle" | "loading" | "done" | "error";
@@ -2883,6 +2699,9 @@ function MarketNewsEditPanel({
   const [affectedRegions, setAffectedRegions] = React.useState(arrToText(item.affected_regions));
   const [signalTags, setSignalTags] = React.useState(arrToText(item.signal_tags));
   const [relevance, setRelevance] = React.useState<"high" | "standard">(item.relevance);
+  const [titlePt, setTitlePt] = React.useState(item.title_pt ?? "");
+  const [snippetPt, setSnippetPt] = React.useState(item.snippet_pt ?? "");
+  const [whyItMattersPt, setWhyItMattersPt] = React.useState(item.why_it_matters_pt ?? "");
 
   const [enrichState, setEnrichState] = React.useState<EnrichState>("idle");
   const [enrichError, setEnrichError] = React.useState<string | null>(null);
@@ -2895,7 +2714,10 @@ function MarketNewsEditPanel({
     category !== item.category ||
     affectedRegions !== arrToText(item.affected_regions) ||
     signalTags !== arrToText(item.signal_tags) ||
-    relevance !== item.relevance;
+    relevance !== item.relevance ||
+    titlePt !== (item.title_pt ?? "") ||
+    snippetPt !== (item.snippet_pt ?? "") ||
+    whyItMattersPt !== (item.why_it_matters_pt ?? "");
 
   const handleSave = async () => {
     await onSave(item.id, {
@@ -2906,6 +2728,9 @@ function MarketNewsEditPanel({
       affected_regions: textToArr(affectedRegions),
       signal_tags: textToArr(signalTags),
       relevance,
+      title_pt: titlePt.trim() || null,
+      snippet_pt: snippetPt.trim() || null,
+      why_it_matters_pt: whyItMattersPt.trim() || null,
     });
   };
 
@@ -2950,6 +2775,9 @@ function MarketNewsEditPanel({
     setCategory(suggestion.category);
     setAffectedRegions(arrToText(suggestion.affected_regions));
     setSignalTags(arrToText(suggestion.signal_tags));
+    if (suggestion.title_pt) setTitlePt(suggestion.title_pt);
+    if (suggestion.snippet_pt) setSnippetPt(suggestion.snippet_pt);
+    if (suggestion.why_it_matters_pt) setWhyItMattersPt(suggestion.why_it_matters_pt);
     setSuggestion(null);
     setEnrichState("idle");
   };
@@ -2964,8 +2792,31 @@ function MarketNewsEditPanel({
     ? new Date(item.published_at).toLocaleDateString()
     : "—";
 
+  const isAutoEnriched = !!item.enriched_at;
+
   return (
     <div className="px-4 pb-5 pt-2 border-t border-border bg-surface-2/50 space-y-4">
+      {/* Auto-enriched banner */}
+      {isAutoEnriched && (
+        <div className="flex items-center gap-3 px-3 py-2 rounded border border-border bg-surface-2 text-[11px]">
+          <span className="text-foreground-subtle">Auto-enriched</span>
+          {item.relevance_score !== null && (
+            <span className="font-mono text-foreground-muted">{item.relevance_score}/100</span>
+          )}
+          {item.enrich_recommendation && (
+            <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${
+              item.enrich_recommendation === "publish"
+                ? "bg-emerald-100 text-emerald-700"
+                : item.enrich_recommendation === "archive"
+                  ? "bg-gray-100 text-gray-500"
+                  : "bg-amber-100 text-amber-700"
+            }`}>
+              {item.enrich_recommendation.replace("_", " ")}
+            </span>
+          )}
+        </div>
+      )}
+
       {/* Meta */}
       <div className="flex flex-wrap gap-x-4 gap-y-1 text-[11px] text-foreground-subtle pt-1">
         <span>Source: <span className="text-foreground-muted">{item.source_name}</span></span>
@@ -3003,6 +2854,42 @@ function MarketNewsEditPanel({
             className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y placeholder:text-foreground-subtle"
           />
         </div>
+
+        {/* PT Translation */}
+        <div className="pt-2 border-t border-border space-y-3">
+          <span className="text-[10px] font-semibold text-foreground-subtle uppercase tracking-wider">PT Translation</span>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Title (PT)</label>
+            <input
+              type="text"
+              value={titlePt}
+              onChange={(e) => setTitlePt(e.target.value)}
+              placeholder="Título em português…"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent placeholder:text-foreground-subtle"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Snippet (PT)</label>
+            <textarea
+              value={snippetPt}
+              onChange={(e) => setSnippetPt(e.target.value)}
+              rows={3}
+              placeholder="Resumo em português…"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y placeholder:text-foreground-subtle"
+            />
+          </div>
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">Why it matters (PT) <span className="text-foreground-subtle">(optional)</span></label>
+            <textarea
+              value={whyItMattersPt}
+              onChange={(e) => setWhyItMattersPt(e.target.value)}
+              rows={2}
+              placeholder="Contexto editorial em português…"
+              className="w-full bg-surface-1 border border-border text-foreground text-sm px-3 py-1.5 rounded focus:outline-none focus:ring-1 focus:ring-accent resize-y placeholder:text-foreground-subtle"
+            />
+          </div>
+        </div>
+
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
           <div>
             <label className="text-[11px] text-foreground-subtle block mb-1">Category</label>
@@ -3098,7 +2985,7 @@ function MarketNewsEditPanel({
               onClick={handleEnrich}
               className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors"
             >
-              Rewrite / Enrich
+              {isAutoEnriched ? "Re-enrich" : "Rewrite / Enrich"}
             </button>
           )}
 
@@ -3158,6 +3045,35 @@ function MarketNewsEditPanel({
                   <span className="block text-foreground-subtle mb-0.5">Why it matters</span>
                   <span className="text-foreground-muted leading-relaxed">{suggestion.why_it_matters}</span>
                 </div>
+                {(suggestion.title_pt || suggestion._pt_translation_error) && (
+                  <div className="pt-2 border-t border-border space-y-2">
+                    <span className="block text-[10px] font-semibold text-foreground-subtle uppercase tracking-wider">PT Translation</span>
+                    {suggestion._pt_translation_error ? (
+                      <span className="text-xs text-amber-600">Translation failed: {suggestion._pt_translation_error}</span>
+                    ) : (
+                      <>
+                        {suggestion.title_pt && (
+                          <div>
+                            <span className="block text-foreground-subtle mb-0.5">Title (PT)</span>
+                            <span className="text-foreground font-medium leading-snug">{suggestion.title_pt}</span>
+                          </div>
+                        )}
+                        {suggestion.snippet_pt && (
+                          <div>
+                            <span className="block text-foreground-subtle mb-0.5">Snippet (PT)</span>
+                            <span className="text-foreground-muted leading-relaxed">{suggestion.snippet_pt}</span>
+                          </div>
+                        )}
+                        {suggestion.why_it_matters_pt && (
+                          <div>
+                            <span className="block text-foreground-subtle mb-0.5">Why it matters (PT)</span>
+                            <span className="text-foreground-muted leading-relaxed">{suggestion.why_it_matters_pt}</span>
+                          </div>
+                        )}
+                      </>
+                    )}
+                  </div>
+                )}
                 <div className="flex flex-wrap gap-x-6 gap-y-2">
                   <div>
                     <span className="block text-foreground-subtle mb-0.5">Category</span>
@@ -3256,6 +3172,143 @@ function MarketNewsEditPanel({
   );
 }
 
+function MarketNewsCard({
+  item,
+  onStatusChange,
+  onSave,
+  saving,
+  isExpanded,
+  onToggleExpand,
+}: {
+  item: MarketNewsRow;
+  onStatusChange: (id: string, status: MarketNewsStatus) => Promise<void>;
+  onSave: (id: string, fields: MarketNewsFieldUpdate) => Promise<void>;
+  saving: boolean;
+  isExpanded: boolean;
+  onToggleExpand: () => void;
+}) {
+  const recColor =
+    item.enrich_recommendation === "publish"
+      ? "bg-emerald-100 text-emerald-700"
+      : item.enrich_recommendation === "archive"
+        ? "bg-gray-100 text-gray-500"
+        : "bg-amber-100 text-amber-700";
+
+  const scoreColor =
+    item.relevance_score === null
+      ? "bg-surface-3 text-foreground-subtle"
+      : item.relevance_score >= 70
+        ? "bg-emerald-100 text-emerald-700"
+        : item.relevance_score >= 40
+          ? "bg-amber-100 text-amber-700"
+          : "bg-surface-3 text-foreground-subtle";
+
+  const pubDate = item.published_at
+    ? new Date(item.published_at).toLocaleDateString()
+    : null;
+
+  return (
+    <article className="rounded border border-border bg-surface-1 overflow-hidden">
+      <div className="p-4 space-y-3">
+        {/* Top row */}
+        <div className="flex items-center justify-between gap-3 flex-wrap">
+          <div className="flex items-center gap-2">
+            {item.relevance_score !== null && (
+              <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-semibold ${scoreColor}`}>
+                {item.relevance_score}
+              </span>
+            )}
+            {item.enrich_recommendation && (
+              <span className={`px-2 py-0.5 rounded text-[10px] font-semibold uppercase tracking-wide ${recColor}`}>
+                {item.enrich_recommendation.replace("_", " ")}
+              </span>
+            )}
+          </div>
+          <span className="text-[11px] text-foreground-subtle">
+            {item.source_name}{pubDate ? ` · ${pubDate}` : ""}
+          </span>
+        </div>
+
+        {/* Title */}
+        <h3 className="text-sm font-semibold text-foreground leading-snug">
+          {item.title}
+        </h3>
+
+        {/* Snippet */}
+        {item.snippet && (
+          <p className="text-[13px] text-foreground-muted leading-relaxed line-clamp-3">
+            {item.snippet}
+          </p>
+        )}
+
+        {/* Why it matters */}
+        {item.why_it_matters && (
+          <p className="text-[12px] text-foreground-subtle leading-relaxed border-l-2 border-accent pl-3">
+            {item.why_it_matters}
+          </p>
+        )}
+
+        {/* Signal tags */}
+        {item.signal_tags && item.signal_tags.length > 0 && (
+          <div className="flex flex-wrap gap-1.5">
+            {item.signal_tags.map((tag) => (
+              <span key={tag} className="px-2 py-0.5 rounded-full bg-surface-3 text-[10px] text-foreground-muted">
+                {tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        {/* Actions */}
+        <div className="flex items-center gap-2 pt-1">
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "published")}
+            disabled={saving}
+            className="px-4 py-1.5 text-xs font-semibold rounded-md bg-green-muted text-green hover:bg-green hover:text-primary-foreground transition-colors disabled:opacity-50"
+          >
+            Publish
+          </button>
+          <button
+            type="button"
+            onClick={() => onStatusChange(item.id, "archived")}
+            disabled={saving}
+            className="px-3 py-1.5 text-xs font-medium rounded border border-border-strong text-foreground-muted hover:text-foreground hover:bg-surface-3 transition-colors disabled:opacity-50"
+          >
+            Archive
+          </button>
+          <button
+            type="button"
+            onClick={onToggleExpand}
+            className="ml-auto px-3 py-1.5 text-xs font-medium rounded border border-border text-foreground-subtle hover:text-foreground hover:bg-surface-2 transition-colors"
+          >
+            {isExpanded ? "Close edit" : "Edit ↗"}
+          </button>
+          <a
+            href={item.source_url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="px-2 py-1.5 text-xs text-foreground-subtle hover:text-foreground transition-colors"
+          >
+            ↗
+          </a>
+        </div>
+      </div>
+
+      {/* Expanded edit panel */}
+      {isExpanded && (
+        <MarketNewsEditPanel
+          item={item}
+          onSave={onSave}
+          onClose={onToggleExpand}
+          onStatusChange={onStatusChange}
+          saving={saving}
+        />
+      )}
+    </article>
+  );
+}
+
 function MarketNewsView() {
   const [statusTab, setStatusTab] = React.useState<MarketNewsStatus>("candidate");
   const [items, setItems] = React.useState<MarketNewsRow[]>([]);
@@ -3263,6 +3316,17 @@ function MarketNewsView() {
   const [expandedId, setExpandedId] = React.useState<string | null>(null);
   const [saving, setSaving] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
+  const [showArchiveRecs, setShowArchiveRecs] = React.useState(false);
+
+  // ── Candidate filter + sort ───────────────────────────────────────────────
+  const [candidateSort, setCandidateSort] = React.useState<"score" | "date_new" | "date_old">("score");
+  const [candidateCategory, setCandidateCategory] = React.useState<string>("all");
+
+  // ── Add URL ──────────────────────────────────────────────────────────────
+  const [addUrlOpen, setAddUrlOpen] = React.useState(false);
+  const [addUrlInput, setAddUrlInput] = React.useState("");
+  const [addUrlLoading, setAddUrlLoading] = React.useState(false);
+  const [addUrlError, setAddUrlError] = React.useState<string | null>(null);
 
   const load = React.useCallback(async (status: MarketNewsStatus) => {
     setLoading(true);
@@ -3281,7 +3345,8 @@ function MarketNewsView() {
     setSaving(true);
     setError(null);
     try {
-      await updateMarketNewsStatus(id, status);
+      const item = items.find((r) => r.id === id);
+      await updateMarketNewsStatus(id, status, item?.published_at);
       // Remove from current list and close panel
       setItems((prev) => prev.filter((r) => r.id !== id));
       setExpandedId(null);
@@ -3310,16 +3375,94 @@ function MarketNewsView() {
     }
   };
 
+  const handleAddUrl = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const url = addUrlInput.trim();
+    if (!url) return;
+    setAddUrlLoading(true);
+    setAddUrlError(null);
+    try {
+      const { data: { session } } = await supabaseAuth.auth.getSession();
+      const res = await fetch("/api/fetch-url-candidate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
+        },
+        body: JSON.stringify({ url }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        if (res.status === 409) {
+          setAddUrlError(`Already exists in queue (${data.existing_status ?? "candidate"}).`);
+        } else {
+          throw new Error(data.error ?? `Request failed (${res.status})`);
+        }
+        return;
+      }
+      // Prepend to list if on candidate tab
+      if (statusTab === "candidate" && data.candidate) {
+        setItems((prev) => [data.candidate as MarketNewsRow, ...prev]);
+      }
+      setAddUrlInput("");
+      setAddUrlOpen(false);
+    } catch (err) {
+      setAddUrlError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setAddUrlLoading(false);
+    }
+  };
+
   return (
     <div className="space-y-6">
       {/* ── Header ──────────────────────────────────────────────── */}
       <div>
-        <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
-          Market News Queue
-        </h1>
-        <p className="text-sm text-foreground-muted mt-1">
-          Review imported market-news candidates before they appear publicly.
-        </p>
+        <div className="flex items-start justify-between gap-4">
+          <div>
+            <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
+              Market News Queue
+            </h1>
+            <p className="text-sm text-foreground-muted mt-1">
+              Review imported market-news candidates before they appear publicly.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => { setAddUrlOpen((v) => !v); setAddUrlError(null); }}
+            className="shrink-0 mt-1 px-3 py-1.5 text-[12px] font-mono font-medium rounded border border-border bg-surface-2 text-foreground hover:bg-surface-3 transition-colors"
+          >
+            + Add URL
+          </button>
+        </div>
+
+        {/* ── Inline Add URL form ──────────────────────────────── */}
+        {addUrlOpen && (
+          <div className="mt-4 p-4 rounded border border-border bg-surface-1">
+            <p className="text-[12px] text-foreground-muted mb-3 font-mono">
+              Paste a news article URL — it will be fetched, enriched, and added as a candidate.
+            </p>
+            <form onSubmit={handleAddUrl} className="flex gap-2">
+              <input
+                type="url"
+                value={addUrlInput}
+                onChange={(e) => setAddUrlInput(e.target.value)}
+                placeholder="https://…"
+                disabled={addUrlLoading}
+                className="flex-1 px-3 py-1.5 text-sm rounded border border-border bg-surface-2 text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+              />
+              <button
+                type="submit"
+                disabled={addUrlLoading || !addUrlInput.trim()}
+                className="px-4 py-1.5 text-[12px] font-mono font-medium rounded bg-accent text-deep-green hover:opacity-90 transition-opacity disabled:opacity-40"
+              >
+                {addUrlLoading ? "Fetching…" : "Fetch & add"}
+              </button>
+            </form>
+            {addUrlError && (
+              <p className="mt-2 text-[12px] text-red">{addUrlError}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* ── Status tabs ─────────────────────────────────────────── */}
@@ -3363,91 +3506,180 @@ function MarketNewsView() {
       )}
 
       {!loading && items.length > 0 && (
-        <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
-          {/* Table header */}
-          <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_120px_80px_64px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
-            <span>Title</span>
-            <span>Source</span>
-            <span>Published</span>
-            <span>Category</span>
-            <span>Ingest</span>
-            <span>Status</span>
-            <span>Rel</span>
-            <span />
-          </div>
+        <>
+          {statusTab === "candidate" ? (
+            // ── Card view for candidates ───────────────────────────
+            (() => {
+              // Available categories from current items
+              const categories = Array.from(new Set(items.map((r) => r.category).filter(Boolean))).sort();
 
-          {items.map((item) => {
-            const isExpanded = expandedId === item.id;
-            const pubDate = item.published_at
-              ? new Date(item.published_at).toLocaleDateString()
-              : "—";
+              // Filter
+              const filtered = items.filter((r) =>
+                candidateCategory === "all" || r.category === candidateCategory
+              );
 
-            return (
-              <article key={item.id}>
-                {/* ── Row ── */}
-                <button
-                  type="button"
-                  onClick={() => setExpandedId(isExpanded ? null : item.id)}
-                  className="w-full grid grid-cols-1 md:grid-cols-[1fr_160px_100px_120px_120px_80px_64px_32px] gap-2 md:gap-3 items-center px-4 py-3 text-left hover:bg-surface-2 transition-colors"
-                >
-                  <span className="text-sm font-medium text-foreground line-clamp-1 min-w-0">
-                    {item.title}
-                  </span>
-                  <span className="text-[11px] text-foreground-muted truncate hidden md:block">
-                    {item.source_name}
-                  </span>
-                  <span className="text-[11px] text-foreground-subtle hidden md:block">
-                    {pubDate}
-                  </span>
-                  <span className="text-[11px] text-foreground-muted truncate hidden md:block">
-                    {item.category}
-                  </span>
-                  <span className="text-[11px] text-foreground-subtle font-mono truncate hidden md:block">
-                    {item.ingestion_source ?? "—"}
-                  </span>
-                  <span className="hidden md:block">
-                    <MarketNewsStatusBadge status={item.status} />
-                  </span>
-                  <span className="hidden md:block">
-                    {item.relevance === "high" && (
-                      <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-accent-muted text-deep-green">
-                        High
-                      </span>
+              // Sort
+              const sorted = [...filtered].sort((a, b) => {
+                if (candidateSort === "score") {
+                  return (b.relevance_score ?? -1) - (a.relevance_score ?? -1);
+                }
+                const da = a.published_at ?? a.created_at ?? "";
+                const db = b.published_at ?? b.created_at ?? "";
+                return candidateSort === "date_new" ? db.localeCompare(da) : da.localeCompare(db);
+              });
+
+              const mainItems    = sorted.filter((r) => r.enrich_recommendation !== "archive");
+              const archiveItems = sorted.filter((r) => r.enrich_recommendation === "archive");
+              return (
+                <>
+                  {/* Filter + sort bar */}
+                  <div className="flex flex-wrap items-center gap-2 pb-1">
+                    <select
+                      value={candidateSort}
+                      onChange={(e) => setCandidateSort(e.target.value as typeof candidateSort)}
+                      className="text-xs rounded border border-border bg-surface-2 px-2 py-1 text-foreground-muted focus:outline-none"
+                    >
+                      <option value="score">Sort: Score ↓</option>
+                      <option value="date_new">Sort: Newest first</option>
+                      <option value="date_old">Sort: Oldest first</option>
+                    </select>
+                    <select
+                      value={candidateCategory}
+                      onChange={(e) => setCandidateCategory(e.target.value)}
+                      className="text-xs rounded border border-border bg-surface-2 px-2 py-1 text-foreground-muted focus:outline-none"
+                    >
+                      <option value="all">All categories</option>
+                      {categories.map((c) => (
+                        <option key={c} value={c}>{c}</option>
+                      ))}
+                    </select>
+                    {(candidateCategory !== "all") && (
+                      <button
+                        type="button"
+                        onClick={() => setCandidateCategory("all")}
+                        className="text-xs text-foreground-subtle hover:text-foreground transition-colors"
+                      >
+                        ✕ Clear
+                      </button>
                     )}
-                  </span>
-                  <span className={"text-foreground-subtle text-xs transition-transform duration-150 " + (isExpanded ? "rotate-180" : "")}>
-                    ▼
-                  </span>
-                </button>
+                    <span className="ml-auto text-[11px] text-foreground-subtle">
+                      {mainItems.length} item{mainItems.length !== 1 ? "s" : ""}
+                      {archiveItems.length > 0 ? ` · ${archiveItems.length} archive rec` : ""}
+                    </span>
+                  </div>
 
-                {/* ── Expanded edit panel ── */}
-                {isExpanded && (
-                  <MarketNewsEditPanel
-                    item={item}
-                    onSave={handleSaveFields}
-                    onClose={() => setExpandedId(null)}
-                    onStatusChange={handleStatusChange}
-                    saving={saving}
-                  />
-                )}
-              </article>
-            );
-          })}
-        </div>
+                  <div className="space-y-3">
+                    {mainItems.map((item) => (
+                      <MarketNewsCard
+                        key={item.id}
+                        item={item}
+                        onStatusChange={handleStatusChange}
+                        onSave={handleSaveFields}
+                        saving={saving}
+                        isExpanded={expandedId === item.id}
+                        onToggleExpand={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                      />
+                    ))}
+                  </div>
+                  {archiveItems.length > 0 && (
+                    <div className="mt-4">
+                      <button
+                        type="button"
+                        onClick={() => setShowArchiveRecs((v) => !v)}
+                        className="text-[11px] text-foreground-subtle hover:text-foreground-muted transition-colors"
+                      >
+                        {showArchiveRecs ? "▲ Hide" : "▼ Show"} {archiveItems.length} archive recommendation{archiveItems.length !== 1 ? "s" : ""}
+                      </button>
+                      {showArchiveRecs && (
+                        <div className="mt-2 space-y-3 opacity-60">
+                          {archiveItems.map((item) => (
+                            <MarketNewsCard
+                              key={item.id}
+                              item={item}
+                              onStatusChange={handleStatusChange}
+                              onSave={handleSaveFields}
+                              saving={saving}
+                              isExpanded={expandedId === item.id}
+                              onToggleExpand={() => setExpandedId(expandedId === item.id ? null : item.id)}
+                            />
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </>
+              );
+            })()
+          ) : (
+            // ── Table view for published / hidden / archived ───────
+            <div className="surface-1 rounded border border-border overflow-hidden divide-y divide-border">
+              <div className="hidden md:grid grid-cols-[1fr_160px_100px_120px_80px_64px_32px] gap-3 px-4 py-2 bg-surface-2 text-[10px] font-medium uppercase tracking-wide text-foreground-subtle">
+                <span>Title</span>
+                <span>Source</span>
+                <span>Published</span>
+                <span>Category</span>
+                <span>Status</span>
+                <span>Score</span>
+                <span />
+              </div>
+              {items.map((item) => {
+                const isExpanded = expandedId === item.id;
+                const pubDate = item.published_at
+                  ? new Date(item.published_at).toLocaleDateString()
+                  : "—";
+                return (
+                  <article key={item.id}>
+                    <button
+                      type="button"
+                      onClick={() => setExpandedId(isExpanded ? null : item.id)}
+                      className="w-full grid grid-cols-1 md:grid-cols-[1fr_160px_100px_120px_80px_64px_32px] gap-2 md:gap-3 items-center px-4 py-3 text-left hover:bg-surface-2 transition-colors"
+                    >
+                      <span className="text-sm font-medium text-foreground line-clamp-1 min-w-0">{item.title}</span>
+                      <span className="text-[11px] text-foreground-muted truncate hidden md:block">{item.source_name}</span>
+                      <span className="text-[11px] text-foreground-subtle hidden md:block">{pubDate}</span>
+                      <span className="text-[11px] text-foreground-muted truncate hidden md:block">{item.category}</span>
+                      <span className="hidden md:block"><MarketNewsStatusBadge status={item.status} /></span>
+                      <span className="hidden md:block">
+                        {item.relevance_score !== null ? (
+                          <span className={`inline-block px-2 py-0.5 text-[11px] font-mono font-medium rounded ${item.relevance_score >= 70 ? "bg-emerald-100 text-emerald-700" : item.relevance_score >= 40 ? "bg-amber-100 text-amber-700" : "bg-surface-3 text-foreground-subtle"}`}>
+                            {item.relevance_score}
+                          </span>
+                        ) : (
+                          <span className="inline-block px-2 py-0.5 text-[11px] font-medium rounded bg-surface-3 text-foreground-subtle">
+                            {item.relevance === "high" ? "High" : "Std"}
+                          </span>
+                        )}
+                      </span>
+                      <span className={"text-foreground-subtle text-xs transition-transform duration-150 " + (isExpanded ? "rotate-180" : "")}>▼</span>
+                    </button>
+                    {isExpanded && (
+                      <MarketNewsEditPanel
+                        item={item}
+                        onSave={handleSaveFields}
+                        onClose={() => setExpandedId(null)}
+                        onStatusChange={handleStatusChange}
+                        saving={saving}
+                      />
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "agents" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "market-social" | "notifications";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications" | "featured";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
-  { key: "listings",      label: "Listings"      },
-  { key: "sources",       label: "Sources"       },
-  { key: "agents",        label: "Agents"        },
+  { key: "sources",       label: "Listings"      },
   { key: "market-news",   label: "Market News"   },
-  { key: "market-social", label: "Market Social" },
+  { key: "featured",      label: "Featured"      },
+  { key: "marketing",     label: "Marketing"     },
   { key: "notifications", label: "Notifications" },
 ];
 
@@ -3551,11 +3783,6 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
                 }
               >
                 {label}
-                {key === "agents" && (
-                  <span className="text-[9px] font-mono font-medium bg-green-muted text-green px-1.5 py-0.5 rounded uppercase tracking-wider">
-                    NEW
-                  </span>
-                )}
                 {key === "notifications" && unreadCount > 0 && (
                   <span className="text-[9px] font-mono font-semibold bg-[#C44A3A]/10 text-[#C44A3A] px-1.5 py-0.5 rounded tabular-nums">
                     {unreadCount > 99 ? "99+" : unreadCount}
@@ -3727,13 +3954,13 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "dashboard" && <DashboardView />}
             {tab === "listings" && <ListingsTabView />}
             {tab === "sources" && <SourcesView />}
-            {tab === "agents" && <AgentsApprovalsView />}
             {tab === "chatlab" && <PropertyChatLabView />}
             {tab === "agencies" && <AgencyConsoleView />}
             {tab === "agency-data" && <AgencyDataConsoleView />}
             {tab === "broker-pilot" && <BrokerPilotView />}
             {tab === "market-news" && <MarketNewsView />}
-            {tab === "market-social" && <MarketNewsSocialAgentView />}
+            {tab === "featured" && <FeaturedView />}
+            {tab === "marketing" && <ListingSocialView />}
             {tab === "notifications" && (
               <NotificationsView onCountChange={handleNotificationCountChange} />
             )}

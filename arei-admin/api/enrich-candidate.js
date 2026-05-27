@@ -2,8 +2,10 @@
  * POST /api/enrich-candidate
  *
  * Calls OpenAI with a raw market news candidate and returns structured
- * editorial suggestions. Never reads or writes the database.
- * Uses OPENAI_API_KEY from the server environment — never from the browser.
+ * editorial suggestions, then calls Claude (Anthropic) to translate the
+ * three key fields into European Portuguese.
+ * Never reads or writes the database.
+ * Uses OPENAI_API_KEY and ANTHROPIC_API_KEY from the server environment.
  */
 
 const SYSTEM_PROMPT = `You are an editorial assistant for the Cape Verde Real Estate Index (AREI). \
@@ -99,7 +101,75 @@ Phrasing guardrail:
   - Do not write "can attract foreign investment" or similar phrases unless the source clearly supports that connection.
   - For indirect items, use language like: "This is indirect context for investors" or "The link to the property market is not direct."`;
 
-function buildUserMessage(body) {
+// ── Article body fetcher ───────────────────────────────────────────────────
+// Fetches the source URL and extracts readable article text so OpenAI has
+// the full article content rather than just the RSS snippet.
+// Non-fatal: returns null on any error.
+
+const ARTICLE_FETCH_TIMEOUT = 10_000;
+const ARTICLE_MAX_BYTES = 200 * 1024; // 200 KB
+const USER_AGENT = "AREI-MarketNewsBot/1.0 (+https://capeverderealestateindex.com)";
+
+function stripTags(html) {
+  return html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/&amp;/g, "&").replace(/&lt;/g, "<").replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"').replace(/&#39;|&apos;/g, "'").replace(/&nbsp;/g, " ")
+    .replace(/&#(\d+);/g, (_, n) => String.fromCharCode(Number(n)))
+    .replace(/\s{2,}/g, " ")
+    .trim();
+}
+
+function extractArticleText(html) {
+  // Pull text from <p> tags — reasonable proxy for article body on most news sites
+  const paragraphs = [];
+  const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi;
+  let m;
+  while ((m = pRe.exec(html)) !== null) {
+    const text = stripTags(m[1]).trim();
+    if (text.length > 40) paragraphs.push(text);
+  }
+  const body = paragraphs.join(" ").slice(0, 3000); // cap at ~3000 chars
+  return body || null;
+}
+
+async function fetchArticleBody(url) {
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ARTICLE_FETCH_TIMEOUT);
+    try {
+      const res = await fetch(url, {
+        headers: { "User-Agent": USER_AGENT, Accept: "text/html,*/*" },
+        signal: controller.signal,
+      });
+      if (!res.ok) return null;
+      const reader = res.body?.getReader();
+      if (!reader) return null;
+      const chunks = [];
+      let total = 0;
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done || !value) break;
+        chunks.push(value);
+        total += value.length;
+        if (total >= ARTICLE_MAX_BYTES) { reader.cancel().catch(() => {}); break; }
+      }
+      const bytes = new Uint8Array(total);
+      let off = 0;
+      for (const c of chunks) { bytes.set(c, off); off += c.length; }
+      const html = new TextDecoder().decode(bytes);
+      return extractArticleText(html);
+    } finally {
+      clearTimeout(timer);
+    }
+  } catch {
+    return null;
+  }
+}
+
+function buildUserMessage(body, articleBody) {
   const lines = [
     `Title: ${body.title || "(none)"}`,
     `Original title: ${body.original_title || "(none)"}`,
@@ -111,6 +181,9 @@ function buildUserMessage(body) {
     `Language: ${body.language || "(unknown)"}`,
     `Ingestion source: ${body.ingestion_source || "(unknown)"}`,
   ];
+  if (articleBody) {
+    lines.push(`\nArticle body (extracted from source URL):\n${articleBody}`);
+  }
   return `Candidate:\n${lines.join("\n")}`;
 }
 
@@ -164,6 +237,9 @@ export default async function handler(req, res) {
     return send(res, 400, { error: "title is required" });
   }
 
+  // ── Fetch article body (non-fatal) ─────────────────────────────────────────
+  const articleBody = body.source_url ? await fetchArticleBody(body.source_url) : null;
+
   // ── Call OpenAI ────────────────────────────────────────────────────────────
 
   let aiResponse;
@@ -178,7 +254,7 @@ export default async function handler(req, res) {
         model: "gpt-4o-mini",
         messages: [
           { role: "system", content: SYSTEM_PROMPT },
-          { role: "user", content: buildUserMessage(body) },
+          { role: "user", content: buildUserMessage(body, articleBody) },
         ],
         temperature: 0.3,
         max_tokens: 800,
@@ -224,5 +300,121 @@ export default async function handler(req, res) {
   // Coerce score to a safe integer before returning
   suggestion.relevance_score = Math.round(Number(suggestion.relevance_score));
 
+  // ── PT translation via Claude API ─────────────────────────────────────────
+  // Only translate if the article is worth showing (not archive).
+  // Soft failure: if translation fails the enrich response still goes through.
+  if (suggestion.recommendation !== "archive") {
+    const anthropicKey = process.env.ANTHROPIC_API_KEY;
+    if (anthropicKey) {
+      try {
+        const ptResult = await translateToPt(anthropicKey, {
+          title: suggestion.title,
+          snippet: suggestion.snippet,
+          why_it_matters: suggestion.why_it_matters ?? null,
+        });
+        suggestion.title_pt = ptResult.title_pt;
+        suggestion.snippet_pt = ptResult.snippet_pt;
+        suggestion.why_it_matters_pt = ptResult.why_it_matters_pt;
+      } catch (err) {
+        // Non-fatal: log warning, return EN-only enrichment
+        suggestion._pt_translation_error = err?.message ?? String(err);
+      }
+    }
+  }
+
   return send(res, 200, suggestion);
+}
+
+// ── PT translation ─────────────────────────────────────────────────────────
+
+const PT_SYSTEM_PROMPT = `You are a professional Portuguese translator specialising in business and real estate content for Cape Verde.
+
+Translate the provided English text into European Portuguese (Portugal standard, pt-PT).
+Use clear, natural language suited for property investors and market observers.
+
+Rules:
+- Translate meaning faithfully. Do not add, omit, or editorialize.
+- Use European Portuguese spelling and vocabulary (not Brazilian).
+  Prefer: "imóvel" not "imóveil", "apartamento", "vivenda", "terreno".
+- Preserve proper nouns unchanged: Cape Verde, Sal, Boa Vista, Santiago,
+  São Vicente, Fogo, Mindelo, Santa Maria, Praia, AREI.
+- Preserve numbers, currencies, percentages, and dates exactly as written.
+- Do not use gerunds as verbal forms (Brazilian pattern) — use infinitive
+  or finite verb constructions.
+- If why_it_matters source is null or "(none)", return null for
+  why_it_matters_pt — do not invent content.
+
+Output ONLY a single JSON object. No markdown. No preamble.
+
+{
+  "title_pt":          "translated headline",
+  "snippet_pt":        "translated snippet",
+  "why_it_matters_pt": "translated why it matters, or null if source was null"
+}`;
+
+function buildPtUserMessage({ title, snippet, why_it_matters }) {
+  return [
+    `title: ${title || "(none)"}`,
+    `snippet: ${snippet || "(none)"}`,
+    `why_it_matters: ${why_it_matters || "(none)"}`,
+  ].join("\n");
+}
+
+const PT_REQUIRED_FIELDS = ["title_pt", "snippet_pt", "why_it_matters_pt"];
+
+function validatePtSuggestion(obj) {
+  for (const field of PT_REQUIRED_FIELDS) {
+    if (!(field in obj)) return `Missing required field: ${field}`;
+  }
+  if (obj.title_pt !== null && typeof obj.title_pt !== "string") return "title_pt must be string or null";
+  if (obj.snippet_pt !== null && typeof obj.snippet_pt !== "string") return "snippet_pt must be string or null";
+  if (obj.why_it_matters_pt !== null && typeof obj.why_it_matters_pt !== "string") return "why_it_matters_pt must be string or null";
+  return null;
+}
+
+async function translateToPt(apiKey, { title, snippet, why_it_matters }) {
+  const response = await fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": apiKey,
+      "anthropic-version": "2023-06-01",
+    },
+    body: JSON.stringify({
+      model: "claude-haiku-4-5-20251001",
+      max_tokens: 600,
+      temperature: 0.1,
+      system: PT_SYSTEM_PROMPT,
+      messages: [
+        { role: "user", content: buildPtUserMessage({ title, snippet, why_it_matters }) },
+      ],
+    }),
+  });
+
+  if (!response.ok) {
+    const errText = await response.text().catch(() => "");
+    throw new Error(`Anthropic PT request failed (HTTP ${response.status}): ${errText.slice(0, 200)}`);
+  }
+
+  const data = await response.json();
+  const text = (data.content || [])
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\n");
+
+  if (!text) throw new Error("Empty content in Anthropic PT response");
+
+  let parsed;
+  try {
+    parsed = JSON.parse(text);
+  } catch {
+    const match = text.match(/\{[\s\S]*\}/);
+    if (!match) throw new Error("Anthropic PT response did not contain JSON");
+    parsed = JSON.parse(match[0]);
+  }
+
+  const validationError = validatePtSuggestion(parsed);
+  if (validationError) throw new Error(`PT response failed validation: ${validationError}`);
+
+  return parsed;
 }
