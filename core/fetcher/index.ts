@@ -26,7 +26,7 @@ import type {
   SourceFetchConfig,
 } from "./types";
 
-// Re-export everything downstream callers still pull from "./genericFetcher".
+// Re-export the helpers and types downstream callers consume.
 export { buildFetchConfigFromYaml } from "./buildFetchConfig";
 export { dedupeImageUrls } from "./parse/images";
 export { mapJsonItem } from "./parse/jsonItem";

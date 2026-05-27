@@ -8,7 +8,7 @@
 // title upgrade, enrichment-flag tracking) stay opt-in via ApplyOptions so
 // path A and path B preserve their current observable behavior exactly.
 
-import { dedupeImageUrls } from "../genericFetcher";
+import { dedupeImageUrls } from "../fetcher";
 
 export interface EnrichableListing {
   id: string;

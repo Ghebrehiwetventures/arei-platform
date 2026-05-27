@@ -10,7 +10,7 @@ import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
 
 import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig } from "../configLoader";
-import { genericPaginatedFetcher, GenericParsedListing } from "../genericFetcher";
+import { genericPaginatedFetcher, GenericParsedListing } from "../fetcher";
 import { fetchHtml } from "../fetchHtml";
 import { fetchHeadless } from "../fetchHeadless";
 import { getCurrency, getCountry } from "../locationMapper";
