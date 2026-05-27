@@ -1,21 +1,22 @@
 // =============================================================================
 // FeaturedView.tsx — admin-curated homepage featured listings
-// Pick up to 4 listings per ISO week; save as draft or publish.
+// Queries v1_feed_cv directly for full listing data (images, property_type).
+// UX: slot buttons inline per listing row — no pre-selection step needed.
 // =============================================================================
 
 import { useState, useEffect, useCallback } from "react";
+import { supabase } from "./supabase";
 import {
-  getListings,
   getFeaturedSelections,
   saveFeaturedSelection,
-  setFeaturedStatus,
   deleteFeaturedSelection,
   toIsoWeek,
   isoWeekToMonday,
   type FeaturedSelectionRow,
 } from "./data";
 
-// ── Minimal listing type for this view ────────────────────────────────────────
+// ── Types ─────────────────────────────────────────────────────────────────────
+
 interface ListingSnippet {
   id: string;
   title: string;
@@ -39,7 +40,11 @@ function toSnippet(l: any): ListingSnippet {
     price: l.price ?? null,
     currency: l.currency ?? null,
     property_type: l.property_type ?? null,
-    image_url: Array.isArray(l.image_urls) ? (l.image_urls[0] ?? null) : null,
+    image_url: Array.isArray(l.image_urls) && l.image_urls.length > 0
+      ? l.image_urls[0]
+      : typeof l.image_urls === "string"
+        ? l.image_urls
+        : null,
     source_id: l.source_id ?? "",
   };
 }
@@ -61,84 +66,100 @@ function weekOffset(isoWeek: string, delta: number): string {
   return toIsoWeek(monday);
 }
 
-// ── Slot card ─────────────────────────────────────────────────────────────────
+async function fetchFromFeed(filters: {
+  island?: string;
+  titleSearch?: string;
+  propertyType?: string;
+  ids?: string[];
+}): Promise<ListingSnippet[]> {
+  let q = supabase
+    .from("v1_feed_cv")
+    .select("id,title,island,city,price,currency,property_type,image_urls,source_id")
+    .order("first_seen_at", { ascending: false });
 
-function SlotCard({
-  index,
-  listing,
-  active,
-  onActivate,
+  if (filters.ids && filters.ids.length > 0) {
+    q = q.in("id", filters.ids);
+  } else {
+    q = q.limit(120);
+    if (filters.island) q = q.eq("island", filters.island);
+    if (filters.titleSearch) q = q.ilike("title", `%${filters.titleSearch}%`);
+    if (filters.propertyType) q = q.ilike("property_type", filters.propertyType);
+  }
+
+  const { data, error } = await q;
+  if (error) {
+    console.error("[FeaturedView] fetchFromFeed error:", error.message);
+    return [];
+  }
+  return (data ?? []).map(toSnippet);
+}
+
+// ── Slot strip ────────────────────────────────────────────────────────────────
+
+function SlotStrip({
+  slots,
   onRemove,
 }: {
-  index: number;
-  listing: ListingSnippet | null;
-  active: boolean;
-  onActivate: () => void;
-  onRemove: () => void;
+  slots: (ListingSnippet | null)[];
+  onRemove: (i: number) => void;
 }) {
   return (
-    <div
-      className={`relative border rounded-lg overflow-hidden cursor-pointer transition-all ${
-        active
-          ? "border-[#8ECFBF] ring-1 ring-[#8ECFBF]/40"
-          : "border-border hover:border-[#8ECFBF]/50"
-      }`}
-      onClick={onActivate}
-    >
-      {/* slot number */}
-      <div className="absolute top-2 left-2 z-10 bg-black/60 text-white text-xs font-mono px-1.5 py-0.5 rounded">
-        {index + 1}
-      </div>
+    <div className="grid grid-cols-4 gap-3">
+      {slots.map((listing, i) => (
+        <div
+          key={i}
+          className={`relative border rounded-lg overflow-hidden ${
+            listing ? "border-border" : "border-dashed border-border"
+          }`}
+        >
+          {/* slot number badge */}
+          <div className="absolute top-2 left-2 z-10 bg-black/70 text-white text-xs font-mono px-1.5 py-0.5 rounded">
+            {i + 1}
+          </div>
 
-      {listing ? (
-        <>
-          {/* thumbnail */}
-          <div className="h-28 bg-surface-1 overflow-hidden">
-            {listing.image_url ? (
-              <img src={listing.image_url} alt="" className="w-full h-full object-cover" />
-            ) : (
-              <div className="w-full h-full flex items-center justify-center text-foreground-subtle text-xs">No image</div>
-            )}
-          </div>
-          {/* meta */}
-          <div className="p-2.5">
-            <div className="text-xs font-medium text-foreground line-clamp-2 leading-snug mb-1">{listing.title}</div>
-            <div className="text-xs text-foreground-muted">
-              {[listing.island, listing.city].filter(Boolean).join(", ")}
+          {listing ? (
+            <>
+              <div className="h-24 bg-surface-1 overflow-hidden">
+                {listing.image_url ? (
+                  <img
+                    src={listing.image_url}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-foreground-subtle">
+                      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                    </svg>
+                  </div>
+                )}
+              </div>
+              <div className="p-2">
+                <div className="text-xs font-medium text-foreground line-clamp-2 leading-snug mb-0.5">{listing.title}</div>
+                <div className="text-xs text-foreground-muted">{[listing.island, listing.city].filter(Boolean).join(", ")}</div>
+                <div className="mt-1 text-xs font-mono text-[#8ECFBF] tabular-nums">{fmtPrice(listing.price, listing.currency)}</div>
+              </div>
+              <button
+                onClick={() => onRemove(i)}
+                className="absolute top-2 right-2 bg-black/60 hover:bg-[#C44A3A]/80 text-white rounded p-0.5 transition-colors"
+                title="Remove"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+                </svg>
+              </button>
+            </>
+          ) : (
+            <div className="h-24 flex flex-col items-center justify-center text-foreground-subtle text-xs gap-1 px-2 text-center">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+              </svg>
+              Empty
             </div>
-            <div className="mt-1 flex items-center justify-between">
-              <span className="text-xs font-mono tabular-nums text-[#8ECFBF]">
-                {fmtPrice(listing.price, listing.currency)}
-              </span>
-              <span className="text-[10px] uppercase tracking-wide text-foreground-subtle">
-                {listing.property_type ?? "—"}
-              </span>
-            </div>
-          </div>
-          {/* remove */}
-          <button
-            onClick={(e) => { e.stopPropagation(); onRemove(); }}
-            className="absolute top-2 right-2 bg-black/60 hover:bg-[#C44A3A]/80 text-white rounded p-0.5 transition-colors"
-            title="Remove from slot"
-          >
-            <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-              <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
-            </svg>
-          </button>
-        </>
-      ) : (
-        <div className="h-28 flex flex-col items-center justify-center text-foreground-subtle text-sm gap-1">
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-            <line x1="12" y1="5" x2="12" y2="19" /><line x1="5" y1="12" x2="19" y2="12" />
-          </svg>
-          <span className="text-xs">Empty slot</span>
+          )}
         </div>
-      )}
-      {active && (
-        <div className="px-2.5 pb-2 pt-0 text-[10px] text-[#8ECFBF] font-medium uppercase tracking-wide">
-          Click a listing below to fill →
-        </div>
-      )}
+      ))}
     </div>
   );
 }
@@ -147,50 +168,79 @@ function SlotCard({
 
 function ListingRow({
   listing,
-  pinnedSlot,
-  activeSlot,
+  slots,
   onPin,
 }: {
   listing: ListingSnippet;
-  pinnedSlot: number | null; // which slot this listing is already in, or null
-  activeSlot: number | null;
-  onPin: (slotIndex: number) => void;
+  slots: (ListingSnippet | null)[];
+  onPin: (listingId: string, slotIndex: number) => void;
 }) {
-  const isPinned = pinnedSlot !== null;
+  const currentSlot = slots.findIndex((s) => s?.id === listing.id);
 
   return (
     <tr className="border-b border-border hover:bg-surface-1 transition-colors">
-      <td className="py-2 px-3 w-10">
-        {listing.image_url ? (
-          <img src={listing.image_url} alt="" className="w-8 h-8 object-cover rounded" />
-        ) : (
-          <div className="w-8 h-8 bg-surface-1 rounded" />
-        )}
+      {/* Thumbnail */}
+      <td className="py-2 px-3 w-12">
+        <div className="w-10 h-10 rounded overflow-hidden bg-surface-1 shrink-0">
+          {listing.image_url ? (
+            <img
+              src={listing.image_url}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+            />
+          ) : (
+            <div className="w-full h-full flex items-center justify-center">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-foreground-subtle">
+                <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+              </svg>
+            </div>
+          )}
+        </div>
       </td>
-      <td className="py-2 px-3 text-sm text-foreground max-w-[280px]">
-        <div className="line-clamp-1">{listing.title}</div>
-        <div className="text-xs text-foreground-muted">{[listing.island, listing.city].filter(Boolean).join(", ")}</div>
+
+      {/* Title + location */}
+      <td className="py-2 px-3 text-sm">
+        <div className="font-medium text-foreground line-clamp-1">{listing.title}</div>
+        <div className="text-xs text-foreground-muted">
+          {[listing.island, listing.city].filter(Boolean).join(", ")}
+        </div>
       </td>
-      <td className="py-2 px-3 text-xs text-foreground-muted">{listing.property_type ?? "—"}</td>
-      <td className="py-2 px-3 text-xs font-mono tabular-nums text-right">
+
+      {/* Type */}
+      <td className="py-2 px-3 text-xs text-foreground-muted capitalize w-28">
+        {listing.property_type ?? "—"}
+      </td>
+
+      {/* Price */}
+      <td className="py-2 px-3 text-xs font-mono tabular-nums text-right w-28">
         {fmtPrice(listing.price, listing.currency)}
       </td>
-      <td className="py-2 px-3 text-xs text-foreground-subtle">{listing.source_id}</td>
-      <td className="py-2 px-3 text-right">
-        {isPinned ? (
-          <span className="inline-flex items-center gap-1 text-[10px] bg-[#8ECFBF]/10 text-[#8ECFBF] border border-[#8ECFBF]/30 px-2 py-0.5 rounded font-medium uppercase tracking-wide">
-            Slot {pinnedSlot! + 1}
-          </span>
-        ) : activeSlot !== null ? (
-          <button
-            onClick={() => onPin(activeSlot)}
-            className="text-[10px] bg-[#8ECFBF] text-[#0A0A0A] px-2.5 py-1 rounded font-medium hover:bg-[#2D4A42] hover:text-white transition-colors uppercase tracking-wide"
-          >
-            Pin to slot {activeSlot + 1}
-          </button>
-        ) : (
-          <span className="text-[10px] text-foreground-subtle">Select slot first</span>
-        )}
+
+      {/* Slot buttons — always visible, 1 2 3 4 */}
+      <td className="py-2 px-3 text-right w-44">
+        <div className="flex items-center justify-end gap-1">
+          {[0, 1, 2, 3].map((i) => {
+            const isThisSlot = currentSlot === i;
+            const slotOccupied = slots[i] !== null && !isThisSlot;
+            return (
+              <button
+                key={i}
+                onClick={() => onPin(listing.id, i)}
+                title={slotOccupied ? `Replace slot ${i + 1}` : `Add to slot ${i + 1}`}
+                className={`w-7 h-7 rounded text-xs font-mono font-medium transition-colors ${
+                  isThisSlot
+                    ? "bg-[#8ECFBF] text-[#0A0A0A]"
+                    : slotOccupied
+                      ? "border border-border text-foreground-subtle hover:border-[#C44A3A]/60 hover:text-[#C44A3A]"
+                      : "border border-border text-foreground-muted hover:border-[#8ECFBF]/60 hover:text-[#8ECFBF]"
+                }`}
+              >
+                {i + 1}
+              </button>
+            );
+          })}
+        </div>
       </td>
     </tr>
   );
@@ -202,7 +252,6 @@ export function FeaturedView() {
   const [currentWeek, setCurrentWeek] = useState(() => toIsoWeek());
   const [selections, setSelections] = useState<FeaturedSelectionRow[]>([]);
   const [slots, setSlots] = useState<(ListingSnippet | null)[]>([null, null, null, null]);
-  const [activeSlot, setActiveSlot] = useState<number | null>(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
   const [saveOk, setSaveOk] = useState(false);
@@ -214,7 +263,7 @@ export function FeaturedView() {
   const [searchResults, setSearchResults] = useState<ListingSnippet[]>([]);
   const [searching, setSearching] = useState(false);
 
-  // Load all selections
+  // Load saved selections
   const loadSelections = useCallback(async () => {
     const rows = await getFeaturedSelections();
     setSelections(rows);
@@ -222,19 +271,15 @@ export function FeaturedView() {
 
   useEffect(() => { loadSelections(); }, [loadSelections]);
 
-  // When week changes, populate slots from saved selection (if any)
+  // When week or selections change, populate slots
   useEffect(() => {
     const row = selections.find((s) => s.iso_week === currentWeek) ?? null;
     if (row && row.listing_ids.length > 0) {
-      getListings("cv", 1, 500, {}).then((res) => {
-        const byId = new Map(res.data.map((l) => [l.id, l]));
+      fetchFromFeed({ ids: row.listing_ids }).then((snippets) => {
+        const byId = new Map(snippets.map((s) => [s.id, s]));
         const filled: (ListingSnippet | null)[] = [null, null, null, null];
         row.listing_ids.forEach((id, i) => {
-          if (i > 3) return;
-          const l = byId.get(id);
-          if (l) {
-            filled[i] = toSnippet(l);
-          }
+          if (i < 4) filled[i] = byId.get(id) ?? null;
         });
         setSlots(filled);
       });
@@ -243,25 +288,16 @@ export function FeaturedView() {
     }
   }, [currentWeek, selections]);
 
-  // Search listings
+  // Initial search load
   const runSearch = useCallback(async () => {
     setSearching(true);
     try {
-      const filters: Record<string, unknown> = {};
-      if (searchIsland) filters.island = searchIsland;
-      if (searchTitle.trim()) filters.titleSearch = searchTitle.trim();
-
-      const res = await getListings("cv", 1, 100, filters as any);
-
-      let results = res.data;
-      // Client-side property type filter (not in ListingsFilters)
-      if (searchType) {
-        results = results.filter(
-          (l: any) => l.property_type?.toLowerCase() === searchType.toLowerCase()
-        );
-      }
-
-      setSearchResults(results.map((l: any) => toSnippet(l)));
+      const results = await fetchFromFeed({
+        island: searchIsland || undefined,
+        titleSearch: searchTitle.trim() || undefined,
+        propertyType: searchType || undefined,
+      });
+      setSearchResults(results);
     } finally {
       setSearching(false);
     }
@@ -270,12 +306,15 @@ export function FeaturedView() {
   useEffect(() => { runSearch(); }, []); // initial load
 
   const handlePin = (listingId: string, slotIndex: number) => {
-    const listing = searchResults.find((l) => l.id === listingId);
+    const listing = searchResults.find((l) => l.id === listingId)
+      ?? slots.find((s) => s?.id === listingId) ?? null;
     if (!listing) return;
     const next = [...slots];
+    // If already in another slot, clear that one
+    const prev = next.findIndex((s) => s?.id === listingId);
+    if (prev >= 0 && prev !== slotIndex) next[prev] = null;
     next[slotIndex] = listing;
     setSlots(next);
-    setActiveSlot(null);
   };
 
   const handleRemoveSlot = (slotIndex: number) => {
@@ -312,34 +351,32 @@ export function FeaturedView() {
   const filledCount = slots.filter(Boolean).length;
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
       <div>
         <div className="text-xs uppercase tracking-widest text-foreground-subtle font-mono mb-1">Homepage</div>
         <h1 className="text-2xl font-bold tracking-tight text-foreground font-mono">Featured listings</h1>
         <p className="text-sm text-foreground-muted mt-1">
-          Curate the four listings shown in "Four listings worth a closer look" on the homepage.
-          If no selection is published for the current week, the homepage falls back to its automatic picker.
+          Curate the four listings shown in "Four listings worth a closer look."
+          Falls back to the automatic picker if nothing is published for the current week.
         </p>
       </div>
 
       {/* Week navigator */}
-      <div className="flex items-center gap-3">
+      <div className="flex items-center gap-3 flex-wrap">
         <button
           onClick={() => setCurrentWeek((w) => weekOffset(w, -1))}
           className="p-1.5 border border-border rounded hover:border-[#8ECFBF]/50 text-foreground-muted hover:text-foreground transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="15 18 9 12 15 6" />
+            <polyline points="15 18 9 12 15 6"/>
           </svg>
         </button>
         <div className="text-sm font-mono text-foreground">
           <span className="text-foreground-subtle mr-1">{currentWeek}</span>
           Week of {fmtWeekLabel(currentWeek)}
           {currentWeek === toIsoWeek() && (
-            <span className="ml-2 text-[10px] uppercase tracking-wide bg-[#8ECFBF]/10 text-[#8ECFBF] border border-[#8ECFBF]/30 px-1.5 py-0.5 rounded font-medium">
-              Current
-            </span>
+            <span className="ml-2 text-[10px] uppercase tracking-wide bg-[#8ECFBF]/10 text-[#8ECFBF] border border-[#8ECFBF]/30 px-1.5 py-0.5 rounded font-medium">Current</span>
           )}
         </div>
         <button
@@ -347,50 +384,36 @@ export function FeaturedView() {
           className="p-1.5 border border-border rounded hover:border-[#8ECFBF]/50 text-foreground-muted hover:text-foreground transition-colors"
         >
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="9 18 15 12 9 6" />
+            <polyline points="9 18 15 12 9 6"/>
           </svg>
         </button>
         <button
           onClick={() => setCurrentWeek(toIsoWeek())}
-          className="text-xs text-foreground-subtle hover:text-foreground underline underline-offset-2 transition-colors ml-1"
+          className="text-xs text-foreground-subtle hover:text-foreground underline underline-offset-2 transition-colors"
         >
           Today
         </button>
 
-        {/* status badge */}
         {currentSelection && (
-          <span
-            className={`ml-auto text-[10px] font-medium uppercase tracking-widest px-2 py-0.5 rounded border ${
-              currentSelection.status === "published"
-                ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
-                : "bg-amber-500/10 text-amber-400 border-amber-500/30"
-            }`}
-          >
+          <span className={`ml-auto text-[10px] font-medium uppercase tracking-widest px-2 py-0.5 rounded border ${
+            currentSelection.status === "published"
+              ? "bg-emerald-500/10 text-emerald-400 border-emerald-500/30"
+              : "bg-amber-500/10 text-amber-400 border-amber-500/30"
+          }`}>
             {currentSelection.status}
           </span>
         )}
       </div>
 
-      {/* 4 Slots */}
+      {/* Slots */}
       <div>
         <div className="text-xs uppercase tracking-widest text-foreground-subtle font-mono mb-3">
           Slots — {filledCount}/4 filled
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {slots.map((listing, i) => (
-            <SlotCard
-              key={i}
-              index={i}
-              listing={listing}
-              active={activeSlot === i}
-              onActivate={() => setActiveSlot(activeSlot === i ? null : i)}
-              onRemove={() => handleRemoveSlot(i)}
-            />
-          ))}
-        </div>
+        <SlotStrip slots={slots} onRemove={handleRemoveSlot} />
       </div>
 
-      {/* Save actions */}
+      {/* Actions */}
       <div className="flex items-center gap-3">
         <button
           onClick={() => handleSave("draft")}
@@ -407,10 +430,7 @@ export function FeaturedView() {
           {saving ? "Saving…" : "Publish"}
         </button>
         {currentSelection && (
-          <button
-            onClick={handleDelete}
-            className="ml-auto text-xs text-[#C44A3A] hover:underline"
-          >
+          <button onClick={handleDelete} className="ml-auto text-xs text-[#C44A3A] hover:underline">
             Delete selection
           </button>
         )}
@@ -418,28 +438,14 @@ export function FeaturedView() {
         {saveError && <span className="text-xs text-[#C44A3A]">{saveError}</span>}
       </div>
 
-      {currentSelection?.note && (
-        <div className="text-xs text-foreground-muted border border-border rounded px-3 py-2">
-          <span className="text-foreground-subtle uppercase tracking-wide mr-1">Note:</span>
-          {currentSelection.note}
-        </div>
-      )}
-
-      {/* Divider */}
       <div className="border-t border-border" />
 
-      {/* Listing search/picker */}
+      {/* Search */}
       <div>
         <div className="text-xs uppercase tracking-widest text-foreground-subtle font-mono mb-3">
-          Browse listings
-          {activeSlot !== null && (
-            <span className="ml-2 normal-case tracking-normal text-[#8ECFBF]">
-              — pinning to slot {activeSlot + 1}
-            </span>
-          )}
+          Browse listings — click a slot number to assign
         </div>
 
-        {/* Filters */}
         <div className="flex flex-wrap gap-2 mb-4">
           <input
             type="text"
@@ -484,7 +490,6 @@ export function FeaturedView() {
           </button>
         </div>
 
-        {/* Results table */}
         <div className="border border-border rounded overflow-hidden">
           {searching ? (
             <div className="py-10 text-center text-sm text-foreground-subtle">Loading…</div>
@@ -495,40 +500,35 @@ export function FeaturedView() {
               <table className="w-full">
                 <thead>
                   <tr className="border-b border-border bg-surface-1">
-                    <th className="py-2 px-3 w-10" />
+                    <th className="py-2 px-3 w-12" />
                     <th className="py-2 px-3 text-left text-xs font-medium text-foreground-subtle uppercase tracking-wide">Listing</th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-foreground-subtle uppercase tracking-wide">Type</th>
-                    <th className="py-2 px-3 text-right text-xs font-medium text-foreground-subtle uppercase tracking-wide">Price</th>
-                    <th className="py-2 px-3 text-left text-xs font-medium text-foreground-subtle uppercase tracking-wide">Source</th>
-                    <th className="py-2 px-3" />
+                    <th className="py-2 px-3 text-left text-xs font-medium text-foreground-subtle uppercase tracking-wide w-28">Type</th>
+                    <th className="py-2 px-3 text-right text-xs font-medium text-foreground-subtle uppercase tracking-wide w-28">Price</th>
+                    <th className="py-2 px-3 text-right text-xs font-medium text-foreground-subtle uppercase tracking-wide w-44">Slot</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {searchResults.slice(0, 50).map((listing) => {
-                    const pinnedSlot = slots.findIndex((s) => s?.id === listing.id);
-                    return (
-                      <ListingRow
-                        key={listing.id}
-                        listing={listing}
-                        pinnedSlot={pinnedSlot >= 0 ? pinnedSlot : null}
-                        activeSlot={activeSlot}
-                        onPin={(slotIdx) => handlePin(listing.id, slotIdx)}
-                      />
-                    );
-                  })}
+                  {searchResults.slice(0, 60).map((listing) => (
+                    <ListingRow
+                      key={listing.id}
+                      listing={listing}
+                      slots={slots}
+                      onPin={handlePin}
+                    />
+                  ))}
                 </tbody>
               </table>
             </div>
           )}
         </div>
-        {searchResults.length > 50 && (
+        {searchResults.length > 60 && (
           <div className="text-xs text-foreground-subtle mt-2">
-            Showing 50 of {searchResults.length}. Refine your search to narrow results.
+            Showing 60 of {searchResults.length} — use filters to narrow down.
           </div>
         )}
       </div>
 
-      {/* Recent history */}
+      {/* History */}
       {selections.length > 0 && (
         <div>
           <div className="border-t border-border mb-5" />
@@ -537,23 +537,19 @@ export function FeaturedView() {
             {selections.map((sel) => (
               <div
                 key={sel.id}
+                onClick={() => setCurrentWeek(sel.iso_week)}
                 className={`flex items-center gap-3 text-sm px-3 py-2 rounded border cursor-pointer transition-colors ${
                   sel.iso_week === currentWeek
                     ? "border-[#8ECFBF]/40 bg-[#8ECFBF]/5"
-                    : "border-border hover:border-border-muted hover:bg-surface-1"
+                    : "border-border hover:bg-surface-1"
                 }`}
-                onClick={() => setCurrentWeek(sel.iso_week)}
               >
                 <span className="font-mono text-xs text-foreground-subtle w-20 shrink-0">{sel.iso_week}</span>
                 <span className="text-foreground-muted text-xs">{fmtWeekLabel(sel.iso_week)}</span>
-                <span className="text-xs text-foreground-subtle">{sel.listing_ids.length} listing{sel.listing_ids.length !== 1 ? "s" : ""}</span>
-                <span
-                  className={`ml-auto text-[10px] font-medium uppercase tracking-widest px-1.5 py-0.5 rounded ${
-                    sel.status === "published"
-                      ? "text-emerald-400"
-                      : "text-amber-400"
-                  }`}
-                >
+                <span className="text-xs text-foreground-subtle">{sel.listing_ids.length} listings</span>
+                <span className={`ml-auto text-[10px] font-medium uppercase tracking-widest px-1.5 py-0.5 rounded ${
+                  sel.status === "published" ? "text-emerald-400" : "text-amber-400"
+                }`}>
                   {sel.status}
                 </span>
               </div>
