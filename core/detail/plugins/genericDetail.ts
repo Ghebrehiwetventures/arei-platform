@@ -63,12 +63,34 @@ const CHROME_ELEMENT_PATTERNS = [
   /\blogo\b/i,
   /\bicon\b/i,
   /favicon/i,
+  /\bsymbol\b/i,
+  /\bwatermark\b/i,
 ];
 
-function isChromeElement(classAttr: string | undefined, altAttr: string | undefined): boolean {
+// Filename-level logo patterns checked against image src URLs (basename).
+// Real estate property photos are rarely named with these markers.
+const CHROME_FILENAME_PATTERNS = [
+  /-(?:symbol|logo|brand|watermark|favicon)\b/i,  // "Gamma-symbol.png", "site-logo.svg"
+  /\b(?:symbol|logo|brand|watermark|favicon)-/i,  // "logo-horizontal.png"
+  /\b(?:site|company|brand)[-_]?logo\b/i,
+];
+
+function isChromeElement(
+  classAttr: string | undefined,
+  altAttr: string | undefined,
+  srcAttr?: string | undefined,
+): boolean {
   for (const p of CHROME_ELEMENT_PATTERNS) {
     if (classAttr && p.test(classAttr)) return true;
     if (altAttr && p.test(altAttr)) return true;
+  }
+  if (srcAttr) {
+    // Test against the full URL — filename-style markers and full-URL markers
+    // both live in src. The basename match still catches files like
+    // "ocean-property-silver-horizontal.jpg" via the broader src match below.
+    for (const p of CHROME_FILENAME_PATTERNS) {
+      if (p.test(srcAttr)) return true;
+    }
   }
   return false;
 }
@@ -368,8 +390,8 @@ export function createGenericDetailPlugin(
         $(imgSelector).each((_, el) => {
           const tagName = (el as any).tagName?.toLowerCase();
           if (tagName === "img") {
-            if (isChromeElement($(el).attr("class"), $(el).attr("alt"))) return;
             const src = $(el).attr("src") || $(el).attr("data-src") || $(el).attr("data-lazy");
+            if (isChromeElement($(el).attr("class"), $(el).attr("alt"), src)) return;
             if (src) addImage(src);
             const srcset = $(el).attr("srcset") || $(el).attr("data-srcset");
             if (srcset) {
@@ -380,18 +402,20 @@ export function createGenericDetailPlugin(
             }
           } else if (tagName === "a") {
             const href = $(el).attr("href");
+            if (href && isChromeElement(undefined, undefined, href)) return;
             if (href) addImage(href);
           } else {
             // Maybe a div with background-image
-            if (isChromeElement($(el).attr("class"), $(el).attr("aria-label"))) return;
             const style = $(el).attr("style") || "";
             const bgMatch = style.match(/url\(\s*['"]?([^'")]+)['"]?\s*\)/i);
-            if (bgMatch?.[1]) addImage(bgMatch[1]);
+            const bgUrl = bgMatch?.[1];
+            if (isChromeElement($(el).attr("class"), $(el).attr("aria-label"), bgUrl)) return;
+            if (bgUrl) addImage(bgUrl);
             // Check for img children
             $(el).find("img").each((_, img) => {
-              if (isChromeElement($(img).attr("class"), $(img).attr("alt"))) return;
-              const src = $(img).attr("src") || $(img).attr("data-src");
-              if (src) addImage(src);
+              const childSrc = $(img).attr("src") || $(img).attr("data-src");
+              if (isChromeElement($(img).attr("class"), $(img).attr("alt"), childSrc)) return;
+              if (childSrc) addImage(childSrc);
             });
           }
         });
@@ -402,20 +426,21 @@ export function createGenericDetailPlugin(
         // Try lightbox links
         $("a[href*='.jpg'], a[href*='.jpeg'], a[href*='.png'], a[href*='.webp']").each((_, el) => {
           const href = $(el).attr("href");
+          if (href && isChromeElement(undefined, undefined, href)) return;
           if (href) addImage(href);
         });
 
         // Try slideshow/carousel images
         $(".swiper-slide img, .slick-slide img, .gallery img, .carousel img").each((_, el) => {
-          if (isChromeElement($(el).attr("class"), $(el).attr("alt"))) return;
           const src = $(el).attr("src") || $(el).attr("data-src");
+          if (isChromeElement($(el).attr("class"), $(el).attr("alt"), src)) return;
           if (src) addImage(src);
         });
 
         // Try all images with uploads path (WordPress)
         $("img[src*='uploads'], img[data-src*='uploads']").each((_, el) => {
-          if (isChromeElement($(el).attr("class"), $(el).attr("alt"))) return;
           const src = $(el).attr("src") || $(el).attr("data-src");
+          if (isChromeElement($(el).attr("class"), $(el).attr("alt"), src)) return;
           if (src) addImage(src);
         });
       }
@@ -424,8 +449,8 @@ export function createGenericDetailPlugin(
       if (imageUrls.length < 3) {
         $("img").each((_, el) => {
           const $img = $(el);
-          if (isChromeElement($img.attr("class"), $img.attr("alt"))) return;
           const src = $img.attr("src") || $img.attr("data-src");
+          if (isChromeElement($img.attr("class"), $img.attr("alt"), src)) return;
           const width = parseInt($img.attr("width") || "0", 10);
           const height = parseInt($img.attr("height") || "0", 10);
           if ((width > 0 && width < 100) || (height > 0 && height < 100)) return;
@@ -441,7 +466,20 @@ export function createGenericDetailPlugin(
       let parkingSpaces: number | null = null;
       let areaSqm: number | null = null;
 
-      const bodyText = $("body").text();
+      // Scope spec_patterns text to avoid regex pollution from Similar Listings,
+      // navigation, sidebar, etc. Priority: explicit specs_selector → description →
+      // body (fallback). Without scoping, regexes like `(\d+)\s*Bedrooms?` match
+      // any digit-bedroom pair anywhere on the page (op24 studio bug: bedrooms=9
+      // bled in from "Similar Listings" / "%20Bedje" URL fragments).
+      let bodyText: string;
+      if (detailConfig.specs_selector) {
+        const $specs = $(detailConfig.specs_selector);
+        bodyText = $specs.length ? $specs.text() : "";
+      } else if (description && description.length >= 50) {
+        bodyText = description;
+      } else {
+        bodyText = $("body").text();
+      }
 
       if (detailConfig.selectors?.bedrooms) {
         const text = $(detailConfig.selectors.bedrooms).first().text().trim();
@@ -452,6 +490,68 @@ export function createGenericDetailPlugin(
         const text = $(detailConfig.selectors.bathrooms).first().text().trim();
         const match = text.match(/\b(\d{1,2})\b/);
         if (match) bathrooms = parseInt(match[1], 10);
+      }
+
+      // C0) spec_table — structured label/value pairs (Elementor pre-data, dl/dt/dd, Houzez meta).
+      // Runs BEFORE regex spec_patterns; structured pairs are more reliable than prose.
+      let specTablePrice: string | undefined;
+      if (detailConfig.spec_table) {
+        const st = detailConfig.spec_table;
+        const matchLabel = (raw: string): keyof typeof st.label_map | undefined => {
+          const lower = raw.toLowerCase().replace(/:$/, "").trim();
+          for (const [field, aliases] of Object.entries(st.label_map)) {
+            for (const alias of aliases) {
+              if (lower === alias.toLowerCase() || lower.includes(alias.toLowerCase())) {
+                return field as keyof typeof st.label_map;
+              }
+            }
+          }
+          return undefined;
+        };
+        const resolveValue = ($label: cheerio.Cheerio<any>, labelText: string): string => {
+          if (st.value_selector) {
+            const sel = st.value_selector.trim();
+            if (sel.startsWith("+")) {
+              return $label.next(sel.slice(1).trim()).first().text().trim();
+            }
+            if (sel.startsWith("~")) {
+              return $label.nextAll(sel.slice(1).trim()).first().text().trim();
+            }
+            const $val = $label.parent().find(sel).first();
+            if ($val.length) return $val.text().trim();
+          }
+          const $row = $label.closest("li, tr, p, div");
+          const full = $row.text().trim();
+          return full.replace(labelText, "").trim();
+        };
+        $(st.container).each((_, container) => {
+          $(container).find(st.label_selector).each((_, labelEl) => {
+            const $label = $(labelEl);
+            const rawLabel = $label.text().trim();
+            if (!rawLabel) return;
+            const field = matchLabel(rawLabel);
+            if (!field) return;
+            const value = resolveValue($label, rawLabel);
+            if (!value || value === "-") return;
+            const intMatch = value.match(/\b(\d{1,3})\b/);
+            const intVal = intMatch ? parseInt(intMatch[1], 10) : null;
+            if (field === "bedrooms" && bedrooms === null && intVal !== null && intVal > 0 && intVal < 20) {
+              bedrooms = intVal;
+            } else if (field === "bathrooms" && bathrooms === null && intVal !== null && intVal > 0 && intVal < 20) {
+              bathrooms = intVal;
+            } else if (field === "parking" && parkingSpaces === null && intVal !== null && intVal >= 0 && intVal < 20) {
+              parkingSpaces = intVal;
+            } else if (field === "area" && areaSqm === null) {
+              const m = value.replace(",", ".").match(/(\d+(?:\.\d+)?)/);
+              if (m) {
+                const n = parseFloat(m[1]);
+                if (!isNaN(n) && n > 0) areaSqm = n;
+              }
+            } else if (field === "price" && !specTablePrice) {
+              specTablePrice = value;
+            }
+          });
+        });
       }
 
       if (detailConfig.spec_patterns) {
@@ -534,8 +634,15 @@ export function createGenericDetailPlugin(
       // ========================================
       let price: number | undefined;
 
+      // F.0) Price found via spec_table label/value pair (if configured)
+      if (specTablePrice) {
+        price = priceFormat
+          ? parseConfiguredPrice(specTablePrice, priceFormat)
+          : parseGenericPrice(specTablePrice);
+      }
+
       // F.1) Try config price selector first
-      if (detailConfig.selectors?.price) {
+      if (!price && detailConfig.selectors?.price) {
         const priceEl = $(detailConfig.selectors.price).first();
         if (priceEl.length) {
           const priceText = priceEl.text().trim();

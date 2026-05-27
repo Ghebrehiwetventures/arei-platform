@@ -15,7 +15,12 @@
  */
 
 import { fetchHeadless } from "./fetchHeadless";
-import { fetchHtml, FetchResult } from "./fetchHtml";
+import { fetchHtml } from "./fetchHtml";
+import { buildListFetchFn } from "./pipeline/fetchSource";
+import { loadLocationHooks } from "./pipeline/locationHooks";
+import { LAND_TYPES, extractPropertyType } from "./pipeline/propertyType";
+import { applyExtractResultToListing } from "./pipeline/enrich";
+import { resolveLocation as resolveListingLocation } from "./pipeline/locationResolver";
 import { initSourceStats, normalizeOrDrop } from "./dropReport";
 
 import * as fs from "fs";
@@ -32,13 +37,12 @@ import {
 } from "./batchEvaluateMarket";
 import { genericDetailExtract, DetailExtractionConfig } from "./genericDetailExtractor";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
-import { parseLocation, getCurrency, getCountry } from "./locationMapper";
+import { getCurrency, getCountry } from "./locationMapper";
 import { deriveProjectMetadata } from "./projectMetadata";
 import {
   genericPaginatedFetcher,
   GenericParsedListing,
   SourceFetchConfig,
-  dedupeImageUrls,
 } from "./genericFetcher";
 import {
   getSourceHealthEntry,
@@ -88,29 +92,6 @@ interface IngestListing {
 // PROPERTY TYPE EXTRACTION
 // ============================================
 
-/** Canonical land/plot property types — shared across pipeline and UI */
-const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
-
-function extractPropertyType(title?: string, url?: string): string {
-  const text = `${title || ""} ${url || ""}`.toLowerCase();
-
-  if (/\b(villa|villas)\b/.test(text)) return "villa";
-  if (/\b(apartment|apartments|flat|flats|apt)\b/.test(text)) return "apartment";
-  if (/\b(house|houses|home|homes)\b/.test(text)) return "house";
-  if (/\b(townhouse|townhouses|town house)\b/.test(text)) return "townhouse";
-  if (/\b(penthouse|penthouses)\b/.test(text)) return "penthouse";
-  if (/\b(studio|studios|bedsitter)\b/.test(text)) return "studio";
-  if (/\b(bungalow|bungalows)\b/.test(text)) return "bungalow";
-  if (/\b(maisonette|maisonettes)\b/.test(text)) return "maisonette";
-  if (/\b(duplex|duplexes)\b/.test(text)) return "duplex";
-  if (/\b(land|plot|plots|acre|acres)\b/.test(text)) return "land";
-  if (/\b(commercial|office|shop|warehouse)\b/.test(text)) return "commercial";
-
-  if (/\b(for.?sale|bedroom|bed)\b/.test(text)) return "house";
-
-  return "property";
-}
-
 // ============================================
 // STUB DATA PROVIDER (for testing)
 // ============================================
@@ -152,18 +133,6 @@ function sleep(ms: number): Promise<void> {
 // DYNAMIC PLUGIN LOADING
 // ============================================
 
-interface LocationHookModule {
-  resolveLocation(input: {
-    id: string;
-    sourceId: string;
-    title?: string | null;
-    description?: string | null;
-    sourceUrl?: string | null;
-    rawIsland?: string | null;
-    rawCity?: string | null;
-  }): { island?: string; city?: string } | null;
-}
-
 /**
  * Try to load market-specific detail plugins from markets/{marketId}/plugins/.
  * Returns an array of DetailPlugin instances found.
@@ -199,26 +168,6 @@ function loadMarketPlugins(marketId: string): DetailPlugin[] {
   return plugins;
 }
 
-/**
- * Try to load market-specific location hooks from markets/{marketId}/locationHooks.
- * Returns the module if found, null otherwise.
- */
-function loadLocationHooks(marketId: string): LocationHookModule | null {
-  const hookPath = path.resolve(__dirname, `../markets/${marketId}/locationHooks`);
-
-  try {
-    const mod = require(hookPath);
-    if (typeof mod.resolveLocation === "function") {
-      console.log(`[Hooks] Loaded location hooks for market: ${marketId}`);
-      return mod as LocationHookModule;
-    }
-  } catch {
-    // No location hooks for this market — that's fine
-  }
-
-  return null;
-}
-
 // ============================================
 // GENERIC SOURCE FETCHER
 // ============================================
@@ -233,21 +182,7 @@ async function genericFetchSource(
   console.log(`[${source.id}] Fetching via ${source.fetch_method || "http"}...`);
 
   const fetchConfig = sourceConfigToFetchConfig(source);
-
-  const fetchFn = async (url: string): Promise<FetchResult> => {
-    if (fetchConfig.fetch_method === "headless") {
-      return fetchHeadless(url);
-    }
-    return fetchHtml(url, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 Chrome/120.0.0.0 Safari/537.36",
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Cache-Control": "no-cache",
-      },
-    });
-  };
-
+  const fetchFn = buildListFetchFn(fetchConfig.fetch_method);
   const result = await genericPaginatedFetcher(fetchConfig, fetchFn);
 
   if (result.listings.length === 0) {
@@ -393,60 +328,11 @@ async function pluginDetailEnrichment(
         },
       });
 
-      let wasEnriched = false;
-
-      // Prefer explicit plain-text description; fall back to stripping description_html
-      let plainDescription = extractResult.description;
-      if ((!plainDescription || plainDescription.length < 50) && listing.description_html) {
-        const stripped = listing.description_html
-          .replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-        if (stripped.length >= 50) {
-          plainDescription = stripped;
-        }
-      }
-
-      if (plainDescription && plainDescription.length >= 50) {
-        if (!listing.description || plainDescription.length > listing.description.length) {
-          listing.description = plainDescription;
-          wasEnriched = true;
-        }
-      }
-
-      // Merge structured data
-      if (extractResult.bedrooms !== undefined) listing.bedrooms = extractResult.bedrooms;
-      if (extractResult.bathrooms !== undefined) listing.bathrooms = extractResult.bathrooms;
-      if (extractResult.parkingSpaces !== undefined) listing.parkingSpaces = extractResult.parkingSpaces;
-      if (extractResult.areaSqm !== undefined) listing.area_sqm = extractResult.areaSqm;
-      if (extractResult.amenities?.length) listing.amenities = extractResult.amenities;
-
-      // Update price if listing has no price but detail page does (min threshold to reject placeholders)
-      if (extractResult.price && extractResult.price >= 500 && !listing.price) {
-        listing.price = extractResult.price;
-        wasEnriched = true;
-      }
-
-      // Update title if we got a better one
-      if (extractResult.title && extractResult.title.length > (listing.title?.length || 0)) {
-        listing.title = extractResult.title;
-      }
-
-      // Update location from detail page if listing has none
-      if (extractResult.location && !listing.location) {
-        listing.location = extractResult.location;
-        wasEnriched = true;
-      }
-
-      // Merge images
-      if (extractResult.imageUrls?.length) {
-        const merged = [...(listing.imageUrls || []), ...extractResult.imageUrls];
-        const deduped = dedupeImageUrls(merged);
-        if (deduped.length !== (listing.imageUrls || []).length) {
-          wasEnriched = true;
-        }
-        listing.imageUrls = deduped;
-      }
+      const wasEnriched = applyExtractResultToListing(listing, extractResult, {
+        applyDescriptionHtmlFallback: true,
+        applyTitleUpgrade: true,
+        applyParkingSpaces: true,
+      });
 
       // Apply project metadata
       if (projectMetadata.source_ref) listing.source_ref = projectMetadata.source_ref;
@@ -468,56 +354,6 @@ async function pluginDetailEnrichment(
   }
 
   console.log(`[DetailEnrich] Complete: ${enrichedCount} enriched, ${failedCount} failed`);
-}
-
-// ============================================
-// LOCATION RESOLUTION WITH FALLBACK CHAIN
-// ============================================
-
-function resolveListingLocation(
-  listing: { id: string; sourceId: string; title?: string; description?: string; detailUrl?: string; externalUrl?: string; location?: string; imageUrls?: string[] },
-  marketId: string,
-  locationHooks: LocationHookModule | null
-): { island?: string; city?: string } {
-  // 1. Try location field
-  const locResult = parseLocation(listing.location, marketId);
-  if (locResult.island) {
-    return { island: locResult.island, city: locResult.city };
-  }
-
-  // 2. Try title
-  if (listing.title) {
-    const titleResult = parseLocation(listing.title, marketId);
-    if (titleResult.island) {
-      return { island: titleResult.island, city: titleResult.city };
-    }
-  }
-
-  // 3. Try description (first 500 chars)
-  if (listing.description) {
-    const descResult = parseLocation(listing.description.substring(0, 500), marketId);
-    if (descResult.island) {
-      return { island: descResult.island, city: descResult.city };
-    }
-  }
-
-  // 4. Try market-specific location hooks (e.g., CV island recovery)
-  if (locationHooks) {
-    const hookResult = locationHooks.resolveLocation({
-      id: listing.id,
-      sourceId: listing.sourceId,
-      title: listing.title,
-      description: listing.description,
-      sourceUrl: listing.detailUrl || listing.externalUrl || null,
-      rawIsland: listing.location,
-      rawCity: undefined,
-    });
-    if (hookResult) {
-      return hookResult;
-    }
-  }
-
-  return {};
 }
 
 // ============================================

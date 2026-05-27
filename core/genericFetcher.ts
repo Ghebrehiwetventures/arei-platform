@@ -93,12 +93,18 @@ export interface ItemMapArrayPick {
   /** Optional filter: pick element whose match_field equals match_value */
   match_field?: string;
   match_value?: string | number | boolean;
+  /** Optional filters: pick element matching every field/value pair. */
+  matches?: Array<{ field: string; equals: string | number | boolean }>;
   /** Optional template applied to the extracted value, with `{VALUE}` placeholder */
   template?: string;
   /** For image arrays: cap number of entries returned */
   limit?: number;
   /** If true, return all entries (array); otherwise return first match (scalar) */
   all?: boolean;
+  /** Optional field to sort array elements by (numeric ascending) before extracting.
+   *  Use for sources whose API doesn't return elements in display order (e.g. REMAX
+   *  ListingImages where `Order=1` may appear last in the response). */
+  sort_by?: string;
 }
 
 export interface ItemMapConfig {
@@ -106,8 +112,10 @@ export interface ItemMapConfig {
   content_base?: string;
   /** Dot-path to unique ID field */
   id?: string;
-  /** Dot-path to title OR template string with {field} placeholders */
-  title?: string;
+  /** Title from path or array-pick by language/type */
+  title?: string | ItemMapArrayPick;
+  /** Ordered title fallbacks tried when `title` and `title_template` are empty. */
+  title_fallbacks?: Array<string | ItemMapArrayPick>;
   title_template?: string;
   /** Dot-path to numeric price */
   price?: string;
@@ -523,8 +531,22 @@ function pickFromArray(
   item: Record<string, unknown>,
   pick: ItemMapArrayPick,
 ): string | string[] | undefined {
-  const arr = getByPath(item, pick.array);
-  if (!Array.isArray(arr)) return undefined;
+  const raw = getByPath(item, pick.array);
+  if (!Array.isArray(raw)) return undefined;
+
+  // Sort by `sort_by` (numeric ascending) if specified; elements with missing
+  // or non-numeric sort keys go to the end. Sort is stable on a shallow copy.
+  let arr = raw;
+  if (pick.sort_by) {
+    const sortKey = pick.sort_by;
+    arr = [...raw].sort((a, b) => {
+      const av = (a as Record<string, unknown>)?.[sortKey];
+      const bv = (b as Record<string, unknown>)?.[sortKey];
+      const an = av == null ? Infinity : Number(av);
+      const bn = bv == null ? Infinity : Number(bv);
+      return (Number.isFinite(an) ? an : Infinity) - (Number.isFinite(bn) ? bn : Infinity);
+    });
+  }
 
   const applyTemplate = (raw: unknown): string | undefined => {
     if (raw == null) return undefined;
@@ -554,17 +576,32 @@ function pickFromArray(
       const mv = (el as Record<string, unknown>)[pick.match_field];
       if (mv !== pick.match_value) continue;
     }
+    if (pick.matches?.length) {
+      const record = el as Record<string, unknown>;
+      const matched = pick.matches.every((rule) => record[rule.field] === rule.equals);
+      if (!matched) continue;
+    }
     const v = extract(el);
     if (v) return v;
   }
   return undefined;
 }
 
+function pickMappedString(item: Record<string, unknown>, mapping: string | ItemMapArrayPick): string | undefined {
+  if (typeof mapping === "string") {
+    const raw = getByPath(item, mapping);
+    return raw == null ? undefined : String(raw);
+  }
+
+  const picked = pickFromArray(item, mapping);
+  return typeof picked === "string" ? picked : undefined;
+}
+
 /**
  * Map a single JSON item into a GenericParsedListing using config.item_map.
  * Returns null if the item should be skipped (unmappable or matches skip_if).
  */
-function mapJsonItem(
+export function mapJsonItem(
   rawItem: unknown,
   config: SourceFetchConfig,
   now: Date,
@@ -589,8 +626,13 @@ function mapJsonItem(
   if (map.title_template) {
     title = renderTemplate(map.title_template, item);
   } else if (map.title) {
-    const raw = getByPath(item, map.title);
-    if (raw != null) title = String(raw);
+    title = pickMappedString(item, map.title) ?? "";
+  }
+  if (!title && map.title_fallbacks?.length) {
+    for (const fallback of map.title_fallbacks) {
+      title = pickMappedString(item, fallback) ?? "";
+      if (title) break;
+    }
   }
   title = title.replace(/\s+/g, " ").trim();
 
@@ -666,7 +708,7 @@ function mapJsonItem(
     const picked = pickFromArray(item, { ...map.images, all: true });
     if (Array.isArray(picked)) imageUrls = picked;
   }
-  imageUrls = dedupeImageUrls(imageUrls).slice(0, map.images?.limit ?? 10);
+  imageUrls = dedupeImageUrls(imageUrls).slice(0, map.images?.limit ?? 100);
 
   // ID fallback chain: explicit id path → url pattern → title+price+url hash
   let id: string | undefined;
@@ -909,7 +951,17 @@ function parseListingsFromHtml(
           }
         }
       } else if (config.selectors.location) {
-        location = $container.find(config.selectors.location).first().text().trim();
+        // Join ALL matched elements, not just .first(). Some sites (e.g. op24)
+        // split location into multiple links inside one container: "São Paulo"
+        // (area) → "Santa Maria" (city). Taking only the first link loses the
+        // city/island info the location resolver needs to disambiguate areas
+        // whose name happens to be a substring of an unrelated place.
+        const parts: string[] = [];
+        $container.find(config.selectors.location).each((_, el) => {
+          const t = $(el).text().trim();
+          if (t && !parts.includes(t)) parts.push(t);
+        });
+        location = parts.join(", ");
       }
 
       // Fallback: Extract location from URL path segments (common pattern)

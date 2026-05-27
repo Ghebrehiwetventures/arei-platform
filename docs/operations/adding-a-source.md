@@ -357,7 +357,70 @@ If you're tempted to write source-specific code, ask: would three future sources
 
 ---
 
-## 5. Operational appendix
+## 5. Re-ingesting a source already on the public feed
+
+When a source already has `published` rows on `v1_feed_cv` and you need the pipeline
+to overwrite them (engine fix, selector change, location-resolver change, new
+image filter, etc.) — **do not bulk-demote first and then DRY_RUN**. The
+status-gated upsert means demoted rows leave `v1_feed_cv` immediately, and the
+DRY_RUN can run for many minutes (especially with `fetch_method: headless`).
+While it runs, the source disappears from the public feed.
+
+### Wrong sequence — causes a feed dropout
+
+```
+demote all published rows  ──► DRY_RUN (10–60 min)  ──► real ingest  ──► re-promote
+        │                            │                       │              │
+        └─ feed loses N rows ────────┴───────────────────────┴──────────────┘
+                                  feed stays short the whole time
+```
+
+This happened on 2026-05-25: 193 op24/ecv/cvp24 rows were demoted before a
+multi-source DRY_RUN, and the feed dropped from 425 to 232 listings until the
+demote was reversed.
+
+### Correct sequence — feed stays full
+
+```
+1. DRY_RUN while rows are still published   (status-gate blocks updates, but the
+                                              DRY_RUN doesn't touch the DB anyway)
+2. Verify the DRY_RUN coverage / location / images / etc. against expectations
+3. Per source, in quick succession:
+     demote published rows  ──►  real ingest  ──►  re-promote rows that came back
+   Total feed dropout per source: a few minutes at most.
+```
+
+Or, when only a handful of rows need updating, target them by id:
+
+```sql
+UPDATE kv_curated.listings SET publish_status='needs_review' WHERE id IN ('...','...');
+-- then ingest, which upserts the demoted rows
+UPDATE kv_curated.listings
+SET publish_status='published'
+WHERE id IN ('...','...') AND publish_status='needs_review';
+```
+
+### Why the status-gate exists
+
+`scripts/ingest_to_curated.ts` upserts with `publish_status='needs_review'` and
+the upsert SQL refuses to write over `published` rows. This protects production
+from accidental corruption — a bad selector change can't silently rewrite live
+listings. Demote-first is the explicit override; treat it as a production change.
+
+### Restoring after an accidental dropout
+
+```sql
+UPDATE kv_curated.listings
+SET publish_status='published'
+WHERE source_id_primary IN ('...')
+  AND publish_status='needs_review'
+  AND first_published_at IS NOT NULL;
+```
+
+The `first_published_at IS NOT NULL` clause restores only rows that were
+previously published — not newly-fetched needs_review rows.
+
+## 6. Operational appendix
 
 ### Useful one-shots
 
@@ -369,7 +432,7 @@ UPDATE kv_curated.listings SET publish_status='needs_review' WHERE id='...';
 
 Then re-run the ingest. The status-gated upsert will pick it up.
 
-Bulk demote a source (use with care):
+Bulk demote a source (use with care — see § 5 for the feed-safe sequence):
 
 ```sql
 UPDATE kv_curated.listings

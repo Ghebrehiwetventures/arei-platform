@@ -47,16 +47,19 @@ export interface ItemMapArrayPick {
   field: string;
   match_field?: string;
   match_value?: string | number | boolean;
+  matches?: Array<{ field: string; equals: string | number | boolean }>;
   template?: string;
   limit?: number;
   all?: boolean;
+  sort_by?: string;
 }
 
 /** Field mapping for json_api sources */
 export interface ItemMapConfig {
   content_base?: string;
   id?: string;
-  title?: string;
+  title?: string | ItemMapArrayPick;
+  title_fallbacks?: Array<string | ItemMapArrayPick>;
   title_template?: string;
   price?: string;
   bedrooms?: string;
@@ -89,6 +92,10 @@ export interface DetailConfig {
     location?: string;
   };
   delay_ms?: number;
+  /** Scope `spec_patterns` regexes to this container instead of `<body>`. Prevents
+   *  regex pollution from Similar Listings / sidebar / navigation. When unset, the
+   *  engine falls back to the description text, then to the full body. */
+  specs_selector?: string;
   /** Spec extraction patterns (config-driven, from sources.yml) */
   spec_patterns?: {
     bedrooms?: string[];
@@ -99,6 +106,26 @@ export interface DetailConfig {
   /** Amenity keywords to detect (config-driven, from sources.yml) */
   amenity_keywords?: {
     [key: string]: string[];
+  };
+  /** Label/value spec table extractor for sites where specs are structured pairs
+   *  (Elementor widgets with `span.pre-data`, definition lists, Houzez meta items).
+   *  Runs between explicit `selectors.{bedrooms,bathrooms}` and the regex-based
+   *  `spec_patterns` fallback. See docs/operations/engine-config-reference.md. */
+  spec_table?: {
+    container: string;
+    label_selector: string;
+    /** If set, value is the text of element matching this selector relative to
+     *  the label. Prefix with `+` or `~` for an adjacent/general sibling selector
+     *  (resolved via cheerio.next/nextAll). If unset, value = closest
+     *  `li, tr, p, div` text with the label text removed. */
+    value_selector?: string;
+    label_map: {
+      bedrooms?: string[];
+      bathrooms?: string[];
+      parking?: string[];
+      area?: string[];
+      price?: string[];
+    };
   };
 }
 

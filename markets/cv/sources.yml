@@ -100,7 +100,17 @@ sources:
       selectors:
         description: "h2:contains('Description') + .elementor-widget-text-editor, .elementor-widget-text-editor p"
         images: "#prop-gallery .swiper-slide img, .elementor-image-carousel img, .swiper-slide a[href*='.jpg']"
-        # bedrooms/bathrooms extracted via spec_patterns below
+        # bedrooms/bathrooms extracted via spec_table below; spec_patterns kept as fallback
+      spec_table:
+        container: ".elementor-widget"
+        label_selector: "span.pre-data, .pre-data"
+        # value_selector unset → use closest li/p/div text minus the label
+        label_map:
+          bedrooms: ["bedrooms", "quartos"]
+          bathrooms: ["bathrooms", "casas de banho", "banheiros"]
+          parking: ["parking spaces", "lugares de estacionamento", "parking", "garage"]
+          area: ["area", "área", "terrace area", "área do terraço"]
+          price: ["price", "preço", "precio", "preis"]
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
@@ -181,7 +191,22 @@ sources:
       selectors:
         description: ".property-description p, .wpsight-listing-description p, [class*='description'] p"
         images: ".property-gallery img, .slick-slide img, .swiper-slide img, img.wp-post-image"
-        price: ".item-price .price, .es-price"
+        price: ".item-price .price, .es-price, .property-price"
+        # Houzez has two layouts: v7 (strong inside li.h-beds) and v8+ (strong in sibling li, label li has .h-beds).
+        bedrooms: ".h-beds strong, ul:has(.h-beds) strong, .es-listing__meta-bedrooms"
+        bathrooms: ".h-baths strong, ul:has(.h-baths) strong, .es-listing__meta-bathrooms"
+      # Houzez v7+ overview: <li class="h-beds"><strong>2</strong><span class="hz-meta-label">Bedrooms</span></li>
+      # spec_table strips the label text from the row, leaving the numeric value.
+      spec_table:
+        container: ".property-overview-data, .property-overview, .listing-details, dl"
+        label_selector: ".hz-meta-label, dt, .label"
+        # value_selector unset → use closest li/p/div text minus the label
+        label_map:
+          bedrooms: ["bedrooms", "beds", "quartos"]
+          bathrooms: ["bathrooms", "baths", "casas de banho", "banheiros"]
+          parking: ["parking", "garage", "estacionamento"]
+          area: ["area size", "area", "size", "área", "superfície"]
+          price: ["price", "preço", "precio"]
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
@@ -362,8 +387,18 @@ sources:
       selectors:
         description: ".property-description, .wpsight-listing-description, [class*='description'] p"
         images: ".property-detail-gallery img, .property-gallery img, .slick-slide img, .swiper-slide img, img.wp-post-image"
-        bedrooms: ".listing-details-detail:contains('Bed') .listing-details-value"
-        bathrooms: ".listing-details-detail:contains('Bath') .listing-details-value"
+        # Houzez has two layouts: v7 (strong inside li.h-beds) and v8+ (strong in sibling li, label li has .h-beds).
+        bedrooms: ".h-beds strong, ul:has(.h-beds) strong, .listing-details-detail:contains('Bed') .listing-details-value"
+        bathrooms: ".h-baths strong, ul:has(.h-baths) strong, .listing-details-detail:contains('Bath') .listing-details-value"
+      spec_table:
+        container: ".property-overview-data, .property-overview, .listing-details, dl"
+        label_selector: ".hz-meta-label, dt, .label"
+        label_map:
+          bedrooms: ["bedrooms", "beds", "quartos"]
+          bathrooms: ["bathrooms", "baths", "casas de banho"]
+          parking: ["parking", "garage", "estacionamento"]
+          area: ["area size", "area", "size", "área"]
+          price: ["price", "preço"]
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
@@ -427,7 +462,11 @@ sources:
       delay_ms: 3000
       selectors:
         description: ".property-description p, .tab-pane p, [class*='description']"
-        images: ".property-slider img, .property-gallery img, .carousel img, img[src*='uploads']"
+        # OSProperty (Joomla) renders this property's own photos inside
+        # .mosaicflow__item; the sidebar widget mod_os_contentslider shows
+        # thumbnails of OTHER properties. Path-scope to the listing's own
+        # gallery directory and to .mosaicflow__item to avoid the leak.
+        images: ".mosaicflow__item img, img[src*='osproperty/properties']"
         price: "span.price-ribbon-price"
         location: ".property-header-info-address"
       spec_patterns:
@@ -618,7 +657,14 @@ sources:
       delay_ms: 3000
       selectors:
         description: ".wpestate_property_description p, .property-description p, [class*='description'] p"
-        images: ".property-slider img, .carousel-inner img, .property_slider img, img[src*='uploads']"
+        # Scope images to actual gallery containers (no img[src*='uploads'] catch-all,
+        # which previously pulled in the site logo). Filename filter on logo patterns
+        # is defense in depth via isChromeElement.
+        images: ".property-slider img, .carousel-inner img, .property_slider img"
+      # Specs live in .listing_detail box ("Property Size: 97m² Rooms: 1 Bedrooms: 2
+      # Bathrooms: 1"). Studios omit the Bedrooms: line — keep bedrooms null instead
+      # of pulling a number from Similar Listings / URL fragments elsewhere on the page.
+      specs_selector: ".listing_detail"
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
@@ -729,7 +775,9 @@ sources:
       count_path: "@odata.count"
       body:
         search: "*"
-        filter: "content/ListingCountryCode eq 'CV' and content/IsFindable eq true"
+        # TransactionTypeUID 261 = Sale (260 = Rent). Without this clause the
+        # search returns rental listings too, which would land in the for-sale feed.
+        filter: "content/ListingCountryCode eq 'CV' and content/IsFindable eq true and content/TransactionTypeUID eq 261"
         count: true
 
     delay_ms: 1500
@@ -744,17 +792,28 @@ sources:
     item_map:
       content_base: content
       id: MLSID
-      title_template: "{NumberOfBedrooms}-bed {City} property"
+      title:
+        array: ListingDescriptions
+        field: Description
+        matches:
+          - field: ISOLanguageCode
+            equals: en
+          - field: DescriptionTypeUID
+            equals: "1113"
+      title_fallbacks:
+        - array: ListingMetaTags
+          field: MetaTitle
+          match_field: LanguageCode
+          match_value: en-US
       price: ListingPriceEuro
       bedrooms: NumberOfBedrooms
       bathrooms: NumberOfBathrooms
       area_sqm: TotalArea
       location_template: "{City}, {Province}"
 
-      # Hidden-price listings are dropped upstream — skip them early.
-      skip_if:
-        - field: HidePricePublic
-          equals: true
+      # Hidden-price listings ("price upon request" on remax.cv) are kept with
+      # price=null. The feed contract treats price as optional (FEED_CONTRACT.md
+      # § "Launch decision") and ingest_to_curated writes price ?? null.
 
       # Prefer the English description, else any language (first match wins).
       description:
@@ -773,11 +832,16 @@ sources:
 
       # Gryphtech REMAX CDN pattern: /userimages/{CountryID}/LargeWM/{FileName}
       # CountryID for CV is 73 (hardcoded in the tenant config).
+      # No `limit` — REMAX's ListingImages is the agent's authoritative gallery,
+      # so we keep every image. Engine default (100) is the only ceiling.
+      # sort_by: Order — REMAX returns images in arbitrary array order; the
+      # numeric `Order` field is the agent's intended display sequence (Order=1
+      # is the hero/cover). Sorting here makes image_urls[0] match remax.cv.
       images:
         array: ListingImages
         field: FileName
+        sort_by: Order
         template: "https://cdn.gryphtech.com/userimages/73/LargeWM/{VALUE}"
-        limit: 10
 
     # Listing detail is already complete from the search API — no HTML enrichment.
     detail:
