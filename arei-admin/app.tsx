@@ -20,6 +20,7 @@ import {
   type MarketNewsFieldUpdate,
 } from "./data";
 import { NotificationsView } from "./NotificationsView";
+import { FeaturedView } from "./FeaturedView";
 
 const SOURCE_STALE_DAYS = 30;
 
@@ -3671,12 +3672,13 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications" | "featured";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
   { key: "sources",       label: "Listings"      },
   { key: "market-news",   label: "Market News"   },
+  { key: "featured",      label: "Featured"      },
   { key: "marketing",     label: "Marketing"     },
   { key: "notifications", label: "Notifications" },
 ];
@@ -3957,6 +3959,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "agency-data" && <AgencyDataConsoleView />}
             {tab === "broker-pilot" && <BrokerPilotView />}
             {tab === "market-news" && <MarketNewsView />}
+            {tab === "featured" && <FeaturedView />}
             {tab === "marketing" && <ListingSocialView />}
             {tab === "notifications" && (
               <NotificationsView onCountChange={handleNotificationCountChange} />

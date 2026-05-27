@@ -173,6 +173,19 @@ export interface IslandContext {
 /** Minimum sample size for showing median */
 export const MIN_MEDIAN_SAMPLE = 5;
 
+/** A single weekly featured selection row from homepage_featured_selections */
+export interface FeaturedSelectionRow {
+  id: string;
+  market_id: string;
+  iso_week: string;
+  listing_ids: string[];
+  status: "draft" | "published";
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
 /** Outlier price bounds */
 export const PRICE_FLOOR = 10_000;
 export const PRICE_CEILING = 5_000_000;

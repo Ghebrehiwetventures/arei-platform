@@ -1229,3 +1229,118 @@ export async function markAllNotificationsRead(): Promise<void> {
     throw new Error(`[Admin] markAllNotificationsRead failed: ${error.message}`);
   }
 }
+
+// ============================================
+// HOMEPAGE FEATURED SELECTIONS
+// All reads/writes use supabaseAuth (authenticated JWT).
+// ============================================
+
+export interface FeaturedSelectionRow {
+  id: string;
+  market_id: string;
+  iso_week: string;
+  listing_ids: string[];
+  status: "draft" | "published";
+  note: string | null;
+  created_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** ISO 8601 week string for a given date (or today). 'YYYY-WNN', Monday-start. */
+export function toIsoWeek(date: Date = new Date()): string {
+  const day = date.getDay();
+  const monday = new Date(date);
+  monday.setDate(date.getDate() + (day === 0 ? -6 : 1 - day));
+  monday.setHours(0, 0, 0, 0);
+  const jan4 = new Date(monday.getFullYear(), 0, 4);
+  const jan4Day = jan4.getDay() || 7;
+  const jan4Monday = new Date(jan4);
+  jan4Monday.setDate(jan4.getDate() - jan4Day + 1);
+  const weekNum = Math.round((monday.getTime() - jan4Monday.getTime()) / (7 * 24 * 60 * 60 * 1000)) + 1;
+  return `${monday.getFullYear()}-W${String(weekNum).padStart(2, "0")}`;
+}
+
+/** Returns the Monday date for a given ISO week string. */
+export function isoWeekToMonday(isoWeek: string): Date {
+  const m = isoWeek.match(/^(\d{4})-W(\d{2})$/);
+  if (!m) return new Date();
+  const year = parseInt(m[1], 10);
+  const week = parseInt(m[2], 10);
+  // Jan 4 is always week 1
+  const jan4 = new Date(year, 0, 4);
+  const jan4Day = jan4.getDay() || 7;
+  const jan4Monday = new Date(jan4);
+  jan4Monday.setDate(jan4.getDate() - jan4Day + 1);
+  const monday = new Date(jan4Monday.getTime() + (week - 1) * 7 * 24 * 60 * 60 * 1000);
+  return monday;
+}
+
+/** Fetch the 6 most recent weeks of selections (includes all statuses). */
+export async function getFeaturedSelections(): Promise<FeaturedSelectionRow[]> {
+  const { data, error } = await supabaseAuth
+    .from("homepage_featured_selections")
+    .select("*")
+    .eq("market_id", "cv")
+    .order("iso_week", { ascending: false })
+    .limit(12);
+
+  if (error) {
+    console.error("[Admin] getFeaturedSelections failed:", error.message);
+    return [];
+  }
+  return (data ?? []) as FeaturedSelectionRow[];
+}
+
+/** Upsert a selection for a given ISO week. */
+export async function saveFeaturedSelection(
+  isoWeek: string,
+  listingIds: string[],
+  status: "draft" | "published",
+  note?: string
+): Promise<void> {
+  const { data: sessionData } = await supabaseAuth.auth.getSession();
+  const createdBy = sessionData.session?.user?.email ?? null;
+
+  const { error } = await supabaseAuth
+    .from("homepage_featured_selections")
+    .upsert(
+      {
+        market_id: "cv",
+        iso_week: isoWeek,
+        listing_ids: listingIds,
+        status,
+        note: note ?? null,
+        created_by: createdBy,
+        updated_at: new Date().toISOString(),
+      },
+      { onConflict: "market_id,iso_week" }
+    );
+
+  if (error) throw new Error(`[Admin] saveFeaturedSelection failed: ${error.message}`);
+}
+
+/** Promote a selection to published or demote to draft. */
+export async function setFeaturedStatus(
+  isoWeek: string,
+  status: "draft" | "published"
+): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("homepage_featured_selections")
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq("market_id", "cv")
+    .eq("iso_week", isoWeek);
+
+  if (error) throw new Error(`[Admin] setFeaturedStatus failed: ${error.message}`);
+}
+
+/** Delete a selection row entirely. */
+export async function deleteFeaturedSelection(isoWeek: string): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("homepage_featured_selections")
+    .delete()
+    .eq("market_id", "cv")
+    .eq("iso_week", isoWeek);
+
+  if (error) throw new Error(`[Admin] deleteFeaturedSelection failed: ${error.message}`);
+}
