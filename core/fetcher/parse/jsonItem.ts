@@ -14,6 +14,7 @@ import type {
 } from "../types";
 import { dedupeImageUrls } from "./images";
 import {
+  applyDetailUrlRewrite,
   extractIdFromUrl,
   generateListingId,
   makeAbsoluteUrl,
@@ -225,6 +226,11 @@ export function mapJsonItem(
   }
   // Strip trailing slashes to match HTML pipeline's canonical form
   if (detailUrl) detailUrl = detailUrl.replace(/\/+$/, "");
+  // id_url_pattern matches against the pre-rewrite URL (mirrors HTML path
+  // in parse/listings.ts), while detailUrl persisted to the listing is the
+  // rewritten form so enrichment hits the chosen variant (e.g. en/).
+  const preRewriteUrl = detailUrl;
+  if (detailUrl) detailUrl = applyDetailUrlRewrite(detailUrl, config.detail_url_rewrite);
 
   // Images
   let imageUrls: string[] = [];
@@ -240,8 +246,8 @@ export function mapJsonItem(
     const raw = getByPath(item, map.id);
     if (raw != null) id = String(raw);
   }
-  if (!id && detailUrl) {
-    id = extractIdFromUrl(detailUrl, config.id_url_pattern);
+  if (!id && preRewriteUrl) {
+    id = extractIdFromUrl(preRewriteUrl, config.id_url_pattern);
   }
   const idPrefix = config.id_prefix || config.id.replace(/^cv_/, "");
   const listingId = id
