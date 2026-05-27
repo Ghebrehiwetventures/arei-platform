@@ -7,7 +7,7 @@ import OpenAI from "openai";
 dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig } from "../core/configLoader";
-import { genericPaginatedFetcher, GenericParsedListing, dedupeImageUrls } from "../core/genericFetcher";
+import { genericPaginatedFetcher, GenericParsedListing } from "../core/genericFetcher";
 import { fetchHtml } from "../core/fetchHtml";
 import { fetchHeadless } from "../core/fetchHeadless";
 import { parseLocation, getCurrency, getCountry } from "../core/locationMapper";
@@ -17,6 +17,7 @@ import { getStrategyFactory, resetStrategyFactory } from "../core/detail/strateg
 import { buildListFetchFn } from "../core/pipeline/fetchSource";
 import { loadLocationHooks, LocationHookModule } from "../core/pipeline/locationHooks";
 import { LAND_TYPES } from "../core/pipeline/propertyType";
+import { applyExtractResultToListing } from "../core/pipeline/enrich";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -175,28 +176,7 @@ async function enrichListings(
         continue;
       }
 
-      if (extractResult.description && extractResult.description.length >= 50) {
-        if (!listing.description || extractResult.description.length > listing.description.length) {
-          listing.description = extractResult.description;
-        }
-      }
-
-      if (extractResult.bedrooms  !== undefined) listing.bedrooms  = extractResult.bedrooms;
-      if (extractResult.bathrooms !== undefined) listing.bathrooms = extractResult.bathrooms;
-      if (extractResult.areaSqm   !== undefined) listing.area_sqm  = extractResult.areaSqm;
-      if (extractResult.amenities?.length)       listing.amenities = extractResult.amenities;
-
-      if (extractResult.imageUrls?.length) {
-        listing.imageUrls = dedupeImageUrls([...listing.imageUrls, ...extractResult.imageUrls]);
-      }
-
-      if (extractResult.location && !listing.location) {
-        listing.location = extractResult.location;
-      }
-
-      if (extractResult.price && extractResult.price >= 500 && !listing.price) {
-        listing.price = extractResult.price;
-      }
+      applyExtractResultToListing(listing, extractResult);
 
       enriched++;
       console.log(`[Enrich] ✓ ${listing.id}`);

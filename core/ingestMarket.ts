@@ -19,6 +19,7 @@ import { fetchHtml } from "./fetchHtml";
 import { buildListFetchFn } from "./pipeline/fetchSource";
 import { loadLocationHooks, LocationHookModule } from "./pipeline/locationHooks";
 import { LAND_TYPES } from "./pipeline/propertyType";
+import { applyExtractResultToListing } from "./pipeline/enrich";
 import { initSourceStats, normalizeOrDrop } from "./dropReport";
 
 import * as fs from "fs";
@@ -41,7 +42,6 @@ import {
   genericPaginatedFetcher,
   GenericParsedListing,
   SourceFetchConfig,
-  dedupeImageUrls,
 } from "./genericFetcher";
 import {
   getSourceHealthEntry,
@@ -347,60 +347,11 @@ async function pluginDetailEnrichment(
         },
       });
 
-      let wasEnriched = false;
-
-      // Prefer explicit plain-text description; fall back to stripping description_html
-      let plainDescription = extractResult.description;
-      if ((!plainDescription || plainDescription.length < 50) && listing.description_html) {
-        const stripped = listing.description_html
-          .replace(/<[^>]+>/g, " ")
-          .replace(/\s+/g, " ")
-          .trim();
-        if (stripped.length >= 50) {
-          plainDescription = stripped;
-        }
-      }
-
-      if (plainDescription && plainDescription.length >= 50) {
-        if (!listing.description || plainDescription.length > listing.description.length) {
-          listing.description = plainDescription;
-          wasEnriched = true;
-        }
-      }
-
-      // Merge structured data
-      if (extractResult.bedrooms !== undefined) listing.bedrooms = extractResult.bedrooms;
-      if (extractResult.bathrooms !== undefined) listing.bathrooms = extractResult.bathrooms;
-      if (extractResult.parkingSpaces !== undefined) listing.parkingSpaces = extractResult.parkingSpaces;
-      if (extractResult.areaSqm !== undefined) listing.area_sqm = extractResult.areaSqm;
-      if (extractResult.amenities?.length) listing.amenities = extractResult.amenities;
-
-      // Update price if listing has no price but detail page does (min threshold to reject placeholders)
-      if (extractResult.price && extractResult.price >= 500 && !listing.price) {
-        listing.price = extractResult.price;
-        wasEnriched = true;
-      }
-
-      // Update title if we got a better one
-      if (extractResult.title && extractResult.title.length > (listing.title?.length || 0)) {
-        listing.title = extractResult.title;
-      }
-
-      // Update location from detail page if listing has none
-      if (extractResult.location && !listing.location) {
-        listing.location = extractResult.location;
-        wasEnriched = true;
-      }
-
-      // Merge images
-      if (extractResult.imageUrls?.length) {
-        const merged = [...(listing.imageUrls || []), ...extractResult.imageUrls];
-        const deduped = dedupeImageUrls(merged);
-        if (deduped.length !== (listing.imageUrls || []).length) {
-          wasEnriched = true;
-        }
-        listing.imageUrls = deduped;
-      }
+      const wasEnriched = applyExtractResultToListing(listing, extractResult, {
+        applyDescriptionHtmlFallback: true,
+        applyTitleUpgrade: true,
+        applyParkingSpaces: true,
+      });
 
       // Apply project metadata
       if (projectMetadata.source_ref) listing.source_ref = projectMetadata.source_ref;
