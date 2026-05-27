@@ -566,6 +566,65 @@ async function listPublishedPosts(sb) {
   return data || [];
 }
 
+async function getExistingPublishedPost(sb, listingId, platform = DEFAULT_PLATFORM, marketId = DEFAULT_MARKET_ID) {
+  const { data: postRows, error: postErr } = await sb
+    .from("social_listing_posts")
+    .select("external_post_id, permalink, market_id, platform")
+    .eq("listing_id", listingId)
+    .order("published_at", { ascending: false })
+    .limit(10);
+  if (postErr) throw new Error(`Could not verify publish history: ${postErr.message}`);
+  const post = (postRows || []).find((row) =>
+    (row.market_id == null || row.market_id === marketId) &&
+    (row.platform == null || row.platform === platform)
+  );
+  if (post) {
+    return {
+      postId: post.external_post_id,
+      permalink: post.permalink || "",
+      storyPublished: false,
+      alreadyPublished: true,
+    };
+  }
+
+  const { data: queueRows, error: queueErr } = await sb
+    .from("social_listing_queue")
+    .select("post_id, permalink, story_published, market_id, platform")
+    .eq("listing_id", listingId)
+    .eq("status", "published")
+    .not("post_id", "is", null)
+    .order("scheduled_at", { ascending: false })
+    .limit(10);
+  if (queueErr) throw new Error(`Could not verify queue history: ${queueErr.message}`);
+  const queued = (queueRows || []).find((row) =>
+    (row.market_id == null || row.market_id === marketId) &&
+    (row.platform == null || row.platform === platform) &&
+    !String(row.post_id || "").startsWith("CLAIM:")
+  );
+  if (!queued) return null;
+  return {
+    postId: queued.post_id,
+    permalink: queued.permalink || "",
+    storyPublished: Boolean(queued.story_published),
+    alreadyPublished: true,
+  };
+}
+
+async function getActiveQueuedPost(sb, listingId, platform = DEFAULT_PLATFORM, marketId = DEFAULT_MARKET_ID) {
+  const { data, error } = await sb
+    .from("social_listing_queue")
+    .select("id, status, scheduled_at, post_id, market_id, platform")
+    .eq("listing_id", listingId)
+    .in("status", ["pending", "published"])
+    .order("scheduled_at", { ascending: false })
+    .limit(10);
+  if (error) throw new Error(`Could not verify queue state: ${error.message}`);
+  return (data || []).find((row) =>
+    (row.market_id == null || row.market_id === marketId) &&
+    (row.platform == null || row.platform === platform)
+  ) || null;
+}
+
 async function getMarketingSummary(sb) {
   const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString();
   const [
@@ -627,6 +686,9 @@ async function publishCarousel(sb, body) {
   const { listingId, caption, imageUrls } = body;
   if (!listingId) throw new Error("listingId required");
   if (!caption || !caption.trim()) throw new Error("caption required");
+
+  const existingPost = await getExistingPublishedPost(sb, listingId);
+  if (existingPost) return existingPost;
 
   const ig = getInstagramConfig();
   if (!ig.configured) throw new Error("Instagram not configured. Set INSTAGRAM_ACCESS_TOKEN and INSTAGRAM_BUSINESS_ACCOUNT_ID.");
@@ -814,6 +876,9 @@ export async function processQueueOnce(sb) {
         primaryPostId = result.postId;
         primaryPermalink = result.permalink;
       }
+      if (result.alreadyPublished) {
+        console.warn(`[social-listing] ${channel} already published; marking queue row published`, item.id);
+      }
       console.log(`[social-listing] ${channel} published`, item.id);
     } catch (err) {
       const msg = err.message || String(err);
@@ -931,17 +996,45 @@ export default async function handler(req, res) {
         return;
       }
       const resolvedChannels = resolveChannels(channels, body.platform || DEFAULT_PLATFORM);
+      const marketId = body.marketId || DEFAULT_MARKET_ID;
+      for (const channel of resolvedChannels) {
+        const existingPost = await getExistingPublishedPost(sb, listingId, channel, marketId);
+        if (existingPost) {
+          send(res, 409, {
+            error: `This listing has already been published to ${channel}.`,
+            existingPost,
+          });
+          return;
+        }
+        const activeQueue = await getActiveQueuedPost(sb, listingId, channel, marketId);
+        if (activeQueue) {
+          send(res, 409, {
+            error: activeQueue.status === "pending"
+              ? `This listing is already queued for ${channel}.`
+              : `This listing has already been published to ${channel}.`,
+            queueId: activeQueue.id,
+            status: activeQueue.status,
+          });
+          return;
+        }
+      }
       const { data, error } = await sb.from("social_listing_queue").insert({
         listing_id: listingId,
         listing_title: listingTitle || null,
         caption: caption.trim(),
         image_urls: imageUrls,
         scheduled_at: scheduledAt,
-        market_id: body.marketId || DEFAULT_MARKET_ID,
+        market_id: marketId,
         platform: resolvedChannels[0],
         channels: resolvedChannels,
       }).select("id, scheduled_at").single();
-      if (error) throw new Error(error.message);
+      if (error) {
+        if (error.code === "23505") {
+          send(res, 409, { error: "This listing is already queued or published on this channel." });
+          return;
+        }
+        throw new Error(error.message);
+      }
       send(res, 200, { queued: true, id: data.id, scheduledAt: data.scheduled_at });
       return;
     }
