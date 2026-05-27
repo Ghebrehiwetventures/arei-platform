@@ -67,15 +67,10 @@ function sleep(ms: number): Promise<void> {
 // callers (genericDetailExtractor, pipeline/enrich).
 export { dedupeImageUrls } from "./fetcher/parse/images";
 
-// JSON item mapping (for json_api sources) lives in ./fetcher/parse/jsonItem.
 // mapJsonItem is re-exported to preserve the public API (tests + any direct
-// consumer). getByPath is needed locally by the json_api pagination branch
-// for advancing through skip/page responses.
-import { getByPath, mapJsonItem } from "./fetcher/parse/jsonItem";
+// consumer). The orchestrator no longer calls it directly; the json_api
+// strategy module imports it internally.
 export { mapJsonItem } from "./fetcher/parse/jsonItem";
-
-// HTML listing parser lives in ./fetcher/parse/listings.
-import { parseListingsFromHtml } from "./fetcher/parse/listings";
 
 // URL-loop pagination strategy (query_param / offset / path_segment /
 // next_link / none) lives in ./fetcher/strategies/urlLoop.
@@ -86,6 +81,9 @@ import { runClickNextStrategy } from "./fetcher/strategies/clickNext";
 
 // ajax_post strategy (Houzez-style load-more) lives in ./fetcher/strategies/ajaxPost.
 import { runAjaxPostStrategy } from "./fetcher/strategies/ajaxPost";
+
+// json_api strategy (Azure Search / OData / Elastic / REST) lives in ./fetcher/strategies/jsonApi.
+import { runJsonApiStrategy } from "./fetcher/strategies/jsonApi";
 
 
 // ============================================
@@ -294,152 +292,12 @@ export async function genericPaginatedFetcher(
 
   // =============================================
   // JSON API PAGINATION (skip/top or page/per_page)
-  // Generic handler for structured JSON APIs (Azure Search, OData, Elastic, REST)
+  // Delegated to ./fetcher/strategies/jsonApi.
   // =============================================
   if (config.pagination.type === "json_api") {
-    const p = config.pagination;
-    const method = (p.method || "POST").toUpperCase();
-    const pageMode = p.page_mode || "skip";
-    const pageSize = p.page_size ?? 20;
-    const pageField = p.page_field || (pageMode === "skip" ? "skip" : "page");
-    const sizeField = p.size_field || (pageMode === "skip" ? "top" : "per_page");
-    const itemsPath = p.items_path || "value";
-    const countPath = p.count_path;
-
-    if (!config.item_map) {
-      debug.errors.push("json_api pagination requires item_map on source config");
-      debug.stopReason = "config_error_missing_item_map";
-      return { listings: [], debug };
-    }
-
-    if (process.env.DEBUG_GENERIC === "1") {
-      console.log(`[GenericFetcher] Using json_api pagination for ${config.id} (${method} ${config.base_url})`);
-    }
-
-    let pageNum = startPage;
-    let totalFromServer: number | undefined;
-
-    while (allListings.length < maxItems && pageNum <= startPage + maxPages - 1) {
-      if (pageNum > startPage) {
-        const actualDelay = delayMs + Math.floor(Math.random() * jitterMs);
-        if (process.env.DEBUG_GENERIC === "1") {
-          console.log(`[GenericFetcher] Waiting ${actualDelay}ms before json_api page ${pageNum}...`);
-        }
-        await sleep(actualDelay);
-      }
-
-      debug.pagesAttempted++;
-
-      // Build pagination values
-      const pageValue = pageMode === "skip" ? (pageNum - startPage) * pageSize : pageNum;
-
-      // Build request
-      let requestUrl = config.base_url;
-      const headers: Record<string, string> = {
-        "User-Agent": getRandomUserAgent(),
-        "Accept": "application/json",
-        "Content-Type": "application/json",
-        "Referer": config.base_url,
-      };
-      let bodyStr: string | undefined;
-
-      if (method === "POST") {
-        const body: Record<string, unknown> = { ...(p.body || {}) };
-        body[pageField] = pageValue;
-        body[sizeField] = pageSize;
-        bodyStr = JSON.stringify(body);
-      } else {
-        const url = new URL(config.base_url);
-        for (const [k, v] of Object.entries(p.query || {})) url.searchParams.set(k, v);
-        url.searchParams.set(pageField, String(pageValue));
-        url.searchParams.set(sizeField, String(pageSize));
-        requestUrl = url.toString();
-      }
-
-      if (process.env.DEBUG_GENERIC === "1") {
-        console.log(`[GenericFetcher] json_api page ${pageNum}: ${pageField}=${pageValue} ${sizeField}=${pageSize}`);
-      }
-
-      try {
-        const response = await fetch(requestUrl, { method, headers, body: bodyStr });
-
-        if (!response.ok) {
-          debug.errors.push(`json_api page ${pageNum}: HTTP ${response.status}`);
-          debug.stopReason = `json_api_http_${response.status}_page_${pageNum}`;
-          break;
-        }
-
-        const json = await response.json();
-        const bodyText = JSON.stringify(json);
-        debug.htmlLengths.push(bodyText.length);
-        debug.pagesSuccessful++;
-
-        if (countPath && totalFromServer === undefined) {
-          const tv = getByPath(json, countPath);
-          if (typeof tv === "number") totalFromServer = tv;
-        }
-
-        const items = getByPath(json, itemsPath);
-        if (!Array.isArray(items)) {
-          debug.errors.push(`json_api page ${pageNum}: items_path "${itemsPath}" did not resolve to an array`);
-          debug.stopReason = `json_api_bad_items_path_page_${pageNum}`;
-          break;
-        }
-
-        const pageListings: GenericParsedListing[] = [];
-        for (const raw of items) {
-          const mapped = mapJsonItem(raw, config, now);
-          if (!mapped) continue;
-          if (processedUrls.has(mapped.detailUrl || mapped.id)) continue;
-          processedUrls.add(mapped.detailUrl || mapped.id);
-          pageListings.push(mapped);
-        }
-
-        debug.listingsPerPage.push(pageListings.length);
-        allListings.push(...pageListings);
-
-        if (process.env.DEBUG_GENERIC === "1") {
-          console.log(`[GenericFetcher] json_api page ${pageNum}: ${items.length} items → ${pageListings.length} mapped (total: ${allListings.length}${totalFromServer !== undefined ? `/${totalFromServer}` : ""})`);
-        }
-
-        // Stop conditions
-        if (items.length === 0) {
-          debug.stopReason = "empty_listings";
-          break;
-        }
-        if (items.length < pageSize) {
-          debug.stopReason = "last_page_partial";
-          break;
-        }
-        if (totalFromServer !== undefined && allListings.length >= totalFromServer) {
-          debug.stopReason = "reached_server_total";
-          break;
-        }
-        if (allListings.length >= maxItems) {
-          debug.stopReason = "max_items_reached";
-          break;
-        }
-
-        pageNum++;
-      } catch (err) {
-        const errMsg = err instanceof Error ? err.message : String(err);
-        debug.errors.push(`json_api page ${pageNum}: ${errMsg}`);
-        debug.stopReason = `json_api_error_page_${pageNum}`;
-        break;
-      }
-    }
-
-    if (!debug.stopReason) debug.stopReason = "natural_end";
-
-    if (process.env.DEBUG_GENERIC === "1") {
-      console.log(`[GenericFetcher] ===== Complete (json_api) =====`);
-      console.log(`[GenericFetcher] Pages: ${debug.pagesSuccessful}/${debug.pagesAttempted}`);
-      console.log(`[GenericFetcher] Total listings: ${allListings.length}${totalFromServer !== undefined ? ` (server total: ${totalFromServer})` : ""}`);
-      console.log(`[GenericFetcher] Stop reason: ${debug.stopReason}`);
-    }
-
+    const listings = await runJsonApiStrategy(config, processedUrls, now, debug);
     return {
-      listings: allListings.slice(0, maxItems),
+      listings: listings.slice(0, maxItems),
       debug,
     };
   }
