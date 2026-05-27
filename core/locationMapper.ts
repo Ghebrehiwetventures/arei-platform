@@ -83,6 +83,25 @@ export function loadLocationsConfig(marketId: string): LocationsConfig | null {
 // PARSE LOCATION STRING → Island/City
 // ============================================
 
+// Unicode-aware word-boundary alias matcher. Naive substring matching produced
+// false positives like "Paul" matching "São Paulo" and "Sal" matching "apartment
+// for sale". Standard regex `\b` is ASCII-only, so we explicitly assert that
+// neither side of the match is a Letter or Number (any script). Cached per alias
+// to avoid recompiling regexes per call.
+const aliasRegexCache: Map<string, RegExp> = new Map();
+function escapeRegex(s: string): string {
+  return s.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+function aliasMatches(text: string, alias: string): boolean {
+  if (!alias) return false;
+  let rx = aliasRegexCache.get(alias);
+  if (!rx) {
+    rx = new RegExp(`(?<![\\p{L}\\p{N}])${escapeRegex(alias)}(?![\\p{L}\\p{N}])`, "iu");
+    aliasRegexCache.set(alias, rx);
+  }
+  return rx.test(text);
+}
+
 export function parseLocation(locationText: string | undefined, marketId: string): LocationResult {
   if (!locationText) {
     return {};
@@ -93,7 +112,6 @@ export function parseLocation(locationText: string | undefined, marketId: string
     return { raw: locationText };
   }
 
-  const textLower = locationText.toLowerCase().trim();
   const result: LocationResult = { raw: locationText };
 
   // Get the list of regions (islands OR regions, whichever exists)
@@ -110,7 +128,7 @@ export function parseLocation(locationText: string | undefined, marketId: string
   for (const region of allRegions) {
     for (const city of region.cities) {
       for (const alias of city.aliases) {
-        if (textLower.includes(alias.toLowerCase())) {
+        if (aliasMatches(locationText, alias)) {
           result.island = region.name;  // "island" field used for both islands and regions
           result.city = city.name;
           return result;
@@ -122,7 +140,7 @@ export function parseLocation(locationText: string | undefined, marketId: string
   // Second pass: Try to match regions (less specific)
   for (const region of allRegions) {
     for (const alias of region.aliases) {
-      if (textLower.includes(alias.toLowerCase())) {
+      if (aliasMatches(locationText, alias)) {
         result.island = region.name;
         // Use default city if defined
         const defaultCity = region.cities.find(c => c.default);

@@ -45,7 +45,7 @@ If you change a source from "no `id_url_pattern`" to "has `id_url_pattern`" afte
 
 | Option | Type | Description |
 |---|---|---|
-| `pagination.type` | `"query_param"` \| `"path_segment"` \| `"json_api"` | How to construct the URL for page N. |
+| `pagination.type` | `"query_param"` \| `"path_segment"` \| `"ajax_post"` \| `"click_next"` \| `"json_api"` \| `"none"` | How to construct the URL for page N. `json_api` posts a JSON body and reads pages from `$skip` / `$top` semantics or numeric `page`. |
 | `pagination.param` | string | (query_param only) Name of the page parameter, e.g. `"page"`. |
 | `pagination.pattern` | string | (path_segment only) Template like `"/page/{page}/"`. |
 | `pagination.start` | int | First page number (usually `1`, occasionally `0`). |
@@ -102,6 +102,23 @@ Common variants:
 
 Market-level location resolution lives in `markets/{market}/locations.yml` and `markets/{market}/locationHooks.ts`. Source-level `location_patterns` is for sites whose location strings need normalisation before the market resolver sees them.
 
+### How the resolver matches aliases
+
+`parseLocation()` in `core/locationMapper.ts` walks the YAML aliases in two passes (cities first, then regions) and tests each alias with a **Unicode-aware word-boundary regex** — `(?<![\p{L}\p{N}])alias(?![\p{L}\p{N}])` with the `iu` flags.
+
+Naive substring matching used to live here and caused real production bugs:
+- `Paul` (city on Santo Antão) matched `São Paulo` (area in Santa Maria, Sal)
+- `Sal` (island) matched every listing title containing `for sale`
+- `Praia` (city on Santiago, the capital) matched `Praia António Sousa` (area in Santa Maria, Sal)
+
+If you add a new alias, prefer the longest/most-specific form ("Cidade da Praia" rather than "Praia") so word-boundary matching has good signal. Single-word aliases that are common substrings of unrelated place names will still false-positive within their own region.
+
+### List-card location selectors with multiple links
+
+The engine joins **all** elements matched by `selectors.location`, not just `.first()`. Sites like op24 split the location into stacked links inside one container (e.g. `<a>São Paulo</a> <a>Santa Maria</a>`). Joining them with `", "` gives the resolver enough context to disambiguate — without this, `São Paulo` alone yields no match, and falling through to the title rarely helps.
+
+If your selector accidentally over-matches (e.g. `a` inside the container catching unrelated link text), scope it tighter — `.property_location_image a` not `.property_location_image *`.
+
 ---
 
 ## 7. Detail enrichment
@@ -156,10 +173,11 @@ The engine has defense-in-depth image filtering on top of your selector (see § 
 
 The engine runs `spec_patterns` first; if a field is still null, it falls back to these selectors and matches the first integer in the captured text.
 
-### 7.2 Spec patterns (body-text regex)
+### 7.2 Spec patterns (regex on a scoped text)
 
 ```yaml
 detail:
+  specs_selector: ".listing_detail"        # optional but recommended
   spec_patterns:
     bedrooms:
       - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
@@ -181,7 +199,47 @@ The patterns are tried in order. First match wins. Per-field sanity checks (engi
 - parking: 0 ≤ N < 20
 - area: any positive number
 
-### 7.3 Amenity keywords
+**Scoping the regex text (`specs_selector`).** Without it, the engine runs each pattern against `$("body").text()` — the entire rendered page. That includes navigation, "Similar Listings" / "Other properties" sidebars, footer, URL fragments, etc. The first regex match wins, so an unrelated `2-Bedroom Apartment` in a sidebar pollutes the field. Real example: an op24 studio listing got `bedrooms = 9` because the regex matched a number in a `%20Bedje` URL fragment.
+
+Resolution order for the text the regex sees:
+
+1. `detail.specs_selector` if set — the engine reads `$(specs_selector).text()`.
+2. Else the description text from `detail.selectors.description` (if it returned ≥50 chars).
+3. Else the full `$("body").text()` (legacy fallback).
+
+Use `specs_selector` whenever the site has a discrete spec box (`.listing_detail`, `.property-features`, `.detailsBar`, `#js-spec-list`, etc.). It is the cleanest source-side defense against bleed-through from related listings. The fallbacks exist so older configs without `specs_selector` keep working.
+
+### 7.3 Label/value spec table (`spec_table`)
+
+Some sites present specs as structured label/value pairs rather than prose (Houzez `.listing-details-detail`, Elementor widgets with `span.pre-data`, classic `<dl><dt><dd>` definition lists, Proppy/CasafariCRM tables). Regex-on-prose (`spec_patterns`) misses these — the value usually isn't adjacent to the label in the rendered text.
+
+```yaml
+detail:
+  spec_table:
+    container: ".elementor-widget"            # nodes to scan
+    label_selector: "span.pre-data"           # element whose text IS the label
+    # value_selector — optional. Forms:
+    #   "+ dd"           → next sibling matching dd
+    #   "~ .value"       → following sibling matching .value
+    #   ".some-class"    → descendant of the label's parent
+    # If omitted, value = closest <li/tr/p/div> text minus the label text.
+    value_selector: "+ dd"
+    label_map:
+      bedrooms: ["bedrooms", "quartos", "beds"]
+      bathrooms: ["bathrooms", "casas de banho"]
+      parking:  ["parking spaces", "garage"]
+      area:     ["area", "área", "terrace area"]
+      price:    ["price", "preço", "precio"]
+```
+
+Resolution order for each spec field:
+1. `detail.selectors.{bedrooms,bathrooms}` (CSS direct, highest priority)
+2. `detail.spec_table` (this section)
+3. `detail.spec_patterns` (regex on body/description text)
+
+Label matching is case-insensitive — an alias matches if `label.toLowerCase()` equals the alias or contains it. Numeric values are read via `\b(\d{1,3})\b` and rejected if outside 0–19 (for beds/baths/parking). Area accepts decimals. Price values go through the same `parseConfiguredPrice` / `parseGenericPrice` pipeline as `selectors.price`.
+
+### 7.4 Amenity keywords
 
 ```yaml
 detail:
@@ -205,7 +263,7 @@ In `core/detail/plugins/genericDetail.ts`:
 
 - **`INVALID_IMAGE_PATTERNS`** — URLs containing `logo`, `icon`, `sprite`, `placeholder`, `default`, `avatar`, `loading`, `spinner`, `blank.`, `1x1.`, `pixel.`, `spacer`, `emoji`, `smiley`, `wp-includes` are rejected.
 - **`SMALL_IMAGE_PATTERNS`** — URLs with `width=N` or `w=N` where N is 1–199, or `-NxN.` / `/NxN/` thumbnail-size paths, are rejected.
-- **`isChromeElement`** — `<img>` whose class or alt matches `header_`, `footer_`, `nav_`, `brand_`, `\blogo\b`, `\bicon\b`, `favicon` is skipped. Catches header logos whose URL is an opaque CDN UUID with no "logo" substring.
+- **`isChromeElement`** — `<img>` whose class, alt, **or src filename** matches `header_`, `footer_`, `nav_`, `brand_`, `\blogo\b`, `\bicon\b`, `favicon`, `\bsymbol\b`, `\bwatermark\b` is skipped. The filename branch also catches `-symbol.png`, `-logo-*`, `site-logo`, etc. so brand assets embedded inline in `description` prose (e.g. `Gamma-symbol.png` on estatecv) don't leak into `image_urls`.
 
 In `core/genericFetcher.ts → dedupeImageUrls`:
 
@@ -217,7 +275,100 @@ These are tuned for the sources we've onboarded so far. If you find a legitimate
 
 ---
 
-## 9. Full worked example (CCore Investments)
+## 9. JSON API sources (`type: json_api`, `pagination.type: json_api`)
+
+For sites whose listings come from a structured API (REMAX, Sotheby's IS, Properstar, anything Azure-Search-backed) — skip HTML parsing entirely. The engine talks to the JSON endpoint and maps fields by dot-path.
+
+```yaml
+pagination:
+  type: json_api
+  method: POST
+  page_mode: skip          # Azure Search uses $skip/$top semantics
+  page_size: 20
+  page_field: skip         # body field name for the offset
+  size_field: top          # body field name for the size
+  items_path: value        # dot-path to the hits array in the response
+  count_path: "@odata.count"
+  body:
+    search: "*"
+    filter: "content/ListingCountryCode eq 'CV' and content/IsFindable eq true"
+    count: true
+```
+
+`item_map` then projects each hit into a `ParsedListing`. Dot-paths resolve inside `content_base`. Templates use `{field}` and `{VALUE}` placeholders.
+
+```yaml
+item_map:
+  content_base: content
+  id: MLSID
+  title:                              # primary: array-pick by matchers
+    array: ListingDescriptions
+    field: Description
+    matches:
+      - field: ISOLanguageCode
+        equals: en
+      - field: DescriptionTypeUID
+        equals: "1113"
+  title_fallbacks:                    # tried in order if `title` is empty
+    - array: ListingMetaTags
+      field: MetaTitle
+      match_field: LanguageCode
+      match_value: en-US
+  price: ListingPriceEuro
+  bedrooms: NumberOfBedrooms
+  bathrooms: NumberOfBathrooms
+  area_sqm: TotalArea
+  location_template: "{City}, {Province}"
+  skip_if:
+    - field: HidePricePublic
+      equals: true                    # drop "price on request" rows. Omit to keep them as price=null.
+  description:
+    array: ListingDescriptions
+    field: Description
+    match_field: ISOLanguageCode
+    match_value: en
+  detail_url:
+    array: ShortLinks
+    field: ShortLink
+    match_field: ISOLanguageCode
+    match_value: en
+    template: "https://www.example.com/{VALUE}"
+  images:
+    array: ListingImages
+    field: FileName
+    sort_by: Order                    # the agent's display sequence; image_urls[0] becomes the hero
+    template: "https://cdn.example.com/path/{VALUE}"
+    # limit: 100                      # optional; default 100 (effectively uncapped)
+```
+
+### Array-pick spec (`ItemMapArrayPick`)
+
+| Option | Description |
+|---|---|
+| `array` | Dot-path to the array field on the item. |
+| `field` | Field name on each element whose value we extract. |
+| `match_field` + `match_value` | Pick the first element whose `match_field == match_value`. Shorthand for a single equality. |
+| `matches[]` | Pick the first element matching **every** `{field, equals}` pair. Use when you need an AND across multiple conditions (e.g. English language AND short-title type). |
+| `template` | Apply to the extracted value, replacing `{VALUE}`. Use for CDN URL templates and absolute-URL construction. |
+| `sort_by` | Sort the array by this field (numeric ascending, missing keys go to end) before picking. Use when the source API doesn't return elements in display order — REMAX's `ListingImages` returns `Order=1` in arbitrary positions, so `sort_by: Order` makes `image_urls[0]` actually match the hero on remax.cv. |
+| `limit` | For `all: true` arrays, cap the number returned. Default `100`. |
+| `all` | Used internally by the engine for `images`. Returns the whole array as a string\[\]. |
+
+### Title and description selection
+
+- `title_template` — string template with `{field}` placeholders into the item. Wins over `title`.
+- `title` — either a dot-path string, or an `ItemMapArrayPick` (typed array selection by language/role).
+- `title_fallbacks` — ordered list tried when `title` yields an empty/missing value. Same shape as `title`.
+
+The order is `title_template` → `title` → fallbacks in array order. This lets a config say "prefer the English short-description; if it's missing, fall back to the meta title" without writing per-source code.
+
+### `skip_if`
+
+Skip a hit when any rule's `getByPath(item, rule.field) === rule.equals` holds. Used in REMAX to drop `HidePricePublic: true` upstream (or, equivalently, omit `skip_if` and let the engine coerce `ListingPriceEuro: 0` to `price: undefined` — the public feed contract treats price as optional, see `docs/FEED_CONTRACT.md`).
+
+---
+
+## 10. Full worked example (CCore Investments)
 
 ```yaml
 - id: cv_ccoreinvestments
