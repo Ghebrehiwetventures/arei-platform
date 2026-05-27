@@ -22,6 +22,15 @@ import { loadLocationHooks } from "./locationHooks";
 import { LAND_TYPES, extractPropertyType } from "./propertyType";
 import { applyExtractResultToListing } from "./enrich";
 import { resolveLocation as resolveIsland } from "./locationResolver";
+import { SourceStatus } from "../status";
+import {
+  getSourceHealthEntry,
+  hasParserDiagnostics,
+  loadSourceHealth,
+  persistSourceHealth,
+  shouldAutoPauseSource,
+  type SourceHealthReportInput,
+} from "../sourceHealth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -483,7 +492,12 @@ async function writeToKvCurated(rows: CuratedRow[]): Promise<void> {
 
 // ─── Fetch ──────────────────────────────────────────────────────────────────
 
-async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing[]> {
+interface FetchOutcome {
+  listings: WorkingListing[];
+  debugErrors: string[];
+}
+
+async function fetchListings(sourceConfig: SourceConfig): Promise<FetchOutcome> {
   const fetchConfig = sourceConfigToFetchConfig(sourceConfig);
   const fetchFn = buildListFetchFn(fetchConfig.fetch_method);
 
@@ -495,7 +509,7 @@ async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing
     console.warn(`[Fetch] Errors: ${result.debug.errors.join(", ")}`);
   }
 
-  return result.listings.map((l: GenericParsedListing) => ({
+  const listings = result.listings.map((l: GenericParsedListing) => ({
     id: l.id,
     sourceId: l.sourceId,
     title: l.title,
@@ -509,6 +523,48 @@ async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing
     area_sqm: l.area_sqm ?? null,
     property_type: extractPropertyType(l.title, l.detailUrl),
   }));
+
+  return { listings, debugErrors: result.debug.errors };
+}
+
+/**
+ * Derive a SourceHealthReportInput from a fetch outcome. Exported for unit
+ * testing — the policy (when to mark BROKEN_SOURCE vs PARTIAL_OK vs OK) lives
+ * here so it can be exercised without mocking the orchestrator.
+ */
+export function deriveSourceHealthReport(
+  sourceId: string,
+  outcome: { listings: unknown[]; debugErrors: string[]; threwError?: string },
+): SourceHealthReportInput {
+  if (outcome.threwError) {
+    return {
+      id: sourceId,
+      status: SourceStatus.BROKEN_SOURCE,
+      lastError: outcome.threwError.slice(0, 100),
+      debugErrors: outcome.debugErrors,
+    };
+  }
+  if (outcome.listings.length === 0 && hasParserDiagnostics(outcome.debugErrors)) {
+    return {
+      id: sourceId,
+      status: SourceStatus.BROKEN_SOURCE,
+      lastError: outcome.debugErrors[0],
+      debugErrors: outcome.debugErrors,
+    };
+  }
+  if (outcome.listings.length === 0) {
+    return {
+      id: sourceId,
+      status: SourceStatus.PARTIAL_OK,
+      lastError: outcome.debugErrors[0],
+      debugErrors: outcome.debugErrors,
+    };
+  }
+  return {
+    id: sourceId,
+    status: SourceStatus.OK,
+    debugErrors: outcome.debugErrors,
+  };
 }
 
 // ─── Entry point ────────────────────────────────────────────────────────────
@@ -521,7 +577,46 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   console.log(`\n=== ingest_to_curated ===`);
   console.log(`market=${marketId}  source=${sourceId}  dry_run=${dryRun}\n`);
 
-  const listings = await fetchListings(sourceConfig);
+  const existingHealth = loadSourceHealth();
+  const persistedHealth = getSourceHealthEntry(existingHealth, marketId, sourceId);
+  if (shouldAutoPauseSource(persistedHealth)) {
+    console.log(
+      `[${sourceId}] Auto-paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs — skipping run.`,
+    );
+    persistSourceHealth(
+      marketId,
+      [
+        {
+          id: sourceId,
+          status: SourceStatus.PAUSED_BY_SYSTEM,
+          pauseReason: persistedHealth!.pauseReason || "parser_failure_threshold",
+          pauseDetail:
+            persistedHealth!.pauseDetail ||
+            `Paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs`,
+        },
+      ],
+      existingHealth,
+    );
+    return;
+  }
+
+  let fetchOutcome: { listings: WorkingListing[]; debugErrors: string[]; threwError?: string };
+  try {
+    const out = await fetchListings(sourceConfig);
+    fetchOutcome = { listings: out.listings, debugErrors: out.debugErrors };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[${sourceId}] Fetch error:`, message);
+    fetchOutcome = { listings: [], debugErrors: [], threwError: message };
+    persistSourceHealth(
+      marketId,
+      [deriveSourceHealthReport(sourceId, fetchOutcome)],
+      existingHealth,
+    );
+    throw err;
+  }
+
+  const listings = fetchOutcome.listings;
   console.log(`\nFetched: ${listings.length} listings`);
 
   await enrichListings(listings, sourceConfig);
@@ -644,10 +739,20 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   if (dryRun) {
     printSummary(listings.length, writable, skipped, publishedIds.size);
     console.log(`\n[DRY_RUN] No rows written.`);
+    persistSourceHealth(
+      marketId,
+      [deriveSourceHealthReport(sourceId, fetchOutcome)],
+      existingHealth,
+    );
     return;
   }
 
   await writeToKvCurated(writable);
   printSummary(listings.length, writable, skipped, publishedIds.size);
   console.log(`\nNext step: verify rows then run promotion SQL (see spec).`);
+  persistSourceHealth(
+    marketId,
+    [deriveSourceHealthReport(sourceId, fetchOutcome)],
+    existingHealth,
+  );
 }
