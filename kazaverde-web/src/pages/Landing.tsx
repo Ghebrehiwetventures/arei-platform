@@ -134,8 +134,10 @@ function pickFeatured(cards: ListingCard[], n: number): ListingCard[] {
     if (c.source_id) seenSources.add(c.source_id);
   };
 
-  // Reserve last slot for one land listing (if available)
-  const landSlot = land[0] ?? null;
+  // Reserve last slot for one land listing (if available).
+  // Prefer land[1] over land[0] to avoid the most-recently-indexed
+  // parcel (which often carries a map/satellite thumbnail).
+  const landSlot = land[1] ?? land[0] ?? null;
   const residentialTarget = landSlot ? n - 1 : n;
 
   // Pass 1: unique island + unique source
