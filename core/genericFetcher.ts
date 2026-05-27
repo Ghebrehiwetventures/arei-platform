@@ -86,45 +86,9 @@ export { mapJsonItem } from "./fetcher/parse/jsonItem";
 // HTML listing parser lives in ./fetcher/parse/listings.
 import { parseListingsFromHtml } from "./fetcher/parse/listings";
 
-// ============================================
-// BUILD PAGINATION URL
-// ============================================
-
-function buildPaginationUrl(config: SourceFetchConfig, pageNum: number): string {
-  const pagination = config.pagination;
-
-  if (pagination.type === "none") {
-    return config.base_url;
-  }
-
-  // First page might not need param
-  if (pageNum === (pagination.start ?? 1) && pagination.first_no_param) {
-    return config.base_url;
-  }
-
-  if (pagination.type === "query_param" && pagination.param) {
-    const separator = config.base_url.includes("?") ? "&" : "?";
-    return `${config.base_url}${separator}${pagination.param}=${pageNum}`;
-  }
-
-  if (pagination.type === "offset" && pagination.param) {
-    const offset = (pageNum - 1) * (pagination.increment || 10);
-    const separator = config.base_url.includes("?") ? "&" : "?";
-    return `${config.base_url}${separator}${pagination.param}=${offset}`;
-  }
-
-  if (pagination.type === "path_segment" && pagination.pattern) {
-    // e.g. pattern="/page/{page}/" → append "/page/2/" to base URL
-    const segment = pagination.pattern.replace("{page}", String(pageNum));
-    // Ensure base URL ends with /
-    const base = config.base_url.endsWith("/") ? config.base_url : config.base_url + "/";
-    // Remove leading / from segment to avoid double slash
-    const cleanSegment = segment.startsWith("/") ? segment.slice(1) : segment;
-    return base + cleanSegment;
-  }
-
-  return config.base_url;
-}
+// URL-loop pagination strategy (query_param / offset / path_segment /
+// next_link / none) lives in ./fetcher/strategies/urlLoop.
+import { runUrlLoopStrategy } from "./fetcher/strategies/urlLoop";
 
 // ============================================
 // COMMON NEXT BUTTON SELECTORS (for auto-detection fallback)
@@ -984,110 +948,11 @@ export async function genericPaginatedFetcher(
 
   // =============================================
   // STANDARD URL-BASED PAGINATION
+  // Delegated to ./fetcher/strategies/urlLoop.
   // =============================================
-  let currentPage = startPage;
-  let hasMore = true;
-  let lastHtml = "";
-
-  while (hasMore && allListings.length < maxItems && currentPage <= startPage + maxPages - 1) {
-    // Delay between pages (skip first)
-    if (currentPage > startPage) {
-      const actualDelay = delayMs + Math.floor(Math.random() * jitterMs);
-      if (process.env.DEBUG_GENERIC === "1") {
-        console.log(`[GenericFetcher] Waiting ${actualDelay}ms before page ${currentPage}...`);
-      }
-      await sleep(actualDelay);
-    }
-
-    const url = buildPaginationUrl(config, currentPage);
-    debug.pagesAttempted++;
-
-    if (process.env.DEBUG_GENERIC === "1") {
-      console.log(`[GenericFetcher] Fetching page ${currentPage}: ${url}`);
-    }
-
-    const result = await doFetch(url);
-
-    if (!result.success || !result.html) {
-      debug.errors.push(`Page ${currentPage}: ${result.error || "No HTML"}`);
-      if (process.env.DEBUG_GENERIC === "1") {
-        console.log(`[GenericFetcher] Failed page ${currentPage}: ${result.error}`);
-      }
-      hasMore = false;
-      debug.stopReason = `fetch_failed_page_${currentPage}`;
-      break;
-    }
-
-    if (result.statusCode !== 200) {
-      debug.errors.push(`Page ${currentPage}: HTTP ${result.statusCode}`);
-      hasMore = false;
-      debug.stopReason = `http_${result.statusCode}_page_${currentPage}`;
-      break;
-    }
-
-    debug.htmlLengths.push(result.html.length);
-
-    // Detect duplicate page content (sign of failed pagination)
-    if (result.html === lastHtml) {
-      debug.stopReason = "duplicate_page_content";
-      hasMore = false;
-      break;
-    }
-    lastHtml = result.html;
-
-    debug.pagesSuccessful++;
-
-    // Parse listings from this page
-    const pageListings = parseListingsFromHtml(result.html, config, processedUrls, now, debug.errors, url);
-    debug.listingsPerPage.push(pageListings.length);
-
-    if (process.env.DEBUG_GENERIC === "1") {
-      console.log(`[GenericFetcher] Page ${currentPage}: ${pageListings.length} listings (total: ${allListings.length + pageListings.length})`);
-    }
-
-    // Check stop conditions
-    if (stopCondition === "empty_listings" && pageListings.length === 0) {
-      debug.stopReason = "empty_listings";
-      hasMore = false;
-    } else if (stopCondition === "max_items" && allListings.length + pageListings.length >= maxItems) {
-      debug.stopReason = "max_items_reached";
-      hasMore = false;
-    } else if (stopCondition === "max_pages" && currentPage >= startPage + maxPages - 1) {
-      debug.stopReason = "max_pages_reached";
-      hasMore = false;
-    } else if (stopCondition === "no_next_link" && config.pagination.next_selector) {
-      const $ = cheerio.load(result.html);
-      const nextLink = $(config.pagination.next_selector);
-      if (nextLink.length === 0) {
-        debug.stopReason = "no_next_link";
-        hasMore = false;
-      }
-    }
-
-    allListings.push(...pageListings);
-    // For offset pagination, always increment page counter by 1
-    // (buildPaginationUrl handles the actual offset calculation)
-    currentPage += (config.pagination.type === "offset" ? 1 : increment);
-  }
-
-  // Final stop reason if we just ran out
-  if (!debug.stopReason && allListings.length >= maxItems) {
-    debug.stopReason = "max_items_reached";
-  }
-  if (!debug.stopReason) {
-    debug.stopReason = "natural_end";
-  }
-
-  if (process.env.DEBUG_GENERIC === "1") {
-    console.log(`[GenericFetcher] ===== Complete =====`);
-    console.log(`[GenericFetcher] Pages: ${debug.pagesSuccessful}/${debug.pagesAttempted}`);
-    console.log(`[GenericFetcher] Total listings: ${allListings.length}`);
-    console.log(`[GenericFetcher] Stop reason: ${debug.stopReason}`);
-    console.log(`[GenericFetcher] HTML lengths: ${debug.htmlLengths.join(", ")}`);
-  }
-
+  const urlLoopListings = await runUrlLoopStrategy(config, doFetch, processedUrls, now, debug);
   return {
-    listings: allListings.slice(0, maxItems),
+    listings: urlLoopListings.slice(0, maxItems),
     debug,
   };
 }
