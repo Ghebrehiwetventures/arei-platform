@@ -547,10 +547,11 @@ export class AREIClient {
     if (rowErr) throw new Error(`getFeaturedListings rows failed: ${rowErr.message}`);
 
     // Return in the order the admin pinned them
-    const byId = new Map((rows ?? []).map((r) => [r.id, r]));
+    const typedRows = (rows ?? []) as unknown as ListingRow[];
+    const byId = new Map(typedRows.map((r) => [r.id, r]));
     const ordered = (data.listing_ids as string[])
       .map((id) => byId.get(id))
-      .filter(Boolean) as ListingRow[];
+      .filter((r): r is ListingRow => r != null);
 
     return ordered.map(toListingCard);
   }
