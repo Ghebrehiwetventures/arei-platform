@@ -1,6 +1,6 @@
 # Generic Pipeline Refactor Plan
 
-Version 1.0 | 2026-05-25
+Version 1.0 | 2026-05-25 (status updated 2026-05-28)
 
 Companion to:
 - `docs/operations/adding-a-source.md` — current workflow for adding a source
@@ -15,6 +15,41 @@ converge on a single, modular, scalable architecture.
 The motivating constraint is in project memory: **extend the engine, don't
 write source-specific plugins; scalability is paramount.** Adding a new
 source (or a new market) should be a YAML change, never a TS change.
+
+---
+
+## 0. Status (2026-05-28)
+
+This banner is the canonical entry point — read it before §1–§7, which are
+preserved as the original plan and **do not always reflect current state**.
+The post-refactor architecture is described in §8.
+
+**Done**
+
+| Phase | Where | Notes |
+|---|---|---|
+| **B** — Plugin elimination | commit `00e98ca` (2026-05-26) | All three CV detail plugins (`simplyCapeVerde`, `terraCaboVerde`, `homesCasaVerde`) removed; every IN source now extracts via `createGenericDetailPlugin` + YAML. `core/detail/plugins/` contains only `genericDetail.ts`. `markets/cv/plugins/` no longer exists. |
+| **C** — Fetcher refactor | PR #286 (merged) | `core/genericFetcher.ts` (2,121 LOC monolith) split into `core/fetcher/{index,buildFetchConfig,types}.ts` + `parse/{url,images,price,jsonItem,listings}.ts` + `strategies/{urlLoop,clickNext,ajaxPost,jsonApi}.ts`. No file exceeds 422 lines. Public API stable. |
+| **D2** — Locale-aware property types (PT/ES/FR) | PR #287 (open) | `extractPropertyType` covers EN+PT+ES+FR with Unicode-aware boundaries. |
+| **D5** — Retry transient HTTP in `fetchHtml` | PR #287 (open) | Bounded retry loop on 408/429/500/502/503/504/529 + transport errors; honors `Retry-After`; per-attempt 20s timeout preserved. |
+| **D6** — Apply `detail_url_rewrite` in `mapJsonItem` | PR #287 (open) | json_api path mirrors HTML path behavior. |
+| **D7** — Wire `sourceHealth` into `runMarketSource` | PR #287 (open) | kv_curated path now persists health and respects `shouldAutoPauseSource`. Includes exported `deriveSourceHealthReport` for unit-testable status derivation. |
+| **Phase A steps 1–4** | already in tree pre-2026-05-28 | `core/pipeline/` skeleton, helper extraction, `runMarketSource.ts`, per-market loop. |
+| **Orphan dead-code removal** | PR #289 (open) | `core/plugins/` tree (1,320 lines), `core/ingestCv.ts.{backup,save}`, `core/ingestCvGeneric.ts` (824 lines) — 3,734 lines deleted, zero importers, zero behavior change. |
+
+**Blocked**
+
+| Phase | Blocker | Notes |
+|---|---|---|
+| **A steps 5–7** — drop `ingestMarket.ts` Supabase writer + delete legacy CV-specific files + delete deprecated npm scripts | **issue #284 / PR #288** | The admin app's `agencyDataConsole.getAgencyListingQuality` still reads from `public.listings` (live, mounted via `AgencyDataConsoleView`). Removing path A's writer leaves that data source stale. PR #288 documents the migration strawman with 5 owner decisions (D1–D5) that must be resolved before the legacy writer can be retired. See `docs/operations/admin-kv-curated-migration.md`. |
+
+**Pending (unblocked but not started)**
+
+- **D1** — `zod` validation in `configLoader.ts` (catch bad selectors at load).
+- **D3** — Houzez + Proppy CMS presets in `cmsPresets.ts`.
+- **D4** — `scripts/promote_source.ts` (demote → ingest → promote) with audit.
+- **§7 open questions** — `cv_nhakaza` IN → OBSERVE, `cv_source_1`/`cv_source_2` stub-source audit, undocumented DROPs (`cv_rightmove`, `cv_globallistings`, `cv_properstar`, `cv_greenacres`), path-A report-output consumer audit.
+- **Legacy CV scripts cleanup** (subset of A steps 5–7 that is *not* gated on #284): delete `core/ingestCv.ts` (1,401 LOC), `core/preflightCv.ts` (453 LOC), `core/reportCv.ts`, `core/parseSimplyCapeVerde.ts` (668 LOC), `core/parseTerraCaboVerde.ts` (399 LOC), and the `package.json::ingest:cv` / `pipeline:cv` / `report:cv` scripts. The canonical path (`scripts/ingest_to_curated.ts` via `runMarketSource`) does not import any of these. Safe to delete independently of `ingestMarket.ts`.
 
 ---
 
@@ -350,21 +385,15 @@ All existing source ingests pass unchanged.
 
 ## 6. Acceptance criteria for "refactor done"
 
-1. `core/detail/plugins/` contains only `genericDetail.ts`.
-2. `markets/{any}/plugins/` does not exist in any market.
-3. Adding a new source is a single YAML edit in `markets/{m}/sources.yml`.
-4. Running `MARKET_ID=cv SOURCE_ID=cv_x npx ts-node scripts/ingest_to_curated.ts`
-   is the only documented ingest command. No `ingest:cv`, no
-   `ingestCv.ts`, no `ingestMarket.ts`.
-5. Field coverage on all 9 currently-IN CV sources is at-or-above the
-   2026-05-25 baseline:
-   - price ≥ 95% (sources that disclose price)
-   - bedrooms ≥ 80%
-   - bathrooms ≥ 80%
-   - images ≥ 1: 100%
-6. No file in `core/` exceeds 700 lines.
-7. `docs/operations/adding-a-source.md` works end-to-end with no
-   references to source-specific TS files.
+| # | Criterion | Status (2026-05-28) |
+|---|---|---|
+| 1 | `core/detail/plugins/` contains only `genericDetail.ts` | ✅ commit `00e98ca` |
+| 2 | `markets/{any}/plugins/` does not exist in any market | ✅ commit `00e98ca` |
+| 3 | Adding a new source is a single YAML edit in `markets/{m}/sources.yml` | ✅ — every IN source extracts via `createGenericDetailPlugin` |
+| 4 | Running `MARKET_ID=cv SOURCE_ID=cv_x npx ts-node scripts/ingest_to_curated.ts` is the only documented ingest command. No `ingest:cv`, no `ingestCv.ts`, no `ingestMarket.ts` | ❌ — blocked on #284 (`ingestMarket.ts`) and the legacy CV scripts cleanup item in §0 |
+| 5 | Field coverage on all 9 IN CV sources is at-or-above the 2026-05-25 baseline (price ≥ 95% disclosed, bedrooms ≥ 80%, bathrooms ≥ 80%, images ≥ 1: 100%) | ✅ verified for `cv_remax` post-Phase-D DRY_RUN (set-equality with live `kv_curated.listings`, zero drops); other sources not re-verified in this round |
+| 6 | No file in `core/` exceeds 700 lines | ❌ — pending Phase A 5–7 deletion. Current offenders: `ingestCv.ts` 1,401 / `ingestMarket.ts` 785 / `runMarketSource.ts` 758 / `genericDetail.ts` 695 (just under, monitor). The first two go in the legacy cleanup; `runMarketSource.ts` may need a split if it grows further |
+| 7 | `docs/operations/adding-a-source.md` works end-to-end with no references to source-specific TS files | ⚠️ — needs re-verification after Phase A 5–7 lands |
 
 ---
 
@@ -382,3 +411,95 @@ All existing source ingests pass unchanged.
   `cv_properstar`, `cv_greenacres` have no documented reason. Either
   document the reason in `sources.yml` comments or re-investigate whether
   they're scrape-worthy.
+
+---
+
+## 8. Current architecture (2026-05-28)
+
+Snapshot of the engine after Phases B+C and the Phase-D resilience fixes.
+
+### 8.1 Canonical ingest path (kv_curated)
+
+```
+scripts/ingest_to_curated.ts          ← CLI entry; env loading only
+  └── core/pipeline/runMarketSource.ts ← per-source orchestrator
+        ├── core/configLoader.ts       ← sources.yml → typed SourceConfig
+        ├── core/pipeline/fetchSource.ts
+        │     └── core/fetcher/        ← strategy dispatcher
+        │           ├── index.ts        ← picks strategy from pagination.type
+        │           ├── strategies/
+        │           │   ├── urlLoop.ts     (query_param + offset + path_segment + none)
+        │           │   ├── clickNext.ts   (headless)
+        │           │   ├── ajaxPost.ts
+        │           │   └── jsonApi.ts
+        │           └── parse/{url,images,price,jsonItem,listings}.ts
+        ├── core/detail/strategyFactory.ts
+        │     └── core/detail/plugins/genericDetail.ts   ← THE ONLY detail extractor
+        ├── core/pipeline/enrich.ts          ← detail extraction + apply to listing
+        ├── core/pipeline/propertyType.ts    ← locale-aware (EN/PT/ES/FR)
+        ├── core/pipeline/locationResolver.ts
+        ├── core/sourceHealth.ts             ← persisted to artifacts/source_health.json
+        ├── core/fetchHtml.ts                ← bounded retry on transient HTTP failures
+        └── core/postgresClient.ts           ← status-gated upsert into kv_curated.listings
+```
+
+**Write target:** `kv_curated.listings` (Supabase via Postgres pooler). The
+upsert is status-gated: `WHERE publish_status = 'needs_review'`. Published
+rows are immutable from the pipeline — promotion is a manual SQL step.
+
+**Source health & auto-pause:** every run (DRY_RUN included) persists a
+`SourceHealthEntry`. After 3 consecutive parser-failure runs the source
+auto-pauses; subsequent runs early-bail and re-persist the pause.
+
+**Adding a source:** YAML-only — append to `markets/{market}/sources.yml`
+with `type`, `pagination`, `selectors`/`item_map`, `detail`. No new TS.
+See `docs/operations/adding-a-source.md`.
+
+### 8.2 Legacy path (still in tree, blocked on #284)
+
+```
+core/ingestMarket.ts (785 LOC)       ← writes to public.listings
+core/ingestCv.ts     (1,401 LOC)     ← CV-specific predecessor
+core/preflightCv.ts  (453 LOC)
+core/reportCv.ts
+core/parseSimplyCapeVerde.ts (668 LOC)
+core/parseTerraCaboVerde.ts  (399 LOC)
+```
+
+Exposed via three deprecated `package.json` scripts:
+`ingest:cv`, `pipeline:cv`, `report:cv`. Plus the generic `ingest` script
+which runs `core/ingestMarket.ts` for any market.
+
+**Why still here:** `core/ingestMarket.ts` is the only thing writing to
+`public.listings`. The admin app
+(`arei-admin/agencyDataConsole.getAgencyListingQuality`, mounted via
+`AgencyDataConsoleView`) reads from `public.listings` to render the
+"Agency data" tab. Deleting the writer leaves that data source frozen.
+
+**Unblock path:**
+
+1. **Owner reviews PR #288** (`docs/operations/admin-kv-curated-migration.md`)
+   and resolves the 5 decisions (D1–D5) on column renames / `approved` →
+   `publish_status` / `last_seen_at` → `last_verified_at` mapping.
+2. **Migrate `agencyDataConsole` to `kv_curated.listings`** per D1–D3.
+3. **Drop the `loadFromSupabase` dead-code chain** in `arei-admin/data.ts`
+   (UI consumers `MarketOverview` / `MarketDetail` are never rendered; the
+   chain runs only as a module-init side-effect).
+4. **Delete the legacy path:**
+   - `core/ingestMarket.ts`, `core/ingestCv.ts`, `core/preflightCv.ts`,
+     `core/reportCv.ts`, `core/parseSimplyCapeVerde.ts`,
+     `core/parseTerraCaboVerde.ts`
+   - `package.json` scripts: `ingest:cv`, `pipeline:cv`, `report:cv`, `ingest`
+   - Revoke admin's read permission on `public.listings`
+
+The legacy CV scripts (everything except `ingestMarket.ts` in the list
+above) are not actually gated on #284 — they're only consumed by
+`package.json::ingest:cv`/`pipeline:cv`/`report:cv`, and the canonical
+path does not import them. They can be deleted in a standalone PR ahead
+of the admin migration if desired (see §0 "Pending").
+
+### 8.3 Tracking issues
+
+- **#284** — admin app migration to `kv_curated.listings`. Resolves the
+  block on Phase A 5–7. PR #288 is the strawman decisions doc waiting
+  on owner answers.

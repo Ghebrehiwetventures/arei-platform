@@ -6,6 +6,7 @@ Companion to:
 - `docs/operations/engine-config-reference.md` — every `sources.yml` option, with examples
 - `docs/operations/source-troubleshooting.md` — symptom → diagnosis recipes
 - `docs/operations/execution-protocol.md` — repo-wide execution rules (truth hierarchy, verification)
+- `docs/operations/generic-pipeline-refactor-plan.md` — current engine state (§0 status, §8 architecture) and remaining refactor work
 - `docs/superpowers/specs/2026-05-11-ccore-ingest-to-curated-design.md` — original design for the ingest script (the worked example)
 
 This is the playbook for getting a new source's listings into `kv_curated.listings` and onto the live KazaVerde feed. It assumes the source has already been scoped in `markets/{market}/sources.yml` at a minimum (id, name, url, lifecycle).
