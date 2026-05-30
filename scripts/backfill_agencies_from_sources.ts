@@ -129,11 +129,14 @@ async function main() {
   const sb = getSupabaseClient();
 
   // ── Step 1: Remove the test seed row (very narrow condition) ──────────────
+  // Narrow OR condition (as authorised): the reserved .example domain can
+  // never be a real agency site, and the exact legacy name is unambiguous.
+  // The website match also catches renamed variants like
+  // "Archipelago Real Estate (DEMO)".
   const { error: delError, count: delCount } = await sb
     .from("agencies")
     .delete({ count: "exact" })
-    .eq("agency_name", "Archipelago Real Estate")
-    .like("website", "%archipelago-cv.example%");
+    .or('website.ilike.%archipelago-cv.example%,agency_name.eq.Archipelago Real Estate');
 
   if (delError) {
     console.warn("[backfill] Warning: could not delete test seed row:", delError.message);
