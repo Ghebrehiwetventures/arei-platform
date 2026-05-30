@@ -94,6 +94,9 @@ export default function Listings() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const initialIsland = searchParams.get("island") || "";
+  // source param: set via navigation from /agents, never user-modified via UI.
+  // Read directly from URL; no state needed.
+  const sourceId = searchParams.get("source") || undefined;
 
   // Filter state
   const [island, setIsland] = useState(initialIsland);
@@ -142,7 +145,7 @@ export default function Listings() {
   useEffect(() => {
     setPage(1);
     setCards([]);
-  }, [island, priceBucket, type, beds]);
+  }, [island, priceBucket, type, beds, sourceId]);
 
   // Sync ?island= to URL
   useEffect(() => {
@@ -184,6 +187,7 @@ export default function Listings() {
           priceBucket: priceBucket || undefined,
           propertyType: type || undefined,
           minBeds: beds || undefined,
+          sourceId,
         });
         if (cancelled) return;
         setCards((prev) => (page === 1 ? result.data : [...prev, ...result.data]));
@@ -203,7 +207,7 @@ export default function Listings() {
     return () => {
       cancelled = true;
     };
-  }, [page, island, priceBucket, type, beds, retryCount]);
+  }, [page, island, priceBucket, type, beds, sourceId, retryCount]);
 
   // Close any open popover on outside click.
   // Target-aware: clicks inside a filter chip wrap, the sort wrap, or

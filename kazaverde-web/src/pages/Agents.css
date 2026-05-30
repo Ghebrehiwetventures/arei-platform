@@ -159,8 +159,11 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  flex-wrap: wrap;
   gap: 8px;
   margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--kv-rule-soft);
 }
 
 .kv-agent-website {
@@ -185,6 +188,18 @@
   text-transform: uppercase;
   color: var(--kv-gray-500);
 }
+
+.kv-agent-listings-link {
+  font-family: var(--kv-mono);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--kv-green-deep);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  transition: color var(--kv-dur-fast) var(--kv-ease);
+}
+.kv-agent-listings-link:hover { color: var(--kv-black); }
 
 /* ─── Empty / loading states ─── */
 .kv-agents-empty {

@@ -135,7 +135,7 @@ export class AREIClient {
   async getListings(
     params: GetListingsParams = {}
   ): Promise<PaginatedListings> {
-    const { page = 1, pageSize = 12, island, priceBucket, propertyType, minBeds } = params;
+    const { page = 1, pageSize = 12, island, priceBucket, propertyType, minBeds, sourceId } = params;
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
@@ -158,6 +158,11 @@ export class AREIClient {
     // Minimum bedrooms
     if (minBeds && minBeds > 0) {
       query = query.gte("bedrooms", minBeds);
+    }
+
+    // Source filter — exact match on source_id column
+    if (sourceId) {
+      query = query.eq("source_id", sourceId);
     }
 
     // Price bucket filter

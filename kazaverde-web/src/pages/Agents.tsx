@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { Link } from "react-router-dom";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useAgencies } from "../hooks/useAgencies";
 import NewsletterCta from "../components/NewsletterCta";
@@ -187,7 +188,15 @@ export default function Agents() {
                         No website listed
                       </span>
                     )}
-                    <span className="kv-agent-market">Cape Verde</span>
+                    {agency.source_ids.length > 0 && (
+                      <Link
+                        to={`/listings?source=${agency.source_ids[0]}`}
+                        className="kv-agent-listings-link"
+                        aria-label={`View listings from ${name}`}
+                      >
+                        View listings →
+                      </Link>
+                    )}
                   </div>
                 </li>
               );

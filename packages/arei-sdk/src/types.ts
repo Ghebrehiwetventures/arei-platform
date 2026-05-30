@@ -134,6 +134,11 @@ export interface GetListingsParams {
   propertyType?: string;
   /** Minimum bedrooms (>=). 0 or undefined = no filter */
   minBeds?: number;
+  /**
+   * Filter by exact source_id (e.g. "cv_terracaboverde").
+   * Maps to the URL param ?source= on the listings page.
+   */
+  sourceId?: string;
 }
 
 /** Paginated response */
