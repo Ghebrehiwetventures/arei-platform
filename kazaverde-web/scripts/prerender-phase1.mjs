@@ -263,6 +263,33 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     ),
     },
     {
+      route: "/agents",
+      ...page(
+      "Real Estate Agents in Cape Verde — Cape Verde Real Estate Index",
+      "Real estate agencies tracked by the Cape Verde Real Estate Index. Explore agencies across Sal, Santiago, Boa Vista and São Vicente.",
+      `
+        <main>
+          <section>
+            <p>Directory</p>
+            <h1>Real Estate Agents in Cape Verde</h1>
+            <p>
+              Agencies tracked by the Cape Verde Real Estate Index — source-linked, publicly listed.
+              Coverage spans Sal, Santiago, Boa Vista and São Vicente.
+            </p>
+          </section>
+
+          <section>
+            <h2>Tracked agencies</h2>
+            <p>
+              Each profile links to the agency's website. Profiles marked "Unclaimed" have not yet
+              been verified by the agency. Data is collected from public listing sources and may be incomplete.
+            </p>
+          </section>
+        </main>
+      `,
+    ),
+    },
+    {
       route: "/about",
       ...page(
       "About | Cape Verde Real Estate Index",
