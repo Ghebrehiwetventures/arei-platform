@@ -472,7 +472,24 @@ export function ListingSocialView() {
             </div>
           </div>
           <div>
-            <div className="label-style mb-1">Listing ({filtered.length} of {listings.length})</div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="label-style">Listing ({filtered.length} of {listings.length})</span>
+              <button
+                onClick={() => {
+                  if (filtered.length === 0) return;
+                  const pick = filtered[Math.floor(Math.random() * filtered.length)];
+                  setSelectedId(pick.id);
+                }}
+                disabled={filtered.length === 0}
+                title="Pick a random listing"
+                className="flex items-center gap-1 text-xs border border-border rounded px-2 py-0.5 text-foreground-muted hover:text-foreground hover:border-[#8ECFBF]/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-mono"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+                </svg>
+                Random
+              </button>
+            </div>
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
@@ -788,11 +805,36 @@ export function ListingSocialView() {
         </div>
       </section>
 
-      {queue.length > 0 && (
+      {queue.length > 0 && (() => {
+        const activeQueue = queue.filter((i) => i.status === "pending" || i.status === "failed");
+        const failedCount = queue.filter((i) => i.status === "failed").length;
+        if (activeQueue.length === 0) return null;
+        return (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-foreground font-mono">Queue ({queue.length})</h3>
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold text-foreground font-mono">
+              Queue ({activeQueue.length})
+            </h3>
+            {failedCount > 0 && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm(`Remove ${failedCount} failed item${failedCount > 1 ? "s" : ""} from queue?`)) return;
+                  try {
+                    await apiFetch("POST", { action: "clear_failed" });
+                    await loadState();
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : String(err));
+                  }
+                }}
+                className="text-[11px] font-mono text-red hover:text-red/70 transition-colors"
+              >
+                Clear failed ({failedCount})
+              </button>
+            )}
+          </div>
           <div className="space-y-2">
-            {queue.map((item) => (
+            {activeQueue.map((item) => (
               <div key={item.id} className="surface-1 border border-border rounded p-3 text-xs font-mono flex items-start justify-between gap-4">
                 <div className="flex gap-3 items-start min-w-0">
                   {item.image_urls?.[0] && (
@@ -842,12 +884,23 @@ export function ListingSocialView() {
                       </button>
                     </>
                   )}
+                  {item.status === "failed" && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFromQueue(item.id)}
+                      title="Remove failed item"
+                      className="text-red/60 hover:text-red transition-colors"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </section>
-      )}
+        );
+      })()}
 
       {published.length > 0 && (
         <section className="space-y-3">
