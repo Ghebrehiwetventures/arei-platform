@@ -1075,7 +1075,7 @@ export default async function handler(req, res) {
         .from("social_listing_queue")
         .delete()
         .eq("id", id)
-        .eq("status", "pending");
+        .in("status", ["pending", "failed"]);
       if (error) throw new Error(error.message);
       send(res, 200, { removed: true });
       return;
@@ -1083,6 +1083,16 @@ export default async function handler(req, res) {
 
     if (body.action === "clear_published") {
       const { error } = await sb.from("social_listing_posts").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+      if (error) throw new Error(error.message);
+      send(res, 200, { cleared: true });
+      return;
+    }
+
+    if (body.action === "clear_failed") {
+      const { error } = await sb
+        .from("social_listing_queue")
+        .delete()
+        .eq("status", "failed");
       if (error) throw new Error(error.message);
       send(res, 200, { cleared: true });
       return;

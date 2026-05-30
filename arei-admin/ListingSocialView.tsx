@@ -805,11 +805,36 @@ export function ListingSocialView() {
         </div>
       </section>
 
-      {queue.length > 0 && (
+      {queue.length > 0 && (() => {
+        const activeQueue = queue.filter((i) => i.status === "pending" || i.status === "failed");
+        const failedCount = queue.filter((i) => i.status === "failed").length;
+        if (activeQueue.length === 0) return null;
+        return (
         <section className="space-y-3">
-          <h3 className="text-lg font-semibold text-foreground font-mono">Queue ({queue.length})</h3>
+          <div className="flex items-center justify-between gap-4">
+            <h3 className="text-lg font-semibold text-foreground font-mono">
+              Queue ({activeQueue.length})
+            </h3>
+            {failedCount > 0 && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm(`Remove ${failedCount} failed item${failedCount > 1 ? "s" : ""} from queue?`)) return;
+                  try {
+                    await apiFetch("POST", { action: "clear_failed" });
+                    await loadState();
+                  } catch (err) {
+                    setError(err instanceof Error ? err.message : String(err));
+                  }
+                }}
+                className="text-[11px] font-mono text-red hover:text-red/70 transition-colors"
+              >
+                Clear failed ({failedCount})
+              </button>
+            )}
+          </div>
           <div className="space-y-2">
-            {queue.map((item) => (
+            {activeQueue.map((item) => (
               <div key={item.id} className="surface-1 border border-border rounded p-3 text-xs font-mono flex items-start justify-between gap-4">
                 <div className="flex gap-3 items-start min-w-0">
                   {item.image_urls?.[0] && (
@@ -859,12 +884,23 @@ export function ListingSocialView() {
                       </button>
                     </>
                   )}
+                  {item.status === "failed" && (
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveFromQueue(item.id)}
+                      title="Remove failed item"
+                      className="text-red/60 hover:text-red transition-colors"
+                    >
+                      ✕
+                    </button>
+                  )}
                 </div>
               </div>
             ))}
           </div>
         </section>
-      )}
+        );
+      })()}
 
       {published.length > 0 && (
         <section className="space-y-3">
