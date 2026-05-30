@@ -104,6 +104,12 @@ function previewImageUrl(url: string, size = 220): string {
   return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=cover&output=jpg&q=82`;
 }
 
+function formatPriceEUR(price: number | null): string {
+  return price
+    ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(price)
+    : "POA";
+}
+
 async function apiFetch<T>(method: string, body?: Record<string, unknown>): Promise<T> {
   const headers: Record<string, string> = { ...(await authHeaders()) as Record<string, string> };
   if (body) headers["Content-Type"] = "application/json";
@@ -142,6 +148,133 @@ interface PublishedPost {
   published_at: string;
 }
 
+// ── Listing browser row — visual replacement for the old <select> listbox.
+//    Thumbnail + title + island·price + image count per row, so the operator
+//    can actually scan inventory instead of reading truncated titles. ───────
+function ListingRow({
+  listing,
+  active,
+  onPick,
+}: {
+  listing: Listing;
+  active: boolean;
+  onPick: () => void;
+}) {
+  const cover = listing.cover_image_url || listing.image_urls?.[0] || "";
+  const count = listing.image_urls?.length ?? 0;
+  return (
+    <button
+      type="button"
+      onClick={onPick}
+      className={`w-full flex items-center gap-3 p-2 rounded text-left transition-colors border ${
+        active
+          ? "border-border-strong bg-surface-2"
+          : "border-transparent hover:bg-surface-2/60"
+      }`}
+    >
+      <div className="relative w-11 h-11 flex-shrink-0 rounded overflow-hidden bg-surface-3">
+        {cover && (
+          <img
+            src={previewImageUrl(cover, 88)}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
+        )}
+        {active && <div className="absolute inset-0 ring-2 ring-inset ring-accent rounded" />}
+      </div>
+      <div className="min-w-0 flex-1">
+        <div className="text-xs text-foreground truncate leading-tight">
+          {listing.title || listing.id}
+        </div>
+        <div className="text-[11px] text-foreground-muted font-mono truncate mt-0.5">
+          {[listing.island, formatPriceEUR(listing.price)].filter(Boolean).join(" · ")}
+        </div>
+      </div>
+      <div className="text-[10px] text-foreground-subtle font-mono flex-shrink-0 tabular-nums">
+        {count} img
+      </div>
+    </button>
+  );
+}
+
+// ── Post preview — a lightweight, honest render of what ships: cover image
+//    (1:1), carousel dots + count, and the caption's opening with truncation.
+//    Not a pixel-perfect IG mock; just the parts that decide quality. ───────
+function PostPreview({
+  images,
+  caption,
+  channels,
+}: {
+  images: string[];
+  caption: string;
+  channels: string[];
+}) {
+  const cover = images[0];
+  const trimmed = caption.trim();
+  return (
+    <div className="surface-1 rounded border border-border overflow-hidden">
+      <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
+        <div className="w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-[10px] font-mono font-semibold">
+          A
+        </div>
+        <div className="text-xs font-mono text-foreground">arei</div>
+        <div className="ml-auto label-style">Preview</div>
+      </div>
+      <div className="relative aspect-square bg-surface-3">
+        {cover ? (
+          <img
+            src={previewImageUrl(cover, 640)}
+            alt=""
+            referrerPolicy="no-referrer"
+            className="w-full h-full object-cover"
+          />
+        ) : (
+          <div className="w-full h-full flex items-center justify-center text-foreground-subtle text-xs font-mono">
+            No image selected
+          </div>
+        )}
+        {images.length > 1 && (
+          <>
+            <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-mono px-1.5 py-0.5 rounded-full tabular-nums">
+              1/{images.length}
+            </div>
+            <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1">
+              {images.slice(0, 10).map((_, i) => (
+                <span
+                  key={i}
+                  className={`rounded-full ${i === 0 ? "w-1.5 h-1.5 bg-white" : "w-1 h-1 bg-white/50"}`}
+                />
+              ))}
+            </div>
+          </>
+        )}
+      </div>
+      <div className="px-3 py-2.5">
+        {trimmed ? (
+          <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap line-clamp-3">
+            <span className="font-mono font-medium">arei</span> {trimmed}
+          </p>
+        ) : (
+          <p className="text-xs text-foreground-subtle">Caption preview will appear here.</p>
+        )}
+        {channels.length > 0 && (
+          <div className="flex flex-wrap gap-1.5 mt-2">
+            {channels.map((c) => (
+              <span
+                key={c}
+                className="text-[10px] font-mono text-foreground-muted capitalize px-1.5 py-0.5 rounded bg-surface-2"
+              >
+                {c}
+              </span>
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
 export function ListingSocialView() {
   const [listings, setListings] = useState<Listing[]>([]);
   const [published, setPublished] = useState<PublishedPost[]>([]);
@@ -172,6 +305,12 @@ export function ListingSocialView() {
   const [permalink, setPermalink] = useState("");
   const [error, setError] = useState("");
   const [notice, setNotice] = useState("");
+  // Mobile only: the browser collapses to a summary chip once a listing is
+  // picked, so the operator isn't scrolling past 400 rows to reach the
+  // composer. Ignored at lg+ where the browser is always shown via CSS.
+  const [mobilePickerOpen, setMobilePickerOpen] = useState(true);
+
+  const publishPanelRef = useRef<HTMLDivElement | null>(null);
 
   const selected = listings.find((l) => l.id === selectedId) || null;
   const allImages = selected?.image_urls || [];
@@ -409,6 +548,25 @@ export function ListingSocialView() {
     applyNextSlot(p);
   };
 
+  // Pick a listing from the browser. On mobile this also collapses the
+  // browser so the composer is immediately in view.
+  const pickListing = (id: string) => {
+    setSelectedId(id);
+    setMobilePickerOpen(false);
+  };
+
+  const pickRandom = () => {
+    if (filtered.length === 0) return;
+    const pick = filtered[Math.floor(Math.random() * filtered.length)];
+    pickListing(pick.id);
+  };
+
+  const openScheduleFromBar = () => {
+    if (!showSchedule) applyNextSlot(schedulePattern);
+    setShowSchedule(true);
+    publishPanelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" });
+  };
+
   if (loading) {
     return <div className="py-12 text-foreground-muted font-mono">Loading listings...</div>;
   }
@@ -419,8 +577,10 @@ export function ListingSocialView() {
   const canPublish = channelIsConfigured && channels.length > 0 && selectedId && caption.trim() && selectedImages.length >= 2 && !publishing;
   const canSchedule = channels.length > 0 && selectedId && caption.trim() && selectedImages.length >= 2 && scheduleTime && !scheduling;
 
+  const selectedCover = selected?.cover_image_url || allImages[0] || "";
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 pb-28 lg:pb-6">
       <section>
         <div className="label-style mb-1">Marketing &gt; Instagram</div>
         <h2 className="text-2xl font-semibold text-foreground font-mono mb-1">Marketing</h2>
@@ -445,44 +605,62 @@ export function ListingSocialView() {
         </section>
       )}
 
-      <section className="grid grid-cols-1 xl:grid-cols-[320px_1fr] gap-6">
-        {/* Left: listing picker */}
-        <div className="surface-1 rounded border border-border p-4 space-y-3">
-          <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-1 gap-3">
-            <div>
-              <div className="label-style mb-1">Search</div>
-              <input
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="Title, island, agency..."
-                className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
-              />
+      {/* Mobile: collapsed-browser summary chip — tap to reopen the picker. */}
+      {selected && !mobilePickerOpen && (
+        <button
+          type="button"
+          onClick={() => setMobilePickerOpen(true)}
+          className="lg:hidden w-full flex items-center gap-3 surface-1 rounded border border-border p-2 text-left"
+        >
+          <div className="w-10 h-10 flex-shrink-0 rounded overflow-hidden bg-surface-3">
+            {selectedCover && (
+              <img src={previewImageUrl(selectedCover, 80)} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+            )}
+          </div>
+          <div className="min-w-0 flex-1">
+            <div className="text-xs text-foreground truncate">{selected.title || selected.id}</div>
+            <div className="text-[11px] text-foreground-muted font-mono truncate mt-0.5">
+              {[selected.island, formatPriceEUR(selected.price)].filter(Boolean).join(" · ")}
             </div>
-            <div>
-              <div className="label-style mb-1">Sort</div>
+          </div>
+          <span className="text-[11px] font-mono text-accent flex-shrink-0">Change ›</span>
+        </button>
+      )}
+
+      {/* ── Studio grid ───────────────────────────────────────────────
+          One instance of each block (the image grid's drag refs require a
+          single grid), reflowed via CSS:
+            mobile : single column (A → B → C), sticky action bar below
+            lg     : [browser | composer], preview/publish under composer
+            xl     : [browser | composer | preview+publish]              */}
+      <section className="grid grid-cols-1 gap-4 items-start lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
+        {/* A · Listing browser */}
+        <div
+          className={`${mobilePickerOpen ? "block" : "hidden"} lg:block surface-1 rounded border border-border lg:sticky lg:top-4 lg:row-span-2 xl:row-span-1`}
+        >
+          <div className="p-3 border-b border-border space-y-2">
+            <input
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search title, island, agency…"
+              className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
+            />
+            <div className="flex items-center gap-2">
               <select
                 value={listingSort}
                 onChange={(e) => setListingSort(e.target.value as ListingSortKey)}
-                className="bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
+                className="bg-background border border-border text-foreground px-2 py-1.5 text-xs font-mono rounded flex-1 min-w-0"
               >
                 {LISTING_SORT_OPTIONS.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
                 ))}
               </select>
-            </div>
-          </div>
-          <div>
-            <div className="flex items-center justify-between mb-1">
-              <span className="label-style">Listing ({filtered.length} of {listings.length})</span>
               <button
-                onClick={() => {
-                  if (filtered.length === 0) return;
-                  const pick = filtered[Math.floor(Math.random() * filtered.length)];
-                  setSelectedId(pick.id);
-                }}
+                type="button"
+                onClick={pickRandom}
                 disabled={filtered.length === 0}
                 title="Pick a random listing"
-                className="flex items-center gap-1 text-xs border border-border rounded px-2 py-0.5 text-foreground-muted hover:text-foreground hover:border-[#8ECFBF]/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-mono"
+                className="flex items-center gap-1 text-xs border border-border rounded px-2 py-1.5 text-foreground-muted hover:text-foreground hover:border-[#8ECFBF]/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-mono flex-shrink-0"
               >
                 <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                   <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
@@ -490,75 +668,67 @@ export function ListingSocialView() {
                 Random
               </button>
             </div>
-            <select
-              value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              className="md:hidden bg-background border border-border text-foreground px-3 py-2 text-sm font-mono w-full rounded"
-            >
-              {filtered.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.title || l.id}
-                </option>
-              ))}
-            </select>
-            <select
-              value={selectedId}
-              onChange={(e) => setSelectedId(e.target.value)}
-              size={10}
-              className="hidden md:block bg-background border border-border text-foreground px-2 py-1 text-xs font-mono w-full rounded"
-            >
-              {filtered.map((l) => (
-                <option key={l.id} value={l.id}>
-                  {l.title || l.id}
-                </option>
-              ))}
-            </select>
+            <div className="flex items-center justify-between">
+              <span className="label-style">Listings</span>
+              <span className="text-[11px] font-mono text-foreground-subtle tabular-nums">
+                {filtered.length}/{listings.length}
+              </span>
+            </div>
           </div>
-
-          {selected && (
-          <>
-            <div className="grid grid-cols-2 gap-x-4 gap-y-1 text-xs font-mono border-t border-border pt-3">
-              <div><span className="text-foreground-muted">Source</span><br />{selected.source_name}</div>
-              <div><span className="text-foreground-muted">Island</span><br />{selected.island}</div>
-              <div><span className="text-foreground-muted">Price</span><br />
-                {selected.price
-                  ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(selected.price)
-                  : "POA"}
-              </div>
-              <div><span className="text-foreground-muted">Specs</span><br />
-                {[
-                  selected.bedrooms ? `${selected.bedrooms}bd` : null,
-                  selected.bathrooms ? `${selected.bathrooms}ba` : null,
-                  selected.area_sqm ? `${Math.round(selected.area_sqm)}m²` : null,
-                ].filter(Boolean).join(" · ") || "—"}
-              </div>
-            </div>
-            <div className="flex flex-col gap-1 text-xs font-mono border-t border-border pt-3">
-              <a
-                href={selected.listing_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="text-green truncate hover:underline"
-              >
-                ↗ capeverderealestateindex.com
-              </a>
-              {selected.source_url && (
-                <a
-                  href={selected.source_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="text-foreground-muted truncate hover:underline hover:text-foreground"
-                >
-                  ↗ {selected.source_name}
-                </a>
-              )}
-            </div>
-          </>
-          )}
+          <div className="p-2 space-y-0.5 overflow-y-auto max-h-[55vh] lg:max-h-[calc(100vh-240px)]">
+            {filtered.map((l) => (
+              <ListingRow
+                key={l.id}
+                listing={l}
+                active={l.id === selectedId}
+                onPick={() => pickListing(l.id)}
+              />
+            ))}
+            {filtered.length === 0 && (
+              <div className="text-xs text-foreground-muted font-mono p-3 text-center">No listings match.</div>
+            )}
+          </div>
         </div>
 
-        {/* Right: images + caption + publish */}
-        <div className="space-y-4">
+        {/* B · Composer — metadata + image picker + caption */}
+        <div className="space-y-4 min-w-0">
+          {selected && (
+            <div className="surface-1 rounded border border-border p-3 sm:p-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-xs font-mono">
+                <div><span className="text-foreground-muted">Source</span><br />{selected.source_name}</div>
+                <div><span className="text-foreground-muted">Island</span><br />{selected.island}</div>
+                <div><span className="text-foreground-muted">Price</span><br />{formatPriceEUR(selected.price)}</div>
+                <div><span className="text-foreground-muted">Specs</span><br />
+                  {[
+                    selected.bedrooms ? `${selected.bedrooms}bd` : null,
+                    selected.bathrooms ? `${selected.bathrooms}ba` : null,
+                    selected.area_sqm ? `${Math.round(selected.area_sqm)}m²` : null,
+                  ].filter(Boolean).join(" · ") || "—"}
+                </div>
+              </div>
+              <div className="flex flex-wrap gap-x-4 gap-y-1 text-xs font-mono border-t border-border mt-3 pt-3">
+                <a
+                  href={selected.listing_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-green truncate hover:underline"
+                >
+                  ↗ capeverderealestateindex.com
+                </a>
+                {selected.source_url && (
+                  <a
+                    href={selected.source_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground-muted truncate hover:underline hover:text-foreground"
+                  >
+                    ↗ {selected.source_name}
+                  </a>
+                )}
+              </div>
+            </div>
+          )}
+
           {/* Image selection */}
           {allImages.length > 0 && (
             <div className="surface-1 rounded border border-border p-3 sm:p-4">
@@ -584,7 +754,7 @@ export function ListingSocialView() {
                 </div>
               </div>
               <div
-                className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-6 xl:grid-cols-8 gap-2 sm:gap-1.5 touch-none"
+                className="grid grid-cols-3 sm:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 sm:gap-1.5 touch-none"
                 onPointerMove={handleDragMove}
                 onPointerUp={handleDragEnd}
                 onPointerCancel={handleDragEnd}
@@ -630,6 +800,9 @@ export function ListingSocialView() {
                       {active && (
                         <>
                           <div className="absolute inset-0 ring-2 ring-inset ring-green pointer-events-none rounded" />
+                          <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-green text-white text-[10px] font-mono font-semibold flex items-center justify-center pointer-events-none">
+                            {position + 1}
+                          </div>
                           <div className="absolute inset-x-1.5 bottom-1.5 grid grid-cols-2 gap-1 sm:hidden">
                             <button
                               type="button"
@@ -663,7 +836,7 @@ export function ListingSocialView() {
             </div>
           )}
 
-          {/* Caption + publish */}
+          {/* Caption */}
           <div className="surface-1 rounded border border-border p-4 space-y-3">
             <div className="label-style">
               Caption
@@ -672,7 +845,7 @@ export function ListingSocialView() {
             <textarea
               value={caption}
               onChange={(e) => setCaption(e.target.value)}
-              rows={12}
+              rows={10}
               className="w-full bg-background border border-border text-foreground p-3 text-sm font-mono leading-relaxed rounded"
               placeholder={captionLoading ? "Generating caption..." : "Select a listing"}
             />
@@ -682,7 +855,17 @@ export function ListingSocialView() {
                 <button type="button" onClick={cancelEdit} className="underline hover:no-underline">Cancel</button>
               </div>
             )}
+          </div>
+        </div>
 
+        {/* C · Preview + publish */}
+        <div
+          ref={publishPanelRef}
+          className="space-y-4 lg:col-start-2 lg:row-start-2 xl:col-start-3 xl:row-start-1 xl:sticky xl:top-4"
+        >
+          <PostPreview images={selectedImages} caption={caption} channels={channels} />
+
+          <div className="surface-1 rounded border border-border p-4 space-y-3">
             {/* Channel selector */}
             <div>
               <div className="label-style mb-2">Channels</div>
@@ -726,16 +909,15 @@ export function ListingSocialView() {
               )}
             </div>
 
-            <div className="flex items-center gap-2 flex-wrap">
+            {/* Desktop actions (mobile uses the sticky bottom bar) */}
+            <div className="hidden lg:flex items-center gap-2 flex-wrap">
               <button
                 type="button"
                 onClick={handlePublish}
                 disabled={!canPublish}
-                className="flex-1 min-w-[160px] px-4 py-2.5 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
+                className="flex-1 min-w-[140px] px-4 py-2.5 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
               >
-                {publishing
-                  ? "Sending…"
-                  : `Publish now (${selectedImages.length})`}
+                {publishing ? "Sending…" : `Publish now (${selectedImages.length})`}
               </button>
               <button
                 type="button"
@@ -749,6 +931,7 @@ export function ListingSocialView() {
                 Schedule
               </button>
             </div>
+
             {showSchedule && (
               <div className="border border-border rounded p-3 space-y-3 bg-background">
                 <div className="label-style">Post frequency</div>
@@ -785,9 +968,7 @@ export function ListingSocialView() {
                     disabled={!canSchedule}
                     className="flex-1 px-4 py-2 text-sm font-semibold rounded bg-foreground text-background hover:opacity-90 transition-all disabled:opacity-40 font-mono"
                   >
-                    {scheduling
-                      ? "Saving..."
-                      : editingQueueId ? "Save changes" : "Add to queue"}
+                    {scheduling ? "Saving..." : editingQueueId ? "Save changes" : "Add to queue"}
                   </button>
                   {editingQueueId && (
                     <button
@@ -805,6 +986,9 @@ export function ListingSocialView() {
         </div>
       </section>
 
+      {/* ── Queue ─────────────────────────────────────────────────────────
+          Pending + recently failed posts. Published items drop off (they
+          surface in the Published grid below). */}
       {queue.length > 0 && (() => {
         const activeQueue = queue.filter((i) => i.status === "pending" || i.status === "failed");
         const failedCount = queue.filter((i) => i.status === "failed").length;
@@ -960,6 +1144,27 @@ export function ListingSocialView() {
           </div>
         </section>
       )}
+
+      {/* Mobile sticky action bar — the publish decision is always reachable
+          without scrolling to the bottom of a long form. */}
+      <div className="lg:hidden fixed bottom-0 left-0 right-0 z-30 surface-1 border-t border-border px-3 py-2.5 flex items-center gap-2">
+        <button
+          type="button"
+          onClick={handlePublish}
+          disabled={!canPublish}
+          className="flex-1 px-4 py-2.5 text-sm font-semibold rounded bg-foreground text-background disabled:opacity-40 font-mono"
+        >
+          {publishing ? "Sending…" : `Publish now (${selectedImages.length})`}
+        </button>
+        <button
+          type="button"
+          onClick={openScheduleFromBar}
+          disabled={selectedImages.length < 2 || !caption.trim() || channels.length === 0}
+          className="px-4 py-2.5 text-sm font-semibold rounded border border-border-strong text-foreground disabled:opacity-40 font-mono"
+        >
+          Schedule
+        </button>
+      </div>
     </div>
   );
 }
