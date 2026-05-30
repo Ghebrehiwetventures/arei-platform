@@ -72,19 +72,31 @@ export default function Agents() {
   const [query, setQuery] = useState("");
   const isSearching = query.trim().length > 0;
 
+  // Public directory shows only agencies that currently have tracked
+  // listing data. 0-listing agencies (e.g. a source returning nothing right
+  // now) stay in the DB but are hidden here, and reappear automatically once
+  // they have listings. Guard: if stats failed to load entirely (empty map),
+  // don't hide everything — fall back to showing all agencies.
+  const visibleAgencies = useMemo(() => {
+    const statsLoaded = Object.keys(stats).length > 0;
+    if (!statsLoaded) return agencies;
+    return agencies.filter((a) => aggregateStats(a, stats) !== null);
+  }, [agencies, stats]);
+
   const filtered = useMemo(() => {
-    if (!isSearching) return agencies;
+    if (!isSearching) return visibleAgencies;
     const q = query.trim().toLowerCase();
-    return agencies.filter((a) => {
+    return visibleAgencies.filter((a) => {
       const name = displayName(a).toLowerCase();
       const desc = (a.description ?? "").toLowerCase();
       return q.split(/\s+/).every((token) => name.includes(token) || desc.includes(token));
     });
-  }, [agencies, query, isSearching]);
+  }, [visibleAgencies, query, isSearching]);
 
-  /* JSON-LD: ItemList of LocalBusiness entries */
+  /* JSON-LD: ItemList of the agencies actually rendered (visible cards),
+     so structured data matches on-page content. */
   useEffect(() => {
-    if (agencies.length === 0) return;
+    if (visibleAgencies.length === 0) return;
     const SCRIPT_ID = "kv-jsonld-agents";
 
     const data = {
@@ -92,8 +104,8 @@ export default function Agents() {
       "@type": "ItemList",
       name: "Real Estate Agents in Cape Verde",
       description: PAGE_DESCRIPTION,
-      numberOfItems: agencies.length,
-      itemListElement: agencies.map((a, i) => ({
+      numberOfItems: visibleAgencies.length,
+      itemListElement: visibleAgencies.map((a, i) => ({
         "@type": "ListItem",
         position: i + 1,
         item: {
@@ -117,7 +129,7 @@ export default function Agents() {
     return () => {
       document.getElementById(SCRIPT_ID)?.remove();
     };
-  }, [agencies]);
+  }, [visibleAgencies]);
 
   return (
     <div className="kv-agents">
@@ -154,9 +166,9 @@ export default function Agents() {
 
         {!loading && (
           <div className="kv-agents-count">
-            <b>{isSearching ? filtered.length : agencies.length}</b>{" "}
-            {(isSearching ? filtered.length : agencies.length) === 1 ? "agency" : "agencies"}
-            {isSearching && agencies.length > 0 && ` of ${agencies.length}`}
+            <b>{isSearching ? filtered.length : visibleAgencies.length}</b>{" "}
+            {(isSearching ? filtered.length : visibleAgencies.length) === 1 ? "agency" : "agencies"}
+            {isSearching && visibleAgencies.length > 0 && ` of ${visibleAgencies.length}`}
           </div>
         )}
       </PageHeader>
