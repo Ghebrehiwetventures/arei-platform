@@ -21,6 +21,7 @@ const Market = lazy(() => import("./pages/Market"));
 const MarketNews = lazy(() => import("./pages/MarketNews"));
 const Rent = lazy(() => import("./pages/Rent"));
 const About = lazy(() => import("./pages/About"));
+const Agents = lazy(() => import("./pages/Agents"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
 
@@ -74,6 +75,7 @@ export default function App() {
           {/* Rent surface offline — redirect to listings. Rent page and data model preserved. */}
           <Route path="/rent" element={<Navigate to="/listings" replace />} />
           <Route path="/about" element={<About />} />
+          <Route path="/agents" element={<Agents />} />
           <Route path="/blog" element={<BlogList />} />
           <Route path="/guides" element={<Navigate to="/blog" replace />} />
           <Route path="/blog/:slug" element={<BlogPost />} />

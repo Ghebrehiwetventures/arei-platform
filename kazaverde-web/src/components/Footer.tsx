@@ -33,6 +33,7 @@ export default function Footer() {
             <h4>{t("footer.index")}</h4>
             <Link to="/listings">{t("common.allListings")}</Link>
             <Link to="/market">{t("common.marketData")}</Link>
+            <Link to="/agents">Agents</Link>
             <Link to="/saved">{t("common.shortlist")}</Link>
             <a href="mailto:info@africarealestateindex.com">{t("common.contact")}</a>
           </div>

@@ -134,6 +134,11 @@ export interface GetListingsParams {
   propertyType?: string;
   /** Minimum bedrooms (>=). 0 or undefined = no filter */
   minBeds?: number;
+  /**
+   * Filter by exact source_id (e.g. "cv_terracaboverde").
+   * Maps to the URL param ?source= on the listings page.
+   */
+  sourceId?: string;
 }
 
 /** Paginated response */
@@ -220,6 +225,37 @@ export interface MarketReportRow {
   published_at: string;
   /** ISO timestamp of last data update */
   last_updated: string;
+}
+
+/** Public-safe row from public.agencies (no relationship/CRM data) */
+export interface AgencyRow {
+  id: string;
+  market_code: string;
+  agency_name: string;
+  public_display_name: string | null;
+  website: string | null;
+  email: string | null;
+  phone: string | null;
+  logo_url: string | null;
+  description: string | null;
+  source_ids: string[];
+  claimed_status: "unclaimed" | "invited" | "claimed" | "verified";
+  created_at: string;
+}
+
+/**
+ * Aggregated public-feed stats for one scraping source, used to enrich
+ * agency cards with AREI-owned data (never external/Google data).
+ * Keyed by source_id when returned from getAgencyListingStats().
+ */
+export interface AgencyListingStats {
+  sourceId: string;
+  /** Number of listings in the public feed for this source_id */
+  listingCount: number;
+  /** Distinct island values present for this source_id, sorted */
+  islands: string[];
+  /** Max last_seen_at across this source's listings (ISO string), or null */
+  lastSeenAt: string | null;
 }
 
 /** Raw row returned by the public.market_news table (snake_case DB shape) */
