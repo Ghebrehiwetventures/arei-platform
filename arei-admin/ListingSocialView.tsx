@@ -674,17 +674,16 @@ export function ListingSocialView() {
             xl     : [browser | composer | preview+publish]
           Each column gets a matching label header on lg+ so the three
           panels share a top baseline — "boxes with aligned windows".    */}
-      <section className="grid grid-cols-1 gap-4 items-start lg:items-stretch lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
-        {/* A · Listing browser — wrapper carries the column label so it
-            sits *above* the card (matching Compose / Preview & publish);
-            inner card uses flex-col + flex-1 so the listings list fills
-            the column height and scrolls internally. */}
+      <section className="grid grid-cols-1 gap-4 items-start lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
+        {/* A · Listing browser — sticky so it tracks the viewport while
+            the user edits images/caption in Compose. max-h-[70vh] caps
+            the panel; the inner list scrolls independently. */}
         <div
-          className={`${mobilePickerOpen ? "block" : "hidden"} lg:flex lg:flex-col lg:row-span-2 xl:row-span-1 space-y-4 min-w-0`}
+          className={`${mobilePickerOpen ? "block" : "hidden"} lg:block space-y-4 lg:sticky lg:top-4 lg:row-span-2 xl:row-span-1`}
         >
           <div className="label-style hidden lg:block">Browse</div>
-          <div className="surface-1 rounded border border-border lg:flex lg:flex-col lg:flex-1 lg:min-h-0">
-          <div className="p-3 border-b border-border space-y-2">
+          <div className="surface-1 rounded border border-border flex flex-col max-h-[55vh] lg:max-h-[70vh]">
+          <div className="p-3 border-b border-border space-y-2 flex-shrink-0">
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
@@ -721,7 +720,7 @@ export function ListingSocialView() {
               </span>
             </div>
           </div>
-          <div className="p-2 space-y-0.5 overflow-y-auto max-h-[55vh] lg:max-h-none lg:flex-1 lg:min-h-0">
+          <div className="p-2 space-y-0.5 overflow-y-auto flex-1 min-h-0">
             {filtered.map((l) => (
               <ListingRow
                 key={l.id}
