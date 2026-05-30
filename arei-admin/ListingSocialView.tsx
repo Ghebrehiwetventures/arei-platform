@@ -675,14 +675,15 @@ export function ListingSocialView() {
           Each column gets a matching label header on lg+ so the three
           panels share a top baseline — "boxes with aligned windows".    */}
       <section className="grid grid-cols-1 gap-4 items-start lg:items-stretch lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
-        {/* A · Listing browser — `lg:flex lg:flex-col` together with
-            items-stretch on the grid makes this panel match the Compose
-            column's height; the inner list then flex-1's into whatever
-            room remains and scrolls internally. */}
+        {/* A · Listing browser — wrapper carries the column label so it
+            sits *above* the card (matching Compose / Preview & publish);
+            inner card uses flex-col + flex-1 so the listings list fills
+            the column height and scrolls internally. */}
         <div
-          className={`${mobilePickerOpen ? "block" : "hidden"} lg:flex lg:flex-col surface-1 rounded border border-border lg:row-span-2 xl:row-span-1`}
+          className={`${mobilePickerOpen ? "block" : "hidden"} lg:flex lg:flex-col lg:row-span-2 xl:row-span-1 space-y-4 min-w-0`}
         >
-          <div className="label-style px-3 pt-3 pb-1.5 hidden lg:block">Browse</div>
+          <div className="label-style hidden lg:block">Browse</div>
+          <div className="surface-1 rounded border border-border lg:flex lg:flex-col lg:flex-1 lg:min-h-0">
           <div className="p-3 border-b border-border space-y-2">
             <input
               value={search}
@@ -732,6 +733,7 @@ export function ListingSocialView() {
             {filtered.length === 0 && (
               <div className="text-xs text-foreground-muted font-mono p-3 text-center">No listings match.</div>
             )}
+          </div>
           </div>
         </div>
 
