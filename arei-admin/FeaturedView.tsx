@@ -129,71 +129,137 @@ async function fetchFromFeed(filters: {
   return (data ?? []).map(toSnippet);
 }
 
+const PROPERTY_TYPES = ["", "apartment", "villa", "house", "land", "commercial"] as const;
+const TYPE_LABELS: Record<string, string> = {
+  "": "Any",
+  apartment: "Apartment",
+  villa: "Villa",
+  house: "House",
+  land: "Land",
+  commercial: "Commercial",
+};
+
+// ── Slot card with per-slot category + random ─────────────────────────────────
+
+function SlotCard({
+  index,
+  listing,
+  allSlots,
+  onRemove,
+  onRandomPick,
+}: {
+  index: number;
+  listing: ListingSnippet | null;
+  allSlots: (ListingSnippet | null)[];
+  onRemove: () => void;
+  onRandomPick: (slotIndex: number, propertyType: string) => void;
+}) {
+  const [selectedType, setSelectedType] = useState("");
+
+  return (
+    <div className={`border rounded-lg overflow-hidden flex flex-col ${
+      listing ? "border-border" : "border-dashed border-border"
+    }`}>
+      {/* slot number badge */}
+      <div className="relative">
+        <div className="absolute top-2 left-2 z-10 bg-black/70 text-white text-xs font-mono px-1.5 py-0.5 rounded">
+          {index + 1}
+        </div>
+
+        {listing ? (
+          <>
+            <div className="h-28 bg-surface-1 overflow-hidden">
+              {listing.image_url ? (
+                <img
+                  src={listing.image_url}
+                  alt=""
+                  className="w-full h-full object-cover"
+                  onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
+                />
+              ) : (
+                <div className="w-full h-full flex items-center justify-center">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-foreground-subtle">
+                    <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
+                  </svg>
+                </div>
+              )}
+            </div>
+            <div className="p-2">
+              <div className="text-xs font-medium text-foreground line-clamp-2 leading-snug mb-0.5">{listing.title}</div>
+              <div className="text-xs text-foreground-muted">{[listing.island, listing.city].filter(Boolean).join(", ")}</div>
+              <div className="mt-1 flex items-center justify-between gap-1">
+                <span className="text-xs font-mono text-[#8ECFBF] tabular-nums">{fmtPrice(listing.price, listing.currency)}</span>
+                <span className="text-[10px] text-foreground-subtle capitalize">{listing.property_type ?? ""}</span>
+              </div>
+            </div>
+            <button
+              onClick={onRemove}
+              className="absolute top-2 right-2 bg-black/60 hover:bg-[#C44A3A]/80 text-white rounded p-0.5 transition-colors"
+              title="Remove"
+            >
+              <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
+                <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
+              </svg>
+            </button>
+          </>
+        ) : (
+          <div className="h-28 flex flex-col items-center justify-center text-foreground-subtle text-xs gap-1 px-2 text-center">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
+              <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            Empty
+          </div>
+        )}
+      </div>
+
+      {/* per-slot category + random */}
+      <div className="p-2 border-t border-border bg-surface-1 flex gap-1.5 mt-auto">
+        <select
+          value={selectedType}
+          onChange={(e) => setSelectedType(e.target.value)}
+          className="flex-1 text-[11px] bg-background border border-border rounded px-1.5 py-1 text-foreground-muted focus:outline-none focus:border-[#8ECFBF]/50 min-w-0"
+        >
+          {PROPERTY_TYPES.map((t) => (
+            <option key={t} value={t}>{TYPE_LABELS[t]}</option>
+          ))}
+        </select>
+        <button
+          onClick={() => onRandomPick(index, selectedType)}
+          title={`Random ${selectedType ? TYPE_LABELS[selectedType] : "listing"} for slot ${index + 1}`}
+          className="flex items-center gap-1 px-2 py-1 text-[11px] border border-border rounded text-foreground-muted hover:text-[#8ECFBF] hover:border-[#8ECFBF]/50 transition-colors font-mono shrink-0"
+        >
+          <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+          </svg>
+          Random
+        </button>
+      </div>
+    </div>
+  );
+}
+
 // ── Slot strip ────────────────────────────────────────────────────────────────
 
 function SlotStrip({
   slots,
   onRemove,
+  onRandomPick,
 }: {
   slots: (ListingSnippet | null)[];
   onRemove: (i: number) => void;
+  onRandomPick: (slotIndex: number, propertyType: string) => void;
 }) {
   return (
     <div className="grid grid-cols-4 gap-3">
       {slots.map((listing, i) => (
-        <div
+        <SlotCard
           key={i}
-          className={`relative border rounded-lg overflow-hidden ${
-            listing ? "border-border" : "border-dashed border-border"
-          }`}
-        >
-          {/* slot number badge */}
-          <div className="absolute top-2 left-2 z-10 bg-black/70 text-white text-xs font-mono px-1.5 py-0.5 rounded">
-            {i + 1}
-          </div>
-
-          {listing ? (
-            <>
-              <div className="h-24 bg-surface-1 overflow-hidden">
-                {listing.image_url ? (
-                  <img
-                    src={listing.image_url}
-                    alt=""
-                    className="w-full h-full object-cover"
-                    onError={(e) => { (e.target as HTMLImageElement).style.display = "none"; }}
-                  />
-                ) : (
-                  <div className="w-full h-full flex items-center justify-center">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1" className="text-foreground-subtle">
-                      <rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/>
-                    </svg>
-                  </div>
-                )}
-              </div>
-              <div className="p-2">
-                <div className="text-xs font-medium text-foreground line-clamp-2 leading-snug mb-0.5">{listing.title}</div>
-                <div className="text-xs text-foreground-muted">{[listing.island, listing.city].filter(Boolean).join(", ")}</div>
-                <div className="mt-1 text-xs font-mono text-[#8ECFBF] tabular-nums">{fmtPrice(listing.price, listing.currency)}</div>
-              </div>
-              <button
-                onClick={() => onRemove(i)}
-                className="absolute top-2 right-2 bg-black/60 hover:bg-[#C44A3A]/80 text-white rounded p-0.5 transition-colors"
-                title="Remove"
-              >
-                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round">
-                  <line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/>
-                </svg>
-              </button>
-            </>
-          ) : (
-            <div className="h-24 flex flex-col items-center justify-center text-foreground-subtle text-xs gap-1 px-2 text-center">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round">
-                <line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/>
-              </svg>
-              Empty
-            </div>
-          )}
-        </div>
+          index={i}
+          listing={listing}
+          allSlots={slots}
+          onRemove={() => onRemove(i)}
+          onRandomPick={onRandomPick}
+        />
       ))}
     </div>
   );
@@ -358,6 +424,21 @@ export function FeaturedView() {
     setSlots(next);
   };
 
+  const handleRandomPick = async (slotIndex: number, propertyType: string) => {
+    // Fetch a pool filtered by the chosen type, then pick randomly
+    const pool = await fetchFromFeed({
+      propertyType: propertyType || undefined,
+    });
+    // Exclude listings already pinned in other slots
+    const usedIds = new Set(slots.filter((s, i) => s && i !== slotIndex).map((s) => s!.id));
+    const candidates = pool.filter((l) => l.image_url && l.price && !usedIds.has(l.id));
+    if (candidates.length === 0) return;
+    const pick = candidates[Math.floor(Math.random() * candidates.length)];
+    const next = [...slots];
+    next[slotIndex] = pick;
+    setSlots(next);
+  };
+
   const handleSave = async (status: "draft" | "published") => {
     setSaving(true);
     setSaveError(null);
@@ -442,32 +523,10 @@ export function FeaturedView() {
 
       {/* Slots */}
       <div>
-        <div className="flex items-center justify-between mb-3">
-          <div className="text-xs uppercase tracking-widest text-foreground-subtle font-mono">
-            Slots — {filledCount}/4 filled
-          </div>
-          <button
-            onClick={() => {
-              const picks = pickRandom(searchResults.length > 0 ? searchResults : []);
-              if (picks.length === 0) return;
-              setSlots([
-                picks[0] ?? null,
-                picks[1] ?? null,
-                picks[2] ?? null,
-                picks[3] ?? null,
-              ]);
-            }}
-            disabled={searchResults.length === 0}
-            title="Pick 4 random listings from current results"
-            className="flex items-center gap-1.5 text-xs border border-border rounded px-2.5 py-1 text-foreground-muted hover:text-foreground hover:border-[#8ECFBF]/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-          >
-            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
-            </svg>
-            Random
-          </button>
+        <div className="text-xs uppercase tracking-widest text-foreground-subtle font-mono mb-3">
+          Slots — {filledCount}/4 filled
         </div>
-        <SlotStrip slots={slots} onRemove={handleRemoveSlot} />
+        <SlotStrip slots={slots} onRemove={handleRemoveSlot} onRandomPick={handleRandomPick} />
       </div>
 
       {/* Actions */}
