@@ -20,6 +20,7 @@ import type {
   MarketNewsRow,
   MarketReportRow,
   FeaturedSelectionRow,
+  AgencyRow,
 } from "./types.js";
 import {
   PRICE_BUCKETS,
@@ -554,6 +555,23 @@ export class AREIClient {
       .filter((r): r is ListingRow => r != null);
 
     return ordered.map(toListingCard);
+  }
+
+  // =========================================================================
+  // getAgencies — public agency directory for a given market
+  // Only returns public-safe columns — never joins agency_relationships.
+  // =========================================================================
+  async getAgencies(marketCode = "cv"): Promise<AgencyRow[]> {
+    const { data, error } = await this.sb
+      .from("agencies")
+      .select(
+        "id, market_code, agency_name, public_display_name, website, email, phone, logo_url, description, source_ids, claimed_status, created_at"
+      )
+      .eq("market_code", marketCode)
+      .order("agency_name", { ascending: true });
+
+    if (error) throw new Error(`getAgencies failed: ${error.message}`);
+    return (data ?? []) as AgencyRow[];
   }
 
   // =========================================================================

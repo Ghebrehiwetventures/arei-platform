@@ -1,0 +1,219 @@
+/* ════════════════════════════════════════════════════════════
+   Agents directory — public agency index for Cape Verde
+   Mirrors BlogList layout: off-white page-head, mono search,
+   3-col card grid, same empty-state dashed box.
+   ════════════════════════════════════════════════════════════ */
+
+.kv-agents {
+  font-family: var(--kv-mono);
+  color: var(--kv-black);
+  background: var(--kv-white);
+}
+
+/* ─── Search ─── */
+.kv-agents-search {
+  position: relative;
+  display: flex;
+  align-items: center;
+  max-width: 560px;
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-white);
+  transition: border-color var(--kv-dur-fast) var(--kv-ease);
+}
+.kv-agents-search:focus-within { border-color: var(--kv-black); }
+
+.kv-agents-search-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  font-size: 16px;
+  color: var(--kv-gray-500);
+  flex-shrink: 0;
+}
+
+.kv-agents-search-input {
+  flex: 1;
+  height: 44px;
+  border: none;
+  background: transparent;
+  font-family: var(--kv-mono);
+  font-size: 14px;
+  color: var(--kv-black);
+  padding: 0 12px 0 0;
+  outline: none;
+}
+.kv-agents-search-input::placeholder { color: var(--kv-gray-500); }
+
+.kv-agents-search-clear {
+  width: 36px;
+  height: 36px;
+  margin-right: 4px;
+  background: transparent;
+  border: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--kv-gray-500);
+  cursor: pointer;
+  transition: color var(--kv-dur-fast) var(--kv-ease);
+}
+.kv-agents-search-clear:hover { color: var(--kv-black); }
+
+.kv-agents-count {
+  margin-top: 14px;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  font-variant-numeric: tabular-nums;
+}
+.kv-agents-count b { color: var(--kv-black); font-weight: 600; }
+
+/* ─── Body ─── */
+.kv-agents-body {
+  max-width: var(--kv-content-w);
+  margin: 0 auto;
+  padding: 56px var(--kv-gutter) 96px;
+}
+
+/* ─── Grid ─── */
+.kv-agents-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+}
+
+/* ─── Card ─── */
+.kv-agent-card {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-paper);
+  padding: 24px;
+  color: var(--kv-black);
+  transition: border-color var(--kv-dur) var(--kv-ease),
+              transform var(--kv-dur) var(--kv-ease);
+}
+.kv-agent-card:hover { border-color: rgba(0, 0, 0, 0.4); transform: translateY(-2px); }
+
+.kv-agent-card-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 12px;
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--kv-rule-soft);
+}
+
+.kv-agent-name {
+  font-family: var(--kv-mono);
+  font-size: 16px;
+  font-weight: var(--kv-fw-regular);
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+  color: var(--kv-black);
+  flex: 1;
+  min-width: 0;
+}
+
+/* Unclaimed badge */
+.kv-agent-badge {
+  flex-shrink: 0;
+  font-family: var(--kv-mono);
+  font-size: 9px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  border: 1px solid var(--kv-rule);
+  padding: 3px 7px;
+  white-space: nowrap;
+}
+
+.kv-agent-description {
+  font-family: var(--kv-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--kv-ink-600);
+  flex: 1;
+  margin-bottom: 20px;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.kv-agent-no-description {
+  font-family: var(--kv-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--kv-ink-400);
+  flex: 1;
+  margin-bottom: 20px;
+  font-style: italic;
+}
+
+.kv-agent-card-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: auto;
+}
+
+.kv-agent-website {
+  font-family: var(--kv-mono);
+  font-size: 11px;
+  color: var(--kv-green-deep);
+  text-decoration: none;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 200px;
+  transition: color var(--kv-dur-fast) var(--kv-ease);
+}
+.kv-agent-website:hover { color: var(--kv-black); }
+
+.kv-agent-market {
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+}
+
+/* ─── Empty / loading states ─── */
+.kv-agents-empty {
+  font-family: var(--kv-mono);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--kv-ink-700);
+  border: 1px dashed var(--kv-rule);
+  background: var(--kv-paper);
+  padding: 24px;
+  max-width: 620px;
+}
+.kv-agents-empty b { color: var(--kv-black); font-weight: 500; }
+
+.kv-agents-loading {
+  font-family: var(--kv-mono);
+  font-size: 13px;
+  color: var(--kv-gray-500);
+  letter-spacing: 0.06em;
+  padding: 24px 0;
+}
+
+/* ─── Responsive ─── */
+@media (max-width: 960px) {
+  .kv-agents-body { padding: 40px var(--kv-gutter) 72px; }
+  .kv-agents-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+@media (max-width: 640px) {
+  .kv-agents-body { padding: 32px var(--kv-gutter) 56px; }
+  .kv-agents-grid { grid-template-columns: 1fr; }
+}

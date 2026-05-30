@@ -20,6 +20,7 @@ export type {
   MarketNewsRow,
   MarketReportRow,
   FeaturedSelectionRow,
+  AgencyRow,
 } from "./types.js";
 
 export {

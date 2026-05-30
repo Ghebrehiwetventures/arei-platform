@@ -222,6 +222,22 @@ export interface MarketReportRow {
   last_updated: string;
 }
 
+/** Public-safe row from public.agencies (no relationship/CRM data) */
+export interface AgencyRow {
+  id: string;
+  market_code: string;
+  agency_name: string;
+  public_display_name: string | null;
+  website: string | null;
+  email: string | null;
+  phone: string | null;
+  logo_url: string | null;
+  description: string | null;
+  source_ids: string[];
+  claimed_status: "unclaimed" | "invited" | "claimed" | "verified";
+  created_at: string;
+}
+
 /** Raw row returned by the public.market_news table (snake_case DB shape) */
 export interface MarketNewsRow {
   id: string;
