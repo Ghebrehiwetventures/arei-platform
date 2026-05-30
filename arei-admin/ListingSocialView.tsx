@@ -472,7 +472,24 @@ export function ListingSocialView() {
             </div>
           </div>
           <div>
-            <div className="label-style mb-1">Listing ({filtered.length} of {listings.length})</div>
+            <div className="flex items-center justify-between mb-1">
+              <span className="label-style">Listing ({filtered.length} of {listings.length})</span>
+              <button
+                onClick={() => {
+                  if (filtered.length === 0) return;
+                  const pick = filtered[Math.floor(Math.random() * filtered.length)];
+                  setSelectedId(pick.id);
+                }}
+                disabled={filtered.length === 0}
+                title="Pick a random listing"
+                className="flex items-center gap-1 text-xs border border-border rounded px-2 py-0.5 text-foreground-muted hover:text-foreground hover:border-[#8ECFBF]/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed font-mono"
+              >
+                <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+                </svg>
+                Random
+              </button>
+            </div>
             <select
               value={selectedId}
               onChange={(e) => setSelectedId(e.target.value)}
