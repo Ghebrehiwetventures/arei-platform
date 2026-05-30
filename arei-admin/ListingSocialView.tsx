@@ -674,10 +674,13 @@ export function ListingSocialView() {
             xl     : [browser | composer | preview+publish]
           Each column gets a matching label header on lg+ so the three
           panels share a top baseline — "boxes with aligned windows".    */}
-      <section className="grid grid-cols-1 gap-4 items-start lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
-        {/* A · Listing browser */}
+      <section className="grid grid-cols-1 gap-4 items-start lg:items-stretch lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
+        {/* A · Listing browser — `lg:flex lg:flex-col` together with
+            items-stretch on the grid makes this panel match the Compose
+            column's height; the inner list then flex-1's into whatever
+            room remains and scrolls internally. */}
         <div
-          className={`${mobilePickerOpen ? "block" : "hidden"} lg:block surface-1 rounded border border-border lg:sticky lg:top-4 lg:row-span-2 xl:row-span-1`}
+          className={`${mobilePickerOpen ? "block" : "hidden"} lg:flex lg:flex-col surface-1 rounded border border-border lg:row-span-2 xl:row-span-1`}
         >
           <div className="label-style px-3 pt-3 pb-1.5 hidden lg:block">Browse</div>
           <div className="p-3 border-b border-border space-y-2">
@@ -717,7 +720,7 @@ export function ListingSocialView() {
               </span>
             </div>
           </div>
-          <div className="p-2 space-y-0.5 overflow-y-auto max-h-[55vh] lg:max-h-[calc(100vh_-_240px)]">
+          <div className="p-2 space-y-0.5 overflow-y-auto max-h-[55vh] lg:max-h-none lg:flex-1 lg:min-h-0">
             {filtered.map((l) => (
               <ListingRow
                 key={l.id}
