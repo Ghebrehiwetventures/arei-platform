@@ -717,7 +717,7 @@ export function ListingSocialView() {
               </span>
             </div>
           </div>
-          <div className="p-2 space-y-0.5 overflow-y-auto max-h-[55vh] lg:max-h-[calc(100vh-240px)]">
+          <div className="p-2 space-y-0.5 overflow-y-auto max-h-[55vh] lg:max-h-[calc(100vh_-_240px)]">
             {filtered.map((l) => (
               <ListingRow
                 key={l.id}
