@@ -198,9 +198,14 @@ function ListingRow({
   );
 }
 
-// ── Post preview — a lightweight, honest render of what ships: cover image
-//    (1:1), carousel dots + count, and the caption's opening with truncation.
-//    Not a pixel-perfect IG mock; just the parts that decide quality. ───────
+// ── Post preview — a lightweight, honest render of what ships.
+//    Cover image (1:1), navigable carousel (prev/next on hover desktop,
+//    swipe-arrows on mobile), dot indicators + counter, and the caption's
+//    opening with truncation. Uses the real IG avatar + handle so the
+//    operator sees what subscribers will see. ─────────────────────────────
+const IG_HANDLE = "capeverderealestateindex";
+const IG_AVATAR = "/cvrei-ig-avatar.png";
+
 function PostPreview({
   images,
   caption,
@@ -210,40 +215,74 @@ function PostPreview({
   caption: string;
   channels: string[];
 }) {
-  const cover = images[0];
+  const [idx, setIdx] = useState(0);
+  // Snap back to first image when the selection changes underneath.
+  useEffect(() => {
+    if (idx >= images.length) setIdx(0);
+  }, [images.length, idx]);
+
   const trimmed = caption.trim();
+  const current = images[idx];
+  const hasMany = images.length > 1;
+
+  const go = (delta: number) => {
+    if (!hasMany) return;
+    setIdx((i) => (i + delta + images.length) % images.length);
+  };
+
   return (
     <div className="surface-1 rounded border border-border overflow-hidden">
       <div className="flex items-center gap-2 px-3 py-2 border-b border-border">
-        <div className="w-6 h-6 rounded-full bg-foreground text-background flex items-center justify-center text-[10px] font-mono font-semibold">
-          A
-        </div>
-        <div className="text-xs font-mono text-foreground">arei</div>
-        <div className="ml-auto label-style">Preview</div>
+        <img
+          src={IG_AVATAR}
+          alt=""
+          className="w-6 h-6 rounded-full object-cover flex-shrink-0"
+        />
+        <div className="text-xs font-mono text-foreground truncate">{IG_HANDLE}</div>
+        <div className="ml-auto label-style flex-shrink-0">Preview</div>
       </div>
-      <div className="relative aspect-square bg-surface-3">
-        {cover ? (
+      <div className="relative aspect-square bg-surface-3 group">
+        {current ? (
           <img
-            src={previewImageUrl(cover, 640)}
+            src={previewImageUrl(current, 640)}
             alt=""
             referrerPolicy="no-referrer"
-            className="w-full h-full object-cover"
+            className="w-full h-full object-cover select-none"
           />
         ) : (
           <div className="w-full h-full flex items-center justify-center text-foreground-subtle text-xs font-mono">
             No image selected
           </div>
         )}
-        {images.length > 1 && (
+        {hasMany && (
           <>
-            <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] font-mono px-1.5 py-0.5 rounded-full tabular-nums">
-              1/{images.length}
+            {/* Counter pill — current / total */}
+            <div className="absolute top-2 right-2 bg-black/65 text-white text-[10px] font-mono px-1.5 py-0.5 rounded-full tabular-nums">
+              {idx + 1}/{images.length}
             </div>
+            {/* Prev / next — visible on hover (desktop) and always on touch.
+                Sized small so they never cover the photo's subject. */}
+            <button
+              type="button"
+              onClick={() => go(-1)}
+              aria-label="Previous image"
+              className="absolute left-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/55 hover:bg-black/75 text-white text-sm font-mono flex items-center justify-center opacity-0 group-hover:opacity-100 lg:opacity-0 lg:group-hover:opacity-100 max-lg:opacity-100 transition-opacity"
+            >‹</button>
+            <button
+              type="button"
+              onClick={() => go(1)}
+              aria-label="Next image"
+              className="absolute right-2 top-1/2 -translate-y-1/2 w-7 h-7 rounded-full bg-black/55 hover:bg-black/75 text-white text-sm font-mono flex items-center justify-center opacity-0 group-hover:opacity-100 lg:opacity-0 lg:group-hover:opacity-100 max-lg:opacity-100 transition-opacity"
+            >›</button>
+            {/* Dot indicators — current one is brighter/larger. */}
             <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex items-center gap-1">
               {images.slice(0, 10).map((_, i) => (
-                <span
+                <button
                   key={i}
-                  className={`rounded-full ${i === 0 ? "w-1.5 h-1.5 bg-white" : "w-1 h-1 bg-white/50"}`}
+                  type="button"
+                  onClick={() => setIdx(i)}
+                  aria-label={`Go to image ${i + 1}`}
+                  className={`rounded-full transition-all ${i === idx ? "w-1.5 h-1.5 bg-white" : "w-1 h-1 bg-white/50 hover:bg-white/80"}`}
                 />
               ))}
             </div>
@@ -253,7 +292,7 @@ function PostPreview({
       <div className="px-3 py-2.5">
         {trimmed ? (
           <p className="text-xs text-foreground leading-relaxed whitespace-pre-wrap line-clamp-3">
-            <span className="font-mono font-medium">arei</span> {trimmed}
+            <span className="font-mono font-medium">{IG_HANDLE}</span> {trimmed}
           </p>
         ) : (
           <p className="text-xs text-foreground-subtle">Caption preview will appear here.</p>
@@ -632,12 +671,15 @@ export function ListingSocialView() {
           single grid), reflowed via CSS:
             mobile : single column (A → B → C), sticky action bar below
             lg     : [browser | composer], preview/publish under composer
-            xl     : [browser | composer | preview+publish]              */}
+            xl     : [browser | composer | preview+publish]
+          Each column gets a matching label header on lg+ so the three
+          panels share a top baseline — "boxes with aligned windows".    */}
       <section className="grid grid-cols-1 gap-4 items-start lg:grid-cols-[300px_minmax(0,1fr)] xl:grid-cols-[300px_minmax(0,1fr)_360px]">
         {/* A · Listing browser */}
         <div
           className={`${mobilePickerOpen ? "block" : "hidden"} lg:block surface-1 rounded border border-border lg:sticky lg:top-4 lg:row-span-2 xl:row-span-1`}
         >
+          <div className="label-style px-3 pt-3 pb-1.5 hidden lg:block">Browse</div>
           <div className="p-3 border-b border-border space-y-2">
             <input
               value={search}
@@ -692,6 +734,7 @@ export function ListingSocialView() {
 
         {/* B · Composer — metadata + image picker + caption */}
         <div className="space-y-4 min-w-0">
+          <div className="label-style hidden lg:block">Compose</div>
           {selected && (
             <div className="surface-1 rounded border border-border p-3 sm:p-4">
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-x-4 gap-y-2 text-xs font-mono">
@@ -803,13 +846,15 @@ export function ListingSocialView() {
                           <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-green text-white text-[10px] font-mono font-semibold flex items-center justify-center pointer-events-none">
                             {position + 1}
                           </div>
-                          <div className="absolute inset-x-1.5 bottom-1.5 grid grid-cols-2 gap-1 sm:hidden">
+                          {/* Mobile reorder — small corner chips, never cover the photo body.
+                              Long-press drag on the tile still works as the primary gesture. */}
+                          <div className="absolute top-1 right-1 flex gap-0.5 sm:hidden">
                             <button
                               type="button"
                               onPointerDown={(e) => e.stopPropagation()}
                               onClick={(e) => { e.stopPropagation(); moveSelectedImage(position, -1); }}
                               disabled={position === 0}
-                              className="h-8 rounded bg-background/90 text-foreground text-base font-mono disabled:opacity-35"
+                              className="w-6 h-6 rounded-full bg-background/85 text-foreground text-xs font-mono leading-none flex items-center justify-center disabled:opacity-30"
                               aria-label="Move image earlier"
                             >‹</button>
                             <button
@@ -817,7 +862,7 @@ export function ListingSocialView() {
                               onPointerDown={(e) => e.stopPropagation()}
                               onClick={(e) => { e.stopPropagation(); moveSelectedImage(position, 1); }}
                               disabled={position === selectedImages.length - 1}
-                              className="h-8 rounded bg-background/90 text-foreground text-base font-mono disabled:opacity-35"
+                              className="w-6 h-6 rounded-full bg-background/85 text-foreground text-xs font-mono leading-none flex items-center justify-center disabled:opacity-30"
                               aria-label="Move image later"
                             >›</button>
                           </div>
@@ -863,6 +908,7 @@ export function ListingSocialView() {
           ref={publishPanelRef}
           className="space-y-4 lg:col-start-2 lg:row-start-2 xl:col-start-3 xl:row-start-1 xl:sticky xl:top-4"
         >
+          <div className="label-style hidden xl:block">Preview &amp; publish</div>
           <PostPreview images={selectedImages} caption={caption} channels={channels} />
 
           <div className="surface-1 rounded border border-border p-4 space-y-3">
