@@ -118,18 +118,28 @@
   min-width: 0;
 }
 
-/* Unclaimed badge */
+/* Unclaimed indicator — deliberately low-weight. A small muted dot + label,
+   no border or fill, so it never competes with the agency name. */
 .kv-agent-badge {
   flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
   font-family: var(--kv-mono);
   font-size: 9px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
+  font-weight: 500;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
-  color: var(--kv-gray-500);
-  border: 1px solid var(--kv-rule);
-  padding: 3px 7px;
+  color: var(--kv-ink-400);
   white-space: nowrap;
+}
+.kv-agent-badge::before {
+  content: "";
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  border: 1px solid var(--kv-ink-300);
+  flex-shrink: 0;
 }
 
 .kv-agent-description {
@@ -137,22 +147,31 @@
   font-size: 14px;
   line-height: 1.6;
   color: var(--kv-ink-600);
-  flex: 1;
-  margin-bottom: 20px;
+  margin-bottom: 16px;
   display: -webkit-box;
   -webkit-line-clamp: 4;
   -webkit-box-orient: vertical;
   overflow: hidden;
 }
 
-.kv-agent-no-description {
-  font-family: var(--kv-sans);
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--kv-ink-400);
-  flex: 1;
-  margin-bottom: 20px;
-  font-style: italic;
+/* AREI-owned stats — listing count, islands, freshness. Neutral, mono,
+   stacked. No rankings, scores, or quality labels. */
+.kv-agent-stats {
+  list-style: none;
+  margin: 0 0 16px;
+  padding: 0;
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  line-height: 1.7;
+  color: var(--kv-ink-600);
+}
+.kv-agent-stats > li {
+  display: block;
+}
+.kv-agent-stats > li:first-child {
+  color: var(--kv-black);
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
 }
 
 .kv-agent-card-foot {

@@ -21,6 +21,7 @@ import type {
   MarketReportRow,
   FeaturedSelectionRow,
   AgencyRow,
+  AgencyListingStats,
 } from "./types.js";
 import {
   PRICE_BUCKETS,
@@ -577,6 +578,54 @@ export class AREIClient {
 
     if (error) throw new Error(`getAgencies failed: ${error.message}`);
     return (data ?? []) as AgencyRow[];
+  }
+
+  // =========================================================================
+  // getAgencyListingStats — one query, aggregated per source_id
+  //
+  // Returns a map keyed by source_id with: listing count, distinct islands,
+  // and the freshest last_seen_at. Reads the SAME public feed view that
+  // getListings() uses, so per-source counts match the filtered listings
+  // page exactly. One round-trip for all sources (no per-agency queries).
+  // =========================================================================
+  async getAgencyListingStats(): Promise<Record<string, AgencyListingStats>> {
+    const { data, error } = await this.sb
+      .from(this.view)
+      .select("source_id, island, last_seen_at");
+
+    if (error) throw new Error(`getAgencyListingStats failed: ${error.message}`);
+
+    const rows = (data ?? []) as {
+      source_id: string | null;
+      island: string | null;
+      last_seen_at: string | null;
+    }[];
+
+    const acc = new Map<string, { count: number; islands: Set<string>; lastSeenAt: string | null }>();
+    for (const row of rows) {
+      if (!row.source_id) continue;
+      let entry = acc.get(row.source_id);
+      if (!entry) {
+        entry = { count: 0, islands: new Set<string>(), lastSeenAt: null };
+        acc.set(row.source_id, entry);
+      }
+      entry.count += 1;
+      if (row.island) entry.islands.add(row.island);
+      if (row.last_seen_at && (!entry.lastSeenAt || row.last_seen_at > entry.lastSeenAt)) {
+        entry.lastSeenAt = row.last_seen_at;
+      }
+    }
+
+    const out: Record<string, AgencyListingStats> = {};
+    for (const [sourceId, entry] of acc) {
+      out[sourceId] = {
+        sourceId,
+        listingCount: entry.count,
+        islands: Array.from(entry.islands).sort(),
+        lastSeenAt: entry.lastSeenAt,
+      };
+    }
+    return out;
   }
 
   // =========================================================================

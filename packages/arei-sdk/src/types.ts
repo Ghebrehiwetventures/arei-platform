@@ -243,6 +243,21 @@ export interface AgencyRow {
   created_at: string;
 }
 
+/**
+ * Aggregated public-feed stats for one scraping source, used to enrich
+ * agency cards with AREI-owned data (never external/Google data).
+ * Keyed by source_id when returned from getAgencyListingStats().
+ */
+export interface AgencyListingStats {
+  sourceId: string;
+  /** Number of listings in the public feed for this source_id */
+  listingCount: number;
+  /** Distinct island values present for this source_id, sorted */
+  islands: string[];
+  /** Max last_seen_at across this source's listings (ISO string), or null */
+  lastSeenAt: string | null;
+}
+
 /** Raw row returned by the public.market_news table (snake_case DB shape) */
 export interface MarketNewsRow {
   id: string;

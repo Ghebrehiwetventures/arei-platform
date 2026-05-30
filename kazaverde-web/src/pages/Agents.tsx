@@ -1,7 +1,9 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
+import type { AgencyRow, AgencyListingStats } from "arei-sdk";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { useAgencies } from "../hooks/useAgencies";
+import { formatDate, toLocale } from "../lib/formatters";
 import NewsletterCta from "../components/NewsletterCta";
 import PageHeader from "../components/PageHeader";
 import SectionHead from "../components/SectionHead";
@@ -27,10 +29,46 @@ function websiteHref(url: string): string {
   return url.startsWith("http") ? url : `https://${url}`;
 }
 
+/** Max islands to list inline before collapsing to "+N". */
+const MAX_ISLANDS_SHOWN = 3;
+
+/**
+ * Aggregate AREI-owned listing stats for one agency across all its
+ * source_ids (usually one). Returns null when there is no listing data —
+ * the caller hides the stats block rather than showing zeros.
+ */
+function aggregateStats(
+  agency: AgencyRow,
+  statsBySource: Record<string, AgencyListingStats>,
+): { listingCount: number; islands: string[]; lastSeenAt: string | null } | null {
+  let listingCount = 0;
+  const islands = new Set<string>();
+  let lastSeenAt: string | null = null;
+
+  for (const sid of agency.source_ids) {
+    const s = statsBySource[sid];
+    if (!s) continue;
+    listingCount += s.listingCount;
+    s.islands.forEach((i) => islands.add(i));
+    if (s.lastSeenAt && (!lastSeenAt || s.lastSeenAt > lastSeenAt)) {
+      lastSeenAt = s.lastSeenAt;
+    }
+  }
+
+  if (listingCount === 0) return null;
+  return { listingCount, islands: Array.from(islands).sort(), lastSeenAt };
+}
+
+function islandsLabel(islands: string[]): string {
+  if (islands.length <= MAX_ISLANDS_SHOWN) return islands.join(", ");
+  return `${islands.slice(0, MAX_ISLANDS_SHOWN).join(", ")} +${islands.length - MAX_ISLANDS_SHOWN}`;
+}
+
 export default function Agents() {
   useDocumentMeta(PAGE_TITLE, PAGE_DESCRIPTION);
 
-  const { agencies, loading, error } = useAgencies();
+  const { agencies, stats, loading, error } = useAgencies();
+  const locale = toLocale("en");
   const [query, setQuery] = useState("");
   const isSearching = query.trim().length > 0;
 
@@ -154,6 +192,7 @@ export default function Agents() {
             {filtered.map((agency) => {
               const name = displayName(agency);
               const isUnclaimed = agency.claimed_status === "unclaimed";
+              const agencyStats = aggregateStats(agency, stats);
 
               return (
                 <li key={agency.id} className="kv-agent-card" role="listitem">
@@ -166,10 +205,23 @@ export default function Agents() {
                     )}
                   </div>
 
-                  {agency.description ? (
+                  {agency.description && (
                     <p className="kv-agent-description">{agency.description}</p>
-                  ) : (
-                    <p className="kv-agent-no-description">No description available.</p>
+                  )}
+
+                  {agencyStats && (
+                    <ul className="kv-agent-stats" aria-label="Tracked data">
+                      <li>
+                        {agencyStats.listingCount}{" "}
+                        {agencyStats.listingCount === 1 ? "tracked listing" : "tracked listings"}
+                      </li>
+                      {agencyStats.islands.length > 0 && (
+                        <li>{islandsLabel(agencyStats.islands)}</li>
+                      )}
+                      {agencyStats.lastSeenAt && (
+                        <li>Updated {formatDate(agencyStats.lastSeenAt, locale)}</li>
+                      )}
+                    </ul>
                   )}
 
                   <div className="kv-agent-card-foot">
