@@ -843,9 +843,9 @@ export function ListingSocialView() {
                       {active && (
                         <>
                           <div className="absolute inset-0 ring-2 ring-inset ring-green pointer-events-none rounded" />
-                          <div className="absolute top-1 left-1 w-5 h-5 rounded-full bg-green text-white text-[10px] font-mono font-semibold flex items-center justify-center pointer-events-none">
-                            {position + 1}
-                          </div>
+                          {/* No order badge — position is already conveyed by the
+                              grid order (selected tiles are sorted to the front),
+                              so a numbered chip would just add visual noise. */}
                           {/* Mobile reorder — small corner chips, never cover the photo body.
                               Long-press drag on the tile still works as the primary gesture. */}
                           <div className="absolute top-1 right-1 flex gap-0.5 sm:hidden">
