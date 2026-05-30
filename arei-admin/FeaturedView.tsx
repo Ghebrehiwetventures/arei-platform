@@ -60,6 +60,41 @@ function fmtWeekLabel(isoWeek: string): string {
   return monday.toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
 }
 
+/** Pick 4 diverse listings: prefer unique island + unique source, then fill. */
+function pickRandom(pool: ListingSnippet[]): ListingSnippet[] {
+  const withImage = pool.filter((l) => l.image_url && l.price);
+  const picked: ListingSnippet[] = [];
+  const seenIslands = new Set<string>();
+  const seenSources = new Set<string>();
+
+  // Shuffle first so repeated clicks give different results
+  const shuffled = [...withImage].sort(() => Math.random() - 0.5);
+
+  // Pass 1: unique island + unique source
+  for (const c of shuffled) {
+    if (picked.length >= 4) break;
+    if (c.island && !seenIslands.has(c.island) && c.source_id && !seenSources.has(c.source_id)) {
+      picked.push(c);
+      if (c.island) seenIslands.add(c.island);
+      if (c.source_id) seenSources.add(c.source_id);
+    }
+  }
+  // Pass 2: unique island
+  for (const c of shuffled) {
+    if (picked.length >= 4) break;
+    if (!picked.includes(c) && c.island && !seenIslands.has(c.island)) {
+      picked.push(c);
+      if (c.island) seenIslands.add(c.island);
+    }
+  }
+  // Pass 3: anything left
+  for (const c of shuffled) {
+    if (picked.length >= 4) break;
+    if (!picked.includes(c)) picked.push(c);
+  }
+  return picked;
+}
+
 function weekOffset(isoWeek: string, delta: number): string {
   const monday = isoWeekToMonday(isoWeek);
   monday.setDate(monday.getDate() + delta * 7);
@@ -407,8 +442,30 @@ export function FeaturedView() {
 
       {/* Slots */}
       <div>
-        <div className="text-xs uppercase tracking-widest text-foreground-subtle font-mono mb-3">
-          Slots — {filledCount}/4 filled
+        <div className="flex items-center justify-between mb-3">
+          <div className="text-xs uppercase tracking-widest text-foreground-subtle font-mono">
+            Slots — {filledCount}/4 filled
+          </div>
+          <button
+            onClick={() => {
+              const picks = pickRandom(searchResults.length > 0 ? searchResults : []);
+              if (picks.length === 0) return;
+              setSlots([
+                picks[0] ?? null,
+                picks[1] ?? null,
+                picks[2] ?? null,
+                picks[3] ?? null,
+              ]);
+            }}
+            disabled={searchResults.length === 0}
+            title="Pick 4 random listings from current results"
+            className="flex items-center gap-1.5 text-xs border border-border rounded px-2.5 py-1 text-foreground-muted hover:text-foreground hover:border-[#8ECFBF]/50 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          >
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <polyline points="16 3 21 3 21 8"/><line x1="4" y1="20" x2="21" y2="3"/><polyline points="21 16 21 21 16 21"/><line x1="15" y1="15" x2="21" y2="21"/>
+            </svg>
+            Random
+          </button>
         </div>
         <SlotStrip slots={slots} onRemove={handleRemoveSlot} />
       </div>
