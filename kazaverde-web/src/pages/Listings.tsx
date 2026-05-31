@@ -8,6 +8,7 @@ import { arei } from "../lib/arei";
 import { formatSourceLabel, isNewListing } from "../lib/format";
 import { formatNumber, formatPrice, formatDate, formatRelTime, toLocale } from "../lib/formatters";
 import { getLocalizedTitle } from "../lib/i18n-listings";
+import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
 import type { ListingCard, PriceBucket } from "arei-sdk";
 import "./Listings.css";
 
@@ -722,7 +723,7 @@ export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boole
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   }
 
-  const localizedTitle = getLocalizedTitle(l, i18n.language).title;
+  const localizedTitle = normalizeListingDisplayTitle(getLocalizedTitle(l, i18n.language).title);
 
   return (
     <Link className="kv-lcard" to={`/listing/${l.id}`}>
@@ -790,7 +791,7 @@ function ListingRow({ l }: { l: ListingCard }) {
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   }
 
-  const localizedTitle = getLocalizedTitle(l, i18n.language).title;
+  const localizedTitle = normalizeListingDisplayTitle(getLocalizedTitle(l, i18n.language).title);
 
   return (
     <Link className="kv-list-row" to={`/listing/${l.id}`}>
