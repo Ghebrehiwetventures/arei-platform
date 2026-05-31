@@ -8,6 +8,7 @@ export function cardToDemoListing(card: ListingCard): DemoListing {
   return {
     id: card.id,
     title: card.title,
+    ai_descriptions: card.ai_descriptions ?? null,
     island: card.island,
     city: card.city,
     price: card.price,
@@ -33,6 +34,7 @@ export function detailToDemoListing(detail: ListingDetail): DemoListing {
   return {
     id: detail.id,
     title: detail.title,
+    ai_descriptions: detail.ai_descriptions ?? null,
     island: detail.island,
     city: detail.city,
     price: detail.price,
