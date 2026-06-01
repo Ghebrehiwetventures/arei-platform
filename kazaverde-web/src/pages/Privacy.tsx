@@ -120,6 +120,16 @@ export default function Privacy() {
                 {services[2][2]}
               </a>
             </li>
+            <li>
+              <strong>{services[3][0]}</strong> {services[3][1]}{" "}
+              <a
+                href="https://www.facebook.com/privacy/policy"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {services[3][2]}
+              </a>
+            </li>
           </ul>
         </div>
       </section>

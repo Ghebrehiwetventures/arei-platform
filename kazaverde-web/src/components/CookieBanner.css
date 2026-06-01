@@ -53,6 +53,13 @@
   font-family: var(--kv-mono);
 }
 
+.ck-actions {
+  flex-shrink: 0;
+  align-self: flex-end;
+  display: flex;
+  gap: 8px;
+}
+
 .ck-btn {
   flex-shrink: 0;
   align-self: flex-end;
@@ -62,14 +69,25 @@
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--kv-black);
-  background: transparent;
+  color: var(--kv-paper);
+  background: var(--kv-black);
   border: 1px solid var(--kv-black);
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
 .ck-btn:hover {
+  background: var(--kv-sage-deep, #2d4a42);
+  border-color: var(--kv-sage-deep, #2d4a42);
+  color: var(--kv-paper);
+}
+
+.ck-btn-secondary {
+  color: var(--kv-black);
+  background: transparent;
+}
+.ck-btn-secondary:hover {
   background: var(--kv-hover);
+  border-color: var(--kv-black);
   color: var(--kv-black);
 }
 
@@ -98,7 +116,12 @@
     font-size: 13px;
   }
 
+  .ck-actions {
+    align-self: stretch;
+  }
+
   .ck-btn {
-    align-self: flex-start;
+    align-self: stretch;
+    flex: 1;
   }
 }

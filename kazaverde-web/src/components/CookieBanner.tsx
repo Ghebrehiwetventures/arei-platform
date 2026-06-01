@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
 import { useTranslation } from "react-i18next";
+import { getConsent, setConsent } from "../lib/consent";
 import "./CookieBanner.css";
-
-const STORAGE_KEY = "kv_cookie_ack";
 
 export default function CookieBanner() {
   const { t } = useTranslation();
@@ -10,22 +9,19 @@ export default function CookieBanner() {
 
   useEffect(() => {
     try {
-      if (!localStorage.getItem(STORAGE_KEY)) {
+      // Show until the visitor has made an explicit marketing decision.
+      if (getConsent() === "unset") {
         // Small delay so it doesn't flash on first paint
-        const t = setTimeout(() => setVisible(true), 1200);
-        return () => clearTimeout(t);
+        const timer = setTimeout(() => setVisible(true), 1200);
+        return () => clearTimeout(timer);
       }
     } catch {
       // localStorage unavailable — don't show
     }
   }, []);
 
-  function accept() {
-    try {
-      localStorage.setItem(STORAGE_KEY, "1");
-    } catch {
-      // silent
-    }
+  function decide(granted: boolean) {
+    setConsent(granted);
     setVisible(false);
   }
 
@@ -40,9 +36,14 @@ export default function CookieBanner() {
             {t("cookieBanner.copy")}
           </p>
         </div>
-        <button className="ck-btn" onClick={accept} type="button">
-          {t("cookieBanner.accept")}
-        </button>
+        <div className="ck-actions">
+          <button className="ck-btn ck-btn-secondary" onClick={() => decide(false)} type="button">
+            {t("cookieBanner.decline")}
+          </button>
+          <button className="ck-btn" onClick={() => decide(true)} type="button">
+            {t("cookieBanner.accept")}
+          </button>
+        </div>
       </div>
     </div>
   );
