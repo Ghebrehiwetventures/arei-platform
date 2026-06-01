@@ -9,11 +9,12 @@ const CV_ISLANDS = [
 interface Props {
   filters: CurationFilters;
   totalCount: number;
+  loading?: boolean;
   listings: CuratedListing[];
   onChange: (next: CurationFilters) => void;
 }
 
-export function FilterBar({ filters, totalCount, listings, onChange }: Props) {
+export function FilterBar({ filters, totalCount, loading, listings, onChange }: Props) {
   const [q, setQ] = useState(filters.q ?? "");
   const sourceIds = useMemo(() => {
     const set = new Set<string>();
@@ -100,7 +101,10 @@ export function FilterBar({ filters, totalCount, listings, onChange }: Props) {
         </form>
 
         <button onClick={clearAll} className="text-xs underline ml-1">clear</button>
-        <span className="ml-auto text-xs text-foreground-muted">{totalCount} results</span>
+        <span className="ml-auto text-xs text-foreground-muted flex items-center gap-2">
+          {loading && <span className="text-foreground-muted italic">updating…</span>}
+          {totalCount} results
+        </span>
       </div>
     </section>
   );

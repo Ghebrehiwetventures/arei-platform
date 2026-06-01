@@ -278,3 +278,12 @@ input, select, textarea {
             mask-image: linear-gradient(to right, black calc(100% - 20px), transparent);
   }
 }
+
+@keyframes curation-loading-bar {
+  0%   { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+.curation-loading-bar {
+  width: 40%;
+  animation: curation-loading-bar 1.1s ease-in-out infinite;
+}

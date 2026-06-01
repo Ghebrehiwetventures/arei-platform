@@ -75,6 +75,7 @@ export function CurationWorkspaceView() {
       <FilterBar
         filters={filters}
         totalCount={totalCount}
+        loading={loadingList}
         listings={listings}
         onChange={setFilters}
       />

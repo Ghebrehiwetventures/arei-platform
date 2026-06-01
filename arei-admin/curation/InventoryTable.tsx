@@ -38,10 +38,19 @@ function NullableNum({ value }: { value: number | null }) {
 
 export function InventoryTable({ rows, loading, selectedIds, onToggleSelect, onToggleSelectAll, onOpenRow }: Props) {
   const allSelected = rows.length > 0 && rows.every((r) => selectedIds.has(r.id));
+  const refreshing = loading && rows.length > 0;
 
   return (
-    <section className="border border-border-strong rounded overflow-hidden">
-      <table className="w-full text-xs">
+    <section className="border border-border-strong rounded overflow-hidden relative">
+      {refreshing && (
+        <div className="absolute left-0 right-0 top-0 h-0.5 overflow-hidden z-10" aria-hidden>
+          <div className="curation-loading-bar h-full bg-sage-deep" />
+        </div>
+      )}
+      <table
+        className={"w-full text-xs transition-opacity duration-150 " + (refreshing ? "opacity-60" : "")}
+        aria-busy={refreshing}
+      >
         <thead className="bg-surface-2 text-foreground-muted">
           <tr>
             <th className="px-2 py-2 w-8"><input type="checkbox" checked={allSelected} onChange={onToggleSelectAll} /></th>
