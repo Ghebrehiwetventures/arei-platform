@@ -11,3 +11,4 @@ web/prototypes/
 .claude
 arei-admin/.env.local
 AGENTS.md
+.superpowers/
