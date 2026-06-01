@@ -96,4 +96,30 @@ function buildListingsQuery(filters) {
   };
 }
 
-module.exports = { buildListingsQuery };
+function buildStatsQuery() {
+  const text = `
+    SELECT
+      count(*) filter (where l.publish_status = 'published')   AS live,
+      count(*) filter (where l.publish_status = 'needs_review') AS needs_review,
+      count(*) filter (
+        where l.publish_status = 'needs_review'
+          and l.first_seen_at < now() - interval '14 days'
+      ) AS needs_review_older_than_14d,
+      count(*) filter (where l.first_seen_at >= now() - interval '7 days') AS new_this_week,
+      count(*) filter (
+        where last_review.verdict = 'hide'
+          and l.publish_status <> 'hidden'
+      ) AS agent_flagged
+    FROM kv_curated.listings l
+    LEFT JOIN LATERAL (
+      SELECT verdict
+        FROM kv_curated.review_log r
+       WHERE r.listing_id = l.id
+       ORDER BY r.created_at DESC
+       LIMIT 1
+    ) last_review ON true
+  `;
+  return { text, values: [] };
+}
+
+module.exports = { buildListingsQuery, buildStatsQuery };

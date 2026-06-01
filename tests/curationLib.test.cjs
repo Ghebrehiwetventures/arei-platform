@@ -74,3 +74,22 @@ test("buildListingsQuery countText reuses the same WHERE clause", () => {
   // count query does NOT include the limit/offset values
   assert.deepEqual(q.countValues, ["needs_review", "cv_remax"]);
 });
+
+const { buildStatsQuery } = require("../arei-admin/api/_curationLib.cjs");
+
+test("buildStatsQuery returns a single SELECT with the five aggregates", () => {
+  const { text, values } = buildStatsQuery();
+  assert.match(text, /count\(\*\) filter \(where l\.publish_status = 'published'\)\s+AS live/);
+  assert.match(text, /count\(\*\) filter \(where l\.publish_status = 'needs_review'\)\s+AS needs_review/);
+  assert.match(text, /AS needs_review_older_than_14d/);
+  assert.match(text, /AS new_this_week/);
+  assert.match(text, /AS agent_flagged/);
+  // No bound parameters — the time windows use SQL interval literals
+  assert.deepEqual(values, []);
+});
+
+test("buildStatsQuery uses LATERAL join for agent_flagged so it stays per-listing", () => {
+  const { text } = buildStatsQuery();
+  assert.match(text, /LATERAL/);
+  assert.match(text, /last_review\.verdict = 'hide'/);
+});
