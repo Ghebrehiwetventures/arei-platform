@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { getCurationStats, getCuratedListings } from "../data";
 import type { CuratedListing, CurationFilters, CurationStats, ReviewVerdict } from "../types";
 import { DashboardStrip } from "./DashboardStrip";
@@ -26,18 +26,32 @@ export function CurationWorkspaceView() {
     finally { setLoadingStats(false); }
   }, []);
 
+  // Per-call sequence token. A response only wins if it was the most recently
+  // dispatched; otherwise a slow older request can clobber a newer one.
+  const listReqIdRef = useRef(0);
   const reloadList = useCallback(async () => {
+    const reqId = ++listReqIdRef.current;
     setLoadingList(true);
     try {
       const { items, totalCount } = await getCuratedListings(filters);
+      if (reqId !== listReqIdRef.current) return;
       setListings(items);
       setTotalCount(totalCount);
     } catch (e) {
+      if (reqId !== listReqIdRef.current) return;
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setLoadingList(false);
+      if (reqId === listReqIdRef.current) setLoadingList(false);
     }
   }, [filters]);
+
+  const applyFilters = useCallback((next: CurationFilters) => {
+    setFilters(next);
+    // Selection is by id and survives across filter changes only by accident;
+    // hiding the selected rows behind a new filter would silently no-op bulk
+    // actions. Force the operator to reselect after every filter change.
+    setSelectedIds(new Set());
+  }, []);
 
   useEffect(() => { void reloadStats(); }, [reloadStats]);
   useEffect(() => { void reloadList(); }, [reloadList]);
@@ -68,7 +82,7 @@ export function CurationWorkspaceView() {
         stats={stats}
         loading={loadingStats}
         currentFilters={filters}
-        onApplyFilter={(f) => setFilters(f)}
+        onApplyFilter={applyFilters}
       />
 
 
@@ -77,7 +91,7 @@ export function CurationWorkspaceView() {
         totalCount={totalCount}
         loading={loadingList}
         listings={listings}
-        onChange={setFilters}
+        onChange={applyFilters}
       />
 
       <InventoryTable
