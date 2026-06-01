@@ -4,6 +4,7 @@ import type { CuratedListing, CurationFilters, CurationStats, ReviewVerdict } fr
 import { DashboardStrip } from "./DashboardStrip";
 import { FilterBar } from "./FilterBar";
 import { InventoryTable } from "./InventoryTable";
+import { ListingDrawer } from "./ListingDrawer";
 
 export function CurationWorkspaceView() {
   const [filters, setFilters] = useState<CurationFilters>({ status: "needs_review" });
@@ -87,10 +88,13 @@ export function CurationWorkspaceView() {
       />
 
       {openId && (
-        <aside className="fixed right-0 top-0 h-full w-[420px] bg-surface-2 border-l border-border-strong p-4 overflow-y-auto z-30">
-          <button className="text-xs underline" onClick={() => setOpenId(null)}>close</button>
-          <div className="text-xs mt-2">Drawer placeholder for {openId}</div>
-        </aside>
+        <ListingDrawer
+          id={openId}
+          onClose={() => setOpenId(null)}
+          onApplied={async () => { await Promise.all([reloadList(), reloadStats()]); }}
+          ephemeralVerdict={ephemeralVerdicts[openId]}
+          onVerdictProduced={(id, v) => setEphemeralVerdicts((prev) => ({ ...prev, [id]: v }))}
+        />
       )}
 
       {selectedIds.size > 0 && (
