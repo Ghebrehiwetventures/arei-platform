@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { applyListingPatch, reviewListing } from "../data";
 import type { CuratedListing, ReviewVerdict } from "../types";
 
@@ -15,7 +15,9 @@ type Mode = "idle" | "reviewing" | "confirm-publish" | "confirm-hide";
 export function BulkActionBar({ selectedIds, rows, onClear, onAfterMutation, onVerdictProduced }: Props) {
   const [mode, setMode] = useState<Mode>("idle");
   const [progress, setProgress] = useState<{ done: number; total: number } | null>(null);
-  const [cancelRequested, setCancelRequested] = useState(false);
+  // Ref, not state: the running loop must observe the latest value without
+  // closing over a stale render.
+  const cancelRef = useRef(false);
   const [error, setError] = useState<string | null>(null);
 
   const selectedRows = rows.filter((r) => selectedIds.has(r.id));
@@ -23,11 +25,11 @@ export function BulkActionBar({ selectedIds, rows, onClear, onAfterMutation, onV
 
   async function runReviewAll() {
     setMode("reviewing");
-    setCancelRequested(false);
+    cancelRef.current = false;
     setProgress({ done: 0, total: selectedRows.length });
     setError(null);
     for (let i = 0; i < selectedRows.length; i++) {
-      if (cancelRequested) break;
+      if (cancelRef.current) break;
       const r = selectedRows[i];
       try {
         const result = await reviewListing(r.id);
@@ -92,7 +94,7 @@ export function BulkActionBar({ selectedIds, rows, onClear, onAfterMutation, onV
           <div className="flex-1 h-1 bg-surface-2 rounded overflow-hidden">
             <div className="h-full bg-sage-deep" style={{ width: `${(progress.done / Math.max(progress.total, 1)) * 100}%` }} />
           </div>
-          <button onClick={() => setCancelRequested(true)} className="underline">cancel</button>
+          <button onClick={() => { cancelRef.current = true; }} className="underline">cancel</button>
         </>
       )}
 
