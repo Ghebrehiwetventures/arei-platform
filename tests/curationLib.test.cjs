@@ -93,3 +93,19 @@ test("buildStatsQuery uses LATERAL join for agent_flagged so it stays per-listin
   assert.match(text, /LATERAL/);
   assert.match(text, /last_review\.verdict = 'hide'/);
 });
+
+const { buildHistoryQuery } = require("../arei-admin/api/_curationLib.cjs");
+
+test("buildHistoryQuery returns ordered, capped log rows for a single listing", () => {
+  const { text, values } = buildHistoryQuery("hcv_xyz");
+  assert.match(text, /FROM kv_curated\.review_log/);
+  assert.match(text, /WHERE listing_id = \$1/);
+  assert.match(text, /ORDER BY created_at DESC/);
+  assert.match(text, /LIMIT 20/);
+  assert.deepEqual(values, ["hcv_xyz"]);
+});
+
+test("buildHistoryQuery rejects missing listing id", () => {
+  assert.throws(() => buildHistoryQuery(""), /listing_id/);
+  assert.throws(() => buildHistoryQuery(null), /listing_id/);
+});

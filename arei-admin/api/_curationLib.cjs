@@ -122,4 +122,18 @@ function buildStatsQuery() {
   return { text, values: [] };
 }
 
-module.exports = { buildListingsQuery, buildStatsQuery };
+function buildHistoryQuery(listingId) {
+  if (!listingId || typeof listingId !== "string") throw new Error("listing_id is required");
+  return {
+    text: `
+      SELECT id, listing_id, model, verdict, confidence, reasons, suggested_patch, hide_reason, created_at
+        FROM kv_curated.review_log
+       WHERE listing_id = $1
+       ORDER BY created_at DESC
+       LIMIT 20
+    `,
+    values: [listingId],
+  };
+}
+
+module.exports = { buildListingsQuery, buildStatsQuery, buildHistoryQuery };
