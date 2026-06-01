@@ -64,7 +64,7 @@ export function DashboardStrip({ stats, loading, onApplyFilter, currentFilters }
         "border-red",
         "Agent flagged",
         stats?.agent_flagged ?? "—",
-        "last verdict = hide, still queued",
+        "last verdict = hide, not yet hidden",
         () => onApplyFilter({ status: "all", flagged_hide: true }),
         flaggedActive,
       )}
