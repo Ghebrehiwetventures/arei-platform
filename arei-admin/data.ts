@@ -10,6 +10,9 @@ import {
   CuratedListing,
   SuggestedPatch,
   ReviewVerdictResult,
+  CurationFilters,
+  CurationStats,
+  ReviewLogRow,
 } from "./types";
 import { supabase, supabaseAuth } from "./supabase";
 import { computeHealthGrade } from "./sourceHealthGrade";
@@ -1358,11 +1361,48 @@ async function authHeader(): Promise<Record<string, string>> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
+function filtersToQueryString(filters: CurationFilters): string {
+  const sp = new URLSearchParams();
+  if (filters.status && filters.status !== "all") sp.set("status", filters.status);
+  if (filters.source_id) sp.set("source_id", filters.source_id);
+  if (filters.island) sp.set("island", filters.island);
+  if (filters.q) sp.set("q", filters.q);
+  if (filters.price_min != null) sp.set("price_min", String(filters.price_min));
+  if (filters.price_max != null) sp.set("price_max", String(filters.price_max));
+  if (filters.first_seen_after) sp.set("first_seen_after", filters.first_seen_after);
+  if (filters.flagged_hide) sp.set("flagged_hide", "1");
+  if (filters.limit != null) sp.set("limit", String(filters.limit));
+  if (filters.offset != null) sp.set("offset", String(filters.offset));
+  const s = sp.toString();
+  return s ? "?" + s : "";
+}
+
+export async function getCuratedListings(filters: CurationFilters = {}): Promise<{ items: CuratedListing[]; totalCount: number }> {
+  const res = await fetch("/api/kv-curated-listing" + filtersToQueryString(filters), {
+    headers: { ...(await authHeader()) },
+  });
+  if (!res.ok) throw new Error(`getCuratedListings: ${res.status} ${await res.text()}`);
+  return (await res.json()) as { items: CuratedListing[]; totalCount: number };
+}
+
+export async function getCurationStats(): Promise<CurationStats> {
+  const res = await fetch("/api/kv-curation-stats", { headers: { ...(await authHeader()) } });
+  if (!res.ok) throw new Error(`getCurationStats: ${res.status} ${await res.text()}`);
+  return (await res.json()) as CurationStats;
+}
+
+export async function getListingReviewHistory(id: string): Promise<ReviewLogRow[]> {
+  const res = await fetch(`/api/kv-curated-listing-history?id=${encodeURIComponent(id)}`, {
+    headers: { ...(await authHeader()) },
+  });
+  if (!res.ok) throw new Error(`getListingReviewHistory: ${res.status} ${await res.text()}`);
+  const j = await res.json();
+  return j.items as ReviewLogRow[];
+}
+
 export async function getCuratedNeedsReviewList(): Promise<CuratedListing[]> {
-  const res = await fetch("/api/kv-curated-listing", { headers: { ...(await authHeader()) } });
-  if (!res.ok) throw new Error(`getCuratedNeedsReviewList: ${res.status} ${await res.text()}`);
-  const json = await res.json();
-  return json.items as CuratedListing[];
+  const { items } = await getCuratedListings({ status: "needs_review" });
+  return items;
 }
 
 export async function getCuratedListing(id: string): Promise<CuratedListing> {

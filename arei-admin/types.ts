@@ -410,6 +410,13 @@ export interface CuratedListing {
   image_urls: string[];
   first_seen_at: string | null;
   last_verified_at: string | null;
+  /** Most recent kv_curated.review_log row; null if never reviewed. */
+  last_review?: {
+    verdict: "publish" | "hold" | "hide";
+    confidence: number;
+    hide_reason: string | null;
+    created_at: string;
+  } | null;
 }
 
 export interface SuggestedPatch {
@@ -434,4 +441,38 @@ export interface ReviewVerdict {
 export interface ReviewVerdictResult {
   id: string;
   verdict: ReviewVerdict;
+  review_log_id?: number | null;
+}
+
+export interface ReviewLogRow {
+  id: number;
+  listing_id: string;
+  model: string;
+  verdict: "publish" | "hold" | "hide";
+  confidence: number;
+  reasons: string[];
+  suggested_patch: SuggestedPatch;
+  hide_reason: string | null;
+  created_at: string;
+}
+
+export interface CurationStats {
+  live: number;
+  needs_review: number;
+  needs_review_older_than_14d: number;
+  new_this_week: number;
+  agent_flagged: number;
+}
+
+export interface CurationFilters {
+  status?: "all" | "published" | "needs_review" | "hidden";
+  source_id?: string;
+  island?: string;
+  q?: string;
+  price_min?: number;
+  price_max?: number;
+  first_seen_after?: string;
+  flagged_hide?: boolean;
+  limit?: number;
+  offset?: number;
 }
