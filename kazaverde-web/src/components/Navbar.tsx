@@ -102,15 +102,18 @@ export default function Navbar() {
           </button>
         </div>
 
-        <button
-          type="button"
-          className={`nav-burger hide-desktop${menuOpen ? " open" : ""}`}
-          onClick={() => setMenuOpen((o) => !o)}
-          aria-label={menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
-          aria-expanded={menuOpen}
-        >
-          <span></span><span></span><span></span>
-        </button>
+        <div className={`nav-mobile-controls hide-desktop${menuOpen ? " open" : ""}`}>
+          <LanguageToggle />
+          <button
+            type="button"
+            className={`nav-burger${menuOpen ? " open" : ""}`}
+            onClick={() => setMenuOpen((o) => !o)}
+            aria-label={menuOpen ? t("nav.closeMenu") : t("nav.openMenu")}
+            aria-expanded={menuOpen}
+          >
+            <span></span><span></span><span></span>
+          </button>
+        </div>
       </div>
 
       {/* Drawer — rendered to body via portal so .nav's sticky+z-index
