@@ -27,6 +27,12 @@ function isCookieAuthorized(req) {
 }
 
 export async function authorize(req) {
+  // Local-dev escape hatch. Guarded by two conditions so this can never fire
+  // in production: an explicit env var the operator has to set, AND a
+  // NODE_ENV that is not "production".
+  if (process.env.DEV_AUTH_BYPASS === "1" && process.env.NODE_ENV !== "production") {
+    return { ok: true };
+  }
   const token = getBearerToken(req);
   if (!token) {
     if (isCookieAuthorized(req)) return { ok: true };
