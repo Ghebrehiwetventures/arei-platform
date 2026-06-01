@@ -91,6 +91,7 @@ function useTheme() {
 import { Source, Listing, SourceStatus, DashboardStats, SourceQualityRow } from "./types";
 import { supabaseAuth } from "./supabase";
 import { PropertyChatLabView } from "./PropertyChatLab";
+import { CuratedReviewView } from "./CuratedReviewView";
 import { SourceHealthReport, buildReportHtml, loadSnapshots, saveSnapshot, summarize, SourceSnapshot } from "./sourceHealthReport";
 import { MarketProvider, MarketSelector, useSelectedMarket, PipelineEmptyState, STATUS_LABEL } from "./marketContext";
 import { AgencyConsoleView } from "./AgencyConsoleView";
@@ -3672,7 +3673,7 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications" | "featured";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications" | "featured" | "curated";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
@@ -3693,6 +3694,7 @@ const AGENCIES_NAV_ITEMS: { key: Tab; label: string }[] = [
 const LABS_NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "broker-pilot", label: "Legacy Broker Preview" },
   { key: "chatlab",      label: "Chat Lab"              },
+  { key: "curated",      label: "Curated Review"        },
 ];
 
 function App({ onSignOut }: { onSignOut?: () => void }) {
@@ -3955,6 +3957,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "listings" && <ListingsTabView />}
             {tab === "sources" && <SourcesView />}
             {tab === "chatlab" && <PropertyChatLabView />}
+            {tab === "curated" && <CuratedReviewView />}
             {tab === "agencies" && <AgencyConsoleView />}
             {tab === "agency-data" && <AgencyDataConsoleView />}
             {tab === "broker-pilot" && <BrokerPilotView />}
