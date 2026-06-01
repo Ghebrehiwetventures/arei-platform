@@ -5,6 +5,7 @@ import { DashboardStrip } from "./DashboardStrip";
 import { FilterBar } from "./FilterBar";
 import { InventoryTable } from "./InventoryTable";
 import { ListingDrawer } from "./ListingDrawer";
+import { BulkActionBar } from "./BulkActionBar";
 
 export function CurationWorkspaceView() {
   const [filters, setFilters] = useState<CurationFilters>({ status: "needs_review" });
@@ -97,15 +98,13 @@ export function CurationWorkspaceView() {
         />
       )}
 
-      {selectedIds.size > 0 && (
-        <div className="fixed bottom-0 left-0 right-0 p-3 bg-surface-3 border-t border-border-strong text-xs z-20">
-          BulkActionBar placeholder · {selectedIds.size} selected
-          <button className="ml-2 underline" onClick={() => setSelectedIds(new Set())}>clear</button>
-        </div>
-      )}
-
-      {/* keep ephemeralVerdicts for sub-components added in later tasks */}
-      <div className="hidden">{Object.keys(ephemeralVerdicts).length}</div>
+      <BulkActionBar
+        selectedIds={selectedIds}
+        rows={listings}
+        onClear={() => setSelectedIds(new Set())}
+        onAfterMutation={async () => { await Promise.all([reloadList(), reloadStats()]); }}
+        onVerdictProduced={(id, v) => setEphemeralVerdicts((prev) => ({ ...prev, [id]: v }))}
+      />
     </div>
   );
 }
