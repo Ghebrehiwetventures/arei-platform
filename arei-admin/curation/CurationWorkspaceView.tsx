@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { getCurationStats, getCuratedListings } from "../data";
 import type { CuratedListing, CurationFilters, CurationStats, ReviewVerdict } from "../types";
 import { DashboardStrip } from "./DashboardStrip";
+import { FilterBar } from "./FilterBar";
 
 export function CurationWorkspaceView() {
   const [filters, setFilters] = useState<CurationFilters>({ status: "needs_review" });
@@ -58,15 +59,12 @@ export function CurationWorkspaceView() {
       />
 
 
-      <section className="border border-border-strong rounded p-3 text-xs text-foreground-muted">
-        FilterBar placeholder · current filters: {JSON.stringify(filters)}
-        <div className="mt-2 flex gap-2">
-          <button className="underline" onClick={() => setFilters({ status: "all" })}>all</button>
-          <button className="underline" onClick={() => setFilters({ status: "needs_review" })}>needs_review</button>
-          <button className="underline" onClick={() => setFilters({ status: "published" })}>published</button>
-          <button className="underline" onClick={() => setFilters({ status: "hidden" })}>hidden</button>
-        </div>
-      </section>
+      <FilterBar
+        filters={filters}
+        totalCount={totalCount}
+        listings={listings}
+        onChange={setFilters}
+      />
 
       <section className="border border-border-strong rounded p-3 text-xs">
         Table placeholder · {loadingList ? "loading…" : `${listings.length} of ${totalCount} rows`}
