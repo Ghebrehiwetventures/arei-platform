@@ -146,3 +146,10 @@ test("buildPatchSql allows returning the row", () => {
   const { text } = buildPatchSql("hcv_xyz", { bedrooms: 1 }, null);
   assert.match(text, /RETURNING \*/);
 });
+
+test("buildPatchSql rejects undefined patch value", () => {
+  assert.throws(
+    () => buildPatchSql("hcv_xyz", { bedrooms: undefined }, null),
+    /undefined.*use null/i,
+  );
+});

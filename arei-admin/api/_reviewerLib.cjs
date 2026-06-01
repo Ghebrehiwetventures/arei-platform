@@ -134,6 +134,7 @@ function buildPatchSql(id, patch, publishStatus) {
 
   for (const [k, v] of Object.entries(patch || {})) {
     if (!PATCH_FIELDS.includes(k)) throw new Error("unknown patch key: " + k);
+    if (v === undefined) throw new Error("patch value for " + k + " is undefined; use null to nullify");
     assigns.push(k + " = $" + i);
     values.push(v);
     i++;
@@ -147,12 +148,15 @@ function buildPatchSql(id, patch, publishStatus) {
     values.push(publishStatus);
     i++;
     if (publishStatus === "published") {
+      // Parameterless clauses (coalesce/now()) do not advance i. Only value-bound
+      // assignments increment it, so $i still points to the WHERE id slot below.
       assigns.push("first_published_at = coalesce(first_published_at, now())");
     }
   }
 
   if (assigns.length === 0) throw new Error("nothing to update");
 
+  // Parameterless — does not consume $i.
   assigns.push("updated_at = now()");
   values.push(id);
 
