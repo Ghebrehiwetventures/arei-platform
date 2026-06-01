@@ -22,7 +22,12 @@ function devApiPlugin(): Plugin {
         if (!req.url || !req.url.startsWith("/api/")) return next();
         const [pathOnly] = req.url.split("?");
         const fileName = pathOnly.replace(/^\/api\//, "").replace(/\/$/, "");
-        const handlerFile = path.resolve(__dirname, "api", fileName + ".js");
+        const apiDir = path.resolve(__dirname, "api");
+        const handlerFile = path.resolve(apiDir, fileName + ".js");
+        // Guard against `/api/../foo` resolving outside the api directory.
+        // `server.host: true` binds 0.0.0.0 in dev, so a passerby on the
+        // same network could otherwise probe arbitrary .js files on disk.
+        if (!handlerFile.startsWith(apiDir + path.sep)) return next();
         if (!fs.existsSync(handlerFile)) return next();
         try {
           // Use Node's native dynamic import — Vite's ssrLoadModule does not
