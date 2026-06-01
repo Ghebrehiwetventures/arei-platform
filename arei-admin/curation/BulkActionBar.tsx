@@ -109,7 +109,7 @@ export function BulkActionBar({ selectedIds, rows, onClear, onAfterMutation, onV
       {mode === "confirm-hide" && (
         <div className="flex items-center gap-3">
           {livePublishedCount > 0 ? (
-            <span className="text-red">⚠ {livePublishedCount} of these are LIVE — hiding them is a production change.</span>
+            <span className="text-red font-medium">Warning: {livePublishedCount} of these are LIVE — hiding them is a production change.</span>
           ) : (
             <span>Hide {selectedIds.size} rows?</span>
           )}
