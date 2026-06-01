@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from "react";
 import { getCurationStats, getCuratedListings } from "../data";
 import type { CuratedListing, CurationFilters, CurationStats, ReviewVerdict } from "../types";
+import { DashboardStrip } from "./DashboardStrip";
 
 export function CurationWorkspaceView() {
   const [filters, setFilters] = useState<CurationFilters>({ status: "needs_review" });
@@ -49,9 +50,13 @@ export function CurationWorkspaceView() {
     <div className="p-4 space-y-4">
       {error && <div className="text-xs text-red">{error}</div>}
 
-      <section className="border border-border-strong rounded p-3 text-xs text-foreground-muted">
-        Dashboard placeholder · stats: {stats ? JSON.stringify(stats) : "loading…"}
-      </section>
+      <DashboardStrip
+        stats={stats}
+        loading={loadingStats}
+        currentFilters={filters}
+        onApplyFilter={(f) => setFilters(f)}
+      />
+
 
       <section className="border border-border-strong rounded p-3 text-xs text-foreground-muted">
         FilterBar placeholder · current filters: {JSON.stringify(filters)}
