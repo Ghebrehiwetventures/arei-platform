@@ -88,3 +88,19 @@ test("parseAndValidateVerdict requires reasons array", () => {
   });
   assert.throws(() => parseAndValidateVerdict(raw), /reasons/);
 });
+
+test("parseAndValidateVerdict rejects array suggested_patch", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: ["x"],
+    suggested_patch: [],
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /suggested_patch must be an object/);
+});
+
+test("parseAndValidateVerdict rejects empty reasons array", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: [],
+    suggested_patch: {},
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /reasons/);
+});

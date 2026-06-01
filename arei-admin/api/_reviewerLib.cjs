@@ -108,10 +108,10 @@ function parseAndValidateVerdict(raw) {
   if (typeof json.confidence !== "number" || json.confidence < 0 || json.confidence > 1) {
     throw new Error("confidence must be a number in [0,1]");
   }
-  if (!Array.isArray(json.reasons) || !json.reasons.every(r => typeof r === "string")) {
-    throw new Error("reasons must be a string[]");
+  if (!Array.isArray(json.reasons) || json.reasons.length === 0 || !json.reasons.every(r => typeof r === "string")) {
+    throw new Error("reasons must be a non-empty string[]");
   }
-  if (json.suggested_patch == null || typeof json.suggested_patch !== "object") {
+  if (json.suggested_patch == null || typeof json.suggested_patch !== "object" || Array.isArray(json.suggested_patch)) {
     throw new Error("suggested_patch must be an object");
   }
   for (const key of Object.keys(json.suggested_patch)) {
