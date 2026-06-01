@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -122,6 +122,11 @@ export default function Listings() {
   const [indexTotal, setIndexTotal] = useState(0);
   const [priceCounts, setPriceCounts] = useState<Record<string, number>>({});
   const [retryCount, setRetryCount] = useState(0);
+  const filtersSlotRef = useRef<HTMLDivElement | null>(null);
+  const filtersRef = useRef<HTMLDivElement | null>(null);
+  const [isMobileFiltersFixed, setIsMobileFiltersFixed] = useState(false);
+  const [mobileFiltersHeight, setMobileFiltersHeight] = useState(0);
+  const [mobileFiltersTop, setMobileFiltersTop] = useState(52);
 
   useEffect(() => {
     arei.getIslandOptions().then(setIslands).catch(() => {});
@@ -225,6 +230,43 @@ export default function Listings() {
     return () => document.removeEventListener("click", onDocClick);
   }, []);
 
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mq = window.matchMedia("(max-width: 640px)");
+    const getNavHeight = () =>
+      Math.ceil(document.querySelector(".nav")?.getBoundingClientRect().height || 52);
+
+    function updateMobileSticky() {
+      const slot = filtersSlotRef.current;
+      const bar = filtersRef.current;
+      if (!slot || !bar || !mq.matches) {
+        setIsMobileFiltersFixed(false);
+        setMobileFiltersHeight(0);
+        return;
+      }
+
+      const navHeight = getNavHeight();
+      const slotTop = slot.getBoundingClientRect().top + window.scrollY;
+      const shouldFix = window.scrollY >= slotTop - navHeight;
+
+      setMobileFiltersTop(navHeight);
+      setMobileFiltersHeight(Math.ceil(bar.getBoundingClientRect().height));
+      setIsMobileFiltersFixed(shouldFix);
+    }
+
+    updateMobileSticky();
+    window.addEventListener("scroll", updateMobileSticky, { passive: true });
+    window.addEventListener("resize", updateMobileSticky);
+    mq.addEventListener?.("change", updateMobileSticky);
+
+    return () => {
+      window.removeEventListener("scroll", updateMobileSticky);
+      window.removeEventListener("resize", updateMobileSticky);
+      mq.removeEventListener?.("change", updateMobileSticky);
+    };
+  }, []);
+
   // All filters are server-side now; only sort runs on the accumulated set.
   const visible = applyClientSort(cards, sort);
 
@@ -274,8 +316,17 @@ export default function Listings() {
       </section>
 
       {/* STICKY FILTER BAR */}
-      <div className="kv-filters">
-        <div className="kv-filters-inner">
+      <div
+        ref={filtersSlotRef}
+        className="kv-filters-slot"
+        style={isMobileFiltersFixed ? { height: mobileFiltersHeight } : undefined}
+      >
+        <div
+          ref={filtersRef}
+          className={`kv-filters${isMobileFiltersFixed ? " mobile-fixed" : ""}`}
+          style={isMobileFiltersFixed ? { top: mobileFiltersTop } : undefined}
+        >
+          <div className="kv-filters-inner">
           <div className="kv-filter-group">
             {/* Island */}
             <div className="kv-field-wrap">
@@ -425,6 +476,7 @@ export default function Listings() {
           <div className="kv-filter-spacer" />
           <div className="kv-filter-result">
             <b>{shownCount}</b> {shownCount === 1 ? t("landing.listing") : t("landing.listings")}
+          </div>
           </div>
         </div>
       </div>

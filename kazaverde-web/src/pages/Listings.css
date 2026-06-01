@@ -81,6 +81,9 @@
   top: 52px; /* sits right below the sticky 52px nav */
   z-index: 100;
 }
+.kv-filters-slot {
+  position: relative;
+}
 .kv-filters-inner {
   max-width: var(--kv-content-w);
   margin: 0 auto;
@@ -641,7 +644,17 @@
   .kv-view-toggle-btn { width: 26px; height: 24px; }
   .kv-view-toggle-btn svg { width: 12px; height: 12px; }
   .kv-section { padding-top: 24px; }
-  .kv-filters { top: 52px; }
+  .kv-filters {
+    top: 52px;
+    padding: 12px 0;
+  }
+  .kv-filters.mobile-fixed {
+    position: fixed;
+    left: 0;
+    right: 0;
+    width: 100%;
+    z-index: 200;
+  }
   /* Horizontal scroll for filter chips — mobile-native pattern.
      Chips keep natural width; user swipes right to reveal extras.
      The first chip aligns with the page's 24px gutter (inherited from
@@ -650,13 +663,16 @@
      chips exist past the cut. */
   .kv-filter-group {
     display: flex;
+    flex: 1 1 auto;
     flex-wrap: nowrap;
-    gap: 8px;
+    gap: 10px;
+    min-width: 0;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     scroll-snap-type: x proximity;
     scrollbar-width: none;
-    padding: 4px 0;
+    padding: 2px 0 4px;
+    scroll-padding-inline: var(--kv-gutter);
     mask-image: linear-gradient(to right, black 92%, transparent 100%);
     -webkit-mask-image: linear-gradient(to right, black 92%, transparent 100%);
   }
@@ -667,6 +683,7 @@
     /* Lock chip text to one line — without this, "ALL ISLANDS" wraps
        inside the flex item to "ALL\nISLANDS". */
     white-space: nowrap;
+    min-height: 38px;
   }
 
   /* Filter-bar count is moved into .kv-section-head on mobile so it
