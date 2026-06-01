@@ -7,8 +7,12 @@ const CV_ISLANDS = [
 ];
 
 // Canonical property_type values the model may emit. Mirrors
-// core/pipeline/propertyType.ts. Keep in sync when that list changes.
+// core/pipeline/propertyType.ts. "property" is the pipeline's catch-all
+// fallback for rows where no keyword matched — keep it in the allow-list
+// so the model doesn't feel forced to invent a replacement when the source
+// text is genuinely ambiguous.
 const PROPERTY_TYPES = [
+  "property",
   "villa", "apartment", "house", "townhouse", "penthouse",
   "studio", "bungalow", "maisonette", "duplex", "land", "commercial",
 ];
