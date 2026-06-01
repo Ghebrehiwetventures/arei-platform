@@ -323,6 +323,14 @@
 body.nav-locked { overflow: hidden; }
 
 @media (max-width: 768px) {
+  .ctn { padding-top: 52px; }
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
   .nav-links { display: none; }
   .nav-burger { display: block; }
   .nav-mobile-controls { display: inline-flex; }
@@ -332,4 +340,8 @@ body.nav-locked { overflow: hidden; }
 }
 @media (min-width: 769px) {
   .hide-desktop { display: none !important; }
+}
+
+@media (max-width: 560px) {
+  .ctn { padding-top: 76px; }
 }
