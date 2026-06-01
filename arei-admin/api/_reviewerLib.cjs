@@ -125,9 +125,47 @@ function parseAndValidateVerdict(raw) {
   return json;
 }
 
+const VALID_PUBLISH_STATUS = new Set(["needs_review", "published", "hidden"]);
+
+function buildPatchSql(id, patch, publishStatus) {
+  const assigns = [];
+  const values = [];
+  let i = 1;
+
+  for (const [k, v] of Object.entries(patch || {})) {
+    if (!PATCH_FIELDS.includes(k)) throw new Error("unknown patch key: " + k);
+    assigns.push(k + " = $" + i);
+    values.push(v);
+    i++;
+  }
+
+  if (publishStatus != null) {
+    if (!VALID_PUBLISH_STATUS.has(publishStatus)) {
+      throw new Error("publish_status must be one of " + [...VALID_PUBLISH_STATUS].join("|"));
+    }
+    assigns.push("publish_status = $" + i);
+    values.push(publishStatus);
+    i++;
+    if (publishStatus === "published") {
+      assigns.push("first_published_at = coalesce(first_published_at, now())");
+    }
+  }
+
+  if (assigns.length === 0) throw new Error("nothing to update");
+
+  assigns.push("updated_at = now()");
+  values.push(id);
+
+  const text =
+    "UPDATE kv_curated.listings SET " + assigns.join(", ") +
+    " WHERE id = $" + i + " RETURNING *";
+  return { text, values };
+}
+
 module.exports = {
   buildReviewPrompt,
   parseAndValidateVerdict,
+  buildPatchSql,
   CV_ISLANDS,
   PROPERTY_TYPES,
   PATCH_FIELDS,

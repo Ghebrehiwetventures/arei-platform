@@ -104,3 +104,45 @@ test("parseAndValidateVerdict rejects empty reasons array", () => {
   });
   assert.throws(() => parseAndValidateVerdict(raw), /reasons/);
 });
+
+const { buildPatchSql } = require("../arei-admin/api/_reviewerLib.cjs");
+
+test("buildPatchSql sets only the fields present", () => {
+  const { text, values } = buildPatchSql("hcv_xyz", { bedrooms: 2, property_type: "apartment" }, null);
+  assert.match(text, /UPDATE kv_curated\.listings SET/);
+  assert.match(text, /bedrooms\s*=\s*\$1/);
+  assert.match(text, /property_type\s*=\s*\$2/);
+  assert.match(text, /updated_at\s*=\s*now\(\)/);
+  assert.match(text, /WHERE id\s*=\s*\$3/);
+  assert.deepEqual(values, [2, "apartment", "hcv_xyz"]);
+  assert.doesNotMatch(text, /publish_status/);
+});
+
+test("buildPatchSql includes publish_status when supplied", () => {
+  const { text, values } = buildPatchSql("hcv_xyz", {}, "hidden");
+  assert.match(text, /publish_status\s*=\s*\$1/);
+  assert.match(text, /WHERE id\s*=\s*\$2/);
+  assert.deepEqual(values, ["hidden", "hcv_xyz"]);
+});
+
+test("buildPatchSql stamps first_published_at when promoting to published", () => {
+  const { text } = buildPatchSql("hcv_xyz", {}, "published");
+  assert.match(text, /first_published_at\s*=\s*coalesce\(first_published_at,\s*now\(\)\)/);
+});
+
+test("buildPatchSql rejects empty patch with no publish_status", () => {
+  assert.throws(() => buildPatchSql("hcv_xyz", {}, null), /nothing to update/i);
+});
+
+test("buildPatchSql rejects unknown patch field", () => {
+  assert.throws(() => buildPatchSql("hcv_xyz", { foo: 1 }, null), /unknown patch key/i);
+});
+
+test("buildPatchSql rejects invalid publish_status", () => {
+  assert.throws(() => buildPatchSql("hcv_xyz", { bedrooms: 1 }, "weird"), /publish_status/);
+});
+
+test("buildPatchSql allows returning the row", () => {
+  const { text } = buildPatchSql("hcv_xyz", { bedrooms: 1 }, null);
+  assert.match(text, /RETURNING \*/);
+});
