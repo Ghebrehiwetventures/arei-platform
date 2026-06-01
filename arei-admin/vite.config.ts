@@ -27,7 +27,12 @@ function devApiPlugin(): Plugin {
         try {
           // Use Node's native dynamic import — Vite's ssrLoadModule does not
           // do CJS interop, which breaks handlers that import a .cjs helper.
-          const mod = await import(pathToFileURL(handlerFile).href);
+          // Cache-bust by mtime so saved edits are picked up without a server
+          // restart. .cjs subimports still get cached by Node, but the .js
+          // handler that re-imports them re-evaluates on each request.
+          const mtime = fs.statSync(handlerFile).mtimeMs;
+          const url = pathToFileURL(handlerFile).href + "?t=" + mtime;
+          const mod = await import(url);
           const handler = mod.default;
           if (typeof handler !== "function") return next();
           await handler(req, res);
