@@ -67,12 +67,14 @@
 /* Card grid — used for Cookie Policy storage types and
    About quality notes. Mirrors kv-m-bars rhythm but as cards. */
 .kv-pol-cards {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  display: flex;
+  flex-wrap: wrap;
   gap: 16px;
   max-width: 960px;
 }
 .kv-pol-card {
+  flex: 1 1 260px;
+  min-width: 0;
   border: 1px solid var(--kv-rule);
   background: var(--kv-paper);
   padding: 18px 20px;
@@ -221,7 +223,7 @@
 /* Responsive */
 @media (max-width: 720px) {
   .kv-pol-prose, .kv-pol-list, .kv-pol-pull { font-size: 14.5px; }
-  .kv-pol-cards { grid-template-columns: 1fr; }
+  .kv-pol-card { flex-basis: 100%; }
   .kv-pol-founder-quote {
     padding-left: 18px;
     font-size: 16px;
