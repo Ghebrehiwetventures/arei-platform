@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   applyListingPatch,
   getCuratedListing,
@@ -28,10 +28,26 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
   const [historyOpen, setHistoryOpen] = useState(false);
   const [history, setHistory] = useState<ReviewLogRow[] | null>(null);
 
+  // Read the latest ephemeralVerdict inside effects without subscribing the
+  // effect to it (which would re-fire on every parent verdict-map mutation).
+  const ephemeralRef = useRef(ephemeralVerdict);
+  ephemeralRef.current = ephemeralVerdict;
+
+  // When the drawer switches to a different listing (parent kept the drawer
+  // open and changed `openId`), reset the verdict pane. Seeded from the
+  // ephemeral verdict for the new id, if one exists.
+  useEffect(() => {
+    const seed = ephemeralRef.current ?? null;
+    setVerdict(seed);
+    setAcceptedKeys(new Set(seed ? Object.keys(seed.suggested_patch) : []));
+  }, [id]);
+
+  // Keyed on `id` only. `ephemeralVerdict` changes every time the parent's
+  // verdict map mutates (incl. from this drawer's own Run Review); re-running
+  // the effect on that would re-fetch the listing and flash the panel.
   useEffect(() => {
     let cancelled = false;
-    setListing(null); setLoading(true); setError(null); setVerdict(ephemeralVerdict ?? null);
-    setAcceptedKeys(new Set(ephemeralVerdict ? Object.keys(ephemeralVerdict.suggested_patch) : []));
+    setListing(null); setLoading(true); setError(null);
     setHistory(null); setHistoryOpen(false);
     (async () => {
       try {
@@ -44,7 +60,7 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
       }
     })();
     return () => { cancelled = true; };
-  }, [id, ephemeralVerdict]);
+  }, [id]);
 
   async function runReview() {
     setReviewing(true); setError(null);
