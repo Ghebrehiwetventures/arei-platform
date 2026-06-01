@@ -1,8 +1,17 @@
 import type { ListingDetail } from "arei-sdk";
 import { normalizeLanguage, type SupportedLanguage } from "../i18n";
 import { PT_LISTING_TRANSLATIONS } from "./pt-listing-translations.generated";
+import { buildListingTitle } from "./listingTitleDisplay.js";
 
-type LocalizedListingFields = { id?: string; title: string; ai_descriptions?: ListingDetail["ai_descriptions"] };
+type LocalizedListingFields = {
+  id?: string;
+  title: string;
+  property_type?: string | null;
+  bedrooms?: number | null;
+  city?: string | null;
+  island?: string | null;
+  ai_descriptions?: ListingDetail["ai_descriptions"];
+};
 
 export function currentListingLanguage(language?: string | null): SupportedLanguage {
   return normalizeLanguage(language);
@@ -11,17 +20,21 @@ export function currentListingLanguage(language?: string | null): SupportedLangu
 export function getLocalizedTitle(
   listing: LocalizedListingFields,
   language?: string | null,
-): { title: string; language: SupportedLanguage; source: "ai" | "raw" } {
+): { title: string; language: SupportedLanguage; source: "ai" | "deterministic" | "raw" } {
   const lang = currentListingLanguage(language);
+
+  // 1. AI-rewritten title for this language (reserved for future use; en pipeline intentionally
+  //    does not produce titles — only descriptions).
   const aiTitle = listing.ai_descriptions?.[lang]?.title?.trim();
   if (aiTitle) return { title: aiTitle, language: lang, source: "ai" };
 
-  const generatedTitle = lang === "pt" && listing.id ? PT_LISTING_TRANSLATIONS[listing.id]?.title?.trim() : "";
-  if (generatedTitle) return { title: generatedTitle, language: "pt", source: "ai" };
+  // 2. Deterministic title from structured fields — fully localized, no AI, no broker text.
+  //    Returns null only when both type AND location are missing (0% of indexable listings).
+  const deterministic = buildListingTitle(listing, lang);
+  if (deterministic) return { title: deterministic, language: lang, source: "deterministic" };
 
-  const englishAiTitle = listing.ai_descriptions?.en?.title?.trim();
-  if (lang === "en" && englishAiTitle) return { title: englishAiTitle, language: "en", source: "ai" };
-
+  // 3. Last resort: raw scraped title (may contain ALL-CAPS or marketing language).
+  //    Caller passes through normalizeListingDisplayTitle() to fix casing.
   return { title: listing.title, language: "en", source: "raw" };
 }
 
