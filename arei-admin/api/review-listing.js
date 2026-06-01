@@ -65,5 +65,36 @@ export default async function handler(req, res) {
   try { verdict = parseAndValidateVerdict(raw); }
   catch (err) { return send(res, 502, { error: err.message, raw }); }
 
-  return send(res, 200, { id: row.id, verdict });
+  // Persist the verdict. Failures here are logged but not surfaced — the
+  // operator already has the verdict in the response and re-running review
+  // would just spend another model call to recover the same data.
+  let review_log_id = null;
+  try {
+    const logClient = createPg();
+    await logClient.connect();
+    try {
+      const { rows: logRows } = await logClient.query(
+        `INSERT INTO kv_curated.review_log
+           (listing_id, model, verdict, confidence, reasons, suggested_patch, hide_reason)
+         VALUES ($1, $2, $3, $4, $5::jsonb, $6::jsonb, $7)
+         RETURNING id`,
+        [
+          row.id,
+          MODEL,
+          verdict.verdict,
+          verdict.confidence,
+          JSON.stringify(verdict.reasons),
+          JSON.stringify(verdict.suggested_patch),
+          verdict.hide_reason ?? null,
+        ],
+      );
+      review_log_id = logRows[0]?.id ?? null;
+    } finally {
+      await logClient.end();
+    }
+  } catch (err) {
+    console.error("[review-listing] failed to insert review_log:", err.message);
+  }
+
+  return send(res, 200, { id: row.id, verdict, review_log_id });
 }
