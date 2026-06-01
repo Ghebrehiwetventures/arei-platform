@@ -1,7 +1,7 @@
 import type { ListingDetail } from "arei-sdk";
 import { normalizeLanguage, type SupportedLanguage } from "../i18n";
 import { PT_LISTING_TRANSLATIONS } from "./pt-listing-translations.generated";
-import { buildListingTitle } from "./listingTitleDisplay.js";
+import { buildListingTitle, isBadListingTitle } from "./listingTitleDisplay.js";
 
 type LocalizedListingFields = {
   id?: string;
@@ -28,13 +28,16 @@ export function getLocalizedTitle(
   const aiTitle = listing.ai_descriptions?.[lang]?.title?.trim();
   if (aiTitle) return { title: aiTitle, language: lang, source: "ai" };
 
-  // 2. Deterministic title from structured fields — fully localized, no AI, no broker text.
-  //    Returns null only when both type AND location are missing (0% of indexable listings).
-  const deterministic = buildListingTitle(listing, lang);
-  if (deterministic) return { title: deterministic, language: lang, source: "deterministic" };
+  // 2. Only replace the raw title when it is clearly broken scraped metadata
+  //    (SqM measurements, "located at" boilerplate, empty, etc.).
+  //    Acceptable project names / generic titles / location descriptions are kept as-is.
+  if (isBadListingTitle(listing.title)) {
+    const deterministic = buildListingTitle(listing, lang);
+    if (deterministic) return { title: deterministic, language: lang, source: "deterministic" };
+  }
 
-  // 3. Last resort: raw scraped title (may contain ALL-CAPS or marketing language).
-  //    Caller passes through normalizeListingDisplayTitle() to fix casing.
+  // 3. Raw title is acceptable — pass it through as-is.
+  //    Caller runs normalizeListingDisplayTitle() to fix ALL-CAPS casing.
   return { title: listing.title, language: "en", source: "raw" };
 }
 

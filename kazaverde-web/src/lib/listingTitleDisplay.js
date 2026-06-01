@@ -144,6 +144,59 @@ export function buildListingTitle(listing, lang = "en") {
 }
 
 // ---------------------------------------------------------------------------
+// isBadListingTitle — conservative detector for clearly broken/scraped titles
+// ---------------------------------------------------------------------------
+
+/**
+ * Returns true ONLY when the raw title is clearly broken scraped metadata
+ * that should be replaced by a deterministic title.
+ *
+ * Conservative by design — acceptable project names, location descriptions,
+ * generic titles, and marketing copy are NOT flagged.
+ *
+ * Flagged patterns:
+ *   • null / empty
+ *   • Starts with a numeric area measurement   "88.66 SqM Condo/Apartment…"
+ *   • Contains "SqM" + a second scraped marker  "… For Sale" / "located at" / "Bedrooms located"
+ *   • "for sale … located at …" boilerplate     "Property for sale located at …"
+ *
+ * NOT flagged (these titles should be preserved):
+ *   • "Modern Residential"
+ *   • "Vila Verde Resort"
+ *   • "Praia de Chaves Villa"
+ *   • "Beachfront Apartment"
+ *   • "Santa Maria Apartment"
+ *   • "Investment with Profitability and Sea View: Entire Building with Active B&B"
+ *   • "2 and 3-Bedroom Villas - Murdeira"   (has "Bedroom" but not SqM)
+ *
+ * @param {string | null | undefined} value
+ * @returns {boolean}
+ */
+export function isBadListingTitle(value) {
+  // 1. Null or empty
+  if (!value || typeof value !== "string") return true;
+  const t = value.trim();
+  if (!t) return true;
+
+  // 2. Starts with a numeric area measurement
+  //    e.g. "88.66 SqM Condo/Apartment For Sale…"
+  //    e.g. "120 m² Villa for Sale"
+  //    Note: \b is not used because "m²" ends with a non-word character (²),
+  //    so a lookahead for whitespace/end is used instead.
+  if (/^\d[\d.,]*\s*(sqm|m²|sq\.?\s*m)(?=[\s,./]|$)/i.test(t)) return true;
+
+  // 3. Contains "SqM" as a unit AND at least one additional scraped-field marker.
+  //    Requiring two signals prevents flagging a title that merely mentions size.
+  if (/\bsqm\b/i.test(t) && /\b(for sale|located at|bedrooms? located)\b/i.test(t)) return true;
+
+  // 4. "for sale … located at …" boilerplate (no SqM required — pattern alone is diagnostic)
+  //    e.g. "Property for sale located at Santa Maria, SAL, SAL"
+  if (/\bfor sale\b.{0,40}\blocated at\b/i.test(t)) return true;
+
+  return false;
+}
+
+// ---------------------------------------------------------------------------
 // normalizeListingDisplayTitle — title-case normalizer for raw scraped titles
 // ---------------------------------------------------------------------------
 

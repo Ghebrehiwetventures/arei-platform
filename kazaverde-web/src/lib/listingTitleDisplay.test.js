@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
 import {
   buildListingTitle,
+  isBadListingTitle,
   isAllCapsStyleTitle,
   normalizeListingDisplayTitle,
 } from "./listingTitleDisplay.js";
@@ -138,6 +139,76 @@ assert.equal(
 assert.equal(
   buildListingTitle({ title: "raw", property_type: "apartment", bedrooms: 1, city: "Praia", island: "Santiago" }, "fr"),
   "1-Bedroom Apartment — Praia, Santiago",
+);
+
+// ---------------------------------------------------------------------------
+// isBadListingTitle — conservative bad-title detector
+// ---------------------------------------------------------------------------
+
+// --- Should be flagged as bad (deterministic title replaces these) ---
+
+// The original bug: scraped dimensional metadata
+assert.equal(
+  isBadListingTitle("88.66 SqM Condo/Apartment For Sale, 2 Bedrooms located at Santa Maria, SAL, SAL"),
+  true,
+  "scraped SqM metadata should be flagged",
+);
+
+// Starts with numeric area
+assert.equal(isBadListingTitle("120 SqM Villa For Sale"), true, "starts with numeric SqM");
+assert.equal(isBadListingTitle("45.5 m² Studio"), true, "starts with numeric m²");
+
+// SqM + located at
+assert.equal(
+  isBadListingTitle("Apartment 75 SqM located at Praia, Santiago"),
+  true,
+  "SqM + located at",
+);
+
+// SqM + for sale
+assert.equal(isBadListingTitle("200 SqM House For Sale"), true, "starts with SqM (numeric)");
+
+// "for sale … located at" boilerplate (no SqM needed)
+assert.equal(
+  isBadListingTitle("Property for sale located at Santa Maria, SAL, SAL"),
+  true,
+  "for sale located at boilerplate",
+);
+assert.equal(
+  isBadListingTitle("Apartment for sale located at Boa Vista"),
+  true,
+  "for sale located at variant",
+);
+
+// Null / empty
+assert.equal(isBadListingTitle(null), true, "null is bad");
+assert.equal(isBadListingTitle(""), true, "empty string is bad");
+assert.equal(isBadListingTitle("   "), true, "whitespace-only is bad");
+assert.equal(isBadListingTitle(undefined), true, "undefined is bad");
+
+// --- Should NOT be flagged (these titles must be preserved as-is) ---
+
+assert.equal(isBadListingTitle("Modern Residential"), false, "generic project name");
+assert.equal(isBadListingTitle("Vila Verde Resort"), false, "resort name");
+assert.equal(isBadListingTitle("Praia de Chaves Villa"), false, "location + type");
+assert.equal(isBadListingTitle("Beachfront Apartment"), false, "descriptive");
+assert.equal(isBadListingTitle("Santa Maria Apartment"), false, "location + type");
+assert.equal(
+  isBadListingTitle("Investment with Profitability and Sea View: Entire Building with Active B&B"),
+  false,
+  "long marketing title without SqM/metadata",
+);
+assert.equal(
+  isBadListingTitle("2 and 3-Bedroom Villas - Murdeira"),
+  false,
+  "has 'Bedroom' but no SqM — must be preserved",
+);
+assert.equal(isBadListingTitle("T3 Townhouse - Vila Verde Resort"), false, "PT bedroom notation + name");
+assert.equal(isBadListingTitle("Branco 4 Holiday Apartments"), false, "development name");
+assert.equal(
+  isBadListingTitle("LARGE BUILDING PLOT BY THE SEA ON THE ISLAND OF MAIO"),
+  false,
+  "ALL-CAPS is handled by normalizer, not bad-title detector",
 );
 
 console.log("listingTitleDisplay tests passed");
