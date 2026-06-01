@@ -227,6 +227,45 @@ export interface MarketReportRow {
   last_updated: string;
 }
 
+/**
+ * One published market briefing edition (editorial layer over a snapshot).
+ * Only published editions are returned — the SDK query and RLS both enforce
+ * status = 'published' AND published_at IS NOT NULL.
+ *
+ * The numbers are NOT stored here; the canonical page pairs this row with the
+ * market_report_snapshots rows that share its snapshot_date.
+ */
+export interface BriefingRow {
+  /** URL key, e.g. '2026-05' */
+  slug: string;
+  /** Human display label for the period, e.g. 'May 2026' */
+  period: string;
+  /** ISO date string (YYYY-MM-DD) of the pinned snapshot in market_report_snapshots */
+  snapshot_date: string;
+  /** Headline, e.g. "Cape Verde Listing Index — May 2026" */
+  title: string;
+  /** Executive summary: 2-3 sentence key takeaway. Null when not yet written. */
+  executive_summary: string | null;
+  /** Editorial context: 2-3 paragraphs (plain text / light markdown). */
+  commentary: string | null;
+  /** Optional methodology override. Null → page renders the standard disclosure. */
+  methodology_note: string | null;
+  /** ISO timestamp when this edition was published */
+  published_at: string;
+  /** ISO timestamp of last edit */
+  updated_at: string;
+}
+
+/** Light row for the briefing archive index — no full editorial body. */
+export interface BriefingSummary {
+  slug: string;
+  period: string;
+  snapshot_date: string;
+  title: string;
+  executive_summary: string | null;
+  published_at: string;
+}
+
 /** Public-safe row from public.agencies (no relationship/CRM data) */
 export interface AgencyRow {
   id: string;

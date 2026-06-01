@@ -1,0 +1,352 @@
+/* ════════════════════════════════════════════════════════════
+   Briefing — institutional market-research publication.
+   Shared by the archive index (/briefings) and the canonical
+   edition page (/briefings/:slug).
+
+   Reference idiom: Knight Frank / Savills / JLL / CoStar — clean,
+   typographic, data-forward. No blog chrome. Reads like a PDF
+   report rendered on web, and prints as one (see @media print).
+   ════════════════════════════════════════════════════════════ */
+
+.kv-bf,
+.kv-bf-archive-page {
+  font-family: var(--kv-mono);
+  color: var(--kv-black);
+  background: var(--kv-white);
+}
+
+.kv-bf-inner {
+  max-width: 880px;
+  margin: 0 auto;
+  padding: 0 24px;
+}
+
+/* ─── Masthead (headline band) ─── */
+.kv-bf-masthead {
+  background: var(--kv-off-white);
+  border-bottom: 1px solid var(--kv-rule);
+  padding: 56px 0 40px;
+}
+.kv-bf-eyebrow {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-green);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kv-bf-eyebrow-sep { color: var(--kv-ink-300); }
+.kv-bf-title {
+  font-size: 34px;
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  margin: 14px 0 0;
+  max-width: 20ch;
+}
+.kv-bf-dateline {
+  margin-top: 18px;
+  font-size: 12.5px;
+  color: var(--kv-ink-500);
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+.kv-bf-dateline-sep { color: var(--kv-ink-300); }
+
+/* ─── Body ─── */
+.kv-bf-body {
+  padding-top: 8px;
+  padding-bottom: 72px;
+}
+
+.kv-bf-section {
+  padding: 36px 0;
+  border-top: 1px solid var(--kv-rule-soft);
+}
+.kv-bf-section-head {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kv-ink-600);
+  margin: 0 0 20px;
+  font-weight: 600;
+}
+.kv-bf-section-kicker {
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-green);
+  margin: 0 0 10px;
+}
+
+/* ─── 2 · Executive summary ─── */
+.kv-bf-summary {
+  padding: 36px 0 8px;
+}
+.kv-bf-summary-lead {
+  font-size: 20px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--kv-black);
+  margin: 0;
+  max-width: 60ch;
+}
+
+/* ─── 3 · KPI cards ─── */
+.kv-bf-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--kv-rule);
+  border: 1px solid var(--kv-rule);
+}
+.kv-bf-kpi {
+  background: var(--kv-paper);
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kv-bf-kpi-val {
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--kv-black);
+}
+.kv-bf-kpi-label {
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kv-ink-500);
+}
+
+/* ─── 4 · Island breakdown table ─── */
+.kv-bf-table-wrap { overflow-x: auto; }
+.kv-bf-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+.kv-bf-table th,
+.kv-bf-table td {
+  text-align: left;
+  padding: 11px 14px;
+  border-bottom: 1px solid var(--kv-rule-soft);
+}
+.kv-bf-table th {
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--kv-ink-500);
+  font-weight: 600;
+  border-bottom-color: var(--kv-rule);
+}
+.kv-bf-table th.num,
+.kv-bf-table td.num {
+  text-align: right;
+}
+.kv-bf-table tbody tr:last-child td { border-bottom: none; }
+.kv-bf-table-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--kv-ink-400);
+}
+
+/* ─── 5 · Commentary prose ─── */
+.kv-bf-prose {
+  max-width: 64ch;
+}
+.kv-bf-prose p {
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--kv-ink-700);
+  margin: 0 0 16px;
+}
+.kv-bf-prose p:last-child { margin-bottom: 0; }
+
+/* ─── 6 · Methodology ─── */
+.kv-bf-methodology p {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--kv-ink-500);
+  margin: 0;
+  max-width: 70ch;
+}
+
+/* ─── 7 · Archive nav (on the canonical page) ─── */
+.kv-bf-archive {
+  margin-top: 8px;
+  padding: 36px 0 0;
+  border-top: 1px solid var(--kv-rule);
+}
+.kv-bf-archive-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kv-bf-archive-list a {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--kv-rule-soft);
+  text-decoration: none;
+  color: var(--kv-black);
+}
+.kv-bf-archive-list a:hover .kv-bf-archive-title { color: var(--kv-green); }
+.kv-bf-archive-period {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kv-ink-500);
+  min-width: 88px;
+}
+.kv-bf-archive-title { font-size: 14.5px; }
+.kv-bf-archive-empty {
+  font-size: 13.5px;
+  color: var(--kv-ink-500);
+  margin: 0 0 20px;
+}
+.kv-bf-archive-all {
+  display: inline-block;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--kv-green);
+  text-decoration: none;
+}
+.kv-bf-archive-all:hover { text-decoration: underline; }
+
+/* ─── Archive index page (/briefings) ─── */
+.kv-bf-archive-intro {
+  margin: 18px 0 0;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--kv-ink-600);
+  max-width: 58ch;
+}
+.kv-bf-index-list {
+  list-style: none;
+  margin: 0;
+  padding: 28px 0 0;
+}
+.kv-bf-index-item { border-top: 1px solid var(--kv-rule-soft); }
+.kv-bf-index-item:first-child { border-top: none; }
+.kv-bf-index-link {
+  display: block;
+  padding: 28px 0;
+  text-decoration: none;
+  color: var(--kv-black);
+}
+.kv-bf-index-link:hover .kv-bf-index-title { color: var(--kv-green); }
+.kv-bf-index-link:hover .kv-bf-index-cta { text-decoration: underline; }
+.kv-bf-index-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kv-ink-500);
+}
+.kv-bf-index-period { color: var(--kv-green); }
+.kv-bf-index-title {
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 10px 0 0;
+}
+.kv-bf-index-summary {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--kv-ink-600);
+  margin: 10px 0 0;
+  max-width: 64ch;
+}
+.kv-bf-index-cta {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--kv-green);
+}
+
+/* ─── Empty / loading / error states ─── */
+.kv-bf-state,
+.kv-bf-empty {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 72px 24px;
+  text-align: center;
+}
+.kv-bf-state p { color: var(--kv-ink-500); }
+.kv-bf-state-error h1,
+.kv-bf-empty h2 {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+.kv-bf-empty p { color: var(--kv-ink-500); line-height: 1.6; }
+.kv-bf-back {
+  display: inline-block;
+  margin-top: 18px;
+  color: var(--kv-green);
+  text-decoration: none;
+}
+.kv-bf-back:hover { text-decoration: underline; }
+
+/* ─── Responsive ─── */
+@media (max-width: 720px) {
+  .kv-bf-title { font-size: 26px; }
+  .kv-bf-kpis { grid-template-columns: repeat(2, 1fr); }
+  .kv-bf-summary-lead { font-size: 18px; }
+  .kv-bf-archive-list a { flex-direction: column; gap: 2px; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Print — render the edition as a clean PDF report. Strip the
+   site shell (nav/footer/newsletter), drop tinted surfaces, and
+   keep sections from splitting across page breaks.
+   ════════════════════════════════════════════════════════════ */
+@media print {
+  .nav,
+  .ft,
+  .nl-cta,
+  .cookie-banner,
+  .kv-bf-archive,
+  .kv-bf-index-cta {
+    display: none !important;
+  }
+
+  .kv-bf,
+  .kv-bf-archive-page,
+  .kv-bf-masthead {
+    background: #fff !important;
+  }
+  .kv-bf-masthead { border-bottom: 1px solid #ccc; padding: 0 0 24px; }
+
+  .kv-bf-inner { max-width: none; padding: 0; }
+  .kv-bf-body { padding-bottom: 0; }
+
+  .kv-bf-section,
+  .kv-bf-summary,
+  .kv-bf-kpis,
+  .kv-bf-table,
+  table.kv-bf-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .kv-bf-kpi { background: #fff !important; }
+  .kv-bf-title,
+  .kv-bf-kpi-val,
+  .kv-bf-summary-lead { color: #000 !important; }
+
+  a { color: #000 !important; text-decoration: none !important; }
+}

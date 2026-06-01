@@ -19,6 +19,8 @@ import type {
   PriceBucket,
   MarketNewsRow,
   MarketReportRow,
+  BriefingRow,
+  BriefingSummary,
   FeaturedSelectionRow,
   AgencyRow,
   AgencyListingStats,
@@ -792,5 +794,83 @@ export class AREIClient {
     // TODO: ta bort dubbel-cast när migration 044 körts och
     // Supabase-typerna regenererats — då härleds MarketReportRow korrekt
     return (data ?? []) as unknown as MarketReportRow[];
+  }
+
+  // =========================================================================
+  // listBriefings — published briefing editions for the archive index
+  //
+  // Returns light summary rows (no full editorial body), newest first.
+  // Only published editions are visible — enforced by RLS and repeated here.
+  // Returns an empty array when no edition has been published yet.
+  // =========================================================================
+  async listBriefings(): Promise<BriefingSummary[]> {
+    const { data, error } = await this.sb
+      .from("market_briefings")
+      .select("slug, period, snapshot_date, title, executive_summary, published_at")
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("snapshot_date", { ascending: false });
+
+    if (error) {
+      throw new Error(`listBriefings failed: ${error.message}`);
+    }
+
+    return (data ?? []) as unknown as BriefingSummary[];
+  }
+
+  // =========================================================================
+  // getBriefing — a single published edition plus its pinned snapshot rows
+  //
+  // The briefing row carries the editorial layer; the numbers come from the
+  // market_report_snapshots rows that share its snapshot_date (island rows
+  // plus the 'ALL' aggregate). Two reads: PostgREST embedding does not fit
+  // because the snapshot is keyed (snapshot_date, island), not a single PK.
+  //
+  // Both reads repeat the published filter — belt-and-suspenders alongside RLS.
+  // Returns null when no published edition exists for the slug.
+  // =========================================================================
+  async getBriefing(
+    slug: string
+  ): Promise<{ briefing: BriefingRow; snapshot: MarketReportRow[] } | null> {
+    const { data: briefingData, error: briefingError } = await this.sb
+      .from("market_briefings")
+      .select(
+        "slug, period, snapshot_date, title, executive_summary, " +
+        "commentary, methodology_note, published_at, updated_at"
+      )
+      .eq("slug", slug)
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .maybeSingle();
+
+    if (briefingError) {
+      throw new Error(`getBriefing failed: ${briefingError.message}`);
+    }
+
+    if (!briefingData) return null;
+
+    const briefing = briefingData as unknown as BriefingRow;
+
+    const { data: snapshotData, error: snapshotError } = await this.sb
+      .from("market_report_snapshots")
+      .select(
+        "snapshot_date, island, listing_count, source_count, " +
+        "index_eligible_count, median_price_eur, avg_eur_per_sqm, " +
+        "sqm_coverage_pct, price_coverage_pct, methodology_version, " +
+        "published_at, last_updated"
+      )
+      .eq("snapshot_date", briefing.snapshot_date)
+      .eq("status", "published")
+      .not("published_at", "is", null)
+      .order("island");
+
+    if (snapshotError) {
+      throw new Error(`getBriefing (snapshot lookup) failed: ${snapshotError.message}`);
+    }
+
+    return {
+      briefing,
+      snapshot: (snapshotData ?? []) as unknown as MarketReportRow[],
+    };
   }
 }

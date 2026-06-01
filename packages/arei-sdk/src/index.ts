@@ -19,6 +19,8 @@ export type {
   AREIConfig,
   MarketNewsRow,
   MarketReportRow,
+  BriefingRow,
+  BriefingSummary,
   FeaturedSelectionRow,
   AgencyRow,
   AgencyListingStats,
