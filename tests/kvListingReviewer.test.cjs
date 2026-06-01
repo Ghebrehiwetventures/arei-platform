@@ -1,7 +1,7 @@
 const test = require("node:test");
 const assert = require("node:assert/strict");
 
-const { buildReviewPrompt } = require("../arei-admin/api/_reviewerLib.cjs");
+const { buildReviewPrompt, parseAndValidateVerdict } = require("../arei-admin/api/_reviewerLib.cjs");
 
 test("buildReviewPrompt embeds title, description, and structured fields", () => {
   const row = {
@@ -45,4 +45,46 @@ test("buildReviewPrompt truncates very long descriptions", () => {
   });
   assert.ok(user.length < 4000, `user prompt was ${user.length} chars, expected < 4000`);
   assert.match(user, /truncated/);
+});
+
+test("parseAndValidateVerdict accepts a clean verdict", () => {
+  const raw = JSON.stringify({
+    verdict: "hold",
+    confidence: 0.8,
+    reasons: ["title says 2 Bed, bedrooms is null"],
+    suggested_patch: { bedrooms: 2 },
+  });
+  const v = parseAndValidateVerdict(raw);
+  assert.equal(v.verdict, "hold");
+  assert.equal(v.suggested_patch.bedrooms, 2);
+});
+
+test("parseAndValidateVerdict strips a json code fence", () => {
+  const raw = "```json\n" + JSON.stringify({
+    verdict: "publish", confidence: 0.9, reasons: ["ok"], suggested_patch: {},
+  }) + "\n```";
+  const v = parseAndValidateVerdict(raw);
+  assert.equal(v.verdict, "publish");
+});
+
+test("parseAndValidateVerdict rejects unknown patch keys", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: ["x"],
+    suggested_patch: { not_a_field: 1 },
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /unknown patch key/i);
+});
+
+test("parseAndValidateVerdict rejects bad verdict enum", () => {
+  const raw = JSON.stringify({
+    verdict: "maybe", confidence: 0.5, reasons: ["x"], suggested_patch: {},
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /verdict/);
+});
+
+test("parseAndValidateVerdict requires reasons array", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: "nope", suggested_patch: {},
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /reasons/);
 });

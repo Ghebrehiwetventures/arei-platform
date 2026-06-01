@@ -85,8 +85,49 @@ function buildReviewPrompt(row) {
   return { system, user };
 }
 
+const VERDICTS = new Set(["publish", "hold", "hide"]);
+
+function stripCodeFence(text) {
+  const trimmed = text.trim();
+  if (trimmed.startsWith("```")) {
+    return trimmed.replace(/^```(?:json)?\s*/i, "").replace(/```\s*$/, "").trim();
+  }
+  return trimmed;
+}
+
+function parseAndValidateVerdict(raw) {
+  let json;
+  try {
+    json = JSON.parse(stripCodeFence(raw));
+  } catch (e) {
+    throw new Error("verdict was not valid JSON: " + e.message);
+  }
+
+  if (!json || typeof json !== "object") throw new Error("verdict is not an object");
+  if (!VERDICTS.has(json.verdict)) throw new Error("verdict must be publish|hold|hide");
+  if (typeof json.confidence !== "number" || json.confidence < 0 || json.confidence > 1) {
+    throw new Error("confidence must be a number in [0,1]");
+  }
+  if (!Array.isArray(json.reasons) || !json.reasons.every(r => typeof r === "string")) {
+    throw new Error("reasons must be a string[]");
+  }
+  if (json.suggested_patch == null || typeof json.suggested_patch !== "object") {
+    throw new Error("suggested_patch must be an object");
+  }
+  for (const key of Object.keys(json.suggested_patch)) {
+    if (!PATCH_FIELDS.includes(key)) {
+      throw new Error("unknown patch key: " + key);
+    }
+  }
+  if (json.verdict === "hide" && json.hide_reason != null && typeof json.hide_reason !== "string") {
+    throw new Error("hide_reason must be a string");
+  }
+  return json;
+}
+
 module.exports = {
   buildReviewPrompt,
+  parseAndValidateVerdict,
   CV_ISLANDS,
   PROPERTY_TYPES,
   PATCH_FIELDS,
