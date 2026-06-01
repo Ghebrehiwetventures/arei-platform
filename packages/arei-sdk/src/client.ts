@@ -88,6 +88,45 @@ const DETAIL_COLUMNS_OPTIONAL = ["description_html", "ai_descriptions"];
 const DETAIL_COLUMNS = [...DETAIL_COLUMNS_BASE, ...DETAIL_COLUMNS_OPTIONAL].join(",");
 const DETAIL_COLUMNS_FALLBACK = DETAIL_COLUMNS_BASE.join(",");
 
+function applyListingFilters(
+  query: any,
+  filters: {
+    island?: string;
+    priceBucket?: PriceBucket;
+    propertyType?: string;
+    minBeds?: number;
+    sourceId?: string;
+  }
+) {
+  const { island, priceBucket, propertyType, minBeds, sourceId } = filters;
+
+  if (island) {
+    query = query.eq("island", island);
+  }
+
+  if (propertyType) {
+    query = query.ilike("property_type", propertyType);
+  }
+
+  if (minBeds && minBeds > 0) {
+    query = query.gte("bedrooms", minBeds);
+  }
+
+  if (sourceId) {
+    query = query.eq("source_id", sourceId);
+  }
+
+  if (priceBucket) {
+    const bucket = PRICE_BUCKETS[priceBucket];
+    query = query
+      .gt("price", 0)
+      .gte("price", bucket.min)
+      .lte("price", bucket.max);
+  }
+
+  return query;
+}
+
 // ---------------------------------------------------------------------------
 // ISO week helper — 'YYYY-WNN' with ISO Monday-start convention
 // ---------------------------------------------------------------------------
@@ -140,55 +179,96 @@ export class AREIClient {
     const from = (page - 1) * pageSize;
     const to = from + pageSize - 1;
 
-    let query = this.sb
-      .from(this.view)
-      .select(CARD_COLUMNS, { count: "exact" });
+    const filters = { island, priceBucket, propertyType, minBeds, sourceId };
 
-    // Island filter
-    if (island) {
-      query = query.eq("island", island);
-    }
-
-    // Property type filter — case-insensitive equality.
-    // DB values are normalized lowercase by the ingester (see core/ingestCv.ts
-    // extractPropertyType), but ilike keeps us safe against legacy rows.
-    if (propertyType) {
-      query = query.ilike("property_type", propertyType);
-    }
-
-    // Minimum bedrooms
-    if (minBeds && minBeds > 0) {
-      query = query.gte("bedrooms", minBeds);
-    }
-
-    // Source filter — exact match on source_id column
-    if (sourceId) {
-      query = query.eq("source_id", sourceId);
-    }
-
-    // Price bucket filter
+    // Price bucket requests are already explicitly priced, so they can use a
+    // single filtered query. The unbucketed browse view keeps "newest" as the
+    // ordering inside each group, but promotes displayable public prices above
+    // "Price on request" rows for a better first impression.
     if (priceBucket) {
-      const bucket = PRICE_BUCKETS[priceBucket];
+      let query = this.sb
+        .from(this.view)
+        .select(CARD_COLUMNS, { count: "exact" });
+
+      query = applyListingFilters(query, filters);
+
+      // Sort and paginate. `id` is the unique tie-breaker — without it, rows
+      // sharing a `first_seen_at` value can drift between pages, making the same
+      // listing appear on multiple pages of the paginated feed.
       query = query
-        .gt("price", 0)
-        .gte("price", bucket.min)
-        .lte("price", bucket.max);
+        .order("first_seen_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, to);
+
+      const { data, count, error } = await query;
+
+      if (error) throw new Error(`getListings failed: ${error.message}`);
+
+      const rows = (data ?? []) as unknown as ListingRow[];
+      const total = count ?? 0;
+
+      return {
+        data: rows.map(toListingCard),
+        total,
+        page,
+        pageSize,
+        totalPages: Math.ceil(total / pageSize),
+      };
     }
 
-    // Sort and paginate. `id` is the unique tie-breaker — without it, rows
-    // sharing a `first_seen_at` value can drift between pages, making the same
-    // listing appear on multiple pages of the paginated feed.
-    query = query
-      .order("first_seen_at", { ascending: false })
-      .order("id", { ascending: true })
-      .range(from, to);
+    const totalQuery = applyListingFilters(
+      this.sb.from(this.view).select("id", { count: "exact", head: true }),
+      filters
+    );
+    const pricedCountQuery = applyListingFilters(
+      this.sb.from(this.view).select("id", { count: "exact", head: true }),
+      filters
+    )
+      .gte("price", PRICE_FLOOR)
+      .lte("price", PRICE_CEILING);
 
-    const { data, count, error } = await query;
+    const [totalRes, pricedCountRes] = await Promise.all([totalQuery, pricedCountQuery]);
 
-    if (error) throw new Error(`getListings failed: ${error.message}`);
+    if (totalRes.error) throw new Error(`getListings failed: ${totalRes.error.message}`);
+    if (pricedCountRes.error) throw new Error(`getListings failed: ${pricedCountRes.error.message}`);
 
-    const rows = (data ?? []) as unknown as ListingRow[];
-    const total = count ?? 0;
+    const total = totalRes.count ?? 0;
+    const pricedCount = pricedCountRes.count ?? 0;
+    const rows: ListingRow[] = [];
+
+    if (from < pricedCount) {
+      const pricedTo = Math.min(to, pricedCount - 1);
+      let pricedQuery = applyListingFilters(
+        this.sb.from(this.view).select(CARD_COLUMNS),
+        filters
+      )
+        .gte("price", PRICE_FLOOR)
+        .lte("price", PRICE_CEILING)
+        .order("first_seen_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(from, pricedTo);
+
+      const { data, error } = await pricedQuery;
+      if (error) throw new Error(`getListings failed: ${error.message}`);
+      rows.push(...((data ?? []) as unknown as ListingRow[]));
+    }
+
+    if (to >= pricedCount && rows.length < pageSize) {
+      const unpricedFrom = Math.max(0, from - pricedCount);
+      const unpricedTo = unpricedFrom + (pageSize - rows.length) - 1;
+      let unpricedQuery = applyListingFilters(
+        this.sb.from(this.view).select(CARD_COLUMNS),
+        filters
+      )
+        .or(`price.is.null,price.lt.${PRICE_FLOOR},price.gt.${PRICE_CEILING}`)
+        .order("first_seen_at", { ascending: false })
+        .order("id", { ascending: true })
+        .range(unpricedFrom, unpricedTo);
+
+      const { data, error } = await unpricedQuery;
+      if (error) throw new Error(`getListings failed: ${error.message}`);
+      rows.push(...((data ?? []) as unknown as ListingRow[]));
+    }
 
     return {
       data: rows.map(toListingCard),
