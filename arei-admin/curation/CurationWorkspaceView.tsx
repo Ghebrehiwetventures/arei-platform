@@ -3,6 +3,7 @@ import { getCurationStats, getCuratedListings } from "../data";
 import type { CuratedListing, CurationFilters, CurationStats, ReviewVerdict } from "../types";
 import { DashboardStrip } from "./DashboardStrip";
 import { FilterBar } from "./FilterBar";
+import { InventoryTable } from "./InventoryTable";
 
 export function CurationWorkspaceView() {
   const [filters, setFilters] = useState<CurationFilters>({ status: "needs_review" });
@@ -47,6 +48,16 @@ export function CurationWorkspaceView() {
     });
   };
 
+  const onToggleSelectAll = () => {
+    setSelectedIds((prev) => {
+      const allCurrentlySelected = listings.every((l) => prev.has(l.id));
+      if (allCurrentlySelected) return new Set();
+      const next = new Set(prev);
+      for (const l of listings) next.add(l.id);
+      return next;
+    });
+  };
+
   return (
     <div className="p-4 space-y-4">
       {error && <div className="text-xs text-red">{error}</div>}
@@ -66,19 +77,14 @@ export function CurationWorkspaceView() {
         onChange={setFilters}
       />
 
-      <section className="border border-border-strong rounded p-3 text-xs">
-        Table placeholder · {loadingList ? "loading…" : `${listings.length} of ${totalCount} rows`}
-        <ul className="mt-2 space-y-1">
-          {listings.slice(0, 10).map((l) => (
-            <li key={l.id} className="flex items-center gap-2">
-              <input type="checkbox" checked={selectedIds.has(l.id)} onChange={() => onRowSelectToggle(l.id)} />
-              <button className="underline" onClick={() => setOpenId(l.id)}>{l.id}</button>
-              <span className="text-foreground-muted">· {l.publish_status} · {l.title.slice(0, 60)}</span>
-              {l.last_review && <span className="text-foreground-muted">[last: {l.last_review.verdict}]</span>}
-            </li>
-          ))}
-        </ul>
-      </section>
+      <InventoryTable
+        rows={listings}
+        loading={loadingList}
+        selectedIds={selectedIds}
+        onToggleSelect={onRowSelectToggle}
+        onToggleSelectAll={onToggleSelectAll}
+        onOpenRow={setOpenId}
+      />
 
       {openId && (
         <aside className="fixed right-0 top-0 h-full w-[420px] bg-surface-2 border-l border-border-strong p-4 overflow-y-auto z-30">
