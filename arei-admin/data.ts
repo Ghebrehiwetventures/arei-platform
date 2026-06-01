@@ -7,6 +7,9 @@ import {
   SourceQualityRow,
   SourceQualityRowRaw,
   IngestRunPhase,
+  CuratedListing,
+  SuggestedPatch,
+  ReviewVerdictResult,
 } from "./types";
 import { supabase, supabaseAuth } from "./supabase";
 import { computeHealthGrade } from "./sourceHealthGrade";
@@ -1343,4 +1346,54 @@ export async function deleteFeaturedSelection(isoWeek: string): Promise<void> {
     .eq("iso_week", isoWeek);
 
   if (error) throw new Error(`[Admin] deleteFeaturedSelection failed: ${error.message}`);
+}
+
+// ============================================
+// KV CURATED REVIEWER
+// ============================================
+
+async function authHeader(): Promise<Record<string, string>> {
+  const { data } = await supabaseAuth.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+export async function getCuratedNeedsReviewList(): Promise<CuratedListing[]> {
+  const res = await fetch("/api/kv-curated-listing", { headers: { ...(await authHeader()) } });
+  if (!res.ok) throw new Error(`getCuratedNeedsReviewList: ${res.status} ${await res.text()}`);
+  const json = await res.json();
+  return json.items as CuratedListing[];
+}
+
+export async function getCuratedListing(id: string): Promise<CuratedListing> {
+  const res = await fetch(`/api/kv-curated-listing?id=${encodeURIComponent(id)}`, {
+    headers: { ...(await authHeader()) },
+  });
+  if (!res.ok) throw new Error(`getCuratedListing: ${res.status} ${await res.text()}`);
+  return (await res.json()) as CuratedListing;
+}
+
+export async function reviewListing(id: string): Promise<ReviewVerdictResult> {
+  const res = await fetch("/api/review-listing", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeader()) },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) throw new Error(`reviewListing: ${res.status} ${await res.text()}`);
+  return (await res.json()) as ReviewVerdictResult;
+}
+
+export async function applyListingPatch(
+  id: string,
+  patch: SuggestedPatch,
+  publishStatus?: "needs_review" | "published" | "hidden",
+): Promise<CuratedListing> {
+  const res = await fetch("/api/apply-listing-patch", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeader()) },
+    body: JSON.stringify({ id, patch, publish_status: publishStatus ?? null }),
+  });
+  if (!res.ok) throw new Error(`applyListingPatch: ${res.status} ${await res.text()}`);
+  const json = await res.json();
+  return json.row as CuratedListing;
 }

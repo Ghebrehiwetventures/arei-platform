@@ -388,3 +388,50 @@ export interface PilotQualityCheck {
   severity: "required" | "recommended" | "optional";
   detail?: string;
 }
+
+// --- KV Curated reviewer ---
+
+export interface CuratedListing {
+  id: string;
+  publish_status: "needs_review" | "published" | "hidden";
+  title: string;
+  description?: string | null;
+  source_id_primary: string;
+  source_url_primary: string | null;
+  island: string;
+  city: string | null;
+  property_type: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  price: number | null;
+  currency: string | null;
+  property_size_sqm: number | null;
+  land_area_sqm: number | null;
+  image_urls: string[];
+  first_seen_at: string | null;
+  last_verified_at: string | null;
+}
+
+export interface SuggestedPatch {
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  property_type?: string;
+  island?: string;
+  city?: string | null;
+  price?: number | null;
+  property_size_sqm?: number | null;
+  land_area_sqm?: number | null;
+}
+
+export interface ReviewVerdict {
+  verdict: "publish" | "hold" | "hide";
+  confidence: number;
+  reasons: string[];
+  suggested_patch: SuggestedPatch;
+  hide_reason?: string;
+}
+
+export interface ReviewVerdictResult {
+  id: string;
+  verdict: ReviewVerdict;
+}
