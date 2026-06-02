@@ -229,3 +229,49 @@ test("parseAndValidateVerdict rejects out-of-range deep confidence", () => {
   });
   assert.throws(() => parseAndValidateVerdict(raw), /confidence/i);
 });
+
+const { buildDeepReviewPrompt } = require("../arei-admin/api/_reviewerLib.cjs");
+
+test("buildDeepReviewPrompt instructs the model to fetch the source URL", () => {
+  const { system, user } = buildDeepReviewPrompt({
+    id: "id", title: "2 Bed Villa", description: "Lovely villa.",
+    source_url_primary: "https://example.com/listing/xyz",
+    island: "Sal", city: "Santa Maria", property_type: "villa",
+    bedrooms: null, bathrooms: null, price: 100000, currency: "EUR",
+    property_size_sqm: null, land_area_sqm: null,
+    image_urls: ["a"], publish_status: "needs_review",
+  });
+  assert.match(system, /web_fetch/i);
+  assert.match(system, /scraper_missed/);
+  assert.match(system, /absent_at_source/);
+  assert.match(system, /unmapped_fields/);
+  assert.match(user, /https:\/\/example\.com\/listing\/xyz/);
+});
+
+test("buildDeepReviewPrompt lists only the currently-null fields as diagnosis targets", () => {
+  const { user } = buildDeepReviewPrompt({
+    id: "id", title: "t", description: "d", source_url_primary: "u",
+    island: "Sal", city: "Santa Maria", property_type: "villa",
+    bedrooms: null, bathrooms: null, price: 100000, currency: "EUR",
+    property_size_sqm: null, land_area_sqm: 500,
+    image_urls: ["a"], publish_status: "needs_review",
+  });
+  assert.match(user, /FIELDS TO DIAGNOSE/);
+  assert.match(user, /bedrooms/);
+  assert.match(user, /bathrooms/);
+  assert.match(user, /property_size_sqm/);
+  // non-null fields must NOT be diagnosis targets
+  assert.doesNotMatch(user.split("FIELDS TO DIAGNOSE")[1], /land_area_sqm/);
+  assert.doesNotMatch(user.split("FIELDS TO DIAGNOSE")[1], /\bprice\b/);
+});
+
+test("buildDeepReviewPrompt notes when there is no source URL", () => {
+  const { user } = buildDeepReviewPrompt({
+    id: "id", title: "t", description: "d", source_url_primary: null,
+    island: "Sal", city: null, property_type: null,
+    bedrooms: null, bathrooms: null, price: null, currency: "EUR",
+    property_size_sqm: null, land_area_sqm: null,
+    image_urls: [], publish_status: "needs_review",
+  });
+  assert.match(user, /no source url/i);
+});

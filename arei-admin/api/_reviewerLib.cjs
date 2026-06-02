@@ -23,6 +23,14 @@ const PATCH_FIELDS = [
   "price", "property_size_sqm", "land_area_sqm",
 ];
 
+// Fields the deep reviewer may diagnose. Subset of the row that maps to real
+// curated columns and is meaningful to recover from the source page.
+const DIAGNOSABLE_FIELDS = [
+  "island", "city", "property_type",
+  "bedrooms", "bathrooms", "price",
+  "property_size_sqm", "land_area_sqm",
+];
+
 const FETCH_STATUSES = new Set(["ok", "failed", "skipped"]);
 const MISSING_FIELD_STATUSES = new Set(["scraper_missed", "absent_at_source", "uncertain"]);
 const UNMAPPED_TYPES = new Set(["numeric", "integer", "text", "boolean"]);
@@ -118,6 +126,86 @@ function buildReviewPrompt(row) {
   return { system, user };
 }
 
+function buildDeepReviewPrompt(row) {
+  const description = (row.description ?? "").length > DESCRIPTION_MAX
+    ? row.description.slice(0, DESCRIPTION_MAX) + "\n…(truncated)"
+    : (row.description ?? "");
+
+  const structured = {
+    island: row.island ?? null,
+    city: row.city ?? null,
+    property_type: row.property_type ?? null,
+    bedrooms: row.bedrooms ?? null,
+    bathrooms: row.bathrooms ?? null,
+    price: row.price ?? null,
+    currency: row.currency ?? null,
+    property_size_sqm: row.property_size_sqm ?? null,
+    land_area_sqm: row.land_area_sqm ?? null,
+    image_urls_count: Array.isArray(row.image_urls) ? row.image_urls.length : 0,
+    publish_status: row.publish_status ?? null,
+  };
+
+  const nullFields = DIAGNOSABLE_FIELDS.filter((f) => {
+    const v = row[f];
+    return v === null || v === undefined || v === "";
+  });
+
+  const system = [
+    "You are a data-quality diagnostician for a Cape Verde real-estate listings feed.",
+    "A listing row has some empty fields. Your job is to determine, for each empty field,",
+    "WHY it is empty by reading the ORIGINAL source page.",
+    "",
+    "Use the web_fetch tool on the source_url to read the live listing page.",
+    "If the page cannot be fetched, set fetch_status to \"failed\" and diagnose from the",
+    "description text only. If there is no source_url, set fetch_status to \"skipped\".",
+    "Otherwise set fetch_status to \"ok\".",
+    "",
+    "For each field in FIELDS TO DIAGNOSE, add one entry to missing_field_report:",
+    "- status \"scraper_missed\": the value IS on the page/description. Return found_value and a short evidence quote.",
+    "- status \"absent_at_source\": the page genuinely does not state this value.",
+    "- status \"uncertain\": you cannot tell.",
+    "Only include found_value when status is \"scraper_missed\". No guessing — evidence or absent_at_source/uncertain.",
+    "When a recovered value maps to one of these columns, ALSO put it in suggested_patch:",
+    PATCH_FIELDS.join(", ") + ".",
+    "",
+    "Separately, list any value present on the page that has NO column above in unmapped_fields,",
+    "e.g. terrace area, year built, pool, parking. suggested_column must be snake_case.",
+    "",
+    "Output JSON only. No prose outside the JSON. Schema:",
+    "{",
+    '  "verdict": "publish" | "hold" | "hide",',
+    '  "confidence": number (0..1),',
+    '  "reasons": string[],',
+    '  "suggested_patch": { ...mappable recovered values... },',
+    '  "fetch_status": "ok" | "failed" | "skipped",',
+    '  "missing_field_report": [ { "field": string, "status": "scraper_missed"|"absent_at_source"|"uncertain", "found_value"?: any, "evidence"?: string, "confidence": number } ],',
+    '  "unmapped_fields": [ { "label": string, "value": string, "suggested_column": string, "type": "numeric"|"integer"|"text"|"boolean", "confidence": number } ],',
+    '  "hide_reason"?: string',
+    "}",
+    "",
+    "Valid islands (use exactly these spellings): " + CV_ISLANDS.join(", "),
+    "Valid property_type values: " + PROPERTY_TYPES.join(", "),
+  ].join("\n");
+
+  const fieldsToDiagnose = nullFields.length > 0 ? nullFields.join(", ") : "(none — all diagnosable fields are populated)";
+
+  const user = [
+    "SOURCE",
+    "title: " + (row.title ?? ""),
+    "source_url: " + (row.source_url_primary ?? "(no source url)"),
+    "description:",
+    description,
+    "",
+    "STRUCTURED FIELDS",
+    JSON.stringify(structured, null, 2),
+    "",
+    "FIELDS TO DIAGNOSE",
+    fieldsToDiagnose,
+  ].join("\n");
+
+  return { system, user };
+}
+
 const VERDICTS = new Set(["publish", "hold", "hide"]);
 
 function stripCodeFence(text) {
@@ -206,9 +294,11 @@ function buildPatchSql(id, patch, publishStatus) {
 
 module.exports = {
   buildReviewPrompt,
+  buildDeepReviewPrompt,
   parseAndValidateVerdict,
   buildPatchSql,
   CV_ISLANDS,
   PROPERTY_TYPES,
   PATCH_FIELDS,
+  DIAGNOSABLE_FIELDS,
 };
