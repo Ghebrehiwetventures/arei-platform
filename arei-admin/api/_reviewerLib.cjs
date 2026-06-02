@@ -292,11 +292,39 @@ function buildPatchSql(id, patch, publishStatus) {
   return { text, values };
 }
 
+function buildScraperGapInsert(listingId, gaps) {
+  if (!Array.isArray(gaps) || gaps.length === 0) return null;
+  const values = [];
+  const tuples = [];
+  let i = 1;
+  for (const g of gaps) {
+    if (!g || typeof g !== "object" || Array.isArray(g)) throw new Error("recovered_gap must be an object");
+    if (typeof g.field !== "string" || g.field.length === 0) throw new Error("recovered_gap.field must be a non-empty string");
+    if (typeof g.source_id !== "string" || g.source_id.length === 0) throw new Error("recovered_gap.source_id must be a non-empty string");
+    tuples.push(`($${i}, $${i + 1}, $${i + 2}, $${i + 3}, $${i + 4}, $${i + 5})`);
+    values.push(
+      listingId,
+      g.source_id,
+      g.field,
+      g.value == null ? null : String(g.value),
+      g.evidence == null ? null : String(g.evidence),
+      g.model == null ? null : String(g.model),
+    );
+    i += 6;
+  }
+  const text =
+    "INSERT INTO kv_curated.scraper_gap_log " +
+    "(listing_id, source_id, field, recovered_value, evidence, model) VALUES " +
+    tuples.join(", ");
+  return { text, values };
+}
+
 module.exports = {
   buildReviewPrompt,
   buildDeepReviewPrompt,
   parseAndValidateVerdict,
   buildPatchSql,
+  buildScraperGapInsert,
   CV_ISLANDS,
   PROPERTY_TYPES,
   PATCH_FIELDS,

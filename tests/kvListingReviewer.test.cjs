@@ -275,3 +275,31 @@ test("buildDeepReviewPrompt notes when there is no source URL", () => {
   });
   assert.match(user, /no source url/i);
 });
+
+const { buildScraperGapInsert } = require("../arei-admin/api/_reviewerLib.cjs");
+
+test("buildScraperGapInsert returns null for empty gaps", () => {
+  assert.equal(buildScraperGapInsert("hcv_x", []), null);
+  assert.equal(buildScraperGapInsert("hcv_x", undefined), null);
+});
+
+test("buildScraperGapInsert builds a multi-row insert", () => {
+  const { text, values } = buildScraperGapInsert("hcv_x", [
+    { field: "bedrooms", source_id: "cv_foo", value: 3, evidence: "3 bed", model: "claude-sonnet-4-6" },
+    { field: "bathrooms", source_id: "cv_foo", value: 2 },
+  ]);
+  assert.match(text, /INSERT INTO kv_curated\.scraper_gap_log/);
+  assert.match(text, /\(\$1, \$2, \$3, \$4, \$5, \$6\), \(\$7, \$8, \$9, \$10, \$11, \$12\)/);
+  assert.deepEqual(values, [
+    "hcv_x", "cv_foo", "bedrooms", "3", "3 bed", "claude-sonnet-4-6",
+    "hcv_x", "cv_foo", "bathrooms", "2", null, null,
+  ]);
+});
+
+test("buildScraperGapInsert rejects an entry missing field", () => {
+  assert.throws(() => buildScraperGapInsert("hcv_x", [{ source_id: "cv_foo" }]), /field/i);
+});
+
+test("buildScraperGapInsert rejects an entry missing source_id", () => {
+  assert.throws(() => buildScraperGapInsert("hcv_x", [{ field: "bedrooms" }]), /source_id/i);
+});
