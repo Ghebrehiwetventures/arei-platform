@@ -5,6 +5,7 @@ import path from "path";
 import fs from "fs";
 import dotenv from "dotenv";
 import { pathToFileURL } from "url";
+import { createRequire } from "module";
 
 const artifactsDir = path.resolve(__dirname, "../artifacts");
 const publicDir = fs.existsSync(artifactsDir) ? artifactsDir : path.resolve(__dirname, "public");
@@ -33,8 +34,16 @@ function devApiPlugin(): Plugin {
           // Use Node's native dynamic import — Vite's ssrLoadModule does not
           // do CJS interop, which breaks handlers that import a .cjs helper.
           // Cache-bust by mtime so saved edits are picked up without a server
-          // restart. .cjs subimports still get cached by Node, but the .js
-          // handler that re-imports them re-evaluates on each request.
+          // restart. ESM query-string busting does not reach .cjs subimports
+          // (Node's CJS loader keeps them in require.cache), so also drop any
+          // cached require.cache entries under api/ before re-importing — a
+          // freshly edited _reviewerLib.cjs would otherwise stay stale.
+          try {
+            const requireFromHere = createRequire(import.meta.url);
+            for (const key of Object.keys(requireFromHere.cache)) {
+              if (key.startsWith(apiDir + path.sep)) delete requireFromHere.cache[key];
+            }
+          } catch { /* best effort */ }
           const mtime = fs.statSync(handlerFile).mtimeMs;
           const url = pathToFileURL(handlerFile).href + "?t=" + mtime;
           const mod = await import(url);
