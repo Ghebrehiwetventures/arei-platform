@@ -45,6 +45,7 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
     const seed = ephemeralRef.current ?? null;
     setVerdict(seed);
     setAcceptedKeys(new Set(seed ? Object.keys(seed.suggested_patch) : []));
+    setSourceId(null);
   }, [id]);
 
   // Keyed on `id` only. `ephemeralVerdict` changes every time the parent's
@@ -199,14 +200,14 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
           <div className="mt-3 flex items-center gap-2">
             <button
               onClick={runReview}
-              disabled={reviewing}
+              disabled={reviewing || deepReviewing}
               className="px-3 py-1.5 text-sm rounded border border-border-strong hover:bg-surface-3 disabled:opacity-50"
             >
               {reviewing ? "Reviewing…" : verdict ? "Re-review" : "Run review"}
             </button>
             <button
               onClick={runDeepReview}
-              disabled={deepReviewing}
+              disabled={deepReviewing || reviewing}
               className="px-3 py-1.5 text-sm rounded border border-border-strong hover:bg-surface-3 disabled:opacity-50"
             >
               {deepReviewing ? "Deep reviewing…" : "Deep review"}
@@ -263,8 +264,8 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
                 <div>
                   <div className="text-xs font-medium mt-2 mb-1">No column for these</div>
                   <ul className="text-xs space-y-1">
-                    {verdict.unmapped_fields.map((u: UnmappedField, i: number) => (
-                      <li key={i} className="border-t border-border-strong pt-1">
+                    {verdict.unmapped_fields.map((u: UnmappedField) => (
+                      <li key={u.label} className="border-t border-border-strong pt-1">
                         <span className="font-mono">{u.label}</span>: {u.value}
                         <span className="text-foreground-muted"> → consider <span className="font-mono">{u.suggested_column}</span> ({u.type})</span>
                       </li>
