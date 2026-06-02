@@ -53,6 +53,7 @@ export default async function handler(req, res) {
 
   const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY });
   let raw;
+  let webFetchInvoked = false;
   try {
     const resp = await anthropic.beta.messages.create({
       model: MODEL,
@@ -64,6 +65,9 @@ export default async function handler(req, res) {
     });
     const textBlocks = resp.content.filter((c) => c.type === "text");
     raw = textBlocks.length ? textBlocks[textBlocks.length - 1].text : "";
+    webFetchInvoked = resp.content.some(
+      (c) => (c.type === "tool_use" || c.type === "server_tool_use") && c.name === "web_fetch",
+    );
   } catch (err) {
     return send(res, 502, { error: "model call failed: " + (err.message || err) });
   }
@@ -71,6 +75,13 @@ export default async function handler(req, res) {
   let verdict;
   try { verdict = parseAndValidateVerdict(raw); }
   catch (err) { return send(res, 502, { error: err.message, raw }); }
+
+  // Trust the response, not the model's self-report: if it claimed "ok" but
+  // never invoked web_fetch, downgrade so the UI banner surfaces that the
+  // diagnosis is from stored data only.
+  if (verdict.fetch_status === "ok" && !webFetchInvoked) {
+    verdict.fetch_status = "failed";
+  }
 
   // Persist. Failures here are logged but not surfaced — the operator already
   // has the verdict in the response.

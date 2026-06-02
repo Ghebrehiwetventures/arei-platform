@@ -422,8 +422,8 @@ export interface CuratedListing {
 export interface SuggestedPatch {
   bedrooms?: number | null;
   bathrooms?: number | null;
-  property_type?: string;
-  island?: string;
+  property_type?: string | null;
+  island?: string | null;
   city?: string | null;
   price?: number | null;
   property_size_sqm?: number | null;

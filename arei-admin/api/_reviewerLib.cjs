@@ -49,6 +49,11 @@ function validateMissingFieldReport(report) {
     if (typeof e.field !== "string" || e.field.length === 0) throw new Error("missing_field_report.field must be a non-empty string");
     if (!MISSING_FIELD_STATUSES.has(e.status)) throw new Error("missing_field_report.status must be scraper_missed|absent_at_source|uncertain");
     if (e.status !== "scraper_missed" && e.found_value !== undefined) throw new Error("found_value is only allowed when status is scraper_missed");
+    if (e.status === "scraper_missed") {
+      if (e.found_value === undefined || e.found_value === null || e.found_value === "") {
+        throw new Error("found_value is required when status is scraper_missed");
+      }
+    }
     if (!isConfidence(e.confidence)) throw new Error("missing_field_report.confidence must be a number in [0,1]");
     if (e.evidence !== undefined && typeof e.evidence !== "string") throw new Error("missing_field_report.evidence must be a string");
   }
