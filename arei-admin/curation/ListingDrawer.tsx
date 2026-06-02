@@ -1,11 +1,14 @@
 import { useEffect, useRef, useState } from "react";
 import {
   applyListingPatch,
+  deepReviewListing,
   getCuratedListing,
   getListingReviewHistory,
   reviewListing,
 } from "../data";
-import type { CuratedListing, ReviewLogRow, ReviewVerdict, SuggestedPatch } from "../types";
+import type {
+  CuratedListing, MissingFieldEntry, RecoveredGap, ReviewLogRow, ReviewVerdict, SuggestedPatch, UnmappedField,
+} from "../types";
 
 interface Props {
   id: string;
@@ -21,6 +24,8 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
   const [error, setError] = useState<string | null>(null);
   const [verdict, setVerdict] = useState<ReviewVerdict | null>(ephemeralVerdict ?? null);
   const [reviewing, setReviewing] = useState(false);
+  const [deepReviewing, setDeepReviewing] = useState(false);
+  const [sourceId, setSourceId] = useState<string | null>(null);
   const [applying, setApplying] = useState(false);
   const [acceptedKeys, setAcceptedKeys] = useState<Set<string>>(
     new Set(ephemeralVerdict ? Object.keys(ephemeralVerdict.suggested_patch) : [])
@@ -76,6 +81,21 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
     }
   }
 
+  async function runDeepReview() {
+    setDeepReviewing(true); setError(null);
+    try {
+      const r = await deepReviewListing(id);
+      setVerdict(r.verdict);
+      setSourceId(r.source_id ?? null);
+      setAcceptedKeys(new Set(Object.keys(r.verdict.suggested_patch)));
+      onVerdictProduced(id, r.verdict);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    } finally {
+      setDeepReviewing(false);
+    }
+  }
+
   function toggleKey(k: string) {
     setAcceptedKeys((prev) => {
       const next = new Set(prev);
@@ -90,9 +110,23 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
     for (const k of acceptedKeys) {
       (subset as Record<string, unknown>)[k] = (verdict.suggested_patch as Record<string, unknown>)[k];
     }
+    const gaps: RecoveredGap[] = [];
+    if (sourceId) {
+      for (const e of verdict.missing_field_report ?? []) {
+        if (e.status === "scraper_missed" && acceptedKeys.has(e.field)) {
+          gaps.push({
+            field: e.field,
+            source_id: sourceId,
+            value: e.found_value ?? null,
+            evidence: e.evidence,
+            model: "claude-sonnet-4-6",
+          });
+        }
+      }
+    }
     setApplying(true); setError(null);
     try {
-      await applyListingPatch(listing.id, subset, publishStatus);
+      await applyListingPatch(listing.id, subset, publishStatus, gaps);
       onApplied();
       onClose();
     } catch (e) {
@@ -170,6 +204,13 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
             >
               {reviewing ? "Reviewing…" : verdict ? "Re-review" : "Run review"}
             </button>
+            <button
+              onClick={runDeepReview}
+              disabled={deepReviewing}
+              className="px-3 py-1.5 text-sm rounded border border-border-strong hover:bg-surface-3 disabled:opacity-50"
+            >
+              {deepReviewing ? "Deep reviewing…" : "Deep review"}
+            </button>
           </div>
 
           {verdict && (
@@ -183,6 +224,55 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
                 {verdict.reasons.map((r, i) => <li key={i}>{r}</li>)}
               </ul>
 
+              {verdict.fetch_status && verdict.fetch_status !== "ok" && (
+                <div className="text-[11px] text-amber">
+                  source page {verdict.fetch_status === "failed" ? "could not be fetched" : "was not fetched"} — diagnosis is from stored data only
+                </div>
+              )}
+
+              {verdict.missing_field_report && verdict.missing_field_report.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium mt-2 mb-1">Field gaps</div>
+                  <table className="text-xs w-full">
+                    <thead className="text-foreground-muted">
+                      <tr><th className="text-left">field</th><th className="text-left">diagnosis</th><th className="text-left">value / evidence</th></tr>
+                    </thead>
+                    <tbody>
+                      {verdict.missing_field_report.map((e: MissingFieldEntry) => (
+                        <tr key={e.field} className="border-t border-border-strong align-top">
+                          <td className="font-mono py-1">{e.field}</td>
+                          <td><GapStatus status={e.status} /></td>
+                          <td>
+                            {e.status === "scraper_missed"
+                              ? <span><span className="font-mono">{String(e.found_value ?? "—")}</span>{e.evidence ? <span className="text-foreground-muted italic"> — {e.evidence}</span> : null}</span>
+                              : <span className="text-foreground-muted">{e.evidence ?? (e.status === "absent_at_source" ? "not stated at source" : "could not determine")}</span>}
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                  {sourceId && verdict.missing_field_report.some((e) => e.status === "scraper_missed") && (
+                    <div className="text-[11px] text-foreground-muted mt-1">
+                      Accept a scraper-missed field below and Apply — it patches the row and logs the scraper gap.
+                    </div>
+                  )}
+                </div>
+              )}
+
+              {verdict.unmapped_fields && verdict.unmapped_fields.length > 0 && (
+                <div>
+                  <div className="text-xs font-medium mt-2 mb-1">No column for these</div>
+                  <ul className="text-xs space-y-1">
+                    {verdict.unmapped_fields.map((u: UnmappedField, i: number) => (
+                      <li key={i} className="border-t border-border-strong pt-1">
+                        <span className="font-mono">{u.label}</span>: {u.value}
+                        <span className="text-foreground-muted"> → consider <span className="font-mono">{u.suggested_column}</span> ({u.type})</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+
               {patchEntries.length > 0 && (
                 <div>
                   <div className="text-xs font-medium mt-2 mb-1">Suggested patch</div>
@@ -195,7 +285,7 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
                         <tr key={k} className="border-t border-border-strong">
                           <td className="py-1"><input type="checkbox" checked={acceptedKeys.has(k)} onChange={() => toggleKey(k)} /></td>
                           <td className="font-mono">{k}</td>
-                          <td>{String((listing as Record<string, unknown>)[k] ?? "—")}</td>
+                          <td>{String((listing as unknown as Record<string, unknown>)[k] ?? "—")}</td>
                           <td>{String(v ?? "—")}</td>
                         </tr>
                       ))}
@@ -271,4 +361,14 @@ function Verdict({ v }: { v: "publish" | "hold" | "hide" }) {
     : v === "hold"  ? "bg-amber-muted text-amber"
     : "bg-red-muted text-red";
   return <span className={`px-2 py-0.5 text-[10px] rounded border border-border-strong ${cls}`}>{v}</span>;
+}
+
+function GapStatus({ status }: { status: "scraper_missed" | "absent_at_source" | "uncertain" }) {
+  const map = {
+    scraper_missed: { cls: "bg-amber-muted text-amber", label: "scraper missed" },
+    absent_at_source: { cls: "bg-surface-3 text-foreground-muted", label: "absent at source" },
+    uncertain: { cls: "bg-surface-3 text-foreground-muted", label: "uncertain" },
+  } as const;
+  const { cls, label } = map[status];
+  return <span className={`px-2 py-0.5 text-[10px] rounded border border-border-strong ${cls}`}>{label}</span>;
 }
