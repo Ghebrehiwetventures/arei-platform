@@ -23,7 +23,40 @@ const PATCH_FIELDS = [
   "price", "property_size_sqm", "land_area_sqm",
 ];
 
+const FETCH_STATUSES = new Set(["ok", "failed", "skipped"]);
+const MISSING_FIELD_STATUSES = new Set(["scraper_missed", "absent_at_source", "uncertain"]);
+const UNMAPPED_TYPES = new Set(["numeric", "integer", "text", "boolean"]);
+const SNAKE_CASE = /^[a-z][a-z0-9_]*$/;
+
 const DESCRIPTION_MAX = 2000;
+
+function isConfidence(n) {
+  return typeof n === "number" && n >= 0 && n <= 1;
+}
+
+function validateMissingFieldReport(report) {
+  if (!Array.isArray(report)) throw new Error("missing_field_report must be an array");
+  for (const e of report) {
+    if (!e || typeof e !== "object" || Array.isArray(e)) throw new Error("missing_field_report entry must be an object");
+    if (typeof e.field !== "string" || e.field.length === 0) throw new Error("missing_field_report.field must be a non-empty string");
+    if (!MISSING_FIELD_STATUSES.has(e.status)) throw new Error("missing_field_report.status must be scraper_missed|absent_at_source|uncertain");
+    if (e.status !== "scraper_missed" && e.found_value !== undefined) throw new Error("found_value is only allowed when status is scraper_missed");
+    if (!isConfidence(e.confidence)) throw new Error("missing_field_report.confidence must be a number in [0,1]");
+    if (e.evidence !== undefined && typeof e.evidence !== "string") throw new Error("missing_field_report.evidence must be a string");
+  }
+}
+
+function validateUnmappedFields(fields) {
+  if (!Array.isArray(fields)) throw new Error("unmapped_fields must be an array");
+  for (const f of fields) {
+    if (!f || typeof f !== "object" || Array.isArray(f)) throw new Error("unmapped_fields entry must be an object");
+    if (typeof f.label !== "string" || f.label.length === 0) throw new Error("unmapped_fields.label must be a non-empty string");
+    if (typeof f.value !== "string" || f.value.length === 0) throw new Error("unmapped_fields.value must be a non-empty string");
+    if (typeof f.suggested_column !== "string" || !SNAKE_CASE.test(f.suggested_column)) throw new Error("unmapped_fields.suggested_column must be snake_case");
+    if (!UNMAPPED_TYPES.has(f.type)) throw new Error("unmapped_fields.type must be numeric|integer|text|boolean");
+    if (!isConfidence(f.confidence)) throw new Error("unmapped_fields.confidence must be a number in [0,1]");
+  }
+}
 
 function buildReviewPrompt(row) {
   const description = (row.description ?? "").length > DESCRIPTION_MAX
@@ -122,6 +155,11 @@ function parseAndValidateVerdict(raw) {
   if (json.verdict === "hide" && json.hide_reason != null && typeof json.hide_reason !== "string") {
     throw new Error("hide_reason must be a string");
   }
+  if (json.fetch_status !== undefined && !FETCH_STATUSES.has(json.fetch_status)) {
+    throw new Error("fetch_status must be ok|failed|skipped");
+  }
+  if (json.missing_field_report !== undefined) validateMissingFieldReport(json.missing_field_report);
+  if (json.unmapped_fields !== undefined) validateUnmappedFields(json.unmapped_fields);
   return json;
 }
 

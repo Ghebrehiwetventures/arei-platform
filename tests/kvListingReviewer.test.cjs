@@ -153,3 +153,79 @@ test("buildPatchSql rejects undefined patch value", () => {
     /undefined.*use null/i,
   );
 });
+
+test("parseAndValidateVerdict still accepts a cheap-path verdict with no deep keys", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: ["x"], suggested_patch: { bedrooms: 2 },
+  });
+  const v = parseAndValidateVerdict(raw);
+  assert.equal(v.fetch_status, undefined);
+  assert.equal(v.missing_field_report, undefined);
+});
+
+test("parseAndValidateVerdict accepts a well-formed deep verdict", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.7,
+    reasons: ["bedrooms missing from row but present on page"],
+    suggested_patch: { bedrooms: 3 },
+    fetch_status: "ok",
+    missing_field_report: [
+      { field: "bedrooms", status: "scraper_missed", found_value: 3, evidence: "\"3 bedroom villa\"", confidence: 0.9 },
+      { field: "price", status: "absent_at_source", confidence: 0.8 },
+    ],
+    unmapped_fields: [
+      { label: "terrace area", value: "85 m²", suggested_column: "terrace_area_sqm", type: "numeric", confidence: 0.7 },
+    ],
+  });
+  const v = parseAndValidateVerdict(raw);
+  assert.equal(v.fetch_status, "ok");
+  assert.equal(v.missing_field_report[0].found_value, 3);
+  assert.equal(v.unmapped_fields[0].suggested_column, "terrace_area_sqm");
+});
+
+test("parseAndValidateVerdict rejects found_value on a non-scraper_missed entry", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: ["x"], suggested_patch: {},
+    missing_field_report: [{ field: "price", status: "absent_at_source", found_value: 100, confidence: 0.5 }],
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /found_value is only allowed/i);
+});
+
+test("parseAndValidateVerdict rejects a bad missing_field_report status", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: ["x"], suggested_patch: {},
+    missing_field_report: [{ field: "price", status: "dunno", confidence: 0.5 }],
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /missing_field_report.*status/i);
+});
+
+test("parseAndValidateVerdict rejects a bad fetch_status enum", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: ["x"], suggested_patch: {}, fetch_status: "weird",
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /fetch_status/i);
+});
+
+test("parseAndValidateVerdict rejects a non-snake_case suggested_column", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: ["x"], suggested_patch: {},
+    unmapped_fields: [{ label: "x", value: "y", suggested_column: "TerraceArea", type: "numeric", confidence: 0.5 }],
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /snake_case/i);
+});
+
+test("parseAndValidateVerdict rejects a bad unmapped_fields type", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: ["x"], suggested_patch: {},
+    unmapped_fields: [{ label: "x", value: "y", suggested_column: "terrace_area_sqm", type: "json", confidence: 0.5 }],
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /unmapped_fields.*type/i);
+});
+
+test("parseAndValidateVerdict rejects out-of-range deep confidence", () => {
+  const raw = JSON.stringify({
+    verdict: "hold", confidence: 0.5, reasons: ["x"], suggested_patch: {},
+    missing_field_report: [{ field: "price", status: "uncertain", confidence: 1.5 }],
+  });
+  assert.throws(() => parseAndValidateVerdict(raw), /confidence/i);
+});
