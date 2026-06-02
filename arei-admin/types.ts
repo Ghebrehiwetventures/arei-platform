@@ -388,3 +388,119 @@ export interface PilotQualityCheck {
   severity: "required" | "recommended" | "optional";
   detail?: string;
 }
+
+// --- KV Curated reviewer ---
+
+export interface CuratedListing {
+  id: string;
+  publish_status: "needs_review" | "published" | "hidden";
+  title: string;
+  description?: string | null;
+  source_id_primary: string;
+  source_url_primary: string | null;
+  island: string;
+  city: string | null;
+  property_type: string | null;
+  bedrooms: number | null;
+  bathrooms: number | null;
+  price: number | null;
+  currency: string | null;
+  property_size_sqm: number | null;
+  land_area_sqm: number | null;
+  image_urls: string[];
+  first_seen_at: string | null;
+  last_verified_at: string | null;
+  /** Most recent kv_curated.review_log row; null if never reviewed. */
+  last_review?: {
+    verdict: "publish" | "hold" | "hide";
+    confidence: number;
+    hide_reason: string | null;
+    created_at: string;
+  } | null;
+}
+
+export interface SuggestedPatch {
+  bedrooms?: number | null;
+  bathrooms?: number | null;
+  property_type?: string | null;
+  island?: string | null;
+  city?: string | null;
+  price?: number | null;
+  property_size_sqm?: number | null;
+  land_area_sqm?: number | null;
+}
+
+export interface MissingFieldEntry {
+  field: string;
+  status: "scraper_missed" | "absent_at_source" | "uncertain";
+  found_value?: string | number | null;
+  evidence?: string;
+  confidence: number;
+}
+
+export interface UnmappedField {
+  label: string;
+  value: string;
+  suggested_column: string;
+  type: "numeric" | "integer" | "text" | "boolean";
+  confidence: number;
+}
+
+export interface RecoveredGap {
+  field: string;
+  source_id: string;
+  value?: string | number | null;
+  evidence?: string;
+  model?: string;
+}
+
+export interface ReviewVerdict {
+  verdict: "publish" | "hold" | "hide";
+  confidence: number;
+  reasons: string[];
+  suggested_patch: SuggestedPatch;
+  hide_reason?: string;
+  fetch_status?: "ok" | "failed" | "skipped";
+  missing_field_report?: MissingFieldEntry[];
+  unmapped_fields?: UnmappedField[];
+}
+
+export interface ReviewVerdictResult {
+  id: string;
+  verdict: ReviewVerdict;
+  review_log_id?: number | null;
+  source_id?: string | null;
+}
+
+export interface ReviewLogRow {
+  id: number;
+  listing_id: string;
+  model: string;
+  verdict: "publish" | "hold" | "hide";
+  confidence: number;
+  reasons: string[];
+  suggested_patch: SuggestedPatch;
+  hide_reason: string | null;
+  created_at: string;
+}
+
+export interface CurationStats {
+  live: number;
+  needs_review: number;
+  needs_review_older_than_14d: number;
+  new_this_week: number;
+  agent_flagged: number;
+}
+
+export interface CurationFilters {
+  status?: "all" | "published" | "needs_review" | "hidden";
+  source_id?: string;
+  island?: string;
+  q?: string;
+  price_min?: number;
+  price_max?: number;
+  first_seen_after?: string;
+  flagged_hide?: boolean;
+  limit?: number;
+  offset?: number;
+}

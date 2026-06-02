@@ -7,6 +7,13 @@ import {
   SourceQualityRow,
   SourceQualityRowRaw,
   IngestRunPhase,
+  CuratedListing,
+  SuggestedPatch,
+  ReviewVerdictResult,
+  CurationFilters,
+  CurationStats,
+  ReviewLogRow,
+  RecoveredGap,
 } from "./types";
 import { supabase, supabaseAuth } from "./supabase";
 import { computeHealthGrade } from "./sourceHealthGrade";
@@ -1343,4 +1350,107 @@ export async function deleteFeaturedSelection(isoWeek: string): Promise<void> {
     .eq("iso_week", isoWeek);
 
   if (error) throw new Error(`[Admin] deleteFeaturedSelection failed: ${error.message}`);
+}
+
+// ============================================
+// KV CURATED REVIEWER
+// ============================================
+
+async function authHeader(): Promise<Record<string, string>> {
+  const { data } = await supabaseAuth.auth.getSession();
+  const token = data.session?.access_token;
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
+function filtersToQueryString(filters: CurationFilters): string {
+  const sp = new URLSearchParams();
+  if (filters.status && filters.status !== "all") sp.set("status", filters.status);
+  if (filters.source_id) sp.set("source_id", filters.source_id);
+  if (filters.island) sp.set("island", filters.island);
+  if (filters.q) sp.set("q", filters.q);
+  if (filters.price_min != null) sp.set("price_min", String(filters.price_min));
+  if (filters.price_max != null) sp.set("price_max", String(filters.price_max));
+  if (filters.first_seen_after) sp.set("first_seen_after", filters.first_seen_after);
+  if (filters.flagged_hide) sp.set("flagged_hide", "1");
+  if (filters.limit != null) sp.set("limit", String(filters.limit));
+  if (filters.offset != null) sp.set("offset", String(filters.offset));
+  const s = sp.toString();
+  return s ? "?" + s : "";
+}
+
+export async function getCuratedListings(filters: CurationFilters = {}): Promise<{ items: CuratedListing[]; totalCount: number }> {
+  const res = await fetch("/api/kv-curated-listing" + filtersToQueryString(filters), {
+    headers: { ...(await authHeader()) },
+  });
+  if (!res.ok) throw new Error(`getCuratedListings: ${res.status} ${await res.text()}`);
+  return (await res.json()) as { items: CuratedListing[]; totalCount: number };
+}
+
+export async function getCurationStats(): Promise<CurationStats> {
+  const res = await fetch("/api/kv-curation-stats", { headers: { ...(await authHeader()) } });
+  if (!res.ok) throw new Error(`getCurationStats: ${res.status} ${await res.text()}`);
+  return (await res.json()) as CurationStats;
+}
+
+export async function getListingReviewHistory(id: string): Promise<ReviewLogRow[]> {
+  const res = await fetch(`/api/kv-curated-listing-history?id=${encodeURIComponent(id)}`, {
+    headers: { ...(await authHeader()) },
+  });
+  if (!res.ok) throw new Error(`getListingReviewHistory: ${res.status} ${await res.text()}`);
+  const j = await res.json();
+  return j.items as ReviewLogRow[];
+}
+
+export async function getCuratedNeedsReviewList(): Promise<CuratedListing[]> {
+  const { items } = await getCuratedListings({ status: "needs_review" });
+  return items;
+}
+
+export async function getCuratedListing(id: string): Promise<CuratedListing> {
+  const res = await fetch(`/api/kv-curated-listing?id=${encodeURIComponent(id)}`, {
+    headers: { ...(await authHeader()) },
+  });
+  if (!res.ok) throw new Error(`getCuratedListing: ${res.status} ${await res.text()}`);
+  return (await res.json()) as CuratedListing;
+}
+
+export async function reviewListing(id: string): Promise<ReviewVerdictResult> {
+  const res = await fetch("/api/review-listing", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeader()) },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) throw new Error(`reviewListing: ${res.status} ${await res.text()}`);
+  return (await res.json()) as ReviewVerdictResult;
+}
+
+export async function deepReviewListing(id: string): Promise<ReviewVerdictResult> {
+  const res = await fetch("/api/deep-review-listing", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeader()) },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) throw new Error(`deepReviewListing: ${res.status} ${await res.text()}`);
+  return (await res.json()) as ReviewVerdictResult;
+}
+
+export async function applyListingPatch(
+  id: string,
+  patch: SuggestedPatch,
+  publishStatus?: "needs_review" | "published" | "hidden",
+  recoveredGaps?: RecoveredGap[],
+): Promise<CuratedListing> {
+  const res = await fetch("/api/apply-listing-patch", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeader()) },
+    body: JSON.stringify({
+      id,
+      patch,
+      publish_status: publishStatus ?? null,
+      ...(recoveredGaps && recoveredGaps.length > 0 ? { recovered_gaps: recoveredGaps } : {}),
+    }),
+  });
+  if (!res.ok) throw new Error(`applyListingPatch: ${res.status} ${await res.text()}`);
+  const json = await res.json();
+  return json.row as CuratedListing;
 }
