@@ -72,6 +72,25 @@ The system prompt anchors three rules: (1) JSON only, (2) only suggest a
 field if the source text directly supports it — no guessing, (3) `hide` is
 for reserved/sold/withdrawn listings.
 
+## Deep review (field-gap diagnosis)
+
+A second, opt-in path diagnoses *why* a row's fields are empty by live-fetching
+the source page. Operator clicks **Deep review** in the drawer →
+`/api/deep-review-listing` calls `claude-sonnet-4-6` with Anthropic's `web_fetch`
+tool, building the prompt from `_reviewerLib.cjs::buildDeepReviewPrompt`. The
+verdict adds:
+
+- `missing_field_report[]` — per empty field: `scraper_missed` (value is on the
+  page → `found_value` + `evidence`), `absent_at_source`, or `uncertain`.
+- `unmapped_fields[]` — page values with no curated column (e.g. terrace area).
+- `fetch_status` — `ok` | `failed` | `skipped`.
+
+Applying a `scraper_missed` field patches the row **and** inserts a confirmed-gap
+row into `kv_curated.scraper_gap_log` (atomic, via `apply-listing-patch`), so
+systematic scraper misses are queryable by `source_id, field`. The cheap Haiku
+`/api/review-listing` path and bulk "Review all" are unchanged. See
+`docs/superpowers/specs/2026-06-02-kv-deep-review-field-gap-diagnosis-design.md`.
+
 ## Costs
 
 Haiku 4.5: ~1k input + ~300 output tokens per call ≈ **$0.0025 per review**.
@@ -97,7 +116,6 @@ No retries beyond the SDK default.
 - Editing `ai_descriptions` / regenerating prose.
 - Image-level review (broken images, wrong subject).
 - Cross-source duplicate detection.
-- A self-fetching agent loop that re-reads the source URL.
 - Pagination beyond a hard `LIMIT 500` (we have ~469 rows total).
 
 If you go to extend the agent (tools, re-fetch, multi-step reasoning), the
