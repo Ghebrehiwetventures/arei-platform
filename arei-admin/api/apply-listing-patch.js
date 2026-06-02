@@ -1,7 +1,9 @@
 // POST /api/apply-listing-patch
-// Body: { id, patch, publish_status? }
+// Body: { id, patch, publish_status?, recovered_gaps? }
 // Applies a subset of fields to kv_curated.listings and optionally changes
-// publish_status. Returns { row }.
+// publish_status. Returns { row }. If recovered_gaps is provided and non-empty,
+// inserts rows into kv_curated.scraper_gap_log in the same transaction as the
+// listing UPDATE.
 
 import { authorize, createPg, readJsonBody, send } from "./_endpointAuth.js";
 import reviewerLib from "./_reviewerLib.cjs";
