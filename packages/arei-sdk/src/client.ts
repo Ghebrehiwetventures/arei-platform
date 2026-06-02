@@ -32,6 +32,7 @@ import {
   PRICE_CEILING,
 } from "./types.js";
 import { toListingCard, toListingDetail } from "./transforms.js";
+import { briefingHasRequiredSnapshot } from "./briefing.js";
 
 // ---------------------------------------------------------------------------
 // View name — change per market
@@ -868,9 +869,14 @@ export class AREIClient {
       throw new Error(`getBriefing (snapshot lookup) failed: ${snapshotError.message}`);
     }
 
-    return {
-      briefing,
-      snapshot: (snapshotData ?? []) as unknown as MarketReportRow[],
-    };
+    const snapshot = (snapshotData ?? []) as unknown as MarketReportRow[];
+
+    // A published briefing without its pinned, published snapshot rows is not
+    // renderable — treat it as unavailable rather than returning a valid
+    // briefing with empty data. The caller maps null to a 404 / unavailable
+    // state, same as a non-existent slug.
+    if (!briefingHasRequiredSnapshot(snapshot)) return null;
+
+    return { briefing, snapshot };
   }
 }
