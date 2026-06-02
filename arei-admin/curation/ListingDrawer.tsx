@@ -38,6 +38,13 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
   const ephemeralRef = useRef(ephemeralVerdict);
   ephemeralRef.current = ephemeralVerdict;
 
+  // Tracks the id the drawer is currently mounted against. Used by async
+  // review handlers to bail when the parent swapped listings mid-flight —
+  // otherwise a verdict + source_id from the previous listing can be written
+  // against the new listing's row (and into scraper_gap_log).
+  const currentIdRef = useRef(id);
+  currentIdRef.current = id;
+
   // When the drawer switches to a different listing (parent kept the drawer
   // open and changed `openId`), reset the verdict pane. Seeded from the
   // ephemeral verdict for the new id, if one exists.
@@ -46,6 +53,11 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
     setVerdict(seed);
     setAcceptedKeys(new Set(seed ? Object.keys(seed.suggested_patch) : []));
     setSourceId(null);
+    // Clear in-flight flags too: a request started for the previous id will
+    // ignore its own state updates (currentIdRef check), so without this the
+    // button stays stuck in "Reviewing…" after switching listings.
+    setReviewing(false);
+    setDeepReviewing(false);
   }, [id]);
 
   // Keyed on `id` only. `ephemeralVerdict` changes every time the parent's
@@ -69,32 +81,38 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
   }, [id]);
 
   async function runReview() {
+    const startedFor = id;
     setReviewing(true); setError(null);
     try {
-      const r = await reviewListing(id);
+      const r = await reviewListing(startedFor);
+      if (currentIdRef.current !== startedFor) return;
       setVerdict(r.verdict);
       setSourceId(null);
       setAcceptedKeys(new Set(Object.keys(r.verdict.suggested_patch)));
-      onVerdictProduced(id, r.verdict);
+      onVerdictProduced(startedFor, r.verdict);
     } catch (e) {
+      if (currentIdRef.current !== startedFor) return;
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setReviewing(false);
+      if (currentIdRef.current === startedFor) setReviewing(false);
     }
   }
 
   async function runDeepReview() {
+    const startedFor = id;
     setDeepReviewing(true); setError(null);
     try {
-      const r = await deepReviewListing(id);
+      const r = await deepReviewListing(startedFor);
+      if (currentIdRef.current !== startedFor) return;
       setVerdict(r.verdict);
       setSourceId(r.source_id ?? null);
       setAcceptedKeys(new Set(Object.keys(r.verdict.suggested_patch)));
-      onVerdictProduced(id, r.verdict);
+      onVerdictProduced(startedFor, r.verdict);
     } catch (e) {
+      if (currentIdRef.current !== startedFor) return;
       setError(e instanceof Error ? e.message : String(e));
     } finally {
-      setDeepReviewing(false);
+      if (currentIdRef.current === startedFor) setDeepReviewing(false);
     }
   }
 
@@ -152,7 +170,7 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
     <aside className="fixed right-0 top-0 h-full w-[480px] bg-surface-2 border-l border-border-strong p-4 overflow-y-auto z-30">
       <div className="flex items-center justify-between">
         <button onClick={onClose} className="text-xs underline">close</button>
-        {listing?.source_url_primary && (
+        {listing?.source_url_primary && /^https?:\/\//i.test(listing.source_url_primary) && (
           <a href={listing.source_url_primary} target="_blank" rel="noopener noreferrer" className="text-xs underline">view source ↗</a>
         )}
       </div>
