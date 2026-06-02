@@ -56,7 +56,7 @@ export default async function handler(req, res) {
   try {
     const resp = await anthropic.beta.messages.create({
       model: MODEL,
-      max_tokens: 2000,
+      max_tokens: 4096,
       betas: [WEB_FETCH_BETA],
       system,
       tools: [WEB_FETCH_TOOL],

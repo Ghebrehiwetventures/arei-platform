@@ -73,6 +73,7 @@ export function ListingDrawer({ id, onClose, onApplied, ephemeralVerdict, onVerd
     try {
       const r = await reviewListing(id);
       setVerdict(r.verdict);
+      setSourceId(null);
       setAcceptedKeys(new Set(Object.keys(r.verdict.suggested_patch)));
       onVerdictProduced(id, r.verdict);
     } catch (e) {
