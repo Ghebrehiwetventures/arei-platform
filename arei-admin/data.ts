@@ -13,6 +13,7 @@ import {
   CurationFilters,
   CurationStats,
   ReviewLogRow,
+  RecoveredGap,
 } from "./types";
 import { supabase, supabaseAuth } from "./supabase";
 import { computeHealthGrade } from "./sourceHealthGrade";
@@ -1423,15 +1424,31 @@ export async function reviewListing(id: string): Promise<ReviewVerdictResult> {
   return (await res.json()) as ReviewVerdictResult;
 }
 
+export async function deepReviewListing(id: string): Promise<ReviewVerdictResult> {
+  const res = await fetch("/api/deep-review-listing", {
+    method: "POST",
+    headers: { "Content-Type": "application/json", ...(await authHeader()) },
+    body: JSON.stringify({ id }),
+  });
+  if (!res.ok) throw new Error(`deepReviewListing: ${res.status} ${await res.text()}`);
+  return (await res.json()) as ReviewVerdictResult;
+}
+
 export async function applyListingPatch(
   id: string,
   patch: SuggestedPatch,
   publishStatus?: "needs_review" | "published" | "hidden",
+  recoveredGaps?: RecoveredGap[],
 ): Promise<CuratedListing> {
   const res = await fetch("/api/apply-listing-patch", {
     method: "POST",
     headers: { "Content-Type": "application/json", ...(await authHeader()) },
-    body: JSON.stringify({ id, patch, publish_status: publishStatus ?? null }),
+    body: JSON.stringify({
+      id,
+      patch,
+      publish_status: publishStatus ?? null,
+      ...(recoveredGaps && recoveredGaps.length > 0 ? { recovered_gaps: recoveredGaps } : {}),
+    }),
   });
   if (!res.ok) throw new Error(`applyListingPatch: ${res.status} ${await res.text()}`);
   const json = await res.json();

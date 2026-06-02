@@ -430,18 +430,46 @@ export interface SuggestedPatch {
   land_area_sqm?: number | null;
 }
 
+export interface MissingFieldEntry {
+  field: string;
+  status: "scraper_missed" | "absent_at_source" | "uncertain";
+  found_value?: string | number | null;
+  evidence?: string;
+  confidence: number;
+}
+
+export interface UnmappedField {
+  label: string;
+  value: string;
+  suggested_column: string;
+  type: "numeric" | "integer" | "text" | "boolean";
+  confidence: number;
+}
+
+export interface RecoveredGap {
+  field: string;
+  source_id: string;
+  value?: string | number | null;
+  evidence?: string;
+  model?: string;
+}
+
 export interface ReviewVerdict {
   verdict: "publish" | "hold" | "hide";
   confidence: number;
   reasons: string[];
   suggested_patch: SuggestedPatch;
   hide_reason?: string;
+  fetch_status?: "ok" | "failed" | "skipped";
+  missing_field_report?: MissingFieldEntry[];
+  unmapped_fields?: UnmappedField[];
 }
 
 export interface ReviewVerdictResult {
   id: string;
   verdict: ReviewVerdict;
   review_log_id?: number | null;
+  source_id?: string | null;
 }
 
 export interface ReviewLogRow {
