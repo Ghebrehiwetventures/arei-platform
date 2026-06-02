@@ -20,6 +20,8 @@ const BlogList = lazy(() => import("./pages/BlogList"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Market = lazy(() => import("./pages/Market"));
 const MarketNews = lazy(() => import("./pages/MarketNews"));
+const BriefingArchive = lazy(() => import("./pages/BriefingArchive"));
+const Briefing = lazy(() => import("./pages/Briefing"));
 const Rent = lazy(() => import("./pages/Rent"));
 const About = lazy(() => import("./pages/About"));
 const Agents = lazy(() => import("./pages/Agents"));
@@ -73,6 +75,9 @@ export default function App() {
           <Route path="/market" element={<Market />} />
           <Route path="/market-news" element={<MarketNews />} />
           <Route path="/news" element={<Navigate to="/market-news" replace />} />
+          <Route path="/briefings" element={<BriefingArchive />} />
+          <Route path="/briefings/:slug" element={<Briefing />} />
+          <Route path="/briefing" element={<Navigate to="/briefings" replace />} />
           {/* Rent surface offline — redirect to listings. Rent page and data model preserved. */}
           <Route path="/rent" element={<Navigate to="/listings" replace />} />
           <Route path="/about" element={<About />} />

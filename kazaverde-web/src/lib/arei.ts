@@ -40,4 +40,6 @@ export const arei = {
   getFeaturedListings: (isoWeek?: string) => getClient().getFeaturedListings(isoWeek),
   getAgencies: (marketCode?: string) => getClient().getAgencies(marketCode),
   getAgencyListingStats: () => getClient().getAgencyListingStats(),
+  listBriefings: () => getClient().listBriefings(),
+  getBriefing: (slug: string) => getClient().getBriefing(slug),
 };
