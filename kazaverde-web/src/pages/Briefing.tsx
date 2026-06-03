@@ -134,7 +134,7 @@ export default function Briefing() {
             ? "Esta edição não existe ou ainda não foi publicada."
             : "This edition does not exist or has not been published."}
         </p>
-        <Link className="kv-bf-back" to="/briefings">
+        <Link className="kv-bf-back" to="/market/briefings">
           {isPt ? "← Ver todas as edições" : "← View all editions"}
         </Link>
       </div>
@@ -150,7 +150,7 @@ export default function Briefing() {
             ? "Esta edição não está disponível de momento."
             : "This edition is not available right now."}
         </p>
-        <Link className="kv-bf-back" to="/briefings">
+        <Link className="kv-bf-back" to="/market/briefings">
           {isPt ? "← Ver todas as edições" : "← View all editions"}
         </Link>
       </div>
@@ -318,7 +318,7 @@ export default function Briefing() {
             <ul className="kv-bf-archive-list">
               {others.map((b) => (
                 <li key={b.slug}>
-                  <Link to={`/briefings/${b.slug}`}>
+                  <Link to={`/market/briefings/${b.slug}`}>
                     <span className="kv-bf-archive-period">{b.period}</span>
                     <span className="kv-bf-archive-title">{b.title}</span>
                   </Link>
@@ -330,7 +330,7 @@ export default function Briefing() {
               {isPt ? "Esta é a única edição até à data." : "This is the only edition to date."}
             </p>
           )}
-          <Link className="kv-bf-archive-all" to="/briefings">
+          <Link className="kv-bf-archive-all" to="/market/briefings">
             {isPt ? "Ver todas as edições →" : "View all editions →"}
           </Link>
         </nav>
