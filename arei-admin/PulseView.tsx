@@ -29,7 +29,7 @@ const CATEGORY_LABELS: Record<PulseCategory, string> = {
 function categoryClasses(cat: PulseCategory): string {
   const risk = "border-[#C44A3A]/30 bg-[#C44A3A]/10 text-[#C44A3A]";
   const sage = "border-[#8ECFBF]/30 bg-[#8ECFBF]/10 text-[#2D4A42] dark:text-[#8ECFBF]";
-  const neutral = "border-border bg-surface-1 text-foreground-muted";
+  const neutral = "border-border bg-surface-2 text-foreground-muted";
   const map: Record<PulseCategory, string> = {
     strategy: sage,
     operations: neutral,
@@ -52,9 +52,9 @@ function priorityTone(priority: number): string {
   return "text-foreground-muted";
 }
 
-// ── Single card ──────────────────────────────────────────────────────────────
+// ── Single row (collapsible) ─────────────────────────────────────────────────
 
-function PulseCardItem({
+function PulseCardRow({
   card,
   onResolve,
 }: {
@@ -63,6 +63,7 @@ function PulseCardItem({
 }) {
   const [busy, setBusy] = useState(false);
   const [feedback, setFeedback] = useState<PulseCardFeedback | null>(card.feedback);
+  const [expanded, setExpanded] = useState(false);
 
   const resolve = useCallback(
     async (status: "done" | "dismissed") => {
@@ -93,117 +94,118 @@ function PulseCardItem({
   );
 
   return (
-    <article className="surface-1 rounded border border-border p-4 flex flex-col gap-3">
-      {/* Header: category + priority + owner */}
-      <div className="flex flex-wrap items-center gap-2">
-        <span
-          className={
-            "text-[10px] font-mono font-medium px-2 py-0.5 rounded uppercase tracking-wider border " +
-            categoryClasses(card.category)
-          }
+    <li className="px-3">
+      {/* Summary row — click the left region to expand; actions stay live. */}
+      <div className="flex items-center gap-2 py-2.5">
+        <button
+          type="button"
+          onClick={() => setExpanded((v) => !v)}
+          aria-expanded={expanded}
+          className="flex-1 min-w-0 flex items-center gap-2.5 text-left"
         >
-          {CATEGORY_LABELS[card.category] ?? card.category}
-        </span>
-        <span className={"text-[11px] font-mono " + priorityTone(card.priority)}>
-          P{card.priority}
-        </span>
-        {card.owner_suggestion && (
-          <span className="text-[11px] text-foreground-subtle">
-            → {card.owner_suggestion}
+          <span className="shrink-0 w-3 text-[10px] text-foreground-subtle">{expanded ? "▾" : "▸"}</span>
+          <span
+            className={
+              "shrink-0 text-[10px] font-mono font-medium px-1.5 py-0.5 rounded uppercase tracking-wider border " +
+              categoryClasses(card.category)
+            }
+          >
+            {CATEGORY_LABELS[card.category] ?? card.category}
           </span>
-        )}
-        {card.source_type === "web" || card.source_type === "mixed" ? (
-          <span className="text-[10px] font-mono text-foreground-subtle uppercase">web</span>
-        ) : null}
-      </div>
-
-      {/* Title */}
-      <h3 className="text-sm font-semibold text-foreground leading-snug">{card.title}</h3>
-
-      {/* Signal + why + action */}
-      <div className="space-y-2 text-[13px] leading-relaxed">
-        <p className="text-foreground-muted">{card.signal_summary}</p>
-        <p>
-          <span className="text-foreground-subtle font-mono text-[11px] uppercase tracking-wide">Why it matters · </span>
-          <span className="text-foreground-muted">{card.why_it_matters}</span>
-        </p>
-        <p>
-          <span className="text-foreground-subtle font-mono text-[11px] uppercase tracking-wide">Do next · </span>
-          <span className="text-foreground">{card.recommended_action}</span>
-        </p>
-      </div>
-
-      {/* Evidence */}
-      {card.evidence.length > 0 && (
-        <div className="flex flex-wrap gap-1.5">
-          {card.evidence.map((e, i) => (
-            <span
-              key={i}
-              title={e.detail ?? e.ref ?? ""}
-              className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 border border-border text-foreground-subtle"
-            >
-              {e.label}
+          <span className={"shrink-0 text-[11px] font-mono " + priorityTone(card.priority)}>
+            P{card.priority}
+          </span>
+          <span className="truncate text-sm font-medium text-foreground">{card.title}</span>
+          {card.owner_suggestion && (
+            <span className="shrink-0 hidden sm:inline text-[11px] text-foreground-subtle">
+              → {card.owner_suggestion}
             </span>
-          ))}
-          {card.source_url && (
-            <a
-              href={card.source_url}
-              target="_blank"
-              rel="noreferrer"
-              className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-[#2D4A42] dark:text-[#8ECFBF] hover:underline"
-            >
-              source ↗
-            </a>
           )}
-        </div>
-      )}
+        </button>
 
-      {/* Actions */}
-      <div className="flex items-center justify-between pt-1 border-t border-border">
-        <div className="flex items-center gap-1">
+        {/* Actions — always visible. */}
+        <div className="shrink-0 flex items-center gap-1">
           <button
             onClick={() => vote("up")}
             aria-pressed={feedback === "up"}
+            title="Useful"
             className={
-              "text-xs px-2 py-1 rounded transition-colors " +
+              "text-xs px-1.5 py-1 rounded transition-colors " +
               (feedback === "up"
                 ? "text-[#2D4A42] dark:text-[#8ECFBF]"
                 : "text-foreground-subtle hover:text-foreground-muted")
             }
           >
-            ▲ Useful
+            ▲
           </button>
           <button
             onClick={() => vote("down")}
             aria-pressed={feedback === "down"}
+            title="Not useful"
             className={
-              "text-xs px-2 py-1 rounded transition-colors " +
+              "text-xs px-1.5 py-1 rounded transition-colors " +
               (feedback === "down"
                 ? "text-[#C44A3A]"
                 : "text-foreground-subtle hover:text-foreground-muted")
             }
           >
-            ▼ Not useful
+            ▼
           </button>
-        </div>
-        <div className="flex items-center gap-2">
           <button
             disabled={busy}
             onClick={() => resolve("dismissed")}
-            className="text-xs px-2.5 py-1 rounded border border-border text-foreground-muted hover:text-foreground disabled:opacity-50"
+            className="text-xs px-2 py-1 rounded border border-border text-foreground-muted hover:text-foreground disabled:opacity-50"
           >
             Dismiss
           </button>
           <button
             disabled={busy}
             onClick={() => resolve("done")}
-            className="text-xs px-2.5 py-1 rounded border border-[#8ECFBF]/40 bg-[#8ECFBF]/10 text-[#2D4A42] dark:text-[#8ECFBF] hover:bg-[#8ECFBF]/20 disabled:opacity-50"
+            className="text-xs px-2 py-1 rounded border border-[#8ECFBF]/40 bg-[#8ECFBF]/10 text-[#2D4A42] dark:text-[#8ECFBF] hover:bg-[#8ECFBF]/20 disabled:opacity-50"
           >
             Done
           </button>
         </div>
       </div>
-    </article>
+
+      {/* Expanded detail. */}
+      {expanded && (
+        <div className="pb-3 pl-[1.4rem] pr-1 space-y-2 text-[13px] leading-relaxed">
+          <p className="text-foreground-muted">{card.signal_summary}</p>
+          <p>
+            <span className="text-foreground-subtle font-mono text-[11px] uppercase tracking-wide">Why it matters · </span>
+            <span className="text-foreground-muted">{card.why_it_matters}</span>
+          </p>
+          <p>
+            <span className="text-foreground-subtle font-mono text-[11px] uppercase tracking-wide">Do next · </span>
+            <span className="text-foreground">{card.recommended_action}</span>
+          </p>
+          {card.evidence.length > 0 && (
+            <div className="flex flex-wrap gap-1.5">
+              {card.evidence.map((e, i) => (
+                <span
+                  key={i}
+                  title={e.detail ?? e.ref ?? ""}
+                  className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-surface-2 border border-border text-foreground-subtle"
+                >
+                  {e.label}
+                </span>
+              ))}
+              {card.source_url && (
+                <a
+                  href={card.source_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="text-[10px] font-mono px-1.5 py-0.5 rounded border border-border text-[#2D4A42] dark:text-[#8ECFBF] hover:underline"
+                >
+                  source ↗
+                </a>
+              )}
+            </div>
+          )}
+        </div>
+      )}
+    </li>
   );
 }
 
@@ -233,7 +235,7 @@ export function AREIPulsePanel() {
 
   return (
     <section className="surface-1 rounded border border-border p-5">
-      <div className="flex items-baseline justify-between mb-4 gap-3 flex-wrap">
+      <div className="flex items-baseline justify-between mb-3 gap-3 flex-wrap">
         <div>
           <h2 className="text-base font-semibold text-foreground font-mono">AREI Pulse</h2>
           <p className="text-xs text-foreground-muted mt-0.5">
@@ -250,11 +252,11 @@ export function AREIPulsePanel() {
           No executive signals to surface today. Pulse stays quiet when there's nothing material.
         </p>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
+        <ul className="rounded border border-border divide-y divide-border bg-surface-1">
           {cards.map((card) => (
-            <PulseCardItem key={card.id} card={card} onResolve={handleResolve} />
+            <PulseCardRow key={card.id} card={card} onResolve={handleResolve} />
           ))}
-        </div>
+        </ul>
       )}
     </section>
   );
