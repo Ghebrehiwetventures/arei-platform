@@ -241,7 +241,7 @@
   text-decoration: none;
   color: var(--kv-black);
 }
-.kv-bf-archive-list a:hover .kv-bf-archive-title { color: var(--kv-green); }
+.kv-bf-archive-list a:hover .kv-bf-archive-title { color: var(--kv-green-deep); }
 .kv-bf-archive-period {
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -259,7 +259,7 @@
   display: inline-block;
   font-size: 13px;
   letter-spacing: 0.03em;
-  color: var(--kv-green);
+  color: var(--kv-green-deep);
   text-decoration: none;
 }
 .kv-bf-archive-all:hover { text-decoration: underline; }
@@ -278,7 +278,7 @@
   text-decoration: none;
   color: var(--kv-black);
 }
-.kv-bf-index-link:hover .kv-bf-index-title { color: var(--kv-green); }
+.kv-bf-index-link:hover .kv-bf-index-title { color: var(--kv-green-deep); }
 .kv-bf-index-link:hover .kv-bf-index-cta { text-decoration: underline; }
 .kv-bf-index-meta {
   display: flex;
@@ -289,7 +289,7 @@
   text-transform: uppercase;
   color: var(--kv-ink-500);
 }
-.kv-bf-index-period { color: var(--kv-green); }
+.kv-bf-index-period { color: var(--kv-green-deep); }
 .kv-bf-index-title {
   font-size: 22px;
   line-height: 1.2;
@@ -308,7 +308,7 @@
   margin-top: 14px;
   font-size: 13px;
   letter-spacing: 0.03em;
-  color: var(--kv-green);
+  color: var(--kv-green-deep);
 }
 
 /* ─── Empty / loading / unavailable states ─── */
@@ -329,7 +329,7 @@
 .kv-bf-back {
   display: inline-block;
   margin-top: 18px;
-  color: var(--kv-green);
+  color: var(--kv-green-deep);
   text-decoration: none;
 }
 .kv-bf-back:hover { text-decoration: underline; }
