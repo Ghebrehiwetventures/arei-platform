@@ -1231,6 +1231,123 @@ export async function markAllNotificationsRead(): Promise<void> {
 }
 
 // ============================================
+// AREI PULSE — executive intelligence cards
+// Read/lifecycle via supabaseAuth (authenticated JWT). Cards are
+// written only by the nightly generator (service role). The browser
+// updates status + feedback only.
+// ============================================
+
+export type PulseCategory =
+  | "strategy"
+  | "operations"
+  | "technical_execution"
+  | "data_quality_risk"
+  | "sales"
+  | "partnerships"
+  | "market_expansion"
+  | "events"
+  | "competitors"
+  | "content_pr"
+  | "fundraising";
+
+export type PulseCardStatus = "new" | "done" | "dismissed";
+export type PulseCardFeedback = "up" | "down";
+export type PulseSourceType = "internal" | "web" | "mixed";
+
+export interface PulseEvidenceItem {
+  label: string;
+  ref?: string;
+  detail?: string;
+}
+
+export interface PulseCard {
+  id: string;
+  digest_date: string;
+  category: PulseCategory;
+  priority: number;
+  title: string;
+  signal_summary: string;
+  why_it_matters: string;
+  recommended_action: string;
+  evidence: PulseEvidenceItem[];
+  source_type: PulseSourceType | null;
+  source_url: string | null;
+  owner_suggestion: string | null;
+  status: PulseCardStatus;
+  feedback: PulseCardFeedback | null;
+  meta: Record<string, unknown>;
+  created_at: string;
+}
+
+const PULSE_CARD_COLUMNS =
+  "id,digest_date,category,priority,title,signal_summary,why_it_matters," +
+  "recommended_action,evidence,source_type,source_url,owner_suggestion," +
+  "status,feedback,meta,created_at";
+
+/**
+ * Cards for the most recent digest_date that still has at least one
+ * non-dismissed card. Falls back to the single latest digest_date.
+ * Sorted by priority desc. Dismissed cards are excluded from the feed.
+ */
+export async function getLatestPulseCards(): Promise<PulseCard[]> {
+  // Find the latest digest_date with visible (non-dismissed) cards.
+  const { data: dateRows, error: dateErr } = await supabaseAuth
+    .from("pulse_cards")
+    .select("digest_date")
+    .neq("status", "dismissed")
+    .order("digest_date", { ascending: false })
+    .limit(1);
+
+  if (dateErr) {
+    console.error("[Admin] getLatestPulseCards (date) failed:", dateErr.message);
+    return [];
+  }
+  const latestDate = dateRows?.[0]?.digest_date as string | undefined;
+  if (!latestDate) return [];
+
+  const { data, error } = await supabaseAuth
+    .from("pulse_cards")
+    .select(PULSE_CARD_COLUMNS)
+    .eq("digest_date", latestDate)
+    .neq("status", "dismissed")
+    .order("priority", { ascending: false });
+
+  if (error) {
+    console.error("[Admin] getLatestPulseCards failed:", error.message);
+    return [];
+  }
+  return (data ?? []) as unknown as PulseCard[];
+}
+
+export async function setPulseCardStatus(
+  id: string,
+  status: PulseCardStatus
+): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("pulse_cards")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`[Admin] setPulseCardStatus failed: ${error.message}`);
+  }
+}
+
+export async function setPulseCardFeedback(
+  id: string,
+  feedback: PulseCardFeedback | null
+): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("pulse_cards")
+    .update({ feedback })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`[Admin] setPulseCardFeedback failed: ${error.message}`);
+  }
+}
+
+// ============================================
 // HOMEPAGE FEATURED SELECTIONS
 // All reads/writes use supabaseAuth (authenticated JWT).
 // ============================================
