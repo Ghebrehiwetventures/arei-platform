@@ -11,6 +11,7 @@ import {
   formatPricePerSqm,
   toLocale,
 } from "../lib/formatters";
+import PageHeader from "../components/PageHeader";
 import "./Briefing.css";
 
 /* ════════════════════════════════════════════════════════════
@@ -51,7 +52,7 @@ function paragraphs(text: string | null): string[] {
 
 export default function Briefing() {
   const { slug = "" } = useParams();
-  const { t, i18n } = useTranslation();
+  const { i18n } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
   const locale = toLocale(i18n.language);
 
@@ -144,7 +145,14 @@ export default function Briefing() {
     return (
       <div className="kv-bf-state kv-bf-state-error">
         <h1>{isPt ? "Briefing indisponível" : "Briefing unavailable"}</h1>
-        <p>{error ?? t("common.liveDataUnavailable")}</p>
+        <p>
+          {isPt
+            ? "Esta edição não está disponível de momento."
+            : "This edition is not available right now."}
+        </p>
+        <Link className="kv-bf-back" to="/briefings">
+          {isPt ? "← Ver todas as edições" : "← View all editions"}
+        </Link>
       </div>
     );
   }
@@ -156,32 +164,18 @@ export default function Briefing() {
 
   return (
     <article className="kv-bf">
-      {/* 1 — Headline */}
-      <header className="kv-bf-masthead">
-        <div className="kv-bf-inner">
-          <div className="kv-bf-eyebrow">
-            {isPt ? "Briefing do índice" : "Index briefing"}
-            <span className="kv-bf-eyebrow-sep">·</span>
-            {briefing.period}
-          </div>
-          <h1 className="kv-bf-title">{briefing.title}</h1>
-          <div className="kv-bf-dateline">
-            <span>
-              {isPt ? "Publicado" : "Published"}{" "}
-              {formatDate(briefing.published_at, locale)}
-            </span>
-            <span className="kv-bf-dateline-sep">·</span>
-            <span>
-              {isPt ? "Dados de" : "Data as of"}{" "}
-              {formatDate(briefing.snapshot_date, locale, true)}
-            </span>
-            <span className="kv-bf-dateline-sep">·</span>
-            <span>{isPt ? "Publicado pela AREI" : "Published by AREI"}</span>
-          </div>
-        </div>
-      </header>
+      {/* 1 — Headline (shared site PageHeader) */}
+      <PageHeader
+        eyebrow={`${isPt ? "Briefing do índice" : "Index briefing"} · ${briefing.period}`}
+        title={briefing.title}
+        sub={
+          isPt
+            ? `Publicado ${formatDate(briefing.published_at, locale)} · Dados de ${formatDate(briefing.snapshot_date, locale, true)} · Publicado pela AREI`
+            : `Published ${formatDate(briefing.published_at, locale)} · Data as of ${formatDate(briefing.snapshot_date, locale, true)} · Published by AREI`
+        }
+      />
 
-      <div className="kv-bf-inner kv-bf-body">
+      <main className="kv-bf-inner kv-bf-body">
         {/* 2 — Executive summary */}
         {briefing.executive_summary && (
           <section className="kv-bf-summary">
@@ -326,7 +320,7 @@ export default function Briefing() {
             {isPt ? "Ver todas as edições →" : "View all editions →"}
           </Link>
         </nav>
-      </div>
+      </main>
     </article>
   );
 }
