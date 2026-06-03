@@ -1286,15 +1286,17 @@ const PULSE_CARD_COLUMNS =
 
 /**
  * Cards for the most recent digest_date that still has at least one
- * non-dismissed card. Falls back to the single latest digest_date.
- * Sorted by priority desc. Dismissed cards are excluded from the feed.
+ * active ('new') card. Sorted by priority desc. The feed shows ONLY
+ * status='new' cards: 'done' and 'dismissed' cards are both excluded so
+ * neither reappears after a refresh. Feedback (👍/👎) on a visible card
+ * does not change its status, so it stays in the feed.
  */
 export async function getLatestPulseCards(): Promise<PulseCard[]> {
-  // Find the latest digest_date with visible (non-dismissed) cards.
+  // Find the latest digest_date that still has active ('new') cards.
   const { data: dateRows, error: dateErr } = await supabaseAuth
     .from("pulse_cards")
     .select("digest_date")
-    .neq("status", "dismissed")
+    .eq("status", "new")
     .order("digest_date", { ascending: false })
     .limit(1);
 
@@ -1309,7 +1311,7 @@ export async function getLatestPulseCards(): Promise<PulseCard[]> {
     .from("pulse_cards")
     .select(PULSE_CARD_COLUMNS)
     .eq("digest_date", latestDate)
-    .neq("status", "dismissed")
+    .eq("status", "new")
     .order("priority", { ascending: false });
 
   if (error) {
