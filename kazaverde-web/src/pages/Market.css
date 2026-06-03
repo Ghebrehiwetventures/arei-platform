@@ -567,8 +567,9 @@
   gap: 24px;
   flex-wrap: wrap;
   border: 1px solid var(--kv-rule);
+  border-left: 3px solid var(--kv-green);
   background: var(--kv-off-white);
-  padding: 18px 22px;
+  padding: 20px 24px;
 }
 .kv-m-briefing-main { flex: 1 1 340px; min-width: 0; }
 .kv-m-briefing-eyebrow {
@@ -612,11 +613,18 @@
 .kv-m-briefing-cta:hover { background: var(--kv-black-hover); }
 .kv-m-briefing-cta-2 {
   font-size: 12.5px;
-  color: var(--kv-green);
-  text-decoration: none;
+  font-weight: var(--kv-fw-medium);
+  /* Readable in both themes (ink adapts), with a sage underline for brand. */
+  color: var(--kv-ink-700);
+  text-decoration: underline;
+  text-decoration-color: var(--kv-green);
+  text-underline-offset: 3px;
   white-space: nowrap;
 }
-.kv-m-briefing-cta-2:hover { text-decoration: underline; }
+.kv-m-briefing-cta-2:hover {
+  color: var(--kv-black);
+  text-decoration-color: var(--kv-black);
+}
 
 @media (max-width: 640px) {
   .kv-m-briefing-actions { width: 100%; flex-direction: column; align-items: stretch; gap: 10px; }
