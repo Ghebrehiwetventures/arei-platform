@@ -425,49 +425,69 @@ function SourceHealthStat({ label, value, tone }: { label: string; value: number
 }
 
 function NorthStarBanner() {
+  // Collapsible disclosure. Default collapsed so AREI Pulse leads the
+  // dashboard; the full strategic copy stays one click away.
+  const [open, setOpen] = useState(false);
+
   return (
-    <div className="rounded border border-border bg-surface-2 px-5 py-4">
-      {/* Title */}
-      <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-2">North Star</p>
-
-      {/* Hero + descriptor */}
-      <p className="text-sm font-semibold text-foreground font-mono leading-snug">
-        Africa's property data is everywhere. We bring it together.
-      </p>
-      <p className="text-xs text-foreground-muted mt-1">
-        Data acquisition and intelligence infrastructure for African property markets.
-      </p>
-
-      {/* Desktop: three columns */}
-      <div className="hidden sm:grid grid-cols-3 gap-5 mt-4">
-        <div>
-          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-1">What</p>
-          <p className="text-xs text-foreground-muted leading-relaxed">We structure fragmented public property listings into readable market intelligence.</p>
+    <div className="rounded border border-border bg-surface-2 px-5 py-3">
+      {/* Collapsed strip: label + hero tagline + expand control. */}
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={open}
+        className="w-full flex items-center justify-between gap-4 text-left"
+      >
+        <div className="min-w-0">
+          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle">North Star</p>
+          <p className="text-sm font-semibold text-foreground font-mono leading-snug">
+            Africa's property data is everywhere. We bring it together.
+          </p>
         </div>
-        <div>
-          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-1">How</p>
-          <p className="text-xs text-foreground-muted leading-relaxed">One engine collects, cleans, scores and publishes market records.</p>
-        </div>
-        <div>
-          <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-1">Why</p>
-          <p className="text-xs text-foreground-muted leading-relaxed">To make African property markets easier to understand for buyers, brokers and professional users.</p>
-        </div>
-      </div>
+        <span className="shrink-0 text-[10px] font-mono uppercase tracking-wider text-foreground-subtle hover:text-foreground-muted">
+          {open ? "Collapse ▲" : "Expand ▼"}
+        </span>
+      </button>
 
-      {/* Mobile: compact single block */}
-      <p className="sm:hidden text-xs text-foreground-muted mt-2 leading-relaxed">
-        Structure fragmented listings. One engine cleans, scores and publishes records. Make the market easier to understand.
-      </p>
+      {/* Expanded content: descriptor, What / How / Why, footer. */}
+      {open && (
+        <div className="mt-3">
+          <p className="text-xs text-foreground-muted">
+            Data acquisition and intelligence infrastructure for African property markets.
+          </p>
 
-      {/* Footer: surfaces */}
-      <p className="text-[10px] font-mono text-foreground-subtle mt-3 pt-3 border-t border-border">
-        Three surfaces. One engine:{" "}
-        <span className="text-foreground-muted">Public Index</span>
-        {" · "}
-        <span className="text-foreground-muted">Broker Tools</span>
-        {" · "}
-        <span className="text-foreground-muted">Intelligence</span>
-      </p>
+          {/* Desktop: three columns */}
+          <div className="hidden sm:grid grid-cols-3 gap-5 mt-4">
+            <div>
+              <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-1">What</p>
+              <p className="text-xs text-foreground-muted leading-relaxed">We structure fragmented public property listings into readable market intelligence.</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-1">How</p>
+              <p className="text-xs text-foreground-muted leading-relaxed">One engine collects, cleans, scores and publishes market records.</p>
+            </div>
+            <div>
+              <p className="text-[10px] font-mono font-medium uppercase tracking-wider text-foreground-subtle mb-1">Why</p>
+              <p className="text-xs text-foreground-muted leading-relaxed">To make African property markets easier to understand for buyers, brokers and professional users.</p>
+            </div>
+          </div>
+
+          {/* Mobile: compact single block */}
+          <p className="sm:hidden text-xs text-foreground-muted mt-2 leading-relaxed">
+            Structure fragmented listings. One engine cleans, scores and publishes records. Make the market easier to understand.
+          </p>
+
+          {/* Footer: surfaces */}
+          <p className="text-[10px] font-mono text-foreground-subtle mt-3 pt-3 border-t border-border">
+            Three surfaces. One engine:{" "}
+            <span className="text-foreground-muted">Public Index</span>
+            {" · "}
+            <span className="text-foreground-muted">Broker Tools</span>
+            {" · "}
+            <span className="text-foreground-muted">Intelligence</span>
+          </p>
+        </div>
+      )}
     </div>
   );
 }
