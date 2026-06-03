@@ -157,3 +157,77 @@ export async function clearFreshPulseCardsForDate(
   }
   return data?.length ?? 0;
 }
+
+/**
+ * Operator feedback distilled for the generator prompt. This is how Pulse
+ * "gets better over time": past 👍/👎 and dismissals are fed back in so the
+ * model favours what the operator found useful and avoids what they
+ * rejected — without changing any facts.
+ */
+export interface FeedbackContext {
+  /** Titles of recently up-voted cards (style/topics to favour). */
+  useful: string[];
+  /** Titles of recently down-voted cards (style/topics to avoid). */
+  notUseful: string[];
+  /** Titles recently dismissed (do not resurface the same suggestion). */
+  dismissed: string[];
+}
+
+interface FeedbackRow {
+  title: string;
+}
+
+/**
+ * Read recent operator feedback (service role). Bounded by lookback window
+ * and per-bucket caps so the prompt stays small. Degrades to empty arrays
+ * on any error — feedback must never block a digest.
+ */
+export async function fetchFeedbackContext(
+  sb: SupabaseClient,
+  lookbackDays = 21,
+  perBucket = 12
+): Promise<FeedbackContext> {
+  const cutoff = new Date(Date.now() - lookbackDays * 24 * 60 * 60 * 1000)
+    .toISOString();
+
+  const empty: FeedbackContext = { useful: [], notUseful: [], dismissed: [] };
+
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  async function titles(apply: (q: any) => any): Promise<string[]> {
+    // Build then run the query; tolerate any failure.
+    try {
+      const base = sb
+        .from("pulse_cards")
+        .select("title")
+        .gte("created_at", cutoff)
+        .order("created_at", { ascending: false })
+        .limit(perBucket);
+      const { data, error } = (await (apply(base) as unknown as Promise<{
+        data: FeedbackRow[] | null;
+        error: { message: string } | null;
+      }>));
+      if (error) {
+        console.warn(`[pulse] feedback fetch failed: ${error.message}`);
+        return [];
+      }
+      // De-duplicate titles, drop empties.
+      return Array.from(
+        new Set((data ?? []).map((r) => r.title).filter((t) => !!t && t.trim()))
+      );
+    } catch (e) {
+      console.warn(`[pulse] feedback fetch error: ${String(e)}`);
+      return [];
+    }
+  }
+
+  try {
+    const [useful, notUseful, dismissed] = await Promise.all([
+      titles((q) => (q as any).eq("feedback", "up")),
+      titles((q) => (q as any).eq("feedback", "down")),
+      titles((q) => (q as any).eq("status", "dismissed")),
+    ]);
+    return { useful, notUseful, dismissed };
+  } catch {
+    return empty;
+  }
+}

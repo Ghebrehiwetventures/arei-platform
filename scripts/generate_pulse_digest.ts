@@ -45,6 +45,8 @@ import {
   insertPulseCards,
   countPulseCardsForDate,
   clearFreshPulseCardsForDate,
+  fetchFeedbackContext,
+  FeedbackContext,
 } from "./lib/pulse";
 import { collectInternalSignals, SignalBundle } from "./lib/pulse-signals";
 import {
@@ -61,7 +63,7 @@ for (const p of [
 }
 
 const MODEL = "claude-sonnet-4-6";
-const PROMPT_VERSION = "pulse-v1";
+const PROMPT_VERSION = "pulse-v2"; // v2: operator feedback loop
 const MAX_CARDS = 5;
 
 // ── AREI executive context ───────────────────────────────────────────────────
@@ -109,7 +111,28 @@ interface ModelCard {
   source_url?: string | null;
 }
 
-function buildPrompt(bundle: SignalBundle, web: WebIntelResult[]): string {
+function buildFeedbackBlock(fb: FeedbackContext): string {
+  const has = fb.useful.length || fb.notUseful.length || fb.dismissed.length;
+  if (!has) {
+    return "(No operator feedback yet — use your best judgement on what matters.)";
+  }
+  const list = (items: string[]) =>
+    items.length ? items.map((t) => `  • ${t}`).join("\n") : "  (none)";
+  return [
+    "Operator FOUND USEFUL (favour this kind of card — topic + framing):",
+    list(fb.useful),
+    "Operator marked NOT USEFUL (avoid this kind of card):",
+    list(fb.notUseful),
+    "Operator DISMISSED (do NOT resurface the same suggestion):",
+    list(fb.dismissed),
+  ].join("\n");
+}
+
+function buildPrompt(
+  bundle: SignalBundle,
+  web: WebIntelResult[],
+  feedback: FeedbackContext
+): string {
   const internal = bundle.signals
     .map((s) => `- [${s.id}] ${s.label}: ${s.summary}`)
     .join("\n");
@@ -131,6 +154,9 @@ ${internal || "(none)"}
 EXTERNAL WEB INTELLIGENCE:
 ${webBlock}
 
+OPERATOR FEEDBACK (tune your selection/framing to this — it is NOT a source of facts):
+${buildFeedbackBlock(feedback)}
+
 TASK:
 Synthesize at most ${MAX_CARDS} EXECUTIVE cards answering: "What should AREI
 care about right now, and what should we do next?"
@@ -148,6 +174,10 @@ Rules:
 - owner_suggestion: "Michael", "Eloy", or null. Infer only when confident.
 - Do NOT produce listing/parser/per-source cards. data_quality_risk only when
   it blocks a company-level priority.
+- Honour the OPERATOR FEEDBACK: lean toward the kind of cards marked useful,
+  avoid the kind marked not-useful, and never re-surface a dismissed
+  suggestion. Feedback shapes selection and framing only — it is NOT a fact
+  source and never overrides the evidence rule.
 
 Respond with STRICT JSON only — an object: {"cards": ModelCard[]}.
 ModelCard = {category, priority, title, signal_summary, why_it_matters,
@@ -280,6 +310,13 @@ async function main(): Promise<number> {
     return 0;
   }
 
+  // 2b. Operator feedback loop — past 👍/👎 + dismissals tune selection.
+  const feedback: FeedbackContext = await fetchFeedbackContext(sb);
+  console.log(
+    `[pulse] feedback: ${feedback.useful.length} useful, ` +
+      `${feedback.notUseful.length} not-useful, ${feedback.dismissed.length} dismissed.`
+  );
+
   // 3. Synthesize via Claude.
   const anthropic = new Anthropic({ apiKey: anthropicKey });
   let raw: ModelCard[];
@@ -288,7 +325,7 @@ async function main(): Promise<number> {
       model: MODEL,
       max_tokens: 2048,
       system: AREI_CONTEXT,
-      messages: [{ role: "user", content: buildPrompt(bundle, web) }],
+      messages: [{ role: "user", content: buildPrompt(bundle, web, feedback) }],
     });
     const block = resp.content.find((c) => c.type === "text");
     const text = block && block.type === "text" ? block.text : "";
