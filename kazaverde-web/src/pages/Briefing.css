@@ -105,26 +105,70 @@
 .kv-bf-table th,
 .kv-bf-table td {
   text-align: left;
-  padding: 11px 14px;
+  padding: 12px 16px;
   border-bottom: 1px solid var(--kv-rule-soft);
 }
-.kv-bf-table th {
-  font-size: 11px;
-  letter-spacing: 0.05em;
+/* Terminal-style header: stronger rule, monospace small-caps. */
+.kv-bf-table thead th {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
   text-transform: uppercase;
   color: var(--kv-ink-500);
   font-weight: var(--kv-fw-semibold);
-  border-bottom-color: var(--kv-rule);
+  border-bottom: 1px solid var(--kv-black);
+  padding-top: 8px;
+  padding-bottom: 8px;
 }
 .kv-bf-table th.num,
 .kv-bf-table td.num {
   text-align: right;
 }
+/* Zebra + hover give the table dashboard-grade legibility. */
+.kv-bf-table tbody tr:nth-child(even) { background: var(--kv-off-white); }
+.kv-bf-table tbody tr:hover { background: var(--kv-green-tint); }
 .kv-bf-table tbody tr:last-child td { border-bottom: none; }
-.kv-bf-table-note {
-  margin: 12px 0 0;
+.kv-bf-island {
+  font-weight: var(--kv-fw-medium);
+  white-space: nowrap;
+}
+/* Small-sample flag + withheld cells. */
+.kv-bf-flag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 5px;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--kv-ink-500);
+  border: 1px solid var(--kv-rule);
+  vertical-align: middle;
+}
+.kv-bf-table td.is-withheld { color: var(--kv-ink-300); }
+
+/* Derived data notes — small, factual, below the table. */
+.kv-bf-datanotes {
+  margin-top: 16px;
+  border-left: 2px solid var(--kv-green);
+  padding-left: 14px;
+}
+.kv-bf-datanotes-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  margin-bottom: 6px;
+}
+.kv-bf-datanotes ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.kv-bf-datanotes li {
   font-size: 12px;
-  color: var(--kv-ink-400);
+  line-height: 1.55;
+  color: var(--kv-ink-500);
+  padding: 1px 0;
 }
 
 /* ─── 2b · Key takeaways ─── */
@@ -197,7 +241,7 @@
   text-decoration: none;
   color: var(--kv-black);
 }
-.kv-bf-archive-list a:hover .kv-bf-archive-title { color: var(--kv-green); }
+.kv-bf-archive-list a:hover .kv-bf-archive-title { color: var(--kv-green-deep); }
 .kv-bf-archive-period {
   font-size: 12px;
   letter-spacing: 0.04em;
@@ -215,7 +259,7 @@
   display: inline-block;
   font-size: 13px;
   letter-spacing: 0.03em;
-  color: var(--kv-green);
+  color: var(--kv-green-deep);
   text-decoration: none;
 }
 .kv-bf-archive-all:hover { text-decoration: underline; }
@@ -234,7 +278,7 @@
   text-decoration: none;
   color: var(--kv-black);
 }
-.kv-bf-index-link:hover .kv-bf-index-title { color: var(--kv-green); }
+.kv-bf-index-link:hover .kv-bf-index-title { color: var(--kv-green-deep); }
 .kv-bf-index-link:hover .kv-bf-index-cta { text-decoration: underline; }
 .kv-bf-index-meta {
   display: flex;
@@ -245,7 +289,7 @@
   text-transform: uppercase;
   color: var(--kv-ink-500);
 }
-.kv-bf-index-period { color: var(--kv-green); }
+.kv-bf-index-period { color: var(--kv-green-deep); }
 .kv-bf-index-title {
   font-size: 22px;
   line-height: 1.2;
@@ -264,7 +308,7 @@
   margin-top: 14px;
   font-size: 13px;
   letter-spacing: 0.03em;
-  color: var(--kv-green);
+  color: var(--kv-green-deep);
 }
 
 /* ─── Empty / loading / unavailable states ─── */
@@ -285,7 +329,7 @@
 .kv-bf-back {
   display: inline-block;
   margin-top: 18px;
-  color: var(--kv-green);
+  color: var(--kv-green-deep);
   text-decoration: none;
 }
 .kv-bf-back:hover { text-decoration: underline; }

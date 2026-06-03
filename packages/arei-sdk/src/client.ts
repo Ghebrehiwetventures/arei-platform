@@ -32,7 +32,7 @@ import {
   PRICE_CEILING,
 } from "./types.js";
 import { toListingCard, toListingDetail } from "./transforms.js";
-import { briefingHasRequiredSnapshot } from "./briefing.js";
+import { briefingHasRequiredSnapshot, isInternalIslandRow } from "./briefing.js";
 
 // ---------------------------------------------------------------------------
 // View name — change per market
@@ -869,7 +869,11 @@ export class AREIClient {
       throw new Error(`getBriefing (snapshot lookup) failed: ${snapshotError.message}`);
     }
 
-    const snapshot = (snapshotData ?? []) as unknown as MarketReportRow[];
+    // Strip internal sentinel rows (e.g. '__hidden_for_dedup__') so they never
+    // reach public output here or in future email distribution. The 'ALL'
+    // aggregate and real island rows are kept.
+    const snapshot = ((snapshotData ?? []) as unknown as MarketReportRow[])
+      .filter((r) => !isInternalIslandRow(r.island));
 
     // A published briefing without its pinned, published snapshot rows is not
     // renderable — treat it as unavailable rather than returning a valid
