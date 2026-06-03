@@ -837,7 +837,7 @@ export class AREIClient {
       .from("market_briefings")
       .select(
         "slug, period, snapshot_date, title, executive_summary, " +
-        "commentary, methodology_note, published_at, updated_at"
+        "key_takeaways, commentary, methodology_note, published_at, updated_at"
       )
       .eq("slug", slug)
       .eq("status", "published")

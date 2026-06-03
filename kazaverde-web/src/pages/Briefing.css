@@ -127,6 +127,32 @@
   color: var(--kv-ink-400);
 }
 
+/* ─── 2b · Key takeaways ─── */
+.kv-bf-takeaways {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 64ch;
+}
+.kv-bf-takeaways li {
+  position: relative;
+  padding: 14px 0 14px 28px;
+  border-bottom: 1px solid var(--kv-rule-soft);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--kv-ink-700);
+}
+.kv-bf-takeaways li:last-child { border-bottom: none; }
+.kv-bf-takeaways li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 22px;
+  width: 8px;
+  height: 8px;
+  background: var(--kv-green);
+}
+
 /* ─── 5 · Commentary prose ─── */
 .kv-bf-prose {
   max-width: 64ch;
@@ -299,6 +325,7 @@
   .kv-bf-section,
   .kv-bf-summary,
   .kv-bf-kpis,
+  .kv-bf-takeaways li,
   .kv-bf-table,
   table.kv-bf-table tr {
     break-inside: avoid;

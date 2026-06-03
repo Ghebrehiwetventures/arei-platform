@@ -246,6 +246,8 @@ export interface BriefingRow {
   title: string;
   /** Executive summary: 2-3 sentence key takeaway. Null when not yet written. */
   executive_summary: string | null;
+  /** 3-5 short key-takeaway statements. Null/empty when not yet written. */
+  key_takeaways: string[] | null;
   /** Editorial context: 2-3 paragraphs (plain text / light markdown). */
   commentary: string | null;
   /** Optional methodology override. Null → page renders the standard disclosure. */

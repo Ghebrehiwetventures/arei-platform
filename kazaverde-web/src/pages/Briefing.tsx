@@ -186,6 +186,20 @@ export default function Briefing() {
           </section>
         )}
 
+        {/* 2b — Key takeaways */}
+        {briefing.key_takeaways && briefing.key_takeaways.length > 0 && (
+          <section className="kv-bf-section">
+            <h2 className="kv-bf-section-head">
+              {isPt ? "Conclusões principais" : "Key takeaways"}
+            </h2>
+            <ul className="kv-bf-takeaways">
+              {briefing.key_takeaways.map((point, i) => (
+                <li key={i}>{point}</li>
+              ))}
+            </ul>
+          </section>
+        )}
+
         {/* 3 — Key market metrics */}
         {allRow && (
           <section className="kv-bf-section">

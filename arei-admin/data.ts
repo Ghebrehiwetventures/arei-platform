@@ -1344,3 +1344,127 @@ export async function deleteFeaturedSelection(isoWeek: string): Promise<void> {
 
   if (error) throw new Error(`[Admin] deleteFeaturedSelection failed: ${error.message}`);
 }
+
+// ============================================
+// MARKET BRIEFINGS (PR B — admin authoring)
+// Editorial layer over market_report_snapshots. All browser reads/writes use
+// supabaseAuth (authenticated session); RLS from migration 050 governs access.
+// Public pages only ever see published editions (049 anon policy).
+// ============================================
+
+export type BriefingStatus = "draft" | "published" | "archived";
+
+export interface AdminBriefingRow {
+  id: string;
+  slug: string;
+  period: string;
+  snapshot_date: string;
+  title: string;
+  executive_summary: string | null;
+  key_takeaways: string[] | null;
+  commentary: string | null;
+  methodology_note: string | null;
+  status: BriefingStatus;
+  published_at: string | null;
+  published_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Editable payload for create / update. */
+export interface BriefingDraftInput {
+  slug: string;
+  period: string;
+  snapshot_date: string;
+  title: string;
+  executive_summary: string | null;
+  key_takeaways: string[] | null;
+  commentary: string | null;
+  methodology_note: string | null;
+}
+
+const BRIEFING_COLUMNS =
+  "id, slug, period, snapshot_date, title, executive_summary, key_takeaways, " +
+  "commentary, methodology_note, status, published_at, published_by, created_at, updated_at";
+
+/** All editions, any status, newest snapshot first. */
+export async function getBriefingsAdmin(): Promise<AdminBriefingRow[]> {
+  const { data, error } = await supabaseAuth
+    .from("market_briefings")
+    .select(BRIEFING_COLUMNS)
+    .order("snapshot_date", { ascending: false });
+
+  if (error) {
+    console.error("[Admin] getBriefingsAdmin failed:", error.message);
+    return [];
+  }
+  return (data ?? []) as unknown as AdminBriefingRow[];
+}
+
+/** Distinct snapshot_date values that have a PUBLISHED 'ALL' aggregate row.
+ *  These are the only dates a briefing can be pinned to and still render. */
+export async function getPublishedSnapshotDates(): Promise<string[]> {
+  const { data, error } = await supabaseAuth
+    .from("market_report_snapshots")
+    .select("snapshot_date")
+    .eq("island", "ALL")
+    .eq("status", "published")
+    .not("published_at", "is", null)
+    .order("snapshot_date", { ascending: false });
+
+  if (error) {
+    console.error("[Admin] getPublishedSnapshotDates failed:", error.message);
+    return [];
+  }
+  const seen = new Set<string>();
+  for (const r of (data ?? []) as { snapshot_date: string }[]) seen.add(r.snapshot_date);
+  return [...seen];
+}
+
+/** Create a new draft edition. Returns the created row. */
+export async function createBriefing(input: BriefingDraftInput): Promise<AdminBriefingRow> {
+  const now = new Date().toISOString();
+  const { data, error } = await supabaseAuth
+    .from("market_briefings")
+    .insert({ ...input, status: "draft", updated_at: now })
+    .select(BRIEFING_COLUMNS)
+    .single();
+
+  if (error) throw new Error(`[Admin] createBriefing failed: ${error.message}`);
+  return data as unknown as AdminBriefingRow;
+}
+
+/** Update an existing edition's editorial fields (status unchanged). */
+export async function updateBriefing(id: string, input: BriefingDraftInput): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("market_briefings")
+    .update({ ...input, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw new Error(`[Admin] updateBriefing failed: ${error.message}`);
+}
+
+/** Transition an edition's status.
+ *  publish → stamps published_at + published_by; unpublish/archive clears nothing
+ *  except status, with published_at cleared on return-to-draft so the public RLS
+ *  (status='published' AND published_at IS NOT NULL) hides it cleanly. */
+export async function setBriefingStatus(
+  id: string,
+  status: BriefingStatus,
+  publishedBy?: string | null,
+): Promise<void> {
+  const patch: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  if (status === "published") {
+    patch.published_at = new Date().toISOString();
+    patch.published_by = publishedBy ?? "admin";
+  } else if (status === "draft") {
+    patch.published_at = null;
+  }
+
+  const { error } = await supabaseAuth
+    .from("market_briefings")
+    .update(patch)
+    .eq("id", id);
+
+  if (error) throw new Error(`[Admin] setBriefingStatus failed: ${error.message}`);
+}
