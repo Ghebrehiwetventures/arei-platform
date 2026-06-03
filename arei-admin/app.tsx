@@ -21,6 +21,7 @@ import {
 } from "./data";
 import { NotificationsView } from "./NotificationsView";
 import { FeaturedView } from "./FeaturedView";
+import { BriefingsView } from "./BriefingsView";
 
 const SOURCE_STALE_DAYS = 30;
 
@@ -3672,12 +3673,13 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications" | "featured";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications" | "featured" | "briefings";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
   { key: "sources",       label: "Listings"      },
   { key: "market-news",   label: "Market News"   },
+  { key: "briefings",     label: "Briefings"     },
   { key: "featured",      label: "Featured"      },
   { key: "marketing",     label: "Marketing"     },
   { key: "notifications", label: "Notifications" },
@@ -3960,6 +3962,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "broker-pilot" && <BrokerPilotView />}
             {tab === "market-news" && <MarketNewsView />}
             {tab === "featured" && <FeaturedView />}
+            {tab === "briefings" && <BriefingsView />}
             {tab === "marketing" && <ListingSocialView />}
             {tab === "notifications" && (
               <NotificationsView onCountChange={handleNotificationCountChange} />

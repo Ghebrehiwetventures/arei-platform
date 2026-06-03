@@ -35,4 +35,10 @@ export {
 
 export { toListingCard, toListingDetail } from "./transforms.js";
 
-export { briefingHasRequiredSnapshot } from "./briefing.js";
+export {
+  briefingHasRequiredSnapshot,
+  validateBriefingForPublish,
+  MIN_KEY_TAKEAWAYS,
+  MAX_KEY_TAKEAWAYS,
+} from "./briefing.js";
+export type { BriefingPublishInput } from "./briefing.js";
