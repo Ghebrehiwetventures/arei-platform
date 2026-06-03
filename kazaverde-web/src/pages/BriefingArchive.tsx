@@ -5,12 +5,14 @@ import type { BriefingSummary } from "arei-sdk";
 import { arei } from "../lib/arei";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { formatDate, toLocale } from "../lib/formatters";
+import PageHeader from "../components/PageHeader";
 import "./Briefing.css";
 
 /* ════════════════════════════════════════════════════════════
    BriefingArchive — index of published editions (/briefings).
    A publication archive, newest first. Each entry links to its
-   canonical edition page at /briefings/:slug.
+   canonical edition page at /briefings/:slug. Uses the shared
+   PageHeader so it reads as part of the same site as Guides / News.
    ════════════════════════════════════════════════════════════ */
 
 export default function BriefingArchive() {
@@ -20,7 +22,9 @@ export default function BriefingArchive() {
 
   const [editions, setEditions] = useState<BriefingSummary[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  // No published edition yet — or the read failed — both resolve to the same
+  // calm empty state. A raw backend error is never shown to visitors.
+  const [failed, setFailed] = useState(false);
 
   useDocumentMeta(
     isPt ? "Briefings de mercado" : "Market briefings",
@@ -36,9 +40,9 @@ export default function BriefingArchive() {
         const list = await arei.listBriefings();
         if (!cancelled) setEditions(list);
       } catch (e) {
-        if (!cancelled) {
-          setError(e instanceof Error ? e.message : "Could not load briefings.");
-        }
+        // Log for debugging; never surface the raw error to the page.
+        console.error("[briefings] listBriefings failed:", e);
+        if (!cancelled) setFailed(true);
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -49,34 +53,26 @@ export default function BriefingArchive() {
     };
   }, []);
 
+  const showEmpty = !loading && (failed || editions.length === 0);
+
   return (
     <div className="kv-bf-archive-page">
-      <header className="kv-bf-masthead">
-        <div className="kv-bf-inner">
-          <div className="kv-bf-eyebrow">
-            {isPt ? "Publicado pela AREI" : "Published by AREI"}
-          </div>
-          <h1 className="kv-bf-title">
-            {isPt ? "Cape Verde Listing Index — Briefings" : "Cape Verde Listing Index — Briefings"}
-          </h1>
-          <p className="kv-bf-archive-intro">
-            {isPt
-              ? "Briefings mensais de mercado, gerados a partir de dados de índice ao vivo. Gratuitos e arquivados de forma permanente."
-              : "Monthly market briefings, generated from live index data. Free and permanently archived."}
-          </p>
-        </div>
-      </header>
+      <PageHeader
+        eyebrow={isPt ? "Publicado pela AREI" : "Published by AREI"}
+        title={isPt ? "Cape Verde Listing Index — Briefings" : "Cape Verde Listing Index — Briefings"}
+        sub={
+          isPt
+            ? "Briefings mensais de mercado, gerados a partir de dados de índice ao vivo. Gratuitos e arquivados de forma permanente."
+            : "Monthly market briefings, generated from live index data. Free and permanently archived."
+        }
+      />
 
-      <div className="kv-bf-inner kv-bf-body">
+      <main className="kv-bf-inner kv-bf-body">
         {loading ? (
           <div className="kv-bf-state">
             <p>{isPt ? "A carregar edições…" : "Loading editions…"}</p>
           </div>
-        ) : error ? (
-          <div className="kv-bf-state kv-bf-state-error">
-            <p>{error}</p>
-          </div>
-        ) : editions.length === 0 ? (
+        ) : showEmpty ? (
           <div className="kv-bf-empty">
             <h2>{isPt ? "A primeira edição em breve" : "First edition coming soon"}</h2>
             <p>
@@ -108,7 +104,7 @@ export default function BriefingArchive() {
             ))}
           </ul>
         )}
-      </div>
+      </main>
     </div>
   );
 }

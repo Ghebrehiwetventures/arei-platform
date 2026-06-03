@@ -3,9 +3,11 @@
    Shared by the archive index (/briefings) and the canonical
    edition page (/briefings/:slug).
 
-   Reference idiom: Knight Frank / Savills / JLL / CoStar — clean,
-   typographic, data-forward. No blog chrome. Reads like a PDF
-   report rendered on web, and prints as one (see @media print).
+   The page header is the shared PageHeader (.kv-pagehead) so these
+   pages read as part of the same site as Guides / News. Everything
+   below the header sits in the same content column (--kv-content-w
+   + --kv-gutter) as the rest of the site, and prints as a clean PDF
+   report (see @media print).
    ════════════════════════════════════════════════════════════ */
 
 .kv-bf,
@@ -15,45 +17,12 @@
   background: var(--kv-white);
 }
 
+/* Same content column as nav / footer / other pages. */
 .kv-bf-inner {
-  max-width: 880px;
+  max-width: var(--kv-content-w);
   margin: 0 auto;
-  padding: 0 24px;
+  padding: 0 var(--kv-gutter);
 }
-
-/* ─── Masthead (headline band) ─── */
-.kv-bf-masthead {
-  background: var(--kv-off-white);
-  border-bottom: 1px solid var(--kv-rule);
-  padding: 56px 0 40px;
-}
-.kv-bf-eyebrow {
-  font-size: 12px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--kv-green);
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.kv-bf-eyebrow-sep { color: var(--kv-ink-300); }
-.kv-bf-title {
-  font-size: 34px;
-  line-height: 1.12;
-  letter-spacing: -0.01em;
-  margin: 14px 0 0;
-  max-width: 20ch;
-}
-.kv-bf-dateline {
-  margin-top: 18px;
-  font-size: 12.5px;
-  color: var(--kv-ink-500);
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 8px;
-}
-.kv-bf-dateline-sep { color: var(--kv-ink-300); }
 
 /* ─── Body ─── */
 .kv-bf-body {
@@ -71,13 +40,14 @@
   text-transform: uppercase;
   color: var(--kv-ink-600);
   margin: 0 0 20px;
-  font-weight: 600;
+  font-weight: var(--kv-fw-semibold);
 }
 .kv-bf-section-kicker {
-  font-size: 12px;
-  letter-spacing: 0.08em;
+  font-size: 11px;
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: var(--kv-green);
+  color: var(--kv-gray-500);
   margin: 0 0 10px;
 }
 
@@ -143,7 +113,7 @@
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--kv-ink-500);
-  font-weight: 600;
+  font-weight: var(--kv-fw-semibold);
   border-bottom-color: var(--kv-rule);
 }
 .kv-bf-table th.num,
@@ -225,13 +195,6 @@
 .kv-bf-archive-all:hover { text-decoration: underline; }
 
 /* ─── Archive index page (/briefings) ─── */
-.kv-bf-archive-intro {
-  margin: 18px 0 0;
-  font-size: 15px;
-  line-height: 1.6;
-  color: var(--kv-ink-600);
-  max-width: 58ch;
-}
 .kv-bf-index-list {
   list-style: none;
   margin: 0;
@@ -278,7 +241,7 @@
   color: var(--kv-green);
 }
 
-/* ─── Empty / loading / error states ─── */
+/* ─── Empty / loading / unavailable states ─── */
 .kv-bf-state,
 .kv-bf-empty {
   max-width: 600px;
@@ -303,7 +266,6 @@
 
 /* ─── Responsive ─── */
 @media (max-width: 720px) {
-  .kv-bf-title { font-size: 26px; }
   .kv-bf-kpis { grid-template-columns: repeat(2, 1fr); }
   .kv-bf-summary-lead { font-size: 18px; }
   .kv-bf-archive-list a { flex-direction: column; gap: 2px; }
@@ -326,10 +288,10 @@
 
   .kv-bf,
   .kv-bf-archive-page,
-  .kv-bf-masthead {
+  .kv-pagehead {
     background: #fff !important;
   }
-  .kv-bf-masthead { border-bottom: 1px solid #ccc; padding: 0 0 24px; }
+  .kv-pagehead { border-bottom: 1px solid #ccc; }
 
   .kv-bf-inner { max-width: none; padding: 0; }
   .kv-bf-body { padding-bottom: 0; }
@@ -344,7 +306,6 @@
   }
 
   .kv-bf-kpi { background: #fff !important; }
-  .kv-bf-title,
   .kv-bf-kpi-val,
   .kv-bf-summary-lead { color: #000 !important; }
 
