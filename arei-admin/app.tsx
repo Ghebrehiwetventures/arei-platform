@@ -20,6 +20,7 @@ import {
   type MarketNewsFieldUpdate,
 } from "./data";
 import { NotificationsView } from "./NotificationsView";
+import { AREIPulsePanel } from "./PulseView";
 import { FeaturedView } from "./FeaturedView";
 import { BriefingsView } from "./BriefingsView";
 
@@ -612,6 +613,8 @@ function DashboardView() {
   return (
     <div className="space-y-8">
       <NorthStarBanner />
+      {/* ── AREI Pulse — executive intelligence (top of dashboard) ── */}
+      <AREIPulsePanel />
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
