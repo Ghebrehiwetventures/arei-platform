@@ -18,6 +18,7 @@ import {
   setBriefingStatus,
   type AdminBriefingRow,
   type BriefingDraftInput,
+  type BriefingStatus,
 } from "./data";
 
 const INPUT_CLS =
@@ -26,6 +27,19 @@ const INPUT_CLS =
 
 const MIN_TAKEAWAYS = 3;
 const MAX_TAKEAWAYS = 5;
+
+// Status filter tabs — mirrors the Market News view's tab pattern.
+const BRIEFING_TABS: { key: BriefingStatus | "all"; label: string }[] = [
+  { key: "all", label: "All" },
+  { key: "published", label: "Published" },
+  { key: "draft", label: "Draft" },
+  { key: "archived", label: "Archived" },
+];
+
+// Shared button styles, matching the admin (Market News) conventions.
+const BTN_SECONDARY =
+  "shrink-0 mt-1 px-3 py-1.5 text-[12px] font-mono font-medium rounded " +
+  "border border-border bg-surface-2 text-foreground hover:bg-surface-3 transition-colors";
 
 // ── Local publish validation ─────────────────────────────────────────────────
 // Mirrors validateBriefingForPublish() in arei-sdk/src/briefing.ts (canonical,
@@ -97,6 +111,7 @@ export function BriefingsView() {
   const [busy, setBusy] = useState(false);
   const [errors, setErrors] = useState<string[]>([]);
   const [notice, setNotice] = useState<string | null>(null);
+  const [statusTab, setStatusTab] = useState<BriefingStatus | "all">("all");
 
   const reload = useCallback(async () => {
     setLoading(true);
@@ -239,12 +254,12 @@ export function BriefingsView() {
     const d = editing.draft;
     const noSnapshots = snapshotDates.length === 0;
     return (
-      <div className="p-6 max-w-3xl mx-auto">
-        <div className="flex items-center justify-between mb-5">
-          <h1 className="text-lg font-semibold text-foreground font-mono">
+      <div className="max-w-3xl space-y-6">
+        <div className="flex items-start justify-between gap-4">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">
             {editing.id ? "Edit briefing" : "New briefing"}
           </h1>
-          <button onClick={cancel} className="text-sm text-foreground-muted hover:text-foreground">
+          <button onClick={cancel} className="shrink-0 mt-1 text-[12px] font-mono text-foreground-muted hover:text-foreground">
             ← Back to list
           </button>
         </div>
@@ -363,37 +378,63 @@ export function BriefingsView() {
   }
 
   // ── List ─────────────────────────────────────────────────────────────────
+  const visibleRows = statusTab === "all" ? rows : rows.filter((r) => r.status === statusTab);
+
   return (
-    <div className="p-6">
-      <div className="flex items-center justify-between mb-5">
+    <div className="space-y-6">
+      {/* ── Header ──────────────────────────────────────────────── */}
+      <div className="flex items-start justify-between gap-4">
         <div>
-          <h1 className="text-lg font-semibold text-foreground font-mono">Briefings</h1>
-          <p className="text-[12px] text-foreground-subtle mt-1">
+          <h1 className="text-[22px] font-bold tracking-tight text-foreground font-mono">Briefings</h1>
+          <p className="text-sm text-foreground-muted mt-1">
             Monthly Cape Verde Listing Index editions. Public pages show published editions only.
           </p>
         </div>
-        <button onClick={startCreate}
-          className="px-4 py-2 text-sm font-medium rounded bg-accent text-white hover:opacity-90">
+        <button type="button" onClick={startCreate} className={BTN_SECONDARY}>
           + New briefing
         </button>
       </div>
 
       {errors.length > 0 && (
-        <ul className="mb-4 text-[12px] text-[#C44A3A] bg-[#C44A3A]/10 border border-[#C44A3A]/20 rounded px-3 py-2 list-disc list-inside">
+        <ul className="text-[12px] text-[#C44A3A] bg-[#C44A3A]/10 border border-[#C44A3A]/20 rounded px-3 py-2 list-disc list-inside">
           {errors.map((e, i) => <li key={i}>{e}</li>)}
         </ul>
       )}
       {notice && (
-        <div className="mb-4 text-[12px] text-green bg-green/10 border border-green/20 rounded px-3 py-2">{notice}</div>
+        <div className="text-[12px] text-green bg-green/10 border border-green/20 rounded px-3 py-2">{notice}</div>
       )}
+
+      {/* ── Status tabs ─────────────────────────────────────────── */}
+      <div className="flex gap-1 border-b border-border">
+        {BRIEFING_TABS.map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setStatusTab(key)}
+            className={
+              "relative px-4 py-2 text-[12px] font-mono font-medium transition-colors -mb-px " +
+              (statusTab === key ? "text-foreground" : "text-foreground-muted hover:text-foreground")
+            }
+          >
+            {label}
+            {statusTab === key && (
+              <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-accent rounded-full" />
+            )}
+          </button>
+        ))}
+      </div>
 
       {loading ? (
         <div className="text-sm text-foreground-muted py-12 text-center">Loading editions…</div>
-      ) : rows.length === 0 ? (
+      ) : visibleRows.length === 0 ? (
         <div className="text-center py-16 border border-dashed border-border rounded">
-          <div className="text-sm text-foreground font-medium">No briefings yet</div>
+          <div className="text-sm text-foreground font-medium">
+            {rows.length === 0 ? "No briefings yet" : "No briefings in this view"}
+          </div>
           <p className="text-[12px] text-foreground-subtle mt-1">
-            Create your first edition. It stays a draft until you publish it.
+            {rows.length === 0
+              ? "Create your first edition. It stays a draft until you publish it."
+              : "No editions match this status filter."}
           </p>
         </div>
       ) : (
@@ -406,7 +447,7 @@ export function BriefingsView() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((r) => (
+            {visibleRows.map((r) => (
               <tr key={r.id} className="border-t border-border">
                 <td className="py-2.5 px-3 text-sm text-foreground font-mono">{r.period}</td>
                 <td className="py-2.5 px-3 text-sm text-foreground-muted">{r.title}</td>
