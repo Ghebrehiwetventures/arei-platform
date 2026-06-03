@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import type { BriefingRow, BriefingSummary, MarketReportRow } from "arei-sdk";
+import { isPublicIslandRow } from "arei-sdk";
 import { arei } from "../lib/arei";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import {
@@ -41,6 +42,11 @@ const STANDARD_METHODOLOGY_PT =
   "dentro do intervalo e não substituídos — e são omitidos quando a amostra " +
   "elegível é inferior a cinco. São preços-pedidos de anúncios públicos, não " +
   "preços de venda concluídos, avaliações bancárias ou dados de registo oficiais.";
+
+/* Median / €/m² are withheld below this many methodology-eligible records
+   (mirrors migration 044's MIN_ELIGIBLE_MEDIAN). Used only to flag small-sample
+   islands in the breakdown — the values themselves are already null from 044. */
+const SMALL_SAMPLE_MIN = 5;
 
 function paragraphs(text: string | null): string[] {
   if (!text) return [];
@@ -109,10 +115,13 @@ export default function Briefing() {
     () => snapshot.find((r) => r.island === "ALL") ?? null,
     [snapshot],
   );
+  // Public island breakdown: real islands only (excludes 'ALL' + internal
+  // sentinel rows like '__hidden_for_dedup__'). getBriefing already strips
+  // sentinels; this is the belt-and-suspenders page-level filter.
   const islandRows = useMemo(
     () =>
       snapshot
-        .filter((r) => r.island !== "ALL")
+        .filter((r) => isPublicIslandRow(r.island))
         .sort((a, b) => b.listing_count - a.listing_count),
     [snapshot],
   );
@@ -262,28 +271,65 @@ export default function Briefing() {
                   </tr>
                 </thead>
                 <tbody>
-                  {islandRows.map((r) => (
-                    <tr key={r.island}>
-                      <td>{r.island}</td>
-                      <td className="num">{formatNumber(r.listing_count, locale)}</td>
-                      <td className="num">
-                        {formatNumber(r.index_eligible_count, locale)}
-                      </td>
-                      <td className="num">{formatMedian(r.median_price_eur, locale)}</td>
-                      <td className="num">
-                        {formatPricePerSqm(r.avg_eur_per_sqm, locale)}
-                      </td>
-                      <td className="num">{formatNumber(r.source_count, locale)}</td>
-                    </tr>
-                  ))}
+                  {islandRows.map((r) => {
+                    const smallSample = r.index_eligible_count < SMALL_SAMPLE_MIN;
+                    return (
+                      <tr key={r.island}>
+                        <td className="kv-bf-island">
+                          {r.island}
+                          {smallSample && (
+                            <span
+                              className="kv-bf-flag"
+                              title={
+                                isPt
+                                  ? "Amostra pequena — mediana e €/m² omitidos"
+                                  : "Small sample — median and €/m² withheld"
+                              }
+                            >
+                              n&lt;5
+                            </span>
+                          )}
+                        </td>
+                        <td className="num">{formatNumber(r.listing_count, locale)}</td>
+                        <td className="num">{formatNumber(r.index_eligible_count, locale)}</td>
+                        <td className={`num${smallSample ? " is-withheld" : ""}`}>
+                          {formatMedian(r.median_price_eur, locale)}
+                        </td>
+                        <td className={`num${smallSample ? " is-withheld" : ""}`}>
+                          {formatPricePerSqm(r.avg_eur_per_sqm, locale)}
+                        </td>
+                        <td className="num">{formatNumber(r.source_count, locale)}</td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
             </div>
-            <p className="kv-bf-table-note">
-              {isPt
-                ? "Mediana e €/m² são omitidos quando a amostra elegível é inferior a cinco."
-                : "Median and €/m² are withheld where the eligible sample is below five."}
-            </p>
+
+            {/* Derived data notes — explain the public output from the data
+                itself. No editorial fields involved (those arrive in PR B). */}
+            <div className="kv-bf-datanotes">
+              <span className="kv-bf-datanotes-label">
+                {isPt ? "Notas sobre os dados" : "Data notes"}
+              </span>
+              <ul>
+                <li>
+                  {isPt
+                    ? "Ilhas com menos de cinco registos elegíveis (n<5) têm a mediana e o €/m² omitidos."
+                    : "Islands with fewer than five eligible records (n<5) have median and €/m² withheld."}
+                </li>
+                <li>
+                  {isPt
+                    ? "Linhas técnicas internas são excluídas desta desagregação pública."
+                    : "Internal technical rows are excluded from this public breakdown."}
+                </li>
+                <li>
+                  {isPt
+                    ? "Sinal baseado em anúncios (preços-pedidos), não preços de transação."
+                    : "Listing-based signal (asking prices), not transaction prices."}
+                </li>
+              </ul>
+            </div>
           </section>
         )}
 

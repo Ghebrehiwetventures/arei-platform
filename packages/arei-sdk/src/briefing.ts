@@ -25,6 +25,24 @@ export function briefingHasRequiredSnapshot(
   return rows.some((r) => r.island === "ALL");
 }
 
+/**
+ * Internal sentinel rows — island names starting with '__' (e.g.
+ * '__hidden_for_dedup__'). These are internal pipeline buckets and must never
+ * reach public output (the public page or future email distribution).
+ */
+export function isInternalIslandRow(island: string): boolean {
+  return island.startsWith("__");
+}
+
+/**
+ * Island rows shown in the public island breakdown: real islands only.
+ * Excludes the 'ALL' aggregate (used for KPIs, not the per-island table) and
+ * internal sentinel rows.
+ */
+export function isPublicIslandRow(island: string): boolean {
+  return island !== "ALL" && !isInternalIslandRow(island);
+}
+
 /** Min / max number of key takeaways an edition must carry to be published. */
 export const MIN_KEY_TAKEAWAYS = 3;
 export const MAX_KEY_TAKEAWAYS = 5;

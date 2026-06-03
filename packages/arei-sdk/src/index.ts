@@ -37,6 +37,8 @@ export { toListingCard, toListingDetail } from "./transforms.js";
 
 export {
   briefingHasRequiredSnapshot,
+  isInternalIslandRow,
+  isPublicIslandRow,
   validateBriefingForPublish,
   MIN_KEY_TAKEAWAYS,
   MAX_KEY_TAKEAWAYS,
