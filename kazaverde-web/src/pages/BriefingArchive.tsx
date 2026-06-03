@@ -62,8 +62,8 @@ export default function BriefingArchive() {
         title={isPt ? "Cape Verde Listing Index — Briefings" : "Cape Verde Listing Index — Briefings"}
         sub={
           isPt
-            ? "Briefings mensais de mercado, gerados a partir de dados de índice ao vivo. Gratuitos e arquivados de forma permanente."
-            : "Monthly market briefings, generated from live index data. Free and permanently archived."
+            ? "Briefings mensais de mercado baseados em snapshots do índice de anúncios da AREI. Gratuitos, arquivados e com metodologia divulgada."
+            : "Monthly market briefings based on AREI listing-index snapshots. Free, archived, and methodology-disclosed."
         }
       />
 
@@ -85,7 +85,7 @@ export default function BriefingArchive() {
           <ul className="kv-bf-index-list">
             {editions.map((b) => (
               <li key={b.slug} className="kv-bf-index-item">
-                <Link to={`/briefings/${b.slug}`} className="kv-bf-index-link">
+                <Link to={`/market/briefings/${b.slug}`} className="kv-bf-index-link">
                   <div className="kv-bf-index-meta">
                     <span className="kv-bf-index-period">{b.period}</span>
                     <span className="kv-bf-index-date">

@@ -5,7 +5,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
 import { formatMedian, formatNumber, toLocale } from "../lib/formatters";
-import { PRICE_BUCKETS, type PriceBucket } from "arei-sdk";
+import { PRICE_BUCKETS, type PriceBucket, type BriefingSummary } from "arei-sdk";
 import "./Detail.css"; // shares kv-d-card / kv-d-meta-row primitives
 import "./Market.css";
 
@@ -291,6 +291,7 @@ interface MarketData {
   pricedCount: number;
   addedThisMonth: number;
   buckets: { key: PriceBucket; label: string; count: number }[];
+  latestBriefing: BriefingSummary | null;
 }
 
 export default function Market() {
@@ -358,10 +359,13 @@ export default function Market() {
     let cancelled = false;
     async function load() {
       try {
-        const [statsRes, islandsRes, listingsRes] = await Promise.all([
+        const [statsRes, islandsRes, listingsRes, briefingsRes] = await Promise.all([
           arei.getMarketStats(),
           arei.getIslandOptions(),
           arei.getListings({ page: 1, pageSize: 500 }),
+          // Latest briefing is a soft dependency — never fail the Market page if
+          // it errors (e.g. table not yet migrated). Resolve to [] instead.
+          arei.listBriefings().catch(() => []),
         ]);
         if (cancelled) return;
 
@@ -436,6 +440,7 @@ export default function Market() {
           pricedCount,
           addedThisMonth,
           buckets,
+          latestBriefing: briefingsRes[0] ?? null,
         });
       } catch (e) {
         if (!cancelled) {
@@ -486,6 +491,53 @@ export default function Market() {
           </p>
         </div>
       </header>
+
+      {/* Monthly market briefings — links to the latest edition + archive.
+          Briefings live under Market; this is their primary discovery point. */}
+      <section className="kv-m-briefing">
+        <div className="kv-m-inner">
+          <div className="kv-m-briefing-card">
+            <div className="kv-m-briefing-main">
+              <div className="kv-m-briefing-eyebrow">
+                {isPt ? "Briefings do Listing Index" : "Listing Index Briefings"}
+              </div>
+              {data.latestBriefing ? (
+                <>
+                  <h2 className="kv-m-briefing-title">{data.latestBriefing.title}</h2>
+                  <div className="kv-m-briefing-period">{data.latestBriefing.period}</div>
+                  {data.latestBriefing.executive_summary && (
+                    <p className="kv-m-briefing-sum">{data.latestBriefing.executive_summary}</p>
+                  )}
+                </>
+              ) : (
+                <>
+                  <h2 className="kv-m-briefing-title">
+                    {isPt ? "Briefings mensais de mercado" : "Monthly market briefings"}
+                  </h2>
+                  <p className="kv-m-briefing-sum">
+                    {isPt
+                      ? "Briefings mensais de mercado baseados em snapshots do índice de anúncios da AREI. Gratuitos, arquivados e com metodologia divulgada."
+                      : "Monthly market briefings based on AREI listing-index snapshots. Free, archived, and methodology-disclosed."}
+                  </p>
+                </>
+              )}
+            </div>
+            <div className="kv-m-briefing-actions">
+              {data.latestBriefing && (
+                <Link
+                  className="kv-m-briefing-cta"
+                  to={`/market/briefings/${data.latestBriefing.slug}`}
+                >
+                  {isPt ? "Ler o briefing mais recente" : "Read latest briefing"} <span aria-hidden="true">→</span>
+                </Link>
+              )}
+              <Link className="kv-m-briefing-cta-2" to="/market/briefings">
+                {isPt ? "Ver todos os briefings" : "View all briefings"}
+              </Link>
+            </div>
+          </div>
+        </div>
+      </section>
 
       {/* Geographic context — orientation block for first-time visitors.
           Lightweight, factual, editorial. No external map API. */}

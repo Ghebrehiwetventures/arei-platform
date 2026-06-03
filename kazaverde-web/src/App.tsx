@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate, useLocation } from "react-router-dom";
+import { Routes, Route, Navigate, useLocation, useParams } from "react-router-dom";
 import { useLayoutEffect, lazy, Suspense } from "react";
 import { Analytics } from "@vercel/analytics/react";
 import Navbar from "./components/Navbar";
@@ -27,6 +27,13 @@ const About = lazy(() => import("./pages/About"));
 const Agents = lazy(() => import("./pages/Agents"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
+
+/* Back-compat redirect: /briefings/:slug → /market/briefings/:slug,
+   preserving the slug param. */
+function BriefingSlugRedirect() {
+  const { slug } = useParams();
+  return <Navigate to={`/market/briefings/${slug ?? ""}`} replace />;
+}
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -75,9 +82,14 @@ export default function App() {
           <Route path="/market" element={<Market />} />
           <Route path="/market-news" element={<MarketNews />} />
           <Route path="/news" element={<Navigate to="/market-news" replace />} />
-          <Route path="/briefings" element={<BriefingArchive />} />
-          <Route path="/briefings/:slug" element={<Briefing />} />
-          <Route path="/briefing" element={<Navigate to="/briefings" replace />} />
+          {/* Canonical: briefings live under Market (they are monthly market
+              reports, not a separate product category). */}
+          <Route path="/market/briefings" element={<BriefingArchive />} />
+          <Route path="/market/briefings/:slug" element={<Briefing />} />
+          {/* Back-compat aliases — old top-level routes redirect to /market/briefings */}
+          <Route path="/briefings" element={<Navigate to="/market/briefings" replace />} />
+          <Route path="/briefings/:slug" element={<BriefingSlugRedirect />} />
+          <Route path="/briefing" element={<Navigate to="/market/briefings" replace />} />
           {/* Rent surface offline — redirect to listings. Rent page and data model preserved. */}
           <Route path="/rent" element={<Navigate to="/listings" replace />} />
           <Route path="/about" element={<About />} />
