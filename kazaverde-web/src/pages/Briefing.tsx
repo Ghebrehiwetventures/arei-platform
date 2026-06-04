@@ -400,8 +400,9 @@ export default function Briefing() {
           </section>
         )}
 
-        {/* 8 — News context (manual, neutral, sourced) */}
-        {briefing.news_items && briefing.news_items.length > 0 && (
+        {/* 8 — News context (manual, neutral, sourced).
+            Array.isArray guards against a malformed (non-array) jsonb value. */}
+        {Array.isArray(briefing.news_items) && briefing.news_items.length > 0 && (
           <section className="kv-bf-section">
             <h2 className="kv-bf-section-head">
               {isPt ? "Contexto de notícias" : "News context"}
