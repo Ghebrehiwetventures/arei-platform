@@ -202,7 +202,7 @@ export default function Saved() {
   }, [cards, marketStats]);
 
   const handleClear = () => {
-    if (window.confirm(isPt ? "Limpar toda a sua lista? Isto afeta apenas este dispositivo." : "Clear your entire shortlist? This only affects this device.")) {
+    if (window.confirm(isPt ? "Limpar toda a sua lista? Isto afeta apenas este dispositivo." : "Clear all your saved properties? This only affects this device.")) {
       clear();
     }
   };
@@ -214,7 +214,7 @@ export default function Saved() {
         <div className="kv-saved-head-inner">
           <div className="kv-saved-eyebrow">{isPt ? "Favoritos" : "Saved properties"}</div>
           <h1 className="kv-saved-title">
-            {isEmpty ? (isPt ? "Ainda não guardou nada." : "No saved properties yet.") : (isPt ? "A sua lista." : "Your shortlist.")}
+            {isEmpty ? (isPt ? "Ainda não guardou nada." : "No saved properties yet.") : (isPt ? "A sua lista." : "Your saved properties.")}
           </h1>
           <div className="kv-saved-meta">
             <span><b>{count}</b> {count === 1 ? (isPt ? "imóvel" : "property") : (isPt ? "imóveis" : "properties")}</span>
@@ -230,7 +230,7 @@ export default function Saved() {
       {loading && (
         <section className="kv-saved-section kv-saved-section-white">
           <div className="kv-saved-section-inner">
-            <div className="kv-saved-loading-lbl">{isPt ? "A carregar lista" : "Loading shortlist"}</div>
+            <div className="kv-saved-loading-lbl">{isPt ? "A carregar lista" : "Loading saved properties"}</div>
             <div className="kv-saved-loading-skel" aria-hidden="true">
               <span /><span /><span />
             </div>
@@ -321,7 +321,7 @@ export default function Saved() {
                 className="kv-saved-foot-clear"
                 onClick={handleClear}
               >
-                {isPt ? "Limpar lista" : "Clear shortlist"}
+                {isPt ? "Limpar lista" : "Clear all"}
               </button>
             </div>
           </div>
@@ -339,7 +339,7 @@ export default function Saved() {
               <div>
                 <div className="kv-saved-section-eyebrow">{isPt ? "Como compara" : "How yours compares"}</div>
                 <h2 className="kv-saved-section-title">
-                  {isPt ? "A sua lista face ao índice." : "Your shortlist against the index."}
+                  {isPt ? "A sua lista face ao índice." : "Your saved properties against the index."}
                 </h2>
                 <p className="kv-saved-section-sub">
                   {isPt
