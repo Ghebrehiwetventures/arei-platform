@@ -405,8 +405,6 @@ function GradeBadge({ grade }: { grade: "A" | "B" | "C" | "D" }) {
 /** Optional GitHub Actions URL for "Latest sync logs" link. Set in env or leave empty. */
 const GITHUB_ACTIONS_URL = import.meta.env.VITE_GITHUB_ACTIONS_URL ?? "";
 
-type SourceQualitySortKey = "sourceName" | "marketId" | "listing_count" | "approved_pct" | "with_image_pct" | "with_price_pct" | "grade";
-
 function SourceHealthStat({ label, value, tone }: { label: string; value: number; tone?: "good" | "warn" | "bad" }) {
   const toneClass =
     tone === "bad"
@@ -492,7 +490,7 @@ function NorthStarBanner() {
   );
 }
 
-function DashboardView() {
+function DashboardView({ onNavigate }: { onNavigate?: (tab: Tab) => void }) {
   const { selected: selectedMarket } = useSelectedMarket();
   const selectedMarketId = selectedMarket.id;
   const selectedMarketLabel = selectedMarket.name;
@@ -500,8 +498,6 @@ function DashboardView() {
   const [loading, setLoading] = useState(true);
   const [latestSync, setLatestSync] = useState<LatestSyncLog | null>(null);
   const [exportingRunReport, setExportingRunReport] = useState(false);
-  const [sortKey, setSortKey] = useState<SourceQualitySortKey>("listing_count");
-  const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
 
   useEffect(() => {
     let cancelled = false;
@@ -586,30 +582,6 @@ function DashboardView() {
     { label: "low ingest→feed ratio (<25%)", count: lowFeedConvSources, tone: "warn" },
   ];
   const topIssues = allIssues.filter((i) => i.count > 0).slice(0, 3);
-
-  const gradeOrder: Record<string, number> = { A: 1, B: 2, C: 3, D: 4 };
-  const sortedSourceRows = [...stats.sourceRows].sort((a, b) => {
-    const mult = sortDir === "asc" ? 1 : -1;
-    if (sortKey === "sourceName" || sortKey === "marketId") {
-      const va = String(a[sortKey] ?? "");
-      const vb = String(b[sortKey] ?? "");
-      return mult * va.localeCompare(vb);
-    }
-    if (sortKey === "grade") {
-      return mult * (gradeOrder[a.grade] - gradeOrder[b.grade]);
-    }
-    const va = Number(a[sortKey]);
-    const vb = Number(b[sortKey]);
-    return mult * (va - vb);
-  });
-
-  const handleSort = (key: SourceQualitySortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir(key === "sourceName" || key === "marketId" ? "asc" : "desc");
-    }
-  };
 
   const handleExportRunReport = async () => {
     setExportingRunReport(true);
@@ -829,69 +801,24 @@ function DashboardView() {
             <div className="text-2xl font-bold tabular-nums tracking-tight font-mono">{stats.marketCount}</div>
           </div>
         </div>
-        <h2 className="text-base font-semibold text-foreground font-mono mb-4">Pipeline quality · all markets</h2>
-        <div className="surface-1 rounded border border-border overflow-hidden shadow-sm">
-          <div className="overflow-x-auto">
-            <table className="w-full min-w-[700px] data-table data-table-id-narrow">
-              <thead>
-                <tr className="border-b border-border bg-surface-2">
-                  {(
-                    [
-                      { key: "sourceName" as const, label: "Source" },
-                      { key: "marketId" as const, label: "Market" },
-                      { key: "listing_count" as const, label: "Count" },
-                      { key: "approved_pct" as const, label: "Pipeline approved %" },
-                      { key: "with_image_pct" as const, label: "Image %" },
-                      { key: "with_price_pct" as const, label: "Price %" },
-                      { key: "grade" as const, label: "Health" },
-                    ] as const
-                  ).map(({ key, label }) => (
-                    <th key={key} className="text-left py-2.5 px-3">
-                      <button
-                        type="button"
-                        onClick={() => handleSort(key)}
-                        className="text-[11px] uppercase tracking-wider text-foreground-subtle font-medium w-full text-left flex items-center gap-1 hover:text-foreground transition-colors"
-                      >
-                        {label}
-                        <span className={sortKey === key ? "text-foreground" : "invisible"} aria-hidden>
-                          {sortKey === key && sortDir === "asc" ? "↑" : "↓"}
-                        </span>
-                      </button>
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedSourceRows.map((r: SourceQualityRow) => (
-                  <tr key={r.source_id} className="border-b border-border last:border-0 hover:bg-surface-3/50 transition-colors">
-                    <td className="py-2.5 px-3 text-sm font-medium text-foreground">{r.sourceName}</td>
-                    <td className="py-2.5 px-3 text-sm text-foreground-muted">{r.marketId}</td>
-                    <td className="py-2.5 px-3 text-sm text-foreground-muted tabular-nums font-mono">
-                      {Number(r.listing_count).toLocaleString()}
-                    </td>
-                    <td className="py-2.5 px-3 text-sm text-foreground-muted tabular-nums font-mono">{r.approved_pct}%</td>
-                    <td className="py-2.5 px-3 text-sm text-foreground-muted tabular-nums font-mono">{r.with_image_pct}%</td>
-                    <td className="py-2.5 px-3 text-sm text-foreground-muted tabular-nums font-mono">{r.with_price_pct}%</td>
-                    <td className="py-2.5 px-3">
-                      <GradeBadge grade={r.grade} />
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-        {stats.sourceRows.length === 0 && (
-          <div className="surface-1 rounded border border-border border-dashed p-12 text-center mt-4">
-            <div className="w-10 h-10 rounded-full bg-surface-2 flex items-center justify-center mx-auto mb-3">
-              <span className="text-foreground-subtle text-sm">⬡</span>
-            </div>
-            <p className="text-sm font-medium text-foreground mb-1">No source data available</p>
-            <p className="text-xs text-foreground-muted">
-              Run the SQL in <code className="font-mono text-xs bg-surface-2 px-1.5 py-0.5 rounded">docs/supabase_rpc.sql</code> in Supabase.
+        {/* Full source-by-source pipeline quality lives on the Sources tab to
+            keep the dashboard home an executive overview, not a diagnostics page. */}
+        <div className="surface-1 rounded border border-border shadow-sm p-4 flex items-center justify-between gap-3 flex-wrap">
+          <div>
+            <h2 className="text-sm font-semibold text-foreground font-mono">Pipeline quality · all markets</h2>
+            <p className="text-xs text-foreground-muted mt-1">
+              {stats.sourceCount} source{stats.sourceCount === 1 ? "" : "s"} across {stats.marketCount} market
+              {stats.marketCount === 1 ? "" : "s"} — full source-by-source diagnostics on the Sources tab.
             </p>
           </div>
-        )}
+          <button
+            type="button"
+            onClick={() => onNavigate?.("sources")}
+            className="text-xs font-medium text-accent hover:text-accent/80 transition-colors whitespace-nowrap inline-flex items-center gap-1"
+          >
+            View full pipeline quality →
+          </button>
+        </div>
       </section>
     </div>
   );
@@ -3976,7 +3903,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
         </div>
         <div className="max-w-[1200px] mx-auto px-4 py-5 md:px-8 md:py-8">
           <MarketProvider>
-            {tab === "dashboard" && <DashboardView />}
+            {tab === "dashboard" && <DashboardView onNavigate={selectTab} />}
             {tab === "listings" && <ListingsTabView />}
             {tab === "sources" && <SourcesView />}
             {tab === "chatlab" && <PropertyChatLabView />}
