@@ -1,0 +1,9 @@
+{
+  "name": "social-news-image",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Prototype renderer for AREI Instagram news posts",
+  "dependencies": {
+    "@resvg/resvg-js": "^2.6.2"
+  }
+}
