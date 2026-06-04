@@ -39,6 +39,8 @@ const UI_TEXT_PATTERNS = [
 
 // Image URL patterns to filter out
 const INVALID_IMAGE_PATTERNS = [
+  /pinterest\.com\/pin\/create\/button/i,
+  /\/share(?:\/|$)/i,
   /logo/i,
   /icon/i,
   /sprite/i,
@@ -54,6 +56,7 @@ const INVALID_IMAGE_PATTERNS = [
   /emoji/i,
   /smiley/i,
   /wp-includes/i,
+  /\/Group-18-Copy\.(?:png|jpe?g|webp)$/i,
 ];
 
 // Element class/alt patterns identifying site chrome (header/footer/branding).
@@ -210,6 +213,106 @@ function isValidImageUrl(url: string): boolean {
   return true;
 }
 
+type JsonLdObject = Record<string, any>;
+
+function asArray<T>(value: T | T[] | undefined | null): T[] {
+  if (value == null) return [];
+  return Array.isArray(value) ? value : [value];
+}
+
+function findRealEstateJsonLd(value: unknown): JsonLdObject | undefined {
+  if (!value || typeof value !== "object") return undefined;
+  const obj = value as JsonLdObject;
+  const types = asArray(obj["@type"]).map(String);
+  const isRealEstate = types.some((type) =>
+    ["Apartment", "House", "SingleFamilyResidence", "Residence", "Accommodation"].includes(type)
+  );
+  if (isRealEstate && (obj.offers || obj.floorSize || obj.numberOfBedrooms || obj.image)) {
+    return obj;
+  }
+
+  for (const child of Object.values(obj)) {
+    if (Array.isArray(child)) {
+      for (const item of child) {
+        const found = findRealEstateJsonLd(item);
+        if (found) return found;
+      }
+    } else {
+      const found = findRealEstateJsonLd(child);
+      if (found) return found;
+    }
+  }
+  return undefined;
+}
+
+function extractRealEstateJsonLd($: cheerio.CheerioAPI): JsonLdObject | undefined {
+  let found: JsonLdObject | undefined;
+  $("script[type='application/ld+json'], script[type=\"application/ld+json\"]").each((_, el) => {
+    if (found) return;
+    const raw = $(el).contents().text().trim();
+    if (!raw) return;
+    try {
+      found = findRealEstateJsonLd(JSON.parse(raw));
+    } catch {
+      // Ignore malformed JSON-LD blocks; sites often include unrelated plugin data.
+    }
+  });
+  return found;
+}
+
+function parseJsonLdInteger(value: unknown): number | null {
+  if (typeof value === "number" && Number.isFinite(value)) return Math.round(value);
+  if (typeof value !== "string") return null;
+  const match = value.match(/\b(\d{1,6}(?:[.,]\d+)?)\b/);
+  if (!match) return null;
+  const parsed = parseFloat(match[1].replace(",", "."));
+  return Number.isFinite(parsed) ? Math.round(parsed) : null;
+}
+
+function parseJsonLdFloorSizeSqm(floorSize: unknown): number | null {
+  const floor = Array.isArray(floorSize) ? floorSize[0] : floorSize;
+  if (floor == null) return null;
+
+  let rawValue: unknown;
+  let unitText = "";
+  if (typeof floor === "object") {
+    const obj = floor as JsonLdObject;
+    rawValue = obj.value ?? obj.amount;
+    unitText = String(obj.unitText ?? obj.unitCode ?? "").toLowerCase();
+  } else {
+    rawValue = floor;
+  }
+
+  const value = typeof rawValue === "number"
+    ? rawValue
+    : typeof rawValue === "string"
+      ? parseFloat(rawValue.replace(",", "."))
+      : NaN;
+  if (!Number.isFinite(value) || value <= 0) return null;
+
+  if (/(sq\s*ft|sqft|ft2|ft²|square\s*feet|square\s*foot)/i.test(unitText)) {
+    return Math.round(value * 0.09290304);
+  }
+  return Math.round(value);
+}
+
+function firstJsonLdOffer(jsonLd: JsonLdObject | undefined): JsonLdObject | undefined {
+  const offer = asArray(jsonLd?.offers)[0];
+  return offer && typeof offer === "object" ? offer as JsonLdObject : undefined;
+}
+
+function parseAreaTextSqm(text: string): number | null {
+  if (!text) return null;
+  const match = text.replace(",", ".").match(/(\d+(?:\.\d+)?)/);
+  if (!match) return null;
+  const value = parseFloat(match[1]);
+  if (!Number.isFinite(value) || value <= 0) return null;
+  if (/(sq\s*ft|sqft|ft2|ft²|square\s*feet|square\s*foot)/i.test(text)) {
+    return Math.round(value * 0.09290304);
+  }
+  return Math.round(value);
+}
+
 function cleanDescription(text: string): string {
   let cleaned = text;
   for (const pattern of UI_TEXT_PATTERNS) {
@@ -297,6 +400,7 @@ export function createGenericDetailPlugin(
 
     extract(html: string, baseUrl: string): DetailExtractResult {
       const $ = cheerio.load(html);
+      const jsonLd = extractRealEstateJsonLd($);
       const imageUrls: string[] = [];
       const seenImages = new Set<string>();
       const amenities = new Set<string>();
@@ -458,6 +562,16 @@ export function createGenericDetailPlugin(
         });
       }
 
+      for (const image of asArray(jsonLd?.image)) {
+        if (typeof image === "string") {
+          addImage(image);
+        } else if (image && typeof image === "object") {
+          const imageObj = image as JsonLdObject;
+          const url = imageObj.url ?? imageObj.contentUrl;
+          if (typeof url === "string") addImage(url);
+        }
+      }
+
       // ========================================
       // C) Extract specs using config patterns
       // ========================================
@@ -542,11 +656,8 @@ export function createGenericDetailPlugin(
             } else if (field === "parking" && parkingSpaces === null && intVal !== null && intVal >= 0 && intVal < 20) {
               parkingSpaces = intVal;
             } else if (field === "area" && areaSqm === null) {
-              const m = value.replace(",", ".").match(/(\d+(?:\.\d+)?)/);
-              if (m) {
-                const n = parseFloat(m[1]);
-                if (!isNaN(n) && n > 0) areaSqm = n;
-              }
+              const n = parseAreaTextSqm(value);
+              if (n !== null) areaSqm = n;
             } else if (field === "price" && !specTablePrice) {
               specTablePrice = value;
             }
@@ -596,10 +707,27 @@ export function createGenericDetailPlugin(
             const regex = new RegExp(patternStr, "i");
             const match = bodyText.match(regex);
             if (match?.[1]) {
-              const num = parseFloat(match[1].replace(",", "."));
-              if (!isNaN(num) && num > 0) { areaSqm = num; break; }
+              const num = parseAreaTextSqm(match[0]);
+              if (num !== null) { areaSqm = num; break; }
             }
           }
+        }
+      }
+
+      const jsonLdAreaSqm = parseJsonLdFloorSizeSqm(jsonLd?.floorSize);
+      if (jsonLdAreaSqm !== null) {
+        areaSqm = jsonLdAreaSqm;
+      }
+      if (bedrooms === null) {
+        const jsonLdBedrooms = parseJsonLdInteger(jsonLd?.numberOfBedrooms);
+        if (jsonLdBedrooms !== null && jsonLdBedrooms > 0 && jsonLdBedrooms < 20) {
+          bedrooms = jsonLdBedrooms;
+        }
+      }
+      if (bathrooms === null) {
+        const jsonLdBathrooms = parseJsonLdInteger(jsonLd?.numberOfBathroomsTotal ?? jsonLd?.numberOfBathrooms);
+        if (jsonLdBathrooms !== null && jsonLdBathrooms > 0 && jsonLdBathrooms < 20) {
+          bathrooms = jsonLdBathrooms;
         }
       }
 
@@ -628,6 +756,9 @@ export function createGenericDetailPlugin(
       let title: string | undefined;
       const h1 = $("h1").first().text().trim();
       if (h1 && h1.length > 5) title = h1;
+      if (!title && typeof jsonLd?.name === "string" && jsonLd.name.trim().length > 5) {
+        title = jsonLd.name.trim();
+      }
 
       // ========================================
       // F) Extract price (config selector first, then regex fallback)
@@ -674,6 +805,12 @@ export function createGenericDetailPlugin(
             // Reasonable property price range: 1,000 to 50,000,000
             if (parsed && parsed >= 1000 && parsed <= 50000000) { price = parsed; break; }
           }
+        }
+      }
+      if (!price) {
+        const jsonLdPrice = parseJsonLdInteger(firstJsonLdOffer(jsonLd)?.price);
+        if (jsonLdPrice !== null && jsonLdPrice >= 1000 && jsonLdPrice <= 50000000) {
+          price = jsonLdPrice;
         }
       }
 
