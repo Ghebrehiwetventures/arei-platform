@@ -212,9 +212,9 @@ export default function Saved() {
       {/* ─── Header (off-white) ─── */}
       <header className="kv-saved-head">
         <div className="kv-saved-head-inner">
-          <div className="kv-saved-eyebrow">{t("common.shortlist")}</div>
+          <div className="kv-saved-eyebrow">{isPt ? "Favoritos" : "Saved properties"}</div>
           <h1 className="kv-saved-title">
-            {isEmpty ? (isPt ? "Ainda não guardou nada." : "Nothing saved yet.") : (isPt ? "A sua lista." : "Your shortlist.")}
+            {isEmpty ? (isPt ? "Ainda não guardou nada." : "No saved properties yet.") : (isPt ? "A sua lista." : "Your shortlist.")}
           </h1>
           <div className="kv-saved-meta">
             <span><b>{count}</b> {count === 1 ? (isPt ? "imóvel" : "property") : (isPt ? "imóveis" : "properties")}</span>
@@ -247,10 +247,10 @@ export default function Saved() {
                 <p className="kv-saved-empty-lead">
                   {isPt
                     ? "Abra qualquer anúncio e toque em guardar na lista no resumo do anúncio. A lista fica neste navegador — sem conta, sem sincronização, sem marketing."
-                    : <>Open any listing and tap <b>Save to shortlist</b> in the listing summary card. Your list lives in this browser — no account, no sync, no marketing.</>}
+                    : <>Open any listing and tap <b>Save</b> to save it here. Your list lives in this browser — no account, no sync, no marketing.</>}
                 </p>
                 <Link to="/listings" className="kv-saved-cta">
-                  <span>{t("common.browseAllListings")}</span>
+                  <span>{t("common.browseListings")}</span>
                   <span aria-hidden="true">→</span>
                 </Link>
               </div>
@@ -313,7 +313,7 @@ export default function Saved() {
 
             <div className="kv-saved-foot">
               <Link to="/listings" className="kv-saved-foot-link">
-                <span>{t("common.browseAllListings")}</span>
+                <span>{t("common.browseListings")}</span>
                 <span aria-hidden="true">→</span>
               </Link>
               <button

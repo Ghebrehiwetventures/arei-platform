@@ -16,11 +16,12 @@ const resources = {
     translation: {
       common: {
         browseAllListings: "Browse all listings",
+        browseListings: "Browse listings",
         listings: "Listings",
         market: "Market",
         news: "News",
         guides: "Guides",
-        shortlist: "Shortlist",
+        shortlist: "Saved",
         allListings: "All listings",
         marketData: "Market data",
         sourceLinkedIndex: "Source-linked index",
@@ -590,6 +591,7 @@ const resources = {
     translation: {
       common: {
         browseAllListings: "Ver todos os anúncios",
+        browseListings: "Ver anúncios",
         listings: "Anúncios",
         market: "Mercado",
         news: "Notícias",
