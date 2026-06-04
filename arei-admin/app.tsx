@@ -12,6 +12,9 @@ import {
   updateMarketNewsStatus,
   updateMarketNewsFields,
   getUnreadNotificationCount,
+  getAdminNotifications,
+  type AdminNotification,
+  type NotificationSeverity,
   type ListingsFilters,
   type ListingsSortKey,
   type LatestSyncLog,
@@ -490,6 +493,93 @@ function NorthStarBanner() {
   );
 }
 
+function notifSeverityDotClass(sev: NotificationSeverity): string {
+  if (sev === "critical") return "bg-[#C44A3A]";
+  if (sev === "warning") return "bg-amber";
+  return "bg-foreground-subtle";
+}
+
+function notifTimeAgo(iso: string): string {
+  const diff = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diff / 60_000);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  if (days < 30) return `${days}d ago`;
+  return new Date(iso).toLocaleDateString("en-GB", { day: "numeric", month: "short", year: "numeric" });
+}
+
+// Compact, at-a-glance notifications summary for the dashboard home. Full list
+// and read/dismiss controls live on the Notifications tab.
+function DashboardNotificationsCard({ onNavigate }: { onNavigate?: (tab: Tab) => void }) {
+  const [items, setItems] = useState<AdminNotification[] | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    getAdminNotifications().then((rows) => {
+      if (!cancelled) setItems(rows);
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Nothing fetched yet, or genuinely empty — keep the dashboard uncluttered.
+  if (!items || items.length === 0) return null;
+
+  const unread = items.filter((n) => n.read_at === null);
+  const unreadCount = unread.length;
+  const criticalCount = unread.filter((n) => n.severity === "critical").length;
+  const warningCount = unread.filter((n) => n.severity === "warning").length;
+  const recent = items.slice(0, 3);
+
+  return (
+    <section className="surface-1 rounded border border-border shadow-sm p-5">
+      <div className="flex items-baseline justify-between gap-3 mb-4">
+        <div className="flex items-baseline gap-2.5 flex-wrap">
+          <h2 className="text-base font-semibold text-foreground font-mono">Notifications</h2>
+          {unreadCount > 0 ? (
+            <span className="text-xs text-foreground-muted tabular-nums">
+              {unreadCount} unread
+              {criticalCount > 0 && <span className="text-[#C44A3A] font-medium"> · {criticalCount} critical</span>}
+              {warningCount > 0 && <span className="text-amber font-medium"> · {warningCount} warning</span>}
+            </span>
+          ) : (
+            <span className="text-xs text-foreground-subtle">all caught up</span>
+          )}
+        </div>
+        <button
+          type="button"
+          onClick={() => onNavigate?.("notifications")}
+          className="text-xs font-medium text-accent hover:text-accent/80 transition-colors whitespace-nowrap shrink-0"
+        >
+          View all notifications →
+        </button>
+      </div>
+      <ul className="space-y-2">
+        {recent.map((n) => (
+          <li key={n.id} className="flex items-start gap-2.5">
+            <span
+              className={`mt-1.5 w-1.5 h-1.5 rounded-full shrink-0 ${notifSeverityDotClass(n.severity)}`}
+              aria-hidden
+            />
+            <div className="min-w-0 flex-1 flex items-baseline justify-between gap-3">
+              <span
+                className={`text-sm truncate ${n.read_at === null ? "font-medium text-foreground" : "text-foreground-muted"}`}
+              >
+                {n.title}
+              </span>
+              <span className="text-[11px] text-foreground-subtle tabular-nums shrink-0">{notifTimeAgo(n.created_at)}</span>
+            </div>
+          </li>
+        ))}
+      </ul>
+    </section>
+  );
+}
+
 function DashboardView({ onNavigate }: { onNavigate?: (tab: Tab) => void }) {
   const { selected: selectedMarket } = useSelectedMarket();
   const selectedMarketId = selectedMarket.id;
@@ -607,6 +697,8 @@ function DashboardView({ onNavigate }: { onNavigate?: (tab: Tab) => void }) {
       <NorthStarBanner />
       {/* ── AREI Pulse — executive intelligence (top of dashboard) ── */}
       <AREIPulsePanel />
+      {/* ── Notifications summary — at a glance, full list on its tab ── */}
+      <DashboardNotificationsCard onNavigate={onNavigate} />
       {/* ── Page header ─────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div>
