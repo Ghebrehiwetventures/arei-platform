@@ -228,6 +228,20 @@ export interface MarketReportRow {
 }
 
 /**
+ * One news-context item in a briefing — manual, neutral context only.
+ * No auto-fetch, no causal/forecast claims; just a sourced, linked reference.
+ */
+export interface BriefingNewsItem {
+  title: string;
+  source: string;
+  url: string;
+  /** Free-form date label, e.g. '2026-05' or '12 May 2026'. */
+  date: string;
+  /** Short, factual note — context, not interpretation. */
+  note: string;
+}
+
+/**
  * One published market briefing edition (editorial layer over a snapshot).
  * Only published editions are returned — the SDK query and RLS both enforce
  * status = 'published' AND published_at IS NOT NULL.
@@ -248,8 +262,14 @@ export interface BriefingRow {
   executive_summary: string | null;
   /** 3-5 short key-takeaway statements. Null/empty when not yet written. */
   key_takeaways: string[] | null;
-  /** Editorial context: 2-3 paragraphs (plain text / light markdown). */
+  /** "Key observations" editorial body: 2-3 paragraphs (plain text). */
   commentary: string | null;
+  /** Supply & price signals — editorial note. Null when not written. (v2) */
+  supply_price_note: string | null;
+  /** Island notes — short, optional editorial note. Null when not written. (v2) */
+  island_notes: string | null;
+  /** News context — 3-5 manual, neutral items. Null/empty when none. (v2) */
+  news_items: BriefingNewsItem[] | null;
   /** Optional methodology override. Null → page renders the standard disclosure. */
   methodology_note: string | null;
   /** ISO timestamp when this edition was published */

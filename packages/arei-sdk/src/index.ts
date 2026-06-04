@@ -21,6 +21,7 @@ export type {
   MarketReportRow,
   BriefingRow,
   BriefingSummary,
+  BriefingNewsItem,
   FeaturedSelectionRow,
   AgencyRow,
   AgencyListingStats,
@@ -40,7 +41,15 @@ export {
   isInternalIslandRow,
   isPublicIslandRow,
   validateBriefingForPublish,
+  deriveBriefingConfidence,
+  isBaselineEdition,
   MIN_KEY_TAKEAWAYS,
   MAX_KEY_TAKEAWAYS,
+  BRIEFING_CONFIDENCE_VERSION,
+  BRIEFING_SMALL_SAMPLE_MIN,
 } from "./briefing.js";
-export type { BriefingPublishInput } from "./briefing.js";
+export type {
+  BriefingPublishInput,
+  BriefingConfidence,
+  BriefingConfidenceLevel,
+} from "./briefing.js";

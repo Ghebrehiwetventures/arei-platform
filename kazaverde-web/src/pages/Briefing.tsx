@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
-import type { BriefingRow, BriefingSummary, MarketReportRow } from "arei-sdk";
-import { isPublicIslandRow } from "arei-sdk";
+import type { BriefingRow, BriefingSummary, MarketReportRow, BriefingConfidence } from "arei-sdk";
+import { isPublicIslandRow, deriveBriefingConfidence, isBaselineEdition } from "arei-sdk";
 import { arei } from "../lib/arei";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import {
@@ -42,6 +42,15 @@ const STANDARD_METHODOLOGY_PT =
   "dentro do intervalo e não substituídos — e são omitidos quando a amostra " +
   "elegível é inferior a cinco. São preços-pedidos de anúncios públicos, não " +
   "preços de venda concluídos, avaliações bancárias ou dados de registo oficiais.";
+
+/* Standard disclosure line — the briefing's positioning, shown as the
+   methodology lead. (Briefing v2.) */
+const DISCLOSURE_EN =
+  "The briefing interprets observed listing activity. It does not claim to " +
+  "measure completed transactions or property values.";
+const DISCLOSURE_PT =
+  "A briefing interpreta a atividade de anúncios observada. Não pretende medir " +
+  "transações concluídas ou valores de imóveis.";
 
 /* Median / €/m² are withheld below this many methodology-eligible records
    (mirrors migration 044's MIN_ELIGIBLE_MEDIAN). Used only to flag small-sample
@@ -124,6 +133,15 @@ export default function Briefing() {
         .filter((r) => isPublicIslandRow(r.island))
         .sort((a, b) => b.listing_count - a.listing_count),
     [snapshot],
+  );
+  // Derived (never stored): confidence from the snapshot, baseline from order.
+  const confidence = useMemo(() => deriveBriefingConfidence(snapshot), [snapshot]);
+  const baseline = useMemo(
+    () =>
+      briefing
+        ? isBaselineEdition(briefing.snapshot_date, others.map((o) => o.snapshot_date))
+        : false,
+    [briefing, others],
   );
 
   if (loading) {
@@ -333,12 +351,19 @@ export default function Briefing() {
           </section>
         )}
 
-        {/* 5 — Commentary */}
-        {commentaryParas.length > 0 && (
+        {/* 5 — Key observations (reuses the commentary field) + baseline note */}
+        {(commentaryParas.length > 0 || baseline) && (
           <section className="kv-bf-section">
             <h2 className="kv-bf-section-head">
-              {isPt ? "Comentário" : "Commentary"}
+              {isPt ? "Observações principais" : "Key observations"}
             </h2>
+            {baseline && (
+              <p className="kv-bf-baseline">
+                {isPt
+                  ? "Baseline estabelecida. A comparação mês-a-mês começa na próxima edição."
+                  : "Baseline established. Month-over-month comparison begins with the next edition."}
+              </p>
+            )}
             <div className="kv-bf-prose">
               {commentaryParas.map((para, i) => (
                 <p key={i}>{para}</p>
@@ -347,11 +372,120 @@ export default function Briefing() {
           </section>
         )}
 
-        {/* 6 — Methodology note */}
+        {/* 6 — Supply & price signals (editorial) */}
+        {briefing.supply_price_note && (
+          <section className="kv-bf-section">
+            <h2 className="kv-bf-section-head">
+              {isPt ? "Sinais de oferta e preço" : "Supply & price signals"}
+            </h2>
+            <div className="kv-bf-prose">
+              {paragraphs(briefing.supply_price_note).map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 7 — Island notes (editorial, short/optional) */}
+        {briefing.island_notes && (
+          <section className="kv-bf-section">
+            <h2 className="kv-bf-section-head">
+              {isPt ? "Notas por ilha" : "Island notes"}
+            </h2>
+            <div className="kv-bf-prose">
+              {paragraphs(briefing.island_notes).map((para, i) => (
+                <p key={i}>{para}</p>
+              ))}
+            </div>
+          </section>
+        )}
+
+        {/* 8 — News context (manual, neutral, sourced) */}
+        {briefing.news_items && briefing.news_items.length > 0 && (
+          <section className="kv-bf-section">
+            <h2 className="kv-bf-section-head">
+              {isPt ? "Contexto de notícias" : "News context"}
+            </h2>
+            <ul className="kv-bf-news">
+              {briefing.news_items.map((item, i) => (
+                <li key={i} className="kv-bf-news-item">
+                  <div className="kv-bf-news-meta">
+                    <span>{item.source}</span>
+                    {item.date && <span className="kv-bf-news-date">{item.date}</span>}
+                  </div>
+                  {item.url ? (
+                    <a
+                      className="kv-bf-news-title"
+                      href={item.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      {item.title} <span aria-hidden="true">↗</span>
+                    </a>
+                  ) : (
+                    <span className="kv-bf-news-title">{item.title}</span>
+                  )}
+                  {item.note && <p className="kv-bf-news-note">{item.note}</p>}
+                </li>
+              ))}
+            </ul>
+            <p className="kv-bf-news-disclaimer">
+              {isPt
+                ? "Contexto externo apenas. Não implica relação causal com os preços observados."
+                : "External context only. No causal link to observed prices is implied."}
+            </p>
+          </section>
+        )}
+
+        {/* 9 — Data confidence (derived from the snapshot; v0.1 rule) */}
+        {confidence && (
+          <section className="kv-bf-section">
+            <h2 className="kv-bf-section-head">
+              {isPt ? "Confiança nos dados" : "Data confidence"}
+            </h2>
+            <div className={`kv-bf-conf kv-bf-conf-${confidence.level}`}>
+              <span className="kv-bf-conf-level">
+                {isPt
+                  ? { high: "Alta", medium: "Média", low: "Baixa" }[confidence.level]
+                  : confidence.level.toUpperCase()}
+              </span>
+              <ul className="kv-bf-conf-why">
+                <li>
+                  {isPt ? "Registos elegíveis: " : "Eligible records: "}
+                  <b>{formatNumber(confidence.indexEligibleCount, locale)}</b>
+                </li>
+                <li>
+                  {isPt ? "Cobertura de preço: " : "Price coverage: "}
+                  <b>{confidence.priceCoveragePct === null ? "—" : `${confidence.priceCoveragePct}%`}</b>
+                </li>
+                <li>
+                  {isPt ? "Cobertura de m²: " : "Sqm coverage: "}
+                  <b>{confidence.sqmCoveragePct === null ? "—" : `${confidence.sqmCoveragePct}%`}</b>
+                </li>
+                {confidence.smallSampleIslands > 0 && (
+                  <li>
+                    {isPt
+                      ? `Ilhas com amostra pequena (n<5): `
+                      : `Small-sample islands (n<5): `}
+                    <b>{formatNumber(confidence.smallSampleIslands, locale)}</b>
+                  </li>
+                )}
+              </ul>
+            </div>
+            <p className="kv-bf-conf-note">
+              {isPt
+                ? "Regra de confiança v0.1 — heurística ajustável baseada na cobertura e no tamanho da amostra, não uma verdade permanente."
+                : "Confidence rule v0.1 — a tunable heuristic from coverage and sample size, not permanent truth."}
+            </p>
+          </section>
+        )}
+
+        {/* 10 — Methodology / disclosure */}
         <section className="kv-bf-section kv-bf-methodology">
           <h2 className="kv-bf-section-head">
-            {isPt ? "Nota metodológica" : "Methodology note"}
+            {isPt ? "Metodologia e divulgação" : "Methodology & disclosure"}
           </h2>
+          <p className="kv-bf-disclosure">{isPt ? DISCLOSURE_PT : DISCLOSURE_EN}</p>
           <p>{methodology}</p>
         </section>
 
