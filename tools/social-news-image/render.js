@@ -93,6 +93,46 @@ function photoZone(x, y, w, h, label) {
     <text x="${x + w / 2}" y="${y + h / 2 + 34}" font-family="${FONT}" font-size="13" font-weight="400" letter-spacing="1" fill="${SAGE}" text-anchor="middle" opacity="0.55">platshållare — verklig bild/AI i steg 2</text>`;
 }
 
+// ── Direction N — Clean "news card" (breaking-news structure, no noise) ─────
+// One small tag + one dominant headline + quiet meta. Two themes.
+function newsCard({ dark }) {
+  const bg = dark ? INK : BONE;
+  const head = dark ? BONE : INK;
+  const meta = dark ? GRAY : GRAY;
+  const tagText = dark ? INK : INK; // ink text on sage chip in both themes
+  const markStroke = dark ? SAGE : INK;
+  const markFill = dark ? SAGE : INK;
+  const rule = dark ? SAGE : INK;
+  const ruleOp = dark ? 0.4 : 0.15;
+
+  const TAG = 'MARKET NEWS · CABO VERDE';
+  const tagFS = 18;
+  const chipW = TAG.length * (tagFS * CHAR_W + 2.4) + 56;
+
+  const hl = wrap(HEADLINE, 62, W - 2 * M);
+  const lh = 78;
+  // vertically center the headline block in the open middle area
+  const blockTop = 360;
+  const hlY = blockTop + 60;
+
+  return frame(`
+    <rect width="${W}" height="${H}" fill="${bg}"/>
+
+    <!-- tag (the only "news" signal we keep from the genre) -->
+    <rect x="${M}" y="${M}" width="${chipW}" height="46" fill="${SAGE}"/>
+    <text x="${M + 28}" y="${M + 30}" font-family="${FONT}" font-size="${tagFS}" font-weight="600" letter-spacing="2.4" fill="${tagText}">${esc(TAG)}</text>
+    <text x="${W - M}" y="${M + 31}" font-family="${FONT}" font-size="20" font-weight="500" letter-spacing="3" fill="${meta}" text-anchor="end">${esc(DATE)}</text>
+
+    <!-- dominant headline -->
+    ${lines(hl, 62, 500, head, M, hlY, lh, 'letter-spacing="-1.5"')}
+
+    <!-- quiet footer -->
+    <line x1="${M}" y1="${H - 150}" x2="${W - M}" y2="${H - 150}" stroke="${rule}" stroke-width="1" opacity="${ruleOp}"/>
+    ${mark(M, H - 116, 52, markStroke, markFill)}
+    <text x="${M + 72}" y="${H - 90}" font-family="${FONT}" font-size="18" font-weight="600" letter-spacing="3" fill="${dark ? SAGE : SAGE_DEEP}">AFRICA REAL ESTATE INDEX</text>
+    <text x="${M + 72}" y="${H - 64}" font-family="${FONT}" font-size="16" font-weight="400" letter-spacing="0.5" fill="${meta}">${esc(SOURCE)}</text>`);
+}
+
 // ── Direction A — Strict typographic, ink ground ────────────────────────────
 function dirA() {
   const hl = wrap(HEADLINE, 60, W - 2 * M);
@@ -174,7 +214,14 @@ const fontFiles = [
 const outDir = path.join(__dirname, 'out');
 fs.mkdirSync(outDir, { recursive: true });
 
-const directions = { A: dirA(), B: dirB(), C: dirC(), D: dirD() };
+const directions = {
+  'N-dark': newsCard({ dark: true }),
+  'N-light': newsCard({ dark: false }),
+  A: dirA(),
+  B: dirB(),
+  C: dirC(),
+  D: dirD(),
+};
 
 for (const [name, svg] of Object.entries(directions)) {
   const resvg = new Resvg(svg, {
