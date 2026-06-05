@@ -1,6 +1,6 @@
 # KazaVerde Curated Feed Operations
 
-Last updated: 2026-05-08
+Last updated: 2026-06-05
 
 ## Purpose
 
@@ -25,6 +25,7 @@ This is a temporary operating state, not the final architecture.
 The following actions can affect the live KazaVerde site immediately:
 
 - changing `publish_status` to `published` for a curated row that meets feed filters
+- changing `publish_status` from `published` to `removed` for a curated row that is no longer in the source feed
 - editing a curated `published` row's title, description, images, island, source id, or source URL
 - changing `public.v1_feed_cv` or `public.v1_feed_cv_curated_preview`
 
@@ -37,7 +38,24 @@ Treat any of those actions as production changes.
 - Do not modify `public.v1_feed_cv` for day-to-day listing changes.
 - Do not change curated rows directly to `published` before verification.
 - Do not regenerate AI descriptions unless that work is explicitly intended and approved.
+- Do not demote listings to `removed` from a failed or zero-row source fetch.
 - Do not rely on docs alone; verify live counts, view definitions, and sample rows.
+
+## Publish status lifecycle
+
+`kv_curated.listings.publish_status` has four listing states:
+
+| status | public feed? | meaning |
+|---|---:|---|
+| `needs_review` | no | Newly fetched or updated inventory awaiting manual review. |
+| `published` | yes | Human-approved inventory visible through `public.v1_feed_cv`. |
+| `hidden` | no | Manually suppressed inventory that should remain out of the public feed. |
+| `removed` | no | Previously published inventory that disappeared from the latest successful source fetch. |
+
+`removed` is not a review queue. It is an inventory lifecycle state. A removed
+listing stays in `kv_curated.listings` for audit/history, but leaves the live
+feed because `public.v1_feed_cv_curated_preview` only selects
+`publish_status = 'published'`.
 
 ## Safe workflow for adding or updating curated rows
 
@@ -87,6 +105,29 @@ After any curated publish change, check:
 - a sample of affected rows from `public.v1_feed_cv`
 - the live site at `https://kazaverde.com/listings`
 
+## Safe workflow for removed source inventory
+
+The curated ingest compares each successful source run against the source's
+currently `published` curated rows. If a published row for that same source id
+is absent from the current successful fetch, the ingest demotes it to
+`publish_status = 'removed'`.
+
+Safety rules:
+
+- Dry runs never mutate rows; they only report removal candidates.
+- A zero-row source fetch disables removal detection for that run.
+- Existing `needs_review`, `hidden`, and `removed` rows are not auto-promoted or
+  auto-demoted by the removal gate.
+- A removed row must not be returned to `published` automatically. If the source
+  later reappears, review the row deliberately before promotion.
+
+Verification after a removal-producing run:
+
+- compare the dry-run `removedCandidates` list with the source pages
+- confirm `public.v1_feed_cv` count decreases by the same number after a live run
+- inspect several demoted rows in `kv_curated.listings` and confirm
+  `publish_status = 'removed'`
+
 ## Safe workflow for feed-layer changes
 
 If you ever need to repoint the public feed again:
@@ -106,3 +147,4 @@ If you ever need to repoint the public feed again:
 - `migrations/028_kv_curated_preview_schema.sql`
 - `migrations/029_switch_v1_feed_cv_to_curated.sql`
 - `migrations/030_v1_feed_cv_curated_preview_contract_compat.sql`
+- `migrations/049_kv_curated_removed_status.sql`

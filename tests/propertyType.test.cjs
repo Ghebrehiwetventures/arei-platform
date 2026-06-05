@@ -23,6 +23,16 @@ test("extractPropertyType: land (EN)", () => {
   assert.equal(extractPropertyType("Building Plot 500m2"), "land");
 });
 
+test("extractPropertyType: plural lots (EN)", () => {
+  const propertyType = extractPropertyType(
+    "Lots in new subdivision - Ilha do Sal - Murdeira",
+    "https://www.ccoreinvestments.com/en/property-detail/sal-murdeira/750773"
+  );
+
+  assert.equal(propertyType, "land");
+  assert.equal(LAND_TYPES.test(propertyType), true);
+});
+
 // ── Portuguese ──────────────────────────────────────────────────────────────
 
 test("extractPropertyType: PT apartamento", () => {

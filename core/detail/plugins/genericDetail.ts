@@ -605,6 +605,11 @@ export function createGenericDetailPlugin(
         const match = text.match(/\b(\d{1,2})\b/);
         if (match) bathrooms = parseInt(match[1], 10);
       }
+      if (detailConfig.selectors?.area) {
+        const text = $(detailConfig.selectors.area).first().text().trim();
+        const parsed = parseAreaTextSqm(text);
+        if (parsed !== null) areaSqm = parsed;
+      }
 
       // C0) spec_table — structured label/value pairs (Elementor pre-data, dl/dt/dd, Houzez meta).
       // Runs BEFORE regex spec_patterns; structured pairs are more reliable than prose.
