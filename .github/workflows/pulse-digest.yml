@@ -29,9 +29,11 @@ jobs:
       SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
       SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      # Optional: set to a configured provider name to enable web intel.
-      # Leave unset for internal-signals-only (no fabricated web results).
+      # Optional web intelligence. Leave both unset for internal-signals-only
+      # (no fabricated web results). To enable: set PULSE_WEB_INTEL_PROVIDER
+      # to "tavily" and provide TAVILY_API_KEY.
       PULSE_WEB_INTEL_PROVIDER: ${{ secrets.PULSE_WEB_INTEL_PROVIDER }}
+      TAVILY_API_KEY: ${{ secrets.TAVILY_API_KEY }}
     steps:
       - name: Checkout
         uses: actions/checkout@v4
