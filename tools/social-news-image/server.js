@@ -13,7 +13,14 @@
 const http = require('http');
 const fs = require('fs');
 const path = require('path');
+const { Resvg } = require('@resvg/resvg-js');
 const { renderHero } = require('./hero');
+
+// Procedural placeholder so the studio works even without a default photo or AI.
+function placeholderImage() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="1080" height="1350"><rect width="1080" height="1350" fill="#2D4A42"/><text x="540" y="660" font-family="monospace" font-size="30" fill="#8ECFBF" text-anchor="middle" opacity="0.8">[ no image ]</text><text x="540" y="710" font-family="monospace" font-size="18" fill="#8ECFBF" text-anchor="middle" opacity="0.5">enable AI or paste an image URL</text></svg>`;
+  return new Resvg(svg).render().asPng();
+}
 
 const PORT = process.env.PORT || 4321;
 const DEFAULT_PHOTO = path.join(__dirname, 'photo.jpg');
@@ -67,7 +74,8 @@ async function getImageBuffer(item, useAi) {
     if (!res.ok) throw new Error(`Image fetch ${res.status}`);
     return Buffer.from(await res.arrayBuffer());
   }
-  return fs.readFileSync(DEFAULT_PHOTO);
+  if (fs.existsSync(DEFAULT_PHOTO)) return fs.readFileSync(DEFAULT_PHOTO);
+  return placeholderImage();
 }
 
 const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
