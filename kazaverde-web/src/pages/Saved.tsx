@@ -380,10 +380,11 @@ export default function Saved() {
               {islandStats.map((s) => (
                 <div className="kv-saved-vs-row" key={s.island}>
                   <div className="kv-saved-vs-island">{s.island}</div>
-                  <div>{s.count}</div>
-                  <div>{fmtPrice(s.avgPrice)}</div>
-                  <div>{fmtPrice(s.marketMedian)}</div>
+                  <div data-k={isPt ? "Guardados" : "You saved"}>{s.count}</div>
+                  <div data-k={isPt ? "Média" : "Your avg"}>{fmtPrice(s.avgPrice)}</div>
+                  <div data-k={isPt ? "Mediana da ilha" : "Island median"}>{fmtPrice(s.marketMedian)}</div>
                   <div
+                    data-k={isPt ? "Face ao mercado" : "Vs market"}
                     className={
                       s.vsPct == null
                         ? "kv-saved-vs-pct"

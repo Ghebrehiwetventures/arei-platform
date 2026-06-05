@@ -329,19 +329,41 @@
   .kv-saved-summary-cell:nth-child(2) { border-right: none; }
   .kv-saved-summary-cell:nth-child(-n+2) { border-bottom: 1px solid var(--kv-rule); }
   .kv-saved-loading-skel { grid-template-columns: repeat(2, 1fr); }
-  /* Vs-table — drop the header row and stack as label/value rows */
+  /* Vs-table — the 5-column grid can't survive narrow widths, so each
+     island becomes a self-contained card: name as a ruled header, then
+     labelled label/value rows (label left, value right). Labels come
+     from each cell's data-k attribute. */
   .kv-saved-vs-row {
-    grid-template-columns: 1fr 1fr;
-    gap: 6px 16px;
+    display: flex;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 0;
+    padding: 16px 18px;
   }
   .kv-saved-vs-head { display: none; }
-  .kv-saved-vs-row > div::before {
+  .kv-saved-vs-island {
+    font-size: 15px;
+    font-weight: 600;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid var(--kv-rule);
+  }
+  .kv-saved-vs-row > div:not(.kv-saved-vs-island) {
+    display: flex;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 5px 0;
+    font-size: 13px;
+  }
+  .kv-saved-vs-row > div:not(.kv-saved-vs-island)::before {
     content: attr(data-k);
     font-size: 10px;
+    font-weight: 600;
     color: var(--kv-gray-500);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    margin-right: 8px;
+    white-space: nowrap;
   }
 }
 @media (max-width: 640px) {
