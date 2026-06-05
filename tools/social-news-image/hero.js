@@ -129,7 +129,6 @@ function renderHero(item) {
 
   ${dek.map((ln, i) => `<text x="${M}" y="${dekFirstBaseline + i * 36}" font-family="${SANS}" font-size="27" font-weight="400" fill="${GRAY}">${esc(ln)}</text>`).join('\n')}
 
-  <text x="${M}" y="${footerY}" font-family="${MONO}" font-size="18" font-weight="500" letter-spacing="1" fill="${GRAY}">capeverderealestateindex.com</text>
   <text x="${W - M}" y="${footerY}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>
 </svg>`;
 
