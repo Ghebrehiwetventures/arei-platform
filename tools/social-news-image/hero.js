@@ -39,7 +39,7 @@ function lockup(x, y, color, h = 46) {
   const y1 = y + t - 1;
   return `${mark(x, y, h, color)}
   <g font-family="${MONO}" font-size="${t}" letter-spacing="${ls}" fill="${color}">
-    <text x="${tx}" y="${y1}" font-weight="600">CAPE VERDE</text>
+    <text x="${tx}" y="${y1}" font-weight="700">CAPE VERDE</text>
     <text x="${tx}" y="${y1 + adv}" font-weight="400" opacity="0.85">REAL ESTATE</text>
     <text x="${tx}" y="${y1 + adv * 2}" font-weight="400" opacity="0.85">INDEX</text>
   </g>`;
@@ -132,7 +132,7 @@ function renderHero(item) {
   <text x="${W - M}" y="${footerY}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>
 </svg>`;
 
-  const fontFiles = ['fonts/PlexMono-Regular.ttf','fonts/PlexMono-Medium.ttf','fonts/PlexMono-SemiBold.ttf','fonts/PlexSans-Regular.ttf','fonts/PlexSans-SemiBold.ttf','fonts/PlexSans-Bold.ttf','fonts/PlexSansCond-Bold.ttf','fonts/PlexSansCond-SemiBold.ttf'].map(f => path.join(__dirname, f));
+  const fontFiles = ['fonts/PlexMono-Regular.ttf','fonts/PlexMono-Medium.ttf','fonts/PlexMono-SemiBold.ttf','fonts/PlexMono-Bold.ttf','fonts/PlexSans-Regular.ttf','fonts/PlexSans-SemiBold.ttf','fonts/PlexSans-Bold.ttf','fonts/PlexSansCond-Bold.ttf','fonts/PlexSansCond-SemiBold.ttf'].map(f => path.join(__dirname, f));
   return new Resvg(svg, { font: { fontFiles, loadSystemFonts: false, defaultFontFamily: COND }, fitTo: { mode: 'width', value: W } }).render().asPng();
 }
 
