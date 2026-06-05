@@ -209,12 +209,125 @@ const fontFiles = [
   path.join(__dirname, 'fonts/PlexMono-Regular.ttf'),
   path.join(__dirname, 'fonts/PlexMono-Medium.ttf'),
   path.join(__dirname, 'fonts/PlexMono-SemiBold.ttf'),
+  path.join(__dirname, 'fonts/PlexSans-Regular.ttf'),
+  path.join(__dirname, 'fonts/PlexSans-SemiBold.ttf'),
+  path.join(__dirname, 'fonts/PlexSans-Bold.ttf'),
 ];
 
 const outDir = path.join(__dirname, 'out');
 fs.mkdirSync(outDir, { recursive: true });
 
+// ── Direction E — Photo-split news — parameterised by panel color theme ─────
+// panelColor: bg of lower panel
+// textColor: headline color
+// eyebrowColor: category label color
+// markColor: D-Layers mark on photo
+function newsSplitTheme({ panelColor, textColor, eyebrowColor, markColor, accentColor }) {
+  const SANS = 'IBM Plex Sans';
+  const splitY = Math.round(H * 0.56);
+  const panelH = H - splitY;
+
+  const hlMaxW = W - 2 * M;
+  const hlFS = 68;
+  const hlCharW = 0.52;
+  const hlMaxChars = Math.floor(hlMaxW / (hlFS * hlCharW));
+  const hlWords = HEADLINE.split(/\s+/);
+  const hlLines = [];
+  let cur = '';
+  for (const w of hlWords) {
+    const cand = cur ? cur + ' ' + w : w;
+    if (cand.length > hlMaxChars && cur) { hlLines.push(cur); cur = w; }
+    else cur = cand;
+  }
+  if (cur) hlLines.push(cur);
+
+  const hlLH = 82;
+  const eyebrowY = splitY + 72;
+  const hlY = eyebrowY + 56;
+  const metaY = Math.max(hlY + hlLines.length * hlLH + 40, H - 120);
+
+  return frame(`
+    ${photoZone(0, 0, W, splitY, '[ FOTO / AI-BILD ]')}
+    <text x="${M}" y="${M + 52}" font-family="${FONT}" font-size="26" font-weight="600" letter-spacing="6" fill="${BONE}" opacity="0.92">MARKET NEWS</text>
+    ${mark(W - M - 72, M + 2, 68, markColor, markColor)}
+    <rect x="0" y="${splitY}" width="${W}" height="${panelH}" fill="${panelColor}"/>
+    <text x="${M}" y="${eyebrowY}" font-family="${FONT}" font-size="22" font-weight="600" letter-spacing="4" fill="${eyebrowColor}">${esc('CABO VERDE · ' + DATE)}</text>
+    ${hlLines.map((ln, i) =>
+      `<text x="${M}" y="${hlY + i * hlLH}" font-family="${SANS}" font-size="${hlFS}" font-weight="700" fill="${textColor}" letter-spacing="-0.5">${esc(ln)}</text>`
+    ).join('\n')}
+    <line x1="${M}" y1="${metaY - 18}" x2="${W - M}" y2="${metaY - 18}" stroke="${accentColor}" stroke-width="1" opacity="0.35"/>
+    <text x="${M}" y="${metaY + 16}" font-family="${FONT}" font-size="19" font-weight="400" fill="${accentColor}" opacity="0.85">${esc(SOURCE)}</text>
+    <text x="${W - M}" y="${metaY + 16}" font-family="${FONT}" font-size="19" font-weight="600" letter-spacing="2" fill="${accentColor}" text-anchor="end" opacity="0.85">arei.so</text>`);
+}
+
+function newsSplit() {
+  return newsSplitTheme({ panelColor: SAGE_DEEP, textColor: BONE, eyebrowColor: SAGE, markColor: BONE, accentColor: SAGE });
+}
+
+// ── Direction E — Photo-split news — parameterised by panel color theme ─────
+// Top ~58%: photo zone. Bottom 42%: sage-deep panel with category, headline, meta.
+// D-Layers mark replaces the globe. IBM Plex Sans for headline punch.
+function newsSplit() {
+  const SANS = 'IBM Plex Sans';
+  const splitY = Math.round(H * 0.56); // photo / panel split
+  const panelH = H - splitY;
+
+  // Headline wrap using Plex Sans proportional width (~0.52 em per char at bold)
+  const hlMaxW = W - 2 * M;
+  const hlFS = 68;
+  const hlCharW = 0.52;
+  const hlMaxChars = Math.floor(hlMaxW / (hlFS * hlCharW));
+  const hlWords = HEADLINE.split(/\s+/);
+  const hlLines = [];
+  let cur = '';
+  for (const w of hlWords) {
+    const cand = cur ? cur + ' ' + w : w;
+    if (cand.length > hlMaxChars && cur) { hlLines.push(cur); cur = w; }
+    else cur = cand;
+  }
+  if (cur) hlLines.push(cur);
+
+  const hlLH = 82;
+  // vertically center headline block in the panel (leaving room for eyebrow + meta)
+  const eyebrowY = splitY + 72;
+  const hlY = eyebrowY + 56;
+  const metaY = Math.max(hlY + hlLines.length * hlLH + 40, H - 120);
+
+  return frame(`
+    <!-- photo zone placeholder -->
+    ${photoZone(0, 0, W, splitY, '[ FOTO / AI-BILD ]')}
+
+    <!-- "BREAKING NEWS" style label + mark on photo -->
+    <text x="${M}" y="${M + 52}" font-family="${FONT}" font-size="26" font-weight="600" letter-spacing="6" fill="${BONE}" opacity="0.92">MARKET NEWS</text>
+    ${mark(W - M - 72, M + 2, 68, BONE, BONE)}
+
+    <!-- teal-deep panel -->
+    <rect x="0" y="${splitY}" width="${W}" height="${panelH}" fill="${SAGE_DEEP}"/>
+
+    <!-- category eyebrow -->
+    <text x="${M}" y="${eyebrowY}" font-family="${FONT}" font-size="22" font-weight="600" letter-spacing="4" fill="${SAGE}">${esc('CABO VERDE · ' + DATE)}</text>
+
+    <!-- headline — Plex Sans Bold for punch -->
+    ${hlLines.map((ln, i) =>
+      `<text x="${M}" y="${hlY + i * hlLH}" font-family="${SANS}" font-size="${hlFS}" font-weight="700" fill="${BONE}" letter-spacing="-0.5">${esc(ln)}</text>`
+    ).join('\n')}
+
+    <!-- source line -->
+    <line x1="${M}" y1="${metaY - 18}" x2="${W - M}" y2="${metaY - 18}" stroke="${SAGE}" stroke-width="1" opacity="0.35"/>
+    <text x="${M}" y="${metaY + 16}" font-family="${FONT}" font-size="19" font-weight="400" fill="${SAGE}" opacity="0.85">${esc(SOURCE)}</text>
+    <text x="${W - M}" y="${metaY + 16}" font-family="${FONT}" font-size="19" font-weight="600" letter-spacing="2" fill="${SAGE}" text-anchor="end" opacity="0.85">arei.so</text>`);
+}
+
 const directions = {
+  // Theme 1: Sage Deep (mörk teal) — standard/default
+  'E1-sage-deep':  newsSplitTheme({ panelColor: SAGE_DEEP, textColor: BONE,    eyebrowColor: SAGE,      markColor: BONE,     accentColor: SAGE }),
+  // Theme 2: Ink (svart) — premium/allvarlig nyhet
+  'E2-ink':        newsSplitTheme({ panelColor: INK,       textColor: BONE,    eyebrowColor: SAGE,      markColor: SAGE,     accentColor: SAGE }),
+  // Theme 3: Sage (ljus teal) — positiv nyhet, med mörk text
+  'E3-sage-light': newsSplitTheme({ panelColor: SAGE,      textColor: INK,     eyebrowColor: SAGE_DEEP, markColor: BONE,     accentColor: SAGE_DEEP }),
+  // Theme 4: Off-white (varmt ljust) — neutral/rapport-känsla
+  'E4-offwhite':   newsSplitTheme({ panelColor: OFFWHITE,  textColor: INK,     eyebrowColor: SAGE_DEEP, markColor: BONE,     accentColor: GRAY }),
+  'E-split': newsSplit(),
   'N-dark': newsCard({ dark: true }),
   'N-light': newsCard({ dark: false }),
   A: dirA(),
