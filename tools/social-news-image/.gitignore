@@ -1,4 +1,5 @@
 node_modules/
 out/
-fonts/
+photo.jpg
+photo_b64.txt
 package-lock.json
