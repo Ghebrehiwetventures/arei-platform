@@ -3,6 +3,7 @@ const assert = require("node:assert/strict");
 
 require("ts-node/register/transpile-only");
 
+const { loadSourcesConfig } = require("../core/configLoader");
 const { createGenericDetailPlugin } = require("../core/detail/plugins/genericDetail");
 
 test("prefers structured bathroom and bedroom selectors over description regex matches", () => {
@@ -72,6 +73,41 @@ test("extracts CCore gross-area detail bar values with comma decimals", () => {
   const result = plugin.extract(html, "https://www.ccoreinvestments.com/en/property-detail/example/839806");
 
   assert.equal(result.areaSqm, 56);
+});
+
+test("extracts CCore home-icon detail bar area values from source config", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_ccoreinvestments");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin("cv_ccoreinvestments", source.detail);
+
+  const html = `
+    <html>
+      <body>
+        <div class="contentText">
+          A normal long listing description that should scope regex fallback away
+          from the details bar and leave selector extraction responsible for area.
+        </div>
+        <ul class="detailsBar__list">
+          <li><div class="detailsBar__detail"><i class="fa fa-bed"></i><span>2</span></div></li>
+          <li><div class="detailsBar__detail"><i class="fa fa-shower"></i><span>2</span></div></li>
+          <li>
+            <div class="detailsBar__detail">
+              <i class="proppy-icon proppy-icon-home-32"></i>
+              <span>64,85 m<sup>2</sup></span>
+            </div>
+          </li>
+        </ul>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(html, "https://www.ccoreinvestments.com/en/property-detail/example/824599");
+
+  assert.equal(result.areaSqm, 65);
 });
 
 test("falls back to regex when structured bathroom selector is absent", () => {

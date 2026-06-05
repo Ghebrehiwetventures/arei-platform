@@ -129,24 +129,26 @@ Spot-check (area):
 
 ## cv_ccoreinvestments — n=84 — DONE 2026-06-05
 
-Status: ✅ **Resolved for current v1 ingest.** One real scraper/config gap was
-fixed: CCore's Casafari/Proppy detail bar exposes gross area behind
-`i.proppy-icon-gross-area-24-custom + span`, but the source config only had
-structured selectors for bedrooms/bathrooms. Current remaining gaps are source
-floors, land/project nulls, or acceptable title/description-only semantics.
+Status: ✅ **Resolved for current v1 ingest.** Fresh 2026-06-05 dry-run found
+one additional scraper/config gap: CCore's Casafari/Proppy detail bar can expose
+area behind either `i.proppy-icon-gross-area-24-custom + span` or
+`i.proppy-icon-home-32 + span`. Both are now configured. Current remaining gaps
+are source floors, land/project nulls, or acceptable title/description-only
+semantics.
 
 | field | missing | verdict | notes |
 |---|---|---|---|
 | price | 1/84 | ✅ ACCEPTED | `ccore_760370` has no visible numeric price and RealEstateListing JSON-LD `offers` has `priceCurrency` but no `price`; treat as source/POA, not a scraper gap. |
 | bedrooms | 8/84 | ✅ ACCEPTED | 3 land rows correctly null residential fields after the `Lots` land-classification fix; 4 studio/store rows have no structured bedroom count (`Studio`/store semantics only); 1 project row exposes `Units: 3`, not a unit bedroom count. Acceptable pending future AI title/description extraction for title-only studio semantics. |
 | bathrooms | 4/84 | ✅ ACCEPTED | 3 are land rows; 1 is a multi-unit development page exposing `Units: 3` rather than per-unit bathrooms. No scraper bug remains. |
-| area | 5/84 | ✅ ACCEPTED | Fixed CCore detail-bar gross-area extraction; all-row area coverage improved from 61/84 to 79/84, and new-row area coverage from 4/13 to 11/13. Remaining pages checked have no detail-bar/JSON-LD/description area value. |
+| area | 4/84 | ✅ ACCEPTED | Fixed CCore detail-bar area extraction for both gross-area and home-icon variants; all-row area coverage improved from 79/84 to 80/84 in this pass. Remaining checked pages have no numeric area in the detail bar; their SVG/checkmark rows are amenities, not area. |
 
 Engine/config fixes landed:
 - ✅ Generic detail plugin supports `detail.selectors.area` and parses comma-decimal
   sqm values from structured selector text.
 - ✅ `cv_ccoreinvestments` config now maps area to
-  `.detailsBar__list i.proppy-icon-gross-area-24-custom + span`.
+  `.detailsBar__list i.proppy-icon-gross-area-24-custom + span` and
+  `.detailsBar__list i.proppy-icon-home-32 + span`.
 - ✅ Property-type heuristic classifies plural `lots` as `land`, so land rows do
   not retain bogus residential bedroom/bathroom values.
 
@@ -161,11 +163,15 @@ Verification evidence:
   - `ccore_831269` studio detail bar showed bathroom + `36,5 m2` but no bed
     icon; post-fix report has `bathrooms=1`, `property_size_sqm=37`,
     `bedrooms=null`.
+  - `ccore_824599` detail bar showed `2 2 64,85 m2` behind
+    `i.proppy-icon-home-32`; pre-fix report had `area=null`, post-fix report
+    has `property_size_sqm=65`.
   - `ccore_760370` JSON-LD `offers` has no `price`; no visible numeric price was
     found on the page.
   - Remaining checked area-null rows (`ccore_839337`, `ccore_836640`,
-    `ccore_829033`, `ccore_824599`, `ccore_820099`) had no detail-bar area,
-    no JSON-LD floor size, and no reliable description area value.
+    `ccore_829033`, `ccore_820099`) had no numeric detail-bar area. The
+    `ccore_836640` and `ccore_820099` extra detail-bar row is an SVG +
+    checkmark amenity row, not a size value.
 - Tests:
   `node --test tests/genericDetail.test.cjs tests/propertyType.test.cjs` passed.
 - Post-fix DRY_RUN report:
@@ -173,16 +179,35 @@ Verification evidence:
   produced 84 rows, 0 skipped, 71 status-gated published rows, 13 dry-run
   writable rows, and wrote `reports/curated/cv_cv_ccoreinvestments.json`.
 - Post-fix coverage in the report:
-  all rows: price 83/84, bedrooms 76/84, bathrooms 80/84, area 79/84,
+  all rows: price 83/84, bedrooms 76/84, bathrooms 80/84, area 80/84,
   images >=1 84/84, images >=3 84/84.
   New dry-run writable rows: price 13/13, bedrooms 12/13, bathrooms 13/13,
   area 11/13, images >=1 13/13, images >=3 13/13.
 - Direct Postgres compare (`DATABASE_URL`, not Supabase JS/REST):
   `kv_curated.listings` currently has 91 `cv_ccoreinvestments` rows
-  (90 `published`, 1 `needs_review`); `public.v1_feed_cv` has 90 rows for this
-  source. The fresh dry run has 84 current source rows. The 13 dry-run rows not
-  in curated/feed are the new writable rows; 20 older curated rows are no longer
-  in the fresh source output. No publish-status changes were made.
+  (71 `published`, 1 `needs_review`, 19 `removed`); `public.v1_feed_cv` has 71
+  rows for this source. The fresh dry run has 84 current source rows. The 13
+  dry-run rows not in curated/feed are the dry-run writable rows. 20 older
+  curated rows are no longer in the fresh source output; 19 are already
+  `removed` and 1 is `needs_review`. No feed rows are missing from the fresh
+  dry-run source set. No publish-status changes were made.
+- Actual ingest run:
+  `REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_ccoreinvestments npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 86 rows, enriched 86/86, skipped 0, status-gated 71 published rows,
+  generated AI descriptions for 15 rows, and upserted 15 rows as `needs_review`
+  with 0 write failures. The two rows that appeared after the dry-run snapshot
+  were `ccore_840239` and `ccore_840228`.
+- Post-ingest report coverage:
+  all rows: price 85/86, bedrooms 78/86, bathrooms 82/86, area 81/86,
+  images >=1 86/86, images >=3 86/86.
+  Writable rows: price 15/15, bedrooms 14/15, bathrooms 15/15, area 12/15,
+  images >=1 15/15, images >=3 15/15, AI descriptions 15/15.
+- Post-ingest DB verification:
+  `kv_curated.listings` has 106 `cv_ccoreinvestments` rows
+  (71 `published`, 16 `needs_review`, 19 `removed`); `public.v1_feed_cv` remains
+  71 rows. All 86 latest report rows exist in `kv_curated`; 15 latest source
+  rows are absent from `v1_feed_cv` because they remain `needs_review`. No
+  publish-status promotions were made.
 
 Spot-check (area):
 - https://www.ccoreinvestments.com/en/property-detail/flats-for-sale-t1-t2-t0-studios-beach-antonio-sousa-santa-maria-sal-island-cape-verde/839806
