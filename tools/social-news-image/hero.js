@@ -29,13 +29,19 @@ function mark(x, y, size, color) {
   return `<g transform="translate(${x},${y}) scale(${s})" stroke="${color}" stroke-width="1.4" stroke-linecap="square" fill="none"><rect x="3" y="3" width="14" height="14"/><rect x="6.5" y="6.5" width="14" height="14"/><rect x="10" y="10" width="9" height="9" fill="${color}" stroke="none"/></g>`;
 }
 
-// CVREI lockup: mark + stacked wordmark (IBM Plex Mono), per og-cvrei.html
-function lockup(x, y, color) {
-  return `${mark(x, y, 50, color)}
-  <g font-family="${MONO}" font-size="15" font-weight="600" letter-spacing="2" fill="${color}">
-    <text x="${x + 66}" y="${y + 15}">CAPE VERDE</text>
-    <text x="${x + 66}" y="${y + 34}">REAL ESTATE</text>
-    <text x="${x + 66}" y="${y + 53}">INDEX</text>
+// CVREI three-line ceremonial lockup (canonical: manual-core.jsx PrimaryLockup).
+// CAPE VERDE is weight 600; REAL ESTATE / INDEX are weight 400 @ 0.85 opacity.
+function lockup(x, y, color, h = 46) {
+  const t = Math.round(h * 0.34);          // wordmark size = mark height × 0.34
+  const tx = x + h + 10;                    // mark + gap
+  const ls = (t * 0.04).toFixed(2);         // 0.04em tracking
+  const adv = Math.round(t * 1.2);          // line advance (lineHeight ~1.0 + gap)
+  const y1 = y + t - 1;
+  return `${mark(x, y, h, color)}
+  <g font-family="${MONO}" font-size="${t}" letter-spacing="${ls}" fill="${color}">
+    <text x="${tx}" y="${y1}" font-weight="600">CAPE VERDE</text>
+    <text x="${tx}" y="${y1 + adv}" font-weight="400" opacity="0.85">REAL ESTATE</text>
+    <text x="${tx}" y="${y1 + adv * 2}" font-weight="400" opacity="0.85">INDEX</text>
   </g>`;
 }
 
@@ -114,8 +120,7 @@ function renderHero(item) {
 
   ${lockup(M, M, BONE)}
   <rect x="${W - M - 150}" y="${M}" width="150" height="44" rx="22" fill="none" stroke="${BONE}" stroke-width="2"/>
-  <text x="${W - M - 92}" y="${M + 29}" font-family="${MONO}" font-size="20" font-weight="700" letter-spacing="2" fill="${BONE}">SWIPE</text>
-  <text x="${W - M - 24}" y="${M + 29}" font-family="${MONO}" font-size="20" font-weight="700" fill="${BONE}">›</text>
+  <text x="${W - M - 73}" y="${M + 29}" font-family="${MONO}" font-size="20" font-weight="700" letter-spacing="2" fill="${BONE}" text-anchor="middle">SWIPE ›</text>
 
   <rect x="${M}" y="${pillY}" width="${catW}" height="${catH}" fill="${SAGE}"/>
   <text x="${M + 22}" y="${pillY + 30}" font-family="${SANS}" font-size="${catFS}" font-weight="700" letter-spacing="1" fill="${INK}">${esc(cat)}</text>
