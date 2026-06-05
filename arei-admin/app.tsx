@@ -102,6 +102,7 @@ import { AgencyConsoleView } from "./AgencyConsoleView";
 import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
 import { BrokerPilotView } from "./BrokerPilotView";
 import { ListingSocialView } from "./ListingSocialView";
+import { NewsPostStudioView } from "./NewsPostStudioView";
 
 // ============================================
 // D · LAYERS MARK — AREI brand mark (SVG)
@@ -3856,7 +3857,7 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications" | "featured" | "briefings";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "news-studio" | "notifications" | "featured" | "briefings";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
@@ -3865,6 +3866,7 @@ const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "briefings",     label: "Briefings"     },
   { key: "featured",      label: "Featured"      },
   { key: "marketing",     label: "Marketing"     },
+  { key: "news-studio",   label: "News Studio"   },
   { key: "notifications", label: "Notifications" },
 ];
 
@@ -4147,6 +4149,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "featured" && <FeaturedView />}
             {tab === "briefings" && <BriefingsView />}
             {tab === "marketing" && <ListingSocialView />}
+            {tab === "news-studio" && <NewsPostStudioView />}
             {tab === "notifications" && (
               <NotificationsView onCountChange={handleNotificationCountChange} />
             )}

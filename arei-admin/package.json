@@ -10,6 +10,7 @@
     "test:social-agent": "node ./scripts/verify-social-market-news.mjs"
   },
   "dependencies": {
+    "@resvg/resvg-js": "^2.6.2",
     "@supabase/supabase-js": "^2.95.3",
     "@tailwindcss/vite": "^4.1.18",
     "react": "^18.2.0",

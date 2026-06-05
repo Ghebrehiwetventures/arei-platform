@@ -8,7 +8,8 @@
   ],
   "functions": {
     "api/social-listing.js": { "maxDuration": 300 },
-    "api/social-listing-cron.js": { "maxDuration": 300 }
+    "api/social-listing-cron.js": { "maxDuration": 300 },
+    "api/generate-news-post-image.js": { "maxDuration": 60 }
   },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }
