@@ -8,6 +8,8 @@
 
 import Anthropic from "@anthropic-ai/sdk";
 import OpenAI from "openai";
+import * as fs from "fs";
+import * as path from "path";
 
 import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig } from "../configLoader";
 import { genericPaginatedFetcher, GenericParsedListing } from "../fetcher";
@@ -406,6 +408,12 @@ interface ExistingRowMeta {
   hasAi: boolean;
 }
 
+interface RemovedPublishedRow {
+  id: string;
+  title: string;
+  source_url_primary: string | null;
+}
+
 async function fetchExistingRowMeta(ids: string[]): Promise<Map<string, ExistingRowMeta>> {
   if (ids.length === 0) return new Map();
   const client = createPostgresClient();
@@ -418,6 +426,73 @@ async function fetchExistingRowMeta(ids: string[]): Promise<Map<string, Existing
       [ids]
     );
     return new Map(result.rows.map(r => [r.id, { status: r.publish_status, hasAi: r.has_ai }]));
+  } finally {
+    await client.end();
+  }
+}
+
+export function buildFindRemovedPublishedRowsQuery(
+  sourceId: string,
+  activeIds: string[]
+): { text: string; values: unknown[] } | null {
+  if (activeIds.length === 0) return null;
+  return {
+    text: `
+SELECT id, title, source_url_primary
+  FROM kv_curated.listings
+ WHERE source_id_primary = $1
+   AND publish_status = 'published'
+   AND NOT (id = ANY($2::text[]))
+ ORDER BY id
+`,
+    values: [sourceId, activeIds],
+  };
+}
+
+export function buildDemoteRemovedPublishedRowsQuery(
+  sourceId: string,
+  activeIds: string[],
+  removedAt: string
+): { text: string; values: unknown[] } | null {
+  if (activeIds.length === 0) return null;
+  return {
+    text: `
+UPDATE kv_curated.listings
+   SET publish_status = 'removed',
+       last_verified_at = $3,
+       notes = concat_ws(E'\\n', nullif(notes, ''), '[' || $3::text || '] Auto-removed: missing from latest successful source fetch.'),
+       updated_at = now()
+ WHERE source_id_primary = $1
+   AND publish_status = 'published'
+   AND NOT (id = ANY($2::text[]))
+ RETURNING id, title, source_url_primary
+`,
+    values: [sourceId, activeIds, removedAt],
+  };
+}
+
+async function findRemovedPublishedRows(sourceId: string, activeIds: string[]): Promise<RemovedPublishedRow[]> {
+  const query = buildFindRemovedPublishedRowsQuery(sourceId, activeIds);
+  if (!query) return [];
+  const client = createPostgresClient();
+  await client.connect();
+  try {
+    const result = await client.query<RemovedPublishedRow>(query.text, query.values);
+    return result.rows;
+  } finally {
+    await client.end();
+  }
+}
+
+async function demoteRemovedPublishedRows(sourceId: string, activeIds: string[]): Promise<RemovedPublishedRow[]> {
+  const removedAt = new Date().toISOString();
+  const query = buildDemoteRemovedPublishedRowsQuery(sourceId, activeIds, removedAt);
+  if (!query) return [];
+  const client = createPostgresClient();
+  await client.connect();
+  try {
+    const result = await client.query<RemovedPublishedRow>(query.text, query.values);
+    return result.rows;
   } finally {
     await client.end();
   }
@@ -567,6 +642,64 @@ export function deriveSourceHealthReport(
   };
 }
 
+// ─── Optional rich JSON report (diagnostics only) ────────────────────────────
+// Opt-in via REPORT_JSON=1. Writes the full per-listing dataset (image URLs,
+// area, beds/baths, price, location, source URL) that the stdout coverage
+// summary omits — for local field-gap / image-outlier analysis. Writes to
+// reports/curated/ (already gitignored). Never runs unless the flag is set, so
+// normal and production runs are untouched.
+function coverageOf(rows: CuratedRow[]) {
+  const n = rows.length || 1;
+  const pct = (c: number) => `${c}/${rows.length} (${Math.round((100 * c) / n)}%)`;
+  const area = (r: CuratedRow) => r.property_size_sqm ?? r.land_area_sqm;
+  return {
+    price: pct(rows.filter(r => r.price != null).length),
+    bedrooms: pct(rows.filter(r => r.bedrooms != null).length),
+    bathrooms: pct(rows.filter(r => r.bathrooms != null).length),
+    area: pct(rows.filter(r => area(r) != null).length),
+    images_ge1: pct(rows.filter(r => r.image_urls && r.image_urls.length > 0).length),
+    images_ge3: pct(rows.filter(r => r.image_urls && r.image_urls.length >= 3).length),
+  };
+}
+
+function writeReportJson(
+  marketId: string,
+  sourceId: string,
+  dryRun: boolean,
+  fetched: number,
+  rows: CuratedRow[],
+  skipped: Array<{ id: string; reason: string }>,
+  publishedIds: Set<string>,
+  removedPublishedRows: RemovedPublishedRow[]
+): void {
+  const dir = path.resolve(__dirname, "../../reports/curated");
+  fs.mkdirSync(dir, { recursive: true });
+  const report = {
+    market: marketId,
+    source: sourceId,
+    generatedAt: new Date().toISOString(),
+    dryRun,
+    summary: {
+      fetched,
+      rowsReady: rows.length,
+      skipped: skipped.length,
+      alreadyPublished: publishedIds.size,
+      writable: rows.filter(r => !publishedIds.has(r.id)).length,
+      removedCandidates: removedPublishedRows.length,
+    },
+    coverage: {
+      allRows: coverageOf(rows),
+      newRows: coverageOf(rows.filter(r => !publishedIds.has(r.id))),
+    },
+    skipped,
+    removedCandidates: removedPublishedRows,
+    listings: rows.map(r => ({ ...r, alreadyPublished: publishedIds.has(r.id) })),
+  };
+  const outPath = path.join(dir, `${marketId}_${sourceId}.json`);
+  fs.writeFileSync(outPath, JSON.stringify(report, null, 2));
+  console.log(`[Report] Wrote ${rows.length} listings → ${outPath}`);
+}
+
 // ─── Entry point ────────────────────────────────────────────────────────────
 
 export async function runMarketSource(opts: RunMarketSourceOptions): Promise<void> {
@@ -703,6 +836,27 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   const writable = rows.filter(r => !publishedIds.has(r.id));
   console.log(`\nRows to process: ${writable.length}`);
 
+  // Removal freshness is about source presence, not curated-row validity.
+  // A fetched listing that later gets skipped for title/location validation
+  // should not be treated as removed from the source.
+  const activeIds = listings.map(l => l.id).filter(Boolean);
+  const removedPublishedRows = await findRemovedPublishedRows(sourceId, activeIds);
+  if (activeIds.length === 0) {
+    console.log(`\n[Removed-gate] Source produced 0 valid rows — removal detection disabled for safety.`);
+  } else if (removedPublishedRows.length > 0) {
+    console.log(`\n[Removed-gate] ${removedPublishedRows.length} published listings absent from latest successful source fetch:`);
+    for (const row of removedPublishedRows) console.log(`  - ${row.id} ${row.source_url_primary ?? ""}`);
+    if (dryRun) {
+      console.log(`  [DRY_RUN] These would be demoted to publish_status='removed'.`);
+    }
+  } else {
+    console.log(`\n[Removed-gate] No published listings missing from latest source fetch.`);
+  }
+
+  if (process.env.REPORT_JSON === "1") {
+    writeReportJson(marketId, sourceId, dryRun, listings.length, rows, skipped, publishedIds, removedPublishedRows);
+  }
+
   if (!dryRun) {
     const needsAi = writable.filter(r => !haveAiIds.has(r.id));
     const aiSkippedExisting = writable.length - needsAi.length;
@@ -745,6 +899,11 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
       existingHealth,
     );
     return;
+  }
+
+  if (removedPublishedRows.length > 0) {
+    const demoted = await demoteRemovedPublishedRows(sourceId, activeIds);
+    console.log(`[Removed-gate] Demoted ${demoted.length} published listings to publish_status='removed'.`);
   }
 
   await writeToKvCurated(writable);

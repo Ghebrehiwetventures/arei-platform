@@ -88,6 +88,7 @@ export interface DetailConfig {
     images?: string;
     bedrooms?: string;
     bathrooms?: string;
+    area?: string;
     price?: string;
     location?: string;
   };
