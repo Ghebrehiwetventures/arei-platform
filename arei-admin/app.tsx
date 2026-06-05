@@ -3370,6 +3370,10 @@ function MarketNewsView() {
   const [addUrlInput, setAddUrlInput] = React.useState("");
   const [addUrlLoading, setAddUrlLoading] = React.useState(false);
   const [addUrlError, setAddUrlError] = React.useState<string | null>(null);
+  const [addUrlManualMode, setAddUrlManualMode] = React.useState(false);
+  const [addUrlTitle, setAddUrlTitle] = React.useState("");
+  const [addUrlSnippet, setAddUrlSnippet] = React.useState("");
+  const [addUrlSourceName, setAddUrlSourceName] = React.useState("");
 
   const load = React.useCallback(async (status: MarketNewsStatus) => {
     setLoading(true);
@@ -3422,6 +3426,10 @@ function MarketNewsView() {
     e.preventDefault();
     const url = addUrlInput.trim();
     if (!url) return;
+    if (addUrlManualMode && !addUrlTitle.trim()) {
+      setAddUrlError("Add the article title before submitting manually.");
+      return;
+    }
     setAddUrlLoading(true);
     setAddUrlError(null);
     try {
@@ -3432,12 +3440,21 @@ function MarketNewsView() {
           "Content-Type": "application/json",
           ...(session?.access_token ? { Authorization: `Bearer ${session.access_token}` } : {}),
         },
-        body: JSON.stringify({ url }),
+        body: JSON.stringify(addUrlManualMode ? {
+          url,
+          manual: true,
+          title: addUrlTitle.trim(),
+          snippet: addUrlSnippet.trim(),
+          sourceName: addUrlSourceName.trim(),
+        } : { url }),
       });
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 409) {
           setAddUrlError(`Already exists in queue (${data.existing_status ?? "candidate"}).`);
+        } else if (data.code === "upstream_blocked") {
+          setAddUrlManualMode(true);
+          setAddUrlError(data.error ?? "The publisher blocked automatic fetching. Add the article details manually.");
         } else {
           throw new Error(data.error ?? `Request failed (${res.status})`);
         }
@@ -3448,6 +3465,10 @@ function MarketNewsView() {
         setItems((prev) => [data.candidate as MarketNewsRow, ...prev]);
       }
       setAddUrlInput("");
+      setAddUrlTitle("");
+      setAddUrlSnippet("");
+      setAddUrlSourceName("");
+      setAddUrlManualMode(false);
       setAddUrlOpen(false);
     } catch (err) {
       setAddUrlError(err instanceof Error ? err.message : String(err));
@@ -3471,7 +3492,7 @@ function MarketNewsView() {
           </div>
           <button
             type="button"
-            onClick={() => { setAddUrlOpen((v) => !v); setAddUrlError(null); }}
+            onClick={() => { setAddUrlOpen((v) => !v); setAddUrlError(null); setAddUrlManualMode(false); }}
             className="shrink-0 mt-1 px-3 py-1.5 text-[12px] font-mono font-medium rounded border border-border bg-surface-2 text-foreground hover:bg-surface-3 transition-colors"
           >
             + Add URL
@@ -3484,22 +3505,62 @@ function MarketNewsView() {
             <p className="text-[12px] text-foreground-muted mb-3 font-mono">
               Paste a news article URL — it will be fetched, enriched, and added as a candidate.
             </p>
-            <form onSubmit={handleAddUrl} className="flex gap-2">
-              <input
-                type="url"
-                value={addUrlInput}
-                onChange={(e) => setAddUrlInput(e.target.value)}
-                placeholder="https://…"
-                disabled={addUrlLoading}
-                className="flex-1 px-3 py-1.5 text-sm rounded border border-border bg-surface-2 text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
-              />
-              <button
-                type="submit"
-                disabled={addUrlLoading || !addUrlInput.trim()}
-                className="px-4 py-1.5 text-[12px] font-mono font-medium rounded bg-accent text-deep-green hover:opacity-90 transition-opacity disabled:opacity-40"
-              >
-                {addUrlLoading ? "Fetching…" : "Fetch & add"}
-              </button>
+            <form onSubmit={handleAddUrl} className="space-y-3">
+              <div className="flex gap-2">
+                <input
+                  type="url"
+                  value={addUrlInput}
+                  onChange={(e) => setAddUrlInput(e.target.value)}
+                  placeholder="https://…"
+                  disabled={addUrlLoading}
+                  className="flex-1 px-3 py-1.5 text-sm rounded border border-border bg-surface-2 text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+                />
+                <button
+                  type="submit"
+                  disabled={addUrlLoading || !addUrlInput.trim() || (addUrlManualMode && !addUrlTitle.trim())}
+                  className="px-4 py-1.5 text-[12px] font-mono font-medium rounded bg-accent text-deep-green hover:opacity-90 transition-opacity disabled:opacity-40"
+                >
+                  {addUrlLoading ? "Fetching…" : addUrlManualMode ? "Add manually" : "Fetch & add"}
+                </button>
+              </div>
+
+              {addUrlManualMode && (
+                <div className="grid gap-2">
+                  <div className="grid gap-1">
+                    <label className="text-[11px] font-mono text-foreground-muted">Article title</label>
+                    <input
+                      type="text"
+                      value={addUrlTitle}
+                      onChange={(e) => setAddUrlTitle(e.target.value)}
+                      placeholder="Bloomberg article headline"
+                      disabled={addUrlLoading}
+                      className="px-3 py-1.5 text-sm rounded border border-border bg-surface-2 text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="grid gap-1">
+                    <label className="text-[11px] font-mono text-foreground-muted">Excerpt</label>
+                    <textarea
+                      value={addUrlSnippet}
+                      onChange={(e) => setAddUrlSnippet(e.target.value)}
+                      placeholder="Short summary or excerpt visible from the source"
+                      disabled={addUrlLoading}
+                      rows={3}
+                      className="px-3 py-1.5 text-sm rounded border border-border bg-surface-2 text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+                    />
+                  </div>
+                  <div className="grid gap-1">
+                    <label className="text-[11px] font-mono text-foreground-muted">Source name</label>
+                    <input
+                      type="text"
+                      value={addUrlSourceName}
+                      onChange={(e) => setAddUrlSourceName(e.target.value)}
+                      placeholder="Bloomberg"
+                      disabled={addUrlLoading}
+                      className="px-3 py-1.5 text-sm rounded border border-border bg-surface-2 text-foreground placeholder:text-foreground-muted focus:outline-none focus:ring-1 focus:ring-accent disabled:opacity-50"
+                    />
+                  </div>
+                </div>
+              )}
             </form>
             {addUrlError && (
               <p className="mt-2 text-[12px] text-red">{addUrlError}</p>

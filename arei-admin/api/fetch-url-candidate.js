@@ -168,7 +168,12 @@ async function fetchPage(url) {
       headers: { "User-Agent": USER_AGENT, Accept: "text/html,*/*" },
       signal: controller.signal,
     });
-    if (!res.ok) throw new Error(`HTTP ${res.status} ${res.statusText}`);
+    if (!res.ok) {
+      const err = new Error(`HTTP ${res.status} ${res.statusText}`);
+      err.status = res.status;
+      err.statusText = res.statusText;
+      throw err;
+    }
     // Read only the first 100 KB — enough for <head> meta tags
     const reader  = res.body?.getReader();
     const chunks  = [];
@@ -190,6 +195,33 @@ async function fetchPage(url) {
   } finally {
     clearTimeout(timer);
   }
+}
+
+function isManualMetadata(body) {
+  return Boolean(
+    body?.manual === true ||
+    body?.manual_metadata === true ||
+    body?.title ||
+    body?.snippet ||
+    body?.sourceName ||
+    body?.source_name
+  );
+}
+
+function buildManualMeta(body, pageUrl) {
+  const title = (body.title || "").toString().trim();
+  if (!title) {
+    const err = new Error("Title is required when the article cannot be fetched automatically.");
+    err.status = 400;
+    throw err;
+  }
+
+  const sourceName = (body.sourceName || body.source_name || "").toString().trim() ||
+    hostnameToSourceName(new URL(pageUrl).hostname);
+  const description = (body.snippet || body.description || "").toString().trim();
+  const lang = (body.language || "en").toString().slice(0, 2).toLowerCase() || "en";
+
+  return { title, description, siteName: sourceName, lang };
 }
 
 // ── OpenAI enrichment ──────────────────────────────────────────────────────
@@ -414,14 +446,36 @@ export default async function handler(req, res) {
 
   // ── Fetch page ────────────────────────────────────────────────────────────
 
-  let html;
-  try {
-    html = await fetchPage(canonicalUrl);
-  } catch (err) {
-    return send(res, 502, { error: `Failed to fetch URL: ${err?.message ?? String(err)}` });
-  }
+  let meta;
+  const manualMetadata = isManualMetadata(body);
+  if (manualMetadata) {
+    try {
+      meta = buildManualMeta(body, canonicalUrl);
+    } catch (err) {
+      return send(res, err?.status || 400, { error: err?.message ?? String(err) });
+    }
+  } else {
+    let html;
+    try {
+      html = await fetchPage(canonicalUrl);
+    } catch (err) {
+      const upstreamStatus = Number(err?.status || 0);
+      if (upstreamStatus === 401 || upstreamStatus === 403 || upstreamStatus === 451) {
+        return send(res, 502, {
+          error: "The publisher blocked automatic fetching. Add the URL manually with the article title and excerpt.",
+          code: "upstream_blocked",
+          upstream_status: upstreamStatus,
+        });
+      }
+      return send(res, 502, {
+        error: `Failed to fetch URL: ${err?.message ?? String(err)}`,
+        code: "upstream_fetch_failed",
+        upstream_status: upstreamStatus || null,
+      });
+    }
 
-  const meta = extractPageMeta(html, canonicalUrl);
+    meta = extractPageMeta(html, canonicalUrl);
+  }
 
   if (!meta.title) {
     return send(res, 422, { error: "Could not extract a title from the page. Check that the URL is a news article." });
