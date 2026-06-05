@@ -76,7 +76,13 @@ function dekWrap(text, fontSize, maxWidth, charW = 0.52) {
 }
 
 function renderHero(item) {
-  const photoUri = 'data:image/jpeg;base64,' + item.imageBuffer.toString('base64');
+  // Detect mime from magic bytes (AI images are PNG, stock photos JPEG).
+  const b = item.imageBuffer;
+  const mime = (b[0] === 0x89 && b[1] === 0x50) ? 'image/png'
+             : (b[0] === 0x47 && b[1] === 0x49) ? 'image/gif'
+             : (b[0] === 0x52 && b[1] === 0x49) ? 'image/webp'
+             : 'image/jpeg';
+  const photoUri = `data:${mime};base64,` + b.toString('base64');
 
   const words = item.headline.toUpperCase().split(/\s+/);
   const hset = highlightSet(words, item.highlight);
