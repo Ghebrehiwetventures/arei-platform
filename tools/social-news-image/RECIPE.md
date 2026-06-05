@@ -15,13 +15,18 @@ news account, restrained like a research desk. Never the cheap red-banner look.
 **Carousel, 3–5 slides.** Carousels get the most reach on IG and let us prove
 value beyond the headline.
 
-| Slide | Purpose | Required |
-|-------|---------|----------|
-| 1 · Hero | The hook: photo + headline | always |
-| 2 · What happened | 2–3 factual bullets | always |
-| 3 · Why it matters | context / analysis, AREI's voice | always |
-| 4 · Data (optional) | one chart/number, flat-ink bg for sharpness | when we have a number |
-| 5 · CTA | follow + link in bio | always (last) |
+**v1 = 2 slides** (Hero + What happened). Keep it lean — the caption carries
+context and CTA. "Why it matters", a data slide, and a CTA slide are **v1.1+**
+(only add once the lean format is proven; more slides risk over-explaining,
+which works against AREI's measured tone).
+
+| Slide | Purpose | Scope |
+|-------|---------|-------|
+| 1 · Hero | The hook: photo + headline | **v1** |
+| 2 · What happened | 2–3 factual bullets, photo + ink zone | **v1** |
+| 3 · Why it matters | context / analysis, AREI's voice | v1.1 (optional) |
+| 4 · Data | one chart/number, flat-ink bg for sharpness | v1.1 (when we have a number) |
+| 5 · CTA | follow + link in bio | v1.1 (last) |
 
 Aspect ratio **1080 × 1350** (4:5 portrait). Outer margin 64–80px.
 
