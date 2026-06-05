@@ -1,0 +1,170 @@
+<h2>B in detail — does this feel right?</h2>
+<p class="subtitle">Four pieces. Tell me which to keep, drop, or rework. (No click needed — just respond in the terminal.)</p>
+
+<div class="mockup" style="margin-bottom:16px;">
+  <div class="mockup-header">1 · Dashboard strip (always visible above the table)</div>
+  <div class="mockup-body" style="padding:12px;">
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;font-size:11px;">
+
+      <div style="background:#1a1a1a;border:1px solid #2D4A42;padding:10px;border-radius:4px;">
+        <div style="opacity:.6;font-size:9px;text-transform:uppercase;letter-spacing:.5px;">Live feed</div>
+        <div style="font-size:22px;margin-top:2px;"><b>425</b></div>
+        <div style="opacity:.6;font-size:9px;">in public.v1_feed_cv · 11 sources</div>
+      </div>
+
+      <div style="background:#1a1a1a;border:1px solid #5a4a14;padding:10px;border-radius:4px;">
+        <div style="opacity:.6;font-size:9px;text-transform:uppercase;letter-spacing:.5px;">Needs review</div>
+        <div style="font-size:22px;margin-top:2px;"><b>44</b></div>
+        <div style="opacity:.6;font-size:9px;">8 in queue &gt;14d · oldest 23d</div>
+      </div>
+
+      <div style="background:#1a1a1a;border:1px solid #333;padding:10px;border-radius:4px;">
+        <div style="opacity:.6;font-size:9px;text-transform:uppercase;letter-spacing:.5px;">New this week</div>
+        <div style="font-size:22px;margin-top:2px;"><b>12</b></div>
+        <div style="opacity:.6;font-size:9px;">first_seen ≥ 7d ago · 4 sources</div>
+      </div>
+
+      <div style="background:#1a1a1a;border:1px solid #5a1f1f;padding:10px;border-radius:4px;">
+        <div style="opacity:.6;font-size:9px;text-transform:uppercase;letter-spacing:.5px;">Agent flagged</div>
+        <div style="font-size:22px;margin-top:2px;"><b>3</b></div>
+        <div style="opacity:.6;font-size:9px;">last verdict = hide · still queued</div>
+      </div>
+
+    </div>
+    <div style="opacity:.5;font-size:9px;margin-top:6px;">↑ click a tile → table filters to that subset. "Agent flagged" needs a review_log table — see below.</div>
+  </div>
+</div>
+
+<div class="mockup" style="margin-bottom:16px;">
+  <div class="mockup-header">2 · Filter bar + table</div>
+  <div class="mockup-body" style="padding:12px;">
+    <div style="display:flex;gap:6px;font-size:10px;margin-bottom:8px;flex-wrap:wrap;align-items:center;">
+      <span style="background:#2D4A42;color:#fff;padding:2px 8px;border-radius:10px;">status: needs_review ×</span>
+      <span style="background:#1a1a1a;color:#ddd;padding:2px 8px;border-radius:10px;border:1px solid #333;">source: any ▾</span>
+      <span style="background:#1a1a1a;color:#ddd;padding:2px 8px;border-radius:10px;border:1px solid #333;">island: any ▾</span>
+      <span style="background:#1a1a1a;color:#ddd;padding:2px 8px;border-radius:10px;border:1px solid #333;">price: any ▾</span>
+      <input class="mock-input" style="padding:2px 8px;font-size:10px;flex:1;max-width:220px;" placeholder="search title or id…">
+      <span style="margin-left:auto;opacity:.6;">44 results</span>
+    </div>
+
+    <table style="width:100%;border-collapse:collapse;font-size:10px;">
+      <thead style="opacity:.6;">
+        <tr><th align="left" style="padding:4px 6px;">status</th><th align="left">image</th><th align="left">title</th><th align="left">source</th><th align="left">island · city</th><th align="left">type</th><th align="right">price €</th><th align="right">b/b/m²</th><th></th></tr>
+      </thead>
+      <tbody>
+        <tr style="border-top:1px solid #222;background:#1d1d1d;">
+          <td style="padding:6px;"><span style="background:#5a4a14;color:#ffd87a;padding:1px 6px;border-radius:3px;">needs_review</span></td>
+          <td><div style="width:32px;height:24px;background:#333;border-radius:2px;"></div></td>
+          <td><b>Ground Floor 2 Bed KEY READY Apartment</b><div style="opacity:.5;font-size:9px;">hcv_0931b1abadab</div></td>
+          <td>homescasaverde</td>
+          <td>Sal · Santa Maria</td>
+          <td>apartment</td>
+          <td align="right">97 500</td>
+          <td align="right" style="color:#c44a3a;">—/—/—</td>
+          <td>↗</td>
+        </tr>
+        <tr style="border-top:1px solid #222;">
+          <td style="padding:6px;"><span style="background:#5a4a14;color:#ffd87a;padding:1px 6px;border-radius:3px;">needs_review</span></td>
+          <td><div style="width:32px;height:24px;background:#333;border-radius:2px;"></div></td>
+          <td>Apartamento T1 - Ilha do Sal - Santa Maria</td>
+          <td>ccoreinvestments</td>
+          <td>Sal · Santa Maria</td>
+          <td style="color:#c44a3a;">property</td>
+          <td align="right">85 000</td>
+          <td align="right">1/—/38</td>
+          <td>↗</td>
+        </tr>
+        <tr style="border-top:1px solid #222;">
+          <td style="padding:6px;"><span style="background:#1a3326;color:#8ECFBF;padding:1px 6px;border-radius:3px;">live</span></td>
+          <td><div style="width:32px;height:24px;background:#333;border-radius:2px;"></div></td>
+          <td>Villa Ocean View</td>
+          <td>remax</td>
+          <td>Sal · Santa Maria</td>
+          <td>villa</td>
+          <td align="right">450 000</td>
+          <td align="right">4/3/220</td>
+          <td>↗</td>
+        </tr>
+      </tbody>
+    </table>
+    <div style="opacity:.5;font-size:9px;margin-top:6px;">Red field hints (— bedrooms, "property" type) make problems jump out at scan-time.</div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">3 · Detail drawer (slides from right)</div>
+    <div class="mockup-body" style="padding:10px;font-size:10px;">
+      <div style="opacity:.5;font-size:9px;">hcv_0931b1abadab</div>
+      <b>Ground Floor 2 Bed KEY READY Apartment</b>
+      <div style="opacity:.6;font-size:9px;">view source ↗</div>
+
+      <div style="display:flex;gap:4px;margin-top:8px;flex-wrap:wrap;">
+        <div style="width:54px;height:36px;background:#333;border-radius:2px;"></div>
+        <div style="width:54px;height:36px;background:#333;border-radius:2px;"></div>
+        <div style="width:54px;height:36px;background:#333;border-radius:2px;"></div>
+        <div style="opacity:.5;align-self:center;">+10</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:4px;margin-top:8px;font-size:9px;">
+        <div><span style="opacity:.5;">island</span><br>Sal</div>
+        <div><span style="opacity:.5;">city</span><br>Santa Maria</div>
+        <div><span style="opacity:.5;">type</span><br>apartment</div>
+        <div><span style="opacity:.5;">price</span><br>€97 500</div>
+        <div><span style="opacity:.5;">bedrooms</span><br><span style="color:#c44a3a;">—</span></div>
+        <div><span style="opacity:.5;">bathrooms</span><br><span style="color:#c44a3a;">—</span></div>
+      </div>
+
+      <button class="mock-button" style="margin-top:8px;width:100%;">Run review</button>
+
+      <div style="margin-top:8px;border-top:1px solid #333;padding-top:8px;">
+        <span style="background:#5a4a14;color:#ffd87a;padding:1px 6px;border-radius:3px;font-size:9px;">hold · 85%</span>
+        <ul style="margin:4px 0 0 14px;padding:0;font-size:9px;">
+          <li>title says "2 Bed", bedrooms is null</li>
+          <li>source mentions ~133m², size is null</li>
+        </ul>
+        <div style="margin-top:6px;font-size:9px;">Suggested patch (☑ to accept)</div>
+        <div style="font-size:9px;">☑ bedrooms · — → 2</div>
+        <div style="font-size:9px;">☑ bathrooms · — → 1</div>
+        <div style="font-size:9px;">☑ property_size_sqm · — → 133</div>
+      </div>
+
+      <div style="display:flex;gap:4px;margin-top:8px;">
+        <button class="mock-button" style="flex:1;">Apply</button>
+        <button class="mock-button" style="flex:1;background:#1a3326;color:#8ECFBF;">Apply + Publish</button>
+        <button class="mock-button" style="flex:1;background:#3a1818;color:#ff8888;">Hide</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="mockup">
+    <div class="mockup-header">4 · Bulk actions (when rows are checked)</div>
+    <div class="mockup-body" style="padding:10px;font-size:10px;">
+      <div style="opacity:.7;">When you tick checkboxes on multiple rows:</div>
+      <div style="margin-top:8px;padding:8px;background:#1a1a1a;border:1px solid #2D4A42;border-radius:4px;">
+        <b>3 selected</b>
+        <div style="display:flex;gap:4px;margin-top:6px;">
+          <button class="mock-button" style="font-size:9px;">Review all</button>
+          <button class="mock-button" style="font-size:9px;background:#1a3326;color:#8ECFBF;">Publish</button>
+          <button class="mock-button" style="font-size:9px;background:#3a1818;color:#ff8888;">Hide</button>
+        </div>
+      </div>
+      <div style="margin-top:8px;opacity:.6;font-size:9px;">
+        "Review all" runs Haiku on each row sequentially (~3s each) and shows a side panel with all verdicts — great for clearing the queue in one pass. Publish/Hide are direct, no review needed.
+      </div>
+      <div style="margin-top:8px;opacity:.5;font-size:9px;">
+        ⚠ Bulk publish on already-live rows is a no-op. Bulk hide on live rows IS a production change — we'll need a confirm step.
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section" style="margin-top:18px;">
+  <p class="label">Open questions for you</p>
+  <ul>
+    <li><b>Dashboard tiles</b> — keep these 4 (Live · Needs review · New this week · Agent flagged)? Add/remove any?</li>
+    <li><b>Agent flagged tile</b> needs persistence (a tiny review_log table). Worth adding now, or skip?</li>
+    <li><b>Bulk actions</b> — wanted, or premature?</li>
+    <li><b>Default columns</b> — image thumbnail in the table, or just title? (Thumbnail makes scanning much easier but takes a row taller.)</li>
+  </ul>
+</div>

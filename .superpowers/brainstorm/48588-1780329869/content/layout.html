@@ -1,0 +1,110 @@
+<h2>Pick a layout direction</h2>
+<p class="subtitle">Three takes on the same data — dashboard + needs_review + live + hidden. Click one to flag your preference, then we can talk it through.</p>
+
+<div class="cards">
+
+  <div class="card" data-choice="tabs" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup" style="margin:0;">
+        <div class="mockup-header">A · Status tabs</div>
+        <div class="mockup-body" style="padding:8px;">
+          <div class="mock-nav" style="background:#1a1a1a;color:#ddd;padding:6px 10px;font-size:11px;">
+            Dashboard · <b style="background:#2D4A42;padding:2px 6px;border-radius:3px;">Needs review (44)</b> · Live (425) · Hidden (0)
+          </div>
+          <div style="display:flex;margin-top:6px;gap:6px;">
+            <div class="mock-sidebar" style="flex:0 0 35%;font-size:9px;padding:6px;">
+              <div>cv_remax · Sal</div>
+              <div style="opacity:.6;">Seaside Paradise…</div>
+              <hr style="opacity:.2;">
+              <div>cv_homescasaverde · Sal</div>
+              <div style="opacity:.6;">2 Bed KEY READY…</div>
+              <hr style="opacity:.2;">
+              <div>cv_ccoreinvestments…</div>
+            </div>
+            <div class="mock-content" style="flex:1;font-size:9px;padding:6px;">
+              <b>Ground Floor 2 Bed…</b>
+              <div style="opacity:.7;">island · city · type · status</div>
+              <div style="background:#2D4A42;color:#fff;display:inline-block;padding:1px 6px;border-radius:3px;margin-top:4px;">hold · 85%</div>
+              <div style="margin-top:4px;opacity:.7;">reasons · suggested patch · apply</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A · Status tabs</h3>
+      <p>Top tabs per status. Each tab can have its own optimal shape (queue list-detail, live table, hidden cards). Familiar mental model, easy to ship.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="table" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup" style="margin:0;">
+        <div class="mockup-header">B · Unified table</div>
+        <div class="mockup-body" style="padding:8px;font-size:9px;">
+          <div style="display:flex;gap:4px;margin-bottom:6px;flex-wrap:wrap;">
+            <span style="background:#2D4A42;color:#fff;padding:1px 6px;border-radius:8px;">All (469)</span>
+            <span style="background:#1a1a1a;color:#ddd;padding:1px 6px;border-radius:8px;border:1px solid #333;">Needs (44)</span>
+            <span style="background:#1a1a1a;color:#ddd;padding:1px 6px;border-radius:8px;border:1px solid #333;">Live (425)</span>
+            <span style="background:#1a1a1a;color:#ddd;padding:1px 6px;border-radius:8px;border:1px solid #333;">Hidden</span>
+            <span style="background:#1a1a1a;color:#ddd;padding:1px 6px;border-radius:8px;border:1px solid #333;">+ source · island · search</span>
+          </div>
+          <table style="width:100%;border-collapse:collapse;">
+            <thead style="opacity:.6;"><tr><th align="left">status</th><th align="left">title</th><th align="left">source</th><th align="left">island</th><th>price</th><th>beds</th><th></th></tr></thead>
+            <tbody>
+              <tr style="border-top:1px solid #333;"><td>🟡 review</td><td>2 Bed KEY READY…</td><td>homes…</td><td>Sal</td><td>97500</td><td>—</td><td>↗</td></tr>
+              <tr style="border-top:1px solid #333;"><td>🟢 live</td><td>Villa Ocean View</td><td>remax</td><td>Sal</td><td>450000</td><td>4</td><td>↗</td></tr>
+              <tr style="border-top:1px solid #333;"><td>🟡 review</td><td>Studio Melia Dunas</td><td>homes…</td><td>Sal</td><td>59500</td><td>—</td><td>↗</td></tr>
+              <tr style="border-top:1px solid #333;"><td>🟢 live</td><td>Apartamento T1</td><td>ccore</td><td>Santiago</td><td>81622</td><td>1</td><td>↗</td></tr>
+            </tbody>
+          </table>
+          <div style="margin-top:6px;opacity:.5;font-size:8px;">Click row → detail drawer slides in from right</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B · Unified table</h3>
+      <p>One inventory table, status is just another filter chip. Sort/search across all 469 rows. Detail drawer for review &amp; patch. Scales as the feed grows; less context-switching.</p>
+    </div>
+  </div>
+
+  <div class="card" data-choice="board" onclick="toggleSelect(this)">
+    <div class="card-image">
+      <div class="mockup" style="margin:0;">
+        <div class="mockup-header">C · Kanban board</div>
+        <div class="mockup-body" style="padding:8px;">
+          <div style="display:flex;gap:6px;font-size:9px;">
+            <div style="flex:1;background:#1f1a14;padding:6px;border-radius:4px;">
+              <div style="opacity:.7;margin-bottom:4px;">🟡 Needs review · 44</div>
+              <div style="background:#1a1a1a;padding:4px;border-radius:3px;margin-bottom:3px;">2 Bed KEY READY…<br><span style="opacity:.5;">Sal</span></div>
+              <div style="background:#1a1a1a;padding:4px;border-radius:3px;margin-bottom:3px;">Studio Melia…<br><span style="opacity:.5;">Sal</span></div>
+              <div style="background:#1a1a1a;padding:4px;border-radius:3px;">…</div>
+            </div>
+            <div style="flex:1;background:#142019;padding:6px;border-radius:4px;">
+              <div style="opacity:.7;margin-bottom:4px;">🟢 Live · 425</div>
+              <div style="background:#1a1a1a;padding:4px;border-radius:3px;margin-bottom:3px;">Villa Ocean View<br><span style="opacity:.5;">€450k · Sal</span></div>
+              <div style="background:#1a1a1a;padding:4px;border-radius:3px;margin-bottom:3px;">Apartamento T1<br><span style="opacity:.5;">€81k · Santiago</span></div>
+              <div style="background:#1a1a1a;padding:4px;border-radius:3px;">…</div>
+            </div>
+            <div style="flex:1;background:#201414;padding:6px;border-radius:4px;">
+              <div style="opacity:.7;margin-bottom:4px;">🔴 Hidden · 0</div>
+              <div style="opacity:.4;text-align:center;padding:14px 0;">empty</div>
+            </div>
+          </div>
+          <div style="margin-top:6px;opacity:.5;font-size:8px;">Drag cards between columns to change status</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C · Kanban board</h3>
+      <p>Three status columns side by side. Visual, satisfying for sweeps. But: 425 live rows don't fit a column nicely, and drag-to-change-publish-status feels too easy for a production-write.</p>
+    </div>
+  </div>
+
+</div>
+
+<div class="section" style="margin-top:24px;">
+  <p class="label">My take</p>
+  <p><b>B (unified table)</b> for the inventory surface + a <b>dashboard strip above it</b>. Status is one filter chip among many — search by source, island, price, etc. The needs_review queue becomes a saved filter (status=needs_review, sort=first_seen DESC) rather than its own page. The detail drawer is where the review/patch UI lives.</p>
+  <p>A is the safe, familiar option. C looks great but the data shapes don't suit a board (425 live vs 44 review is too unbalanced) and drag-to-publish is risky.</p>
+</div>
