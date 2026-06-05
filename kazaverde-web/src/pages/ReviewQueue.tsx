@@ -39,6 +39,13 @@ interface ReviewResponse {
   error?: string;
 }
 
+interface PublishResponse {
+  publishedIds: string[];
+  skippedIds: string[];
+  requestedIds: string[];
+  error?: string;
+}
+
 const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
   { value: "needs_review", label: "Needs review" },
   { value: "published", label: "Published" },
@@ -47,7 +54,7 @@ const STATUS_OPTIONS: { value: StatusFilter; label: string }[] = [
 ];
 
 function formatMoney(value: number | null, currency: string | null): string {
-  if (value == null) return "No price";
+  if (value == null) return "Price on request";
   return new Intl.NumberFormat("en-GB", {
     style: "currency",
     currency: currency || "EUR",
@@ -68,13 +75,18 @@ function sourceLabel(sourceId: string): string {
 
 function missingFields(row: ReviewListing): string[] {
   const fields = [];
-  if (row.price == null) fields.push("price");
   if (row.bedrooms == null && row.property_type !== "land") fields.push("beds");
   if (row.bathrooms == null && row.property_type !== "land") fields.push("baths");
   if (row.area_sqm == null) fields.push("area");
   if (!row.image_urls?.length) fields.push("images");
   if (!row.has_ai_description) fields.push("AI text");
   return fields;
+}
+
+function reviewNotes(row: ReviewListing): string[] {
+  const notes = [];
+  if (row.price == null) notes.push("price on request");
+  return notes;
 }
 
 export default function ReviewQueue() {
@@ -85,6 +97,9 @@ export default function ReviewQueue() {
   const [sources, setSources] = useState<SourceSummary[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const [notice, setNotice] = useState<string | null>(null);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(() => new Set());
+  const [publishingIds, setPublishingIds] = useState<Set<string>>(() => new Set());
   const [refreshKey, setRefreshKey] = useState(0);
 
   useEffect(() => {
@@ -104,6 +119,10 @@ export default function ReviewQueue() {
         if (cancelled) return;
         setRows(json.data);
         setSources(json.sources);
+        setSelectedIds((current) => {
+          const selectable = new Set(json.data.filter((row) => row.publish_status === "needs_review").map((row) => row.id));
+          return new Set(Array.from(current).filter((id) => selectable.has(id)));
+        });
       } catch (err) {
         if (cancelled) return;
         setRows([]);
@@ -161,6 +180,76 @@ export default function ReviewQueue() {
     return Array.from(totals.entries()).sort((a, b) => b[1] - a[1]);
   }, [visibleRows]);
 
+  const selectableRows = useMemo(
+    () => visibleRows.filter((row) => row.publish_status === "needs_review"),
+    [visibleRows],
+  );
+  const selectedVisibleCount = selectableRows.filter((row) => selectedIds.has(row.id)).length;
+  const allVisibleSelected = selectableRows.length > 0 && selectedVisibleCount === selectableRows.length;
+  const publishing = publishingIds.size > 0;
+
+  const toggleSelected = (id: string, checked: boolean) => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      if (checked) next.add(id);
+      else next.delete(id);
+      return next;
+    });
+  };
+
+  const selectVisible = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      for (const row of selectableRows) next.add(row.id);
+      return next;
+    });
+  };
+
+  const clearVisibleSelection = () => {
+    setSelectedIds((current) => {
+      const next = new Set(current);
+      for (const row of selectableRows) next.delete(row.id);
+      return next;
+    });
+  };
+
+  const clearSelected = () => setSelectedIds(new Set());
+
+  const publishListings = async (ids: string[]) => {
+    const uniqueIds = Array.from(new Set(ids)).filter(Boolean);
+    if (uniqueIds.length === 0) return;
+
+    setError(null);
+    setNotice(null);
+    setPublishingIds(new Set(uniqueIds));
+    try {
+      const res = await fetch("/__kv-review/publish", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ids: uniqueIds }),
+      });
+      const json = await res.json() as PublishResponse;
+      if (!res.ok) throw new Error(json.error || "Could not publish listings.");
+
+      setSelectedIds((current) => {
+        const next = new Set(current);
+        for (const id of json.publishedIds) next.delete(id);
+        return next;
+      });
+      const skippedCount = json.skippedIds.length;
+      setNotice(
+        skippedCount > 0
+          ? `Published ${json.publishedIds.length}; skipped ${skippedCount} already changed or non-review row${skippedCount === 1 ? "" : "s"}.`
+          : `Published ${json.publishedIds.length} listing${json.publishedIds.length === 1 ? "" : "s"}.`,
+      );
+      setRefreshKey((n) => n + 1);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Could not publish listings.");
+    } finally {
+      setPublishingIds(new Set());
+    }
+  };
+
   return (
     <main className="kv-review">
       <header className="kv-review-head">
@@ -207,6 +296,29 @@ export default function ReviewQueue() {
         </label>
       </section>
 
+      <section className="kv-review-actions" aria-label="Review actions">
+        <div>
+          <strong>{selectedIds.size}</strong>
+          <span>selected for publish</span>
+        </div>
+        <button type="button" onClick={selectVisible} disabled={selectableRows.length === 0 || allVisibleSelected || publishing}>
+          Select visible
+        </button>
+        <button type="button" onClick={clearSelected} disabled={selectedIds.size === 0 || publishing}>
+          Clear
+        </button>
+        <button
+          type="button"
+          className="kv-review-publish"
+          onClick={() => publishListings(Array.from(selectedIds))}
+          disabled={selectedIds.size === 0 || publishing}
+        >
+          {publishing ? "Publishing..." : `Publish selected (${selectedIds.size})`}
+        </button>
+      </section>
+
+      {notice && <div className="kv-review-notice" role="status">{notice}</div>}
+
       <section className="kv-review-stats" aria-label="Review summary">
         <div>
           <span>Showing</span>
@@ -240,6 +352,18 @@ export default function ReviewQueue() {
           <table className="kv-review-table">
             <thead>
               <tr>
+                <th className="kv-review-select">
+                  <input
+                    type="checkbox"
+                    aria-label="Select visible needs-review listings"
+                    checked={allVisibleSelected}
+                    disabled={selectableRows.length === 0 || publishing}
+                    onChange={(e) => {
+                      if (e.target.checked) selectVisible();
+                      else clearVisibleSelection();
+                    }}
+                  />
+                </th>
                 <th>Listing</th>
                 <th>Source</th>
                 <th>Status</th>
@@ -247,13 +371,24 @@ export default function ReviewQueue() {
                 <th>Facts</th>
                 <th>Gaps</th>
                 <th>Updated</th>
+                <th>Action</th>
               </tr>
             </thead>
             <tbody>
               {visibleRows.map((row) => {
                 const gaps = missingFields(row);
+                const notes = reviewNotes(row);
                 return (
                   <tr key={row.id}>
+                    <td className="kv-review-select">
+                      <input
+                        type="checkbox"
+                        aria-label={`Select ${row.title || row.id}`}
+                        checked={selectedIds.has(row.id)}
+                        disabled={row.publish_status !== "needs_review" || publishing}
+                        onChange={(e) => toggleSelected(row.id, e.target.checked)}
+                      />
+                    </td>
                     <td>
                       <div className="kv-review-listing">
                         {row.image_urls?.[0] ? <img src={row.image_urls[0]} alt="" /> : <div className="kv-review-noimg" />}
@@ -288,9 +423,20 @@ export default function ReviewQueue() {
                     <td>
                       <div className="kv-review-gaps">
                         {gaps.length ? gaps.map((gap) => <span key={gap}>{gap}</span>) : <span className="is-clean">clear</span>}
+                        {notes.map((note) => <span key={note} className="is-note">{note}</span>)}
                       </div>
                     </td>
                     <td>{formatDate(row.updated_at || row.last_verified_at || row.first_seen_at)}</td>
+                    <td>
+                      <button
+                        type="button"
+                        className="kv-review-row-publish"
+                        disabled={row.publish_status !== "needs_review" || publishing}
+                        onClick={() => publishListings([row.id])}
+                      >
+                        {publishingIds.has(row.id) ? "Publishing..." : "Publish"}
+                      </button>
+                    </td>
                   </tr>
                 );
               })}

@@ -1,6 +1,7 @@
 import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react";
 import { PRERENDER_LISTING_IDS } from "./src/lib/prerender-listings";
+import { buildPublishSelectedSql, normalizeReviewStatus } from "./reviewQueueDevApi.mjs";
 
 const prerenderedListingIds = new Set(PRERENDER_LISTING_IDS);
 
@@ -12,19 +13,43 @@ function sendJson(res: { statusCode: number; setHeader: (name: string, value: st
   res.end(JSON.stringify(body));
 }
 
+function readJsonBody(req: any): Promise<unknown> {
+  return new Promise((resolve, reject) => {
+    let body = "";
+    req.on("data", (chunk: Buffer) => {
+      body += chunk.toString("utf8");
+      if (body.length > 64_000) reject(new Error("Request body is too large."));
+    });
+    req.on("end", () => {
+      if (!body.trim()) {
+        resolve({});
+        return;
+      }
+      try {
+        resolve(JSON.parse(body));
+      } catch {
+        reject(new Error("Request body must be valid JSON."));
+      }
+    });
+    req.on("error", reject);
+  });
+}
+
 function reviewQueueDevPlugin(databaseUrl: string | undefined) {
   return {
     name: "kv-review-queue-dev-api",
     apply: "serve" as const,
     configureServer(server: any) {
       server.middlewares.use(async (req: any, res: any, next: () => void) => {
-        if (!req.url || req.method !== "GET") {
+        if (!req.url) {
           next();
           return;
         }
 
         const url = new URL(req.url, "http://127.0.0.1");
-        if (url.pathname !== "/__kv-review/listings") {
+        const isListRequest = url.pathname === "/__kv-review/listings" && req.method === "GET";
+        const isPublishRequest = url.pathname === "/__kv-review/publish" && req.method === "POST";
+        if (!isListRequest && !isPublishRequest) {
           next();
           return;
         }
@@ -34,32 +59,54 @@ function reviewQueueDevPlugin(databaseUrl: string | undefined) {
           return;
         }
 
-        const statusParam = url.searchParams.get("status") || "needs_review";
-        const status = ["needs_review", "published", "hidden"].includes(statusParam)
-          ? statusParam as ReviewStatus
-          : undefined;
-        const sourceId = (url.searchParams.get("sourceId") || "").trim();
-        const limitParam = Number(url.searchParams.get("limit") || "200");
-        const limit = Number.isFinite(limitParam) ? Math.max(1, Math.min(Math.trunc(limitParam), 500)) : 200;
-
-        const filters: string[] = ["source_id_primary LIKE 'cv\\_%' ESCAPE '\\'"];
-        const params: unknown[] = [];
-        if (status) {
-          params.push(status);
-          filters.push(`publish_status = $${params.length}`);
-        }
-        if (sourceId) {
-          params.push(sourceId);
-          filters.push(`source_id_primary = $${params.length}`);
-        }
-        params.push(limit);
-        const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
-
         let client: any;
         try {
           const { Client } = await import("pg");
           client = new Client({ connectionString: databaseUrl });
           await client.connect();
+
+          if (isPublishRequest) {
+            const body = await readJsonBody(req) as { ids?: unknown };
+            const publish = buildPublishSelectedSql(body.ids);
+            if (publish.ids.length === 0) {
+              sendJson(res, 400, { error: "Select at least one listing to publish." });
+              return;
+            }
+
+            const publishResult = await client.query(publish.sql, [publish.ids]);
+            const publishedIds = publishResult.rows
+              .filter((row: { published: boolean }) => row.published)
+              .map((row: { id: string }) => row.id);
+            const skippedIds = publishResult.rows
+              .filter((row: { published: boolean }) => !row.published)
+              .map((row: { id: string }) => row.id);
+
+            sendJson(res, 200, {
+              publishedIds,
+              skippedIds,
+              requestedIds: publish.ids,
+            });
+            return;
+          }
+
+          const statusParam = url.searchParams.get("status") || "needs_review";
+          const status = normalizeReviewStatus(statusParam) as ReviewStatus | undefined;
+          const sourceId = (url.searchParams.get("sourceId") || "").trim();
+          const limitParam = Number(url.searchParams.get("limit") || "200");
+          const limit = Number.isFinite(limitParam) ? Math.max(1, Math.min(Math.trunc(limitParam), 500)) : 200;
+
+          const filters: string[] = ["source_id_primary LIKE 'cv\\_%' ESCAPE '\\'"];
+          const params: unknown[] = [];
+          if (status) {
+            params.push(status);
+            filters.push(`publish_status = $${params.length}`);
+          }
+          if (sourceId) {
+            params.push(sourceId);
+            filters.push(`source_id_primary = $${params.length}`);
+          }
+          params.push(limit);
+          const where = filters.length ? `WHERE ${filters.join(" AND ")}` : "";
 
           const [rowsResult, summaryResult] = await Promise.all([
             client.query(

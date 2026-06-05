@@ -56,9 +56,11 @@
 }
 
 .kv-review-toolbar,
+.kv-review-actions,
 .kv-review-stats,
 .kv-review-table-wrap,
-.kv-review-empty {
+.kv-review-empty,
+.kv-review-notice {
   max-width: 1320px;
   margin-left: auto;
   margin-right: auto;
@@ -90,6 +92,69 @@
 .kv-review-toolbar input {
   width: 100%;
   padding: 0 10px;
+}
+
+.kv-review-actions {
+  position: sticky;
+  top: 66px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid #d9ddd8;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(8px);
+}
+
+.kv-review-actions div {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-right: auto;
+}
+
+.kv-review-actions strong {
+  font-size: 18px;
+}
+
+.kv-review-actions span {
+  color: #697071;
+  font-size: 12px;
+}
+
+.kv-review-actions button,
+.kv-review-row-publish {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+.kv-review button:disabled,
+.kv-review input:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.kv-review-publish,
+.kv-review-row-publish {
+  border-color: #18725f !important;
+  background: #18725f !important;
+  color: #fff !important;
+}
+
+.kv-review-notice {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border: 1px solid #b8ddd1;
+  border-radius: 8px;
+  background: #e8f6f1;
+  color: #18725f;
+  font-size: 13px;
+  font-weight: 700;
 }
 
 .kv-review-stats {
@@ -132,7 +197,7 @@
 
 .kv-review-table {
   width: 100%;
-  min-width: 980px;
+  min-width: 1080px;
   border-collapse: collapse;
   font-size: 13px;
 }
@@ -153,6 +218,17 @@
   color: #697071;
   font-size: 11px;
   text-transform: uppercase;
+}
+
+.kv-review-select {
+  width: 42px;
+  text-align: center !important;
+}
+
+.kv-review-select input {
+  width: 18px;
+  min-height: 18px;
+  accent-color: #18725f;
 }
 
 .kv-review-table tr:last-child td {
@@ -250,6 +326,15 @@
   color: #18725f;
 }
 
+.kv-review-gaps .is-note {
+  background: #eef1ed;
+  color: #4f5758;
+}
+
+.kv-review-row-publish {
+  white-space: nowrap;
+}
+
 .kv-review-empty {
   margin-top: 14px;
   padding: 32px;
@@ -275,7 +360,8 @@
   }
 
   .kv-review-head,
-  .kv-review-toolbar {
+  .kv-review-toolbar,
+  .kv-review-actions {
     display: grid;
   }
 
