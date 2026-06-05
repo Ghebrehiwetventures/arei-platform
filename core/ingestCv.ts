@@ -39,7 +39,7 @@ import {
   genericPaginatedFetcher,
   GenericParsedListing,
   GenericFetchResult,
-} from "./genericFetcher";
+} from "./fetcher";
 import { sourceConfigToFetchConfig } from "./configLoader";
 
 // ============================================

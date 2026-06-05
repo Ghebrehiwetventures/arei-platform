@@ -9,7 +9,7 @@ import * as cheerio from "cheerio";
 import sanitize from "sanitize-html";
 import { DetailConfig, SelectorsConfig } from "./configLoader";
 import { CMSType, CMS_PRESETS, detectCMS, getImageAttrs } from "./cmsPresets";
-import { dedupeImageUrls } from "./genericFetcher";
+import { dedupeImageUrls } from "./fetcher";
 
 // Strict HTML sanitization: only structural tags allowed
 const SANITIZE_OPTIONS: sanitize.IOptions = {

@@ -134,6 +134,11 @@ export interface GetListingsParams {
   propertyType?: string;
   /** Minimum bedrooms (>=). 0 or undefined = no filter */
   minBeds?: number;
+  /**
+   * Filter by exact source_id (e.g. "cv_terracaboverde").
+   * Maps to the URL param ?source= on the listings page.
+   */
+  sourceId?: string;
 }
 
 /** Paginated response */
@@ -220,6 +225,78 @@ export interface MarketReportRow {
   published_at: string;
   /** ISO timestamp of last data update */
   last_updated: string;
+}
+
+/**
+ * One published market briefing edition (editorial layer over a snapshot).
+ * Only published editions are returned — the SDK query and RLS both enforce
+ * status = 'published' AND published_at IS NOT NULL.
+ *
+ * The numbers are NOT stored here; the canonical page pairs this row with the
+ * market_report_snapshots rows that share its snapshot_date.
+ */
+export interface BriefingRow {
+  /** URL key, e.g. '2026-05' */
+  slug: string;
+  /** Human display label for the period, e.g. 'May 2026' */
+  period: string;
+  /** ISO date string (YYYY-MM-DD) of the pinned snapshot in market_report_snapshots */
+  snapshot_date: string;
+  /** Headline, e.g. "Cape Verde Listing Index — May 2026" */
+  title: string;
+  /** Executive summary: 2-3 sentence key takeaway. Null when not yet written. */
+  executive_summary: string | null;
+  /** 3-5 short key-takeaway statements. Null/empty when not yet written. */
+  key_takeaways: string[] | null;
+  /** Editorial context: 2-3 paragraphs (plain text / light markdown). */
+  commentary: string | null;
+  /** Optional methodology override. Null → page renders the standard disclosure. */
+  methodology_note: string | null;
+  /** ISO timestamp when this edition was published */
+  published_at: string;
+  /** ISO timestamp of last edit */
+  updated_at: string;
+}
+
+/** Light row for the briefing archive index — no full editorial body. */
+export interface BriefingSummary {
+  slug: string;
+  period: string;
+  snapshot_date: string;
+  title: string;
+  executive_summary: string | null;
+  published_at: string;
+}
+
+/** Public-safe row from public.agencies (no relationship/CRM data) */
+export interface AgencyRow {
+  id: string;
+  market_code: string;
+  agency_name: string;
+  public_display_name: string | null;
+  website: string | null;
+  email: string | null;
+  phone: string | null;
+  logo_url: string | null;
+  description: string | null;
+  source_ids: string[];
+  claimed_status: "unclaimed" | "invited" | "claimed" | "verified";
+  created_at: string;
+}
+
+/**
+ * Aggregated public-feed stats for one scraping source, used to enrich
+ * agency cards with AREI-owned data (never external/Google data).
+ * Keyed by source_id when returned from getAgencyListingStats().
+ */
+export interface AgencyListingStats {
+  sourceId: string;
+  /** Number of listings in the public feed for this source_id */
+  listingCount: number;
+  /** Distinct island values present for this source_id, sorted */
+  islands: string[];
+  /** Max last_seen_at across this source's listings (ISO string), or null */
+  lastSeenAt: string | null;
 }
 
 /** Raw row returned by the public.market_news table (snake_case DB shape) */

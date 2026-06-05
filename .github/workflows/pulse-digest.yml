@@ -1,0 +1,51 @@
+name: AREI Pulse digest
+
+# Nightly executive intelligence digest. Synthesizes at most 5
+# company-level cards (strategy, sales, partnerships, market expansion,
+# events, competitors, content/PR, fundraising, ops, and summarized
+# data-quality risk) into pulse_cards. The admin dashboard reads them.
+#
+# This is NOT a technical notification job — it does not touch listings,
+# parsers, or per-source health, and does not overlap with the separate
+# data-cleaning agent. Idempotent per UTC day (skips if cards already
+# exist unless run with --force).
+#
+# Manual workflow_dispatch is enabled for on-demand regeneration.
+
+on:
+  schedule:
+    - cron: "0 4 * * *" # 04:00 UTC daily (early morning briefing)
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Regenerate even if cards already exist for today"
+        type: boolean
+        default: false
+
+jobs:
+  pulse:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      # Optional: set to a configured provider name to enable web intel.
+      # Leave unset for internal-signals-only (no fabricated web results).
+      PULSE_WEB_INTEL_PROVIDER: ${{ secrets.PULSE_WEB_INTEL_PROVIDER }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Generate executive Pulse digest
+        run: |
+          npx ts-node --transpile-only scripts/generate_pulse_digest.ts \
+            ${{ github.event.inputs.force == 'true' && '--force' || '' }}

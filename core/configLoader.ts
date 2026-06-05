@@ -290,7 +290,7 @@ export function loadRulesConfig(marketId: string): ConfigLoadResult<RulesConfig>
 import {
   SourceFetchConfig,
   buildFetchConfigFromYaml,
-} from "./genericFetcher";
+} from "./fetcher";
 
 export function sourceConfigToFetchConfig(source: SourceConfig): SourceFetchConfig {
   return buildFetchConfigFromYaml(source);

@@ -6,6 +6,7 @@ import type { DemoListing } from "../lib/demo-data";
 import { formatLocation, formatBedrooms, formatBathrooms, isNewListing } from "../lib/format";
 import { formatPrice, toLocale, labelPropertyType } from "../lib/formatters";
 import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
+import { getLocalizedTitle } from "../lib/i18n-listings";
 import "./PropertyCard.css";
 
 interface Props {
@@ -22,7 +23,7 @@ export default function PropertyCard({ listing, index = 0, viewMode = "grid", di
   const { toggle, isSaved } = useSaved();
   const isNew = isNewListing(listing.first_seen_at);
   const saved = isSaved(listing.id);
-  const displayTitle = normalizeListingDisplayTitle(listing.title);
+  const displayTitle = normalizeListingDisplayTitle(getLocalizedTitle(listing, i18n.language).title);
   const [imageIndex, setImageIndex] = useState(0);
   const touchStartX = useRef(0);
   const touchStartY = useRef(0);

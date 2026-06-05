@@ -33,6 +33,7 @@ export default function Footer() {
             <h4>{t("footer.index")}</h4>
             <Link to="/listings">{t("common.allListings")}</Link>
             <Link to="/market">{t("common.marketData")}</Link>
+            <Link to="/agents">Agents</Link>
             <Link to="/saved">{t("common.shortlist")}</Link>
             <a href="mailto:info@africarealestateindex.com">{t("common.contact")}</a>
           </div>
@@ -49,6 +50,7 @@ export default function Footer() {
             <Link to="/blog/buying-property-cape-verde-guide">{t("footer.buyingGuide")}</Link>
             <Link to="/blog">{t("footer.guidesFaq")}</Link>
             <Link to="/market-news">{t("common.news")}</Link>
+            <Link to="/market/briefings">{t("footer.briefings", { defaultValue: "Market briefings" })}</Link>
             <Link to="/market#methodology">{t("footer.methodology")}</Link>
             <Link to="/about">{t("common.about")}</Link>
           </div>

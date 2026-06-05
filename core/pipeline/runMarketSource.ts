@@ -12,7 +12,7 @@ import * as fs from "fs";
 import * as path from "path";
 
 import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig } from "../configLoader";
-import { genericPaginatedFetcher, GenericParsedListing } from "../genericFetcher";
+import { genericPaginatedFetcher, GenericParsedListing } from "../fetcher";
 import { fetchHtml } from "../fetchHtml";
 import { fetchHeadless } from "../fetchHeadless";
 import { getCurrency, getCountry } from "../locationMapper";
@@ -24,6 +24,15 @@ import { loadLocationHooks } from "./locationHooks";
 import { LAND_TYPES, extractPropertyType } from "./propertyType";
 import { applyExtractResultToListing } from "./enrich";
 import { resolveLocation as resolveIsland } from "./locationResolver";
+import { SourceStatus } from "../status";
+import {
+  getSourceHealthEntry,
+  hasParserDiagnostics,
+  loadSourceHealth,
+  persistSourceHealth,
+  shouldAutoPauseSource,
+  type SourceHealthReportInput,
+} from "../sourceHealth";
 
 // ─── Types ─────────────────────────────────────────────────────────────────
 
@@ -558,7 +567,12 @@ async function writeToKvCurated(rows: CuratedRow[]): Promise<void> {
 
 // ─── Fetch ──────────────────────────────────────────────────────────────────
 
-async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing[]> {
+interface FetchOutcome {
+  listings: WorkingListing[];
+  debugErrors: string[];
+}
+
+async function fetchListings(sourceConfig: SourceConfig): Promise<FetchOutcome> {
   const fetchConfig = sourceConfigToFetchConfig(sourceConfig);
   const fetchFn = buildListFetchFn(fetchConfig.fetch_method);
 
@@ -570,7 +584,7 @@ async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing
     console.warn(`[Fetch] Errors: ${result.debug.errors.join(", ")}`);
   }
 
-  return result.listings.map((l: GenericParsedListing) => ({
+  const listings = result.listings.map((l: GenericParsedListing) => ({
     id: l.id,
     sourceId: l.sourceId,
     title: l.title,
@@ -584,6 +598,106 @@ async function fetchListings(sourceConfig: SourceConfig): Promise<WorkingListing
     area_sqm: l.area_sqm ?? null,
     property_type: extractPropertyType(l.title, l.detailUrl),
   }));
+
+  return { listings, debugErrors: result.debug.errors };
+}
+
+/**
+ * Derive a SourceHealthReportInput from a fetch outcome. Exported for unit
+ * testing — the policy (when to mark BROKEN_SOURCE vs PARTIAL_OK vs OK) lives
+ * here so it can be exercised without mocking the orchestrator.
+ */
+export function deriveSourceHealthReport(
+  sourceId: string,
+  outcome: { listings: unknown[]; debugErrors: string[]; threwError?: string },
+): SourceHealthReportInput {
+  if (outcome.threwError) {
+    return {
+      id: sourceId,
+      status: SourceStatus.BROKEN_SOURCE,
+      lastError: outcome.threwError.slice(0, 100),
+      debugErrors: outcome.debugErrors,
+    };
+  }
+  if (outcome.listings.length === 0 && hasParserDiagnostics(outcome.debugErrors)) {
+    return {
+      id: sourceId,
+      status: SourceStatus.BROKEN_SOURCE,
+      lastError: outcome.debugErrors[0],
+      debugErrors: outcome.debugErrors,
+    };
+  }
+  if (outcome.listings.length === 0) {
+    return {
+      id: sourceId,
+      status: SourceStatus.PARTIAL_OK,
+      lastError: outcome.debugErrors[0],
+      debugErrors: outcome.debugErrors,
+    };
+  }
+  return {
+    id: sourceId,
+    status: SourceStatus.OK,
+    debugErrors: outcome.debugErrors,
+  };
+}
+
+// ─── Optional rich JSON report (diagnostics only) ────────────────────────────
+// Opt-in via REPORT_JSON=1. Writes the full per-listing dataset (image URLs,
+// area, beds/baths, price, location, source URL) that the stdout coverage
+// summary omits — for local field-gap / image-outlier analysis. Writes to
+// reports/curated/ (already gitignored). Never runs unless the flag is set, so
+// normal and production runs are untouched.
+function coverageOf(rows: CuratedRow[]) {
+  const n = rows.length || 1;
+  const pct = (c: number) => `${c}/${rows.length} (${Math.round((100 * c) / n)}%)`;
+  const area = (r: CuratedRow) => r.property_size_sqm ?? r.land_area_sqm;
+  return {
+    price: pct(rows.filter(r => r.price != null).length),
+    bedrooms: pct(rows.filter(r => r.bedrooms != null).length),
+    bathrooms: pct(rows.filter(r => r.bathrooms != null).length),
+    area: pct(rows.filter(r => area(r) != null).length),
+    images_ge1: pct(rows.filter(r => r.image_urls && r.image_urls.length > 0).length),
+    images_ge3: pct(rows.filter(r => r.image_urls && r.image_urls.length >= 3).length),
+  };
+}
+
+function writeReportJson(
+  marketId: string,
+  sourceId: string,
+  dryRun: boolean,
+  fetched: number,
+  rows: CuratedRow[],
+  skipped: Array<{ id: string; reason: string }>,
+  publishedIds: Set<string>,
+  removedPublishedRows: RemovedPublishedRow[]
+): void {
+  const dir = path.resolve(__dirname, "../../reports/curated");
+  fs.mkdirSync(dir, { recursive: true });
+  const report = {
+    market: marketId,
+    source: sourceId,
+    generatedAt: new Date().toISOString(),
+    dryRun,
+    summary: {
+      fetched,
+      rowsReady: rows.length,
+      skipped: skipped.length,
+      alreadyPublished: publishedIds.size,
+      writable: rows.filter(r => !publishedIds.has(r.id)).length,
+      removedCandidates: removedPublishedRows.length,
+    },
+    coverage: {
+      allRows: coverageOf(rows),
+      newRows: coverageOf(rows.filter(r => !publishedIds.has(r.id))),
+    },
+    skipped,
+    removedCandidates: removedPublishedRows,
+    listings: rows.map(r => ({ ...r, alreadyPublished: publishedIds.has(r.id) })),
+  };
+  const outPath = path.join(dir, `${marketId}_${sourceId}.json`);
+  fs.writeFileSync(outPath, JSON.stringify(report, null, 2));
+  console.log(`[Report] Wrote ${rows.length} listings → ${outPath}`);
 }
 
 // ─── Optional rich JSON report (diagnostics only) ────────────────────────────
@@ -654,7 +768,46 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   console.log(`\n=== ingest_to_curated ===`);
   console.log(`market=${marketId}  source=${sourceId}  dry_run=${dryRun}\n`);
 
-  const listings = await fetchListings(sourceConfig);
+  const existingHealth = loadSourceHealth();
+  const persistedHealth = getSourceHealthEntry(existingHealth, marketId, sourceId);
+  if (shouldAutoPauseSource(persistedHealth)) {
+    console.log(
+      `[${sourceId}] Auto-paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs — skipping run.`,
+    );
+    persistSourceHealth(
+      marketId,
+      [
+        {
+          id: sourceId,
+          status: SourceStatus.PAUSED_BY_SYSTEM,
+          pauseReason: persistedHealth!.pauseReason || "parser_failure_threshold",
+          pauseDetail:
+            persistedHealth!.pauseDetail ||
+            `Paused after ${persistedHealth!.consecutiveFailureCount} consecutive parser-failure runs`,
+        },
+      ],
+      existingHealth,
+    );
+    return;
+  }
+
+  let fetchOutcome: { listings: WorkingListing[]; debugErrors: string[]; threwError?: string };
+  try {
+    const out = await fetchListings(sourceConfig);
+    fetchOutcome = { listings: out.listings, debugErrors: out.debugErrors };
+  } catch (err) {
+    const message = err instanceof Error ? err.message : String(err);
+    console.error(`[${sourceId}] Fetch error:`, message);
+    fetchOutcome = { listings: [], debugErrors: [], threwError: message };
+    persistSourceHealth(
+      marketId,
+      [deriveSourceHealthReport(sourceId, fetchOutcome)],
+      existingHealth,
+    );
+    throw err;
+  }
+
+  const listings = fetchOutcome.listings;
   console.log(`\nFetched: ${listings.length} listings`);
 
   await enrichListings(listings, sourceConfig);
@@ -798,6 +951,11 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   if (dryRun) {
     printSummary(listings.length, writable, skipped, publishedIds.size);
     console.log(`\n[DRY_RUN] No rows written.`);
+    persistSourceHealth(
+      marketId,
+      [deriveSourceHealthReport(sourceId, fetchOutcome)],
+      existingHealth,
+    );
     return;
   }
 
@@ -809,4 +967,9 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   await writeToKvCurated(writable);
   printSummary(listings.length, writable, skipped, publishedIds.size);
   console.log(`\nNext step: verify rows then run promotion SQL (see spec).`);
+  persistSourceHealth(
+    marketId,
+    [deriveSourceHealthReport(sourceId, fetchOutcome)],
+    existingHealth,
+  );
 }

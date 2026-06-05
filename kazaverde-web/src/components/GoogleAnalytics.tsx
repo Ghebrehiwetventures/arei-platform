@@ -1,5 +1,6 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useLocation } from "react-router-dom";
+import { hasMarketingConsent, onConsentChange } from "../lib/consent";
 
 const GA4_MEASUREMENT_ID = import.meta.env.VITE_GA4_MEASUREMENT_ID;
 const GA4_SCRIPT_ID = "kv-ga4-script";
@@ -31,9 +32,12 @@ function ensureGoogleAnalytics(measurementId: string) {
 
 export default function GoogleAnalytics() {
   const location = useLocation();
+  const [consented, setConsented] = useState(() => hasMarketingConsent());
+
+  useEffect(() => onConsentChange((c) => setConsented(c === "granted")), []);
 
   useEffect(() => {
-    if (!import.meta.env.PROD || !GA4_MEASUREMENT_ID) return;
+    if (!import.meta.env.PROD || !GA4_MEASUREMENT_ID || !consented) return;
 
     ensureGoogleAnalytics(GA4_MEASUREMENT_ID);
     if (!ga4Initialized) {
@@ -43,7 +47,7 @@ export default function GoogleAnalytics() {
     window.gtag?.("config", GA4_MEASUREMENT_ID, {
       page_path: `${location.pathname}${location.search}`,
     });
-  }, [location.pathname, location.search]);
+  }, [consented, location.pathname, location.search]);
 
   return null;
 }

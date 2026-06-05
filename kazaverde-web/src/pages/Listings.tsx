@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { Link, useSearchParams } from "react-router-dom";
 import { useTranslation } from "react-i18next";
@@ -8,6 +8,7 @@ import { arei } from "../lib/arei";
 import { formatSourceLabel, isNewListing } from "../lib/format";
 import { formatNumber, formatPrice, formatDate, formatRelTime, toLocale } from "../lib/formatters";
 import { getLocalizedTitle } from "../lib/i18n-listings";
+import { normalizeListingDisplayTitle } from "../lib/listingTitleDisplay.js";
 import type { ListingCard, PriceBucket } from "arei-sdk";
 import "./Listings.css";
 
@@ -94,6 +95,9 @@ export default function Listings() {
 
   const [searchParams, setSearchParams] = useSearchParams();
   const initialIsland = searchParams.get("island") || "";
+  // source param: set via navigation from /agents, never user-modified via UI.
+  // Read directly from URL; no state needed.
+  const sourceId = searchParams.get("source") || undefined;
 
   // Filter state
   const [island, setIsland] = useState(initialIsland);
@@ -118,6 +122,11 @@ export default function Listings() {
   const [indexTotal, setIndexTotal] = useState(0);
   const [priceCounts, setPriceCounts] = useState<Record<string, number>>({});
   const [retryCount, setRetryCount] = useState(0);
+  const filtersSlotRef = useRef<HTMLDivElement | null>(null);
+  const filtersRef = useRef<HTMLDivElement | null>(null);
+  const [isMobileFiltersFixed, setIsMobileFiltersFixed] = useState(false);
+  const [mobileFiltersHeight, setMobileFiltersHeight] = useState(0);
+  const [mobileFiltersTop, setMobileFiltersTop] = useState(52);
 
   useEffect(() => {
     arei.getIslandOptions().then(setIslands).catch(() => {});
@@ -142,7 +151,7 @@ export default function Listings() {
   useEffect(() => {
     setPage(1);
     setCards([]);
-  }, [island, priceBucket, type, beds]);
+  }, [island, priceBucket, type, beds, sourceId]);
 
   // Sync ?island= to URL
   useEffect(() => {
@@ -184,6 +193,7 @@ export default function Listings() {
           priceBucket: priceBucket || undefined,
           propertyType: type || undefined,
           minBeds: beds || undefined,
+          sourceId,
         });
         if (cancelled) return;
         setCards((prev) => (page === 1 ? result.data : [...prev, ...result.data]));
@@ -203,7 +213,7 @@ export default function Listings() {
     return () => {
       cancelled = true;
     };
-  }, [page, island, priceBucket, type, beds, retryCount]);
+  }, [page, island, priceBucket, type, beds, sourceId, retryCount]);
 
   // Close any open popover on outside click.
   // Target-aware: clicks inside a filter chip wrap, the sort wrap, or
@@ -218,6 +228,43 @@ export default function Listings() {
     }
     document.addEventListener("click", onDocClick);
     return () => document.removeEventListener("click", onDocClick);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const mq = window.matchMedia("(max-width: 640px)");
+    const getNavHeight = () =>
+      Math.ceil(document.querySelector(".nav")?.getBoundingClientRect().height || 52);
+
+    function updateMobileSticky() {
+      const slot = filtersSlotRef.current;
+      const bar = filtersRef.current;
+      if (!slot || !bar || !mq.matches) {
+        setIsMobileFiltersFixed(false);
+        setMobileFiltersHeight(0);
+        return;
+      }
+
+      const navHeight = getNavHeight();
+      const slotTop = slot.getBoundingClientRect().top + window.scrollY;
+      const shouldFix = window.scrollY >= slotTop - navHeight;
+
+      setMobileFiltersTop(navHeight);
+      setMobileFiltersHeight(Math.ceil(bar.getBoundingClientRect().height));
+      setIsMobileFiltersFixed(shouldFix);
+    }
+
+    updateMobileSticky();
+    window.addEventListener("scroll", updateMobileSticky, { passive: true });
+    window.addEventListener("resize", updateMobileSticky);
+    mq.addEventListener?.("change", updateMobileSticky);
+
+    return () => {
+      window.removeEventListener("scroll", updateMobileSticky);
+      window.removeEventListener("resize", updateMobileSticky);
+      mq.removeEventListener?.("change", updateMobileSticky);
+    };
   }, []);
 
   // All filters are server-side now; only sort runs on the accumulated set.
@@ -269,8 +316,17 @@ export default function Listings() {
       </section>
 
       {/* STICKY FILTER BAR */}
-      <div className="kv-filters">
-        <div className="kv-filters-inner">
+      <div
+        ref={filtersSlotRef}
+        className="kv-filters-slot"
+        style={isMobileFiltersFixed ? { height: mobileFiltersHeight } : undefined}
+      >
+        <div
+          ref={filtersRef}
+          className={`kv-filters${isMobileFiltersFixed ? " mobile-fixed" : ""}`}
+          style={isMobileFiltersFixed ? { top: mobileFiltersTop } : undefined}
+        >
+          <div className="kv-filters-inner">
           <div className="kv-filter-group">
             {/* Island */}
             <div className="kv-field-wrap">
@@ -420,6 +476,7 @@ export default function Listings() {
           <div className="kv-filter-spacer" />
           <div className="kv-filter-result">
             <b>{shownCount}</b> {shownCount === 1 ? t("landing.listing") : t("landing.listings")}
+          </div>
           </div>
         </div>
       </div>
@@ -718,7 +775,7 @@ export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boole
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   }
 
-  const localizedTitle = getLocalizedTitle(l, i18n.language).title;
+  const localizedTitle = normalizeListingDisplayTitle(getLocalizedTitle(l, i18n.language).title);
 
   return (
     <Link className="kv-lcard" to={`/listing/${l.id}`}>
@@ -786,7 +843,7 @@ function ListingRow({ l }: { l: ListingCard }) {
     if (l.land_area_sqm != null) specs.push({ label: "m²", value: l.land_area_sqm });
   }
 
-  const localizedTitle = getLocalizedTitle(l, i18n.language).title;
+  const localizedTitle = normalizeListingDisplayTitle(getLocalizedTitle(l, i18n.language).title);
 
   return (
     <Link className="kv-list-row" to={`/listing/${l.id}`}>

@@ -38,4 +38,8 @@ export const arei = {
   subscribeNewsletter: (email: string) => getClient().subscribeNewsletter(email),
   getMarketNews: () => getClient().getMarketNews(),
   getFeaturedListings: (isoWeek?: string) => getClient().getFeaturedListings(isoWeek),
+  getAgencies: (marketCode?: string) => getClient().getAgencies(marketCode),
+  getAgencyListingStats: () => getClient().getAgencyListingStats(),
+  listBriefings: () => getClient().listBriefings(),
+  getBriefing: (slug: string) => getClient().getBriefing(slug),
 };

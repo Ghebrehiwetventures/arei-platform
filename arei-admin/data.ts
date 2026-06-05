@@ -1231,6 +1231,125 @@ export async function markAllNotificationsRead(): Promise<void> {
 }
 
 // ============================================
+// AREI PULSE — executive intelligence cards
+// Read/lifecycle via supabaseAuth (authenticated JWT). Cards are
+// written only by the nightly generator (service role). The browser
+// updates status + feedback only.
+// ============================================
+
+export type PulseCategory =
+  | "strategy"
+  | "operations"
+  | "technical_execution"
+  | "data_quality_risk"
+  | "sales"
+  | "partnerships"
+  | "market_expansion"
+  | "events"
+  | "competitors"
+  | "content_pr"
+  | "fundraising";
+
+export type PulseCardStatus = "new" | "done" | "dismissed";
+export type PulseCardFeedback = "up" | "down";
+export type PulseSourceType = "internal" | "web" | "mixed";
+
+export interface PulseEvidenceItem {
+  label: string;
+  ref?: string;
+  detail?: string;
+}
+
+export interface PulseCard {
+  id: string;
+  digest_date: string;
+  category: PulseCategory;
+  priority: number;
+  title: string;
+  signal_summary: string;
+  why_it_matters: string;
+  recommended_action: string;
+  evidence: PulseEvidenceItem[];
+  source_type: PulseSourceType | null;
+  source_url: string | null;
+  owner_suggestion: string | null;
+  status: PulseCardStatus;
+  feedback: PulseCardFeedback | null;
+  meta: Record<string, unknown>;
+  created_at: string;
+}
+
+const PULSE_CARD_COLUMNS =
+  "id,digest_date,category,priority,title,signal_summary,why_it_matters," +
+  "recommended_action,evidence,source_type,source_url,owner_suggestion," +
+  "status,feedback,meta,created_at";
+
+/**
+ * Cards for the most recent digest_date that still has at least one
+ * active ('new') card. Sorted by priority desc. The feed shows ONLY
+ * status='new' cards: 'done' and 'dismissed' cards are both excluded so
+ * neither reappears after a refresh. Feedback (👍/👎) on a visible card
+ * does not change its status, so it stays in the feed.
+ */
+export async function getLatestPulseCards(): Promise<PulseCard[]> {
+  // Find the latest digest_date that still has active ('new') cards.
+  const { data: dateRows, error: dateErr } = await supabaseAuth
+    .from("pulse_cards")
+    .select("digest_date")
+    .eq("status", "new")
+    .order("digest_date", { ascending: false })
+    .limit(1);
+
+  if (dateErr) {
+    console.error("[Admin] getLatestPulseCards (date) failed:", dateErr.message);
+    return [];
+  }
+  const latestDate = dateRows?.[0]?.digest_date as string | undefined;
+  if (!latestDate) return [];
+
+  const { data, error } = await supabaseAuth
+    .from("pulse_cards")
+    .select(PULSE_CARD_COLUMNS)
+    .eq("digest_date", latestDate)
+    .eq("status", "new")
+    .order("priority", { ascending: false });
+
+  if (error) {
+    console.error("[Admin] getLatestPulseCards failed:", error.message);
+    return [];
+  }
+  return (data ?? []) as unknown as PulseCard[];
+}
+
+export async function setPulseCardStatus(
+  id: string,
+  status: PulseCardStatus
+): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("pulse_cards")
+    .update({ status })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`[Admin] setPulseCardStatus failed: ${error.message}`);
+  }
+}
+
+export async function setPulseCardFeedback(
+  id: string,
+  feedback: PulseCardFeedback | null
+): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("pulse_cards")
+    .update({ feedback })
+    .eq("id", id);
+
+  if (error) {
+    throw new Error(`[Admin] setPulseCardFeedback failed: ${error.message}`);
+  }
+}
+
+// ============================================
 // HOMEPAGE FEATURED SELECTIONS
 // All reads/writes use supabaseAuth (authenticated JWT).
 // ============================================
@@ -1343,4 +1462,128 @@ export async function deleteFeaturedSelection(isoWeek: string): Promise<void> {
     .eq("iso_week", isoWeek);
 
   if (error) throw new Error(`[Admin] deleteFeaturedSelection failed: ${error.message}`);
+}
+
+// ============================================
+// MARKET BRIEFINGS (PR B — admin authoring)
+// Editorial layer over market_report_snapshots. All browser reads/writes use
+// supabaseAuth (authenticated session); RLS from migration 050 governs access.
+// Public pages only ever see published editions (049 anon policy).
+// ============================================
+
+export type BriefingStatus = "draft" | "published" | "archived";
+
+export interface AdminBriefingRow {
+  id: string;
+  slug: string;
+  period: string;
+  snapshot_date: string;
+  title: string;
+  executive_summary: string | null;
+  key_takeaways: string[] | null;
+  commentary: string | null;
+  methodology_note: string | null;
+  status: BriefingStatus;
+  published_at: string | null;
+  published_by: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Editable payload for create / update. */
+export interface BriefingDraftInput {
+  slug: string;
+  period: string;
+  snapshot_date: string;
+  title: string;
+  executive_summary: string | null;
+  key_takeaways: string[] | null;
+  commentary: string | null;
+  methodology_note: string | null;
+}
+
+const BRIEFING_COLUMNS =
+  "id, slug, period, snapshot_date, title, executive_summary, key_takeaways, " +
+  "commentary, methodology_note, status, published_at, published_by, created_at, updated_at";
+
+/** All editions, any status, newest snapshot first. */
+export async function getBriefingsAdmin(): Promise<AdminBriefingRow[]> {
+  const { data, error } = await supabaseAuth
+    .from("market_briefings")
+    .select(BRIEFING_COLUMNS)
+    .order("snapshot_date", { ascending: false });
+
+  if (error) {
+    console.error("[Admin] getBriefingsAdmin failed:", error.message);
+    return [];
+  }
+  return (data ?? []) as unknown as AdminBriefingRow[];
+}
+
+/** Distinct snapshot_date values that have a PUBLISHED 'ALL' aggregate row.
+ *  These are the only dates a briefing can be pinned to and still render. */
+export async function getPublishedSnapshotDates(): Promise<string[]> {
+  const { data, error } = await supabaseAuth
+    .from("market_report_snapshots")
+    .select("snapshot_date")
+    .eq("island", "ALL")
+    .eq("status", "published")
+    .not("published_at", "is", null)
+    .order("snapshot_date", { ascending: false });
+
+  if (error) {
+    console.error("[Admin] getPublishedSnapshotDates failed:", error.message);
+    return [];
+  }
+  const seen = new Set<string>();
+  for (const r of (data ?? []) as { snapshot_date: string }[]) seen.add(r.snapshot_date);
+  return [...seen];
+}
+
+/** Create a new draft edition. Returns the created row. */
+export async function createBriefing(input: BriefingDraftInput): Promise<AdminBriefingRow> {
+  const now = new Date().toISOString();
+  const { data, error } = await supabaseAuth
+    .from("market_briefings")
+    .insert({ ...input, status: "draft", updated_at: now })
+    .select(BRIEFING_COLUMNS)
+    .single();
+
+  if (error) throw new Error(`[Admin] createBriefing failed: ${error.message}`);
+  return data as unknown as AdminBriefingRow;
+}
+
+/** Update an existing edition's editorial fields (status unchanged). */
+export async function updateBriefing(id: string, input: BriefingDraftInput): Promise<void> {
+  const { error } = await supabaseAuth
+    .from("market_briefings")
+    .update({ ...input, updated_at: new Date().toISOString() })
+    .eq("id", id);
+
+  if (error) throw new Error(`[Admin] updateBriefing failed: ${error.message}`);
+}
+
+/** Transition an edition's status.
+ *  publish → stamps published_at + published_by; unpublish/archive clears nothing
+ *  except status, with published_at cleared on return-to-draft so the public RLS
+ *  (status='published' AND published_at IS NOT NULL) hides it cleanly. */
+export async function setBriefingStatus(
+  id: string,
+  status: BriefingStatus,
+  publishedBy?: string | null,
+): Promise<void> {
+  const patch: Record<string, unknown> = { status, updated_at: new Date().toISOString() };
+  if (status === "published") {
+    patch.published_at = new Date().toISOString();
+    patch.published_by = publishedBy ?? "admin";
+  } else if (status === "draft") {
+    patch.published_at = null;
+  }
+
+  const { error } = await supabaseAuth
+    .from("market_briefings")
+    .update(patch)
+    .eq("id", id);
+
+  if (error) throw new Error(`[Admin] setBriefingStatus failed: ${error.message}`);
 }

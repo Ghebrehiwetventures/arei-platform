@@ -195,6 +195,23 @@
 }
 
 /* ── Burger (mobile) ── 3 spans → X on .open. cv-listing pattern. */
+.nav-mobile-controls {
+  display: none;
+  align-items: center;
+  gap: 12px;
+  position: relative;
+  z-index: 220;
+}
+
+.nav-mobile-controls .lang-toggle-btn {
+  min-width: 34px;
+  min-height: 32px;
+  color: var(--kv-black);
+  opacity: 1;
+  padding: 0 4px;
+}
+.nav-mobile-controls.open .lang-toggle-btn { color: var(--kv-white); }
+
 .nav-burger {
   display: none;
   width: 36px;
@@ -306,11 +323,25 @@
 body.nav-locked { overflow: hidden; }
 
 @media (max-width: 768px) {
+  .ctn { padding-top: 52px; }
+  .nav {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+  }
   .nav-links { display: none; }
   .nav-burger { display: block; }
+  .nav-mobile-controls { display: inline-flex; }
   .hide-desktop { display: block !important; }
+  .nav-mobile-controls.hide-desktop { display: inline-flex !important; }
   .hide-mobile { display: none !important; }
 }
 @media (min-width: 769px) {
   .hide-desktop { display: none !important; }
+}
+
+@media (max-width: 560px) {
+  .ctn { padding-top: 76px; }
 }

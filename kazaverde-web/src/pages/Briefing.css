@@ -1,0 +1,384 @@
+/* ════════════════════════════════════════════════════════════
+   Briefing — institutional market-research publication.
+   Shared by the archive index (/briefings) and the canonical
+   edition page (/briefings/:slug).
+
+   The page header is the shared PageHeader (.kv-pagehead) so these
+   pages read as part of the same site as Guides / News. Everything
+   below the header sits in the same content column (--kv-content-w
+   + --kv-gutter) as the rest of the site, and prints as a clean PDF
+   report (see @media print).
+   ════════════════════════════════════════════════════════════ */
+
+.kv-bf,
+.kv-bf-archive-page {
+  font-family: var(--kv-mono);
+  color: var(--kv-black);
+  background: var(--kv-white);
+}
+
+/* Same content column as nav / footer / other pages. */
+.kv-bf-inner {
+  max-width: var(--kv-content-w);
+  margin: 0 auto;
+  padding: 0 var(--kv-gutter);
+}
+
+/* ─── Body ─── */
+.kv-bf-body {
+  padding-top: 8px;
+  padding-bottom: 72px;
+}
+
+.kv-bf-section {
+  padding: 36px 0;
+  border-top: 1px solid var(--kv-rule-soft);
+}
+.kv-bf-section-head {
+  font-size: 13px;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--kv-ink-600);
+  margin: 0 0 20px;
+  font-weight: var(--kv-fw-semibold);
+}
+.kv-bf-section-kicker {
+  font-size: 11px;
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  margin: 0 0 10px;
+}
+
+/* ─── 2 · Executive summary ─── */
+.kv-bf-summary {
+  padding: 36px 0 8px;
+}
+.kv-bf-summary-lead {
+  font-size: 20px;
+  line-height: 1.5;
+  letter-spacing: -0.005em;
+  color: var(--kv-black);
+  margin: 0;
+  max-width: 60ch;
+}
+
+/* ─── 3 · KPI cards ─── */
+.kv-bf-kpis {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 1px;
+  background: var(--kv-rule);
+  border: 1px solid var(--kv-rule);
+}
+.kv-bf-kpi {
+  background: var(--kv-paper);
+  padding: 22px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.kv-bf-kpi-val {
+  font-size: 28px;
+  line-height: 1;
+  letter-spacing: -0.02em;
+  font-variant-numeric: tabular-nums;
+  color: var(--kv-black);
+}
+.kv-bf-kpi-label {
+  font-size: 11.5px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kv-ink-500);
+}
+
+/* ─── 4 · Island breakdown table ─── */
+.kv-bf-table-wrap { overflow-x: auto; }
+.kv-bf-table {
+  width: 100%;
+  min-width: 560px;
+  border-collapse: collapse;
+  font-size: 13.5px;
+  font-variant-numeric: tabular-nums;
+}
+.kv-bf-table th,
+.kv-bf-table td {
+  text-align: left;
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--kv-rule-soft);
+}
+/* Terminal-style header: stronger rule, monospace small-caps. */
+.kv-bf-table thead th {
+  font-size: 10.5px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-ink-500);
+  font-weight: var(--kv-fw-semibold);
+  border-bottom: 1px solid var(--kv-black);
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+.kv-bf-table th.num,
+.kv-bf-table td.num {
+  text-align: right;
+}
+/* Zebra + hover give the table dashboard-grade legibility. */
+.kv-bf-table tbody tr:nth-child(even) { background: var(--kv-off-white); }
+.kv-bf-table tbody tr:hover { background: var(--kv-green-tint); }
+.kv-bf-table tbody tr:last-child td { border-bottom: none; }
+.kv-bf-island {
+  font-weight: var(--kv-fw-medium);
+  white-space: nowrap;
+}
+/* Small-sample flag + withheld cells. */
+.kv-bf-flag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 5px;
+  font-size: 9.5px;
+  letter-spacing: 0.04em;
+  color: var(--kv-ink-500);
+  border: 1px solid var(--kv-rule);
+  vertical-align: middle;
+}
+.kv-bf-table td.is-withheld { color: var(--kv-ink-300); }
+
+/* Derived data notes — small, factual, below the table. */
+.kv-bf-datanotes {
+  margin-top: 16px;
+  border-left: 2px solid var(--kv-green);
+  padding-left: 14px;
+}
+.kv-bf-datanotes-label {
+  display: block;
+  font-size: 10.5px;
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  margin-bottom: 6px;
+}
+.kv-bf-datanotes ul {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+.kv-bf-datanotes li {
+  font-size: 12px;
+  line-height: 1.55;
+  color: var(--kv-ink-500);
+  padding: 1px 0;
+}
+
+/* ─── 2b · Key takeaways ─── */
+.kv-bf-takeaways {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-width: 64ch;
+}
+.kv-bf-takeaways li {
+  position: relative;
+  padding: 14px 0 14px 28px;
+  border-bottom: 1px solid var(--kv-rule-soft);
+  font-size: 15.5px;
+  line-height: 1.55;
+  color: var(--kv-ink-700);
+}
+.kv-bf-takeaways li:last-child { border-bottom: none; }
+.kv-bf-takeaways li::before {
+  content: "";
+  position: absolute;
+  left: 4px;
+  top: 22px;
+  width: 8px;
+  height: 8px;
+  background: var(--kv-green);
+}
+
+/* ─── 5 · Commentary prose ─── */
+.kv-bf-prose {
+  max-width: 64ch;
+}
+.kv-bf-prose p {
+  font-size: 15.5px;
+  line-height: 1.7;
+  color: var(--kv-ink-700);
+  margin: 0 0 16px;
+}
+.kv-bf-prose p:last-child { margin-bottom: 0; }
+
+/* ─── 6 · Methodology ─── */
+.kv-bf-methodology p {
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--kv-ink-500);
+  margin: 0;
+  max-width: 70ch;
+}
+
+/* ─── 7 · Archive nav (on the canonical page) ─── */
+.kv-bf-archive {
+  margin-top: 8px;
+  padding: 36px 0 0;
+  border-top: 1px solid var(--kv-rule);
+}
+.kv-bf-archive-list {
+  list-style: none;
+  margin: 0 0 20px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.kv-bf-archive-list a {
+  display: flex;
+  align-items: baseline;
+  gap: 14px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--kv-rule-soft);
+  text-decoration: none;
+  color: var(--kv-black);
+}
+.kv-bf-archive-list a:hover .kv-bf-archive-title { color: var(--kv-green-deep); }
+.kv-bf-archive-period {
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kv-ink-500);
+  min-width: 88px;
+}
+.kv-bf-archive-title { font-size: 14.5px; }
+.kv-bf-archive-empty {
+  font-size: 13.5px;
+  color: var(--kv-ink-500);
+  margin: 0 0 20px;
+}
+.kv-bf-archive-all {
+  display: inline-block;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--kv-green-deep);
+  text-decoration: none;
+}
+.kv-bf-archive-all:hover { text-decoration: underline; }
+
+/* ─── Archive index page (/briefings) ─── */
+.kv-bf-index-list {
+  list-style: none;
+  margin: 0;
+  padding: 28px 0 0;
+}
+.kv-bf-index-item { border-top: 1px solid var(--kv-rule-soft); }
+.kv-bf-index-item:first-child { border-top: none; }
+.kv-bf-index-link {
+  display: block;
+  padding: 28px 0;
+  text-decoration: none;
+  color: var(--kv-black);
+}
+.kv-bf-index-link:hover .kv-bf-index-title { color: var(--kv-green-deep); }
+.kv-bf-index-link:hover .kv-bf-index-cta { text-decoration: underline; }
+.kv-bf-index-meta {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--kv-ink-500);
+}
+.kv-bf-index-period { color: var(--kv-green-deep); }
+.kv-bf-index-title {
+  font-size: 22px;
+  line-height: 1.2;
+  letter-spacing: -0.01em;
+  margin: 10px 0 0;
+}
+.kv-bf-index-summary {
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--kv-ink-600);
+  margin: 10px 0 0;
+  max-width: 64ch;
+}
+.kv-bf-index-cta {
+  display: inline-block;
+  margin-top: 14px;
+  font-size: 13px;
+  letter-spacing: 0.03em;
+  color: var(--kv-green-deep);
+}
+
+/* ─── Empty / loading / unavailable states ─── */
+.kv-bf-state,
+.kv-bf-empty {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 72px 24px;
+  text-align: center;
+}
+.kv-bf-state p { color: var(--kv-ink-500); }
+.kv-bf-state-error h1,
+.kv-bf-empty h2 {
+  font-size: 22px;
+  margin: 0 0 12px;
+}
+.kv-bf-empty p { color: var(--kv-ink-500); line-height: 1.6; }
+.kv-bf-back {
+  display: inline-block;
+  margin-top: 18px;
+  color: var(--kv-green-deep);
+  text-decoration: none;
+}
+.kv-bf-back:hover { text-decoration: underline; }
+
+/* ─── Responsive ─── */
+@media (max-width: 720px) {
+  .kv-bf-kpis { grid-template-columns: repeat(2, 1fr); }
+  .kv-bf-summary-lead { font-size: 18px; }
+  .kv-bf-archive-list a { flex-direction: column; gap: 2px; }
+}
+
+/* ════════════════════════════════════════════════════════════
+   Print — render the edition as a clean PDF report. Strip the
+   site shell (nav/footer/newsletter), drop tinted surfaces, and
+   keep sections from splitting across page breaks.
+   ════════════════════════════════════════════════════════════ */
+@media print {
+  .nav,
+  .ft,
+  .nl-cta,
+  .cookie-banner,
+  .kv-bf-archive,
+  .kv-bf-index-cta {
+    display: none !important;
+  }
+
+  .kv-bf,
+  .kv-bf-archive-page,
+  .kv-pagehead {
+    background: #fff !important;
+  }
+  .kv-pagehead { border-bottom: 1px solid #ccc; }
+
+  .kv-bf-inner { max-width: none; padding: 0; }
+  .kv-bf-body { padding-bottom: 0; }
+
+  .kv-bf-section,
+  .kv-bf-summary,
+  .kv-bf-kpis,
+  .kv-bf-takeaways li,
+  .kv-bf-table,
+  table.kv-bf-table tr {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .kv-bf-kpi { background: #fff !important; }
+  .kv-bf-kpi-val,
+  .kv-bf-summary-lead { color: #000 !important; }
+
+  a { color: #000 !important; text-decoration: none !important; }
+}

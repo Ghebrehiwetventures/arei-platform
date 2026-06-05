@@ -12,10 +12,10 @@
 
 .ck-banner {
   display: flex;
-  align-items: flex-end;
-  gap: 16px;
+  flex-direction: column;
+  gap: 14px;
   width: min(380px, calc(100vw - 40px));
-  padding: 16px 16px 14px;
+  padding: 16px;
   background: var(--kv-paper);
   border: 1px solid var(--kv-black);
   box-shadow: 0 18px 42px rgba(0, 0, 0, 0.16);
@@ -49,27 +49,42 @@
   font-size: 12px;
   color: var(--kv-ink-700);
   line-height: 1.6;
-  max-width: 32ch;
   font-family: var(--kv-mono);
+}
+
+.ck-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
 }
 
 .ck-btn {
   flex-shrink: 0;
-  align-self: flex-end;
   padding: 9px 18px;
   font-family: var(--kv-mono);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--kv-black);
-  background: transparent;
+  color: var(--kv-paper);
+  background: var(--kv-black);
   border: 1px solid var(--kv-black);
   cursor: pointer;
   transition: background 0.2s, color 0.2s;
 }
 .ck-btn:hover {
+  background: var(--kv-sage-deep, #2d4a42);
+  border-color: var(--kv-sage-deep, #2d4a42);
+  color: var(--kv-paper);
+}
+
+.ck-btn-secondary {
+  color: var(--kv-black);
+  background: transparent;
+}
+.ck-btn-secondary:hover {
   background: var(--kv-hover);
+  border-color: var(--kv-black);
   color: var(--kv-black);
 }
 
@@ -82,23 +97,14 @@
   }
 
   .ck-banner {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 14px;
     width: min(100%, 380px);
-    padding: 16px;
-  }
-
-  .ck-copy {
-    text-align: left;
   }
 
   .ck-text {
-    max-width: none;
     font-size: 13px;
   }
 
   .ck-btn {
-    align-self: flex-start;
+    flex: 1;
   }
 }

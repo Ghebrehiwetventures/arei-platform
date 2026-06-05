@@ -3,7 +3,7 @@ const assert = require("node:assert/strict");
 
 require("ts-node/register/transpile-only");
 
-const { mapJsonItem } = require("../core/genericFetcher");
+const { mapJsonItem } = require("../core/fetcher");
 
 test("json_api mapping can pick an English title from a typed description array", () => {
   const raw = {
@@ -142,4 +142,109 @@ test("json_api mapping uses ordered title fallbacks when the preferred title is 
     listing.title,
     "Condo/Apartment For Sale, 2 Bedrooms located at Santa Maria, SAL, SAL | Cape Verde",
   );
+});
+
+test("json_api mapping applies detail_url_rewrite to detailUrl and extracts id from pre-rewrite URL", () => {
+  const raw = {
+    content: {
+      City: "Praia",
+      Province: "SAN",
+      ListingPriceEuro: 250000,
+      ListingDescriptions: [
+        { DescriptionTypeUID: "1113", ISOLanguageCode: "en", Description: "Apartment in Praia" },
+      ],
+      ShortLinks: [
+        { ShortLink: "/property-detail/12345", ISOLanguageCode: "en" },
+      ],
+    },
+  };
+
+  const listing = mapJsonItem(raw, {
+    id: "cv_example",
+    name: "Example JSON API",
+    base_url: "https://example.test",
+    pagination: { type: "json_api" },
+    selectors: {},
+    delay_ms: 0,
+    jitter_ms: 0,
+    max_items: 10,
+    max_pages: 1,
+    stop_condition: "empty_listings",
+    reject_url_patterns: [],
+    fetch_method: "http",
+    cms_type: "custom",
+    id_prefix: "ex",
+    id_url_pattern: "/property-detail/(\\d+)",
+    detail_url_rewrite: { from: "/property-detail/", to: "/en/property-detail/" },
+    item_map: {
+      content_base: "content",
+      title: {
+        array: "ListingDescriptions",
+        field: "Description",
+        match_field: "ISOLanguageCode",
+        match_value: "en",
+      },
+      price: "ListingPriceEuro",
+      location_template: "{City}, {Province}",
+      detail_url: {
+        array: "ShortLinks",
+        field: "ShortLink",
+        match_field: "ISOLanguageCode",
+        match_value: "en",
+      },
+    },
+  }, new Date("2026-05-20T00:00:00.000Z"));
+
+  assert.equal(listing.detailUrl, "https://example.test/en/property-detail/12345");
+  assert.equal(listing.id, "ex_12345");
+});
+
+test("json_api mapping leaves detailUrl unchanged when no detail_url_rewrite is configured", () => {
+  const raw = {
+    content: {
+      City: "Praia",
+      ListingPriceEuro: 250000,
+      ListingDescriptions: [
+        { DescriptionTypeUID: "1113", ISOLanguageCode: "en", Description: "Apartment in Praia" },
+      ],
+      ShortLinks: [
+        { ShortLink: "/property-detail/12345", ISOLanguageCode: "en" },
+      ],
+    },
+  };
+
+  const listing = mapJsonItem(raw, {
+    id: "cv_example",
+    name: "Example JSON API",
+    base_url: "https://example.test",
+    pagination: { type: "json_api" },
+    selectors: {},
+    delay_ms: 0,
+    jitter_ms: 0,
+    max_items: 10,
+    max_pages: 1,
+    stop_condition: "empty_listings",
+    reject_url_patterns: [],
+    fetch_method: "http",
+    cms_type: "custom",
+    id_prefix: "ex",
+    item_map: {
+      content_base: "content",
+      title: {
+        array: "ListingDescriptions",
+        field: "Description",
+        match_field: "ISOLanguageCode",
+        match_value: "en",
+      },
+      price: "ListingPriceEuro",
+      detail_url: {
+        array: "ShortLinks",
+        field: "ShortLink",
+        match_field: "ISOLanguageCode",
+        match_value: "en",
+      },
+    },
+  }, new Date("2026-05-20T00:00:00.000Z"));
+
+  assert.equal(listing.detailUrl, "https://example.test/property-detail/12345");
 });

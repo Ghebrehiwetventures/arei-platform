@@ -9,6 +9,7 @@
 export interface DemoListing {
   id: string;
   title: string;
+  ai_descriptions?: import("arei-sdk").ListingCard["ai_descriptions"];
   city: string | null;
   island: string;
   price: number | null;
