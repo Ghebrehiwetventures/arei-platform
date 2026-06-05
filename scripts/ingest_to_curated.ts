@@ -11,7 +11,11 @@ dotenv.config({ path: path.resolve(__dirname, "../.env") });
 
 import { runMarketSource } from "../core/pipeline/runMarketSource";
 
-export { buildKvCuratedUpsertQuery } from "../core/pipeline/runMarketSource";
+export {
+  buildKvCuratedUpsertQuery,
+  buildFindRemovedPublishedRowsQuery,
+  buildDemoteRemovedPublishedRowsQuery,
+} from "../core/pipeline/runMarketSource";
 
 function loadEnv(): { marketId: string; sourceId: string; dryRun: boolean } {
   const marketId = process.env.MARKET_ID;

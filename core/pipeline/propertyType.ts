@@ -20,7 +20,7 @@ export function extractPropertyType(title?: string, url?: string): string {
   if (/\b(bungalow|bungalows)\b/.test(text)) return "bungalow";
   if (/\b(maisonette|maisonettes)\b/.test(text)) return "maisonette";
   if (/\b(duplex|duplexes)\b/.test(text)) return "duplex";
-  if (/\b(land|plot|plots|acre|acres)\b/.test(text)) return "land";
+  if (/\b(land|lot|lots|plot|plots|acre|acres)\b/.test(text)) return "land";
   if (/\b(commercial|office|shop|warehouse)\b/.test(text)) return "commercial";
 
   if (/\b(for.?sale|bedroom|bed)\b/.test(text)) return "house";

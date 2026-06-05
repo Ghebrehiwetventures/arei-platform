@@ -316,6 +316,7 @@ sources:
         # the right answer for a project that spans multiple unit types.
         bedrooms: ".detailsBar__list i.fa-bed + span"
         bathrooms: ".detailsBar__list i.fa-shower + span"
+        area: ".detailsBar__list i.proppy-icon-gross-area-24-custom + span"
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"

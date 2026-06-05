@@ -45,6 +45,35 @@ test("prefers structured bathroom and bedroom selectors over description regex m
   assert.equal(result.bathrooms, 2);
 });
 
+test("extracts CCore gross-area detail bar values with comma decimals", () => {
+  const plugin = createGenericDetailPlugin("cv_ccoreinvestments", {
+    selectors: {
+      area: ".detailsBar__list i.proppy-icon-gross-area-24-custom + span",
+    },
+  });
+
+  const html = `
+    <html>
+      <body>
+        <ul class="detailsBar__list">
+          <li><div class="detailsBar__detail"><i class="fa fa-bed"></i><span>1</span></div></li>
+          <li><div class="detailsBar__detail"><i class="fa fa-shower"></i><span>1</span></div></li>
+          <li>
+            <div class="detailsBar__detail">
+              <i class="proppy-icon proppy-icon-gross-area-24-custom"></i>
+              <span>55,56 m<sup>2</sup></span>
+            </div>
+          </li>
+        </ul>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(html, "https://www.ccoreinvestments.com/en/property-detail/example/839806");
+
+  assert.equal(result.areaSqm, 56);
+});
+
 test("falls back to regex when structured bathroom selector is absent", () => {
   const plugin = createGenericDetailPlugin("cv_example", {
     selectors: {
