@@ -781,8 +781,8 @@ export default function Detail() {
                 aria-pressed={isSaved(detail.id)}
                 aria-label={isSaved(detail.id) ? t("detail.savedAria") : t("detail.saveAria")}
               >
-                <svg width="11" height="11" viewBox="0 0 24 24" fill={isSaved(detail.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2.2" aria-hidden="true">
-                  <path d="M6 3h12a1 1 0 0 1 1 1v17l-7-4-7 4V4a1 1 0 0 1 1-1z" />
+                <svg width="12" height="12" viewBox="0 0 24 24" fill={isSaved(detail.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                 </svg>
                 <span>{isSaved(detail.id) ? t("detail.savedToShortlist") : t("detail.saveToShortlist")}</span>
               </button>

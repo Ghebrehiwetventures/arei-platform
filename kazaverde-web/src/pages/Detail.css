@@ -636,14 +636,15 @@
 
 /* Save — lightweight utility/bookmark action in the summary header row,
    right-aligned against the LISTING SUMMARY label. Intentionally NOT a
-   second CTA: no border box, no full-width bar, no sage block. Small
-   uppercase mono; saved state switches the label to SAVED and tints the
-   filled bookmark in sage-deep. The broker CTA stays the only dominant
-   full-width button. */
+   second CTA: no border box, no full-width bar, no colour block. Small
+   uppercase mono; state is conveyed monochrome — default is muted gray,
+   saved goes full ink with the bookmark filled (the same Feather
+   bookmark glyph used on .pc-save listing cards, kept consistent). The
+   broker CTA stays the only dominant full-width button. */
 .kv-d-save {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   padding: 2px 0;
   margin: 0;
   background: transparent;
@@ -651,17 +652,17 @@
   font-family: var(--kv-mono);
   font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   text-transform: uppercase;
   color: var(--kv-gray-500);
   line-height: 1;
   cursor: pointer;
   transition: color var(--kv-dur) var(--kv-ease);
 }
-.kv-d-save svg { display: block; flex-shrink: 0; }
+.kv-d-save svg { display: block; flex-shrink: 0; transform: translateY(-0.5px); }
 .kv-d-save:hover { color: var(--kv-black); }
-.kv-d-save:focus-visible { outline: 2px solid var(--kv-green-deep); outline-offset: 3px; }
-.kv-d-save.is-saved { color: var(--kv-green-deep); }
+.kv-d-save:focus-visible { outline: 2px solid var(--kv-black); outline-offset: 3px; }
+.kv-d-save.is-saved { color: var(--kv-black); }
 .kv-d-save:active { transform: translateY(1px); }
 
 /* Listing-summary inner blocks — cv-listing.html .s-price/.s-specs.
