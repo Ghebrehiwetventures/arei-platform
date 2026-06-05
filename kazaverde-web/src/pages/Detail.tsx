@@ -774,6 +774,18 @@ export default function Detail() {
           <div className="kv-d-card">
             <div className="kv-d-card-h">
               <span>{t("detail.listingSummary")}</span>
+              <button
+                type="button"
+                className={`kv-d-save${isSaved(detail.id) ? " is-saved" : ""}`}
+                onClick={() => toggle(detail.id)}
+                aria-pressed={isSaved(detail.id)}
+                aria-label={isSaved(detail.id) ? t("detail.savedAria") : t("detail.saveAria")}
+              >
+                <svg width="12" height="12" viewBox="0 0 24 24" fill={isSaved(detail.id) ? "currentColor" : "none"} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                  <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
+                </svg>
+                <span>{isSaved(detail.id) ? t("detail.savedToShortlist") : t("detail.saveToShortlist")}</span>
+              </button>
             </div>
             <div className="kv-d-card-body">
               {detail.price && (
@@ -826,15 +838,6 @@ export default function Detail() {
                   <span aria-hidden="true">→</span>
                 </a>
               )}
-              <button
-                type="button"
-                className={`kv-d-btn-ghost${isSaved(detail.id) ? " is-saved" : ""}`}
-                onClick={() => toggle(detail.id)}
-                aria-pressed={isSaved(detail.id)}
-              >
-                <span>{isSaved(detail.id) ? t("detail.savedToShortlist") : t("detail.saveToShortlist")}</span>
-                <span aria-hidden="true">↗</span>
-              </button>
             </div>
           </div>
 

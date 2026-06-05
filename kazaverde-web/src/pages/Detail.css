@@ -600,12 +600,12 @@
   font-size: 12px;
 }
 
-/* Sidebar CTAs — cv-listing.html .s-cta-* pattern. Title-case Mono
-   text (NOT uppercase) so they read relaxed and editorial. Primary
-   is a filled black bar (the action); secondary is a transparent
-   outline link.
+/* Sidebar broker CTA — cv-listing.html .s-cta-* pattern. Title-case
+   Mono text (NOT uppercase) so it reads relaxed and editorial. A filled
+   black bar — the single dominant action in the card. (Save lives in
+   the summary header row as a lightweight utility, not a second CTA.)
 
-   These intentionally diverge from the global .kv-btn (which is
+   This intentionally diverges from the global .kv-btn (which is
    uppercase outlined) because the sidebar is a long-form action card
    — uppercase + outlined was reading as too shouty there. */
 .kv-d-btn-primary {
@@ -634,34 +634,36 @@
 .kv-d-btn-primary:hover { background: var(--kv-black-hover); color: var(--kv-white); }
 .kv-d-btn-primary:active { transform: translateY(1px); }
 
-.kv-d-btn-ghost {
-  display: flex;
+/* Save — lightweight utility/bookmark action in the summary header row,
+   right-aligned against the LISTING SUMMARY label. Intentionally NOT a
+   second CTA: no border box, no full-width bar, no colour block. Small
+   uppercase mono; state is conveyed monochrome — default is muted gray,
+   saved goes full ink with the bookmark filled (the same Feather
+   bookmark glyph used on .pc-save listing cards, kept consistent). The
+   broker CTA stays the only dominant full-width button. */
+.kv-d-save {
+  display: inline-flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  width: 100%;
-  padding: 12px 18px;
-  margin-top: 8px;
+  gap: 6px;
+  padding: 2px 0;
+  margin: 0;
   background: transparent;
-  color: var(--kv-gray-500);
-  border: 1px solid var(--kv-rule);
+  border: none;
   font-family: var(--kv-mono);
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 500;
-  letter-spacing: 0;
-  text-transform: none;
-  text-align: left;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  line-height: 1;
   cursor: pointer;
-  transition: border-color var(--kv-dur) var(--kv-ease),
-              color var(--kv-dur) var(--kv-ease);
+  transition: color var(--kv-dur) var(--kv-ease);
 }
-.kv-d-btn-ghost:hover { border-color: var(--kv-black); color: var(--kv-black); }
-.kv-d-btn-ghost.is-saved {
-  background: var(--kv-green);
-  border-color: var(--kv-black);
-  color: var(--kv-black);
-}
-.kv-d-btn-ghost:active { transform: translateY(1px); }
+.kv-d-save svg { display: block; flex-shrink: 0; transform: translateY(-0.5px); }
+.kv-d-save:hover { color: var(--kv-black); }
+.kv-d-save:focus-visible { outline: 2px solid var(--kv-black); outline-offset: 3px; }
+.kv-d-save.is-saved { color: var(--kv-black); }
+.kv-d-save:active { transform: translateY(1px); }
 
 /* Listing-summary inner blocks — cv-listing.html .s-price/.s-specs.
    Light-weight large price + tight subline, then specs row that

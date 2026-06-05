@@ -202,7 +202,7 @@ export default function Saved() {
   }, [cards, marketStats]);
 
   const handleClear = () => {
-    if (window.confirm(isPt ? "Limpar toda a sua lista? Isto afeta apenas este dispositivo." : "Clear your entire shortlist? This only affects this device.")) {
+    if (window.confirm(isPt ? "Limpar toda a sua lista? Isto afeta apenas este dispositivo." : "Clear all your saved properties? This only affects this device.")) {
       clear();
     }
   };
@@ -212,9 +212,9 @@ export default function Saved() {
       {/* ─── Header (off-white) ─── */}
       <header className="kv-saved-head">
         <div className="kv-saved-head-inner">
-          <div className="kv-saved-eyebrow">{t("common.shortlist")}</div>
+          <div className="kv-saved-eyebrow">{isPt ? "Favoritos" : "Saved properties"}</div>
           <h1 className="kv-saved-title">
-            {isEmpty ? (isPt ? "Ainda não guardou nada." : "Nothing saved yet.") : (isPt ? "A sua lista." : "Your shortlist.")}
+            {isEmpty ? (isPt ? "Ainda não guardou nada." : "No saved properties yet.") : (isPt ? "A sua lista." : "Your saved properties.")}
           </h1>
           <div className="kv-saved-meta">
             <span><b>{count}</b> {count === 1 ? (isPt ? "imóvel" : "property") : (isPt ? "imóveis" : "properties")}</span>
@@ -230,7 +230,7 @@ export default function Saved() {
       {loading && (
         <section className="kv-saved-section kv-saved-section-white">
           <div className="kv-saved-section-inner">
-            <div className="kv-saved-loading-lbl">{isPt ? "A carregar lista" : "Loading shortlist"}</div>
+            <div className="kv-saved-loading-lbl">{isPt ? "A carregar lista" : "Loading saved properties"}</div>
             <div className="kv-saved-loading-skel" aria-hidden="true">
               <span /><span /><span />
             </div>
@@ -247,10 +247,10 @@ export default function Saved() {
                 <p className="kv-saved-empty-lead">
                   {isPt
                     ? "Abra qualquer anúncio e toque em guardar na lista no resumo do anúncio. A lista fica neste navegador — sem conta, sem sincronização, sem marketing."
-                    : <>Open any listing and tap <b>Save to shortlist</b> in the listing summary card. Your list lives in this browser — no account, no sync, no marketing.</>}
+                    : <>Open any listing and tap <b>Save</b> to save it here. Your list lives in this browser — no account, no sync, no marketing.</>}
                 </p>
                 <Link to="/listings" className="kv-saved-cta">
-                  <span>{t("common.browseAllListings")}</span>
+                  <span>{t("common.browseListings")}</span>
                   <span aria-hidden="true">→</span>
                 </Link>
               </div>
@@ -313,7 +313,7 @@ export default function Saved() {
 
             <div className="kv-saved-foot">
               <Link to="/listings" className="kv-saved-foot-link">
-                <span>{t("common.browseAllListings")}</span>
+                <span>{t("common.browseListings")}</span>
                 <span aria-hidden="true">→</span>
               </Link>
               <button
@@ -321,7 +321,7 @@ export default function Saved() {
                 className="kv-saved-foot-clear"
                 onClick={handleClear}
               >
-                {isPt ? "Limpar lista" : "Clear shortlist"}
+                {isPt ? "Limpar lista" : "Clear all"}
               </button>
             </div>
           </div>
@@ -339,7 +339,7 @@ export default function Saved() {
               <div>
                 <div className="kv-saved-section-eyebrow">{isPt ? "Como compara" : "How yours compares"}</div>
                 <h2 className="kv-saved-section-title">
-                  {isPt ? "A sua lista face ao índice." : "Your shortlist against the index."}
+                  {isPt ? "A sua lista face ao índice." : "Your saved properties against the index."}
                 </h2>
                 <p className="kv-saved-section-sub">
                   {isPt
@@ -380,10 +380,11 @@ export default function Saved() {
               {islandStats.map((s) => (
                 <div className="kv-saved-vs-row" key={s.island}>
                   <div className="kv-saved-vs-island">{s.island}</div>
-                  <div>{s.count}</div>
-                  <div>{fmtPrice(s.avgPrice)}</div>
-                  <div>{fmtPrice(s.marketMedian)}</div>
+                  <div data-k={isPt ? "Guardados" : "You saved"}>{s.count}</div>
+                  <div data-k={isPt ? "Média" : "Your avg"}>{fmtPrice(s.avgPrice)}</div>
+                  <div data-k={isPt ? "Mediana da ilha" : "Island median"}>{fmtPrice(s.marketMedian)}</div>
                   <div
+                    data-k={isPt ? "Face ao mercado" : "Vs market"}
                     className={
                       s.vsPct == null
                         ? "kv-saved-vs-pct"
