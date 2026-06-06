@@ -26,5 +26,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Ingest market news candidates (auto-enrich on insert)
-        run: npx ts-node --transpile-only scripts/ingest_market_news.ts --commit --enrich
+      # Enrichment is handled automatically by the Vercel cron
+      # (api/enrich-pending-cron), which runs where OPENAI_API_KEY lives.
+      # Ingest only inserts candidates here (no key required on Actions).
+      - name: Ingest market news candidates
+        run: npx ts-node --transpile-only scripts/ingest_market_news.ts --commit
