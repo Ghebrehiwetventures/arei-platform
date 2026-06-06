@@ -63,6 +63,14 @@ interface GenerateResponse {
   caption: string;
   promptUsed: string | null;
   warning: string | null;
+  attribution?: string | null;
+  photoMeta?: {
+    photo_provider: string;
+    photo_author: string;
+    photo_author_url: string;
+    photo_source_url: string;
+    photo_attribution_text: string;
+  } | null;
 }
 
 export function NewsPostStudioView() {
@@ -78,10 +86,12 @@ export function NewsPostStudioView() {
   const [dek, setDek] = useState("");
   const [bullets, setBullets] = useState("");
   const [useAi, setUseAi] = useState(true);
+  const [imageSource, setImageSource] = useState<"ai" | "pexels">("ai");
   const [quality, setQuality] = useState("high");
   const [imageUrl, setImageUrl] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceName, setSourceName] = useState("");
+  const [region, setRegion] = useState("");
 
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
@@ -116,6 +126,7 @@ export function NewsPostStudioView() {
     setHighlight(suggestHighlight(title));
     setSourceUrl(item.sourceUrl || "");
     setSourceName(item.sourceName || "");
+    setRegion(item.region || "");
     setCaptionText(buildCaption(item));
     setResult(null);
     setError(null);
@@ -131,7 +142,13 @@ export function NewsPostStudioView() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-        body: JSON.stringify({ category, headline, highlight, date, dek, bullets, useAi, quality, imageUrl }),
+        // For Pexels, force useAi:true so the server's fallback (when no usable
+        // photo is found) still produces an AI background rather than a placeholder.
+        body: JSON.stringify({
+          category, headline, highlight, date, dek, bullets,
+          useAi: imageSource === "pexels" ? true : useAi,
+          quality, imageUrl, imageSource, location: region,
+        }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
@@ -287,24 +304,46 @@ export function NewsPostStudioView() {
             <textarea className={inputCls} rows={4} value={bullets} onChange={(e) => setBullets(e.target.value)} placeholder="One fact per line…" />
           </Field>
 
-          <label className="flex items-center gap-2 text-xs font-mono mt-2">
-            <input type="checkbox" checked={useAi} onChange={(e) => setUseAi(e.target.checked)} />
-            Generate AI image relevant to the headline
-          </label>
+          <Field label="Image source">
+            <select
+              className={inputCls}
+              value={imageSource}
+              onChange={(e) => setImageSource(e.target.value as "ai" | "pexels")}
+            >
+              <option value="ai">AI image (generated)</option>
+              <option value="pexels">Pexels photo (real photography)</option>
+            </select>
+          </Field>
 
-          {useAi && (
-            <Field label="Quality">
-              <select className={inputCls} value={quality} onChange={(e) => setQuality(e.target.value)}>
-                <option value="high">high (≈ $0.25)</option>
-                <option value="medium">medium (≈ $0.06)</option>
-                <option value="low">low (≈ $0.02)</option>
-              </select>
-            </Field>
+          {imageSource === "pexels" && (
+            <p className="text-[11px] font-mono text-foreground-subtle -mt-1">
+              Real photo searched from the headline. Falls back to the AI image
+              if no usable photo is found. Photographer credited on the slide.
+            </p>
           )}
-          {!useAi && (
-            <Field label="Image URL (used when AI is off)">
-              <input className={inputCls} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
-            </Field>
+
+          {imageSource === "ai" && (
+            <>
+              <label className="flex items-center gap-2 text-xs font-mono mt-2">
+                <input type="checkbox" checked={useAi} onChange={(e) => setUseAi(e.target.checked)} />
+                Generate AI image relevant to the headline
+              </label>
+
+              {useAi && (
+                <Field label="Quality">
+                  <select className={inputCls} value={quality} onChange={(e) => setQuality(e.target.value)}>
+                    <option value="high">high (≈ $0.25)</option>
+                    <option value="medium">medium (≈ $0.06)</option>
+                    <option value="low">low (≈ $0.02)</option>
+                  </select>
+                </Field>
+              )}
+              {!useAi && (
+                <Field label="Image URL (used when AI is off)">
+                  <input className={inputCls} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
+                </Field>
+              )}
+            </>
           )}
 
           <button
@@ -338,6 +377,14 @@ export function NewsPostStudioView() {
                 );
               })}
               {result?.warning && <div className="text-[11px] text-[#C44A3A]">{result.warning}</div>}
+              {result?.photoMeta && (
+                <div className="text-[11px] font-mono text-foreground-subtle">
+                  {result.photoMeta.photo_attribution_text}
+                  {result.photoMeta.photo_source_url && (
+                    <> · <a href={result.photoMeta.photo_source_url} target="_blank" rel="noreferrer" className="underline">source →</a></>
+                  )}
+                </div>
+              )}
               <div>
                 <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle mb-1">
                   Caption
