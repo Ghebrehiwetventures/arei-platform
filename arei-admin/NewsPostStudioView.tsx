@@ -85,6 +85,11 @@ export function NewsPostStudioView() {
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Item-list filter / search / sort
+  const [search, setSearch] = useState("");
+  const [catFilter, setCatFilter] = useState("");
+  const [sortBy, setSortBy] = useState("recent");
+
   // Caption (editable) + Instagram publish state
   const [captionText, setCaptionText] = useState("");
   const [publishing, setPublishing] = useState(false);
@@ -160,6 +165,15 @@ export function NewsPostStudioView() {
     }
   }
 
+  const categoryOptions = Array.from(new Set(items.map((i) => i.category).filter(Boolean))).sort();
+  const filteredItems = items
+    .filter((i) => (!catFilter || i.category === catFilter) &&
+      (!search || (i.sourceTitle || "").toLowerCase().includes(search.toLowerCase())))
+    .sort((a, b) => {
+      const ta = new Date(a.publishedAt).getTime() || 0;
+      const tb = new Date(b.publishedAt).getTime() || 0;
+      return sortBy === "oldest" ? ta - tb : tb - ta;
+    });
 
   return (
     <div>
@@ -174,15 +188,37 @@ export function NewsPostStudioView() {
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr_minmax(0,420px)] gap-5">
         {/* ── Item picker ─────────────────────────────── */}
         <div className="border border-border rounded">
-          <div className="px-3 py-2 border-b border-border text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">
-            Market news
+          <div className="px-3 py-2 border-b border-border text-[10px] font-mono uppercase tracking-widest text-foreground-subtle flex items-center justify-between">
+            <span>Market news</span>
+            <span className="text-foreground-muted normal-case tracking-normal">{filteredItems.length}</span>
           </div>
-          <div className="max-h-[70vh] overflow-y-auto">
+          {/* filter + sort + search */}
+          <div className="p-2 border-b border-border space-y-2">
+            <input
+              className={inputCls + " text-xs"}
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              placeholder="Search headlines…"
+            />
+            <div className="flex gap-2">
+              <select className={inputCls + " text-xs"} value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
+                <option value="">All categories</option>
+                {categoryOptions.map((c) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+              <select className={inputCls + " text-xs"} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="recent">Newest</option>
+                <option value="oldest">Oldest</option>
+              </select>
+            </div>
+          </div>
+          <div className="max-h-[60vh] overflow-y-auto">
             {loadingItems && <div className="p-3 text-xs text-foreground-muted">Loading…</div>}
-            {!loadingItems && items.length === 0 && (
-              <div className="p-3 text-xs text-foreground-muted">No items.</div>
+            {!loadingItems && filteredItems.length === 0 && (
+              <div className="p-3 text-xs text-foreground-muted">No matching items.</div>
             )}
-            {items.map((it) => (
+            {filteredItems.map((it) => (
               <button
                 key={it.id}
                 onClick={() => selectItem(it)}
