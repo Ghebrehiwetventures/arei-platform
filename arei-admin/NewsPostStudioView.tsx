@@ -42,6 +42,21 @@ function splitBullets(text: string): string {
   return sentences.map((s) => s.trim()).slice(0, 3).join("\n");
 }
 
+// Full Instagram caption: the actual news (what happened + why it matters) +
+// source attribution + hashtags. No "link in bio" (the site only has links)
+// and no "AI illustration" note.
+function buildCaption(item: MarketNewsItem): string {
+  const tags = ["#capeverde", "#caboverde", "#realestate", "#marketnews", "#" + (item.category || "").toLowerCase().replace(/[^a-z]/g, "")]
+    .filter((t) => t.length > 1);
+  const parts: string[] = [];
+  if (item.sourceTitle?.trim()) parts.push(item.sourceTitle.trim());
+  if (item.whatHappened?.trim()) parts.push(item.whatHappened.trim());
+  if (item.whyItMatters?.trim()) parts.push(item.whyItMatters.trim());
+  if (item.sourceName?.trim()) parts.push(`Source: ${item.sourceName.trim()}`);
+  parts.push(tags.join(" "));
+  return parts.join("\n\n");
+}
+
 interface GenerateResponse {
   slides: { label: string; imageBase64: string }[];
   mime: string;
@@ -92,8 +107,11 @@ export function NewsPostStudioView() {
     setBullets(splitBullets(item.whatHappened || ""));
     setDate(formatDate(item.publishedAt));
     setHighlight(suggestHighlight(title));
+    setCaptionText(buildCaption(item));
     setResult(null);
     setError(null);
+    setPublished(null);
+    setPublishError(null);
   }
 
   async function generate() {
@@ -109,7 +127,8 @@ export function NewsPostStudioView() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
       setResult(data as GenerateResponse);
-      setCaptionText((data as GenerateResponse).caption || "");
+      // Keep the full client-built caption (set on item select); don't replace
+      // it with the server's short suggestion.
       setPublished(null);
       setPublishError(null);
     } catch (e: any) {

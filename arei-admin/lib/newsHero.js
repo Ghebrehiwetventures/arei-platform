@@ -224,29 +224,53 @@ export async function renderDetailSlide(item) {
 }
 
 // ── Image sourcing & helpers ────────────────────────────────────────────────
-const MOTIFS = {
-  Aviation: "an airliner in flight over the Atlantic, or an aerial view of a coastal runway and turquoise sea",
-  "Real Estate": "coastal low-rise architecture and new residential development along a tropical shoreline",
-  Tourism: "a calm tropical Atlantic beach and coastline at golden hour",
-  Policy: "a clean civic or government building exterior with calm, neutral framing",
-  Infrastructure: "a port, harbour cranes or a coastal road seen from above",
-  "Market News": "a wide aerial view of a tropical Atlantic island coastline",
+// Pick the scene from the HEADLINE first (so a hotel story shows a hotel, not a
+// generic beach), then fall back to category. Handles both the studio category
+// names and the enrichment category names.
+const SUBJECT_RULES = [
+  [/\b(hotel|resort|hospitality|rooms?|tourist)\b/i, "a striking modern beachfront resort and hotel buildings, pool and palms"],
+  [/\b(flight|airline|route|airport|aviation|air\s|transatlantic|charter)\b/i, "a commercial airliner banking through a dramatic sky above the Atlantic ocean"],
+  [/\b(port|harbou?r|shipping|cargo|maritime|cruise|ferry)\b/i, "a coastal port with cranes and ships under dramatic light"],
+  [/\b(road|highway|bridge|construction|build|develop|crane|stadium)\b/i, "a coastal construction site with cranes and new buildings against a bold sky"],
+  [/\b(property|real estate|apartment|villa|housing|residen|land)\b/i, "modern coastal residential architecture with sharp clean lines and dramatic light"],
+  [/\b(bank|credit|mortgage|loan|finance|fiscal|econom|currency|investment|fund)\b/i, "a sleek modern business district building shot from a bold low angle"],
+  [/\b(tax|residency|visa|law|regulat|policy|government|statute|ministr|parliament)\b/i, "a bold modern civic or government building, strong architectural perspective"],
+];
+const CATEGORY_FALLBACK = {
+  aviation: "a commercial airliner over the Atlantic at golden hour",
+  tourism: "a vibrant resort coastline with dramatic golden light",
+  "real estate": "modern coastal residential architecture in dramatic light",
+  policy: "a bold modern civic building, strong perspective",
+  "policy & tax": "a bold modern civic building, strong perspective",
+  infrastructure: "a coastal port or new development with cranes under a dramatic sky",
+  economy: "a sleek modern business district building, low angle",
+  "banking & credit": "a sleek modern business district building, low angle",
+  "market news": "a dramatic aerial of a tropical Atlantic island town and coastline",
 };
 
 export function buildImagePrompt(item) {
-  const motif = MOTIFS[item.category] || MOTIFS["Market News"];
+  const headline = item.headline || "";
+  let subject = null;
+  for (const [re, scene] of SUBJECT_RULES) {
+    if (re.test(headline)) { subject = scene; break; }
+  }
+  if (!subject) subject = CATEGORY_FALLBACK[(item.category || "").toLowerCase()] || CATEGORY_FALLBACK["market news"];
   return [
-    `Editorial documentary news photograph illustrating the story: "${item.headline}".`,
-    `Show ${motif}.`,
-    "Cinematic natural light, muted editorial color grade, high detail, realistic.",
-    "No text, no logos, no signage, no readable writing, no recognizable real landmarks, no people in focus.",
+    `A bold, cinematic editorial news image for the story: "${headline}".`,
+    `Depict ${subject}, set in Cape Verde (an Atlantic island nation).`,
+    "Dramatic directional lighting, rich high-contrast color, striking wide-angle composition, photorealistic, magazine-cover quality.",
+    "No text, no logos, no readable signage, no recognizable real landmarks, no identifiable faces.",
   ].join(" ");
 }
 
 export function suggestCaption(item) {
-  const tags = ["#capeverde", "#caboverde", "#realestate", "#marketnews", "#" + (item.category || "").toLowerCase().replace(/\s+/g, "")];
-  const dek = item.dek ? `\n\n${item.dek}` : "";
-  return `${item.headline}.${dek}\n\nFull briefing → link in bio.\n\n[Image: AI illustration]\n${tags.join(" ")}`;
+  const tags = ["#capeverde", "#caboverde", "#realestate", "#marketnews", "#" + (item.category || "").toLowerCase().replace(/[^a-z]/g, "")];
+  const parts = [`${item.headline}.`];
+  if (item.body && item.body.trim()) parts.push(item.body.trim());
+  else if (item.dek && item.dek.trim()) parts.push(item.dek.trim());
+  if (item.sourceName) parts.push(`Source: ${item.sourceName}`);
+  parts.push(tags.join(" "));
+  return parts.join("\n\n");
 }
 
 // Generate an AI background via OpenAI gpt-image-1 (relevant to the news).
