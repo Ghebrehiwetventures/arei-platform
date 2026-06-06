@@ -764,27 +764,27 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     @import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;700&display=swap');
     :root { color-scheme: light; }
     * { box-sizing: border-box; }
-    body { margin: 0; font-family: "IBM Plex Sans", -apple-system, system-ui, sans-serif; background: #f7f6f2; color: #111110; -webkit-font-smoothing: antialiased; font-size: 13px; line-height: 1.5; }
+    body { margin: 0; font-family: system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #f7f6f2; color: #111110; -webkit-font-smoothing: antialiased; font-size: 13px; line-height: 1.5; }
     .wrap { max-width: 1100px; margin: 0 auto; padding: 32px 24px 48px; }
     h1 { font-size: 20px; margin: 0 0 4px; font-weight: 600; letter-spacing: -0.01em; }
     h2 { font-size: 13px; margin: 0 0 12px; font-weight: 600; letter-spacing: 0.01em; }
     .muted { color: #6b7280; }
-    .sub { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .sub { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-weight: 500; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
     section { background: #fff; border: 1px solid #dddbd5; border-radius: 4px; padding: 16px; margin-top: 16px; }
     .grid { display: grid; gap: 12px; }
     .grid-4 { grid-template-columns: repeat(4, 1fr); }
     .grid-3 { grid-template-columns: repeat(3, 1fr); }
     .grid-2 { grid-template-columns: repeat(2, 1fr); }
     .card { background: #fff; border: 1px solid #dddbd5; border-radius: 4px; padding: 12px; }
-    .num { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
-    .pill { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; font-family: "IBM Plex Mono", ui-monospace, monospace; text-transform: uppercase; letter-spacing: 0.04em; }
+    .num { font-size: 22px; font-weight: 600; font-variant-numeric: tabular-nums; margin-top: 4px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+    .pill { display: inline-block; padding: 2px 6px; border-radius: 3px; font-size: 10px; font-weight: 600; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; text-transform: uppercase; letter-spacing: 0.04em; }
     .good { background: rgba(46,125,82,0.09); color: #2e7d52; }
     .warn { background: rgba(146,96,10,0.09); color: #92600a; }
     .bad { background: rgba(185,28,28,0.07); color: #b91c1c; }
     .bar { height: 6px; background: #f2f1ed; border-radius: 2px; overflow: hidden; margin-top: 6px; }
     .bar > div { height: 100%; background: #111110; }
     .grades { display: flex; height: 22px; border: 1px solid #dddbd5; border-radius: 3px; overflow: hidden; }
-    .grades > div { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .grades > div { display: flex; align-items: center; justify-content: center; font-size: 11px; font-weight: 600; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
     .gA, .gB { background: rgba(46,125,82,0.12); color: #2e7d52; }
     .gC { background: rgba(146,96,10,0.12); color: #92600a; }
     .gD { background: rgba(185,28,28,0.09); color: #b91c1c; }
@@ -794,23 +794,23 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     .src-card { border: 1px solid #dddbd5; border-radius: 4px; padding: 12px; background: #fff; }
     .src-card .head { display: flex; justify-content: space-between; gap: 8px; align-items: flex-start; }
     .src-card .name { font-weight: 600; font-size: 13px; }
-    .src-card .id { color: #9ca3af; font-size: 11px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .src-card .id { color: #9ca3af; font-size: 11px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
     .src-card .stats { display: grid; grid-template-columns: repeat(3,1fr); gap: 8px; margin-top: 10px; font-size: 12px; }
-    .src-card .stats .lbl { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-family: "IBM Plex Mono", ui-monospace, monospace; }
-    .src-card .stats .val { font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
-    .grade-pill { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 3px; font-size: 11px; font-weight: 700; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    .src-card .stats .lbl { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+    .src-card .stats .val { font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
+    .grade-pill { display: inline-flex; width: 22px; height: 22px; align-items: center; justify-content: center; border-radius: 3px; font-size: 11px; font-weight: 700; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
     table { width: 100%; border-collapse: collapse; margin-top: 8px; font-size: 12px; }
     th, td { padding: 6px 8px; text-align: left; border-bottom: 1px solid #dddbd5; }
-    th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; font-weight: 500; font-family: "IBM Plex Mono", ui-monospace, monospace; }
-    td.n { text-align: right; font-family: "IBM Plex Mono", ui-monospace, monospace; font-variant-numeric: tabular-nums; }
+    th { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: #9ca3af; font-weight: 500; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
+    td.n { text-align: right; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-variant-numeric: tabular-nums; }
     ol.actions { padding-left: 0; list-style: none; margin: 0; }
     ol.actions li { border: 1px solid #dddbd5; border-radius: 4px; padding: 12px 14px; margin-bottom: 10px; background: #fff; }
     ol.actions .head { display: flex; justify-content: space-between; align-items: baseline; gap: 12px; margin-bottom: 8px; }
-    ol.actions .rank { color: #9ca3af; font-family: "IBM Plex Mono", ui-monospace, monospace; font-size: 12px; margin-right: 8px; }
+    ol.actions .rank { color: #9ca3af; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; font-size: 12px; margin-right: 8px; }
     ol.actions .name { font-weight: 600; font-size: 14px; }
-    ol.actions .impact { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 3px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    ol.actions .impact { font-size: 10px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 2px 8px; border-radius: 3px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
     ol.actions .body { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; font-size: 12px; }
-    ol.actions .body .lbl { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; font-family: "IBM Plex Mono", ui-monospace, monospace; }
+    ol.actions .body .lbl { color: #9ca3af; font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; margin-bottom: 2px; font-family: ui-monospace, "SF Mono", Menlo, Consolas, monospace; }
     .topissues-toggle summary { cursor: pointer; padding: 10px 14px; color: #6b7280; font-size: 12px; font-weight: 500; user-select: none; }
     .topissues-toggle[open] summary { border-bottom: 1px solid #dddbd5; margin-bottom: 8px; }
     .header-actions { display: flex; justify-content: space-between; align-items: baseline; }
@@ -856,7 +856,7 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     .map(([label, items]) => {
       const names = items.slice(0, 3).map((r) => esc(r.sourceName)).join(", ");
       const more = items.length > 3 ? `, +${items.length - 3}` : "";
-      return `<div class="row"><span>${esc(label)}</span><span class="muted" style="font-family:'IBM Plex Mono',ui-monospace,monospace">${items.length} · ${names}${more}</span></div>`;
+      return `<div class="row"><span>${esc(label)}</span><span class="muted" style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace">${items.length} · ${names}${more}</span></div>`;
     })
     .join("") || `<div class="muted">No issues detected.</div>`;
 
@@ -947,12 +947,12 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
         <rect x="10"  y="10"  width="9"  height="9"  fill="#111110" stroke="none" />
       </svg>
       <div>
-        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;font-family:'IBM Plex Mono',ui-monospace,monospace;margin-bottom:2px">AREI · Source Health Report</div>
+        <div style="font-size:10px;text-transform:uppercase;letter-spacing:0.08em;color:#9ca3af;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;margin-bottom:2px">AREI · Source Health Report</div>
         <h1>${esc(marketLabel)}</h1>
         <div class="muted">Generated ${esc(generated)}</div>
       </div>
     </div>
-    <button class="no-print" onclick="window.print()" style="padding:6px 12px;border:1px solid #dddbd5;background:#fff;border-radius:3px;cursor:pointer;font-size:12px;font-family:'IBM Plex Mono',ui-monospace,monospace">Print / Save PDF</button>
+    <button class="no-print" onclick="window.print()" style="padding:6px 12px;border:1px solid #dddbd5;background:#fff;border-radius:3px;cursor:pointer;font-size:12px;font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace">Print / Save PDF</button>
   </div>
 
   <section>
@@ -1004,7 +1004,7 @@ export function buildReportHtml(rows: SourceQualityRow[], marketLabel: string, m
     </div>
     <p class="muted" style="font-size:11px;margin:0 0 8px">Declared as <code>type: stub</code> in <code>markets/${esc(marketLabel.toLowerCase() === "cape verde" ? "cv" : "*")}/sources.yml</code>; not counted in summary, eligibility checks, priority actions, or top sources.</p>
     <ul style="margin:0;padding-left:18px;font-size:12px;color:#6b7280">
-      ${stubRows.map((r) => `<li><strong style="color:#111113">${esc(r.sourceName)}</strong> <span style="font-family:'IBM Plex Mono',ui-monospace,monospace;color:#9ca3af">· ${esc(r.source_id)}</span> — ${Number(r.listing_count).toLocaleString()} listings · ${r.public_feed_count_n.toLocaleString()} feed</li>`).join("")}
+      ${stubRows.map((r) => `<li><strong style="color:#111113">${esc(r.sourceName)}</strong> <span style="font-family:ui-monospace,'SF Mono',Menlo,Consolas,monospace;color:#9ca3af">· ${esc(r.source_id)}</span> — ${Number(r.listing_count).toLocaleString()} listings · ${r.public_feed_count_n.toLocaleString()} feed</li>`).join("")}
     </ul>
   </section>` : ""}
 
