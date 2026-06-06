@@ -98,7 +98,10 @@ Avoid these words and phrases in all fields:
 
 Relevance score and recommendation rules:
 - Do not invent facts. Use only the information provided.
-- Be conservative. When in doubt, use keep_candidate.
+- Be conservative. When in doubt about investor relevance, prefer "archive" over "keep_candidate" for items with no concrete Cape Verde market angle.
+- Score on INVESTOR MATERIALITY: would a foreign property, tourism, or business investor in Cape Verde actually care about or act on this? If not, it is not relevant for AREI — score it low and archive it, even if "Cape Verde" appears in the text.
+- Cape Verde must be a PRIMARY subject with a concrete real-estate, tourism, aviation/connectivity, infrastructure, investment, tax/residency, or banking angle. If Cape Verde is only mentioned in passing, listed among several countries, or the core story is health, crime, disaster, disease/outbreak, accidents, sports, or celebrity news, set relevance_score below 15 and recommendation = "archive".
+- When the facts genuinely support it, frame the title and snippet as an opportunity or positive signal for an investor — but never invent positivity, hype, or certainty.
 
 Use "publish" ONLY when the article has a clear and direct market signal in one of these areas:
   - Aviation or connectivity (new routes, airport investment, airline capacity)
@@ -118,8 +121,9 @@ Use "keep_candidate" when:
   Examples: artist statutes, cultural legislation, education centres, public administration reform, regulatory body achievements, procurement process improvements
 
 Use "archive" when:
-  - Crime, health incidents, celebrity or sports gossip
+  - Crime, health incidents, disease outbreaks, accidents or disasters, celebrity or sports gossip
   - Generic travel content or lifestyle articles
+  - Multi-country roundups or international news where Cape Verde is only one name in a list, with no Cape-Verde-specific market fact
   - Title-only or near-empty RSS items
   - Unrelated international news with no Cape Verde market angle
 
