@@ -4,12 +4,14 @@
   "outputDirectory": "dist",
   "framework": null,
   "crons": [
-    { "path": "/api/social-listing-cron", "schedule": "* * * * *" }
+    { "path": "/api/social-listing-cron", "schedule": "* * * * *" },
+    { "path": "/api/enrich-pending-cron", "schedule": "15 * * * *" }
   ],
   "functions": {
     "api/social-listing.js": { "maxDuration": 300 },
     "api/social-listing-cron.js": { "maxDuration": 300 },
-    "api/generate-news-post-image.js": { "maxDuration": 60 }
+    "api/generate-news-post-image.js": { "maxDuration": 60 },
+    "api/enrich-pending-cron.js": { "maxDuration": 120 }
   },
   "rewrites": [
     { "source": "/((?!api/).*)", "destination": "/index.html" }

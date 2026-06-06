@@ -612,7 +612,7 @@ function validatePtSuggestion(obj) {
   return null;
 }
 
-async function translateToPt(apiKey, { title, snippet, why_it_matters }) {
+export async function translateToPt(apiKey, { title, snippet, why_it_matters }) {
   const response = await fetch("https://api.anthropic.com/v1/messages", {
     method: "POST",
     headers: {
