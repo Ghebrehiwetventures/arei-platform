@@ -80,6 +80,8 @@ export function NewsPostStudioView() {
   const [useAi, setUseAi] = useState(true);
   const [quality, setQuality] = useState("high");
   const [imageUrl, setImageUrl] = useState("");
+  const [sourceUrl, setSourceUrl] = useState("");
+  const [sourceName, setSourceName] = useState("");
 
   const [generating, setGenerating] = useState(false);
   const [result, setResult] = useState<GenerateResponse | null>(null);
@@ -112,6 +114,8 @@ export function NewsPostStudioView() {
     setBullets(splitBullets(item.whatHappened || ""));
     setDate(formatDate(item.publishedAt));
     setHighlight(suggestHighlight(title));
+    setSourceUrl(item.sourceUrl || "");
+    setSourceName(item.sourceName || "");
     setCaptionText(buildCaption(item));
     setResult(null);
     setError(null);
@@ -247,6 +251,17 @@ export function NewsPostStudioView() {
           <Field label="Headline">
             <textarea className={inputCls} rows={2} value={headline} onChange={(e) => setHeadline(e.target.value)} />
           </Field>
+          {sourceUrl && (
+            <a
+              href={sourceUrl}
+              target="_blank"
+              rel="noreferrer"
+              className="block -mt-1 text-[11px] font-mono text-accent hover:underline truncate"
+              title={sourceUrl}
+            >
+              View original article{sourceName ? ` · ${sourceName}` : ""} →
+            </a>
+          )}
           <div>
             <div className="flex items-center justify-between mb-1">
               <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">

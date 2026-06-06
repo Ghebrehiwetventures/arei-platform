@@ -243,7 +243,7 @@ Required fields:
 {
   "title": "short plain-English headline, max ~10 words, no bureaucratic phrasing, no sensationalism",
   "snippet": "1–2 simple sentences. State what happened, who did it, and where if relevant.",
-  "why_it_matters": "1–2 sentences written for a foreign investor, buyer or broker. Start with 'This matters because' or similar.",
+  "why_it_matters": "1–2 sentences of market intelligence for a foreign investor, buyer or broker. Open directly with the market implication — never with explainer scaffolding such as 'This matters because', 'Why it matters' or 'This is important because'. Institutional, concise, investor-grade tone. Example: 'Luxury inventory moving across Sal signals where foreign buyer demand and high-end capital may be concentrating.'",
   "category": "exactly one of: Economy, Tourism, Infrastructure, Policy & Tax, Banking & Credit",
   "signal_tags": ["3–5 short market signal phrases"],
   "affected_regions": ["Cape Verde islands or regions directly affected — empty array if national or unclear"],
