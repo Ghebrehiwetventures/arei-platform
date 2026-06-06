@@ -166,7 +166,28 @@ function isGoogleNewsUrl(rawUrl) {
 function isOffGoogle(u) {
   try {
     const h = new URL(u).hostname.toLowerCase();
-    return !h.endsWith("google.com") && !h.endsWith("gstatic.com") && !h.endsWith("googleapis.com");
+    return (
+      !h.endsWith("google.com") &&
+      !h.endsWith("gstatic.com") &&
+      !h.endsWith("googleapis.com") &&
+      !h.endsWith("googleusercontent.com") // image/asset CDN — not a publisher
+    );
+  } catch {
+    return false;
+  }
+}
+
+// A real article link: off-Google, not an image/asset, not a known non-article host.
+function isLikelyArticleLink(u) {
+  if (!isOffGoogle(u)) return false;
+  try {
+    const url = new URL(u);
+    const host = url.hostname.toLowerCase();
+    const path = url.pathname.toLowerCase();
+    if (/\.(png|jpe?g|gif|webp|svg|ico|css|js|mp4|woff2?)($|\?)/.test(path)) return false;
+    const nonArticle = ["schema.org", "w3.org", "fonts.gstatic.com", "accounts.google", "policies.google", "support.google", "play.google", "apps.apple.com"];
+    if (nonArticle.some((b) => host.includes(b))) return false;
+    return true;
   } catch {
     return false;
   }
@@ -202,13 +223,14 @@ export function decodeGoogleNewsUrl(rawUrl) {
 function extractPublisherLinkFromHtml(html) {
   if (!html) return null;
   // Google News interstitial pages expose the target via data-n-au, or via a
-  // single external <a href>.
+  // real external <a href>. Skip image/asset links (e.g. lh3.googleusercontent
+  // thumbnails) which are not the article.
   const nau = html.match(/data-n-au=["'](https?:\/\/[^"']+)["']/i);
-  if (nau && isOffGoogle(nau[1])) return nau[1];
+  if (nau && isLikelyArticleLink(nau[1])) return nau[1];
   const hrefs = html.match(/href=["'](https?:\/\/[^"']+)["']/gi) || [];
   for (const h of hrefs) {
     const m = h.match(/href=["'](https?:\/\/[^"']+)["']/i);
-    if (m && isOffGoogle(m[1])) return m[1];
+    if (m && isLikelyArticleLink(m[1])) return m[1];
   }
   return null;
 }
