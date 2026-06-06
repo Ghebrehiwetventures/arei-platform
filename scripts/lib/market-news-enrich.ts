@@ -57,7 +57,7 @@ Required fields:
 {
   "title": "short plain-English headline, max ~10 words, no bureaucratic phrasing, no sensationalism",
   "snippet": "1–2 simple sentences. State what happened, who did it, and where if relevant. No long government-style sentences.",
-  "why_it_matters": "1–2 sentences written for a foreign investor, buyer or broker. Start with 'This matters because' or similar plain framing. Connect to market context only when reasonable. Use cautious language when the link to property is indirect. Do not claim every story directly changes property prices.",
+  "why_it_matters": "1–2 sentences of market intelligence for a foreign investor, buyer or broker. Open directly with the market implication — never with an explainer phrase. Connect to market context only when reasonable. Use cautious language when the link to property is indirect. Do not claim every story directly changes property prices. Example tone: 'Luxury inventory moving across Sal signals where foreign buyer demand and high-end capital may be concentrating.'",
   "category": "exactly one of: Economy, Tourism, Infrastructure, Policy & Tax, Banking & Credit",
   "signal_tags": ["3–5 short market signal phrases, e.g. Air connectivity, Tourism demand, Resort development"],
   "affected_regions": ["Cape Verde islands or regions directly affected, e.g. Sal, Boa Vista, Santiago, São Vicente, Fogo — leave empty array if impact is national or unclear"],
@@ -84,7 +84,14 @@ Why it matters rules:
 - Good connections include: tourism, infrastructure, aviation and access, public investment, regulation, government capacity and transparency, the cultural and visitor economy, foreign investment activity, and property-market context when it genuinely applies.
 - Use cautious language when the connection is indirect. It is fine to say the story helps investors understand how the country is developing.
 - Do not pretend every story directly affects property prices or demand.
-- "This matters because..." is a natural way to open, but do not force it every time.
+- Open directly with the market implication. Lead with what the development signals for demand, capital, access, supply or risk — not with a framing phrase.
+- The tone is AREI / CVREI market intelligence: institutional, concise, investor-grade. Not a beginner explainer or newsletter bot.
+- NEVER open with or include explainer scaffolding. The following phrases are forbidden in this field (and any casing/variant of them):
+  - "This matters because"
+  - "Why it matters"
+  - "This is important because"
+- Good example: "Luxury inventory moving across Sal signals where foreign buyer demand and high-end capital may be concentrating."
+- Weak example to avoid: "This matters because the sale could attract foreign buyers interested in Cape Verde's real estate market."
 
 Avoid these words and phrases in all fields:
 - will boost property demand
@@ -93,6 +100,9 @@ Avoid these words and phrases in all fields:
 - confirms investor confidence
 - world-class / major breakthrough / game changer
 - lauds / commends / exemplary (bureaucratic tone)
+- This matters because
+- Why it matters
+- This is important because
 - any phrase that overstates certainty about market impact
 
 Relevance score and recommendation rules:
