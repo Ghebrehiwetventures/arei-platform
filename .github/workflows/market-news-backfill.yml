@@ -1,0 +1,45 @@
+name: Market News Backfill Enrich
+
+# One-time / occasional manual backfill: enrich existing un-enriched candidates.
+# Run from the Actions tab → "Run workflow". Defaults to a dry-run.
+on:
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Actually enrich + write (unchecked = dry-run, lists only)"
+        type: boolean
+        default: false
+      limit:
+        description: "Max rows to process"
+        default: "100"
+      status:
+        description: "Which status to backfill (candidate | all)"
+        default: "candidate"
+
+jobs:
+  backfill:
+    runs-on: ubuntu-latest
+    env:
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Backfill enrichment
+        run: >-
+          npx ts-node --transpile-only scripts/backfill_market_news_enrich.ts
+          --limit=${{ inputs.limit }}
+          --status=${{ inputs.status }}
+          ${{ inputs.commit && '--commit' || '' }}
