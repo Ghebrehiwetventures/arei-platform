@@ -2710,6 +2710,19 @@ type EnrichSuggestion = {
   snippet_pt?: string | null;
   why_it_matters_pt?: string | null;
   _pt_translation_error?: string;
+  key_facts?: EnrichKeyFact[];
+  cape_verde_angle?: string | null;
+  article_body_used?: boolean;
+  resolved_source_url?: string;
+};
+
+type EnrichKeyFact = {
+  fact: string;
+  value?: string | number;
+  unit?: string;
+  geography?: string;
+  source_text?: string;
+  confidence: "high" | "medium" | "low";
 };
 
 type EnrichState = "idle" | "loading" | "done" | "error";
@@ -3057,6 +3070,20 @@ function MarketNewsEditPanel({
                   AI Suggestion
                 </span>
                 <div className="flex items-center gap-2.5">
+                  <span
+                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${
+                      suggestion.article_body_used
+                        ? "bg-emerald-50 text-emerald-700"
+                        : "bg-surface-3 text-foreground-subtle"
+                    }`}
+                    title={
+                      suggestion.article_body_used
+                        ? "Enriched from the full article body"
+                        : "Full article body unavailable — enriched from title/snippet only"
+                    }
+                  >
+                    {suggestion.article_body_used ? "Full article" : "Snippet only"}
+                  </span>
                   <span className="text-[10px] text-foreground-subtle">
                     Relevance: {suggestion.relevance_score}/100
                   </span>
@@ -3135,10 +3162,63 @@ function MarketNewsEditPanel({
                     </div>
                   )}
                 </div>
+                {suggestion.cape_verde_angle && (
+                  <div className="pt-2 border-t border-border">
+                    <span className="block text-foreground-subtle mb-0.5">Cape Verde angle</span>
+                    <span className="text-foreground-muted leading-relaxed">{suggestion.cape_verde_angle}</span>
+                  </div>
+                )}
+                {suggestion.key_facts && suggestion.key_facts.length > 0 && (
+                  <div className="pt-2 border-t border-border space-y-1.5">
+                    <span className="block text-[10px] font-semibold text-foreground-subtle uppercase tracking-wider">
+                      Key facts ({suggestion.key_facts.length})
+                    </span>
+                    <ul className="space-y-1.5">
+                      {suggestion.key_facts.map((f, i) => (
+                        <li key={i} className="leading-snug">
+                          <div className="flex items-start gap-1.5">
+                            <span
+                              className={`mt-[3px] inline-block w-1.5 h-1.5 rounded-full shrink-0 ${
+                                f.confidence === "high"
+                                  ? "bg-emerald-500"
+                                  : f.confidence === "medium"
+                                    ? "bg-amber-400"
+                                    : "bg-gray-300"
+                              }`}
+                              title={`${f.confidence} confidence`}
+                            />
+                            <span className="text-foreground-muted">
+                              {f.fact}
+                              {f.value !== undefined && f.value !== null && f.value !== "" && (
+                                <span className="text-foreground font-medium"> — {f.value}{f.unit ? ` ${f.unit}` : ""}</span>
+                              )}
+                            </span>
+                          </div>
+                          {f.source_text && (
+                            <span className="block pl-3 mt-0.5 text-[11px] text-foreground-subtle italic">"{f.source_text}"</span>
+                          )}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
                 <div>
                   <span className="block text-foreground-subtle mb-0.5">Reasoning</span>
                   <span className="text-foreground-muted italic">{suggestion.reasoning}</span>
                 </div>
+                {suggestion.resolved_source_url && (
+                  <div>
+                    <span className="block text-foreground-subtle mb-0.5">Resolved source</span>
+                    <a
+                      href={suggestion.resolved_source_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-accent underline break-all"
+                    >
+                      {suggestion.resolved_source_url}
+                    </a>
+                  </div>
+                )}
               </div>
 
               {/* Apply / Dismiss */}

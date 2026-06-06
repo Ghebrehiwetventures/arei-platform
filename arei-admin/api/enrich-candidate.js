@@ -8,11 +8,15 @@
  * Uses OPENAI_API_KEY and ANTHROPIC_API_KEY from the server environment.
  */
 
-const SYSTEM_PROMPT = `You are an editorial assistant for the Cape Verde Real Estate Index (AREI). \
+export const SYSTEM_PROMPT = `You are an editorial assistant for the Cape Verde Real Estate Index (AREI). \
 AREI helps foreign investors, buyers and market observers understand what is happening in Cape Verde.
 
 Your job: take raw local news — which may be in Portuguese, English, French, or another language — \
 and rewrite it in plain English so that an outside investor can understand it quickly.
+
+Work in two stages. FIRST extract the concrete Cape-Verde-relevant facts from the input. \
+THEN write the title and snippet from those extracted facts. The headline and summary must reflect \
+what the facts actually say about Cape Verde — not the generic angle of the original headline.
 
 You are translating meaning, not words. Write clearly. Use short sentences. Avoid jargon. \
 Do not make it sound like a government report or academic paper.
@@ -21,16 +25,43 @@ Output ONLY a single JSON object. No markdown fences. No preamble. No trailing t
 
 Required fields:
 {
-  "title": "short plain-English headline, max ~10 words, no bureaucratic phrasing, no sensationalism",
+  "title": "short plain-English headline, max ~12 words, no bureaucratic phrasing, no sensationalism",
   "snippet": "1–2 simple sentences. State what happened, who did it, and where if relevant. No long government-style sentences.",
   "why_it_matters": "1–2 sentences written for a foreign investor, buyer or broker. Start with 'This matters because' or similar plain framing. Connect to market context only when reasonable. Use cautious language when the link to property is indirect. Do not claim every story directly changes property prices.",
   "category": "exactly one of: Economy, Tourism, Infrastructure, Policy & Tax, Banking & Credit",
   "signal_tags": ["3–5 short market signal phrases, e.g. Air connectivity, Tourism demand, Resort development"],
   "affected_regions": ["Cape Verde islands or regions directly affected, e.g. Sal, Boa Vista, Santiago, São Vicente, Fogo — leave empty array if impact is national or unclear"],
+  "key_facts": [
+    {
+      "fact": "what the fact states, e.g. 'Cape Verde ranks 6th in Africa by hotel pipeline rooms'",
+      "value": "the number or value if any, e.g. 6 or 4328 — omit when there is no number",
+      "unit": "unit for the value if any, e.g. 'rooms', 'hotels', '%' — omit when not applicable",
+      "geography": "the place the fact is about, e.g. 'Cape Verde' — omit when unclear",
+      "source_text": "a short verbatim excerpt from the provided input that supports this fact",
+      "confidence": "high | medium | low"
+    }
+  ],
+  "cape_verde_angle": "one sentence explaining the specific Cape Verde relevance, or null if Cape Verde is only weakly or indirectly relevant",
   "relevance_score": <integer 0–100 where 100 = directly and clearly affects Cape Verde real estate, tourism, or investment>,
   "recommendation": "publish" or "keep_candidate" or "archive",
   "reasoning": "1–2 sentences explaining your recommendation"
 }
+
+Fact extraction (do this FIRST, before writing the title and snippet):
+- Read the title, the snippet, and the "Article body" section if it is present.
+- Extract concrete, Cape-Verde-relevant facts into "key_facts". A fact is concrete when it has a number, ranking, named institution, named project, date, or a specific comparison.
+- If the input contains a Cape Verde ranking, hotel or room count, project count, construction percentage, investment figure, tourism demand signal, or named institution, you MUST extract it as a fact.
+- Every fact must be present in the provided input. Never invent figures, rankings, actors, dates or places. If unsure, lower the confidence or omit the fact entirely.
+- "source_text" must be a short verbatim excerpt copied from the provided input — do not paraphrase it.
+- If no concrete Cape Verde facts exist in the input, return an empty "key_facts" array and set "cape_verde_angle" to null.
+
+Render title and snippet FROM the extracted facts:
+- Prefer specific Cape Verde facts (numbers, rankings, named projects) over generic "Africa real estate" or "across the continent" language.
+- When strong facts exist, lead with the most investor-relevant one.
+  Example good title: "Cape Verde ranks sixth in Africa hotel pipeline with 4,328 planned rooms".
+  Example weak title to avoid: "Africa's hotel development reaches record high".
+- The snippet should state the key facts plainly and, where useful, note what they imply for Cape Verde (e.g. strong planned investment but limited near-term delivery). Do not overstate certainty.
+- Base relevance_score on the full available content, including the article body — not only the RSS headline. An article that names Cape Verde with concrete figures is more relevant than its generic headline suggests.
 
 Title rules:
 - Short and clear.
@@ -101,14 +132,149 @@ Phrasing guardrail:
   - Do not write "can attract foreign investment" or similar phrases unless the source clearly supports that connection.
   - For indirect items, use language like: "This is indirect context for investors" or "The link to the property market is not direct."`;
 
-// ── Article body fetcher ───────────────────────────────────────────────────
-// Fetches the source URL and extracts readable article text so OpenAI has
-// the full article content rather than just the RSS snippet.
-// Non-fatal: returns null on any error.
+// ── Structured logging ──────────────────────────────────────────────────────
+// Emits the named pipeline events so fulltext success/failure is observable in
+// server logs. Never throws.
+
+export function logEvent(event, detail) {
+  try {
+    console.log(`[enrich-candidate] ${event}${detail ? " " + JSON.stringify(detail) : ""}`);
+  } catch {
+    console.log(`[enrich-candidate] ${event}`);
+  }
+}
+
+// ── Source URL resolution (Google News → publisher) ─────────────────────────
+// Google News RSS items link to news.google.com/rss/articles/<id>, not the real
+// publisher article. Fetching that URL yields no article body, so we resolve it
+// to the publisher URL first. Best-effort with graceful fallback.
 
 const ARTICLE_FETCH_TIMEOUT = 10_000;
 const ARTICLE_MAX_BYTES = 200 * 1024; // 200 KB
+const ARTICLE_MIN_CHARS = 200;        // below this, body is too weak — fall back to snippet
 const USER_AGENT = "AREI-MarketNewsBot/1.0 (+https://capeverderealestateindex.com)";
+
+function isGoogleNewsUrl(rawUrl) {
+  try {
+    const h = new URL(rawUrl).hostname.toLowerCase();
+    return h === "news.google.com" || h.endsWith(".news.google.com");
+  } catch {
+    return false;
+  }
+}
+
+function isOffGoogle(u) {
+  try {
+    const h = new URL(u).hostname.toLowerCase();
+    return !h.endsWith("google.com") && !h.endsWith("gstatic.com") && !h.endsWith("googleapis.com");
+  } catch {
+    return false;
+  }
+}
+
+/**
+ * Best-effort offline decode of the publisher URL embedded in a Google News
+ * /articles/<id> path. Older Google News IDs base64url-decode to a binary blob
+ * that contains the publisher URL as readable text. Returns null for the newer
+ * encrypted ID format, which cannot be decoded offline.
+ */
+export function decodeGoogleNewsUrl(rawUrl) {
+  try {
+    const u = new URL(rawUrl);
+    const seg = u.pathname.split("/").filter(Boolean).pop();
+    if (!seg || seg.length < 16) return null;
+    let b64 = seg.replace(/-/g, "+").replace(/_/g, "/");
+    while (b64.length % 4) b64 += "=";
+    const decoded = Buffer.from(b64, "base64").toString("latin1");
+    const matches = decoded.match(/https?:\/\/[\x21-\x7e]+/g);
+    if (!matches) return null;
+    for (const raw of matches) {
+      // Trim trailing protobuf/binary junk: keep only valid URL characters.
+      const clean = raw.replace(/[^a-zA-Z0-9\-._~:/?#[\]@!$&'()*+,;=%].*$/, "");
+      if (clean.length > 12 && isOffGoogle(clean)) return clean;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}
+
+function extractPublisherLinkFromHtml(html) {
+  if (!html) return null;
+  // Google News interstitial pages expose the target via data-n-au, or via a
+  // single external <a href>.
+  const nau = html.match(/data-n-au=["'](https?:\/\/[^"']+)["']/i);
+  if (nau && isOffGoogle(nau[1])) return nau[1];
+  const hrefs = html.match(/href=["'](https?:\/\/[^"']+)["']/gi) || [];
+  for (const h of hrefs) {
+    const m = h.match(/href=["'](https?:\/\/[^"']+)["']/i);
+    if (m && isOffGoogle(m[1])) return m[1];
+  }
+  return null;
+}
+
+/**
+ * Resolve a candidate source URL to the real publisher URL when it is a Google
+ * News link. Returns { url, resolved, method }. Falls back to the original URL
+ * on any failure — never throws.
+ */
+export async function resolvePublisherUrl(rawUrl, { fetchImpl = fetch } = {}) {
+  if (!rawUrl) {
+    logEvent("source_url_resolution_skipped", { reason: "no_url" });
+    return { url: rawUrl, resolved: false };
+  }
+  if (!isGoogleNewsUrl(rawUrl)) {
+    logEvent("source_url_resolution_skipped", { reason: "not_google_news" });
+    return { url: rawUrl, resolved: false };
+  }
+
+  // Attempt 1: offline base64 decode (no network).
+  const decoded = decodeGoogleNewsUrl(rawUrl);
+  if (decoded) {
+    logEvent("source_url_resolved_to_publisher", { method: "decode", url: decoded });
+    logEvent("source_url_resolution_success", { method: "decode" });
+    return { url: decoded, resolved: true, method: "decode" };
+  }
+
+  // Attempt 2: follow redirects, then inspect the final URL and interstitial HTML.
+  try {
+    const controller = new AbortController();
+    const timer = setTimeout(() => controller.abort(), ARTICLE_FETCH_TIMEOUT);
+    let res;
+    try {
+      res = await fetchImpl(rawUrl, {
+        headers: { "User-Agent": USER_AGENT, Accept: "text/html,*/*" },
+        redirect: "follow",
+        signal: controller.signal,
+      });
+    } finally {
+      clearTimeout(timer);
+    }
+    const finalUrl = res?.url || "";
+    if (finalUrl && isOffGoogle(finalUrl)) {
+      logEvent("source_url_resolved_to_publisher", { method: "redirect", url: finalUrl });
+      logEvent("source_url_resolution_success", { method: "redirect" });
+      return { url: finalUrl, resolved: true, method: "redirect" };
+    }
+    const html = typeof res?.text === "function" ? await res.text() : "";
+    const link = extractPublisherLinkFromHtml(html);
+    if (link) {
+      logEvent("source_url_resolved_to_publisher", { method: "html", url: link });
+      logEvent("source_url_resolution_success", { method: "html" });
+      return { url: link, resolved: true, method: "html" };
+    }
+    logEvent("source_url_resolution_failed", { reason: "no_publisher_link" });
+    return { url: rawUrl, resolved: false };
+  } catch (err) {
+    logEvent("source_url_resolution_failed", { reason: err?.message ?? String(err) });
+    return { url: rawUrl, resolved: false };
+  }
+}
+
+// ── Article body fetcher ───────────────────────────────────────────────────
+// Fetches the (resolved) article URL and extracts readable article text so
+// OpenAI has the full article content rather than just the RSS snippet.
+// Non-fatal: returns null on any error.
 
 function stripTags(html) {
   return html
@@ -122,54 +288,83 @@ function stripTags(html) {
     .trim();
 }
 
-function extractArticleText(html) {
-  // Pull text from <p> tags — reasonable proxy for article body on most news sites
+export function extractArticleText(html) {
+  if (!html) return null;
+  // Pull text from <p> tags — reasonable proxy for article body on most news sites.
+  // Drop obvious boilerplate (nav, footer, cookie, newsletter, ad text).
+  const BOILERPLATE = /\b(cookie|subscribe|newsletter|sign up|advertisement|all rights reserved|privacy policy|terms of service|follow us|share this)\b/i;
   const paragraphs = [];
   const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi;
   let m;
   while ((m = pRe.exec(html)) !== null) {
     const text = stripTags(m[1]).trim();
-    if (text.length > 40) paragraphs.push(text);
+    if (text.length > 40 && !BOILERPLATE.test(text)) paragraphs.push(text);
   }
   const body = paragraphs.join(" ").slice(0, 3000); // cap at ~3000 chars
   return body || null;
 }
 
-async function fetchArticleBody(url) {
+/**
+ * Fetch the article URL and extract readable body text.
+ * Returns null on any failure (timeout, non-200, empty/too-short body). The
+ * caller treats null as "fall back to snippet-only enrichment".
+ */
+export async function fetchArticleBody(url, { fetchImpl = fetch } = {}) {
+  if (!url) return null;
   try {
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), ARTICLE_FETCH_TIMEOUT);
     try {
-      const res = await fetch(url, {
+      const res = await fetchImpl(url, {
         headers: { "User-Agent": USER_AGENT, Accept: "text/html,*/*" },
         signal: controller.signal,
       });
-      if (!res.ok) return null;
-      const reader = res.body?.getReader();
-      if (!reader) return null;
-      const chunks = [];
-      let total = 0;
-      while (true) {
-        const { done, value } = await reader.read();
-        if (done || !value) break;
-        chunks.push(value);
-        total += value.length;
-        if (total >= ARTICLE_MAX_BYTES) { reader.cancel().catch(() => {}); break; }
+      if (!res.ok) {
+        logEvent("fulltext_fetch_failed", { url, status: res.status });
+        return null;
       }
-      const bytes = new Uint8Array(total);
-      let off = 0;
-      for (const c of chunks) { bytes.set(c, off); off += c.length; }
-      const html = new TextDecoder().decode(bytes);
-      return extractArticleText(html);
+
+      // Prefer streaming (caps download); fall back to text() for mocked responses.
+      let html;
+      if (res.body?.getReader) {
+        const reader = res.body.getReader();
+        const chunks = [];
+        let total = 0;
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done || !value) break;
+          chunks.push(value);
+          total += value.length;
+          if (total >= ARTICLE_MAX_BYTES) { reader.cancel().catch(() => {}); break; }
+        }
+        const bytes = new Uint8Array(total);
+        let off = 0;
+        for (const c of chunks) { bytes.set(c, off); off += c.length; }
+        html = new TextDecoder().decode(bytes);
+      } else if (typeof res.text === "function") {
+        html = (await res.text()).slice(0, ARTICLE_MAX_BYTES * 4);
+      } else {
+        logEvent("fulltext_fetch_failed", { url, reason: "no_body" });
+        return null;
+      }
+
+      const text = extractArticleText(html);
+      if (!text || text.length < ARTICLE_MIN_CHARS) {
+        logEvent("fulltext_empty_or_too_short", { url, length: text ? text.length : 0 });
+        return null;
+      }
+      logEvent("fulltext_fetch_success", { url, length: text.length });
+      return text;
     } finally {
       clearTimeout(timer);
     }
-  } catch {
+  } catch (err) {
+    logEvent("fulltext_fetch_failed", { url, reason: err?.message ?? String(err) });
     return null;
   }
 }
 
-function buildUserMessage(body, articleBody) {
+export function buildUserMessage(body, articleBody) {
   const lines = [
     `Title: ${body.title || "(none)"}`,
     `Original title: ${body.original_title || "(none)"}`,
@@ -200,7 +395,7 @@ const REQUIRED_FIELDS = [
 ];
 const VALID_RECOMMENDATIONS = ["publish", "keep_candidate", "archive"];
 
-function validateSuggestion(obj) {
+export function validateSuggestion(obj) {
   for (const field of REQUIRED_FIELDS) {
     if (!(field in obj)) return `Missing required field: ${field}`;
   }
@@ -214,6 +409,36 @@ function validateSuggestion(obj) {
   if (!Array.isArray(obj.signal_tags)) return "signal_tags must be an array";
   if (!Array.isArray(obj.affected_regions)) return "affected_regions must be an array";
   return null;
+}
+
+const VALID_CONFIDENCE = ["high", "medium", "low"];
+
+/**
+ * Sanitise the optional structured-extraction fields in place. These are NOT
+ * required for a valid suggestion — a model that omits them must not cause the
+ * enrichment to fail — so malformed values are coerced/dropped rather than
+ * rejected. Returns the same object for convenience.
+ */
+export function normalizeSuggestion(suggestion) {
+  const rawFacts = Array.isArray(suggestion.key_facts) ? suggestion.key_facts : [];
+  suggestion.key_facts = rawFacts
+    .filter((f) => f && typeof f === "object" && typeof f.fact === "string" && f.fact.trim())
+    .map((f) => {
+      const fact = { fact: f.fact.trim() };
+      if (f.value !== undefined && f.value !== null && f.value !== "") fact.value = f.value;
+      if (typeof f.unit === "string" && f.unit.trim()) fact.unit = f.unit.trim();
+      if (typeof f.geography === "string" && f.geography.trim()) fact.geography = f.geography.trim();
+      if (typeof f.source_text === "string" && f.source_text.trim()) fact.source_text = f.source_text.trim();
+      fact.confidence = VALID_CONFIDENCE.includes(f.confidence) ? f.confidence : "low";
+      return fact;
+    });
+
+  suggestion.cape_verde_angle =
+    typeof suggestion.cape_verde_angle === "string" && suggestion.cape_verde_angle.trim()
+      ? suggestion.cape_verde_angle.trim()
+      : null;
+
+  return suggestion;
 }
 
 function send(res, status, data) {
@@ -237,8 +462,15 @@ export default async function handler(req, res) {
     return send(res, 400, { error: "title is required" });
   }
 
-  // ── Fetch article body (non-fatal) ─────────────────────────────────────────
-  const articleBody = body.source_url ? await fetchArticleBody(body.source_url) : null;
+  // ── Resolve publisher URL + fetch article body (both non-fatal) ────────────
+  let articleBody = null;
+  let resolvedUrl = body.source_url || null;
+  if (body.source_url) {
+    const resolution = await resolvePublisherUrl(body.source_url);
+    resolvedUrl = resolution.url || body.source_url;
+    articleBody = await fetchArticleBody(resolvedUrl);
+    if (!articleBody) logEvent("fallback_to_snippet", { url: resolvedUrl });
+  }
 
   // ── Call OpenAI ────────────────────────────────────────────────────────────
 
@@ -299,6 +531,14 @@ export default async function handler(req, res) {
 
   // Coerce score to a safe integer before returning
   suggestion.relevance_score = Math.round(Number(suggestion.relevance_score));
+
+  // Sanitise the optional structured-extraction fields, then attach the
+  // server-computed provenance fields (not produced by the model).
+  normalizeSuggestion(suggestion);
+  suggestion.article_body_used = Boolean(articleBody);
+  if (resolvedUrl && resolvedUrl !== body.source_url) {
+    suggestion.resolved_source_url = resolvedUrl;
+  }
 
   // ── PT translation via Claude API ─────────────────────────────────────────
   // Only translate if the article is worth showing (not archive).
