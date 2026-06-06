@@ -1,5 +1,6 @@
 import { createClient } from "@supabase/supabase-js";
 import { renderHero, renderDetailSlide, generateAiImage, suggestCaption, buildImagePrompt, placeholderImage } from "../lib/newsHero.js";
+import { searchPexelsPhoto } from "../lib/pexels.js";
 
 const COOKIE_NAME = "admin_session";
 
@@ -80,6 +81,7 @@ export default async function handler(req, res) {
       dek: clean(body.dek),
       aiPrompt: clean(body.aiPrompt),
       imageUrl: clean(body.imageUrl),
+      location: clean(body.location),
     };
     if (!item.headline) {
       send(res, 400, { error: "headline is required" });
@@ -95,32 +97,75 @@ export default async function handler(req, res) {
 
     const useAi = body.useAi === true || body.useAi === "1";
     const quality = clean(body.quality) || "high";
+    const imageSource = clean(body.imageSource) || "ai"; // "ai" (default) | "pexels"
 
     // Resolve the background image.
     let imageBuffer;
     let promptUsed = null;
     let warning = null;
-    if (useAi) {
-      if (!process.env.OPENAI_API_KEY) {
-        warning = "OPENAI_API_KEY not configured — used placeholder.";
-        imageBuffer = await placeholderImage();
-      } else {
+    let attribution = null; // rendered on the hero when sourced from Pexels
+    let photoMeta = null;   // provider/author info returned to the client
+
+    // Existing AI / explicit-URL / placeholder resolution. Used directly for the
+    // default flow, and as the fallback when a Pexels lookup is unavailable.
+    async function resolveAiOrUrl() {
+      if (useAi) {
+        if (!process.env.OPENAI_API_KEY) {
+          warning = "OPENAI_API_KEY not configured — used placeholder.";
+          return placeholderImage();
+        }
         const { buffer, prompt } = await generateAiImage(item, quality);
-        imageBuffer = buffer;
         promptUsed = prompt;
+        return buffer;
       }
-    } else if (item.imageUrl) {
-      const r = await fetch(item.imageUrl);
-      if (!r.ok) throw new Error(`Image fetch failed (${r.status})`);
-      imageBuffer = Buffer.from(await r.arrayBuffer());
+      if (item.imageUrl) {
+        const r = await fetch(item.imageUrl);
+        if (!r.ok) throw new Error(`Image fetch failed (${r.status})`);
+        return Buffer.from(await r.arrayBuffer());
+      }
+      return placeholderImage();
+    }
+
+    if (imageSource === "pexels") {
+      // Optional real-photo background. Any failure falls back to the existing
+      // AI/placeholder flow so the user flow never breaks.
+      try {
+        const photo = await searchPexelsPhoto({
+          headline: item.headline,
+          category: item.category,
+          location: item.location,
+        });
+        if (photo) {
+          const r = await fetch(photo.imageUrl);
+          if (r.ok) {
+            imageBuffer = Buffer.from(await r.arrayBuffer());
+            attribution = photo.attribution;
+            photoMeta = {
+              photo_provider: "pexels",
+              photo_author: photo.photographer,
+              photo_author_url: photo.photographerUrl,
+              photo_source_url: photo.sourceUrl,
+              photo_attribution_text: photo.attribution,
+            };
+          }
+        }
+      } catch {
+        // swallow — handled by the fallback below
+      }
+      if (!imageBuffer) {
+        warning = process.env.PEXELS_API_KEY
+          ? "No usable Pexels photo — fell back to the AI/placeholder image."
+          : "PEXELS_API_KEY not configured — fell back to the AI/placeholder image.";
+        imageBuffer = await resolveAiOrUrl();
+      }
     } else {
-      imageBuffer = await placeholderImage();
+      imageBuffer = await resolveAiOrUrl();
     }
 
     const total = includeSlide2 ? 2 : 1;
     const slides = [];
 
-    const hero = await renderHero({ ...item, imageBuffer });
+    const hero = await renderHero({ ...item, imageBuffer, attribution });
     slides.push({ label: "1 · Hero", imageBase64: hero.toString("base64") });
 
     if (includeSlide2) {
@@ -144,6 +189,8 @@ export default async function handler(req, res) {
       caption,
       promptUsed: promptUsed || (useAi ? buildImagePrompt(item) : null),
       warning,
+      attribution,
+      photoMeta,
     });
   } catch (err) {
     send(res, 500, { error: err?.message || String(err) });

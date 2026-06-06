@@ -129,6 +129,12 @@ export async function renderHero(item) {
     if (all.length > 2 && dek.length === 2) dek[1] = dek[1].replace(/[\s.,;:]+$/, "") + "…";
   }
 
+  // Optional photo attribution (e.g. Pexels) rendered small at bottom-left.
+  const attribution = (item.attribution || "").trim();
+  const attributionSvg = attribution
+    ? `<text x="${M}" y="${H - 26}" font-family="${MONO}" font-size="16" font-weight="400" letter-spacing="0.5" fill="${GRAY}" opacity="0.7">${esc(attribution)}</text>`
+    : "";
+
   const cat = (item.category || "Market News").toUpperCase();
   const catFS = 22, catPad = 26;
   const catW = cat.length * (catFS * 0.62 + 1) + catPad * 2; // account for tracking + bold caps
@@ -171,6 +177,7 @@ export async function renderHero(item) {
   ${headlineSvg}
   ${dek.map((ln, i) => `<text x="${M}" y="${dekFirstBaseline + i * 36}" font-family="${SANS}" font-size="27" font-weight="400" fill="${GRAY}">${esc(ln)}</text>`).join("\n")}
   <text x="${W - M}" y="${footerY}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>
+  ${attributionSvg}
 </svg>`;
 
   return new Resvg(svg, {
