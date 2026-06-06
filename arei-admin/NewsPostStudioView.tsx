@@ -317,8 +317,9 @@ export function NewsPostStudioView() {
 
           {imageSource === "pexels" && (
             <p className="text-[11px] font-mono text-foreground-subtle -mt-1">
-              Real photo searched from the headline. Falls back to the AI image
-              if no usable photo is found. Photographer credited on the slide.
+              Real photo searched from the headline. Generate again for a
+              different photo. Falls back to the AI image if no usable photo is
+              found. Photographer credited on the slide.
             </p>
           )}
 

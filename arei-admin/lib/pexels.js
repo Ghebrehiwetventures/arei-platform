@@ -90,7 +90,10 @@ export async function searchPexelsPhoto(item = {}) {
       const res = await fetch(url, { headers: { Authorization: key } });
       if (!res.ok) continue; // try next query (rate limit, bad query, etc.)
       const json = await res.json();
-      photo = Array.isArray(json?.photos) ? json.photos.find((p) => p?.src) : null;
+      // Pick a random photo from the results so re-generating yields variety
+      // ("shuffle") instead of always returning the first match.
+      const usable = Array.isArray(json?.photos) ? json.photos.filter((p) => p?.src) : [];
+      photo = usable.length ? usable[Math.floor(Math.random() * usable.length)] : null;
     } catch {
       continue; // network error — try next query
     }
