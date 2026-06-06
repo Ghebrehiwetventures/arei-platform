@@ -129,11 +129,10 @@ export async function renderHero(item) {
     if (all.length > 2 && dek.length === 2) dek[1] = dek[1].replace(/[\s.,;:]+$/, "") + "…";
   }
 
-  // Optional photo attribution (e.g. Pexels) rendered small at bottom-left.
-  const attribution = (item.attribution || "").trim();
-  const attributionSvg = attribution
-    ? `<text x="${M}" y="${H - 26}" font-family="${MONO}" font-size="16" font-weight="400" letter-spacing="0.5" fill="${GRAY}" opacity="0.7">${esc(attribution)}</text>`
-    : "";
+  // Swipe affordance (SWIPE pill + corner chevrons) only makes sense for a
+  // multi-slide carousel. Single-slide posts pass showNav:false to hide them.
+  // (Photo attribution is surfaced in the caption, not burned onto the image.)
+  const showNav = item.showNav !== false;
 
   const cat = (item.category || "Market News").toUpperCase();
   const catFS = 22, catPad = 26;
@@ -170,14 +169,13 @@ export async function renderHero(item) {
   <rect x="0" y="0" width="${W}" height="240" fill="url(#topfade)"/>
   <rect width="${W}" height="${H}" fill="url(#fade)"/>
   ${lockup(M, M, BONE)}
-  <rect x="${W - M - 150}" y="${M}" width="150" height="44" rx="22" fill="none" stroke="${BONE}" stroke-width="2"/>
-  <text x="${W - M - 73}" y="${M + 29}" font-family="${MONO}" font-size="20" font-weight="700" letter-spacing="2" fill="${BONE}" text-anchor="middle">SWIPE ›</text>
+  ${showNav ? `<rect x="${W - M - 150}" y="${M}" width="150" height="44" rx="22" fill="none" stroke="${BONE}" stroke-width="2"/>
+  <text x="${W - M - 73}" y="${M + 29}" font-family="${MONO}" font-size="20" font-weight="700" letter-spacing="2" fill="${BONE}" text-anchor="middle">SWIPE ›</text>` : ""}
   <rect x="${M}" y="${pillY}" width="${catW}" height="${catH}" fill="${SAGE}"/>
   <text x="${M + catPad}" y="${pillY + 30}" font-family="${SANS}" font-size="${catFS}" font-weight="700" letter-spacing="1" fill="${INK}">${esc(cat)}</text>
   ${headlineSvg}
   ${dek.map((ln, i) => `<text x="${M}" y="${dekFirstBaseline + i * 36}" font-family="${SANS}" font-size="27" font-weight="400" fill="${GRAY}">${esc(ln)}</text>`).join("\n")}
-  <text x="${W - M}" y="${footerY}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>
-  ${attributionSvg}
+  ${showNav ? `<text x="${W - M}" y="${footerY}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>` : ""}
 </svg>`;
 
   return new Resvg(svg, {

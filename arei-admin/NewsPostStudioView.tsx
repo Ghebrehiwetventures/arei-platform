@@ -35,11 +35,28 @@ function suggestHighlight(headline: string): string {
   return w.slice(Math.floor(w.length / 2)).join(" ");
 }
 
-// Slide-2 bullets: split "what happened" into up to 3 sentences, one per line.
-function splitBullets(text: string): string {
-  const sentences = (text || "").trim().match(/[^.!?]+[.!?]+/g);
-  if (!sentences) return (text || "").trim();
-  return sentences.map((s) => s.trim()).slice(0, 3).join("\n");
+type ImageSource = "ai" | "pexels" | "url" | "upload";
+
+// Add/replace a single photo-credit line in the caption. Used when a Pexels
+// photo is chosen so the photographer is credited in the caption (not on the
+// image). Idempotent across re-generates / shuffles: removes any prior credit
+// line first, so a new photographer replaces the old one without duplicating.
+function applyPhotoCredit(caption: string, credit: string): string {
+  const stripped = caption
+    .split("\n")
+    .filter((l) => !/^\s*Photo:\s.*\/\sPexels\s*$/i.test(l))
+    .join("\n")
+    .replace(/\n{3,}/g, "\n\n")
+    .trimEnd();
+  if (!credit) return stripped;
+  // Insert the credit just before the hashtags block (last paragraph), else append.
+  const paras = stripped.split("\n\n");
+  const lastIsTags = paras.length > 1 && /(^|\s)#\w/.test(paras[paras.length - 1]);
+  if (lastIsTags) {
+    paras.splice(paras.length - 1, 0, credit);
+    return paras.join("\n\n");
+  }
+  return `${stripped}\n\n${credit}`;
 }
 
 // Full Instagram caption: the actual news (what happened + why it matters) +
@@ -84,9 +101,7 @@ export function NewsPostStudioView() {
   const [highlight, setHighlight] = useState("");
   const [date, setDate] = useState("");
   const [dek, setDek] = useState("");
-  const [bullets, setBullets] = useState("");
-  const [useAi, setUseAi] = useState(true);
-  const [imageSource, setImageSource] = useState<"ai" | "pexels">("ai");
+  const [imageSource, setImageSource] = useState<ImageSource>("ai");
   const [quality, setQuality] = useState("high");
   const [imageUrl, setImageUrl] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
@@ -121,7 +136,6 @@ export function NewsPostStudioView() {
     setHeadline(title);
     setCategory(CATEGORIES.includes(item.category) ? item.category : "Market News");
     setDek(firstSentence(item.whatHappened || ""));
-    setBullets(splitBullets(item.whatHappened || ""));
     setDate(formatDate(item.publishedAt));
     setHighlight(suggestHighlight(title));
     setSourceUrl(item.sourceUrl || "");
@@ -142,19 +156,21 @@ export function NewsPostStudioView() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-        // For Pexels, force useAi:true so the server's fallback (when no usable
-        // photo is found) still produces an AI background rather than a placeholder.
+        // useAi is true for AI and for Pexels (Pexels falls back to AI when no
+        // usable photo is found). URL/upload sources use the imageUrl directly.
         body: JSON.stringify({
-          category, headline, highlight, date, dek, bullets,
-          useAi: imageSource === "pexels" ? true : useAi,
+          category, headline, highlight, date, dek,
+          useAi: imageSource === "ai" || imageSource === "pexels",
           quality, imageUrl, imageSource, location: region,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      setResult(data as GenerateResponse);
-      // Keep the full client-built caption (set on item select); don't replace
-      // it with the server's short suggestion.
+      const result = data as GenerateResponse;
+      setResult(result);
+      // Keep the full client-built caption; only add the photographer credit to
+      // the caption (not the image) when a Pexels photo was used.
+      setCaptionText((c) => applyPhotoCredit(c, result.photoMeta?.photo_attribution_text || ""));
       setPublished(null);
       setPublishError(null);
     } catch (e: any) {
@@ -300,18 +316,16 @@ export function NewsPostStudioView() {
           <Field label="Dek (one supporting line)">
             <textarea className={inputCls} rows={2} value={dek} onChange={(e) => setDek(e.target.value)} />
           </Field>
-          <Field label="Slide 2 — What happened (one bullet per line, max 4; blank = hero only)">
-            <textarea className={inputCls} rows={4} value={bullets} onChange={(e) => setBullets(e.target.value)} placeholder="One fact per line…" />
-          </Field>
-
           <Field label="Image source">
             <select
               className={inputCls}
               value={imageSource}
-              onChange={(e) => setImageSource(e.target.value as "ai" | "pexels")}
+              onChange={(e) => setImageSource(e.target.value as ImageSource)}
             >
               <option value="ai">AI image (generated)</option>
               <option value="pexels">Pexels photo (real photography)</option>
+              <option value="upload">Upload image</option>
+              <option value="url">Image URL</option>
             </select>
           </Field>
 
@@ -319,32 +333,41 @@ export function NewsPostStudioView() {
             <p className="text-[11px] font-mono text-foreground-subtle -mt-1">
               Real photo searched from the headline. Generate again for a
               different photo. Falls back to the AI image if no usable photo is
-              found. Photographer credited on the slide.
+              found. Photographer credited in the caption.
             </p>
           )}
 
           {imageSource === "ai" && (
-            <>
-              <label className="flex items-center gap-2 text-xs font-mono mt-2">
-                <input type="checkbox" checked={useAi} onChange={(e) => setUseAi(e.target.checked)} />
-                Generate AI image relevant to the headline
-              </label>
+            <Field label="Quality">
+              <select className={inputCls} value={quality} onChange={(e) => setQuality(e.target.value)}>
+                <option value="high">high (≈ $0.25)</option>
+                <option value="medium">medium (≈ $0.06)</option>
+                <option value="low">low (≈ $0.02)</option>
+              </select>
+            </Field>
+          )}
 
-              {useAi && (
-                <Field label="Quality">
-                  <select className={inputCls} value={quality} onChange={(e) => setQuality(e.target.value)}>
-                    <option value="high">high (≈ $0.25)</option>
-                    <option value="medium">medium (≈ $0.06)</option>
-                    <option value="low">low (≈ $0.02)</option>
-                  </select>
-                </Field>
-              )}
-              {!useAi && (
-                <Field label="Image URL (used when AI is off)">
-                  <input className={inputCls} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
-                </Field>
-              )}
-            </>
+          {imageSource === "url" && (
+            <Field label="Image URL">
+              <input className={inputCls} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
+            </Field>
+          )}
+
+          {imageSource === "upload" && (
+            <Field label="Upload image">
+              <input
+                type="file"
+                accept="image/*"
+                className={inputCls + " text-xs"}
+                onChange={(e) => {
+                  const f = e.target.files?.[0];
+                  if (!f) { setImageUrl(""); return; }
+                  const reader = new FileReader();
+                  reader.onload = () => setImageUrl(typeof reader.result === "string" ? reader.result : "");
+                  reader.readAsDataURL(f);
+                }}
+              />
+            </Field>
           )}
 
           <button
