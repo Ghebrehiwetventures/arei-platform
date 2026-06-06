@@ -70,6 +70,12 @@ export function NewsPostStudioView() {
   const [result, setResult] = useState<GenerateResponse | null>(null);
   const [error, setError] = useState<string | null>(null);
 
+  // Caption (editable) + Instagram publish state
+  const [captionText, setCaptionText] = useState("");
+  const [publishing, setPublishing] = useState(false);
+  const [published, setPublished] = useState<{ permalink: string } | null>(null);
+  const [publishError, setPublishError] = useState<string | null>(null);
+
   useEffect(() => {
     fetchMarketNewsSocialState()
       .then((s) => setItems(s.items))
@@ -103,10 +109,35 @@ export function NewsPostStudioView() {
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
       setResult(data as GenerateResponse);
+      setCaptionText((data as GenerateResponse).caption || "");
+      setPublished(null);
+      setPublishError(null);
     } catch (e: any) {
       setError(e.message || String(e));
     } finally {
       setGenerating(false);
+    }
+  }
+
+  async function publish() {
+    if (!result?.slides?.length) return;
+    if (!window.confirm("Publish this post to Instagram now? It goes live immediately.")) return;
+    setPublishing(true);
+    setPublishError(null);
+    try {
+      const res = await fetch("/api/publish-news-post", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        body: JSON.stringify({ images: result.slides.map((s) => s.imageBase64), caption: captionText }),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Publish failed (${res.status})`);
+      setPublished({ permalink: data.permalink || "" });
+    } catch (e: any) {
+      setPublishError(e.message || String(e));
+    } finally {
+      setPublishing(false);
     }
   }
 
@@ -239,15 +270,35 @@ export function NewsPostStudioView() {
               {result?.warning && <div className="text-[11px] text-[#C44A3A]">{result.warning}</div>}
               <div>
                 <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle mb-1">
-                  Suggested caption
+                  Caption
                 </div>
                 <textarea
                   className={inputCls}
                   rows={8}
-                  defaultValue={result?.caption}
-                  key={result?.caption}
+                  value={captionText}
+                  onChange={(e) => setCaptionText(e.target.value)}
                 />
               </div>
+
+              {/* ── Publish to Instagram ─────────────── */}
+              {published ? (
+                <div className="text-xs font-mono text-accent border border-accent/40 rounded p-3">
+                  ✓ Published to Instagram.
+                  {published.permalink && (
+                    <> <a href={published.permalink} target="_blank" rel="noreferrer" className="underline">View post →</a></>
+                  )}
+                </div>
+              ) : (
+                <button
+                  onClick={publish}
+                  disabled={publishing}
+                  className="w-full px-4 py-2.5 rounded bg-accent text-accent-foreground font-medium text-sm disabled:opacity-50"
+                >
+                  {publishing ? "Publishing…" : "Publish to Instagram"}
+                </button>
+              )}
+              {publishError && <div className="text-xs text-[#C44A3A]">{publishError}</div>}
+
               {result?.promptUsed && (
                 <details className="text-[11px] text-foreground-subtle">
                   <summary className="cursor-pointer font-mono">Image prompt used</summary>
