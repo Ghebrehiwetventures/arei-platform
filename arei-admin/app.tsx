@@ -102,6 +102,7 @@ import { AgencyConsoleView } from "./AgencyConsoleView";
 import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
 import { BrokerPilotView } from "./BrokerPilotView";
 import { ListingSocialView } from "./ListingSocialView";
+import { NewsPostStudioView } from "./NewsPostStudioView";
 
 // ============================================
 // D · LAYERS MARK — AREI brand mark (SVG)
@@ -3856,7 +3857,7 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "notifications" | "featured" | "briefings";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "news-studio" | "notifications" | "featured" | "briefings";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
@@ -3864,8 +3865,13 @@ const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "market-news",   label: "Market News"   },
   { key: "briefings",     label: "Briefings"     },
   { key: "featured",      label: "Featured"      },
-  { key: "marketing",     label: "Marketing"     },
   { key: "notifications", label: "Notifications" },
+];
+
+// Marketing = the social-media machine. Each entry is a post type.
+const MARKETING_NAV_ITEMS: { key: Tab; label: string }[] = [
+  { key: "news-studio", label: "News Posts"    },
+  { key: "marketing",   label: "Listing Posts" },
 ];
 
 const AGENCIES_NAV_ITEMS: { key: Tab; label: string }[] = [
@@ -3886,6 +3892,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
   const [agenciesOpen, setAgenciesOpen] = useState(false);
+  const [marketingOpen, setMarketingOpen] = useState(true);
   const [labsOpen, setLabsOpen] = useState(false);
 
   // Close sidebar when resizing up to desktop
@@ -3976,6 +3983,38 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
               </button>
             </div>
           ))}
+
+          {/* ── Marketing (social-media machine) ──── */}
+          <div className="mt-3 border-t border-border pt-2">
+            <button
+              onClick={() => setMarketingOpen((o) => !o)}
+              className="w-full flex items-center justify-between pl-4 pr-3 py-1.5 text-[10px] font-mono font-medium uppercase tracking-widest text-foreground-subtle hover:text-foreground-muted transition-colors duration-150"
+            >
+              Marketing
+              <span className="text-[9px] leading-none">{marketingOpen ? "▴" : "▾"}</span>
+            </button>
+            {marketingOpen && MARKETING_NAV_ITEMS.map(({ key, label }) => (
+              <div key={key} className="relative">
+                {tab === key && (
+                  <span
+                    className="absolute left-0 top-0 bottom-0 w-0.5 bg-accent pointer-events-none"
+                    aria-hidden="true"
+                  />
+                )}
+                <button
+                  onClick={() => selectTab(key)}
+                  className={
+                    "w-full flex items-center pl-6 pr-3 py-1.5 text-[11px] font-mono transition-colors duration-150 " +
+                    (tab === key
+                      ? "text-foreground-muted"
+                      : "text-foreground-subtle hover:text-foreground-muted hover:bg-surface-2")
+                  }
+                >
+                  {label}
+                </button>
+              </div>
+            ))}
+          </div>
 
           {/* ── Agencies ─────────────────────────── */}
           <div className="mt-3 border-t border-border pt-2">
@@ -4147,6 +4186,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "featured" && <FeaturedView />}
             {tab === "briefings" && <BriefingsView />}
             {tab === "marketing" && <ListingSocialView />}
+            {tab === "news-studio" && <NewsPostStudioView />}
             {tab === "notifications" && (
               <NotificationsView onCountChange={handleNotificationCountChange} />
             )}

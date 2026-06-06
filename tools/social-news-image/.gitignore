@@ -1,0 +1,5 @@
+node_modules/
+out/
+photo.jpg
+photo_b64.txt
+package-lock.json
