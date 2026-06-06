@@ -66,10 +66,7 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 Next operational steps:
 1. Retry the completed `cv_ccoreinvestments` freshness ingest only when its
    hostname is reachable; its last two zero-row attempts made no writes.
-2. Run the reviewed `cv_capeverdeproperty24` live ingest only after explicit
-   confirmation. Investigation, fixes, tests, dry run, and DB comparison are
-   complete; no live ingest has been performed.
-3. Investigate `cv_cabohouseproperty` next.
+2. Investigate `cv_cabohouseproperty` next.
 
 ---
 
@@ -388,8 +385,8 @@ Spot-check (area):
 
 ## cv_capeverdeproperty24 — n=41 — DONE 2026-06-06
 
-Status: ✅ **Investigation and fixes complete; live ingest awaiting explicit
-approval.** The OSProperty hypothesis was correct for legacy detail pages:
+Status: ✅ **Resolved for current v1 ingest.** The OSProperty hypothesis was
+correct for legacy detail pages:
 structured fields existed in `#propertydetails .corefields` as
 `.fieldlabel + .fieldvalue`, but the source had no `spec_table` configuration.
 All 41 current listing pages were fetched and compared against every missing
@@ -450,7 +447,22 @@ Verification evidence:
   `Exclusive Villa with Private Pool`, `Sea View Apartments`).
   A live ingest would refresh the 36 published rows in place and insert only
   those 5 new rows as `needs_review`; it would not promote or demote rows.
-- No live `cv_capeverdeproperty24` ingest was run.
+- Live ingest after explicit approval:
+  `REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_capeverdeproperty24 npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 41 rows, enriched 41/41 with 0 failures, reconciled the 3 changed
+  generated IDs to their existing published same-URL rows, found no removal
+  candidates, generated AI descriptions for the 5 genuinely new rows, and
+  upserted 41/41 with 0 failures.
+- Direct Postgres verification after the live ingest:
+  `kv_curated.listings` has 41 rows split as 36 `published` + 5
+  `needs_review`; `public.v1_feed_cv` remains exactly the 36 published rows.
+  All five new rows have AI descriptions and remain out of the feed. No rows
+  were promoted or demoted.
+- Verified refreshed published samples:
+  `cvp24_079f28315dc6` (`brl10-2`) is 1 bed, 1 bath, 60 sqm;
+  `cvp24_a8b1163a0c14` (`pds-b8-2`) is 1 bed, 1 bath, 58 sqm;
+  `cvp24_59545a1c01f9` (`pds-b2-2`) is 1 bed, 1 bath, 46 sqm; and
+  `cvp24_9423e529fb60` is 2 beds, 3 baths, 185 sqm.
 
 Spot-check:
 - https://capeverdeproperty24.com/en/todas-as-propriedades/nos-kasa-do-rei
