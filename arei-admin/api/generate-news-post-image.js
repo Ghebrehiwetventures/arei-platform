@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { renderHero, renderDetailSlide, generateAiImage, suggestCaption, buildImagePrompt, placeholderImage } from "../lib/newsHero.js";
+import { renderHero, generateAiImage, suggestCaption, buildImagePrompt, placeholderImage } from "../lib/newsHero.js";
 import { searchPexelsPhoto } from "../lib/pexels.js";
 
 const COOKIE_NAME = "admin_session";
@@ -88,13 +88,6 @@ export default async function handler(req, res) {
       return;
     }
 
-    // Slide 2 ("What happened") bullets — array or newline-separated string.
-    const bullets = (Array.isArray(body.bullets) ? body.bullets : String(body.bullets || "").split("\n"))
-      .map(clean)
-      .filter(Boolean)
-      .slice(0, 4);
-    const includeSlide2 = bullets.length > 0;
-
     const useAi = body.useAi === true || body.useAi === "1";
     const quality = clean(body.quality) || "high";
     const imageSource = clean(body.imageSource) || "ai"; // "ai" (default) | "pexels"
@@ -119,6 +112,13 @@ export default async function handler(req, res) {
         return buffer;
       }
       if (item.imageUrl) {
+        // Support both a remote URL and an uploaded image sent as a data: URL.
+        if (item.imageUrl.startsWith("data:")) {
+          const b64 = item.imageUrl.split(",")[1] || "";
+          const buf = Buffer.from(b64, "base64");
+          if (!buf.length) throw new Error("Uploaded image is empty or invalid");
+          return buf;
+        }
         const r = await fetch(item.imageUrl);
         if (!r.ok) throw new Error(`Image fetch failed (${r.status})`);
         return Buffer.from(await r.arrayBuffer());
@@ -162,24 +162,12 @@ export default async function handler(req, res) {
       imageBuffer = await resolveAiOrUrl();
     }
 
-    const total = includeSlide2 ? 2 : 1;
+    // Single-slide post: hero only. No swipe affordance / corner chevrons since
+    // there is nothing to swipe to. Photo attribution is surfaced in the caption
+    // (via photoMeta), not burned onto the image.
     const slides = [];
-
-    const hero = await renderHero({ ...item, imageBuffer, attribution });
+    const hero = await renderHero({ ...item, imageBuffer, showNav: false });
     slides.push({ label: "1 · Hero", imageBase64: hero.toString("base64") });
-
-    if (includeSlide2) {
-      // Reuse the same background image for visual continuity (one AI image, two slides).
-      const detail = await renderDetailSlide({
-        category: item.category,
-        kicker: "What happened",
-        bullets,
-        idx: 2,
-        total,
-        imageBuffer,
-      });
-      slides.push({ label: "2 · What happened", imageBase64: detail.toString("base64") });
-    }
 
     const caption = suggestCaption(item);
 
