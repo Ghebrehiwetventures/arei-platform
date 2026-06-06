@@ -110,6 +110,65 @@ test("extracts CCore home-icon detail bar area values from source config", () =>
   assert.equal(result.areaSqm, 65);
 });
 
+test("extracts Cape Verde Property 24 OSProperty core fields from source config", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_capeverdeproperty24");
+  assert.ok(source);
+  assert.deepEqual(source.detail.spec_table, {
+    container: "#propertydetails .corefields",
+    label_selector: ".fieldlabel",
+    value_selector: "+ .fieldvalue",
+    label_map: {
+      bedrooms: ["bed"],
+      bathrooms: ["bath"],
+      area: ["square meter"],
+    },
+  });
+
+  const plugin = createGenericDetailPlugin(
+    "cv_capeverdeproperty24",
+    source.detail,
+    source.price_format,
+  );
+
+  const html = `
+    <html>
+      <body>
+        <div id="propertydetails">
+          <div class="row-fluid corefields">
+            <div class="row-fluid">
+              <div class="span12">
+                <div class="fieldlabel">Bed</div>
+                <div class="fieldvalue">1</div>
+              </div>
+            </div>
+            <div class="row-fluid">
+              <div class="span12">
+                <div class="fieldlabel">Bath</div>
+                <div class="fieldvalue">1</div>
+              </div>
+            </div>
+            <div class="row-fluid">
+              <div class="span12">
+                <div class="fieldlabel">Square meter</div>
+                <div class="fieldvalue">60.00 sqmt</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(html, "https://capeverdeproperty24.com/en/brl10-2");
+
+  assert.equal(result.bedrooms, 1);
+  assert.equal(result.bathrooms, 1);
+  assert.equal(result.areaSqm, 60);
+});
+
 test("falls back to regex when structured bathroom selector is absent", () => {
   const plugin = createGenericDetailPlugin("cv_example", {
     selectors: {

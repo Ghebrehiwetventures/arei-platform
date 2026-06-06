@@ -56,7 +56,7 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 - [x] cv_simplycapeverde
 - [x] cv_ccoreinvestments
 - [x] cv_homescasaverde
-- [ ] cv_capeverdeproperty24 — NEXT INVESTIGATION
+- [x] cv_capeverdeproperty24
 - [ ] cv_cabohouseproperty
 - [ ] cv_estatecv
 - [ ] cv_oceanproperty24
@@ -66,8 +66,10 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 Next operational steps:
 1. Retry the completed `cv_ccoreinvestments` freshness ingest only when its
    hostname is reachable; its last two zero-row attempts made no writes.
-2. Investigate `cv_capeverdeproperty24` with a fresh dry run and source-page
-   comparisons. This is the next new source investigation.
+2. Run the reviewed `cv_capeverdeproperty24` live ingest only after explicit
+   confirmation. Investigation, fixes, tests, dry run, and DB comparison are
+   complete; no live ingest has been performed.
+3. Investigate `cv_cabohouseproperty` next.
 
 ---
 
@@ -384,24 +386,78 @@ Spot-check (area):
 
 ---
 
-## cv_capeverdeproperty24 — n=41 (badly broken) — NEXT
+## cv_capeverdeproperty24 — n=41 — DONE 2026-06-06
 
-Status: ❓ **Not yet investigated.** Begin with a fresh report; do not rely on
-the older counts below as current evidence.
+Status: ✅ **Investigation and fixes complete; live ingest awaiting explicit
+approval.** The OSProperty hypothesis was correct for legacy detail pages:
+structured fields existed in `#propertydetails .corefields` as
+`.fieldlabel + .fieldvalue`, but the source had no `spec_table` configuration.
+All 41 current listing pages were fetched and compared against every missing
+price, bedroom, bathroom, area, and image field.
 
-| field | missing | verdict | notes |
-|---|---|---|---|
-| price | 18/41 | ❓ | |
-| bedrooms | 33/41 | ❓ | |
-| bathrooms | 37/41 | ❓ | |
-| area | 35/41 | ❓ | |
+| field | pre-fix missing | post-fix missing | verdict | notes |
+|---|---:|---:|---|---|
+| price | 18/41 | 18/41 | 🌐 SOURCE | Every null-price page shows `Call for details price`; no numeric source price was found. |
+| bedrooms | 33/41 | 21/41 | ◑ MIXED / ACCEPTED | OSProperty structured extraction recovered 12 rows. Residuals are land/commercial/project/multi-unit cases or values expressed only through titles/prose (`T1`, studio, one-/two-/three-bedroom wording), acceptable pending AI title/description extraction. |
+| bathrooms | 37/41 | 24/41 | ◑ MIXED / ACCEPTED | OSProperty structured extraction recovered 13 rows. Residuals are non-residential/source floors or prose-only bathroom semantics, including multi-room hospitality properties without one unit-level count. |
+| any area | 35/41 historical | 24/41 | ◑ MIXED / ACCEPTED | OSProperty structured extraction recovered 11 residential area rows. Final coverage is 14 `property_size_sqm` + 3 `land_area_sqm`; remaining pages either omit area or state it only in prose/project descriptions. |
+| images | 0/41 current | 0/41 | ✅ | Fresh runs have 41/41 rows with source-scoped images; the older all-image failure no longer reproduces. |
 
-Hypothesis: detail spec extraction effectively not configured/working for this CMS (OSProperty).
+Fixes landed:
+- ✅ `cv_capeverdeproperty24.detail.spec_table` now maps OSProperty `Bed`,
+  `Bath`, and `Square meter` fields inside `#propertydetails .corefields`.
+- ✅ Ingest identity reconciliation now reuses an existing same-source,
+  same-URL curated ID before status/removal checks, preferring published rows.
+  This prevents title/price hash churn from demoting a still-live published row
+  and inserting a replacement as `needs_review`.
+- ✅ Focused regression tests cover both OSProperty extraction from source
+  config and same-URL published-row identity preservation.
+
+Verification evidence:
+- Baseline command:
+  `DRY_RUN=1 REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_capeverdeproperty24 npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 41 rows from 5 pages, enriched 41/41 with 0 failures, and wrote no
+  data. Baseline coverage: price 23/41, bedrooms 8/41, bathrooms 4/41,
+  residential area 3/41, images 41/41.
+- Every current page was batch-fetched and its dedicated price element,
+  OSProperty `.fieldlabel + .fieldvalue` pairs, and listing description were
+  compared with the report. Legacy examples:
+  - `brl10-2`: `Bed 1`, `Bath 1`, `Square meter 60.00 sqmt`.
+  - `pds-th-5-por-do-sol-2`: `Bed 2`, `Bath 3`, `Square meter 185.00 sqmt`.
+  - `cl-d-tr-trilocale-1d-3`: `Bed 2`, `Bath 1`, `Square meter 86.00 sqmt`.
+  - `pds-b2-2`: `Bed 1`, `Bath 1`, `Square meter 46.00 sqmt`.
+- Newer-page evidence includes source/prose-only semantics:
+  `Nos Kasa do Rei` shows call-for-price and room-by-room prose;
+  `Exclusive Villa with Private Pool` describes bedrooms/bathrooms only in
+  prose; `Sun Dream Apartamento Boa Vista T1` exposes `T1` in title/prose;
+  land/commercial pages correctly have no residential bed/bath expectation.
+- Tests:
+  `node --test tests/genericDetail.test.cjs tests/genericFetcherJsonApi.test.cjs tests/ingestToCurated.test.cjs tests/propertyType.test.cjs`
+  passed 41/41.
+- Final post-fix dry run fetched 41 rows, enriched 41/41 with 0 failures, and
+  produced coverage: price 23/41, bedrooms 20/41, bathrooms 17/41,
+  residential area 14/41, land area 3/41, any area 17/41, images 41/41.
+- The first DB comparison exposed three false removal candidates whose source
+  URLs were still current but whose title/price-derived IDs had changed:
+  `brl10-2`, `pds-b8-2`, and `pds-b2-2`. After the identity fix, the final dry
+  run reconciled exactly those three IDs, recognized all 36 existing rows as
+  published, and reported **no published listings missing**.
+- Direct Postgres comparison through `DATABASE_URL` (not Supabase JS/REST):
+  `kv_curated.listings` has 36 rows, all `published`;
+  `public.v1_feed_cv` has the same 36 rows. The final dry run has 41 rows:
+  all 36 curated/feed IDs are present, and 5 rows are genuinely new
+  (`Nos Kasa do Rei`, `Nos Kasa North`, `Ca' Povocao Velha`,
+  `Exclusive Villa with Private Pool`, `Sea View Apartments`).
+  A live ingest would refresh the 36 published rows in place and insert only
+  those 5 new rows as `needs_review`; it would not promote or demote rows.
+- No live `cv_capeverdeproperty24` ingest was run.
 
 Spot-check:
-- https://capeverdeproperty24.com/en/todas-as-propriedades/nos-kasa-do-rei  (price,baths,area)
-- https://capeverdeproperty24.com/en/todas-as-propriedades/nos-kasa-north  (beds,baths,area)
-- https://capeverdeproperty24.com/en/todas-as-propriedades/casa-morna  (beds,baths,area)
+- https://capeverdeproperty24.com/en/todas-as-propriedades/nos-kasa-do-rei
+- https://capeverdeproperty24.com/en/todas-as-propriedades/nos-kasa-north
+- https://capeverdeproperty24.com/en/todas-as-propriedades/casa-morna
+- https://capeverdeproperty24.com/en/brl10-2
+- https://capeverdeproperty24.com/en/pds-th-5-por-do-sol-2
 
 ---
 

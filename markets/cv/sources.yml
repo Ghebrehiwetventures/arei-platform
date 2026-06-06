@@ -470,6 +470,14 @@ sources:
         images: ".mosaicflow__item img, img[src*='osproperty/properties']"
         price: "span.price-ribbon-price"
         location: ".property-header-info-address"
+      spec_table:
+        container: "#propertydetails .corefields"
+        label_selector: ".fieldlabel"
+        value_selector: "+ .fieldvalue"
+        label_map:
+          bedrooms: ["bed"]
+          bathrooms: ["bath"]
+          area: ["square meter"]
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"

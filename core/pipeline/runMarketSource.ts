@@ -406,10 +406,66 @@ interface ExistingRowMeta {
   hasAi: boolean;
 }
 
+interface ExistingUrlIdentity {
+  id: string;
+  status: string;
+}
+
 interface RemovedPublishedRow {
   id: string;
   title: string;
   source_url_primary: string | null;
+}
+
+export function reconcileListingIdsBySourceUrl(
+  listings: Array<{ id: string; detailUrl?: string }>,
+  existingByUrl: Map<string, ExistingUrlIdentity>
+): Array<{ from: string; to: string; url: string }> {
+  const changes: Array<{ from: string; to: string; url: string }> = [];
+  for (const listing of listings) {
+    if (!listing.detailUrl) continue;
+    const existing = existingByUrl.get(listing.detailUrl);
+    if (!existing || existing.id === listing.id) continue;
+    changes.push({ from: listing.id, to: existing.id, url: listing.detailUrl });
+    listing.id = existing.id;
+  }
+  return changes;
+}
+
+async function fetchExistingUrlIdentities(
+  sourceId: string,
+  sourceUrls: string[]
+): Promise<Map<string, ExistingUrlIdentity>> {
+  const urls = [...new Set(sourceUrls.filter(Boolean))];
+  if (urls.length === 0) return new Map();
+
+  const client = createPostgresClient();
+  await client.connect();
+  try {
+    const result = await client.query<{
+      id: string;
+      publish_status: string;
+      source_url_primary: string;
+    }>(
+      `SELECT DISTINCT ON (source_url_primary)
+              id, publish_status, source_url_primary
+         FROM kv_curated.listings
+        WHERE source_id_primary = $1
+          AND source_url_primary = ANY($2::text[])
+        ORDER BY source_url_primary,
+                 CASE WHEN publish_status = 'published' THEN 0 ELSE 1 END,
+                 first_seen_at ASC`,
+      [sourceId, urls]
+    );
+    return new Map(
+      result.rows.map(r => [
+        r.source_url_primary,
+        { id: r.id, status: r.publish_status },
+      ])
+    );
+  } finally {
+    await client.end();
+  }
 }
 
 async function fetchExistingRowMeta(ids: string[]): Promise<Map<string, ExistingRowMeta>> {
@@ -807,6 +863,18 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   console.log(`\nFetched: ${listings.length} listings`);
 
   await enrichListings(listings, sourceConfig);
+
+  const existingByUrl = await fetchExistingUrlIdentities(
+    sourceId,
+    listings.map(l => l.detailUrl ?? "")
+  );
+  const identityChanges = reconcileListingIdsBySourceUrl(listings, existingByUrl);
+  if (identityChanges.length > 0) {
+    console.log(`\n[Identity-gate] ${identityChanges.length} generated ids reconciled to existing same-URL rows:`);
+    for (const change of identityChanges) {
+      console.log(`  ↻ ${change.from} → ${change.to}  ${change.url}`);
+    }
+  }
 
   const currency = getCurrency(marketId);
   const country  = getCountry(marketId);

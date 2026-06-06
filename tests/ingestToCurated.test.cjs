@@ -7,6 +7,7 @@ const {
   buildKvCuratedUpsertQuery,
   buildFindRemovedPublishedRowsQuery,
   buildDemoteRemovedPublishedRowsQuery,
+  reconcileListingIdsBySourceUrl,
 } = require("../scripts/ingest_to_curated");
 
 test("curated upsert includes last_verified_at on insert and update", () => {
@@ -113,4 +114,37 @@ test("removed published demotion only updates currently published missing rows",
   assert.equal(query.values[0], "cv_ccoreinvestments");
   assert.deepEqual(query.values[1], ["ccore_1"]);
   assert.equal(query.values[2], removedAt);
+});
+
+test("same-source URL identity reconciliation preserves an existing published row id", () => {
+  const listings = [
+    {
+      id: "cvp24_new_hash",
+      detailUrl: "https://capeverdeproperty24.com/en/brl10-2",
+      title: "Brl10 2",
+    },
+    {
+      id: "cvp24_new_listing",
+      detailUrl: "https://capeverdeproperty24.com/en/new-listing",
+      title: "New listing",
+    },
+  ];
+  const existingByUrl = new Map([
+    [
+      "https://capeverdeproperty24.com/en/brl10-2",
+      { id: "cvp24_existing_published", status: "published" },
+    ],
+  ]);
+
+  const changes = reconcileListingIdsBySourceUrl(listings, existingByUrl);
+
+  assert.deepEqual(changes, [
+    {
+      from: "cvp24_new_hash",
+      to: "cvp24_existing_published",
+      url: "https://capeverdeproperty24.com/en/brl10-2",
+    },
+  ]);
+  assert.equal(listings[0].id, "cvp24_existing_published");
+  assert.equal(listings[1].id, "cvp24_new_listing");
 });
