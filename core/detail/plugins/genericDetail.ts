@@ -1,6 +1,8 @@
 import * as cheerio from "cheerio";
 import { DetailPlugin, DetailExtractResult } from "../types";
 import { DetailConfig, PriceFormatConfig } from "../../configLoader";
+const parseSrcsetModule = require("parse-srcset");
+const parseSrcset = parseSrcsetModule.default || parseSrcsetModule;
 
 /**
  * Generic Config-Driven Detail Plugin
@@ -51,7 +53,7 @@ const INVALID_IMAGE_PATTERNS = [
   /spinner/i,
   /blank\./i,
   /1x1\./i,
-  /pixel\./i,
+  /\bpixel\.(?:gif|png|jpe?g|webp)(?:[?#]|$)/i,
   /spacer/i,
   /emoji/i,
   /smiley/i,
@@ -211,6 +213,17 @@ function isValidImageUrl(url: string): boolean {
   for (const p of INVALID_IMAGE_PATTERNS) { if (p.test(url)) return false; }
   for (const p of SMALL_IMAGE_PATTERNS) { if (p.test(url)) return false; }
   return true;
+}
+
+function extractSrcsetUrls(srcset: string): string[] {
+  if (!srcset) return [];
+  try {
+    return parseSrcset(srcset)
+      .map((entry: { url?: string }) => entry.url)
+      .filter((url: unknown): url is string => typeof url === "string" && url.length > 0);
+  } catch {
+    return [];
+  }
 }
 
 type JsonLdObject = Record<string, any>;
@@ -499,10 +512,7 @@ export function createGenericDetailPlugin(
             if (src) addImage(src);
             const srcset = $(el).attr("srcset") || $(el).attr("data-srcset");
             if (srcset) {
-              for (const part of srcset.split(",")) {
-                const url = part.trim().split(/\s+/)[0];
-                if (url) addImage(url);
-              }
+              for (const url of extractSrcsetUrls(srcset)) addImage(url);
             }
           } else if (tagName === "a") {
             const href = $(el).attr("href");
@@ -639,6 +649,11 @@ export function createGenericDetailPlugin(
             const $val = $label.parent().find(sel).first();
             if ($val.length) return $val.text().trim();
           }
+          const previousSiblingText = $label.prev().text().trim();
+          if (previousSiblingText) {
+            const followingSiblingText = $label.nextAll().text().trim();
+            return followingSiblingText ? `${previousSiblingText} ${followingSiblingText}` : previousSiblingText;
+          }
           const $row = $label.closest("li, tr, p, div");
           const full = $row.text().trim();
           return full.replace(labelText, "").trim();
@@ -707,7 +722,7 @@ export function createGenericDetailPlugin(
         }
 
         // Area
-        if (detailConfig.spec_patterns.area) {
+        if (areaSqm === null && detailConfig.spec_patterns.area) {
           for (const patternStr of detailConfig.spec_patterns.area) {
             const regex = new RegExp(patternStr, "i");
             const match = bodyText.match(regex);
@@ -719,9 +734,15 @@ export function createGenericDetailPlugin(
         }
       }
 
-      const jsonLdAreaSqm = parseJsonLdFloorSizeSqm(jsonLd?.floorSize);
-      if (jsonLdAreaSqm !== null) {
-        areaSqm = jsonLdAreaSqm;
+      // JSON-LD floorSize is a fallback only. A structured on-page value (e.g.
+      // a Houzez "87.41 m²" overview row) must win, because some themes emit
+      // the square-meter figure in JSON-LD while mislabeling the unit as SQFT,
+      // which would otherwise be wrongly divided to ~1/10.76 of the real area.
+      if (areaSqm === null) {
+        const jsonLdAreaSqm = parseJsonLdFloorSizeSqm(jsonLd?.floorSize);
+        if (jsonLdAreaSqm !== null) {
+          areaSqm = jsonLdAreaSqm;
+        }
       }
       if (bedrooms === null) {
         const jsonLdBedrooms = parseJsonLdInteger(jsonLd?.numberOfBedrooms);

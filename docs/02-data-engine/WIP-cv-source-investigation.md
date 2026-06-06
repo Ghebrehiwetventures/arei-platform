@@ -55,13 +55,21 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 - [ ] cv_terracaboverde
 - [x] cv_simplycapeverde
 - [x] cv_ccoreinvestments
-- [ ] cv_homescasaverde
-- [ ] cv_capeverdeproperty24
+- [ ] cv_homescasaverde — extraction fixed; corrective re-ingest still required
+- [ ] cv_capeverdeproperty24 — NEXT INVESTIGATION
 - [ ] cv_cabohouseproperty
 - [ ] cv_estatecv
 - [ ] cv_oceanproperty24
 - [ ] cv_nhakaza
 - [ ] Cross-cutting image issues
+
+Next operational steps:
+1. Re-ingest `cv_homescasaverde` and verify the corrected area values through
+   direct Postgres. Do not promote any rows.
+2. Retry the completed `cv_ccoreinvestments` freshness ingest only when its
+   hostname is reachable; its last two zero-row attempts made no writes.
+3. Investigate `cv_capeverdeproperty24` with a fresh dry run and source-page
+   comparisons. This is the next new source investigation.
 
 ---
 
@@ -108,9 +116,22 @@ Verification evidence:
 - Live/dry-run compare after fix: current dry run has 77 rows; live curated/feed had 57 published rows; 21 dry-run rows were not in curated DB; 1 old live row was no longer in source/dryrun and its source URL returned 404.
 - Ingest run completed for `SOURCE_ID=cv_simplycapeverde`: 77 fetched/enriched, 56 already-published rows skipped by status gate, 21 upserted as `needs_review`.
 - Post-ingest DB verification: `kv_curated.listings` has 57 `published` + 21 `needs_review` rows for `cv_simplycapeverde`; `public.v1_feed_cv` remains 57 rows for this source until review promotion.
+- Published-row freshness rerun on 2026-06-06:
+  `REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_simplycapeverde npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 77 rows, enriched 77/77, refreshed 61 current published rows with
+  status and existing AI descriptions preserved, demoted 1 absent published row
+  (`scv_8f62bb91a9ed`) to `removed`, and upserted 77 rows with 0 failures.
+  Direct Postgres verification after the run: all 77 current source rows exist
+  in curated as 61 `published` + 16 `needs_review`; 1 older row is `removed`;
+  `public.v1_feed_cv` has 61 rows for this source. No promotions were made.
 
 Operational notes worth carrying forward:
-- The curated ingest status gate is working: published rows are not overwritten by source re-ingest; new/changed rows enter as `needs_review`.
+- Current curated ingest freshness rule: rows that still appear in the latest
+  successful source fetch are upsert-refreshed even when already `published`.
+  `publish_status`, `first_seen_at`, `first_published_at`, and existing
+  `ai_descriptions` are preserved on conflict; source-derived fields
+  (price/specs/images/description/source URL/last_verified_at) are refreshed.
+  New rows still enter as `needs_review`.
 - Published rows that disappear from a latest successful source fetch should be
   demoted to `removed`, not `needs_review`. Dry runs report these as removal
   candidates; zero-row/failed fetches must not demote anything.
@@ -208,6 +229,13 @@ Verification evidence:
   71 rows. All 86 latest report rows exist in `kv_curated`; 15 latest source
   rows are absent from `v1_feed_cv` because they remain `needs_review`. No
   publish-status promotions were made.
+- Published-row freshness rerun attempted twice on 2026-06-06, but the exact
+  configured source URL (`https://www.ccoreinvestments.com/en/list?page=1`)
+  failed at the network/DNS layer and both ingests returned 0 rows with
+  `fetch_failed_page_1`. The zero-row safety gate disabled removal detection and
+  performed no writes. Direct Postgres verification remained unchanged:
+  82 `published`, 5 `needs_review`, 19 `removed`; `public.v1_feed_cv` has 82
+  rows. Retry when the source hostname is reachable.
 
 Spot-check (area):
 - https://www.ccoreinvestments.com/en/property-detail/flats-for-sale-t1-t2-t0-studios-beach-antonio-sousa-santa-maria-sal-island-cape-verde/839806
@@ -215,17 +243,134 @@ Spot-check (area):
 
 ---
 
-## cv_homescasaverde — n=57
+## cv_homescasaverde — n=62 — DONE 2026-06-05
+
+> ⚠️ **REOPENED & RE-FIXED 2026-06-05 (area).** The "✅ ACCEPTED" area row below
+> was wrong. After ingest, **40/58 area-bearing rows were corrupted to ~1/10.76
+> of their true value** (e.g. `hcv_3298681ed1f3` Melia Tortuga penthouse showed
+> `8` sqm; real area is `87.41 m²`). Root cause: Houzez emits the on-page
+> **square-meter** figure in JSON-LD but mislabels the unit as `"SQFT"`
+> (`floorSize: {value: 87.41, unitText: "SQFT"}`). `genericDetail.ts` let
+> JSON-LD `floorSize` **unconditionally override** the correctly-parsed
+> structured `87.41 m²` overview value, then applied a bogus ft²→m² conversion
+> (`87.41 × 0.0929 ≈ 8`). This is the only field whose JSON-LD fallback
+> overrode structured DOM data — beds/baths already gate behind `=== null`.
+> **Fix:** JSON-LD `floorSize` is now a fallback only (applied iff `areaSqm`
+> is still null), so the structured on-page m² value wins. Verified: new unit
+> test `tests/genericDetail.test.cjs` ("keeps structured sqm area when JSON-LD
+> floorSize mislabels the same value as SQFT"); real saved page + real
+> `markets/cv/sources.yml` config now extracts `areaSqm = 87`; full suite
+> `node --test tests/` = 49/49 pass. simplycapeverde's genuine SqFt JSON-LD
+> path is unaffected (it has no structured area, so the fallback still fires →
+> `678 SqFt → 63 sqm` test still passes). **Still TODO:** re-ingest
+> homescasaverde to overwrite the 40 corrupted DB rows.
+
+Status: ✅ **Resolved for current v1 ingest.** Fresh 2026-06-05 dry-run found
+two scraper bugs and one extraction-precedence bug:
+
+- ShortPixel CDN `srcset` values contain commas inside the URL path
+  (`ret_img,q_cdnize,to_auto,...`). The generic detail plugin was splitting on
+  commas manually, producing junk images such as `/property/q_cdnize` and
+  `/property/to_auto` on every current Homes Casa Verde row.
+- Homes Casa Verde Houzez overview values are rendered as previous sibling
+  values followed by label list items, e.g. `151.75 m²` then `Area Size`. The
+  generic `spec_table` resolver only looked inside/after the label, so it missed
+  source-visible structured area values.
+- Structured overview area could be overwritten later by description regex area
+  matches. Example: the entire-building page shows `859 m² Area Size` in the
+  overview, but prose also says `544m² corner plot`; structured area must win.
 
 | field | missing | verdict | notes |
 |---|---|---|---|
-| price | 0/57 | ✅ | |
-| bedrooms | 5/57 | ❓ | |
-| bathrooms | 4/57 | ❓ | |
-| area | 38/57 | ❓ | |
+| price | 0/62 | ✅ ACCEPTED | Fresh dry run has numeric price coverage on all current source rows. |
+| bedrooms | 4/62 | ✅ ACCEPTED | Remaining nulls are non-residential/complex cases: two land rows, one commercial office, and one entire-building investment page with no single residential bedroom count. |
+| bathrooms | 3/62 | ✅ ACCEPTED | Remaining nulls are two land rows and the entire-building page, where floor-level prose/layout is not a single unit bathroom count. |
+| area | 2/62 | ⚠️ SEE CALLOUT | Coverage was 60/62, but 40/58 present values were corrupted by the JSON-LD `SQFT` override (see REOPENED callout above). Engine fixed; DB rows still need re-ingest. Remaining nulls are source floors: one page shows `TBA m² Area Size`; one duplex page has no area label/value in the overview. |
+| images | 0 junk / 62 rows | ✅ FIXED | ShortPixel comma/srcset fragmentation fixed; final report has 0 `/property/q_cdnize`, `/property/to_auto`, or `/property/s_webp:avif` junk image URLs. |
 
-Known issue: 🔧 **comma/srcset splitting bug** — ShortPixel CDN URLs fragmented
-into junk (`/property/q_cdnize`, `/to_auto`) across 56 listings. See cross-cutting.
+Engine fixes landed:
+- ✅ Generic detail plugin parses `srcset` with `parse-srcset` instead of manual
+  comma splitting, so ShortPixel CDN URLs are kept whole.
+- ✅ Generic image filtering no longer rejects the legitimate `shortpixel.ai`
+  CDN as a generic tracking `pixel.*` image.
+- ✅ Generic `spec_table` value resolution supports previous-sibling value /
+  label pairs used by Homes Casa Verde Houzez overview rows.
+- ✅ Regex area fallback no longer overwrites a structured selector/spec-table
+  area value.
+- ✅ Curated upsert now refreshes source-derived fields for existing published
+  rows while preserving `publish_status`, first-seen/published timestamps, and
+  existing AI descriptions.
+- ✅ Removed-row demotion query casts its timestamp parameter consistently, so
+  notes and `last_verified_at` can be updated in one Postgres statement.
+
+Verification evidence:
+- Initial sandboxed dry run failed to launch Puppeteer and wrote a zero-row
+  safety report; rerun with browser/network access was required for valid
+  evidence.
+- Pre-fix fresh dry run:
+  `DRY_RUN=1 REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_homescasaverde npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 62 rows, enriched 62/62, skipped 0, status-gated 9 published rows,
+  and had all-row coverage: price 62/62, bedrooms 58/62, bathrooms 59/62,
+  area 51/62, images >=1 62/62, images >=3 62/62. Image audit found 182
+  suspicious ShortPixel/junk entries and every row had junk fragments.
+- Source-page DOM probes with the same headless browser path confirmed:
+  - `hcv_ce1584d7161e` overview showed `2 Bedrooms`, `3 Bathrooms`,
+    `151.75 m² Area Size`; pre-fix report had `area=null`, post-fix has
+    `property_size_sqm=152`.
+  - `hcv_1439dd3146ef` overview showed `3 Bedrooms`, `1 Bathroom`,
+    `120 m² Area Size`; post-fix has `property_size_sqm=120`.
+  - `hcv_ab5889781d21` overview showed `3 Bedrooms`, `3 Bathrooms`,
+    `133 m² Area Size`; post-fix has `property_size_sqm=133`.
+  - `hcv_66d431a4ad07` overview showed `1 Bathroom`,
+    `56.62 m² Area Size`, `Office, Commercial`; post-fix has
+    `property_size_sqm=57`, `bathrooms=1`, `bedrooms=null` as expected.
+  - `hcv_96b97eaf392d` overview showed `859 m² Area Size`; post-fix extractor
+    keeps `property_size_sqm=859` instead of the prose `544m²` plot mention.
+  - Residual missing-area rows checked: `hcv_e6bb812bf2bc` shows `TBA m² Area
+    Size`; `hcv_a615295a7053` has no overview area label/value. Treat both as
+    source floors.
+- Tests:
+  `node --test tests/ingestToCurated.test.cjs tests/genericDetail.test.cjs tests/propertyType.test.cjs`
+  passed after adding coverage for ShortPixel `srcset`, previous-sibling
+  overview values, structured-area precedence over prose regex matches,
+  published-row refresh upserts, and removed-row timestamp casting.
+- Final post-fix dry run:
+  `DRY_RUN=1 REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_homescasaverde npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 62 rows, enriched 62/62, skipped 0, status-gated 9 published rows,
+  and reported 53 dry-run writable rows with no writes.
+- Final report coverage:
+  all rows: price 62/62, bedrooms 58/62, bathrooms 59/62, area 60/62,
+  images >=1 62/62, images >=3 62/62.
+  New dry-run writable rows: price 53/53, bedrooms 51/53, bathrooms 51/53,
+  area 51/53, images >=1 53/53, images >=3 53/53.
+- Direct Postgres compare (`DATABASE_URL`, not Supabase JS/REST):
+  `kv_curated.listings` currently has 53 `cv_homescasaverde` rows
+  (15 `published`, 38 `needs_review`); `public.v1_feed_cv` has 15 rows for this
+  source. The fresh dry run has 62 current source rows. Six published feed rows
+  are absent from the latest successful source fetch and are dry-run removal
+  candidates only. Sixteen current dry-run rows are not yet in curated; 53
+  current dry-run rows are absent from `v1_feed_cv` because they are not
+  published. No publish-status promotions or live writes were made.
+- Follow-up ingest freshness rule change before live ingest: published rows
+  that are still present in the latest source fetch are no longer skipped by the
+  upsert. They remain `published`, but source-derived fields are refreshed.
+  Existing AI descriptions are preserved and no new AI text is generated for
+  already-published rows.
+- Actual ingest run:
+  `REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_homescasaverde npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 62 rows, enriched 62/62, skipped 0, refreshed 9 current published
+  rows with status preserved, generated AI descriptions for 16 eligible
+  non-published rows, demoted 6 absent published rows to `removed`, and upserted
+  62 rows with 0 write failures. No promotions were made.
+- Post-ingest DB verification:
+  `kv_curated.listings` has 69 `cv_homescasaverde` rows
+  (9 `published`, 54 `needs_review`, 6 `removed`); `public.v1_feed_cv` has 9
+  rows for this source. All 62 latest source rows exist in `kv_curated`; current
+  source rows are split as 9 `published` + 53 `needs_review`. Verified sample
+  refreshed values include `hcv_66d431a4ad07` as published commercial area
+  `57`, `hcv_2fa8df61ad6e` as published land area `699`, `hcv_96b97eaf392d`
+  area `859`, `hcv_ab5889781d21` area `133`, and `hcv_ce1584d7161e` area `152`.
+  Post-ingest image audit found 0 ShortPixel fragment/junk URLs.
 
 Spot-check (area):
 - https://www.homescasaverde.com/property/exceptional-poolside-melia-tortuga-apartment-for-sale
@@ -234,7 +379,10 @@ Spot-check (area):
 
 ---
 
-## cv_capeverdeproperty24 — n=41 (badly broken)
+## cv_capeverdeproperty24 — n=41 (badly broken) — NEXT
+
+Status: ❓ **Not yet investigated.** Begin with a fresh report; do not rely on
+the older counts below as current evidence.
 
 | field | missing | verdict | notes |
 |---|---|---|---|

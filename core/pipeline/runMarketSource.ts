@@ -323,7 +323,7 @@ function printSummary(
   fetched: number,
   rows: CuratedRow[],
   skipped: Array<{ id: string; reason: string }>,
-  skippedPublished: number = 0
+  refreshedPublished: number = 0
 ): void {
   const byIsland: Record<string, number> = {};
   let withPrice = 0, withBedrooms = 0, withBathrooms = 0, withImages = 0, withAi = 0;
@@ -343,8 +343,8 @@ function printSummary(
   console.log(`\n=== kv_curated insert summary ===`);
   console.log(`Total fetched:     ${fetched}`);
   skipped.forEach(s => console.log(`  Skipped (${s.reason}): 1`));
-  if (skippedPublished > 0) {
-    console.log(`Skipped (already published, untouched): ${skippedPublished}`);
+  if (refreshedPublished > 0) {
+    console.log(`Published refreshed (status preserved): ${refreshedPublished}`);
   }
   console.log(`Inserted/updated:  ${n}`);
   console.log(`\nBy island:`);
@@ -396,12 +396,10 @@ ON CONFLICT (id) DO UPDATE SET
   last_verified_at           = EXCLUDED.last_verified_at,
   seeded_from_raw_listing_id = EXCLUDED.seeded_from_raw_listing_id,
   updated_at                 = now()
-WHERE kv_curated.listings.publish_status = 'needs_review'
 `;
-// Status-gated: the WHERE clause makes the upsert a no-op for already-published
-// rows. To re-enrich a published listing, demote it first:
-//   UPDATE kv_curated.listings SET publish_status='needs_review' WHERE id='...';
-// publish_status, first_seen_at, first_published_at are NOT updated on conflict.
+// Conflict updates preserve publish_status, first_seen_at, first_published_at,
+// and existing ai_descriptions. All other source-derived fields are refreshed
+// for both needs_review and published rows.
 
 interface ExistingRowMeta {
   status: string;
@@ -459,8 +457,8 @@ export function buildDemoteRemovedPublishedRowsQuery(
     text: `
 UPDATE kv_curated.listings
    SET publish_status = 'removed',
-       last_verified_at = $3,
-       notes = concat_ws(E'\\n', nullif(notes, ''), '[' || $3::text || '] Auto-removed: missing from latest successful source fetch.'),
+       last_verified_at = $3::timestamptz,
+       notes = concat_ws(E'\\n', nullif(notes, ''), '[' || ($3::timestamptz)::text || '] Auto-removed: missing from latest successful source fetch.'),
        updated_at = now()
  WHERE source_id_primary = $1
    AND publish_status = 'published'
@@ -547,10 +545,8 @@ async function writeToKvCurated(rows: CuratedRow[]): Promise<void> {
       const query = buildKvCuratedUpsertQuery(row, verifiedAt);
       const result = await client.query(query.text, query.values);
       if (result.rowCount === 0) {
-        // Pre-filter caught all known published rows. A 0 here means the row
-        // was promoted between the pre-check and the write — rare but possible.
         raceSkipped++;
-        console.warn(`[Write] ⊘ ${row.id}: WHERE skipped (promoted mid-run?)`);
+        console.warn(`[Write] ⊘ ${row.id}: upsert affected 0 rows`);
       } else {
         inserted++;
       }
@@ -684,7 +680,7 @@ function writeReportJson(
       rowsReady: rows.length,
       skipped: skipped.length,
       alreadyPublished: publishedIds.size,
-      writable: rows.filter(r => !publishedIds.has(r.id)).length,
+      writable: rows.length,
       removedCandidates: removedPublishedRows.length,
     },
     coverage: {
@@ -742,7 +738,7 @@ function writeReportJson(
       rowsReady: rows.length,
       skipped: skipped.length,
       alreadyPublished: publishedIds.size,
-      writable: rows.filter(r => !publishedIds.has(r.id)).length,
+      writable: rows.length,
       removedCandidates: removedPublishedRows.length,
     },
     coverage: {
@@ -870,11 +866,10 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
     skipped.forEach(s => console.log(`  ${s.id}: ${s.reason}`));
   }
 
-  // Status-gating: published rows are immutable from the pipeline. Pre-filter
-  // them so we don't waste AI calls and so the summary reflects reality.
-  // Also pre-fetch ai_descriptions presence so we can skip AI generation for
-  // rows that already have one — the upsert preserves existing ai_descriptions,
-  // so re-generating would just burn API credits with no effect.
+  // Existing published rows stay published, but source-derived fields are
+  // refreshed on conflict. Existing ai_descriptions are preserved, so pre-fetch
+  // their presence to avoid burning API credits on descriptions the upsert would
+  // keep unchanged.
   const existingMeta = await fetchExistingRowMeta(rows.map(r => r.id));
   const publishedIds = new Set(
     [...existingMeta.entries()]
@@ -887,11 +882,10 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
       .map(([id]) => id)
   );
   if (publishedIds.size > 0) {
-    console.log(`\n[Status-gate] ${publishedIds.size} listings already published — skipping (untouched):`);
-    for (const id of publishedIds) console.log(`  ⊘ ${id}`);
-    console.log(`  (to re-enrich one: UPDATE kv_curated.listings SET publish_status='needs_review' WHERE id='...';)`);
+    console.log(`\n[Status-gate] ${publishedIds.size} listings already published — refreshing source fields, preserving publish_status and existing ai_descriptions:`);
+    for (const id of publishedIds) console.log(`  ↻ ${id}`);
   }
-  const writable = rows.filter(r => !publishedIds.has(r.id));
+  const writable = rows;
   console.log(`\nRows to process: ${writable.length}`);
 
   // Removal freshness is about source presence, not curated-row validity.
@@ -916,10 +910,10 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   }
 
   if (!dryRun) {
-    const needsAi = writable.filter(r => !haveAiIds.has(r.id));
+    const needsAi = writable.filter(r => !haveAiIds.has(r.id) && !publishedIds.has(r.id));
     const aiSkippedExisting = writable.length - needsAi.length;
     if (aiSkippedExisting > 0) {
-      console.log(`\n[AI-gate] ${aiSkippedExisting}/${writable.length} rows already have ai_descriptions — skipping generation (upsert preserves existing).`);
+      console.log(`\n[AI-gate] ${aiSkippedExisting}/${writable.length} rows skipped for AI generation (already have ai_descriptions or are published; upsert preserves existing AI text).`);
     }
 
     let aiOk = 0;

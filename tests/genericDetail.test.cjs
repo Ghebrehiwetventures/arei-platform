@@ -219,6 +219,33 @@ test("rejects social share and site branding images from detail galleries", () =
   ]);
 });
 
+test("parses ShortPixel srcset URLs without splitting CDN parameters into junk images", () => {
+  const plugin = createGenericDetailPlugin("cv_homescasaverde", {
+    selectors: {
+      images: ".property-detail-gallery img",
+    },
+  });
+
+  const html = `
+    <html>
+      <body>
+        <div class="property-detail-gallery">
+          <img
+            src="https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/cover-584x438.jpg"
+            srcset="https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/cover-584x438.jpg 584w, https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/cover-2048x1536.jpg 2048w"
+          >
+        </div>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(html, "https://www.homescasaverde.com/property/example");
+
+  assert.deepEqual(result.imageUrls, [
+    "https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/cover-2048x1536.jpg",
+  ]);
+});
+
 test("converts SqFt area values extracted from spec tables", () => {
   const plugin = createGenericDetailPlugin("cv_simplycapeverde", {
     spec_table: {
@@ -243,6 +270,113 @@ test("converts SqFt area values extracted from spec tables", () => {
   const result = plugin.extract(html, "https://simplycapeverde.com/property/2-bedroom-apartment-for-sale-in-santa-maria");
 
   assert.equal(result.areaSqm, 78);
+});
+
+test("extracts spec-table values from previous sibling labels used by Homes Casa Verde overview", () => {
+  const plugin = createGenericDetailPlugin("cv_homescasaverde", {
+    spec_table: {
+      container: ".property-overview-data",
+      label_selector: ".hz-meta-label",
+      label_map: {
+        area: ["area size"],
+      },
+    },
+  });
+
+  const html = `
+    <html>
+      <body>
+        <ul class="property-overview-data">
+          <li>151.75 m²</li>
+          <li class="h-area-sizes hz-meta-label">Area Size</li>
+        </ul>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(html, "https://www.homescasaverde.com/property/vila-verde-townhouse-with-pool-views-yucca");
+
+  assert.equal(result.areaSqm, 152);
+});
+
+test("keeps structured area when later description text contains other area values", () => {
+  const plugin = createGenericDetailPlugin("cv_homescasaverde", {
+    selectors: {
+      description: ".property-description",
+    },
+    spec_table: {
+      container: ".property-overview-data",
+      label_selector: ".hz-meta-label",
+      label_map: {
+        area: ["area size"],
+      },
+    },
+    spec_patterns: {
+      area: [
+        "(\\d+(?:[.,]\\d+)?)\\s*(?:m[²2]|sqm|sq\\.?\\s*m)",
+      ],
+    },
+  });
+
+  const html = `
+    <html>
+      <body>
+        <ul class="property-overview-data">
+          <li>859 m²</li>
+          <li class="h-area-sizes hz-meta-label">Area Size</li>
+        </ul>
+        <div class="property-description">
+          On a 544m² corner plot with new road access, the building offers flexible accommodation.
+        </div>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(html, "https://www.homescasaverde.com/property/entire-building-for-sale");
+
+  assert.equal(result.areaSqm, 859);
+});
+
+test("keeps structured sqm area when JSON-LD floorSize mislabels the same value as SQFT", () => {
+  const plugin = createGenericDetailPlugin("cv_homescasaverde", {
+    spec_table: {
+      container: ".property-overview-data",
+      label_selector: ".hz-meta-label",
+      label_map: {
+        area: ["area size"],
+      },
+    },
+  });
+
+  // Houzez emits the on-page square-meter figure in JSON-LD but mislabels the
+  // unit as "SQFT". The structured "87.41 m²" overview value must win, not the
+  // bogus SqFt conversion (87.41 * 0.0929 -> 8).
+  const html = `
+    <html>
+      <body>
+        <ul class="property-overview-data">
+          <li><strong>87.41 m²</strong></li>
+          <li class="h-area-sizes hz-meta-label">Area Size</li>
+        </ul>
+        <script type="application/ld+json">
+          {
+            "@context": "https://schema.org",
+            "@type": "Apartment",
+            "name": "2 Bed, 2 Bath Penthouse In Melia Tortuga",
+            "floorSize": {
+              "@type": "QuantitativeValue",
+              "value": 87.41,
+              "unitText": "SQFT"
+            }
+          }
+        </script>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(html, "https://www.homescasaverde.com/property/2-bed-2-bath-penthouse-in-melia-tortuga-2");
+
+  assert.equal(result.areaSqm, 87);
 });
 
 test("converts SqFt area values extracted from regex patterns", () => {

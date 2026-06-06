@@ -45,6 +45,42 @@ test("curated upsert includes last_verified_at on insert and update", () => {
   assert.equal(query.values[22], "ccore_731730");
 });
 
+test("curated upsert refreshes existing rows regardless of publish_status while preserving existing ai_descriptions", () => {
+  const verifiedAt = "2026-06-05T14:00:00.000Z";
+  const row = {
+    id: "hcv_published",
+    title: "Updated source title",
+    description: "updated desc",
+    description_html: null,
+    ai_descriptions: { en: { text: "new generated text" } },
+    price: 135000,
+    currency: "EUR",
+    price_period: "sale",
+    country: "Cape Verde",
+    island: "Sal",
+    city: "Santa Maria",
+    bedrooms: 2,
+    bathrooms: 3,
+    property_type: "townhouse",
+    property_size_sqm: 152,
+    land_area_sqm: null,
+    image_urls: ["https://cdn.example.com/updated.jpg"],
+    source_id_primary: "cv_homescasaverde",
+    source_url_primary: "https://www.homescasaverde.com/property/example",
+    first_seen_at: "2026-06-05T13:36:48.023Z",
+    publish_status: "needs_review",
+    seeded_from_raw_listing_id: "hcv_published",
+  };
+
+  const query = buildKvCuratedUpsertQuery(row, verifiedAt);
+
+  assert.doesNotMatch(query.text, /WHERE\s+kv_curated\.listings\.publish_status\s*=\s*'needs_review'/);
+  assert.match(query.text, /title\s*=\s*EXCLUDED\.title/);
+  assert.match(query.text, /property_size_sqm\s*=\s*EXCLUDED\.property_size_sqm/);
+  assert.match(query.text, /WHEN kv_curated\.listings\.ai_descriptions IS NOT NULL\s+THEN kv_curated\.listings\.ai_descriptions/);
+  assert.doesNotMatch(query.text, /publish_status\s*=\s*EXCLUDED\.publish_status/);
+});
+
 test("removed published lookup is disabled when a source fetch returns no rows", () => {
   assert.equal(buildFindRemovedPublishedRowsQuery("cv_ccoreinvestments", []), null);
   assert.equal(
@@ -71,6 +107,8 @@ test("removed published demotion only updates currently published missing rows",
   assert.match(query.text, /SET\s+publish_status = 'removed'/);
   assert.match(query.text, /publish_status = 'published'/);
   assert.match(query.text, /NOT \(id = ANY\(\$2::text\[\]\)\)/);
+  assert.match(query.text, /last_verified_at = \$3::timestamptz/);
+  assert.match(query.text, /\(\$3::timestamptz\)::text/);
   assert.match(query.text, /RETURNING id, title, source_url_primary/);
   assert.equal(query.values[0], "cv_ccoreinvestments");
   assert.deepEqual(query.values[1], ["ccore_1"]);
