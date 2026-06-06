@@ -14,37 +14,49 @@
 
 const PEXELS_SEARCH_URL = "https://api.pexels.com/v1/search";
 
-// Map a headline to a concrete photo subject so the query is specific
-// ("resort", "architecture") rather than always "Cape Verde". Mirrors the
-// intent of newsHero.buildImagePrompt's SUBJECT_RULES, kept lightweight here.
+// Map a headline to a SINGLE light subject word used to refine a Cape Verde
+// query (e.g. "Cabo Verde beach"). Kept to one word so the country anchor
+// stays dominant — multi-word topics dilute the match and Pexels starts
+// returning generic / wrong-country photos.
+// Patterns intentionally omit a trailing \b so plurals/inflections match
+// ("Flights" → flight, "buildings" → build).
 const TOPIC_RULES = [
-  [/\b(hotel|resort|hospitality|rooms?|tourist|tourism)\b/i, "resort hotel"],
-  [/\b(flight|airline|route|airport|aviation|charter)\b/i, "airport airplane"],
-  [/\b(port|harbou?r|shipping|cargo|maritime|cruise|ferry)\b/i, "coastal port harbour"],
-  [/\b(road|highway|bridge|construction|build|develop|crane|stadium)\b/i, "construction site building"],
-  [/\b(property|real estate|apartment|villa|housing|residen|land)\b/i, "modern coastal architecture"],
-  [/\b(bank|credit|mortgage|loan|finance|fiscal|econom|currency|investment|fund)\b/i, "modern office building"],
-  [/\b(tax|residency|visa|law|regulat|policy|government|statute|ministr|parliament)\b/i, "civic government building"],
+  [/\b(hotel|resort|hospitality|room|tourist|tourism)/i, "resort"],
+  [/\b(flight|airline|route|airport|aviation|charter)/i, "airport"],
+  [/\b(port|harbou?r|shipping|cargo|maritime|cruise|ferry)/i, "harbour"],
+  [/\b(road|highway|bridge|construction|build|develop|crane|stadium)/i, "construction"],
+  [/\b(property|real estate|apartment|villa|housing|residen|land)/i, "architecture"],
+  [/\b(bank|credit|mortgage|loan|finance|fiscal|econom|currency|investment|fund)/i, "city"],
+  [/\b(tax|residency|visa|law|regulat|policy|government|statute|ministr|parliament)/i, "town"],
 ];
 
-// Ordered fallback queries (per spec) used when the derived query yields
-// nothing. Each is tried in turn until a usable photo is found.
-const FALLBACK_QUERIES = [
-  "Cape Verde real estate",
-  "Cape Verde architecture",
-  "coastal property",
-  "modern apartment building",
+// Known Cape Verde place names (islands + main towns). Used both to build
+// location-specific queries and to recognise genuinely Cape-Verdean photos in
+// the results. "Cabo Verde" is the native (Portuguese) name and Pexels' richest
+// tag, so it leads.
+const CV_PLACES = [
+  "Sal", "Boa Vista", "Santiago", "São Vicente", "Sao Vicente", "Fogo",
+  "Santo Antão", "Santo Antao", "Maio", "Brava", "São Nicolau", "Sao Nicolau",
+  "Mindelo", "Praia", "Santa Maria", "Sal Rei", "Espargos",
 ];
+const CV_RELEVANCE_RE = new RegExp(
+  ["cabo verde", "cape verde", ...CV_PLACES].map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"),
+  "i"
+);
 
 /**
- * Build the ordered list of search queries for a news item.
- * Derived (location + topic) first, then the spec fallback chain.
+ * Build the ordered list of search queries for a news item. Every query is
+ * anchored to Cape Verde (native "Cabo Verde" first) so results stay in-country
+ * — no landless generic queries, which is what previously surfaced wrong
+ * -country photos (e.g. Dakar).
  * @param {{ headline?: string, category?: string, location?: string }} item
  * @returns {string[]} de-duplicated, non-empty queries in priority order
  */
 export function buildPexelsQueries(item = {}) {
   const headline = String(item.headline || "");
-  const location = String(item.location || "").trim() || "Cape Verde";
+  // Region/island hint, when it is an actual place (not the country itself).
+  const rawLoc = String(item.location || "").trim();
+  const island = rawLoc && !/^(cape|cabo)\s+verde$/i.test(rawLoc) ? rawLoc : "";
 
   let topic = null;
   for (const [re, t] of TOPIC_RULES) {
@@ -52,16 +64,23 @@ export function buildPexelsQueries(item = {}) {
   }
   if (!topic) {
     const cat = String(item.category || "").toLowerCase();
-    topic = /tourism/.test(cat) ? "resort coastline"
-      : /infrastructure/.test(cat) ? "construction development"
-      : /(bank|credit|economy)/.test(cat) ? "modern office building"
-      : /(policy|tax)/.test(cat) ? "civic government building"
-      : "coastal architecture";
+    topic = /tourism/.test(cat) ? "beach"
+      : /infrastructure/.test(cat) ? "construction"
+      : /(bank|credit|economy)/.test(cat) ? "city"
+      : /(policy|tax)/.test(cat) ? "town"
+      : "island";
   }
 
-  const derived = `${location} ${topic}`.trim();
-  const queries = [derived, ...FALLBACK_QUERIES];
-  return Array.from(new Set(queries.map((q) => q.trim()).filter(Boolean)));
+  const queries = [
+    island && `Cabo Verde ${island}`,
+    island && `Cape Verde ${island}`,
+    `Cabo Verde ${topic}`,
+    `Cape Verde ${topic}`,
+    "Cabo Verde",
+    "Cape Verde",
+    "Cabo Verde beach",
+  ];
+  return Array.from(new Set(queries.map((q) => String(q || "").trim()).filter(Boolean)));
 }
 
 /**
@@ -82,40 +101,51 @@ export async function searchPexelsPhoto(item = {}) {
   if (!key) return null;
 
   const queries = buildPexelsQueries(item);
-
-  for (const query of queries) {
-    let photo;
-    try {
-      const url = `${PEXELS_SEARCH_URL}?query=${encodeURIComponent(query)}&per_page=15&orientation=portrait`;
-      const res = await fetch(url, { headers: { Authorization: key } });
-      if (!res.ok) continue; // try next query (rate limit, bad query, etc.)
-      const json = await res.json();
-      // Pick a random photo from the results so re-generating yields variety
-      // ("shuffle") instead of always returning the first match.
-      const usable = Array.isArray(json?.photos) ? json.photos.filter((p) => p?.src) : [];
-      photo = usable.length ? usable[Math.floor(Math.random() * usable.length)] : null;
-    } catch {
-      continue; // network error — try next query
-    }
-    if (!photo) continue;
-
+  const pick = (arr) => arr[Math.floor(Math.random() * arr.length)];
+  const toResult = (photo, query) => {
     // Prefer a portrait-cropped render sized for the 1080x1350 slide.
     const imageUrl =
       photo.src.portrait || photo.src.large2x || photo.src.large || photo.src.original;
-    if (!imageUrl) continue;
-
+    if (!imageUrl) return null;
     const photographer = String(photo.photographer || "Unknown");
-    const photographerUrl = String(photo.photographer_url || "");
-    const sourceUrl = String(photo.url || "");
     return {
       imageUrl,
       photographer,
-      photographerUrl,
-      sourceUrl,
+      photographerUrl: String(photo.photographer_url || ""),
+      sourceUrl: String(photo.url || ""),
       attribution: `Photo: ${photographer} / Pexels`,
       query,
     };
+  };
+
+  // Backstop: first usable photo from any query, used only if NO query yields a
+  // photo whose description actually names Cape Verde — better a "Cabo Verde"
+  // query photo than falling all the way back to the AI image.
+  let backstop = null;
+
+  for (const query of queries) {
+    let usable = [];
+    try {
+      const url = `${PEXELS_SEARCH_URL}?query=${encodeURIComponent(query)}&per_page=30&orientation=portrait`;
+      const res = await fetch(url, { headers: { Authorization: key } });
+      if (!res.ok) continue; // try next query (rate limit, bad query, etc.)
+      const json = await res.json();
+      usable = Array.isArray(json?.photos) ? json.photos.filter((p) => p?.src) : [];
+    } catch {
+      continue; // network error — try next query
+    }
+    if (!usable.length) continue;
+
+    // Prefer photos genuinely about Cape Verde (alt text names the country or an
+    // island). Random among the matches → re-generating shuffles the background.
+    const cvMatches = usable.filter((p) => CV_RELEVANCE_RE.test(String(p.alt || "")));
+    if (cvMatches.length) {
+      const result = toResult(pick(cvMatches), query);
+      if (result) return result;
+    }
+    if (!backstop) backstop = { photo: pick(usable), query };
   }
 
+  if (backstop) return toResult(backstop.photo, backstop.query);
   return null;
 }
