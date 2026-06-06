@@ -55,7 +55,7 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 - [ ] cv_terracaboverde
 - [x] cv_simplycapeverde
 - [x] cv_ccoreinvestments
-- [ ] cv_homescasaverde — extraction fixed; corrective re-ingest still required
+- [x] cv_homescasaverde
 - [ ] cv_capeverdeproperty24 — NEXT INVESTIGATION
 - [ ] cv_cabohouseproperty
 - [ ] cv_estatecv
@@ -64,11 +64,9 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 - [ ] Cross-cutting image issues
 
 Next operational steps:
-1. Re-ingest `cv_homescasaverde` and verify the corrected area values through
-   direct Postgres. Do not promote any rows.
-2. Retry the completed `cv_ccoreinvestments` freshness ingest only when its
+1. Retry the completed `cv_ccoreinvestments` freshness ingest only when its
    hostname is reachable; its last two zero-row attempts made no writes.
-3. Investigate `cv_capeverdeproperty24` with a fresh dry run and source-page
+2. Investigate `cv_capeverdeproperty24` with a fresh dry run and source-page
    comparisons. This is the next new source investigation.
 
 ---
@@ -262,8 +260,8 @@ Spot-check (area):
 > `markets/cv/sources.yml` config now extracts `areaSqm = 87`; full suite
 > `node --test tests/` = 49/49 pass. simplycapeverde's genuine SqFt JSON-LD
 > path is unaffected (it has no structured area, so the fallback still fires →
-> `678 SqFt → 63 sqm` test still passes). **Still TODO:** re-ingest
-> homescasaverde to overwrite the 40 corrupted DB rows.
+> `678 SqFt → 63 sqm` test still passes). The corrective Homes Casa Verde
+> re-ingest was completed and live values were verified through direct Postgres.
 
 Status: ✅ **Resolved for current v1 ingest.** Fresh 2026-06-05 dry-run found
 two scraper bugs and one extraction-precedence bug:
@@ -285,7 +283,7 @@ two scraper bugs and one extraction-precedence bug:
 | price | 0/62 | ✅ ACCEPTED | Fresh dry run has numeric price coverage on all current source rows. |
 | bedrooms | 4/62 | ✅ ACCEPTED | Remaining nulls are non-residential/complex cases: two land rows, one commercial office, and one entire-building investment page with no single residential bedroom count. |
 | bathrooms | 3/62 | ✅ ACCEPTED | Remaining nulls are two land rows and the entire-building page, where floor-level prose/layout is not a single unit bathroom count. |
-| area | 2/62 | ⚠️ SEE CALLOUT | Coverage was 60/62, but 40/58 present values were corrupted by the JSON-LD `SQFT` override (see REOPENED callout above). Engine fixed; DB rows still need re-ingest. Remaining nulls are source floors: one page shows `TBA m² Area Size`; one duplex page has no area label/value in the overview. |
+| area | 2/62 | ✅ FIXED / SOURCE FLOOR | Coverage is 60/62. The JSON-LD `SQFT` override was fixed and corrected values were written by the live re-ingest. Remaining nulls are source floors: one page shows `TBA m² Area Size`; one duplex page has no area label/value in the overview. |
 | images | 0 junk / 62 rows | ✅ FIXED | ShortPixel comma/srcset fragmentation fixed; final report has 0 `/property/q_cdnize`, `/property/to_auto`, or `/property/s_webp:avif` junk image URLs. |
 
 Engine fixes landed:
@@ -371,6 +369,13 @@ Verification evidence:
   `57`, `hcv_2fa8df61ad6e` as published land area `699`, `hcv_96b97eaf392d`
   area `859`, `hcv_ab5889781d21` area `133`, and `hcv_ce1584d7161e` area `152`.
   Post-ingest image audit found 0 ShortPixel fragment/junk URLs.
+- Fresh live verification on 2026-06-06 through `DATABASE_URL`/direct Postgres:
+  `kv_curated.listings` has 69 rows (57 `published`, 6 `needs_review`, 6
+  `removed`) and `public.v1_feed_cv` has 57 Homes Casa Verde rows. The known
+  corrupted sample `hcv_3298681ed1f3` is `87` sqm in curated and the live feed;
+  other checked values are `120`, `133`, `152`, `57`, and `859` sqm as
+  expected. No current non-removed Homes Casa Verde row has a suspicious area
+  between 1 and 19 sqm. The corrective re-ingest is complete.
 
 Spot-check (area):
 - https://www.homescasaverde.com/property/exceptional-poolside-melia-tortuga-apartment-for-sale
