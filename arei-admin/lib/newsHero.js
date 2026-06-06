@@ -119,9 +119,20 @@ export async function renderHero(item) {
   const hset = highlightSet(words, item.highlight);
   const hlFS = 92, hlLH = 92;
   const lines = wrapWords(words, hlFS, W - 2 * M);
-  const dek = item.dek ? dekWrap(item.dek, 27, W - 2 * M).slice(0, 2) : [];
+
+  // dek: wrap to max 2 lines; if it overflowed, end with an ellipsis (clean,
+  // never mid-word).
+  let dek = [];
+  if (item.dek) {
+    const all = dekWrap(item.dek, 27, W - 2 * M);
+    dek = all.slice(0, 2);
+    if (all.length > 2 && dek.length === 2) dek[1] = dek[1].replace(/[\s.,;:]+$/, "") + "…";
+  }
+
   const cat = (item.category || "Market News").toUpperCase();
-  const catFS = 22, catW = cat.length * (catFS * 0.6) + 44, catH = 44;
+  const catFS = 22, catPad = 26;
+  const catW = cat.length * (catFS * 0.62 + 1) + catPad * 2; // account for tracking + bold caps
+  const catH = 44;
 
   const footerY = H - 50;
   const dekLastBaseline = H - 104;
@@ -156,7 +167,7 @@ export async function renderHero(item) {
   <rect x="${W - M - 150}" y="${M}" width="150" height="44" rx="22" fill="none" stroke="${BONE}" stroke-width="2"/>
   <text x="${W - M - 73}" y="${M + 29}" font-family="${MONO}" font-size="20" font-weight="700" letter-spacing="2" fill="${BONE}" text-anchor="middle">SWIPE ›</text>
   <rect x="${M}" y="${pillY}" width="${catW}" height="${catH}" fill="${SAGE}"/>
-  <text x="${M + 22}" y="${pillY + 30}" font-family="${SANS}" font-size="${catFS}" font-weight="700" letter-spacing="1" fill="${INK}">${esc(cat)}</text>
+  <text x="${M + catPad}" y="${pillY + 30}" font-family="${SANS}" font-size="${catFS}" font-weight="700" letter-spacing="1" fill="${INK}">${esc(cat)}</text>
   ${headlineSvg}
   ${dek.map((ln, i) => `<text x="${M}" y="${dekFirstBaseline + i * 36}" font-family="${SANS}" font-size="27" font-weight="400" fill="${GRAY}">${esc(ln)}</text>`).join("\n")}
   <text x="${W - M}" y="${footerY}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>

@@ -19,6 +19,22 @@ function formatDate(iso: string): string {
   return d.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }).toUpperCase();
 }
 
+// First complete sentence — avoids the mid-word truncation of a raw char slice.
+function firstSentence(text: string): string {
+  const t = (text || "").trim();
+  if (!t) return "";
+  const m = t.match(/^.*?[.!?](\s|$)/);
+  return (m ? m[0] : t).trim();
+}
+
+// Auto-suggest the sage highlight: the back half of the headline carries the
+// news (the subject/outcome). Matches how a human picks it ~most of the time.
+function suggestHighlight(headline: string): string {
+  const w = (headline || "").trim().split(/\s+/).filter(Boolean);
+  if (w.length < 4) return "";
+  return w.slice(Math.floor(w.length / 2)).join(" ");
+}
+
 interface GenerateResponse {
   imageBase64: string;
   mime: string;
@@ -54,12 +70,13 @@ export function NewsPostStudioView() {
   }, []);
 
   function selectItem(item: MarketNewsItem) {
+    const title = item.sourceTitle || "";
     setSelectedId(item.id);
-    setHeadline(item.sourceTitle || "");
+    setHeadline(title);
     setCategory(CATEGORIES.includes(item.category) ? item.category : "Market News");
-    setDek((item.whatHappened || "").slice(0, 120));
+    setDek(firstSentence(item.whatHappened || ""));
     setDate(formatDate(item.publishedAt));
-    setHighlight("");
+    setHighlight(suggestHighlight(title));
     setResult(null);
     setError(null);
   }
@@ -139,9 +156,21 @@ export function NewsPostStudioView() {
           <Field label="Headline">
             <textarea className={inputCls} rows={2} value={headline} onChange={(e) => setHeadline(e.target.value)} />
           </Field>
-          <Field label="Highlight (phrase coloured sage)">
+          <div>
+            <div className="flex items-center justify-between mb-1">
+              <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">
+                Highlight (phrase coloured sage)
+              </div>
+              <button
+                type="button"
+                onClick={() => setHighlight(suggestHighlight(headline))}
+                className="text-[10px] font-mono text-accent hover:underline"
+              >
+                ↻ suggest
+              </button>
+            </div>
             <input className={inputCls} value={highlight} onChange={(e) => setHighlight(e.target.value)} placeholder="e.g. Cabo Verde and Brazil" />
-          </Field>
+          </div>
           <Field label="Date">
             <input className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} placeholder="JUN 4, 2026" />
           </Field>
