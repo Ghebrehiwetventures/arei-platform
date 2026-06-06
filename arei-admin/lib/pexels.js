@@ -118,10 +118,13 @@ export async function searchPexelsPhoto(item = {}) {
     };
   };
 
-  // Backstop: first usable photo from any query, used only if NO query yields a
-  // photo whose description actually names Cape Verde — better a "Cabo Verde"
-  // query photo than falling all the way back to the AI image.
-  let backstop = null;
+  // Build a candidate POOL across the (all Cape-Verde-anchored) queries, deduped
+  // by photo id, then shuffle across the whole pool. Every query already pins
+  // the country, so the pool stays in-country — we no longer hard-filter on the
+  // alt text (which collapsed variety to the ~3 photos that happen to name Cape
+  // Verde). Stop early once the pool is wide enough to avoid extra API calls.
+  const POOL_TARGET = 24;
+  const pool = new Map(); // id/url -> { photo, query }
 
   for (const query of queries) {
     let usable = [];
@@ -134,18 +137,21 @@ export async function searchPexelsPhoto(item = {}) {
     } catch {
       continue; // network error — try next query
     }
-    if (!usable.length) continue;
-
-    // Prefer photos genuinely about Cape Verde (alt text names the country or an
-    // island). Random among the matches → re-generating shuffles the background.
-    const cvMatches = usable.filter((p) => CV_RELEVANCE_RE.test(String(p.alt || "")));
-    if (cvMatches.length) {
-      const result = toResult(pick(cvMatches), query);
-      if (result) return result;
+    for (const photo of usable) {
+      const id = photo.id ?? photo.src?.original ?? Math.random();
+      if (!pool.has(id)) pool.set(id, { photo, query });
     }
-    if (!backstop) backstop = { photo: pick(usable), query };
+    if (pool.size >= POOL_TARGET) break; // enough variety — stop fetching
   }
 
-  if (backstop) return toResult(backstop.photo, backstop.query);
-  return null;
+  if (!pool.size) return null;
+  const all = [...pool.values()];
+
+  // Soft preference: if a healthy number of photos explicitly name Cape Verde,
+  // shuffle among those; otherwise shuffle the whole in-country pool.
+  const cvMatches = all.filter((x) => CV_RELEVANCE_RE.test(String(x.photo.alt || "")));
+  const chosenSet = cvMatches.length >= 5 ? cvMatches : all;
+
+  const choice = pick(chosenSet);
+  return toResult(choice.photo, choice.query);
 }
