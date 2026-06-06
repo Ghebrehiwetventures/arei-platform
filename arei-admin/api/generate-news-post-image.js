@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { renderHero, generateAiImage, suggestCaption, buildImagePrompt, placeholderImage } from "../lib/newsHero.js";
+import { renderHero, renderDetailSlide, generateAiImage, suggestCaption, buildImagePrompt, placeholderImage } from "../lib/newsHero.js";
 
 const COOKIE_NAME = "admin_session";
 
@@ -86,6 +86,13 @@ export default async function handler(req, res) {
       return;
     }
 
+    // Slide 2 ("What happened") bullets — array or newline-separated string.
+    const bullets = (Array.isArray(body.bullets) ? body.bullets : String(body.bullets || "").split("\n"))
+      .map(clean)
+      .filter(Boolean)
+      .slice(0, 4);
+    const includeSlide2 = bullets.length > 0;
+
     const useAi = body.useAi === true || body.useAi === "1";
     const quality = clean(body.quality) || "high";
 
@@ -110,11 +117,29 @@ export default async function handler(req, res) {
       imageBuffer = await placeholderImage();
     }
 
-    const png = await renderHero({ ...item, imageBuffer });
+    const total = includeSlide2 ? 2 : 1;
+    const slides = [];
+
+    const hero = await renderHero({ ...item, imageBuffer });
+    slides.push({ label: "1 · Hero", imageBase64: hero.toString("base64") });
+
+    if (includeSlide2) {
+      // Reuse the same background image for visual continuity (one AI image, two slides).
+      const detail = await renderDetailSlide({
+        category: item.category,
+        kicker: "What happened",
+        bullets,
+        idx: 2,
+        total,
+        imageBuffer,
+      });
+      slides.push({ label: "2 · What happened", imageBase64: detail.toString("base64") });
+    }
+
     const caption = suggestCaption(item);
 
     send(res, 200, {
-      imageBase64: png.toString("base64"),
+      slides,
       mime: "image/png",
       caption,
       promptUsed: promptUsed || (useAi ? buildImagePrompt(item) : null),

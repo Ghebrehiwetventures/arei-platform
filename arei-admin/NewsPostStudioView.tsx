@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useState } from "react";
 import { fetchMarketNewsSocialState, type MarketNewsItem } from "./socialMarketNews";
 import { supabaseAuth } from "./supabase";
 
@@ -35,8 +35,15 @@ function suggestHighlight(headline: string): string {
   return w.slice(Math.floor(w.length / 2)).join(" ");
 }
 
+// Slide-2 bullets: split "what happened" into up to 3 sentences, one per line.
+function splitBullets(text: string): string {
+  const sentences = (text || "").trim().match(/[^.!?]+[.!?]+/g);
+  if (!sentences) return (text || "").trim();
+  return sentences.map((s) => s.trim()).slice(0, 3).join("\n");
+}
+
 interface GenerateResponse {
-  imageBase64: string;
+  slides: { label: string; imageBase64: string }[];
   mime: string;
   caption: string;
   promptUsed: string | null;
@@ -54,6 +61,7 @@ export function NewsPostStudioView() {
   const [highlight, setHighlight] = useState("");
   const [date, setDate] = useState("");
   const [dek, setDek] = useState("");
+  const [bullets, setBullets] = useState("");
   const [useAi, setUseAi] = useState(true);
   const [quality, setQuality] = useState("high");
   const [imageUrl, setImageUrl] = useState("");
@@ -75,6 +83,7 @@ export function NewsPostStudioView() {
     setHeadline(title);
     setCategory(CATEGORIES.includes(item.category) ? item.category : "Market News");
     setDek(firstSentence(item.whatHappened || ""));
+    setBullets(splitBullets(item.whatHappened || ""));
     setDate(formatDate(item.publishedAt));
     setHighlight(suggestHighlight(title));
     setResult(null);
@@ -89,7 +98,7 @@ export function NewsPostStudioView() {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-        body: JSON.stringify({ category, headline, highlight, date, dek, useAi, quality, imageUrl }),
+        body: JSON.stringify({ category, headline, highlight, date, dek, bullets, useAi, quality, imageUrl }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
@@ -101,10 +110,6 @@ export function NewsPostStudioView() {
     }
   }
 
-  const imgSrc = useMemo(
-    () => (result ? `data:${result.mime};base64,${result.imageBase64}` : null),
-    [result]
-  );
 
   return (
     <div>
@@ -177,6 +182,9 @@ export function NewsPostStudioView() {
           <Field label="Dek (one supporting line)">
             <textarea className={inputCls} rows={2} value={dek} onChange={(e) => setDek(e.target.value)} />
           </Field>
+          <Field label="Slide 2 — What happened (one bullet per line, max 4; blank = hero only)">
+            <textarea className={inputCls} rows={4} value={bullets} onChange={(e) => setBullets(e.target.value)} placeholder="One fact per line…" />
+          </Field>
 
           <label className="flex items-center gap-2 text-xs font-mono mt-2">
             <input type="checkbox" checked={useAi} onChange={(e) => setUseAi(e.target.checked)} />
@@ -210,16 +218,24 @@ export function NewsPostStudioView() {
 
         {/* ── Preview ─────────────────────────────────── */}
         <div className="space-y-3">
-          {imgSrc ? (
+          {result?.slides?.length ? (
             <>
-              <img src={imgSrc} alt="Preview" className="w-full rounded-lg border border-border" />
-              <a
-                href={imgSrc}
-                download="cvrei-news-post.png"
-                className="block text-center px-3 py-2 rounded border border-border text-xs font-mono hover:bg-surface-2"
-              >
-                ↓ Download PNG
-              </a>
+              {result.slides.map((s, i) => {
+                const src = `data:${result.mime};base64,${s.imageBase64}`;
+                return (
+                  <div key={i} className="space-y-1">
+                    <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">{s.label}</div>
+                    <img src={src} alt={s.label} className="w-full rounded-lg border border-border" />
+                    <a
+                      href={src}
+                      download={`cvrei-news-${i + 1}.png`}
+                      className="block text-center px-3 py-2 rounded border border-border text-xs font-mono hover:bg-surface-2"
+                    >
+                      ↓ Download slide {i + 1}
+                    </a>
+                  </div>
+                );
+              })}
               {result?.warning && <div className="text-[11px] text-[#C44A3A]">{result.warning}</div>}
               <div>
                 <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle mb-1">

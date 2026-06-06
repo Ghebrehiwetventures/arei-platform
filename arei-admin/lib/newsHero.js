@@ -179,6 +179,50 @@ export async function renderHero(item) {
   }).render().asPng();
 }
 
+function mimeOf(b) {
+  return b[0] === 0x89 && b[1] === 0x50 ? "image/png"
+    : b[0] === 0x47 && b[1] === 0x49 ? "image/gif"
+    : b[0] === 0x52 && b[1] === 0x49 ? "image/webp" : "image/jpeg";
+}
+
+// ── Detail slide (slide 2): photo top + solid ink zone with kicker + bullets ─
+// item = { category, kicker, bullets[], idx, total, imageBuffer }
+export async function renderDetailSlide(item) {
+  const fontFiles = await loadFonts();
+  const photoUri = `data:${mimeOf(item.imageBuffer)};base64,` + item.imageBuffer.toString("base64");
+  const seam = 560;
+  const kicker = (item.kicker || "What happened").toUpperCase();
+  const idx = item.idx || 2, total = item.total || 2;
+
+  let y = seam + 150;
+  const bulletSvg = (item.bullets || []).filter(Boolean).map((b) => {
+    const lines = dekWrap(b, 36, W - 2 * M - 44);
+    const block = lines.map((ln, i) => `<text x="${M + 44}" y="${y + i * 48}" font-family="${SANS}" font-size="36" font-weight="500" fill="${BONE}">${esc(ln)}</text>`).join("\n");
+    const sq = `<rect x="${M}" y="${y - 29}" width="19" height="19" fill="${SAGE}"/>`;
+    y += lines.length * 48 + 40;
+    return sq + "\n" + block;
+  }).join("\n");
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs><linearGradient id="tf" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="${INK}" stop-opacity="0.5"/><stop offset="100%" stop-color="${INK}" stop-opacity="0"/></linearGradient></defs>
+  <image href="${photoUri}" x="0" y="0" width="${W}" height="${seam + 30}" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="0" y="0" width="${W}" height="200" fill="url(#tf)"/>
+  <rect x="0" y="${seam}" width="${W}" height="${H - seam}" fill="${INK}"/>
+  ${lockup(M, M, BONE)}
+  <text x="${W - M}" y="${M + 28}" font-family="${MONO}" font-size="22" font-weight="600" letter-spacing="2" fill="${BONE}" text-anchor="end">0${idx} / 0${total}</text>
+  <text x="${M}" y="${seam + 78}" font-family="${COND}" font-size="68" font-weight="700" fill="${SAGE}" letter-spacing="-1">${esc(kicker)}</text>
+  <line x1="${M}" y1="${seam + 102}" x2="${W - M}" y2="${seam + 102}" stroke="${SAGE}" stroke-width="1" opacity="0.35"/>
+  ${bulletSvg}
+  <text x="${W - M}" y="${H - 50}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>
+</svg>`;
+
+  return new Resvg(svg, {
+    font: { fontFiles, loadSystemFonts: false, defaultFontFamily: COND },
+    fitTo: { mode: "width", value: W },
+  }).render().asPng();
+}
+
 // ── Image sourcing & helpers ────────────────────────────────────────────────
 const MOTIFS = {
   Aviation: "an airliner in flight over the Atlantic, or an aerial view of a coastal runway and turquoise sea",
