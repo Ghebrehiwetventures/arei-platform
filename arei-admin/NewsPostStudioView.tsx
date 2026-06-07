@@ -59,32 +59,16 @@ function applyPhotoCredit(caption: string, credit: string): string {
   return `${stripped}\n\n${credit}`;
 }
 
-// Full Instagram caption: the actual news (what happened + why it matters) +
-// source attribution + hashtags. No "link in bio" (the site only has links)
-// and no "AI illustration" note.
-// Defensively strip explainer scaffolding ("This matters because", "Why it
-// matters", "This is important because") from a line so the caption never reads
-// like a beginner explainer — even for rows enriched before the prompt was
-// fixed, or when the model ignored the instruction. Re-capitalises what's left.
-function stripExplainerScaffold(text: string): string {
-  const cleaned = text
-    .trim()
-    .replace(/^\s*(this matters because|this is important because|why it matters)\s*[:,]?\s*/i, "");
-  return cleaned ? cleaned.charAt(0).toUpperCase() + cleaned.slice(1) : cleaned;
-}
-
+// Instagram caption = the news, summarised: headline + the aggregated
+// what-happened summary + source + hashtags. No "why it matters" analysis
+// (that explainer tone is unwanted on Instagram), no "link in bio", no "AI
+// illustration" note.
 function buildCaption(item: MarketNewsItem): string {
   const tags = ["#capeverde", "#caboverde", "#realestate", "#marketnews", "#" + (item.category || "").toLowerCase().replace(/[^a-z]/g, "")]
     .filter((t) => t.length > 1);
   const parts: string[] = [];
   if (item.sourceTitle?.trim()) parts.push(item.sourceTitle.trim());
-  // Lead with the aggregated news summary, then the market implication with any
-  // "this matters" scaffolding removed.
   if (item.whatHappened?.trim()) parts.push(item.whatHappened.trim());
-  if (item.whyItMatters?.trim()) {
-    const why = stripExplainerScaffold(item.whyItMatters);
-    if (why) parts.push(why);
-  }
   if (item.sourceName?.trim()) parts.push(`Source: ${item.sourceName.trim()}`);
   parts.push(tags.join(" "));
   return parts.join("\n\n");
