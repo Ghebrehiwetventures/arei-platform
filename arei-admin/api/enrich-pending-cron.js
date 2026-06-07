@@ -31,7 +31,8 @@ function getSupabase() {
 }
 
 // Compute the enrichment suggestion for one row (mirrors enrich-candidate.js).
-async function enrichOne(row, apiKey) {
+// Exported so the one-time re-enrich backfill reuses the exact same logic.
+export async function enrichOne(row, apiKey) {
   let articleBody = null;
   let resolvedUrl = row.source_url || null;
   if (row.source_url) {
