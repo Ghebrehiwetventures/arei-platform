@@ -12,7 +12,30 @@
  * every successful result carries an `attribution` string for rendering/credit.
  */
 
+import fs from "node:fs";
+import path from "node:path";
+import { fileURLToPath } from "node:url";
+
 const PEXELS_SEARCH_URL = "https://api.pexels.com/v1/search";
+
+// Curated allowlist of human-verified Cape Verde photos. When non-empty it is
+// used exclusively — the background is then ALWAYS genuinely Cape Verde, never a
+// look-alike neighbour (Canary Islands, etc.), and needs no live search. Build /
+// extend it via the /api/pexels-curate endpoint. Falls back to live keyword
+// search only while the list is empty.
+const HERE = path.dirname(fileURLToPath(import.meta.url));
+let ALLOWLIST = [];
+try {
+  const parsed = JSON.parse(fs.readFileSync(path.join(HERE, "cape-verde-photos.json"), "utf8"));
+  if (Array.isArray(parsed)) ALLOWLIST = parsed.filter((p) => p && p.imageUrl);
+} catch {
+  // absent / unreadable / empty → live-search fallback
+}
+
+/** True when a photo's description names a place that is NOT Cape Verde. */
+export function isLikelyWrongCountry(alt) {
+  return WRONG_COUNTRY_RE.test(String(alt || ""));
+}
 
 // Places that, when named in a photo's description, mean it is NOT Cape Verde.
 // Pexels pads "Cabo Verde" searches with generic West-African / coastal photos,
@@ -74,6 +97,22 @@ export function buildPexelsQueries(item = {}) {
  * }>} the chosen photo, or null if the key is missing / API fails / no result.
  */
 export async function searchPexelsPhoto(item = {}) {
+  // Curated allowlist takes precedence: a fixed, human-verified set of Cape
+  // Verde photos. Shuffling among them guarantees a genuine Cape Verde
+  // background every time — no live search, no look-alike countries.
+  if (ALLOWLIST.length) {
+    const p = ALLOWLIST[Math.floor(Math.random() * ALLOWLIST.length)];
+    const photographer = String(p.photographer || "Unknown");
+    return {
+      imageUrl: p.imageUrl,
+      photographer,
+      photographerUrl: String(p.photographerUrl || ""),
+      sourceUrl: String(p.sourceUrl || ""),
+      attribution: `Photo: ${photographer} / Pexels`,
+      query: "curated",
+    };
+  }
+
   const key = process.env.PEXELS_API_KEY;
   if (!key) return null;
 
