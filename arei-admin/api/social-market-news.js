@@ -177,7 +177,13 @@ async function listMarketNewsItems(sb) {
   if (error) {
     return { items: [], error: `Could not load market_news: ${error.message}` };
   }
+  // Only surface ENRICHED items in the News Post Studio. Un-enriched candidates
+  // still carry their raw RSS title (e.g. "… - Africa News Agency"), not the
+  // Cape-Verde-angled headline that enrichment writes to `title`. Hide those, and
+  // hide items enrichment recommended archiving (off-topic / low relevance), so
+  // a post can never be built from a raw, un-angled headline.
   const items = (data || [])
+    .filter((row) => row.enriched_at && row.enrich_recommendation !== "archive")
     .map(normalizeMarketNewsItem)
     .filter(isCapeVerdeItem)
     .sort((a, b) => String(b.publishedAt || "").localeCompare(String(a.publishedAt || "")));
