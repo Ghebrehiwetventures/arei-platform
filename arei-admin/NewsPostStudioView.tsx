@@ -125,6 +125,10 @@ export function NewsPostStudioView() {
   const [published, setPublished] = useState<{ permalink: string } | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
 
+  // One-time backfill: re-enrich rows enriched before the richer-summary prompt.
+  const [reenriching, setReenriching] = useState(false);
+  const [reenrichMsg, setReenrichMsg] = useState("");
+
   useEffect(() => {
     fetchMarketNewsSocialState()
       .then((s) => setItems(s.items))
@@ -201,6 +205,42 @@ export function NewsPostStudioView() {
     generate({ aiPromptOverride: prompt, isTweak: true });
   }
 
+  // Loop the re-enrich endpoint (with the Studio's Supabase auth) until the
+  // backfill reports done. Opening the endpoint URL directly fails because a
+  // browser navigation sends no auth header — this button sends it.
+  async function runReenrichBackfill() {
+    if (reenriching) return;
+    setReenriching(true);
+    setReenrichMsg("Starting…");
+    try {
+      let done = false;
+      let total = 0;
+      let guard = 0;
+      while (!done && guard < 100) {
+        guard++;
+        const res = await fetch("/api/reenrich-market-news?limit=6", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+        });
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+        total += data.processed || 0;
+        done = Boolean(data.done);
+        setReenrichMsg(`Re-enriched ${total}… ${data.remaining ?? "?"} remaining`);
+      }
+      setReenrichMsg(
+        done
+          ? `Done — re-enriched ${total} items. Re-pick an item to see the fuller caption.`
+          : `Paused after ${total}. Click again to continue.`
+      );
+    } catch (e: any) {
+      setReenrichMsg(`Error: ${e.message || String(e)}`);
+    } finally {
+      setReenriching(false);
+    }
+  }
+
   async function publish() {
     if (!result?.slides?.length) return;
     if (!window.confirm("Publish this post to Instagram now? It goes live immediately.")) return;
@@ -270,6 +310,17 @@ export function NewsPostStudioView() {
                 <option value="oldest">Oldest</option>
               </select>
             </div>
+          </div>
+          {/* One-time maintenance: re-enrich rows with the richer-summary prompt */}
+          <div className="p-2 border-b border-border">
+            <button
+              onClick={runReenrichBackfill}
+              disabled={reenriching}
+              className="w-full px-2 py-1.5 rounded border border-border text-[10px] font-mono uppercase tracking-widest text-foreground-subtle hover:bg-surface-2 disabled:opacity-50"
+            >
+              {reenriching ? "Re-enriching…" : "⟳ Backfill old captions"}
+            </button>
+            {reenrichMsg && <div className="mt-1 text-[10px] font-mono text-foreground-subtle">{reenrichMsg}</div>}
           </div>
           <div className="max-h-[60vh] overflow-y-auto">
             {loadingItems && <div className="p-3 text-xs text-foreground-muted">Loading…</div>}
