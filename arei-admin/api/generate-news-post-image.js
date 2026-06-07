@@ -153,9 +153,7 @@ export default async function handler(req, res) {
         // swallow — handled by the fallback below
       }
       if (!imageBuffer) {
-        warning = process.env.PEXELS_API_KEY
-          ? "No usable Pexels photo — fell back to the AI/placeholder image."
-          : "PEXELS_API_KEY not configured — fell back to the AI/placeholder image.";
+        warning = "Curated Cape Verde photo library is empty — used an AI image instead. Add photos via curation to use real photography.";
         imageBuffer = await resolveAiOrUrl();
       }
     } else {

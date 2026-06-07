@@ -344,7 +344,7 @@ export function NewsPostStudioView() {
               onChange={(e) => setImageSource(e.target.value as ImageSource)}
             >
               <option value="ai">AI image (generated)</option>
-              <option value="pexels">Pexels photo (real photography)</option>
+              <option value="pexels">Curated Cape Verde photo (library)</option>
               <option value="upload">Upload image</option>
               <option value="url">Image URL</option>
             </select>
@@ -352,9 +352,9 @@ export function NewsPostStudioView() {
 
           {imageSource === "pexels" && (
             <p className="text-[11px] font-mono text-foreground-subtle -mt-1">
-              Real photo searched from the headline. Generate again for a
-              different photo. Falls back to the AI image if no usable photo is
-              found. Photographer credited in the caption.
+              Shuffles a real, human-verified Cape Verde photo from the curated
+              library (never the wrong country). While the library is empty it
+              falls back to an AI image. Photographer credited in the caption.
             </p>
           )}
 
