@@ -260,16 +260,21 @@ export function buildImagePrompt(item) {
     if (re.test(headline)) { subject = scene; break; }
   }
   if (!subject) subject = CATEGORY_FALLBACK[(item.category || "").toLowerCase()] || CATEGORY_FALLBACK["market news"];
+  // NOTE: do NOT put the headline text in the prompt — gpt-image renders quoted
+  // words as actual text in the scene (e.g. a ghosted "CAPE VERDE" appeared in
+  // the image). The subject is already derived from the headline above; describe
+  // only the scene.
   return [
-    `A bold, editorial news image for the story: "${headline}".`,
+    "A bold, editorial news photograph for a Cape Verde real-estate market story.",
     `Depict ${subject}, set in Cape Verde (an Atlantic island nation).`,
     // Bright by default — the old "dramatic lighting" wording made every image
     // dark, forcing a manual "more light" tweak each time.
     "Bright, clear natural daylight with an airy, optimistic mood — luminous, not dark or moody.",
     // Leave the lower third calm so the headline overlay reads cleanly.
-    "Editorial composition for a vertical poster: keep the main subject in the upper two-thirds and leave the lower third calm and uncluttered (open sky, sea, or plain ground) as negative space for a headline overlaid at the bottom.",
+    "Editorial composition for a vertical poster: keep the main subject in the upper two-thirds and leave the lower third calm and uncluttered (open sky, sea, or plain ground) as negative space for a headline overlaid later.",
     "Photorealistic, rich colour, magazine-cover polish.",
-    "No text, no logos, no readable signage, no recognizable real landmarks, no identifiable faces.",
+    // Strong no-text guard — gpt-image otherwise hallucinates words/signage.
+    "CRITICAL: this is a pure photographic scene with absolutely NO text, letters, words, numbers, captions, labels, watermarks, signage, posters or logos anywhere in the frame. No recognizable real landmarks, no identifiable faces.",
   ].join(" ");
 }
 
