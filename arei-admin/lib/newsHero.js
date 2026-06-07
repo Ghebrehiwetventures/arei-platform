@@ -165,7 +165,7 @@ export async function renderHero(item) {
       <stop offset="100%" stop-color="${INK}" stop-opacity="0"/>
     </linearGradient>
   </defs>
-  <image href="${photoUri}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>
+  <image href="${photoUri}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMin slice"/>
   <rect x="0" y="0" width="${W}" height="240" fill="url(#topfade)"/>
   <rect width="${W}" height="${H}" fill="url(#fade)"/>
   ${lockup(M, M, BONE)}
