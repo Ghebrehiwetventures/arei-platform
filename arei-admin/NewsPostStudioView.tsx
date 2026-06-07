@@ -103,6 +103,8 @@ export function NewsPostStudioView() {
   const [dek, setDek] = useState("");
   const [imageSource, setImageSource] = useState<ImageSource>("ai");
   const [quality, setQuality] = useState("high");
+  const [basePrompt, setBasePrompt] = useState("");
+  const [tweakNote, setTweakNote] = useState("");
   const [imageUrl, setImageUrl] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceName, setSourceName] = useState("");
@@ -148,7 +150,10 @@ export function NewsPostStudioView() {
     setPublishError(null);
   }
 
-  async function generate() {
+  // opts.aiPromptOverride re-runs AI image generation with a specific prompt
+  // (used by "Tweak" to get fresh variants of a liked image). opts.isTweak keeps
+  // the original base prompt stable across repeated tweaks.
+  async function generate(opts?: { aiPromptOverride?: string; isTweak?: boolean }) {
     setGenerating(true);
     setError(null);
     try {
@@ -160,14 +165,18 @@ export function NewsPostStudioView() {
         // usable photo is found). URL/upload sources use the imageUrl directly.
         body: JSON.stringify({
           category, headline, highlight, date, dek,
-          useAi: imageSource === "ai" || imageSource === "pexels",
-          quality, imageUrl, imageSource, location: region,
+          useAi: opts?.aiPromptOverride ? true : imageSource === "ai" || imageSource === "pexels",
+          quality, imageUrl, location: region,
+          imageSource: opts?.aiPromptOverride ? "ai" : imageSource,
+          aiPrompt: opts?.aiPromptOverride || undefined,
         }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
       const result = data as GenerateResponse;
       setResult(result);
+      // Remember the first AI prompt as the stable base for tweaks.
+      if (!opts?.isTweak && result.promptUsed) setBasePrompt(result.promptUsed);
       // Keep the full client-built caption; only add the photographer credit to
       // the caption (not the image) when a Pexels photo was used.
       setCaptionText((c) => applyPhotoCredit(c, result.photoMeta?.photo_attribution_text || ""));
@@ -178,6 +187,18 @@ export function NewsPostStudioView() {
     } finally {
       setGenerating(false);
     }
+  }
+
+  // Generate a fresh variant of the current AI image: same subject/style, new
+  // take. Optionally steered by a short note ("more flag, dusk light").
+  function tweak() {
+    const base = (basePrompt || result?.promptUsed || "").trim();
+    if (!base) return;
+    const note = tweakNote.trim();
+    const prompt = note
+      ? `${base} Variation, keeping the same subject and style: ${note}.`
+      : `${base} Produce a fresh variation — alternate composition, camera angle and lighting — keeping the same subject and style.`;
+    generate({ aiPromptOverride: prompt, isTweak: true });
   }
 
   async function publish() {
@@ -400,6 +421,26 @@ export function NewsPostStudioView() {
                   </div>
                 );
               })}
+              {result?.promptUsed && !result?.photoMeta && (
+                <div className="space-y-1.5 rounded-lg border border-border p-2">
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">
+                    Tweak — more variants of this image
+                  </div>
+                  <input
+                    className={inputCls + " text-xs"}
+                    value={tweakNote}
+                    onChange={(e) => setTweakNote(e.target.value)}
+                    placeholder="optional steer, e.g. more flag, dusk light"
+                  />
+                  <button
+                    onClick={tweak}
+                    disabled={generating}
+                    className="w-full px-3 py-2 rounded border border-accent/50 text-accent text-xs font-mono hover:bg-surface-2 disabled:opacity-50"
+                  >
+                    {generating ? "Tweaking…" : "↻ Tweak (new variant)"}
+                  </button>
+                </div>
+              )}
               {result?.warning && <div className="text-[11px] text-[#C44A3A]">{result.warning}</div>}
               {result?.photoMeta && (
                 <div className="text-[11px] font-mono text-foreground-subtle">
