@@ -118,13 +118,14 @@ export async function searchPexelsPhoto(item = {}) {
     };
   };
 
-  // Build a candidate POOL across the (all Cape-Verde-anchored) queries, deduped
-  // by photo id, then shuffle across the whole pool. Every query already pins
-  // the country, so the pool stays in-country — we no longer hard-filter on the
-  // alt text (which collapsed variety to the ~3 photos that happen to name Cape
-  // Verde). Stop early once the pool is wide enough to avoid extra API calls.
-  const POOL_TARGET = 24;
-  const pool = new Map(); // id/url -> { photo, query }
+  // Pexels keyword search for a small country is unreliable: "Cabo Verde …"
+  // queries pad results with generic "African coast / Atlantic / boats" photos
+  // from other countries (Liberia, Senegal, …). Keyword anchoring alone is NOT
+  // enough — so we GEO-VERIFY: only accept a photo whose description (alt) names
+  // Cape Verde or one of its islands. If none is found, return null so the
+  // caller falls back to the AI image — never a wrong-country photo.
+  const VERIFY_TARGET = 12; // stop once we have enough verified photos for variety
+  const verified = new Map(); // id -> { photo, query }
 
   for (const query of queries) {
     let usable = [];
@@ -138,20 +139,17 @@ export async function searchPexelsPhoto(item = {}) {
       continue; // network error — try next query
     }
     for (const photo of usable) {
+      // Geo gate: the photo must actually name Cape Verde / an island in its alt.
+      if (!CV_RELEVANCE_RE.test(String(photo.alt || ""))) continue;
       const id = photo.id ?? photo.src?.original ?? Math.random();
-      if (!pool.has(id)) pool.set(id, { photo, query });
+      if (!verified.has(id)) verified.set(id, { photo, query });
     }
-    if (pool.size >= POOL_TARGET) break; // enough variety — stop fetching
+    if (verified.size >= VERIFY_TARGET) break; // enough verified variety
   }
 
-  if (!pool.size) return null;
-  const all = [...pool.values()];
+  if (!verified.size) return null; // no genuine Cape Verde photo → AI fallback
 
-  // Soft preference: if a healthy number of photos explicitly name Cape Verde,
-  // shuffle among those; otherwise shuffle the whole in-country pool.
-  const cvMatches = all.filter((x) => CV_RELEVANCE_RE.test(String(x.photo.alt || "")));
-  const chosenSet = cvMatches.length >= 5 ? cvMatches : all;
-
-  const choice = pick(chosenSet);
+  // Shuffle across all verified (genuinely Cape Verde) photos.
+  const choice = pick([...verified.values()]);
   return toResult(choice.photo, choice.query);
 }
