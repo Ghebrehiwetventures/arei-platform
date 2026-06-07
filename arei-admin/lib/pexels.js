@@ -14,68 +14,38 @@
 
 const PEXELS_SEARCH_URL = "https://api.pexels.com/v1/search";
 
-// Map a headline to a SINGLE light subject word used to refine a Cape Verde
-// query (e.g. "Cabo Verde beach"). Kept to one word so the country anchor
-// stays dominant — multi-word topics dilute the match and Pexels starts
-// returning generic / wrong-country photos.
-// Patterns intentionally omit a trailing \b so plurals/inflections match
-// ("Flights" → flight, "buildings" → build).
-const TOPIC_RULES = [
-  [/\b(hotel|resort|hospitality|room|tourist|tourism)/i, "resort"],
-  [/\b(flight|airline|route|airport|aviation|charter)/i, "airport"],
-  [/\b(port|harbou?r|shipping|cargo|maritime|cruise|ferry)/i, "harbour"],
-  [/\b(road|highway|bridge|construction|build|develop|crane|stadium)/i, "construction"],
-  [/\b(property|real estate|apartment|villa|housing|residen|land)/i, "architecture"],
-  [/\b(bank|credit|mortgage|loan|finance|fiscal|econom|currency|investment|fund)/i, "city"],
-  [/\b(tax|residency|visa|law|regulat|policy|government|statute|ministr|parliament)/i, "town"],
-];
-
-// Known Cape Verde place names (islands + main towns). Used both to build
-// location-specific queries and to recognise genuinely Cape-Verdean photos in
-// the results. "Cabo Verde" is the native (Portuguese) name and Pexels' richest
-// tag, so it leads.
-const CV_PLACES = [
-  "Sal", "Boa Vista", "Santiago", "São Vicente", "Sao Vicente", "Fogo",
-  "Santo Antão", "Santo Antao", "Maio", "Brava", "São Nicolau", "Sao Nicolau",
-  "Mindelo", "Praia", "Santa Maria", "Sal Rei", "Espargos",
-];
-const CV_RELEVANCE_RE = new RegExp(
-  ["cabo verde", "cape verde", ...CV_PLACES].map((p) => p.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")).join("|"),
+// Places that, when named in a photo's description, mean it is NOT Cape Verde.
+// Pexels pads "Cabo Verde" searches with generic West-African / coastal photos,
+// but the wrong-country ones almost always name their location in the alt text
+// (e.g. "… in Monrovia, Liberia", "… Dakar, Senegal"). We simply drop those and
+// keep everything else, which keeps the rotation wide and on-country.
+const WRONG_COUNTRY_RE = new RegExp(
+  [
+    "liberia", "monrovia", "senegal", "dakar", "gambia", "banjul",
+    "guinea", "conakry", "bissau", "sierra leone", "freetown",
+    "nigeria", "lagos", "abuja", "ghana", "accra", "ivory coast",
+    "côte d'ivoire", "cote d'ivoire", "abidjan", "mali", "bamako",
+    "mauritania", "nouakchott", "morocco", "marrakech", "casablanca",
+    "togo", "benin", "cotonou", "lome", "lomé", "angola", "luanda",
+    "mozambique", "maputo", "south africa", "cape town", "johannesburg",
+    "kenya", "nairobi", "tanzania", "zanzibar", "ethiopia", "egypt", "cairo",
+  ].join("|"),
   "i"
 );
 
 /**
- * Build the ordered list of search queries for a news item. Every query is
- * anchored to Cape Verde (native "Cabo Verde" first) so results stay in-country
- * — no landless generic queries, which is what previously surfaced wrong
- * -country photos (e.g. Dakar).
- * @param {{ headline?: string, category?: string, location?: string }} item
+ * Build a small, simple set of Cape-Verde search queries. No topic/category
+ * refinement — multi-word topics diluted the match and pulled in wrong-country
+ * photos. Just the country (native "Cabo Verde" first) plus the island when
+ * known, which keeps results broad and on-country.
+ * @param {{ location?: string }} item
  * @returns {string[]} de-duplicated, non-empty queries in priority order
  */
 export function buildPexelsQueries(item = {}) {
-  const headline = String(item.headline || "");
-  // Region/island hint, when it is an actual place (not the country itself).
   const rawLoc = String(item.location || "").trim();
   const island = rawLoc && !/^(cape|cabo)\s+verde$/i.test(rawLoc) ? rawLoc : "";
-
-  let topic = null;
-  for (const [re, t] of TOPIC_RULES) {
-    if (re.test(headline)) { topic = t; break; }
-  }
-  if (!topic) {
-    const cat = String(item.category || "").toLowerCase();
-    topic = /tourism/.test(cat) ? "beach"
-      : /infrastructure/.test(cat) ? "construction"
-      : /(bank|credit|economy)/.test(cat) ? "city"
-      : /(policy|tax)/.test(cat) ? "town"
-      : "island";
-  }
-
   const queries = [
     island && `Cabo Verde ${island}`,
-    island && `Cape Verde ${island}`,
-    `Cabo Verde ${topic}`,
-    `Cape Verde ${topic}`,
     "Cabo Verde",
     "Cape Verde",
     "Cabo Verde beach",
@@ -118,19 +88,17 @@ export async function searchPexelsPhoto(item = {}) {
     };
   };
 
-  // Pexels keyword search for a small country is unreliable: "Cabo Verde …"
-  // queries pad results with generic "African coast / Atlantic / boats" photos
-  // from other countries (Liberia, Senegal, …). Keyword anchoring alone is NOT
-  // enough — so we GEO-VERIFY: only accept a photo whose description (alt) names
-  // Cape Verde or one of its islands. If none is found, return null so the
-  // caller falls back to the AI image — never a wrong-country photo.
-  const VERIFY_TARGET = 12; // stop once we have enough verified photos for variety
-  const verified = new Map(); // id -> { photo, query }
+  // Pull a broad pool from the simple Cape-Verde queries, deduped by id. Drop
+  // only photos whose description names another country (those wrong-country
+  // leaks self-identify, e.g. "Monrovia, Liberia"); keep everything else so the
+  // rotation stays varied. Stop once the pool is comfortably large.
+  const POOL_TARGET = 40;
+  const pool = new Map(); // id -> { photo, query }
 
   for (const query of queries) {
     let usable = [];
     try {
-      const url = `${PEXELS_SEARCH_URL}?query=${encodeURIComponent(query)}&per_page=30&orientation=portrait`;
+      const url = `${PEXELS_SEARCH_URL}?query=${encodeURIComponent(query)}&per_page=80&orientation=portrait`;
       const res = await fetch(url, { headers: { Authorization: key } });
       if (!res.ok) continue; // try next query (rate limit, bad query, etc.)
       const json = await res.json();
@@ -139,17 +107,14 @@ export async function searchPexelsPhoto(item = {}) {
       continue; // network error — try next query
     }
     for (const photo of usable) {
-      // Geo gate: the photo must actually name Cape Verde / an island in its alt.
-      if (!CV_RELEVANCE_RE.test(String(photo.alt || ""))) continue;
+      if (WRONG_COUNTRY_RE.test(String(photo.alt || ""))) continue; // drop named wrong-country
       const id = photo.id ?? photo.src?.original ?? Math.random();
-      if (!verified.has(id)) verified.set(id, { photo, query });
+      if (!pool.has(id)) pool.set(id, { photo, query });
     }
-    if (verified.size >= VERIFY_TARGET) break; // enough verified variety
+    if (pool.size >= POOL_TARGET) break; // enough variety — stop fetching
   }
 
-  if (!verified.size) return null; // no genuine Cape Verde photo → AI fallback
-
-  // Shuffle across all verified (genuinely Cape Verde) photos.
-  const choice = pick([...verified.values()]);
+  if (!pool.size) return null; // nothing usable → AI fallback
+  const choice = pick([...pool.values()]);
   return toResult(choice.photo, choice.query);
 }
