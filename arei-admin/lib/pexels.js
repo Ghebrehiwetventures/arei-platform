@@ -21,6 +21,7 @@ const PEXELS_SEARCH_URL = "https://api.pexels.com/v1/search";
 // keep everything else, which keeps the rotation wide and on-country.
 const WRONG_COUNTRY_RE = new RegExp(
   [
+    // West / coastal Africa (Atlantic-coast false positives)
     "liberia", "monrovia", "senegal", "dakar", "gambia", "banjul",
     "guinea", "conakry", "bissau", "sierra leone", "freetown",
     "nigeria", "lagos", "abuja", "ghana", "accra", "ivory coast",
@@ -29,6 +30,12 @@ const WRONG_COUNTRY_RE = new RegExp(
     "togo", "benin", "cotonou", "lome", "lomé", "angola", "luanda",
     "mozambique", "maputo", "south africa", "cape town", "johannesburg",
     "kenya", "nairobi", "tanzania", "zanzibar", "ethiopia", "egypt", "cairo",
+    // Macaronesia + Iberia — volcanic Atlantic islands that look like Cape
+    // Verde and are geographically adjacent, so Pexels mixes them in.
+    "canary", "canarias", "canaria", "lanzarote", "tenerife", "fuerteventura",
+    "la palma", "la gomera", "el hierro", "la graciosa",
+    "madeira", "funchal", "azores", "açores", "acores",
+    "spain", "españa", "espana", "portugal", "lisbon", "lisboa",
   ].join("|"),
   "i"
 );
