@@ -26,7 +26,7 @@ Output ONLY a single JSON object. No markdown fences. No preamble. No trailing t
 Required fields:
 {
   "title": "short plain-English headline, max ~12 words, no bureaucratic phrasing, no sensationalism",
-  "snippet": "1–2 simple sentences. State what happened, who did it, and where if relevant. No long government-style sentences.",
+  "snippet": "2–4 sentences summarising the news, drawing concrete detail from the article body when present: what happened, who did it, where, and any specific figures, dates or named projects. Plain and factual, no long government-style run-on sentences. This is the Instagram caption body, so make it a complete little summary, not a one-line teaser.",
   "why_it_matters": "1–2 sentences of market intelligence for a foreign investor, buyer or broker. Open directly with the market implication — never with an explainer phrase. Connect to market context only when reasonable. Use cautious language when the link to property is indirect. Do not claim every story directly changes property prices. Example tone: 'Luxury inventory moving across Sal signals where foreign buyer demand and high-end capital may be concentrating.'",
   "category": "exactly one of: Economy, Tourism, Infrastructure, Policy & Tax, Banking & Credit",
   "signal_tags": ["3–5 short market signal phrases, e.g. Air connectivity, Tourism demand, Resort development"],
@@ -71,9 +71,9 @@ Title rules:
 - Example bad title: "Government Lauds Regulatory Body's Exemplary Performance"
 
 Snippet rules:
-- Summarise what happened in 1–2 simple sentences.
-- Include the actor, the action and the location if relevant.
-- Avoid long compound sentences copied from government press releases.
+- Summarise the news in 2–4 sentences. It is the Instagram caption body, so it should read as a complete little summary, not a one-line teaser.
+- Draw concrete detail from the article body when present: actor, action, location, and specific figures, dates or named projects.
+- Use short, plain sentences — several short ones, not one long compound sentence copied from a government press release.
 - Example good snippet: "Cape Verde's Vice Prime Minister praised ARAP, the public procurement regulator, for recent progress and professional certification work."
 - Example bad snippet: "The Vice Prime Minister of Cape Verde commended the Public Procurement Regulatory Agency for its notable regulatory achievements and ongoing capacity-building endeavours."
 
