@@ -57,7 +57,7 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 - [x] cv_ccoreinvestments
 - [x] cv_homescasaverde
 - [x] cv_capeverdeproperty24
-- [ ] cv_cabohouseproperty
+- [x] cv_cabohouseproperty
 - [ ] cv_estatecv
 - [ ] cv_oceanproperty24
 - [ ] cv_nhakaza
@@ -66,7 +66,10 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 Next operational steps:
 1. Retry the completed `cv_ccoreinvestments` freshness ingest only when its
    hostname is reachable; its last two zero-row attempts made no writes.
-2. Investigate `cv_cabohouseproperty` next.
+2. Resolve [GitHub issue #361](https://github.com/Ghebrehiwetventures/arei-platform/issues/361)
+   before any `cv_cabohouseproperty` live ingest. MalCare currently blocks the
+   headless fetch with HTTP 403; require a fresh non-zero dry run afterward.
+3. Investigate `cv_estatecv` next.
 
 ---
 
@@ -473,22 +476,107 @@ Spot-check:
 
 ---
 
-## cv_cabohouseproperty — n=8 (+4 skipped: island unresolved)
+## cv_cabohouseproperty — n=12 — DONE 2026-06-06
+
+Status: ⚠️ **Investigation and extraction fixes complete; live ingest blocked by
+source firewall.** The source uses a MyHome `/featured/` sale subset, so absence
+from the fetch is not authoritative evidence of removal. On 2026-06-08, MalCare
+returned HTTP 403 to the headless runner. Track the blocker in
+[GitHub issue #361](https://github.com/Ghebrehiwetventures/arei-platform/issues/361).
 
 | field | missing | verdict | notes |
 |---|---|---|---|
-| price | 1/8 | ❓ | |
-| bedrooms | 4/8 | ❓ | |
-| bathrooms | 4/8 | ❓ | |
-| area | 0/8 | ✅ | |
+| price | 1/12 | ✅ SOURCE | The whole-building page displays `Contact us for price`; numeric null is correct/POA. |
+| bedrooms | 2/12 | ✅ SOURCE / N/A | The whole-building page has no single building-level bedroom count and the land listing is non-residential. The other 10 rows expose authoritative MyHome bedroom attributes. |
+| bathrooms | 2/12 | ✅ SOURCE / N/A | Same two non-unit rows as bedrooms. The other 10 rows expose authoritative MyHome bathroom attributes. |
+| area | 0/12 | ✅ SCRAPER FIXED | MyHome attribute `m2` now wins over prose. The land page exposes two plot sizes; current row uses the first plot's `157.03 sqm` rather than plot identifier `441`. |
+| images | 0/12 | ✅ | All 12 rows have at least 3 images. |
 
-Known issue: 🔧 **4/12 fetched listings dropped — "island unresolved"** (location
-resolver gap, see source-troubleshooting.md §2.7). Skipped IDs:
-`chp_0120a80e1d2e`, `chp_921aa3dd379b`, `chp_a7d324ce42dc`, `chp_b33e7c42dd6f`.
+Root causes and fixes:
+- ✅ **SCRAPER:** Cabo House MyHome detail pages expose area, bedrooms, and
+  bathrooms in `.mh-estate__section--attributes`, but the source config only
+  scanned description prose. This caused missing beds/baths/areas and a false
+  `7 sqm` apartment area from a balcony sentence even though the structured
+  area was `70,57`.
+- ✅ **SCRAPER:** Generic structured-area parsing previously selected the first
+  number in `Plot 441: 157.03 sqm`, producing `441 sqm`. It now prefers the
+  number bound to an area unit and falls back to the first number only when no
+  unit-bound value exists.
+- ✅ **RESOLVER:** The two current skipped rows had generic list-page locations
+  (`Villa, Sale` / `Sale, Ground`) and their scoped descriptions did not include
+  `Santa Maria` or `Sal` early enough for the generic resolver. Verified
+  source-specific landmarks now resolve `Tortuga Beach Resort` and
+  `Porto Antigo` to Santa Maria, Sal.
+- ✅ **STATUS SAFETY:** `https://www.cabohouseproperty.com/featured/?offer-type=sale`
+  is a featured subset, not a complete catalogue. Three published rows absent
+  from the subset still had live HTTP 200 detail pages. Added
+  `removal_detection: false` for this source and a generic per-source gate, so
+  a live ingest cannot auto-demote rows based only on absence from this subset.
+
+Fresh evidence:
+- Initial valid dry run before fixes:
+  `DRY_RUN=1 REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_cabohouseproperty npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 12, enriched 12/12, kept 10, and skipped 2 for unresolved island
+  (`chp_cfc6e9876a76`, `chp_573e1b0d1937`). Coverage was price 9/10,
+  bedrooms 3/10, bathrooms 3/10, area 8/10, images >=1 and >=3 10/10.
+- Source-page audit covered all 12 current detail pages. Every residential row
+  had MyHome attributes for beds/baths/area. Examples:
+  `chp_e20c19e1f995` = 2 beds, 1 bath, 70.57 sqm (not the 7 sqm balcony);
+  `chp_755a0b71000a` = 1 bed, 1 bath, 43.8 sqm;
+  `chp_c9fe8222a22e` = 2 beds, 1 bath, 71.34 sqm;
+  `chp_573e1b0d1937` = 1 bed, 1 bath, 54.42 sqm;
+  `chp_cfc6e9876a76` = 3 beds, 3 baths, 246 sqm.
+- Successful post-fix dry run fetched 12, enriched 12/12, kept 12, skipped 0,
+  and refreshed 2 existing published rows in dry-run simulation only. Coverage:
+  price 11/12, bedrooms 10/12, bathrooms 10/12, area 12/12,
+  images >=1 12/12, images >=3 12/12. No writes or promotions occurred.
+- The final land parser and removal-gate changes are covered by focused tests.
+  A subsequent report regeneration attempt returned an empty page, then a
+  navigation timeout; a direct availability probe later returned HTTP `000`
+  after 75 seconds. All zero-row attempts made no writes and removal detection
+  remained disabled. Retry the exact dry run when the source is reachable
+  before authorizing live ingest.
+- Follow-up on 2026-06-08: the exact dry run was attempted twice and both runs
+  returned 0 listings from one successful page parse (`stop: empty_listings`).
+  No writes or removals occurred. A direct rendered-DOM Chromium diagnostic
+  established the real response: HTTP 403, 336 bytes of HTML, zero property
+  links/MyHome elements, and body text `MalCare Firewall — Blocked because of
+  Malicious Activities`.
+- The zero-row classification also exposed an engine observability defect:
+  `core/fetchHeadless.ts` currently returns `statusCode: 200` after rendering
+  any HTML, even when `page.goto()` received HTTP 403. It also waits for the
+  Elementor-specific `.e-loop-item` selector although Cabo House uses MyHome.
+  Issue #361 records investigation options and acceptance criteria for
+  propagating the real status and classifying firewall/interstitial pages as
+  blocked fetches rather than empty catalogues.
+- Tests:
+  `node --test tests/genericDetail.test.cjs tests/cvIslandRecovery.test.cjs tests/ingestToCurated.test.cjs tests/propertyType.test.cjs tests/runMarketSourceHealth.test.cjs`
+  passed 48/48; `git diff --check` passed.
+
+Direct Postgres comparison (`DATABASE_URL`, not Supabase JS/REST):
+- `kv_curated.listings` has 5 rows for this source, all `published`;
+  `public.v1_feed_cv` has the same 5 rows.
+- Two current dry-run rows already exist and retain the same IDs for the same
+  URLs: `chp_0b22e43d2537` and `chp_cfc6e9876a76`. No same-URL ID mismatch was
+  found.
+- Ten current rows are net-new and absent from curated/feed; a live ingest
+  would insert them as `needs_review`, not publish them.
+- Three older published/feed rows are absent from the featured subset:
+  `chp_37d8820086a9`, `chp_b33e7c42dd6f`, and `chp_c1c618b0a1b0`.
+  Their detail URLs returned HTTP 200 during the investigation, so treating
+  them as removal candidates would be unsafe. The new source-level removal
+  gate prevents demotion.
+- Existing published rows have AI descriptions and historical
+  first-seen/published timestamps. The tested upsert path preserves status,
+  existing AI descriptions, and those timestamps while refreshing
+  source-derived fields. No database writes were made in this investigation.
 
 Spot-check:
-- https://www.cabohouseproperty.com/properties/apartments/sale/2/excellent-investment-property-near-hilton-hotel  (beds,baths)
-- https://www.cabohouseproperty.com/properties/building/sale/various-floors/building-for-sale-in-santa-maria-investment-opportunity  (price)
+- https://www.cabohouseproperty.com/properties/apartments/sale/2/excellent-investment-property-near-hilton-hotel
+- https://www.cabohouseproperty.com/properties/building/sale/various-floors/building-for-sale-in-santa-maria-investment-opportunity
+- https://www.cabohouseproperty.com/properties/villa/sale/ground-first/charming-detached-villa-for-sale-tortuga-beach-resort
+- https://www.cabohouseproperty.com/properties/apartments/sale/ground/porto-antigo-bright-sea-view-apartment
+- https://www.cabohouseproperty.com/properties/land/sale/ground/building-land-santa-maria-two-adjacent-plots
 
 ---
 

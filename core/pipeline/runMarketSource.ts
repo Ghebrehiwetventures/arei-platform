@@ -503,6 +503,13 @@ SELECT id, title, source_url_primary
   };
 }
 
+export function shouldRunRemovalDetection(
+  removalDetection: boolean | undefined,
+  activeIds: string[]
+): boolean {
+  return removalDetection !== false && activeIds.length > 0;
+}
+
 export function buildDemoteRemovedPublishedRowsQuery(
   sourceId: string,
   activeIds: string[],
@@ -960,9 +967,17 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   // A fetched listing that later gets skipped for title/location validation
   // should not be treated as removed from the source.
   const activeIds = listings.map(l => l.id).filter(Boolean);
-  const removedPublishedRows = await findRemovedPublishedRows(sourceId, activeIds);
+  const removalDetectionEnabled = shouldRunRemovalDetection(
+    sourceConfig.removal_detection,
+    activeIds
+  );
+  const removedPublishedRows = removalDetectionEnabled
+    ? await findRemovedPublishedRows(sourceId, activeIds)
+    : [];
   if (activeIds.length === 0) {
     console.log(`\n[Removed-gate] Source produced 0 valid rows — removal detection disabled for safety.`);
+  } else if (!removalDetectionEnabled) {
+    console.log(`\n[Removed-gate] Removal detection disabled by source config (catalogue is not authoritative for absence).`);
   } else if (removedPublishedRows.length > 0) {
     console.log(`\n[Removed-gate] ${removedPublishedRows.length} published listings absent from latest successful source fetch:`);
     for (const row of removedPublishedRows) console.log(`  - ${row.id} ${row.source_url_primary ?? ""}`);

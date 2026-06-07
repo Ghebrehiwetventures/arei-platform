@@ -16,6 +16,7 @@ export {
   buildFindRemovedPublishedRowsQuery,
   buildDemoteRemovedPublishedRowsQuery,
   reconcileListingIdsBySourceUrl,
+  shouldRunRemovalDetection,
 } from "../core/pipeline/runMarketSource";
 
 function loadEnv(): { marketId: string; sourceId: string; dryRun: boolean } {

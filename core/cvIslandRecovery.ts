@@ -16,6 +16,8 @@ export type CvIslandRecoveryRule =
   | "homescasaverde:vila_verde"
   | "homescasaverde:paradise_beach"
   | "simplycapeverde:dunas_beach_resort"
+  | "cabohouseproperty:tortuga_beach_resort"
+  | "cabohouseproperty:porto_antigo"
   | "terracaboverde:city_sal_rei"
   | "rightmove:title_santo_antao";
 
@@ -224,6 +226,28 @@ export function resolveCvIslandRecovery(
     const combined = `${title} ${input.sourceUrl || ""}`;
     if (containsText(combined, "Dunas Beach Resort")) {
       return resolved("Sal", null, "high", "simplycapeverde:dunas_beach_resort", "Dunas Beach Resort");
+    }
+  }
+
+  if (input.sourceId === "cv_cabohouseproperty") {
+    const combined = `${title} ${description} ${input.sourceUrl || ""}`;
+    if (containsText(combined, "Tortuga Beach Resort")) {
+      return resolved(
+        "Sal",
+        "Santa Maria",
+        "high",
+        "cabohouseproperty:tortuga_beach_resort",
+        "Tortuga Beach Resort"
+      );
+    }
+    if (containsText(combined, "Porto Antigo")) {
+      return resolved(
+        "Sal",
+        "Santa Maria",
+        "high",
+        "cabohouseproperty:porto_antigo",
+        "Porto Antigo"
+      );
     }
   }
 

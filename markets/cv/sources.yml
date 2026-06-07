@@ -516,6 +516,7 @@ sources:
     delay_ms: 3000
     jitter_ms: 1000
     max_items: 50
+    removal_detection: false  # /featured/ is a subset, not an authoritative full catalogue
 
     selectors:
       listing: ".mh-estate-horizontal__primary, .mh-estate-vertical__primary, [class*='mh-estate']"
@@ -538,6 +539,14 @@ sources:
       selectors:
         description: ".mh-estate__description p, .property-description p, [class*='description'] p"
         images: ".mh-estate__gallery img, .swiper-slide img, .property-gallery img, img.wp-post-image"
+        bedrooms: "#mh-estate_attribute--5"
+        bathrooms: "#mh-estate_attribute--7"
+      specs_selector: ".mh-estate__section--attributes"
+      spec_table:
+        container: ".mh-estate__section--attributes"
+        label_selector: "#mh-estate_attribute--25 strong"
+        label_map:
+          area: ["m2"]
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"

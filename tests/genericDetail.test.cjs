@@ -169,6 +169,132 @@ test("extracts Cape Verde Property 24 OSProperty core fields from source config"
   assert.equal(result.areaSqm, 60);
 });
 
+test("extracts Cabo House MyHome attributes before prose fallbacks", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_cabohouseproperty");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(
+    "cv_cabohouseproperty",
+    source.detail,
+    source.price_format,
+  );
+
+  const html = `
+    <html>
+      <body>
+        <div class="mh-estate__section mh-estate__section--attributes">
+          <ul class="mh-estate__list__inner">
+            <li id="mh-estate_attribute--25" class="mh-estate__list__element">
+              <strong>m2:</strong>
+              70,57
+            </li>
+            <li id="mh-estate_attribute--5" class="mh-estate__list__element">
+              <strong><i class="flaticon-bed"></i></strong>
+              2
+            </li>
+            <li id="mh-estate_attribute--7" class="mh-estate__list__element">
+              <strong><i class="flaticon-bath-2"></i></strong>
+              1
+            </li>
+          </ul>
+        </div>
+        <div class="mh-estate__section mh-estate__section--description">
+          <p>A private balcony of approximately 7 m².</p>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(
+    html,
+    "https://www.cabohouseproperty.com/properties/apartments/sale/2/example",
+  );
+
+  assert.equal(result.areaSqm, 71);
+  assert.equal(result.bedrooms, 2);
+  assert.equal(result.bathrooms, 1);
+});
+
+test("ignores plot identifiers before Cabo House sqm values", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_cabohouseproperty");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(
+    "cv_cabohouseproperty",
+    source.detail,
+    source.price_format,
+  );
+
+  const html = `
+    <html>
+      <body>
+        <div class="mh-estate__section mh-estate__section--attributes">
+          <ul class="mh-estate__list__inner">
+            <li id="mh-estate_attribute--25" class="mh-estate__list__element">
+              <strong>m2:</strong>
+              Plot 441: 157.03 sqm - Plot 442: 160.37 sqm
+            </li>
+          </ul>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(
+    html,
+    "https://www.cabohouseproperty.com/properties/land/sale/ground/example",
+  );
+
+  assert.equal(result.areaSqm, 157);
+});
+
+test("does not infer whole-building bedrooms or bathrooms from one floor description", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_cabohouseproperty");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(
+    "cv_cabohouseproperty",
+    source.detail,
+    source.price_format,
+  );
+
+  const html = `
+    <html>
+      <body>
+        <div class="mh-estate__section mh-estate__section--attributes">
+          <ul class="mh-estate__list__inner">
+            <li id="mh-estate_attribute--25" class="mh-estate__list__element">
+              <strong>m2:</strong>
+              470
+            </li>
+          </ul>
+        </div>
+        <div class="mh-estate__section mh-estate__section--description">
+          <p>The first-floor apartment includes 1 bedroom and 1 bathroom.</p>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(
+    html,
+    "https://www.cabohouseproperty.com/properties/building/sale/various-floors/example",
+  );
+
+  assert.equal(result.areaSqm, 470);
+  assert.equal(result.bedrooms, null);
+  assert.equal(result.bathrooms, null);
+});
+
 test("falls back to regex when structured bathroom selector is absent", () => {
   const plugin = createGenericDetailPlugin("cv_example", {
     selectors: {

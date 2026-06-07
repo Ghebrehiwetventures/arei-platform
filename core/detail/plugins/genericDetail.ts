@@ -316,7 +316,11 @@ function firstJsonLdOffer(jsonLd: JsonLdObject | undefined): JsonLdObject | unde
 
 function parseAreaTextSqm(text: string): number | null {
   if (!text) return null;
-  const match = text.replace(",", ".").match(/(\d+(?:\.\d+)?)/);
+  const normalized = text.replace(/,/g, ".");
+  const unitBoundMatch = normalized.match(
+    /(\d+(?:\.\d+)?)\s*(?:m[²2]|sqm|sq\.?\s*m|sq\.?\s*ft|sqft|ft[²2]|square\s*(?:met(?:er|re)s?|feet|foot))/i
+  );
+  const match = unitBoundMatch || normalized.match(/(\d+(?:\.\d+)?)/);
   if (!match) return null;
   const value = parseFloat(match[1]);
   if (!Number.isFinite(value) || value <= 0) return null;

@@ -163,6 +163,9 @@ export interface SourceConfig {
   max_items?: number;
   max_pages?: number;
   stop_condition?: StopCondition;
+  /** Whether absence from a successful fetch proves removal. Disable for
+   *  featured/search subsets that do not represent the full source catalogue. */
+  removal_detection?: boolean;
   reject_url_patterns?: string[];
   min_path_segments?: number;
   price_format?: PriceFormatConfig;

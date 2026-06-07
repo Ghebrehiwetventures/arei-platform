@@ -8,6 +8,7 @@ const {
   buildFindRemovedPublishedRowsQuery,
   buildDemoteRemovedPublishedRowsQuery,
   reconcileListingIdsBySourceUrl,
+  shouldRunRemovalDetection,
 } = require("../scripts/ingest_to_curated");
 
 test("curated upsert includes last_verified_at on insert and update", () => {
@@ -88,6 +89,13 @@ test("removed published lookup is disabled when a source fetch returns no rows",
     buildDemoteRemovedPublishedRowsQuery("cv_ccoreinvestments", [], "2026-06-05T12:00:00.000Z"),
     null
   );
+});
+
+test("removal detection is disabled for incomplete source catalogues", () => {
+  assert.equal(shouldRunRemovalDetection(false, ["chp_current"]), false);
+  assert.equal(shouldRunRemovalDetection(true, ["chp_current"]), true);
+  assert.equal(shouldRunRemovalDetection(undefined, ["chp_current"]), true);
+  assert.equal(shouldRunRemovalDetection(undefined, []), false);
 });
 
 test("removed published lookup finds published rows absent from current source ids", () => {
