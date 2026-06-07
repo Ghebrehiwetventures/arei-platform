@@ -233,24 +233,24 @@ export async function renderDetailSlide(item) {
 // generic beach), then fall back to category. Handles both the studio category
 // names and the enrichment category names.
 const SUBJECT_RULES = [
-  [/\b(hotel|resort|hospitality|rooms?|tourist)\b/i, "a striking modern beachfront resort and hotel buildings, pool and palms"],
-  [/\b(flight|airline|route|airport|aviation|air\s|transatlantic|charter)\b/i, "a commercial airliner banking through a dramatic sky above the Atlantic ocean"],
-  [/\b(port|harbou?r|shipping|cargo|maritime|cruise|ferry)\b/i, "a coastal port with cranes and ships under dramatic light"],
-  [/\b(road|highway|bridge|construction|build|develop|crane|stadium)\b/i, "a coastal construction site with cranes and new buildings against a bold sky"],
-  [/\b(property|real estate|apartment|villa|housing|residen|land)\b/i, "modern coastal residential architecture with sharp clean lines and dramatic light"],
-  [/\b(bank|credit|mortgage|loan|finance|fiscal|econom|currency|investment|fund)\b/i, "a sleek modern business district building shot from a bold low angle"],
-  [/\b(tax|residency|visa|law|regulat|policy|government|statute|ministr|parliament)\b/i, "a bold modern civic or government building, strong architectural perspective"],
+  [/\b(hotel|resort|hospitality|rooms?|tourist)\b/i, "a striking modern beachfront resort and hotel buildings, pool and palms under a bright blue sky"],
+  [/\b(flight|airline|route|airport|aviation|air\s|transatlantic|charter)\b/i, "a commercial airliner climbing through a bright, clear blue sky above the Atlantic ocean"],
+  [/\b(port|harbou?r|shipping|cargo|maritime|cruise|ferry)\b/i, "a coastal port with cranes and ships in clear bright daylight"],
+  [/\b(road|highway|bridge|construction|build|develop|crane|stadium)\b/i, "a coastal construction site with cranes and new buildings under a bright clear sky"],
+  [/\b(property|real estate|apartment|villa|housing|residen|land)\b/i, "modern coastal residential architecture with sharp clean lines in bright daylight"],
+  [/\b(bank|credit|mortgage|loan|finance|fiscal|econom|currency|investment|fund)\b/i, "a sleek modern business district building in clear daylight, low angle"],
+  [/\b(tax|residency|visa|law|regulat|policy|government|statute|ministr|parliament)\b/i, "a bright modern civic or government building, strong architectural perspective"],
 ];
 const CATEGORY_FALLBACK = {
-  aviation: "a commercial airliner over the Atlantic at golden hour",
-  tourism: "a vibrant resort coastline with dramatic golden light",
-  "real estate": "modern coastal residential architecture in dramatic light",
-  policy: "a bold modern civic building, strong perspective",
-  "policy & tax": "a bold modern civic building, strong perspective",
-  infrastructure: "a coastal port or new development with cranes under a dramatic sky",
-  economy: "a sleek modern business district building, low angle",
-  "banking & credit": "a sleek modern business district building, low angle",
-  "market news": "a dramatic aerial of a tropical Atlantic island town and coastline",
+  aviation: "a commercial airliner over the Atlantic in bright clear daylight",
+  tourism: "a vibrant sunlit resort coastline under a bright blue sky",
+  "real estate": "modern coastal residential architecture in bright daylight",
+  policy: "a bright modern civic building, strong perspective",
+  "policy & tax": "a bright modern civic building, strong perspective",
+  infrastructure: "a coastal port or new development with cranes under a bright clear sky",
+  economy: "a sleek modern business district building in clear daylight, low angle",
+  "banking & credit": "a sleek modern business district building in clear daylight, low angle",
+  "market news": "a bright sunlit aerial of a tropical Atlantic island town and coastline",
 };
 
 export function buildImagePrompt(item) {
@@ -261,9 +261,14 @@ export function buildImagePrompt(item) {
   }
   if (!subject) subject = CATEGORY_FALLBACK[(item.category || "").toLowerCase()] || CATEGORY_FALLBACK["market news"];
   return [
-    `A bold, cinematic editorial news image for the story: "${headline}".`,
+    `A bold, editorial news image for the story: "${headline}".`,
     `Depict ${subject}, set in Cape Verde (an Atlantic island nation).`,
-    "Dramatic directional lighting, rich high-contrast color, striking wide-angle composition, photorealistic, magazine-cover quality.",
+    // Bright by default — the old "dramatic lighting" wording made every image
+    // dark, forcing a manual "more light" tweak each time.
+    "Bright, clear natural daylight with an airy, optimistic mood — luminous, not dark or moody.",
+    // Leave the lower third calm so the headline overlay reads cleanly.
+    "Editorial composition for a vertical poster: keep the main subject in the upper two-thirds and leave the lower third calm and uncluttered (open sky, sea, or plain ground) as negative space for a headline overlaid at the bottom.",
+    "Photorealistic, rich colour, magazine-cover polish.",
     "No text, no logos, no readable signage, no recognizable real landmarks, no identifiable faces.",
   ].join(" ");
 }
