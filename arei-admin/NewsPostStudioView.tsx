@@ -109,6 +109,9 @@ export function NewsPostStudioView() {
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceName, setSourceName] = useState("");
   const [articleBodyUsed, setArticleBodyUsed] = useState<boolean | null>(null);
+  const [richerSibling, setRicherSibling] = useState<MarketNewsItem | null>(null);
+  const [richerSourceCount, setRicherSourceCount] = useState(0);
+  const [dateWarning, setDateWarning] = useState(false);
   const [region, setRegion] = useState("");
 
   const [generating, setGenerating] = useState(false);
@@ -156,6 +159,35 @@ export function NewsPostStudioView() {
     setError(null);
     setPublished(null);
     setPublishError(null);
+    // Guard: suspiciously old published date (e.g. a 2017 date on 2026 news).
+    const y = item.publishedAt ? new Date(item.publishedAt).getFullYear() : NaN;
+    setDateWarning(Number.isFinite(y) && y < new Date().getFullYear() - 1);
+    // Väg A: if this item is thin, look for a richer open sibling in its cluster.
+    setRicherSibling(null);
+    setRicherSourceCount(0);
+    if (item.articleBodyUsed !== true) loadRicherSibling(item.id);
+  }
+
+  // Fetch a richer open-source sibling for a thin item (same story cluster).
+  async function loadRicherSibling(itemId: string) {
+    try {
+      const res = await fetch(`/api/richer-sibling?id=${encodeURIComponent(itemId)}`, {
+        credentials: "include",
+        headers: await authHeaders(),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) return; // silent — it's an optional enhancement
+      // Ignore if the user has since selected another item.
+      setSelectedId((cur) => {
+        if (cur === itemId) {
+          setRicherSibling(data.sibling || null);
+          setRicherSourceCount(data.sourceCount || 0);
+        }
+        return cur;
+      });
+    } catch {
+      /* optional — ignore */
+    }
   }
 
   // opts.aiPromptOverride re-runs AI image generation with a specific prompt
@@ -415,6 +447,21 @@ export function NewsPostStudioView() {
             >
               {articleBodyUsed ? "✓ Full article" : "Snippet only"}
             </span>
+          )}
+          {dateWarning && (
+            <div className="text-[10px] font-mono text-amber-700" title="The published date looks far in the past for this news — verify it isn't a stale/mis-parsed date.">
+              ⚠ Old published date — verify
+            </div>
+          )}
+          {richerSibling && (
+            <button
+              onClick={() => selectItem(richerSibling)}
+              className="block w-full text-left mt-1 px-2 py-1.5 rounded border border-accent/50 text-[11px] font-mono text-accent hover:bg-surface-2"
+              title="Switch to a sibling article about the same story from an open source. Source link and the caption's attribution follow the article you switch to."
+            >
+              ↑ Richer version from {richerSibling.sourceName} · full article{richerSourceCount ? ` · ${richerSourceCount} sources` : ""} →
+              <span className="block text-foreground-subtle normal-case truncate mt-0.5">{richerSibling.sourceTitle}</span>
+            </button>
           )}
           <div>
             <div className="flex items-center justify-between mb-1">
