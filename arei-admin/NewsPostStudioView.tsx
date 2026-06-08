@@ -129,6 +129,8 @@ export function NewsPostStudioView() {
   // One-time backfill: re-enrich rows enriched before the richer-summary prompt.
   const [reenriching, setReenriching] = useState(false);
   const [reenrichMsg, setReenrichMsg] = useState("");
+  const [clustering, setClustering] = useState(false);
+  const [clusterMsg, setClusterMsg] = useState("");
 
   useEffect(() => {
     fetchMarketNewsSocialState()
@@ -243,6 +245,29 @@ export function NewsPostStudioView() {
     }
   }
 
+  // Run the news clustering engine over enriched market_news and report stats.
+  async function runClustering() {
+    if (clustering) return;
+    setClustering(true);
+    setClusterMsg("Clustering…");
+    try {
+      const res = await fetch("/api/cluster-news", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
+      setClusterMsg(
+        `${data.clusters} clusters from ${data.articles} articles · ${data.multiSourceClusters} multi-source · ${data.duplicatesGrouped} duplicates grouped`
+      );
+    } catch (e: any) {
+      setClusterMsg(`Error: ${e.message || String(e)}`);
+    } finally {
+      setClustering(false);
+    }
+  }
+
   async function publish() {
     if (!result?.slides?.length) return;
     if (!window.confirm("Publish this post to Instagram now? It goes live immediately.")) return;
@@ -323,6 +348,14 @@ export function NewsPostStudioView() {
               {reenriching ? "Re-enriching…" : "⟳ Backfill old captions"}
             </button>
             {reenrichMsg && <div className="mt-1 text-[10px] font-mono text-foreground-subtle">{reenrichMsg}</div>}
+            <button
+              onClick={runClustering}
+              disabled={clustering}
+              className="w-full mt-2 px-2 py-1.5 rounded border border-border text-[10px] font-mono uppercase tracking-widest text-foreground-subtle hover:bg-surface-2 disabled:opacity-50"
+            >
+              {clustering ? "Clustering…" : "⟳ Rebuild news clusters"}
+            </button>
+            {clusterMsg && <div className="mt-1 text-[10px] font-mono text-foreground-subtle">{clusterMsg}</div>}
           </div>
           <div className="max-h-[60vh] overflow-y-auto">
             {loadingItems && <div className="p-3 text-xs text-foreground-muted">Loading…</div>}
