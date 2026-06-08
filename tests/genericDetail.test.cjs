@@ -901,3 +901,24 @@ test("converts SqFt area values extracted from regex patterns", () => {
 
   assert.equal(result.areaSqm, 63);
 });
+
+test("parses comma-thousands square-metre values as thousands, not decimals", () => {
+  const plugin = createGenericDetailPlugin("cv_simplycapeverde", {
+    selectors: {
+      description: ".property-description",
+    },
+    spec_patterns: {
+      area: [
+        "(\\d[\\d,]*(?:\\.\\d+)?)\\s*(?:m[²2]|sqm)",
+      ],
+    },
+  });
+
+  const result = plugin.extract(`
+    <div class="property-description">
+      Set on 20,000 m² (2 hectares) of land near Mindelo.
+    </div>
+  `, "https://simplycapeverde.com/property/development-opportunity");
+
+  assert.equal(result.areaSqm, 20000);
+});

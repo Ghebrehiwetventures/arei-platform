@@ -369,7 +369,10 @@ function parseAreaTextSqm(text: string): number | null {
       ? numeric.replace(/\./g, "").replace(",", ".")
       : numeric.replace(/,/g, "");
   } else if (numeric.includes(",")) {
-    numeric = numeric.replace(",", ".");
+    const parts = numeric.split(",");
+    numeric = parts.length > 1 && parts.slice(1).every((part) => part.length === 3)
+      ? parts.join("")
+      : numeric.replace(",", ".");
   }
 
   const value = parseFloat(numeric);
