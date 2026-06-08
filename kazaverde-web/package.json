@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "sync-sdk": "npm --prefix ../packages/arei-sdk install && npm --prefix ../packages/arei-sdk run build",
-    "test": "node ./src/lib/listingTitleDisplay.test.js && node ./src/lib/briefingSnapshot.test.js && node ./src/lib/briefingValidation.test.js && node ./src/lib/briefingIslands.test.js",
+    "test": "node ./src/lib/listingTitleDisplay.test.js && node ./src/lib/briefingSnapshot.test.js && node ./src/lib/briefingValidation.test.js && node ./src/lib/briefingIslands.test.js && node ./src/lib/briefingConfidence.test.js",
     "dev": "npm run sync-sdk && vite",
     "build": "npm run sync-sdk && tsc -b && vite build && node ./scripts/prerender-phase1.mjs",
     "preview": "vite preview"

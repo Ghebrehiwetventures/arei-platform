@@ -833,16 +833,33 @@ export class AREIClient {
   async getBriefing(
     slug: string
   ): Promise<{ briefing: BriefingRow; snapshot: MarketReportRow[] } | null> {
-    const { data: briefingData, error: briefingError } = await this.sb
-      .from("market_briefings")
-      .select(
-        "slug, period, snapshot_date, title, executive_summary, " +
-        "key_takeaways, commentary, methodology_note, published_at, updated_at"
-      )
-      .eq("slug", slug)
-      .eq("status", "published")
-      .not("published_at", "is", null)
-      .maybeSingle();
+    // Base columns (always present). v2 editorial columns (supply_price_note,
+    // island_notes, news_items) are added by migration 052 and may not exist
+    // yet — so we try them first and gracefully fall back to base if the DB
+    // hasn't been migrated. This keeps existing briefings readable even if the
+    // web deploys before 052 runs. (Mirrors the DETAIL_COLUMNS_OPTIONAL pattern.)
+    const BRIEFING_BASE_COLS =
+      "slug, period, snapshot_date, title, executive_summary, " +
+      "key_takeaways, commentary, methodology_note, published_at, updated_at";
+    const BRIEFING_V2_COLS = "supply_price_note, island_notes, news_items";
+
+    const briefingBySlug = (cols: string) =>
+      this.sb
+        .from("market_briefings")
+        .select(cols)
+        .eq("slug", slug)
+        .eq("status", "published")
+        .not("published_at", "is", null)
+        .maybeSingle();
+
+    let { data: briefingData, error: briefingError } = await briefingBySlug(
+      `${BRIEFING_BASE_COLS}, ${BRIEFING_V2_COLS}`
+    );
+
+    // Retry without the v2 columns when the schema predates migration 052.
+    if (briefingError && /column .* does not exist|could not find/i.test(briefingError.message)) {
+      ({ data: briefingData, error: briefingError } = await briefingBySlug(BRIEFING_BASE_COLS));
+    }
 
     if (briefingError) {
       throw new Error(`getBriefing failed: ${briefingError.message}`);

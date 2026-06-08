@@ -1473,6 +1473,15 @@ export async function deleteFeaturedSelection(isoWeek: string): Promise<void> {
 
 export type BriefingStatus = "draft" | "published" | "archived";
 
+/** Manual, neutral news-context item (v2). */
+export interface BriefingNewsItem {
+  title: string;
+  source: string;
+  url: string;
+  date: string;
+  note: string;
+}
+
 export interface AdminBriefingRow {
   id: string;
   slug: string;
@@ -1482,6 +1491,9 @@ export interface AdminBriefingRow {
   executive_summary: string | null;
   key_takeaways: string[] | null;
   commentary: string | null;
+  supply_price_note: string | null;
+  island_notes: string | null;
+  news_items: BriefingNewsItem[] | null;
   methodology_note: string | null;
   status: BriefingStatus;
   published_at: string | null;
@@ -1499,12 +1511,16 @@ export interface BriefingDraftInput {
   executive_summary: string | null;
   key_takeaways: string[] | null;
   commentary: string | null;
+  supply_price_note: string | null;
+  island_notes: string | null;
+  news_items: BriefingNewsItem[] | null;
   methodology_note: string | null;
 }
 
 const BRIEFING_COLUMNS =
   "id, slug, period, snapshot_date, title, executive_summary, key_takeaways, " +
-  "commentary, methodology_note, status, published_at, published_by, created_at, updated_at";
+  "commentary, supply_price_note, island_notes, news_items, methodology_note, " +
+  "status, published_at, published_by, created_at, updated_at";
 
 /** All editions, any status, newest snapshot first. */
 export async function getBriefingsAdmin(): Promise<AdminBriefingRow[]> {

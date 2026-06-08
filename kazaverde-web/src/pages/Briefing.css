@@ -30,65 +30,84 @@
   padding-bottom: 72px;
 }
 
+/* Generous vertical rhythm — each section breathes. A hairline rule + a sage
+   tick on every heading give the report a consistent editorial spine. */
 .kv-bf-section {
-  padding: 36px 0;
+  padding: 52px 0;
   border-top: 1px solid var(--kv-rule-soft);
 }
 .kv-bf-section-head {
-  font-size: 13px;
-  letter-spacing: 0.06em;
-  text-transform: uppercase;
-  color: var(--kv-ink-600);
-  margin: 0 0 20px;
-  font-weight: var(--kv-fw-semibold);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-h3);
+  line-height: 1.15;
+  letter-spacing: var(--kv-ls-display);
+  text-transform: none;
+  color: var(--kv-green-deep);
+  font-weight: var(--kv-fw-regular);
+  margin: 0 0 24px;
+}
+.kv-bf-section-head::before {
+  content: "";
+  flex: none;
+  width: 20px;
+  height: 2px;
+  background: var(--kv-green);
 }
 .kv-bf-section-kicker {
-  font-size: 11px;
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-sm);
   font-weight: var(--kv-fw-semibold);
-  letter-spacing: 0.16em;
+  letter-spacing: var(--kv-ls-eyebrow);
   text-transform: uppercase;
   color: var(--kv-gray-500);
-  margin: 0 0 10px;
+  margin: 0 0 14px;
 }
 
-/* ─── 2 · Executive summary ─── */
+/* ─── 2 · Executive summary — the editorial standfirst (Plex Sans) ─── */
 .kv-bf-summary {
-  padding: 36px 0 8px;
+  padding: 52px 0 12px;
 }
 .kv-bf-summary-lead {
-  font-size: 20px;
+  font-family: var(--kv-sans);
+  font-size: clamp(19px, 2.2vw, 23px);
   line-height: 1.5;
-  letter-spacing: -0.005em;
+  letter-spacing: -0.01em;
   color: var(--kv-black);
   margin: 0;
-  max-width: 60ch;
+  max-width: 40ch;
+  max-width: min(62ch, 100%);
 }
 
-/* ─── 3 · KPI cards ─── */
+/* ─── 3 · KPI cards — the headline numbers, given real presence ─── */
 .kv-bf-kpis {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1px;
   background: var(--kv-rule);
   border: 1px solid var(--kv-rule);
+  border-top: 2px solid var(--kv-green);
 }
 .kv-bf-kpi {
   background: var(--kv-paper);
-  padding: 22px 18px;
+  padding: 26px 22px;
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 .kv-bf-kpi-val {
-  font-size: 28px;
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-h1);
   line-height: 1;
-  letter-spacing: -0.02em;
+  letter-spacing: var(--kv-ls-display);
   font-variant-numeric: tabular-nums;
   color: var(--kv-black);
 }
 .kv-bf-kpi-label {
-  font-size: 11.5px;
-  letter-spacing: 0.04em;
+  font-size: var(--kv-t-sm);
+  letter-spacing: var(--kv-ls-label);
   text-transform: uppercase;
   color: var(--kv-ink-500);
 }
@@ -180,10 +199,11 @@
 }
 .kv-bf-takeaways li {
   position: relative;
-  padding: 14px 0 14px 28px;
+  padding: 15px 0 15px 30px;
   border-bottom: 1px solid var(--kv-rule-soft);
-  font-size: 15.5px;
-  line-height: 1.55;
+  font-family: var(--kv-sans);
+  font-size: 16px;
+  line-height: 1.6;
   color: var(--kv-ink-700);
 }
 .kv-bf-takeaways li:last-child { border-bottom: none; }
@@ -202,19 +222,132 @@
   max-width: 64ch;
 }
 .kv-bf-prose p {
-  font-size: 15.5px;
-  line-height: 1.7;
+  font-family: var(--kv-sans);
+  font-size: 16px;
+  line-height: 1.75;
   color: var(--kv-ink-700);
-  margin: 0 0 16px;
+  margin: 0 0 18px;
 }
 .kv-bf-prose p:last-child { margin-bottom: 0; }
 
 /* ─── 6 · Methodology ─── */
 .kv-bf-methodology p {
-  font-size: 13px;
-  line-height: 1.65;
+  font-family: var(--kv-sans);
+  font-size: 14px;
+  line-height: 1.7;
   color: var(--kv-ink-500);
+  margin: 0 0 12px;
+  max-width: 72ch;
+}
+.kv-bf-methodology p:last-child { margin-bottom: 0; }
+/* Disclosure reads as a standfirst above the detailed methodology. */
+.kv-bf-disclosure {
+  font-family: var(--kv-sans) !important;
+  font-size: clamp(15px, 1.6vw, 17px) !important;
+  line-height: 1.5;
+  color: var(--kv-black) !important;
+  font-weight: var(--kv-fw-medium);
+  max-width: 60ch;
+}
+
+/* ─── Baseline note (shown on the earliest edition) ─── */
+.kv-bf-baseline {
+  font-family: var(--kv-sans);
+  font-size: 14.5px;
+  line-height: 1.55;
+  color: var(--kv-ink-600);
+  border-left: 2px solid var(--kv-green);
+  padding: 10px 0 10px 16px;
+  margin: 0 0 20px;
+  max-width: 64ch;
+}
+
+/* ─── News context (manual, neutral) ─── */
+.kv-bf-news {
+  list-style: none;
   margin: 0;
+  padding: 0;
+  max-width: 70ch;
+}
+.kv-bf-news-item {
+  padding: 16px 0;
+  border-bottom: 1px solid var(--kv-rule-soft);
+}
+.kv-bf-news-item:first-child { padding-top: 0; }
+.kv-bf-news-item:last-child { border-bottom: none; }
+.kv-bf-news-meta {
+  display: flex;
+  gap: 10px;
+  font-size: 11px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--kv-ink-500);
+  margin-bottom: 6px;
+}
+.kv-bf-news-date { color: var(--kv-gray-500); }
+.kv-bf-news-title {
+  display: inline-block;
+  font-family: var(--kv-sans);
+  font-size: 16px;
+  font-weight: var(--kv-fw-medium);
+  line-height: 1.35;
+  color: var(--kv-black);
+  text-decoration: none;
+}
+a.kv-bf-news-title { text-decoration: underline; text-decoration-color: var(--kv-green); text-underline-offset: 3px; }
+a.kv-bf-news-title:hover { color: var(--kv-green-deep); }
+.kv-bf-news-note {
+  font-family: var(--kv-sans);
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--kv-ink-600);
+  margin: 6px 0 0;
+}
+.kv-bf-news-disclaimer {
+  margin: 14px 0 0;
+  font-size: 12px;
+  color: var(--kv-ink-400);
+}
+
+/* ─── Data confidence (derived) ─── */
+.kv-bf-conf {
+  display: flex;
+  gap: 20px;
+  align-items: flex-start;
+  flex-wrap: wrap;
+  border: 1px solid var(--kv-rule);
+  border-left: 3px solid var(--kv-green);
+  background: var(--kv-off-white);
+  padding: 16px 20px;
+}
+.kv-bf-conf-level {
+  font-family: var(--kv-mono);
+  font-size: 13px;
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 4px 10px;
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-paper);
+  white-space: nowrap;
+}
+.kv-bf-conf-high .kv-bf-conf-level { color: var(--kv-green-deep); border-color: var(--kv-green); }
+.kv-bf-conf-medium .kv-bf-conf-level { color: var(--kv-ink-700); }
+.kv-bf-conf-low .kv-bf-conf-level { color: var(--kv-accent-coral); border-color: var(--kv-accent-coral); }
+.kv-bf-conf-why {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 4px;
+  font-size: 12.5px;
+  color: var(--kv-ink-600);
+}
+.kv-bf-conf-why b { color: var(--kv-black); font-variant-numeric: tabular-nums; }
+.kv-bf-conf-note {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: var(--kv-ink-400);
   max-width: 70ch;
 }
 

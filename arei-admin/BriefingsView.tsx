@@ -19,6 +19,7 @@ import {
   type AdminBriefingRow,
   type BriefingDraftInput,
   type BriefingStatus,
+  type BriefingNewsItem,
 } from "./data";
 
 const INPUT_CLS =
@@ -73,6 +74,9 @@ function emptyDraft(): BriefingDraftInput {
     executive_summary: "",
     key_takeaways: ["", "", ""],
     commentary: "",
+    supply_price_note: "",
+    island_notes: "",
+    news_items: [],
     methodology_note: "",
   };
 }
@@ -86,6 +90,9 @@ function toDraft(row: AdminBriefingRow): BriefingDraftInput {
     executive_summary: row.executive_summary ?? "",
     key_takeaways: row.key_takeaways && row.key_takeaways.length > 0 ? row.key_takeaways : ["", "", ""],
     commentary: row.commentary ?? "",
+    supply_price_note: row.supply_price_note ?? "",
+    island_notes: row.island_notes ?? "",
+    news_items: row.news_items ?? [],
     methodology_note: row.methodology_note ?? "",
   };
 }
@@ -161,15 +168,46 @@ export function BriefingsView() {
         : e,
     );
 
-  // Strip empty takeaways before persisting.
+  // ── News items (manual, neutral context) ───────────────────────────────────
+  const EMPTY_NEWS: BriefingNewsItem = { title: "", source: "", url: "", date: "", note: "" };
+  const setNews = (i: number, field: keyof BriefingNewsItem, v: string) =>
+    setEditing((e) => {
+      if (!e) return e;
+      const next = [...(e.draft.news_items ?? [])];
+      next[i] = { ...next[i], [field]: v };
+      return { ...e, draft: { ...e.draft, news_items: next } };
+    });
+  const addNews = () =>
+    setEditing((e) =>
+      e ? { ...e, draft: { ...e.draft, news_items: [...(e.draft.news_items ?? []), { ...EMPTY_NEWS }] } } : e,
+    );
+  const removeNews = (i: number) =>
+    setEditing((e) =>
+      e ? { ...e, draft: { ...e.draft, news_items: (e.draft.news_items ?? []).filter((_, j) => j !== i) } } : e,
+    );
+
+  // Strip empty takeaways / news items before persisting.
   function cleanDraft(d: BriefingDraftInput): BriefingDraftInput {
     const takeaways = (d.key_takeaways ?? []).map((x) => x.trim()).filter(Boolean);
+    const news = (d.news_items ?? [])
+      .map((n) => ({
+        title: n.title.trim(),
+        source: n.source.trim(),
+        url: n.url.trim(),
+        date: n.date.trim(),
+        note: n.note.trim(),
+      }))
+      // Keep an item only if it has at least a title (the minimum useful unit).
+      .filter((n) => n.title.length > 0);
     return {
       ...d,
       slug: d.slug.trim() || slugify(d.period),
       key_takeaways: takeaways.length > 0 ? takeaways : null,
       executive_summary: d.executive_summary?.trim() || null,
       commentary: d.commentary?.trim() || null,
+      supply_price_note: d.supply_price_note?.trim() || null,
+      island_notes: d.island_notes?.trim() || null,
+      news_items: news.length > 0 ? news : null,
       methodology_note: d.methodology_note?.trim() || null,
     };
   }
@@ -347,10 +385,65 @@ export function BriefingsView() {
           </div>
 
           <div>
-            <label className="text-[11px] text-foreground-subtle block mb-1">Commentary</label>
+            <label className="text-[11px] text-foreground-subtle block mb-1">
+              Key observations <span className="text-foreground-subtle">(shown as the lead editorial section)</span>
+            </label>
             <textarea className={`${INPUT_CLS} resize-y`} rows={6} value={d.commentary ?? ""}
               placeholder="2-3 paragraphs of editorial context. Blank lines separate paragraphs."
               onChange={(e) => patch({ commentary: e.target.value })} />
+          </div>
+
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">
+              Supply &amp; price signals <span className="text-foreground-subtle">(optional)</span>
+            </label>
+            <textarea className={`${INPUT_CLS} resize-y`} rows={4} value={d.supply_price_note ?? ""}
+              placeholder="How supply and asking prices are moving. Asking prices only — not transaction prices."
+              onChange={(e) => patch({ supply_price_note: e.target.value })} />
+          </div>
+
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">
+              Island notes <span className="text-foreground-subtle">(optional, short)</span>
+            </label>
+            <textarea className={`${INPUT_CLS} resize-y`} rows={3} value={d.island_notes ?? ""}
+              placeholder="Anything that stands out per island."
+              onChange={(e) => patch({ island_notes: e.target.value })} />
+          </div>
+
+          {/* News context — manual, neutral. */}
+          <div>
+            <label className="text-[11px] text-foreground-subtle block mb-1">
+              News context <span className="text-foreground-subtle">(optional, 3–5 items — neutral context only, no causal/forecast claims)</span>
+            </label>
+            <div className="space-y-3">
+              {(d.news_items ?? []).map((n, i) => (
+                <div key={i} className="border border-border rounded p-3 space-y-2 bg-surface-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[11px] text-foreground-subtle font-mono">Item {i + 1}</span>
+                    <button type="button" onClick={() => removeNews(i)}
+                      className="text-[12px] text-foreground-subtle hover:text-[#C44A3A]">Remove</button>
+                  </div>
+                  <input className={INPUT_CLS} value={n.title} placeholder="Title"
+                    onChange={(e) => setNews(i, "title", e.target.value)} />
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                    <input className={INPUT_CLS} value={n.source} placeholder="Source"
+                      onChange={(e) => setNews(i, "source", e.target.value)} />
+                    <input className={INPUT_CLS} value={n.date} placeholder="Date (e.g. May 2026)"
+                      onChange={(e) => setNews(i, "date", e.target.value)} />
+                    <input className={INPUT_CLS} value={n.url} placeholder="https://…"
+                      onChange={(e) => setNews(i, "url", e.target.value)} />
+                  </div>
+                  <input className={INPUT_CLS} value={n.note} placeholder="Short neutral note (context, not interpretation)"
+                    onChange={(e) => setNews(i, "note", e.target.value)} />
+                </div>
+              ))}
+            </div>
+            {(d.news_items ?? []).length < 5 && (
+              <button type="button" onClick={addNews} className="mt-2 text-[12px] text-accent hover:underline">
+                + Add news item
+              </button>
+            )}
           </div>
 
           <div>
