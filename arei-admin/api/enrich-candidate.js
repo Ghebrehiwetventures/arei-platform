@@ -166,7 +166,16 @@ export function logEvent(event, detail) {
 const ARTICLE_FETCH_TIMEOUT = 10_000;
 const ARTICLE_MAX_BYTES = 200 * 1024; // 200 KB
 const ARTICLE_MIN_CHARS = 200;        // below this, body is too weak — fall back to snippet
-const USER_AGENT = "AREI-MarketNewsBot/1.0 (+https://capeverderealestateindex.com)";
+const ARTICLE_MAX_CHARS = 5000;       // cap the extracted body (was 3000 — richer summaries)
+// A real browser UA: many news sites 403 or serve an empty shell to non-browser
+// bots, which is the main reason full text was missing for some sources.
+const USER_AGENT =
+  "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36";
+const ARTICLE_FETCH_HEADERS = {
+  "User-Agent": USER_AGENT,
+  Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+  "Accept-Language": "en-US,en;q=0.9,pt;q=0.8",
+};
 
 function isGoogleNewsUrl(rawUrl) {
   try {
@@ -324,19 +333,63 @@ function stripTags(html) {
     .trim();
 }
 
+// Many news sites embed schema.org NewsArticle/Article JSON-LD with the full
+// `articleBody` — the cleanest, most complete text when present. Try it first.
+function extractJsonLdArticleBody(html) {
+  const re = /<script[^>]+type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi;
+  let m;
+  while ((m = re.exec(html)) !== null) {
+    let data;
+    try { data = JSON.parse(m[1].trim()); } catch { continue; }
+    const nodes = [];
+    const visit = (n) => {
+      if (!n || typeof n !== "object") return;
+      if (Array.isArray(n)) { n.forEach(visit); return; }
+      nodes.push(n);
+      if (Array.isArray(n["@graph"])) n["@graph"].forEach(visit);
+    };
+    visit(data);
+    for (const n of nodes) {
+      if (typeof n.articleBody === "string" && n.articleBody.trim().length >= ARTICLE_MIN_CHARS) {
+        return stripTags(n.articleBody).trim();
+      }
+    }
+  }
+  return null;
+}
+
+// If an <article> element exists, narrow to it so navigation/related-story
+// paragraphs elsewhere on the page don't pollute the body.
+function pickArticleScope(html) {
+  const m = html.match(/<article[^>]*>([\s\S]*?)<\/article>/i);
+  return m && m[1].length > 400 ? m[1] : html;
+}
+
 export function extractArticleText(html) {
   if (!html) return null;
-  // Pull text from <p> tags — reasonable proxy for article body on most news sites.
+
+  // 1) schema.org articleBody — cleanest full text when the site provides it.
+  const ld = extractJsonLdArticleBody(html);
+  if (ld && ld.length >= ARTICLE_MIN_CHARS) return ld.slice(0, ARTICLE_MAX_CHARS);
+
+  // 2) Fall back to <p> extraction. Strip non-content regions first so their
+  //    text can't leak in, then prefer an <article> scope when present.
+  const cleaned = html
+    .replace(/<script[\s\S]*?<\/script>/gi, " ")
+    .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<(nav|header|footer|aside|form)[\s\S]*?<\/\1>/gi, " ");
+  const scope = pickArticleScope(cleaned);
+
   // Drop obvious boilerplate (nav, footer, cookie, newsletter, ad text).
-  const BOILERPLATE = /\b(cookie|subscribe|newsletter|sign up|advertisement|all rights reserved|privacy policy|terms of service|follow us|share this)\b/i;
+  const BOILERPLATE = /\b(cookie|subscribe|newsletter|sign up|advertisement|all rights reserved|privacy policy|terms of service|follow us|share this|read more|related articles?)\b/i;
   const paragraphs = [];
   const pRe = /<p[^>]*>([\s\S]*?)<\/p>/gi;
   let m;
-  while ((m = pRe.exec(html)) !== null) {
+  while ((m = pRe.exec(scope)) !== null) {
     const text = stripTags(m[1]).trim();
     if (text.length > 40 && !BOILERPLATE.test(text)) paragraphs.push(text);
   }
-  const body = paragraphs.join(" ").slice(0, 3000); // cap at ~3000 chars
+  const body = paragraphs.join(" ").slice(0, ARTICLE_MAX_CHARS);
   return body || null;
 }
 
@@ -352,7 +405,8 @@ export async function fetchArticleBody(url, { fetchImpl = fetch } = {}) {
     const timer = setTimeout(() => controller.abort(), ARTICLE_FETCH_TIMEOUT);
     try {
       const res = await fetchImpl(url, {
-        headers: { "User-Agent": USER_AGENT, Accept: "text/html,*/*" },
+        headers: ARTICLE_FETCH_HEADERS,
+        redirect: "follow",
         signal: controller.signal,
       });
       if (!res.ok) {
