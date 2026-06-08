@@ -205,7 +205,9 @@ async function enrichListings(
         continue;
       }
 
-      applyExtractResultToListing(listing, extractResult);
+      applyExtractResultToListing(listing, extractResult, {
+        applyTruncatedTitleUpgrade: true,
+      });
 
       enriched++;
       console.log(`[Enrich] ✓ ${listing.id}`);

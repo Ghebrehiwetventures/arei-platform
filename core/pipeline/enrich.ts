@@ -48,6 +48,8 @@ export interface ApplyOptions {
   applyDescriptionHtmlFallback?: boolean;
   /** Overwrite title when extract title is longer. (path A) */
   applyTitleUpgrade?: boolean;
+  /** Replace only list titles that visibly end in an ellipsis. (curated path) */
+  applyTruncatedTitleUpgrade?: boolean;
   /** Assign parkingSpaces when extracted. (path A) */
   applyParkingSpaces?: boolean;
 }
@@ -107,6 +109,17 @@ export function applyExtractResultToListing(
   // ── title (path A only) ─────────────────────────────────────────────────
   if (options.applyTitleUpgrade && extract.title && extract.title.length > (listing.title?.length || 0)) {
     listing.title = extract.title;
+  }
+  const currentTitle = listing.title?.trim() || "";
+  const explicitlyTruncated = /(?:\.\.\.|…)$/.test(currentTitle);
+  if (
+    options.applyTruncatedTitleUpgrade &&
+    explicitlyTruncated &&
+    extract.title &&
+    extract.title.length > currentTitle.length
+  ) {
+    listing.title = extract.title.replace(/\s+\|\s+[^|]+$/, "").trim();
+    wasEnriched = true;
   }
 
   // ── location (when listing has none) ────────────────────────────────────
