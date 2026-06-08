@@ -7,6 +7,49 @@ const { loadSourcesConfig, sourceConfigToFetchConfig } = require("../core/config
 const { parseListingsFromHtml } = require("../core/fetcher/parse/listings");
 const { dedupeImageUrls } = require("../core/fetcher/parse/images");
 
+test("CSS background extraction scopes shared Elementor card classes by unique wrapper class", () => {
+  const config = {
+    id: "cv_terracaboverde",
+    name: "Terra Cabo Verde",
+    base_url: "https://terracaboverde.com/properties/",
+    fetch_method: "http",
+    pagination: { type: "none" },
+    selectors: {
+      listing: ".e-loop-item",
+      link: "a[href*='/properties/']",
+      title: "h3",
+      image: "img",
+    },
+    id_prefix: "tcv",
+  };
+  const html = `
+    <style>
+      .elementor-101 .shared-image { background-image: url("https://cdn.example.com/one.jpg"); }
+      .elementor-202 .shared-image { background-image: url("https://cdn.example.com/two.jpg"); }
+    </style>
+    <article class="elementor e-loop-item elementor-101">
+      <a href="/properties/one/"><h3>Property One</h3></a>
+      <div class="shared-image"></div>
+    </article>
+    <article class="elementor e-loop-item elementor-202">
+      <a href="/properties/two/"><h3>Property Two</h3></a>
+      <div class="shared-image"></div>
+    </article>
+  `;
+
+  const rows = parseListingsFromHtml(
+    html,
+    config,
+    new Set(),
+    new Date("2026-06-08T00:00:00.000Z"),
+  );
+
+  assert.deepEqual(rows.map((row) => row.imageUrls), [
+    ["https://cdn.example.com/one.jpg"],
+    ["https://cdn.example.com/two.jpg"],
+  ]);
+});
+
 test("NhaKaza list parsing keeps the short sale card and excludes featured rentals", () => {
   const loaded = loadSourcesConfig("cv");
   assert.equal(loaded.success, true, loaded.error);

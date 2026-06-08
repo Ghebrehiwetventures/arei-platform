@@ -52,7 +52,7 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 
 ## Progress rollup
 
-- [ ] cv_terracaboverde
+- [x] cv_terracaboverde
 - [x] cv_simplycapeverde
 - [x] cv_ccoreinvestments
 - [x] cv_homescasaverde
@@ -61,6 +61,7 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 - [x] cv_estatecv
 - [x] cv_oceanproperty24
 - [x] cv_nhakaza
+- [x] cv_remax (json_api — audited 2026-06-08, no fixes needed)
 - [x] Cross-cutting image issues
 
 Next operational steps:
@@ -80,18 +81,144 @@ Next operational steps:
 
 ---
 
-## cv_terracaboverde — n=35 (healthy control)
+## cv_terracaboverde — n=37 — DONE 2026-06-08
 
-| field | missing | verdict | notes |
+Status: ✅ **Resolved for current v1 ingest.** All three previously-blocked
+gates were rerun successfully and the confirmed live ingest refreshed published
+rows, inserted new rows as `needs_review`, and demoted two verified-404 rows to
+`removed`. No promotion occurred.
+
+Live ingest evidence (2026-06-08):
+- Gate 1 — final dry run after the property-type patch:
+  `DRY_RUN=1 REPORT_JSON=1 DEBUG_GENERIC=1 MARKET_ID=cv SOURCE_ID=cv_terracaboverde npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 37, enriched 37/37, 0 skipped, 0 failures. Report coverage:
+  price 37/37, bedrooms 37/37, bathrooms 37/37, area 37/37, images ≥1 37/37.
+  Property type fully resolved (32 apartment + 5 villa; 0 heuristic `property`
+  rows). 29 already-published rows status-gated; 8 new; 2 removal candidates.
+- Gate 2 — both removal-candidate URLs returned HTTP 404 on direct GET, so
+  demotion is authoritative and safe:
+  `one-bedroom-flat-for-sale-in-estrela-do-mar` and
+  `one-bedroom-flat-for-sale-in-the-estoril-area-ca-boteto`.
+- Gate 3 — pre-ingest direct Postgres (`DATABASE_URL`, not Supabase JS/REST):
+  `kv_curated.listings` had 31 `published` rows, `public.v1_feed_cv` had 31,
+  all 31 with AI descriptions. This reconciles to 29 still-live (refresh in
+  place) + 2 to demote + 8 genuinely new.
+- Confirmed live ingest:
+  `REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_terracaboverde npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  upserted 37/37 with 0 failures, generated AI descriptions for the 8 new rows,
+  preserved status/AI on 29 published rows, and demoted the 2 absent rows.
+- Post-ingest direct Postgres verification:
+  `kv_curated.listings` has 29 `published` + 8 `needs_review` + 2 `removed`;
+  `public.v1_feed_cv` has exactly the 29 published rows. The 8 `needs_review`
+  rows all have AI descriptions and null `first_published_at` (not promoted).
+  The 2 demoted rows are `removed`. Coverage on the 37 current rows:
+  price 37/37, bedrooms 37/37, bathrooms 37/37, area 37/37.
+
+Remaining work: manually review the 8 `needs_review` additions before any
+separate promotion decision.
+
+### Pre-fix investigation record
+
+Status (pre-ingest): ⚠️ Fixes implemented and locally verified; the final
+network dry run after the structured property-type patch, direct
+removal-candidate page checks, and the expanded direct Postgres comparison were
+blocked when the execution environment exhausted its external approval quota.
+Those gates were subsequently rerun (see live ingest evidence above).
+
+Fresh pre-fix command:
+
+```bash
+DRY_RUN=1 REPORT_JSON=1 DEBUG_GENERIC=1 MARKET_ID=cv \
+  SOURCE_ID=cv_terracaboverde \
+  npx ts-node --transpile-only scripts/ingest_to_curated.ts
+```
+
+Fresh pre-fix evidence:
+- 37 fetched over six requests: pages `9 + 9 + 9 + 9 + 1`, then page 6
+  returned zero rows and stopped with `empty_listings`.
+- 37/37 detail pages enriched, 0 detail failures, 0 skipped rows.
+- Direct pipeline DB reads reconciled 29 same-source/same-URL generated IDs to
+  existing published curated IDs; 8 rows were new dry-run rows.
+- Two published rows were dry-run removal candidates only:
+  `one-bedroom-flat-for-sale-in-estrela-do-mar` and
+  `one-bedroom-flat-for-sale-in-the-estoril-area-ca-boteto`.
+- Coverage before fixes: price 37/37, bedrooms 35/37, bathrooms 37/37,
+  area 18/37, island/city 37/37, property type non-null 37/37, images >=1
+  37/37.
+
+| field | pre-fix gap | verdict | evidence / action |
 |---|---|---|---|
-| price | 0/35 | ✅ | |
-| bedrooms | 2/35 | ❓ | |
-| bathrooms | 0/35 | ✅ | |
-| area | 0/35 | ✅ | |
+| price | 0/37 missing | ✅ SOURCE / ACCEPTED | All catalogue cards and detail `Price:` labels had numeric EUR prices. The checked villa page also contains an older `265,000 euro` prose value while its structured/current price is `€270.000`; structured source data wins. |
+| bedrooms | 2/37 missing | 🔧 SCRAPER — FIXED IN CODE | Both pages expose structured `Bedrooms: 0` but explicitly say `two ... bedrooms` in visible description text. Added a Terra source pattern for word-form bedroom counts. Both now extract 2 in tests and the last successful post-fix dry run. |
+| bathrooms | 0/37 missing | ✅ SOURCE / ACCEPTED | 37/37 extracted from structured `Bathrooms:` rows. |
+| area | 19/37 null plus several false tiny values | 🔧 SCRAPER — FIXED IN CODE | Current pages use `Sales area: <n> sqm`; config only recognized `Area:`, which is a neighborhood string and could yield bogus values such as 1, 8, or 12 sqm. Added `Sales area` aliases. Last successful post-fix dry run recovered 37/37 areas with checked examples `75,8 -> 76`, `100 -> 100`, and `143 -> 143` sqm. |
+| location | 0/37 missing | ✅ SOURCE / ACCEPTED | Current catalogue is Boa Vista; detail pages expose `Island: Boa Vista` and `Municipality: Sal Rei`. Final report resolves all 37 to Boa Vista / Sal Rei. |
+| property type | 5 heuristic `property` rows | 🔧 SCRAPER — FIXED IN CODE, FINAL DRY RUN PENDING | Terra exposes structured `Category:` values. Added generic spec-table property-type extraction and Terra `category` aliases so structured category wins over title heuristics. Focused/full tests pass; network quota blocked the required final report regeneration. |
+| images | 37/37 contaminated pre-fix | 🔧 SCRAPER — FIXED | List-page CSS extraction scanned shared Elementor classes, giving every card all page covers plus site chrome. The detail selector also included page-wide swiper links. CSS extraction now prefers page-unique wrapper classes; Terra detail images are scoped to `#prop-gallery`, with generic image fallback disabled. |
 
-Spot-check (beds):
-- https://www.terracaboverde.com/properties/seafront-penthouse-with-panoramic-oceanfront-terrace
-- https://www.terracaboverde.com/properties/villa-with-private-pool-and-large-outdoor-patio
+Bedroom page evidence:
+- `seafront-penthouse-with-panoramic-oceanfront-terrace`: structured
+  `Rooms: T2-3 Rooms`, `Bedrooms: 0`, `Bathrooms: 1`, `Sales area: 100 sqm`;
+  visible description says two large bedrooms. No real-estate JSON-LD block.
+- `villa-with-private-pool-and-large-outdoor-patio`: structured
+  `Rooms: T3-4 Rooms`, `Bedrooms: 0`, `Bathrooms: 3`,
+  `Sales area: 143 sqm`; visible description says two double bedrooms.
+  No real-estate JSON-LD block.
+
+Sale-only and pagination evidence:
+- All 37 detail pages in the exhaustive valid-page pass returned HTTP 200 and
+  exposed `Type: For sale`; no rental catalogue rows were retained.
+- Pages 1-5 produced 37 unique detail URLs with no loops or duplicate URLs.
+  Page 6 produced zero rows and is the authoritative stop.
+- The source catalogue contains investment language about renting owned units
+  and rental potential, but those rows are sale offerings with a purchase
+  price and `Type: For sale`, not rental listings.
+
+Image evidence after the list/detail image fixes:
+- Final successful image report: 551 retained URLs, 551 unique URLs,
+  5-20 images per listing, 0 shared URLs across listings, and 0 known
+  logo/footer/placeholder URLs.
+- Exhaustive GET audit: 551/551 returned 2xx, `image/jpeg` or `image/png`,
+  and non-empty bodies (38,254 to 3,045,694 bytes).
+- 37/37 listing pages returned HTTP 200; every retained image URL was present
+  inside that same page's `#prop-gallery`; 0 association failures.
+- Content hashing found one exact duplicate pair inside the source gallery for
+  the seafront penthouse and 44 groups reused across separate related
+  developments/listings. These are SOURCE-level duplicate/reused source
+  assets, not scraper cross-association.
+
+Fixes implemented:
+- Terra config recognizes `Sales area` and word-form bedroom counts.
+- Terra detail images are restricted to the authoritative property gallery.
+- Generic CSS background extraction prefers classes unique on the current page,
+  preventing shared Elementor classes from leaking every card image into every
+  row.
+- Generic spec-table extraction can emit a canonical structured property type;
+  Terra maps `Category` / `Categoria`.
+
+Tests:
+- Regression tests first reproduced Terra `Sales area`, word-form bedrooms,
+  page-wide swiper image leakage, shared Elementor CSS leakage, and structured
+  category extraction.
+- Focused:
+  `node --test tests/genericDetail.test.cjs tests/genericFetcherHtml.test.cjs tests/propertyType.test.cjs tests/ingestToCurated.test.cjs`
+  passed 60/60.
+- Full suite: `node --test tests/` passed 80/80.
+
+Database and remaining gates:
+- The successful dry run's direct Postgres-backed status/identity gates found
+  29 existing published rows, preserved their IDs by same-URL reconciliation,
+  identified 8 new rows, and made no writes or promotions.
+- Two missing published rows remain removal candidates only. Their current
+  pages must be checked directly before any live run can demote them.
+- The expanded direct `DATABASE_URL` query for curated/feed counts, timestamps,
+  AI-description preservation, and status comparison first failed on sandbox
+  DNS and then could not be approved because the environment's external-access
+  quota was exhausted.
+- Re-run the final non-zero dry run after the property-type patch, repeat the
+  551-image audit if the catalogue changes, verify both removal-candidate URLs,
+  and complete the direct Postgres comparison. Then report findings and request
+  explicit confirmation before live ingest.
 
 ---
 
@@ -954,6 +1081,74 @@ Historical excluded rentals:
 
 Remaining work: manually review the single `needs_review` row before any
 separate promotion decision.
+
+---
+
+## cv_remax — n=45 — AUDITED + REFRESH-INGESTED 2026-06-08 (no fixes needed)
+
+Status: ✅ **Healthy. No scraper/config bug found.** This source was not part of
+the original 10-source rollup. It is a `json_api` source (Gryphtech / Azure
+Search MLS backend, `detail.enabled: false`) so it has no HTML extraction-gap
+class of bug — every field comes straight from structured JSON via `item_map`.
+A confirmed refresh ingest was run (below): it refreshed the 37 published rows
+in place and inserted 6 new rows as `needs_review`. No removals, no promotions.
+
+Command:
+
+```bash
+DRY_RUN=1 REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_remax \
+  npx ts-node --transpile-only scripts/ingest_to_curated.ts
+```
+
+Coverage and verdicts (truth class: verified in data + verified against the
+live RE/MAX API):
+
+| field | coverage | verdict | evidence |
+|---|---:|---|---|
+| price | 33/45 | ✅ SOURCE / ACCEPTED | All 12 nulls have API `ListingPriceEuro: 0` and `ListingPrice: 0` = "price on request" on remax.cv. Mapping intentionally writes null (config comment + FEED_CONTRACT price-optional). |
+| bedrooms | 35/45 | ✅ SOURCE / ACCEPTED | All 10 nulls are API `NumberOfBedrooms: null`. Mostly land/commercial/building types (PropertyTypeUID 211/13/228) plus a few apartments left blank by the agent. |
+| bathrooms | 35/45 | ✅ SOURCE / ACCEPTED | Same 10 rows; API `NumberOfBathrooms: null`. |
+| area | 36/45 (33 `property_size_sqm` + 3 `land_area_sqm`) | ✅ SOURCE / ACCEPTED | All 9 nulls have API `TotalArea: 0` **and** every alternate area field empty (`LivingArea`, `LotSize`, `LotSize2`, `BuiltArea`, `LeaseArea`). No field to map. |
+| images | 45/45 ≥1; 38/45 ≥3 | ✅ | 800 URLs, 777 unique, 0 non-CDN, 0 logo/social/placeholder/tracking patterns. Sampled CDN URLs returned HTTP 200 `image/jpeg` with real bytes. 7 rows below 3 images expose only 1–2 photos at source. |
+
+Raw-API audit method (the json_api equivalent of "open the listing page"):
+- POST `https://www.remax.cv/search/listing-search/docs/search` with the exact
+  configured body (`search:"*"`, sale-only filter `TransactionTypeUID eq 261`,
+  `count:true`, `$skip`/`$top` pagination). `@odata.count` = 45, fetched 45.
+- For every report row with a null field, the matching API `content` object was
+  inspected. In all cases the API value was itself `0`/`null`, and for area the
+  full set of area fields was empty — confirming SOURCE, not a mapping miss.
+
+Reconcile (direct Postgres, `DATABASE_URL`, not Supabase JS/REST):
+- API 45 rows; `kv_curated.listings` 39 rows (37 `published` + 2 `needs_review`);
+  `public.v1_feed_cv` 37.
+- **0 published rows absent from the API** → no removal candidates (dry-run
+  removed-gate agreed: "No published listings missing").
+- 6 rows are genuinely new (`rmx_730061005-23`, `-001-55`, `-005-24`, `-001-54`,
+  `-002-13`, `-002-14`); a live ingest would insert them as `needs_review`.
+- The 2 existing `needs_review` rows are correct and unpromoted
+  (`first_published_at` null): `rmx_730061001-53` (well-formed €145k 2-bed
+  apartment) and `rmx_730061002-8` (price-on-request apartment with no API
+  specs).
+
+Conclusion: no engine or config change. RE/MAX field gaps are real source
+floors.
+
+Confirmed refresh ingest (2026-06-08):
+- `REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_remax npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched 45, enriched 45/45, refreshed the 37 published rows (status / AI /
+  timestamps preserved), generated AI descriptions for 4 of the 6 new rows
+  (3 skipped as too-short source descriptions, i.e. price-on-request stubs),
+  upserted 45/45 with 0 failures, and demoted nothing (no removal candidates).
+- Post-ingest direct Postgres: `kv_curated.listings` 37 `published` +
+  8 `needs_review`; `public.v1_feed_cv` unchanged at 37. All 8 `needs_review`
+  rows have null `first_published_at` (none promoted).
+
+Adjacent finding (not actioned): `cv_capeverdepropertyuk` is configured (not
+`DROP`) but has **0 rows** in curated/feed — likely never ingested or a broken
+fetch. Worth a separate look. Dropped sources (`cv_rightmove`,
+`cv_globallistings`, `cv_properstar`, `cv_greenacres`) carry
+`lifecycleOverride: DROP` and are out of scope.
 
 ---
 

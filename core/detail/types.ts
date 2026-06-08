@@ -42,6 +42,7 @@ export interface DetailEnrichmentResult {
   areaSqm?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
+  propertyType?: string | null;
   parkingSpaces?: number | null;
   terraceArea?: number | null;
   amenities?: string[];
@@ -71,6 +72,7 @@ export interface DetailExtractResult {
   areaSqm?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
+  propertyType?: string | null;
   parkingSpaces?: number | null;
   terraceArea?: number | null;
   amenities?: string[];

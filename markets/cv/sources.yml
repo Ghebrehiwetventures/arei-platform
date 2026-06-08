@@ -97,9 +97,10 @@ sources:
       enabled: true
       policy: always        # always, on_violation, never
       delay_ms: 2500
+      image_fallback: false
       selectors:
         description: "h2:contains('Description') + .elementor-widget-text-editor, .elementor-widget-text-editor p"
-        images: "#prop-gallery .swiper-slide img, .elementor-image-carousel img, .swiper-slide a[href*='.jpg']"
+        images: "#prop-gallery .elementor-image-carousel img"
         # bedrooms/bathrooms extracted via spec_table below; spec_patterns kept as fallback
       spec_table:
         container: ".elementor-widget"
@@ -109,12 +110,14 @@ sources:
           bedrooms: ["bedrooms", "quartos"]
           bathrooms: ["bathrooms", "casas de banho", "banheiros"]
           parking: ["parking spaces", "lugares de estacionamento", "parking", "garage"]
-          area: ["area", "área", "terrace area", "área do terraço"]
+          area: ["sales area", "área de venda", "area", "área", "terrace area", "área do terraço"]
           price: ["price", "preço", "precio", "preis"]
+          property_type: ["category", "categoria"]
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
           - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\b[^.!?]{0,40}\\bbedrooms?\\b"
           - "\\bT(\\d+)\\b"                                    # CV standard: T2 = 2 bedrooms
           - "(?:T|Tipologia)\\s*(\\d+)"                        # "Tipologia 2"
           - "(\\d+)\\s*(?:dorm|assoalhada)"                    # Portuguese variants

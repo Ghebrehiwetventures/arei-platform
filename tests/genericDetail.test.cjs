@@ -6,6 +6,72 @@ require("ts-node/register/transpile-only");
 const { loadSourcesConfig } = require("../core/configLoader");
 const { createGenericDetailPlugin } = require("../core/detail/plugins/genericDetail");
 
+test("extracts Terra Cabo Verde sales area and word-form bedrooms from current markup", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_terracaboverde");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(
+    "cv_terracaboverde",
+    source.detail,
+    source.price_format,
+  );
+
+  const result = plugin.extract(`
+    <div class="elementor-widget">
+      <ul>
+        <li><span class="elementor-icon-list-text"><span class="pre-data">Area: </span>Praia de Cabral</span></li>
+        <li><span class="elementor-icon-list-text"><span class="pre-data">Sales area: </span>75,8 sqm</span></li>
+        <li><span class="elementor-icon-list-text"><span class="pre-data">Category: </span>Apartment</span></li>
+        <li><span class="elementor-icon-list-text"><span class="pre-data">Bedrooms: </span>0</span></li>
+      </ul>
+    </div>
+    <div class="elementor-widget-text-editor">
+      <p>The sleeping area features two large, bright bedrooms with natural ventilation.</p>
+    </div>
+  `, "https://www.terracaboverde.com/properties/example");
+
+  assert.equal(result.areaSqm, 76);
+  assert.equal(result.bedrooms, 2);
+  assert.equal(result.propertyType, "apartment");
+});
+
+test("keeps Terra Cabo Verde images scoped to the current property gallery", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_terracaboverde");
+  const plugin = createGenericDetailPlugin("cv_terracaboverde", source.detail, source.price_format);
+
+  const result = plugin.extract(`
+    <div class="swiper-slide">
+      <a href="https://www.terracaboverde.com/wp-content/uploads/2024/12/img-immobili-cover.jpg">
+        Site chrome
+      </a>
+    </div>
+    <div class="related-properties swiper-slide">
+      <a href="https://www.terracaboverde.com/wp-content/uploads/2026/05/unrelated-listing.jpg">
+        Related listing
+      </a>
+    </div>
+    <div id="prop-gallery">
+      <div class="elementor-image-carousel">
+        <img src="https://www.terracaboverde.com/wp-content/uploads/2026/05/current-1.jpg">
+        <img src="https://www.terracaboverde.com/wp-content/uploads/2026/05/current-2.jpg">
+        <img src="https://www.terracaboverde.com/wp-content/uploads/2026/05/current-3.jpg">
+      </div>
+    </div>
+  `, "https://www.terracaboverde.com/properties/example");
+
+  assert.deepEqual(result.imageUrls, [
+    "https://www.terracaboverde.com/wp-content/uploads/2026/05/current-1.jpg",
+    "https://www.terracaboverde.com/wp-content/uploads/2026/05/current-2.jpg",
+    "https://www.terracaboverde.com/wp-content/uploads/2026/05/current-3.jpg",
+  ]);
+});
+
 test("extracts EstateCV detail fields from current source markup", () => {
   const config = loadSourcesConfig("cv");
   assert.equal(config.success, true, config.error);

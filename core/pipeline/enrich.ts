@@ -22,6 +22,7 @@ export interface EnrichableListing {
   detailUrl?: string;
   bedrooms?: number | null;
   bathrooms?: number | null;
+  property_type?: string;
   area_sqm?: number | null;
   parkingSpaces?: number | null;
   amenities?: string[];
@@ -34,6 +35,7 @@ export interface ExtractResultLike {
   price?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
+  propertyType?: string | null;
   parkingSpaces?: number | null;
   areaSqm?: number | null;
   amenities?: string[];
@@ -89,6 +91,7 @@ export function applyExtractResultToListing(
   // ── structured fields ───────────────────────────────────────────────────
   if (extract.bedrooms !== undefined) listing.bedrooms = extract.bedrooms;
   if (extract.bathrooms !== undefined) listing.bathrooms = extract.bathrooms;
+  if (extract.propertyType) listing.property_type = extract.propertyType;
   if (options.applyParkingSpaces && extract.parkingSpaces !== undefined) {
     listing.parkingSpaces = extract.parkingSpaces;
   }

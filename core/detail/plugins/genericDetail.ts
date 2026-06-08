@@ -372,6 +372,18 @@ function parseAreaTextSqm(text: string): number | null {
   return Math.round(value);
 }
 
+function normalizePropertyType(value: string): string | null {
+  const normalized = value.toLowerCase().trim();
+  if (/\b(apartment|flat|apartamento|appartement)\b/.test(normalized)) return "apartment";
+  if (/\b(villa|vila|moradia)\b/.test(normalized)) return "villa";
+  if (/\b(house|home|casa|maison)\b/.test(normalized)) return "house";
+  if (/\b(penthouse|cobertura|ático|attique)\b/.test(normalized)) return "penthouse";
+  if (/\b(studio|estúdio|estudio)\b/.test(normalized)) return "studio";
+  if (/\b(land|plot|lot|terreno|lote|parcela|terrain)\b/.test(normalized)) return "land";
+  if (/\b(commercial|office|shop|comercial|escritório|loja)\b/.test(normalized)) return "commercial";
+  return null;
+}
+
 function cleanDescription(text: string): string {
   let cleaned = text;
   for (const pattern of UI_TEXT_PATTERNS) {
@@ -635,6 +647,7 @@ export function createGenericDetailPlugin(
       let bathrooms: number | null = null;
       let parkingSpaces: number | null = null;
       let areaSqm: number | null = null;
+      let propertyType: string | null = null;
       let structuredAreaFound = false;
 
       // Scope spec_patterns text to avoid regex pollution from Similar Listings,
@@ -738,6 +751,8 @@ export function createGenericDetailPlugin(
               if (n !== null) areaSqm = n;
             } else if (field === "price" && !specTablePrice) {
               specTablePrice = value;
+            } else if (field === "property_type" && propertyType === null) {
+              propertyType = normalizePropertyType(value);
             }
           });
         });
@@ -921,6 +936,7 @@ export function createGenericDetailPlugin(
         areaSqm,
         bedrooms,
         bathrooms,
+        propertyType,
         parkingSpaces,
         amenities: Array.from(amenities),
       };

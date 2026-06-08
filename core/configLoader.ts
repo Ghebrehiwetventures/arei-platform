@@ -132,6 +132,7 @@ export interface DetailConfig {
       parking?: string[];
       area?: string[];
       price?: string[];
+      property_type?: string[];
     };
   };
 }
