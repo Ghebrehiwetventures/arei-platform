@@ -922,3 +922,53 @@ test("parses comma-thousands square-metre values as thousands, not decimals", ()
 
   assert.equal(result.areaSqm, 20000);
 });
+
+test("Homes Casa Verde keeps the large current-listing gallery image and excludes similar listings", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_homescasaverde");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(source.id, source.detail, source.price_format);
+  const result = plugin.extract(`
+    <div class="property-detail-gallery">
+      <img
+        src="https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/current-584x438.jpg"
+        srcset="https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/current-584x438.jpg 584w,
+                https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/current-2048x1536.jpg 2048w">
+    </div>
+    <div class="similar-listings">
+      <img class="wp-post-image" src="https://www.homescasaverde.com/wp-content/uploads/2026/06/other-property.jpg">
+    </div>
+  `, "https://www.homescasaverde.com/property/current");
+
+  assert.deepEqual(result.imageUrls, [
+    "https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/current-2048x1536.jpg",
+  ]);
+});
+
+test("EstateCV ignores unrelated page uploads and keeps property gallery images", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_estatecv");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(source.id, source.detail, source.price_format);
+  const result = plugin.extract(`
+    <header>
+      <img src="https://estatecv.com/wp-content/uploads/2024/08/office-team-1200x800.jpg">
+    </header>
+    <div class="gallery">
+      <img class="gallery__img"
+        src="https://estatecv.com/wp-content/uploads/2024/09/unit-445x331.jpg"
+        srcset="https://estatecv.com/wp-content/uploads/2024/09/unit-445x331.jpg 445w,
+                https://estatecv.com/wp-content/uploads/2024/09/unit-1440x913.jpg 1440w">
+    </div>
+  `, "https://estatecv.com/en/properties/apartments/unit");
+
+  assert.deepEqual(result.imageUrls, [
+    "https://estatecv.com/wp-content/uploads/2024/09/unit-1440x913.jpg",
+  ]);
+});

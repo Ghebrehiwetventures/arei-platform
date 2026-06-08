@@ -388,9 +388,10 @@ sources:
       enabled: true
       policy: always
       delay_ms: 3000
+      image_fallback: false
       selectors:
         description: ".property-description, .wpsight-listing-description, [class*='description'] p"
-        images: ".property-detail-gallery img, .property-gallery img, .slick-slide img, .swiper-slide img, img.wp-post-image"
+        images: ".property-detail-gallery img, .property-gallery .slick-slide img, .property-gallery .swiper-slide img"
         # Houzez has two layouts: v7 (strong inside li.h-beds) and v8+ (strong in sibling li, label li has .h-beds).
         bedrooms: ".h-beds strong, ul:has(.h-beds) strong, .listing-details-detail:contains('Bed') .listing-details-value"
         bathrooms: ".h-baths strong, ul:has(.h-baths) strong, .listing-details-detail:contains('Bath') .listing-details-value"
@@ -612,9 +613,10 @@ sources:
       policy: always
       fetch_method: http
       delay_ms: 3000
+      image_fallback: false
       selectors:
         description: ".pageContent__text p[data-start], .property__description p, .entry-content p, [class*='description'] p"
-        images: "img.gallery__img, .swiper-slide img, .gallery img, img[src*='uploads']"
+        images: "img.gallery__img, .property__gallery .swiper-slide img, .property__gallery .gallery img"
         # Price in detail pages: "Price: 479 491 €" format in spans
         price: ".property-info__price, .property__content p span:first-child"
       spec_table:

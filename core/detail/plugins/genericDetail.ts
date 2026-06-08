@@ -1,6 +1,7 @@
 import * as cheerio from "cheerio";
 import { DetailPlugin, DetailExtractResult } from "../types";
 import { DetailConfig, PriceFormatConfig } from "../../configLoader";
+import { dedupeImageUrls } from "../../fetcher/parse/images";
 const parseSrcsetModule = require("parse-srcset");
 const parseSrcset = parseSrcsetModule.default || parseSrcsetModule;
 
@@ -947,7 +948,7 @@ export function createGenericDetailPlugin(
         price,
         description,
         location,
-        imageUrls: imageUrls.slice(0, 20),
+        imageUrls: dedupeImageUrls(imageUrls).slice(0, 20),
         areaSqm,
         bedrooms,
         bathrooms,
