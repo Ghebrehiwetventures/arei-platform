@@ -333,6 +333,10 @@ function firstJsonLdOffer(jsonLd: JsonLdObject | undefined): JsonLdObject | unde
   return offer && typeof offer === "object" ? offer as JsonLdObject : undefined;
 }
 
+// Below this, an "area" value is implausible for a real property/unit and is
+// almost always a mis-parsed code or stray digit (e.g. "En-bv-01" → 1).
+const MIN_PLAUSIBLE_AREA_SQM = 5;
+
 function parseAreaTextSqm(text: string): number | null {
   if (!text) return null;
 
@@ -352,7 +356,11 @@ function parseAreaTextSqm(text: string): number | null {
       "i",
     ),
   );
-  const match = unitBoundMatch || text.match(new RegExp(numberPattern));
+  // Unitless fallback: accept a standalone number, but never digits glued into
+  // an alphanumeric code like "En-bv-01" (a unit/neighborhood identifier whose
+  // trailing digits would otherwise become a bogus 1 m² area).
+  const standaloneMatch = text.match(new RegExp(String.raw`(?<![\w-])` + numberPattern + String.raw`(?![\w-])`));
+  const match = unitBoundMatch || standaloneMatch;
   if (!match) return null;
 
   let numeric = match[1].replace(/[\s\u00a0]/g, "");
@@ -367,9 +375,13 @@ function parseAreaTextSqm(text: string): number | null {
   const value = parseFloat(numeric);
   if (!Number.isFinite(value) || value <= 0) return null;
   if (/(sq\s*ft|sqft|ft2|ft²|square\s*feet|square\s*foot)/i.test(text)) {
-    return Math.round(value * 0.09290304);
+    const sqm = Math.round(value * 0.09290304);
+    return sqm < MIN_PLAUSIBLE_AREA_SQM ? null : sqm;
   }
-  return Math.round(value);
+  // Sanity floor: a sub-5 m² "area" is never a real property/unit area and is a
+  // tell-tale of a mis-parsed code or stray digit.
+  const rounded = Math.round(value);
+  return rounded < MIN_PLAUSIBLE_AREA_SQM ? null : rounded;
 }
 
 function normalizePropertyType(value: string): string | null {

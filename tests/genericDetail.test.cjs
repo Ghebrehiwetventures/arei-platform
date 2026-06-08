@@ -38,6 +38,34 @@ test("extracts Terra Cabo Verde sales area and word-form bedrooms from current m
   assert.equal(result.propertyType, "apartment");
 });
 
+test("ignores Terra Cabo Verde unit-code Area row and uses Sales area for sqm", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_terracaboverde");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(
+    "cv_terracaboverde",
+    source.detail,
+    source.price_format,
+  );
+
+  // Real production markup: the "Area:" row holds a unit/neighborhood CODE
+  // ("En-bv-01"), not a number. Its trailing digits must not be parsed as area;
+  // the structured "Sales area" value is the real m² figure.
+  const result = plugin.extract(`
+    <div class="elementor-widget">
+      <ul>
+        <li><span class="elementor-icon-list-text"><span class="pre-data">Area: </span>En-bv-01</span></li>
+        <li><span class="elementor-icon-list-text"><span class="pre-data">Sales area: </span>61,91 sqm</span></li>
+      </ul>
+    </div>
+  `, "https://www.terracaboverde.com/properties/one-bedroom-flat-for-sale-in-estrela-do-mar-2");
+
+  assert.equal(result.areaSqm, 62);
+});
+
 test("keeps Terra Cabo Verde images scoped to the current property gallery", () => {
   const config = loadSourcesConfig("cv");
   assert.equal(config.success, true, config.error);
