@@ -117,6 +117,7 @@ function normalizeMarketNewsItem(row) {
     // true = enrichment had the full article body; false/null = snippet-only
     // (closed source). Drives the "Full article" / "Snippet only" badge.
     articleBodyUsed: typeof row.article_body_used === "boolean" ? row.article_body_used : null,
+    relevanceScore: Number.isFinite(Number(row.relevance_score)) ? Number(row.relevance_score) : null,
   };
 }
 

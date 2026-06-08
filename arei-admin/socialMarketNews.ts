@@ -27,6 +27,8 @@ export interface MarketNewsItem {
   publishedAt: string;
   /** true = enrichment had the full article; false/null = snippet-only (closed source). */
   articleBodyUsed?: boolean | null;
+  /** AI relevance 0–100 (higher = more postable). */
+  relevanceScore?: number | null;
 }
 
 export interface MarketNewsSocialDraft {
