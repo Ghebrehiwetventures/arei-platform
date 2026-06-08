@@ -121,7 +121,7 @@ export function NewsPostStudioView() {
   // Item-list filter / search / sort
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("");
-  const [sortBy, setSortBy] = useState("recent");
+  const [sortBy, setSortBy] = useState("relevant");
 
   // Caption (editable) + Instagram publish state
   const [captionText, setCaptionText] = useState("");
@@ -327,6 +327,13 @@ export function NewsPostStudioView() {
     .filter((i) => (!catFilter || i.category === catFilter) &&
       (!search || (i.sourceTitle || "").toLowerCase().includes(search.toLowerCase())))
     .sort((a, b) => {
+      if (sortBy === "relevant") {
+        const ra = a.relevanceScore ?? -1;
+        const rb = b.relevanceScore ?? -1;
+        if (rb !== ra) return rb - ra;
+        // tie-break by recency
+        return (new Date(b.publishedAt).getTime() || 0) - (new Date(a.publishedAt).getTime() || 0);
+      }
       const ta = new Date(a.publishedAt).getTime() || 0;
       const tb = new Date(b.publishedAt).getTime() || 0;
       return sortBy === "oldest" ? ta - tb : tb - ta;
@@ -365,6 +372,7 @@ export function NewsPostStudioView() {
                 ))}
               </select>
               <select className={inputCls + " text-xs"} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
+                <option value="relevant">Most relevant</option>
                 <option value="recent">Newest</option>
                 <option value="oldest">Oldest</option>
               </select>
@@ -402,7 +410,21 @@ export function NewsPostStudioView() {
                   selectedId === it.id ? "bg-surface-2" : "hover:bg-surface-2/60"
                 }`}
               >
-                <div className="text-xs font-medium leading-snug line-clamp-2">{it.sourceTitle}</div>
+                <div className="flex items-start gap-2">
+                  {it.relevanceScore != null && (
+                    <span
+                      className={`mt-0.5 shrink-0 px-1.5 py-0.5 rounded text-[10px] font-mono font-semibold ${
+                        it.relevanceScore >= 70 ? "bg-emerald-100 text-emerald-700"
+                          : it.relevanceScore >= 40 ? "bg-amber-100 text-amber-700"
+                          : "bg-surface-3 text-foreground-subtle"
+                      }`}
+                      title="AI relevance score (0–100)"
+                    >
+                      {it.relevanceScore}
+                    </span>
+                  )}
+                  <div className="text-xs font-medium leading-snug line-clamp-2">{it.sourceTitle}</div>
+                </div>
                 <div className="text-[10px] font-mono text-foreground-subtle mt-1">
                   {it.category} · {it.sourceName}
                 </div>
