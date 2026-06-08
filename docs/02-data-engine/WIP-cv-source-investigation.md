@@ -58,7 +58,7 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 - [x] cv_homescasaverde
 - [x] cv_capeverdeproperty24
 - [x] cv_cabohouseproperty
-- [ ] cv_estatecv
+- [x] cv_estatecv
 - [ ] cv_oceanproperty24
 - [ ] cv_nhakaza
 - [ ] Cross-cutting image issues
@@ -69,7 +69,10 @@ Next operational steps:
 2. Resolve [GitHub issue #361](https://github.com/Ghebrehiwetventures/arei-platform/issues/361)
    before any `cv_cabohouseproperty` live ingest. MalCare currently blocks the
    headless fetch with HTTP 403; require a fresh non-zero dry run afterward.
-3. Investigate `cv_estatecv` next.
+3. Await confirmation before the first post-fix live ingest for
+   `cv_estatecv`; the investigation and direct database comparison are
+   complete.
+4. Investigate `cv_oceanproperty24` after the EstateCV live-ingest decision.
 
 ---
 
@@ -580,20 +583,132 @@ Spot-check:
 
 ---
 
-## cv_estatecv — n=166 (largest source; worst bathrooms)
+## cv_estatecv — n=166 — INVESTIGATION COMPLETE 2026-06-08
 
-| field | missing | verdict | notes |
-|---|---|---|---|
-| price | 36/166 | ❓ | |
-| bedrooms | 46/166 | ❓ | |
-| **bathrooms** | **166/166** | ❓ | 100% missing — almost certainly 🔧 SCRAPER |
-| area | 54/166 | ❓ | |
+Status: ✅ **Resolved for a confirmation-gated live ingest.** No live write was
+performed. The final authoritative dry run fetched the complete non-zero
+catalogue, enriched every row, and produced no skipped rows, detail failures,
+or removal candidates.
 
-Also: 3–4 detail-fetch failures reproduce here (transient? retry).
+Commands:
 
-Spot-check (price,baths):
+```bash
+DRY_RUN=1 REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_estatecv \
+  npx ts-node --transpile-only scripts/ingest_to_curated.ts
+
+node --test tests/genericDetail.test.cjs tests/propertyType.test.cjs \
+  tests/pipelineDetailRetry.test.cjs tests/ingestToCurated.test.cjs
+```
+
+Fresh before/after evidence:
+
+| field | fresh pre-fix present | post-fix present | post-fix missing | verdict |
+|---|---:|---:|---:|---|
+| price | 129/166 | 100/166 | 66/166 | ◑ MIXED/ACCEPTED |
+| bedrooms | 120/166 | 122/166 | 44/166 | ◑ MIXED/ACCEPTED |
+| bathrooms | 0/166 | 45/166 | 121/166 | ◑ MIXED/ACCEPTED |
+| any area | 112/166 | 164/166 | 2/166 | ◑ MIXED/ACCEPTED |
+| images ≥1 | 166/166 | 166/166 | 0/166 | ✅ |
+| images ≥3 | 162/166 | 163/166 | 3/166 | 🌐 SOURCE |
+
+The lower numeric-price count is a correctness improvement, not a regression.
+The old detail selector crossed into related-listing cards and assigned their
+prices to POA listings. Current page comparison found 64 missing-price rows
+with negotiated/POA text and two land rows priced per square metre rather than
+with a total asking price. The one current report price whose detail summary
+has no price is visible on the catalogue card.
+
+Field verdicts from the 166-page source audit:
+
+- **Bedrooms:** the 44 nulls are 40 land, three commercial, and one house; none
+  exposes a defensible total bedroom count. The penthouse prose counts that
+  were previously missed are now extracted.
+- **Bathrooms:** 45 source-derivable totals are now extracted, including word
+  counts and “each/both bedrooms have an en-suite” phrasing. The 121 remaining
+  nulls are 40 land, three commercial, 32 houses, and 46 apartments. Their
+  pages either omit bathrooms or mention only a partial suite/bathroom fact,
+  not a defensible property total; those are acceptable pending AI field
+  extraction. One historical apparent miss now redirects to a different
+  Apartment E page whose current content has no bathroom total.
+- **Area:** the two remaining nulls are source ranges, `300–3000 m²` and
+  `10000–60000 m²`, which must not be collapsed to one exact area. Delta 07's
+  localized `Celková užitná plocha: 367,64 m²` now yields `368 m²`, while its
+  `200 m²` plot row no longer wins. The Carvoeiros page is internally
+  contradictory (`200 000 m²` in its primary summary and `to 20000 m²` in a
+  later duplicate row), so it is classified MIXED and retains the primary
+  source value.
+- **Images:** every row has at least one image. The three rows below the
+  three-image quality threshold expose only one or two listing images on the
+  source page.
+
+Engine/config fixes:
+
+- Kept headless fetching for the paginated catalogue, but configured detail
+  pages for direct HTTP and added one EstateCV-only retry for transient detail
+  failures.
+- Added structured detail price/summary-table extraction, word-number
+  bedroom/bathroom parsing, conservative en-suite bathroom inference, grouped
+  area-number parsing, range rejection, structured-area precedence over
+  conflicting JSON-LD, and localized usable-area labels.
+- Made exact spec labels win before contained aliases so generic `area` cannot
+  select `Plot area` ahead of `Total usable area`.
+- Resolved `/lands/` URLs as `land` and `/offices/` URLs as `commercial`
+  before generic title heuristics.
+
+Fetch, pagination, and location evidence:
+
+- Final dry run: 166 listings from 20 pages; authoritative stop reason
+  `empty_listings`.
+- Detail extraction: 166/166 succeeded, zero retries needed in the final run,
+  zero failures, zero skipped rows.
+- The one fresh pre-fix failure,
+  `https://estatecv.com/en/properties/lands/stavebni-pozemky-na-sao-nicolau`,
+  returned HTTP 200 on immediate direct retry and succeeded in repeated
+  post-fix runs. Classification: transient headless/detail behavior, not a
+  block, bad URL, or empty catalogue.
+- Multi-island resolution produced no unknown island:
+  Santiago 120, Boa Vista 15, Maio 15, São Nicolau 10, Fogo 5, São Vicente 1.
+
+Tests:
+
+- Added focused regressions for EstateCV HTTP detail selection and retry,
+  current price/spec markup, word-count and inferred bathrooms, grouped areas,
+  ranges, JSON-LD conflicts, usable-area versus plot-area selection, localized
+  labels, and URL-based land/commercial classification.
+- Focused safety suite passed 53/53:
+  `tests/genericDetail.test.cjs`, `tests/propertyType.test.cjs`,
+  `tests/pipelineDetailRetry.test.cjs`, and
+  `tests/ingestToCurated.test.cjs`.
+
+Direct Postgres comparison (`DATABASE_URL`, not Supabase JS/REST):
+
+- `kv_curated.listings` has 150 rows, all `published`;
+  `public.v1_feed_cv` has the same 150 rows, all published, approved, and
+  indexable.
+- All 150 existing rows were recognized as published by the dry run. Their AI
+  descriptions and first-seen/published/last-verified timestamps are present;
+  the tested upsert path preserves status, timestamps, and existing AI text.
+- Sixteen current catalogue rows are net-new and absent from curated/feed;
+  they remain `needs_review` in the dry-run report. Nothing is promoted during
+  testing.
+- No curated row is absent from the current catalogue, so there are no false
+  removal candidates.
+- One generated ID was reconciled by same-source URL:
+  `ecv_2b05162dee4d → ecv_7c9a7d084966` for the A03 apartment. The final report
+  and database have no same-URL ID mismatch.
+
+Source-page evidence:
+
 - https://estatecv.com/en/properties/apartments/duargema-house-of-diaspora-s01-mezonet-3kk
 - https://estatecv.com/en/properties/apartments/duargema-house-of-diaspora-s02-mezonet-3kk
+- https://estatecv.com/en/properties/houses/duargema-delta-07
+- https://estatecv.com/en/properties/lands/stavebni-pozemky-na-sao-nicolau
+- https://estatecv.com/en/properties/lands/zemedelske-pozemky-na-sao-nicolau
+- https://estatecv.com/en/properties/lands/building-plot-for-sale-carvoeiros-sao-nicolau
+
+Remaining work: obtain confirmation, perform the live EstateCV ingest, then
+verify that the 150 published rows remain published and the 16 additions enter
+as `needs_review`.
 
 ---
 

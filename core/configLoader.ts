@@ -83,6 +83,9 @@ export interface PriceFormatConfig {
 export interface DetailConfig {
   enabled?: boolean;
   policy?: DetailPolicy;
+  /** Detail pages may be server-rendered even when catalogue pagination needs
+   *  a headless browser. Defaults to the source-level fetch method. */
+  fetch_method?: FetchMethod;
   selectors?: {
     description?: string;
     images?: string;

@@ -6,6 +6,161 @@ require("ts-node/register/transpile-only");
 const { loadSourcesConfig } = require("../core/configLoader");
 const { createGenericDetailPlugin } = require("../core/detail/plugins/genericDetail");
 
+test("extracts EstateCV detail fields from current source markup", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_estatecv");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(
+    "cv_estatecv",
+    source.detail,
+    source.price_format,
+  );
+
+  const html = `
+    <html>
+      <body>
+        <strong class="property-info__price">97 776 €</strong>
+        <div class="pageContent__text">
+          <p>This penthouse features 4 en-suite bedrooms and two bathrooms.</p>
+        </div>
+        <div class="property-summary__list">
+          <table>
+            <tr><td>Price</td><td>97 776 €</td></tr>
+            <tr><td>Area</td><td>87 040 m2</td></tr>
+          </table>
+        </div>
+      </body>
+    </html>
+  `;
+
+  const result = plugin.extract(
+    html,
+    "https://estatecv.com/en/properties/apartments/example",
+  );
+
+  assert.equal(result.price, 97776);
+  assert.equal(result.bedrooms, 4);
+  assert.equal(result.bathrooms, 2);
+  assert.equal(result.areaSqm, 87040);
+});
+
+test("infers EstateCV bathroom count when every known bedroom is en-suite", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_estatecv");
+  const plugin = createGenericDetailPlugin("cv_estatecv", source.detail, source.price_format);
+
+  const result = plugin.extract(`
+    <div class="pageContent__text">
+      <p>Apartment T2. Each bedroom has an ensuite bathroom.</p>
+    </div>
+  `, "https://estatecv.com/en/properties/apartments/example");
+
+  assert.equal(result.bedrooms, 2);
+  assert.equal(result.bathrooms, 2);
+});
+
+test("does not turn EstateCV area ranges into a single exact area", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_estatecv");
+  const plugin = createGenericDetailPlugin("cv_estatecv", source.detail, source.price_format);
+
+  const result = plugin.extract(`
+    <div class="property-summary__list">
+      <table><tr><td>Area</td><td>300 - 3000 m²</td></tr></table>
+    </div>
+  `, "https://estatecv.com/en/properties/lands/example");
+
+  assert.equal(result.areaSqm, null);
+});
+
+test("EstateCV structured area ranges block conflicting JSON-LD fallbacks", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_estatecv");
+  const plugin = createGenericDetailPlugin("cv_estatecv", source.detail, source.price_format);
+
+  const result = plugin.extract(`
+    <script type="application/ld+json">
+      {
+        "@type": "House",
+        "floorSize": { "value": 200000, "unitText": "m2" }
+      }
+    </script>
+    <div class="property-summary__list">
+      <table><tr><td>Area</td><td>up to 20000 m²</td></tr></table>
+    </div>
+  `, "https://estatecv.com/en/properties/lands/example");
+
+  assert.equal(result.areaSqm, null);
+});
+
+test("EstateCV houses prefer total usable area over plot area", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_estatecv");
+  const plugin = createGenericDetailPlugin("cv_estatecv", source.detail, source.price_format);
+
+  const result = plugin.extract(`
+    <div class="property-summary__list">
+      <table>
+        <tr><td>Plot area</td><td>200 m²</td></tr>
+        <tr><td>Total usable area</td><td>367,64 m²</td></tr>
+        <tr><td>Interior usable area</td><td>262,83 m²</td></tr>
+      </table>
+    </div>
+  `, "https://estatecv.com/en/properties/houses/example");
+
+  assert.equal(result.areaSqm, 368);
+});
+
+test("EstateCV extracts localized total usable area labels", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_estatecv");
+  const plugin = createGenericDetailPlugin("cv_estatecv", source.detail, source.price_format);
+
+  const result = plugin.extract(`
+    <div class="property-summary__list">
+      <table>
+        <tr><td>Plocha parcely</td><td>200 m²</td></tr>
+        <tr><td>Celková užitná plocha</td><td>367,64 m²</td></tr>
+      </table>
+    </div>
+  `, "https://estatecv.com/en/properties/houses/duargema-delta-07");
+
+  assert.equal(result.areaSqm, 368);
+});
+
+test("infers two bathrooms from a primary suite plus a shared bathroom", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_estatecv");
+  const plugin = createGenericDetailPlugin("cv_estatecv", source.detail, source.price_format);
+
+  const result = plugin.extract(`
+    <div class="pageContent__text">
+      <p>
+        Villa T3. The master bedroom is a suite with its own bathroom;
+        the other two bedrooms share a bathroom.
+      </p>
+    </div>
+  `, "https://estatecv.com/en/properties/houses/example");
+
+  assert.equal(result.bedrooms, 3);
+  assert.equal(result.bathrooms, 2);
+});
+
 test("prefers structured bathroom and bedroom selectors over description regex matches", () => {
   const plugin = createGenericDetailPlugin("cv_ccoreinvestments", {
     selectors: {

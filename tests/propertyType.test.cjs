@@ -33,6 +33,26 @@ test("extractPropertyType: plural lots (EN)", () => {
   assert.equal(LAND_TYPES.test(propertyType), true);
 });
 
+test("extractPropertyType: EstateCV lands URL overrides generic property title", () => {
+  assert.equal(
+    extractPropertyType(
+      "PROPERTY MEANT FOR AN EXTENSIVE DEVELOPMENT PROJECT",
+      "https://estatecv.com/en/properties/lands/development-project",
+    ),
+    "land",
+  );
+});
+
+test("extractPropertyType: EstateCV offices URL resolves to commercial", () => {
+  assert.equal(
+    extractPropertyType(
+      "DuarGema Fitness",
+      "https://estatecv.com/en/properties/offices/fitness-duargema",
+    ),
+    "commercial",
+  );
+});
+
 // ── Portuguese ──────────────────────────────────────────────────────────────
 
 test("extractPropertyType: PT apartamento", () => {

@@ -607,20 +607,30 @@ sources:
     detail:
       enabled: true
       policy: always
+      fetch_method: http
       delay_ms: 3000
       selectors:
         description: ".pageContent__text p[data-start], .property__description p, .entry-content p, [class*='description'] p"
         images: "img.gallery__img, .swiper-slide img, .gallery img, img[src*='uploads']"
         # Price in detail pages: "Price: 479 491 €" format in spans
-        price: ".property__content p span:first-child"
+        price: ".property-info__price, .property__content p span:first-child"
+      spec_table:
+        container: ".property-summary__list table"
+        label_selector: "td:first-child"
+        value_selector: "+ td"
+        label_map:
+          area: ["total usable area", "celková užitná plocha", "area"]
+          price: ["price"]
       spec_patterns:
         bedrooms:
+          - "(\\d+|one|two|three|four|five|six|seven|eight|nine|ten)\\s+(?:\\w+\\s+){0,2}(?:en[- ]?suite|ensuite)\\s+Bedrooms?"
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
           - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
           - "\\bT(\\d+)\\b"
           - "(?:T|Tipologia)\\s*(\\d+)"
           - "(\\d+)\\s*(?:dorm|assoalhada)"
         bathrooms:
+          - "(\\d+|one|two|three|four|five|six|seven|eight|nine|ten)\\s*(?:full\\s+)?Bathrooms?"
           - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:

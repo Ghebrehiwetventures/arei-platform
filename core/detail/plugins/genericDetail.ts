@@ -282,6 +282,25 @@ function parseJsonLdInteger(value: unknown): number | null {
   return Number.isFinite(parsed) ? Math.round(parsed) : null;
 }
 
+const COUNT_WORDS: Record<string, number> = {
+  one: 1,
+  two: 2,
+  three: 3,
+  four: 4,
+  five: 5,
+  six: 6,
+  seven: 7,
+  eight: 8,
+  nine: 9,
+  ten: 10,
+};
+
+function parseCountToken(value: string): number | null {
+  const normalized = value.trim().toLowerCase();
+  if (/^\d+$/.test(normalized)) return parseInt(normalized, 10);
+  return COUNT_WORDS[normalized] ?? null;
+}
+
 function parseJsonLdFloorSizeSqm(floorSize: unknown): number | null {
   const floor = Array.isArray(floorSize) ? floorSize[0] : floorSize;
   if (floor == null) return null;
@@ -316,13 +335,36 @@ function firstJsonLdOffer(jsonLd: JsonLdObject | undefined): JsonLdObject | unde
 
 function parseAreaTextSqm(text: string): number | null {
   if (!text) return null;
-  const normalized = text.replace(/,/g, ".");
-  const unitBoundMatch = normalized.match(
-    /(\d+(?:\.\d+)?)\s*(?:m[²2]|sqm|sq\.?\s*m|sq\.?\s*ft|sqft|ft[²2]|square\s*(?:met(?:er|re)s?|feet|foot))/i
+
+  // A range or a multi-parcel value is not one exact property area.
+  if (
+    /\d[\d\s.,]*\s*(?:-|–|—|to)\s*\d[\d\s.,]*\s*(?:m[²2]|sqm)/i.test(text) ||
+    /\b(?:up\s+to|to)\s+\d[\d\s.,]*\s*(?:m[²2]|sqm)/i.test(text) ||
+    /\d[\d\s.,]*\s*(?:m[²2]|sqm)?\s+and\s+\d[\d\s.,]*\s*(?:m[²2]|sqm)/i.test(text)
+  ) {
+    return null;
+  }
+
+  const numberPattern = String.raw`(\d{1,3}(?:[\s\u00a0]\d{3})+(?:[.,]\d+)?|\d+(?:[.,]\d+)?)`;
+  const unitBoundMatch = text.match(
+    new RegExp(
+      `${numberPattern}\\s*(?:m[²2]|sqm|sq\\.?\\s*m|sq\\.?\\s*ft|sqft|ft[²2]|square\\s*(?:met(?:er|re)s?|feet|foot))`,
+      "i",
+    ),
   );
-  const match = unitBoundMatch || normalized.match(/(\d+(?:\.\d+)?)/);
+  const match = unitBoundMatch || text.match(new RegExp(numberPattern));
   if (!match) return null;
-  const value = parseFloat(match[1]);
+
+  let numeric = match[1].replace(/[\s\u00a0]/g, "");
+  if (numeric.includes(",") && numeric.includes(".")) {
+    numeric = numeric.lastIndexOf(",") > numeric.lastIndexOf(".")
+      ? numeric.replace(/\./g, "").replace(",", ".")
+      : numeric.replace(/,/g, "");
+  } else if (numeric.includes(",")) {
+    numeric = numeric.replace(",", ".");
+  }
+
+  const value = parseFloat(numeric);
   if (!Number.isFinite(value) || value <= 0) return null;
   if (/(sq\s*ft|sqft|ft2|ft²|square\s*feet|square\s*foot)/i.test(text)) {
     return Math.round(value * 0.09290304);
@@ -593,6 +635,7 @@ export function createGenericDetailPlugin(
       let bathrooms: number | null = null;
       let parkingSpaces: number | null = null;
       let areaSqm: number | null = null;
+      let structuredAreaFound = false;
 
       // Scope spec_patterns text to avoid regex pollution from Similar Listings,
       // navigation, sidebar, etc. Priority: explicit specs_selector → description →
@@ -621,6 +664,7 @@ export function createGenericDetailPlugin(
       }
       if (detailConfig.selectors?.area) {
         const text = $(detailConfig.selectors.area).first().text().trim();
+        structuredAreaFound = text.length > 0;
         const parsed = parseAreaTextSqm(text);
         if (parsed !== null) areaSqm = parsed;
       }
@@ -634,7 +678,16 @@ export function createGenericDetailPlugin(
           const lower = raw.toLowerCase().replace(/:$/, "").trim();
           for (const [field, aliases] of Object.entries(st.label_map)) {
             for (const alias of aliases) {
-              if (lower === alias.toLowerCase() || lower.includes(alias.toLowerCase())) {
+              if (lower === alias.toLowerCase()) {
+                return field as keyof typeof st.label_map;
+              }
+            }
+          }
+          const genericAliases = new Set(["area", "size", "price", "bed", "bath"]);
+          for (const [field, aliases] of Object.entries(st.label_map)) {
+            for (const alias of aliases) {
+              const normalizedAlias = alias.toLowerCase();
+              if (!genericAliases.has(normalizedAlias) && lower.includes(normalizedAlias)) {
                 return field as keyof typeof st.label_map;
               }
             }
@@ -680,6 +733,7 @@ export function createGenericDetailPlugin(
             } else if (field === "parking" && parkingSpaces === null && intVal !== null && intVal >= 0 && intVal < 20) {
               parkingSpaces = intVal;
             } else if (field === "area" && areaSqm === null) {
+              structuredAreaFound = true;
               const n = parseAreaTextSqm(value);
               if (n !== null) areaSqm = n;
             } else if (field === "price" && !specTablePrice) {
@@ -696,8 +750,8 @@ export function createGenericDetailPlugin(
             const regex = new RegExp(patternStr, "i");
             const match = bodyText.match(regex);
             if (match?.[1]) {
-              const num = parseInt(match[1], 10);
-              if (!isNaN(num) && num > 0 && num < 20) { bedrooms = num; break; }
+              const num = parseCountToken(match[1]);
+              if (num !== null && num > 0 && num < 20) { bedrooms = num; break; }
             }
           }
         }
@@ -707,8 +761,8 @@ export function createGenericDetailPlugin(
             const regex = new RegExp(patternStr, "i");
             const match = bodyText.match(regex);
             if (match?.[1]) {
-              const num = parseInt(match[1], 10);
-              if (!isNaN(num) && num > 0 && num < 20) { bathrooms = num; break; }
+              const num = parseCountToken(match[1]);
+              if (num !== null && num > 0 && num < 20) { bathrooms = num; break; }
             }
           }
         }
@@ -726,7 +780,7 @@ export function createGenericDetailPlugin(
         }
 
         // Area
-        if (areaSqm === null && detailConfig.spec_patterns.area) {
+        if (areaSqm === null && !structuredAreaFound && detailConfig.spec_patterns.area) {
           for (const patternStr of detailConfig.spec_patterns.area) {
             const regex = new RegExp(patternStr, "i");
             const match = bodyText.match(regex);
@@ -738,11 +792,24 @@ export function createGenericDetailPlugin(
         }
       }
 
+      if (bathrooms === null && bedrooms !== null) {
+        const everyBedroomEnsuite =
+          /\beach bedroom has (?:an?\s+)?(?:own\s+)?(?:en[- ]?suite|ensuite) bathroom\b/i.test(bodyText) ||
+          /\bboth bedrooms\b[^.!?]{0,180}\beach\b[^.!?]{0,80}\b(?:en[- ]?suite|ensuite) bathroom\b/i.test(bodyText);
+        if (everyBedroomEnsuite) {
+          bathrooms = bedrooms;
+        } else if (
+          /\bmaster bedroom\b[^.!?]{0,100}\bown bathroom\b[^.!?]{0,160}\bother two bedrooms share a bathroom\b/i.test(bodyText)
+        ) {
+          bathrooms = 2;
+        }
+      }
+
       // JSON-LD floorSize is a fallback only. A structured on-page value (e.g.
       // a Houzez "87.41 m²" overview row) must win, because some themes emit
       // the square-meter figure in JSON-LD while mislabeling the unit as SQFT,
       // which would otherwise be wrongly divided to ~1/10.76 of the real area.
-      if (areaSqm === null) {
+      if (areaSqm === null && !structuredAreaFound) {
         const jsonLdAreaSqm = parseJsonLdFloorSizeSqm(jsonLd?.floorSize);
         if (jsonLdAreaSqm !== null) {
           areaSqm = jsonLdAreaSqm;

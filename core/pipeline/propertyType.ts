@@ -76,6 +76,16 @@ const HOUSE_FALLBACK = makeRegex([
  */
 export function extractPropertyType(title?: string, url?: string): string {
   const text = `${title || ""} ${url || ""}`.toLowerCase();
+  const pathname = (() => {
+    try {
+      return url ? new URL(url).pathname.toLowerCase() : "";
+    } catch {
+      return "";
+    }
+  })();
+
+  if (/\/(?:lands?|plots?|lots?)(?:\/|$)/.test(pathname)) return "land";
+  if (/\/(?:offices?|commercial)(?:\/|$)/.test(pathname)) return "commercial";
 
   if (VILLA.test(text)) return "villa";
   if (APARTMENT.test(text)) return "apartment";

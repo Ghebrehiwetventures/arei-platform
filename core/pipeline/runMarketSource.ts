@@ -109,6 +109,30 @@ function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms));
 }
 
+const ESTATECV_SOURCE_ID = "cv_estatecv";
+const ESTATECV_DETAIL_RETRY_DELAY_MS = 1500;
+
+export function getDetailFetchMethod(sourceConfig: SourceConfig): "http" | "headless" {
+  return sourceConfig.detail?.fetch_method ?? sourceConfig.fetch_method ?? "http";
+}
+
+export async function fetchDetailWithRetry(
+  sourceId: string,
+  detailUrl: string,
+  fetchFn: (url: string) => Promise<any>,
+  sleepFn: (ms: number) => Promise<void> = sleep,
+): Promise<any & { retried: boolean }> {
+  let result = await fetchFn(detailUrl);
+  if (sourceId !== ESTATECV_SOURCE_ID || (result.success && result.html)) {
+    return { ...result, retried: false };
+  }
+
+  console.log(`[Enrich] Retrying transient EstateCV detail failure: ${detailUrl}`);
+  await sleepFn(ESTATECV_DETAIL_RETRY_DELAY_MS);
+  result = await fetchFn(detailUrl);
+  return { ...result, retried: true };
+}
+
 // ─── Detail enrichment ───────────────────────────────────────────────────────
 
 async function enrichListings(
@@ -149,8 +173,12 @@ async function enrichListings(
     await sleep(delayMs + Math.floor(Math.random() * 500));
 
     try {
-      const fetchFn = sourceConfig.fetch_method === "headless" ? fetchHeadless : fetchHtml;
-      const fetchResult = await fetchFn(listing.detailUrl);
+      const fetchFn = getDetailFetchMethod(sourceConfig) === "headless" ? fetchHeadless : fetchHtml;
+      const fetchResult = await fetchDetailWithRetry(
+        sourceConfig.id,
+        listing.detailUrl,
+        fetchFn,
+      );
 
       if (!fetchResult.success || !fetchResult.html) {
         failed++;
