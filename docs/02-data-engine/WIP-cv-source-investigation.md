@@ -239,6 +239,55 @@ Remaining work: re-run `cv_cabohouseproperty` once issue #361 / the MalCare
 block clears; review the 74 `needs_review` rows for promotion in the KazaVerde
 review UI.
 
+### needs_review promotion + area-code scraper bug — 2026-06-08
+
+Promoted complete `needs_review` rows to `published` (live feed) using the
+canonical review-publish path (`publish_status='published'`,
+`first_published_at=COALESCE(first_published_at, now())`). Completeness bar:
+price + bedrooms + bathrooms + `property_size_sqm` all non-null **and ≥3
+images**.
+
+First pass matched 21 rows; 20 promoted cleanly. The 21st
+(`tcv_a6a4c5f42d17`, "One-bedroom flat … Estrela Do Mar") had a bogus **1 m²**
+area — surfacing a scraper bug the earlier "Sales area" fix had missed.
+
+**Bug (🔧 SCRAPER, now FIXED):** Terra detail pages expose both
+`Area: En-bv-01` (a unit/neighborhood **code**) and `Sales area: 61,91 sqm`
+(the real figure). `parseAreaTextSqm`'s unitless fallback pulled the code's
+trailing digits (`01` → 1), and DOM order let `Area:` lock in before
+`Sales area:` was read. The existing regression test used a code-free
+neighborhood name (`Praia de Cabral`) so it never caught the digit case. This
+produced impossible sub-10 m² areas on **7 already-published rows** (6 terra +
+`ccore_832259` at 3 m²), and terra's "37/37 area" coverage was therefore partly
+bogus (these counted as "present"). The complete-pipeline spot-check missed it
+because it sampled only *null* fields, not implausible values.
+
+Fix (TDD, commit `6044a48`):
+- `parseAreaTextSqm` unitless fallback now requires a standalone number not glued
+  to letters/hyphens, so `En-bv-01` no longer yields an area and the structured
+  `Sales area` value wins.
+- Added `MIN_PLAUSIBLE_AREA_SQM = 5` floor as defense-in-depth.
+- New regression test reproduces the real `En-bv-01` markup (expected 62, was 1);
+  full suite 81/81.
+
+Remediation sequence:
+1. Demoted all 7 corrupt-area rows to `needs_review` (held with a note),
+   clearing them from the live feed.
+2. Re-ingested `cv_terracaboverde` (37 upserted) and `cv_ccoreinvestments`
+   (87 upserted), 0 failures. Areas corrected in place:
+   `tcv_a6a4c5f42d17` 1→62, plus 90/85/71/70/108/128 m² on the other terra
+   rows; `ccore_832259` 3→null (source has no valid area, so null is correct).
+3. Re-promoted the 7 now-complete terra rows.
+
+Final CV state (direct Postgres): **482 published == 482 feed rows**,
+54 `needs_review`, 30 `removed`, and **0 published rows with area < 10 m²**.
+Net effect vs. the post-ingest baseline: 20 net-new `needs_review` rows promoted
+to the live feed, plus 6 previously-published terra rows corrected and
+re-published with real areas.
+
+Carry-forward: the completeness/quality bar for promotion should screen for
+*implausible* values (e.g. area < 5 m²), not only nulls.
+
 ---
 
 ## cv_terracaboverde — n=37 — DONE 2026-06-08
