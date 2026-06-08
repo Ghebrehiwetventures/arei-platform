@@ -972,3 +972,44 @@ test("EstateCV ignores unrelated page uploads and keeps property gallery images"
     "https://estatecv.com/wp-content/uploads/2024/09/unit-1440x913.jpg",
   ]);
 });
+
+test("Homes Casa Verde extracts the detail address block for city recovery", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_homescasaverde");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(source.id, source.detail, source.price_format);
+  const result = plugin.extract(`
+    <div class="property-address">
+      <ul>
+        <li>City: Santa Maria</li>
+        <li>State/county: Sal</li>
+        <li>Area: Vila Verde</li>
+      </ul>
+    </div>
+  `, "https://www.homescasaverde.com/property/vila-verde");
+
+  assert.match(result.location, /Santa Maria/);
+  assert.match(result.location, /Sal/);
+});
+
+test("Simply Cape Verde extracts Land from the Houzez property-type row", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_simplycapeverde");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(source.id, source.detail, source.price_format);
+  const result = plugin.extract(`
+    <ul class="property-overview-data">
+      <li><strong>20,000 m²</strong><span class="hz-meta-label">Land Area</span></li>
+      <li><strong>Land</strong><span class="hz-meta-label">Property Type</span></li>
+    </ul>
+  `, "https://simplycapeverde.com/property/development-opportunity");
+
+  assert.equal(result.areaSqm, 20000);
+  assert.equal(result.propertyType, "land");
+});

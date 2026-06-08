@@ -208,7 +208,8 @@ sources:
           bedrooms: ["bedrooms", "beds", "quartos"]
           bathrooms: ["bathrooms", "baths", "casas de banho", "banheiros"]
           parking: ["parking", "garage", "estacionamento"]
-          area: ["area size", "area", "size", "área", "superfície"]
+          area: ["area size", "land area", "area", "size", "área", "superfície"]
+          property_type: ["property type", "type"]
           price: ["price", "preço", "precio"]
       spec_patterns:
         bedrooms:
@@ -392,6 +393,7 @@ sources:
       selectors:
         description: ".property-description, .wpsight-listing-description, [class*='description'] p"
         images: ".property-detail-gallery img, .property-gallery .slick-slide img, .property-gallery .swiper-slide img"
+        location: ".property-address, .property-address-wrap, .block-content-wrap .property-address"
         # Houzez has two layouts: v7 (strong inside li.h-beds) and v8+ (strong in sibling li, label li has .h-beds).
         bedrooms: ".h-beds strong, ul:has(.h-beds) strong, .listing-details-detail:contains('Bed') .listing-details-value"
         bathrooms: ".h-baths strong, ul:has(.h-baths) strong, .listing-details-detail:contains('Bath') .listing-details-value"

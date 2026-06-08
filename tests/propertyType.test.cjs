@@ -47,6 +47,13 @@ test("extractPropertyType: plural lots (EN)", () => {
   assert.equal(LAND_TYPES.test(propertyType), true);
 });
 
+test("extractPropertyType: explicit development opportunity resolves to land", () => {
+  assert.equal(
+    extractPropertyType("Fabulous Development Opportunity - Prime Cape Verde Property"),
+    "land",
+  );
+});
+
 test("extractPropertyType: EstateCV lands URL overrides generic property title", () => {
   assert.equal(
     extractPropertyType(

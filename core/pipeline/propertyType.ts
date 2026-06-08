@@ -57,6 +57,7 @@ const MAISONETTE = makeRegex(["maisonette", "maisonettes"]);
 const DUPLEX = makeRegex(["duplex", "duplexes", "dúplex"]);
 const LAND = makeRegex([
   "land", "lot", "lots", "plot", "plots", "acre", "acres",
+  "development opportunity", "development site",
   "terreno", "terrenos", "lote", "lotes",    // PT
   "parcela", "parcelas",                      // ES
   "terrain", "terrains",                      // FR
