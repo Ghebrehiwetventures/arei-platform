@@ -108,6 +108,7 @@ export function NewsPostStudioView() {
   const [imageUrl, setImageUrl] = useState("");
   const [sourceUrl, setSourceUrl] = useState("");
   const [sourceName, setSourceName] = useState("");
+  const [articleBodyUsed, setArticleBodyUsed] = useState<boolean | null>(null);
   const [region, setRegion] = useState("");
 
   const [generating, setGenerating] = useState(false);
@@ -146,6 +147,7 @@ export function NewsPostStudioView() {
     setHighlight(suggestHighlight(title));
     setSourceUrl(item.sourceUrl || "");
     setSourceName(item.sourceName || "");
+    setArticleBodyUsed(item.articleBodyUsed ?? null);
     setRegion(item.region || "");
     setCaptionText(buildCaption(item));
     setResult(null);
@@ -366,6 +368,20 @@ export function NewsPostStudioView() {
             >
               View original article{sourceName ? ` · ${sourceName}` : ""} →
             </a>
+          )}
+          {selectedId && articleBodyUsed !== null && (
+            <span
+              className={`inline-block -mt-1 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wide ${
+                articleBodyUsed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
+              }`}
+              title={
+                articleBodyUsed
+                  ? "Enrichment used the full article — caption can be rich."
+                  : "Source gave snippet only (paywall / bot-block / JS) — caption is necessarily short. Not a bug."
+              }
+            >
+              {articleBodyUsed ? "✓ Full article" : "Snippet only"}
+            </span>
           )}
           <div>
             <div className="flex items-center justify-between mb-1">

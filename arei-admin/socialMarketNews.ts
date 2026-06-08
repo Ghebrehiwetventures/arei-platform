@@ -25,6 +25,8 @@ export interface MarketNewsItem {
   status: string;
   reviewStatus: string;
   publishedAt: string;
+  /** true = enrichment had the full article; false/null = snippet-only (closed source). */
+  articleBodyUsed?: boolean | null;
 }
 
 export interface MarketNewsSocialDraft {

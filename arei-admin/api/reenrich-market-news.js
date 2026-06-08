@@ -120,6 +120,7 @@ export default async function handler(req, res) {
             affected_regions: Array.isArray(s.affected_regions) ? s.affected_regions : [],
             relevance_score: s.relevance_score,
             enrich_recommendation: s.recommendation,
+            article_body_used: s.article_body_used ?? null,
             enriched_at: new Date().toISOString(),
             reenriched_at: new Date().toISOString(),
           })
