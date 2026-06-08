@@ -76,6 +76,7 @@ export default async function handler(req, res) {
       .from("market_news")
       .select("id, title, snippet, source_name, source_url, canonical_url, category, country_code, affected_regions, signal_tags, published_at")
       .not("enriched_at", "is", null)
+      .or("enrich_recommendation.is.null,enrich_recommendation.neq.archive") // keep off-topic (archived) stories out of clusters
       .order("published_at", { ascending: false })
       .limit(UNIVERSE_LIMIT);
     if (ne) throw new Error(`Load market_news failed: ${ne.message}`);

@@ -111,6 +111,7 @@ Relevance score and recommendation rules:
 - Be conservative. When in doubt about investor relevance, prefer "archive" over "keep_candidate" for items with no concrete Cape Verde market angle.
 - Score on INVESTOR MATERIALITY: would a foreign property, tourism, or business investor in Cape Verde actually care about or act on this? If not, it is not relevant for AREI — score it low and archive it, even if "Cape Verde" appears in the text.
 - Cape Verde must be a PRIMARY subject with a concrete real-estate, tourism, aviation/connectivity, infrastructure, investment, tax/residency, or banking angle. If Cape Verde is only mentioned in passing, listed among several countries, or the core story is health, crime, disaster, disease/outbreak, accidents, sports, or celebrity news, set relevance_score below 15 and recommendation = "archive".
+- A health, disease/outbreak, crime, accident or disaster story is ALWAYS "archive", even if it mentions tourism, travel, the economy or their "impact"/"concerns". A tangential tourism or economic angle does NOT make a disease or crime story relevant for a property investor. Example: "Hantavirus outbreak on cruise ship raises tourism concerns" → archive.
 - When the facts genuinely support it, frame the title and snippet as an opportunity or positive signal for an investor — but never invent positivity, hype, or certainty.
 
 Use "publish" ONLY when the article has a clear and direct market signal in one of these areas:

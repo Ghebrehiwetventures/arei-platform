@@ -126,10 +126,16 @@ Use "keep_candidate" when:
   - The item may be useful background but needs human judgment to assess market relevance
 
 Use "archive" when:
-  - Crime, health incidents, celebrity or sports gossip
+  - Crime, health incidents, disease/outbreaks, accidents or disasters, celebrity or sports gossip
   - Generic travel content or lifestyle articles
   - Title-only or near-empty RSS items
   - Unrelated international news with no Cape Verde market angle
+
+A health, disease/outbreak, crime, accident or disaster story is ALWAYS "archive",
+even if it mentions tourism, travel, the economy or their "impact"/"concerns". A
+tangential tourism or economic angle does NOT make a disease or crime story relevant
+for a property investor. Example: "Hantavirus outbreak on cruise ship raises tourism
+concerns" → archive.
 
 Category guardrail:
   - "category" MUST be exactly one of: Economy, Tourism, Infrastructure, Policy & Tax, Banking & Credit.
