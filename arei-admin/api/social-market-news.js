@@ -114,6 +114,9 @@ function normalizeMarketNewsItem(row) {
     status: firstText(row, ["status", "published_status"]),
     reviewStatus: firstText(row, ["review_status"]),
     publishedAt: firstText(row, ["published_at", "published_date", "date"]),
+    // true = enrichment had the full article body; false/null = snippet-only
+    // (closed source). Drives the "Full article" / "Snippet only" badge.
+    articleBodyUsed: typeof row.article_body_used === "boolean" ? row.article_body_used : null,
   };
 }
 

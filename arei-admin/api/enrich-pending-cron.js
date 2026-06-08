@@ -67,6 +67,7 @@ export async function enrichOne(row, apiKey) {
   if (validationError) throw new Error(`Validation failed: ${validationError}`);
   suggestion.relevance_score = Math.round(Number(suggestion.relevance_score));
   normalizeSuggestion(suggestion);
+  suggestion.article_body_used = Boolean(articleBody); // full text vs snippet-only
   return suggestion;
 }
 
@@ -118,6 +119,7 @@ export default async function handler(req, res) {
             affected_regions: Array.isArray(s.affected_regions) ? s.affected_regions : [],
             relevance_score: s.relevance_score,
             enrich_recommendation: s.recommendation,
+            article_body_used: s.article_body_used ?? null,
             enriched_at: new Date().toISOString(),
           })
           .eq("id", row.id);
