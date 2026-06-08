@@ -27,6 +27,7 @@ import {
   normalizeBedroomsForPropertyType,
 } from "./propertyType";
 import { applyExtractResultToListing } from "./enrich";
+import { applyCvSourceCorrections } from "./cvSourceCorrections";
 import { resolveLocation as resolveIsland } from "./locationResolver";
 import { SourceStatus } from "../status";
 import {
@@ -52,6 +53,7 @@ interface WorkingListing {
   bedrooms?: number | null;
   bathrooms?: number | null;
   area_sqm?: number | null;
+  land_area_sqm?: number | null;
   amenities?: string[];
   property_type?: string;
 }
@@ -912,6 +914,7 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   console.log(`\nFetched: ${listings.length} listings`);
 
   await enrichListings(listings, sourceConfig);
+  for (const listing of listings) applyCvSourceCorrections(listing);
 
   const existingByUrl = await fetchExistingUrlIdentities(
     sourceId,
@@ -969,7 +972,7 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
       bathrooms: isLand ? null : (listing.bathrooms ?? null),
       property_type: propertyType,
       property_size_sqm: isLand ? null : (listing.area_sqm ?? null),
-      land_area_sqm: isLand ? (listing.area_sqm ?? null) : null,
+      land_area_sqm: listing.land_area_sqm ?? (isLand ? (listing.area_sqm ?? null) : null),
       image_urls: listing.imageUrls,
       source_id_primary: sourceId,
       source_url_primary: listing.detailUrl ?? null,
