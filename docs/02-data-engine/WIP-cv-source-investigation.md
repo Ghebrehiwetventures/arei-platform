@@ -81,6 +81,118 @@ Next operational steps:
 
 ---
 
+## Complete-pipeline dry run — 2026-06-08
+
+Ran the full CV curated pipeline in `DRY_RUN` (no DB writes, no AI) across all
+**10 active sources** (`lifecycleOverride: IN`). Stub sources (`cv_source_1`,
+`cv_source_2`) and `DROP` sources (`cv_capeverdepropertyuk` — Cloudflare JS
+challenge; `cv_rightmove`, `cv_globallistings`, `cv_properstar`,
+`cv_greenacres`) are excluded by design.
+
+Per-source `ingest_to_curated.ts` invocation, one per source:
+
+```bash
+DRY_RUN=1 REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=<id> \
+  npx ts-node --transpile-only scripts/ingest_to_curated.ts
+```
+
+| source | fetched | pages | enriched | detail fail | skipped | removal cands | stop reason |
+|---|---:|---:|---:|---:|---:|---:|---|
+| cv_terracaboverde | 37 | 6 | 37 | 0 | 0 | 0 | empty_listings |
+| cv_simplycapeverde | 77 | 7 | 77 | 0 | 0 | 0 | ajax_server_no_more |
+| cv_ccoreinvestments | **0** | 0 | — | — | — | — (disabled) | **fetch_failed_page_1** |
+| cv_homescasaverde | 63 | 7 | 63 | 0 | 0 | 0 | empty_listings |
+| cv_capeverdeproperty24 | 41 | 5 | 41 | 0 | 0 | 0 | natural_end |
+| cv_cabohouseproperty | **0** | 1 | — | — | — | — (disabled) | **empty_listings (MalCare 403)** |
+| cv_estatecv | 166 | 20 | 166 | 0 | 0 | 0 | empty_listings |
+| cv_oceanproperty24 | 12 | 2 | 12 | 0 | 0 | 0 | empty_listings |
+| cv_nhakaza | 1 | 1 | 1 | 0 | 0 | 0 | no_next_button |
+| cv_remax | 45 | 3 | 45 | 0 | 0 | 0 | last_page_partial |
+
+Pipeline health:
+- **8 of 10 sources reachable**, returning **442 listings**, all **442
+  enriched with 0 detail failures and 0 skipped rows**. No source produced a
+  false removal candidate against its published set.
+- **2 sources returned 0 rows** — both are known, pre-existing blockers, and the
+  zero-row safety gate correctly disabled removal detection so no rows would be
+  demoted:
+  - `cv_ccoreinvestments` — `fetch_failed_page_1` (host/DNS unreachable from this
+    environment; retry when reachable).
+  - `cv_cabohouseproperty` — `empty_listings` from the MalCare 403 firewall
+    (GitHub issue #361). The engine still reports HTTP 200 here; see #361.
+
+Aggregate field coverage over the 442 reachable listings (from the JSON
+reports, null-aware — studios with `bedrooms=0` count as present):
+
+| field | coverage |
+|---|---|
+| price | 335/442 (76%) |
+| bedrooms | 359/442 (81%) |
+| bathrooms | 278/442 (63%) |
+| any area | 367/442 (83%) |
+| images ≥1 | 438/442 (99%) |
+| images ≥3 | 423/442 (96%) |
+
+Per-source coverage:
+
+| source | n | price | beds | baths | area | img≥1 | img≥3 |
+|---|---:|---:|---:|---:|---:|---:|---:|
+| cv_terracaboverde | 37 | 37 | 37 | 37 | 37 | 37 | 37 |
+| cv_simplycapeverde | 77 | 66 | 74 | 72 | 40 | 73 | 69 |
+| cv_homescasaverde | 63 | 63 | 59 | 60 | 61 | 63 | 63 |
+| cv_capeverdeproperty24 | 41 | 23 | 20 | 17 | 17 | 41 | 41 |
+| cv_estatecv | 166 | 100 | 122 | 45 | 164 | 166 | 163 |
+| cv_oceanproperty24 | 12 | 12 | 11 | 11 | 11 | 12 | 12 |
+| cv_nhakaza | 1 | 1 | 1 | 1 | 1 | 1 | 0 |
+| cv_remax | 45 | 33 | 35 | 35 | 36 | 45 | 38 |
+
+Coverage notes: the lower price/beds/baths/area counts are the accepted
+source-floor and POA/land/commercial cases documented per source above
+(e.g. `cv_capeverdeproperty24` "Call for details" prices, `cv_estatecv` land
+bathrooms, `cv_remax` price-on-request). The four `cv_simplycapeverde` rows
+below images ≥1 are legacy pages already noted in that source's section. No new
+scraper regressions surfaced; coverage matches the per-source post-fix numbers.
+
+### Random missing-value spot-check (SCRAPER vs SOURCE) — 2026-06-08
+
+To validate the per-source verdicts before a full-system ingest, 12 listings
+with missing fields were sampled at random across the reachable sources and
+each original listing was opened to check whether the value is actually shown
+on the source. `cv_terracaboverde` and `cv_nhakaza` had **0 rows with gaps** so
+nothing was sampled from them.
+
+**Result: 12/12 gaps are genuine SOURCE absences. Zero scraper faults.**
+
+| source | listing | missing | verdict | evidence on source page |
+|---|---|---|---|---|
+| simplycapeverde | São Vicente development | beds, baths | 🌐 SOURCE | development opportunity; 20,000 m² shown, no beds/baths in JSON-LD or text |
+| simplycapeverde | D205 Lantana apt | area | 🌐 SOURCE | JSON-LD has beds/baths but no `floorSize`; no m² anywhere on page |
+| homescasaverde | prime land | beds, baths | 🌐 SOURCE | land; 699 m² shown, beds/baths N/A |
+| homescasaverde | entire building | beds, baths | 🌐 SOURCE | multi-floor building, per-floor areas, no single bed/bath count |
+| capeverdeproperty24 | nos-kasa-north | beds, baths, area | 🌐 SOURCE | no OSProperty `.corefields` block at all — prose-only newer page |
+| capeverdeproperty24 | pds-b2-2 | price | 🌐 SOURCE | "Call for details price"; corefields Bed=1/Bath=1/46 sqm extracted correctly |
+| estatecv | DuarGema Delta-03 | baths | 🌐 SOURCE | only "master suite with its own bathroom" prose; no defensible total (price 481,005 present) |
+| estatecv | A16 4kk apt | baths | 🌐 SOURCE | no bathroom stated on page (T3; price 253,092 present) |
+| estatecv | B07 2kk apt | price, baths | 🌐 SOURCE | "Price negotiated", JSON-LD `"price":""`; no bathroom stated |
+| oceanproperty24 | IDRA | beds, baths, area | 🌐 SOURCE | multi-unit Project page; per-unit price/area ranges, no single-unit values |
+| remax | 730061001-53 | area | 🌐 SOURCE | API `TotalArea=0` and `LivingArea`/`BuiltArea`/`LotSize`/`LeaseArea` all null |
+| remax | 730061001-50 | area | 🌐 SOURCE | API `TotalArea=0` and all alternate area fields null |
+
+Method: server-rendered HTML sources were fetched with browser headers and
+inspected for JSON-LD specs, structured spec/corefields tables, and visible
+labels. RE/MAX listing pages are JS-only shells (~2.4 KB), so the API-driven
+data was re-queried directly per MLSID. All gaps trace to POA / "Call for
+details" pricing, land/commercial rows, multi-unit project ranges, or
+partial-suite bathroom prose — i.e. real source floors, consistent with each
+source's verdict above.
+
+**Conclusion: the system is validated for a full-system live ingest.** The two
+blocked sources (`cv_ccoreinvestments`, `cv_cabohouseproperty`) must be
+re-attempted only when reachable; the zero-row gate prevents them from demoting
+any published row in the meantime.
+
+---
+
 ## cv_terracaboverde — n=37 — DONE 2026-06-08
 
 Status: ✅ **Resolved for current v1 ingest.** All three previously-blocked
@@ -1144,11 +1256,11 @@ Confirmed refresh ingest (2026-06-08):
   8 `needs_review`; `public.v1_feed_cv` unchanged at 37. All 8 `needs_review`
   rows have null `first_published_at` (none promoted).
 
-Adjacent finding (not actioned): `cv_capeverdepropertyuk` is configured (not
-`DROP`) but has **0 rows** in curated/feed — likely never ingested or a broken
-fetch. Worth a separate look. Dropped sources (`cv_rightmove`,
-`cv_globallistings`, `cv_properstar`, `cv_greenacres`) carry
-`lifecycleOverride: DROP` and are out of scope.
+Out-of-scope sources (for reference): `cv_capeverdepropertyuk` carries
+`lifecycleOverride: DROP` with the note "Cloudflare JS challenge blocks all
+requests" — its 0 rows are expected, not a bug. `cv_rightmove`,
+`cv_globallistings`, `cv_properstar`, and `cv_greenacres` are also `DROP`.
+`cv_source_1` / `cv_source_2` are `type: stub` test fixtures.
 
 ---
 
