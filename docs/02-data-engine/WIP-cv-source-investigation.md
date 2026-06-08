@@ -191,6 +191,54 @@ blocked sources (`cv_ccoreinvestments`, `cv_cabohouseproperty`) must be
 re-attempted only when reachable; the zero-row gate prevents them from demoting
 any published row in the meantime.
 
+### Full-system live ingest — 2026-06-08
+
+Ran the live curated ingest (`REPORT_JSON=1`, no `DRY_RUN`) across all 10
+sources sequentially. `cv_ccoreinvestments` — blocked in the earlier dry sweep —
+was **reachable this time** and ingested 87 rows. Only `cv_cabohouseproperty`
+remained blocked (MalCare 403); it produced 0 rows, wrote nothing, and the
+zero-row gate disabled removal detection. **9 of 10 sources wrote successfully,
+all with 0 write failures and 0 unintended demotions.**
+
+| source | fetched | upserted | new AI desc | removal demotions | result |
+|---|---:|---:|---:|---:|---|
+| cv_terracaboverde | 37 | 37 | 0 | 0 | ✅ |
+| cv_simplycapeverde | 77 | 77 | 0 | 0 | ✅ |
+| cv_ccoreinvestments | 87 | 87 | 1 | 0 | ✅ now reachable |
+| cv_homescasaverde | 63 | 63 | 1 | 0 | ✅ |
+| cv_capeverdeproperty24 | 41 | 41 | 0 | 0 | ✅ |
+| cv_cabohouseproperty | 0 | 0 | 0 | 0 (disabled) | ⚠️ MalCare 403, no writes |
+| cv_estatecv | 166 | 166 | 14 | 0 | ✅ first live ingest |
+| cv_oceanproperty24 | 12 | 12 | 0 | 0 | ✅ |
+| cv_nhakaza | 1 | 1 | 0 | 0 | ✅ |
+| cv_remax | 45 | 45 | 0 | 0 | ✅ |
+
+Post-ingest direct Postgres verification (`DATABASE_URL`, all CV sources):
+
+| source | published | needs_review | removed | feed |
+|---|---:|---:|---:|---:|
+| cv_terracaboverde | 29 | 8 | 2 | 29 |
+| cv_simplycapeverde | 61 | 16 | 1 | 61 |
+| cv_ccoreinvestments | 82 | 6 | 19 | 82 |
+| cv_homescasaverde | 57 | 7 | 6 | 57 |
+| cv_capeverdeproperty24 | 36 | 5 | 0 | 36 |
+| cv_cabohouseproperty | 5 | 0 | 0 | 5 |
+| cv_estatecv | 150 | 16 | 0 | 150 |
+| cv_oceanproperty24 | 5 | 7 | 2 | 5 |
+| cv_nhakaza | 0 | 1 | 0 | 0 |
+| cv_remax | 37 | 8 | 0 | 37 |
+| **TOTAL** | **462** | **74** | **30** | **462** |
+
+Integrity: every source's `published` count equals its `v1_feed_cv` count, and
+**0 feed rows are unbacked by a published curated row** — no `needs_review` leak
+into the public feed, no published rows lost. `cv_estatecv`'s first live ingest
+kept all 150 prior rows published and added 16 new `needs_review` rows. The CV
+market now has **462 published listings live** plus 74 held for manual review.
+
+Remaining work: re-run `cv_cabohouseproperty` once issue #361 / the MalCare
+block clears; review the 74 `needs_review` rows for promotion in the KazaVerde
+review UI.
+
 ---
 
 ## cv_terracaboverde — n=37 — DONE 2026-06-08
