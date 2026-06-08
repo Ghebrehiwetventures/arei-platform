@@ -201,6 +201,70 @@ test("prefers structured bathroom and bedroom selectors over description regex m
   assert.equal(result.bathrooms, 2);
 });
 
+test("extracts Ocean Property bedroom and bathroom fields from dedicated detail nodes", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_oceanproperty24");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(
+    "cv_oceanproperty24",
+    source.detail,
+    source.price_format,
+  );
+
+  const result = plugin.extract(`
+    <div class="listing_detail property_default_rooms"><strong>Rooms:</strong> 1</div>
+    <div class="listing_detail property_default_bedrooms"><strong>Bedrooms:</strong> 2</div>
+    <div class="listing_detail property_default_bathrooms"><strong>Bathrooms:</strong> 1</div>
+  `, "https://www.oceanproperty24.com/properties/beautiful-2-bedroom-apartment");
+
+  assert.equal(result.bedrooms, 2);
+  assert.equal(result.bathrooms, 1);
+});
+
+test("extracts NhaKaza Portuguese specs and query-backed gallery images", () => {
+  const config = loadSourcesConfig("cv");
+  assert.equal(config.success, true, config.error);
+
+  const source = config.data.sources.find((candidate) => candidate.id === "cv_nhakaza");
+  assert.ok(source);
+
+  const plugin = createGenericDetailPlugin(
+    "cv_nhakaza",
+    source.detail,
+    source.price_format,
+  );
+
+  const result = plugin.extract(`
+    <div class="listing_single_description">
+      <ul>
+        <li><a>Tipologia: T1</a></li>
+        <li><a>Área: 60M<sup>2</sup></a></li>
+        <li><a>WC: 1</a></li>
+      </ul>
+      <h4>Descrição Imóvel</h4>
+      <p>Apartamento totalmente equipado em Achada Santo António, perto de serviços, transportes e comércio local.</p>
+    </div>
+    <section class="listing-title-area p0">
+      <img src="/file.php?filename=/1603/med/one.jpeg">
+      <img src="/file.php?filename=/1603/med/two.jpeg">
+    </section>
+    <aside>
+      <img src="/file.php?filename=/1607/med/unrelated-rental.jpeg">
+    </aside>
+  `, "https://nhakaza.cv/arrendar-apartamento/example/?view_page=show_ad&id=1603");
+
+  assert.equal(result.bedrooms, 1);
+  assert.equal(result.bathrooms, 1);
+  assert.equal(result.areaSqm, 60);
+  assert.deepEqual(result.imageUrls, [
+    "https://nhakaza.cv/file.php?filename=/1603/med/one.jpeg",
+    "https://nhakaza.cv/file.php?filename=/1603/med/two.jpeg",
+  ]);
+});
+
 test("extracts CCore gross-area detail bar values with comma decimals", () => {
   const plugin = createGenericDetailPlugin("cv_ccoreinvestments", {
     selectors: {

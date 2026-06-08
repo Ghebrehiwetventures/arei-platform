@@ -1,6 +1,14 @@
 // Canonical land/plot type regex — shared across pipeline and UI.
 export const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
 
+export function normalizeBedroomsForPropertyType(
+  propertyType: string,
+  bedrooms: number | null | undefined,
+): number | null {
+  if (bedrooms != null) return bedrooms;
+  return propertyType === "studio" ? 0 : null;
+}
+
 // Unicode-aware word boundary: stops "casa" matching inside "casaco" but also
 // works for accented keywords like "ático" where ASCII \b fails because
 // accented letters aren't ASCII word chars. Always paired around a keyword
@@ -88,10 +96,10 @@ export function extractPropertyType(title?: string, url?: string): string {
   if (/\/(?:offices?|commercial)(?:\/|$)/.test(pathname)) return "commercial";
 
   if (VILLA.test(text)) return "villa";
+  if (STUDIO.test(text)) return "studio";
   if (APARTMENT.test(text)) return "apartment";
   if (TOWNHOUSE.test(text)) return "townhouse";
   if (PENTHOUSE.test(text)) return "penthouse";
-  if (STUDIO.test(text)) return "studio";
   if (BUNGALOW.test(text)) return "bungalow";
   if (MAISONETTE.test(text)) return "maisonette";
   if (DUPLEX.test(text)) return "duplex";

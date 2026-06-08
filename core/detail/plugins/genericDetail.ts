@@ -582,7 +582,7 @@ export function createGenericDetailPlugin(
       }
 
       // Fallback: generic image extraction
-      if (imageUrls.length < 3) {
+      if (imageUrls.length < 3 && detailConfig.image_fallback !== false) {
         // Try lightbox links
         $("a[href*='.jpg'], a[href*='.jpeg'], a[href*='.png'], a[href*='.webp']").each((_, el) => {
           const href = $(el).attr("href");
@@ -606,7 +606,7 @@ export function createGenericDetailPlugin(
       }
 
       // Final fallback: all reasonably-sized images
-      if (imageUrls.length < 3) {
+      if (imageUrls.length < 3 && detailConfig.image_fallback !== false) {
         $("img").each((_, el) => {
           const $img = $(el);
           const src = $img.attr("src") || $img.attr("data-src");

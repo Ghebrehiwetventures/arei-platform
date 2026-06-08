@@ -40,7 +40,29 @@ test("EstateCV retries one transient detail fetch failure", async () => {
   assert.equal(result.retried, true);
 });
 
-test("other sources do not receive the EstateCV-specific detail retry", async () => {
+test("NhaKaza retries one transient detail fetch failure", async () => {
+  let attempts = 0;
+  const fetchFn = async () => {
+    attempts++;
+    if (attempts === 1) {
+      return { success: false, error: "temporary connection reset" };
+    }
+    return { success: true, statusCode: 200, html: "<html>ok</html>" };
+  };
+
+  const result = await fetchDetailWithRetry(
+    "cv_nhakaza",
+    "https://nhakaza.cv/comprar-apartamento/example",
+    fetchFn,
+    async () => {},
+  );
+
+  assert.equal(attempts, 2);
+  assert.equal(result.success, true);
+  assert.equal(result.retried, true);
+});
+
+test("other sources do not receive source-specific detail retries", async () => {
   let attempts = 0;
   const fetchFn = async () => {
     attempts++;

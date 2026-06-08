@@ -117,7 +117,7 @@ export function parseListingsFromHtml(
           const $titles = $container.find(config.selectors.title);
           $titles.each((_, titleEl) => {
             const text = $(titleEl).text().trim();
-            if (text.length > 15 && (!title || text.length > title.length)) {
+            if (text.length >= 5 && (!title || text.length > title.length)) {
               title = text;
             }
           });

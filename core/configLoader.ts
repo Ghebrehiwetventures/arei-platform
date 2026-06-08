@@ -95,6 +95,9 @@ export interface DetailConfig {
     price?: string;
     location?: string;
   };
+  /** Disable generic page-wide image fallbacks when the configured image
+   *  selector is authoritative and unrelated sidebar images are present. */
+  image_fallback?: boolean;
   delay_ms?: number;
   /** Scope `spec_patterns` regexes to this container instead of `<body>`. Prevents
    *  regex pollution from Similar Listings / sidebar / navigation. When unset, the

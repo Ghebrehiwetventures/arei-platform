@@ -59,9 +59,9 @@ shown on the page? **Yes + we have null** = 🔧 SCRAPER. **No** = 🌐 SOURCE.
 - [x] cv_capeverdeproperty24
 - [x] cv_cabohouseproperty
 - [x] cv_estatecv
-- [ ] cv_oceanproperty24
-- [ ] cv_nhakaza
-- [ ] Cross-cutting image issues
+- [x] cv_oceanproperty24
+- [x] cv_nhakaza
+- [x] Cross-cutting image issues
 
 Next operational steps:
 1. Retry the completed `cv_ccoreinvestments` freshness ingest only when its
@@ -72,7 +72,11 @@ Next operational steps:
 3. Await confirmation before the first post-fix live ingest for
    `cv_estatecv`; the investigation and direct database comparison are
    complete.
-4. Investigate `cv_oceanproperty24` after the EstateCV live-ingest decision.
+4. Review the 7 new `cv_oceanproperty24` rows now held as `needs_review`;
+   the post-fix live ingest and direct database verification are complete.
+5. Review the new `cv_nhakaza` row now held as `needs_review`; the
+   investigation, sale-only live ingest, and direct database verification are
+   complete.
 
 ---
 
@@ -556,7 +560,7 @@ Fresh evidence:
   `node --test tests/genericDetail.test.cjs tests/cvIslandRecovery.test.cjs tests/ingestToCurated.test.cjs tests/propertyType.test.cjs tests/runMarketSourceHealth.test.cjs`
   passed 48/48; `git diff --check` passed.
 
-Direct Postgres comparison (`DATABASE_URL`, not Supabase JS/REST):
+Pre-ingest direct Postgres comparison (`DATABASE_URL`, not Supabase JS/REST):
 - `kv_curated.listings` has 5 rows for this source, all `published`;
   `public.v1_feed_cv` has the same 5 rows.
 - Two current dry-run rows already exist and retain the same IDs for the same
@@ -712,35 +716,244 @@ as `needs_review`.
 
 ---
 
-## cv_oceanproperty24 — n=12
+## cv_oceanproperty24 — n=12 — DONE 2026-06-08
 
-| field | missing | verdict | notes |
-|---|---|---|---|
-| price | 0/12 | ✅ | |
-| bedrooms | 3/12 | ❓ | |
-| bathrooms | 1/12 | ❓ | |
-| area | 1/12 | ❓ | |
+Status: ✅ **Resolved for current v1 ingest.** The fresh source has 12 current
+rows. Two structured-spec bugs and one property-type precedence gap were fixed,
+then the confirmed live ingest refreshed published rows, inserted new rows as
+`needs_review`, and removed two verified 404 rows.
 
-Spot-check:
-- https://www.oceanproperty24.com/properties/new-project-alert-idra  (beds,baths,area)
-- https://www.oceanproperty24.com/properties/studio-apartment-for-sale-in-vila-verde-resort-pepper-community  (beds — studio = 0 beds? source issue)
+| field | before | after | verdict | notes |
+|---|---:|---:|---|---|
+| price | 12/12 | 12/12 | ✅ SOURCE / ACCEPTED | All 12 current pages expose a numeric EUR price, including IDRA's "Starting from €125.000"; report values match. |
+| bedrooms | 9/12 | 11/12 | 🔧 SCRAPER FIXED / SOURCE | Concatenated `.listing_detail` text caused `Rooms: 1` to be read as the bedroom value on four rows. Dedicated bedroom nodes now win. Both source-declared studios are represented as `property_type=studio`, `bedrooms=0`, consistent with the existing KazaVerde data/UI contract. IDRA remains null because it is a multi-unit project page with no single unit bedroom count. |
+| bathrooms | 11/12 | 11/12 | 🔧 SCRAPER FIXED / SOURCE | Dedicated bathroom nodes fixed wrong non-null values on affected rows; IDRA has no project-level bathroom count and correctly remains null. |
+| area | 11/12 | 11/12 | 🌐 SOURCE | Eleven pages expose structured property size and match the report after normal rounding. IDRA exposes no single unit area and correctly remains null. |
+| images | 12/12 ≥1; 12/12 ≥3 | unchanged | ✅ ACCEPTED | 228 report image URLs, all unique within each row, all hosted by `www.oceanproperty24.com`, with no logo/social/tracking/placeholder patterns. Per-row counts are 12–20 because detail enrichment caps the retained gallery. |
+
+Fixes landed:
+- ✅ `cv_oceanproperty24` now uses `.property_default_bedrooms` and
+  `.property_default_bathrooms` instead of relying on concatenated
+  `.listing_detail` regex text.
+- ✅ Property-type classification checks `studio` before `apartment`, so
+  "Studio Apartment" does not collapse to the generic apartment type.
+- ✅ Curated row construction maps a null bedroom count to `0` only when the
+  resolved property type is `studio`; explicit bedroom counts remain unchanged.
+
+Fresh dry-run evidence:
+- Command:
+  `DRY_RUN=1 REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_oceanproperty24 npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+- Final run fetched 12 listings, enriched 12/12, had 0 detail failures and 0
+  skipped rows, produced 12 rows, detected 5 current published rows, and
+  reported 2 dry-run removal candidates.
+- Final JSON coverage:
+  price 12/12, bedrooms 11/12, bathrooms 11/12, area 11/12,
+  images >=1 12/12, images >=3 12/12.
+- The console summary prints bedrooms as 9/12 because its legacy truthiness
+  counter excludes valid `0` studio values; the generated JSON report uses
+  null checks and is the authoritative 11/12 count.
+
+Page and pagination evidence:
+- All 12 current detail URLs returned live property pages and were compared
+  against dedicated price, bedroom, bathroom, size, city/county, canonical URL,
+  and gallery elements.
+- Confirmed structured corrections include:
+  `op24_82480dd59149` 1→2 bedrooms and 2→1 bathrooms;
+  `op24_86a88005347d` 1→2 bedrooms and 2→1 bathrooms;
+  `op24_4bb909b8f168` 1→2 bedrooms;
+  `op24_89d18f086d75` 2→1 bedrooms; and
+  `op24_f83ec466809b` 1→2 bathrooms.
+- The configured `?page=2` request repeats the same 12 catalogue rows in a
+  different order; URL deduplication yields 0 new rows and safely stops.
+  The conventional `/listings/apartment/page/2/` path contains 0 listing
+  wrappers. The current authoritative catalogue is therefore the 12 unique
+  rows on page 1; no pagination loss was found.
+- IDRA:
+  https://www.oceanproperty24.com/properties/new-project-alert-idra
+  exposes price and Santa Maria / Sal location, but no single-unit bedroom,
+  bathroom, or area values. These nulls are source/project semantics, acceptable
+  pending future AI title/description extraction for unit-range detail.
+- Studio sample:
+  https://www.oceanproperty24.com/properties/studio-apartment-for-sale-in-vila-verde-resort-pepper-community
+  exposes bathroom and area but no bedroom node; `studio` + `bedrooms=0` is now
+  used instead of inventing a positive bedroom count.
+
+Tests:
+- Added failing regressions first for Ocean Property dedicated spec nodes,
+  studio-over-apartment classification precedence, and the established
+  zero-bedroom studio contract.
+- `node --test tests/genericDetail.test.cjs tests/propertyType.test.cjs tests/ingestToCurated.test.cjs tests/pipelineDetailRetry.test.cjs`
+  passed 56/56.
+- `git diff --check` passed.
+
+Direct Postgres comparison (`DATABASE_URL`, not Supabase JS/REST):
+- `kv_curated.listings` currently has 7 rows for this source, all `published`;
+  `public.v1_feed_cv` also has 7.
+- Five of the 12 current source rows already exist as published rows. They all
+  have AI descriptions and populated original `first_seen_at` /
+  `first_published_at` timestamps. A live ingest would refresh source fields in
+  place while preserving those statuses, timestamps, and AI descriptions.
+- Seven current source rows are absent from curated/feed and would enter as
+  `needs_review`; no row would be promoted during ingest.
+- Same-source, same-URL reconciliation found 0 ID mismatches.
+- Two published rows are absent from the fresh catalogue:
+  `op24_6fd09fa8b542` (`blue-ocean-brand-new-apartment`) and
+  `op24_8989275bc131` (`one-bedroom-apartment-in-porto-antigo-3`).
+  Both source URLs currently return Ocean Property "Page Not Found" pages, so
+  they are genuine removal candidates rather than false catalogue misses.
+- The successful non-zero full-catalogue fetch makes removal detection
+  authoritative for this run.
+- Confirmed live ingest command:
+  `REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_oceanproperty24 npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched and enriched 12/12 rows, generated AI descriptions for all 7 new
+  rows, refreshed all 5 current published rows, upserted 12/12 with 0 failures,
+  and demoted the 2 confirmed absent rows to `removed`.
+- Post-ingest direct Postgres verification:
+  `kv_curated.listings` has 14 rows for the source: 5 `published`,
+  7 `needs_review`, and 2 `removed`; `public.v1_feed_cv` has exactly the 5
+  current published rows.
+- All 12 current report rows exist in curated, and report-to-database comparison
+  found 0 mismatches across price, bedrooms, bathrooms, property type, area,
+  island, city, and image count.
+- The five existing published rows kept their original `first_seen_at`,
+  `first_published_at`, `publish_status`, IDs, and AI descriptions while their
+  source-derived fields and `last_verified_at` were refreshed.
+- The two published studio rows were corrected in place from polluted
+  `bedrooms=9` values to `property_type=studio`, `bedrooms=0`.
+- The seven additions have `first_published_at=null`, AI descriptions present,
+  and remain outside the public feed as `needs_review`. No promotions occurred.
+- The two removed rows kept their historical first-seen/published timestamps
+  and AI descriptions; only status/removal verification metadata changed.
+
+Remaining work: manually review the 7 `needs_review` additions before any
+separate promotion decision.
 
 ---
 
-## cv_nhakaza — n=3 (rentals; tiny)
+## cv_nhakaza — n=1 sale — DONE 2026-06-08
 
-| field | missing | verdict | notes |
-|---|---|---|---|
-| price | 0/3 | ✅ | |
-| bedrooms | 1/3 | ❓ | |
-| bathrooms | 0/3 | ✅ | |
-| area | 3/3 | ❓ | |
+Status: ✅ **Resolved for current v1 ingest.** The final authoritative dry run
+returned the sole current sale listing, excluded the three sidebar rentals,
+enriched the detail page, and produced no skipped rows, detail failures,
+pagination loops, or removal candidates. The confirmed live ingest then added
+that row as `needs_review`; no promotion occurred.
 
-Known issue: 3 image URLs are `nhakaza.cv/file.php` (no extension) — verify they resolve to real images.
+Commands:
 
-Spot-check:
+```bash
+DRY_RUN=1 REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_nhakaza \
+  npx ts-node --transpile-only scripts/ingest_to_curated.ts
+
+node --test tests/
+```
+
+Fresh before/after evidence:
+
+| field | pre-fix unsafe rental result | final sale result | verdict |
+|---|---:|---:|---|
+| fetched / rows ready | 3 / 3 | 1 / 1 | 🔧 SCRAPER FIXED |
+| price | 3/3 | 1/1 | 🔧 SCRAPER FIXED: CVE now preserved instead of EUR |
+| bedrooms | 2/3 | 1/1 | 🔧 SCRAPER FIXED |
+| bathrooms | 2/3 | 1/1 | 🔧 SCRAPER FIXED |
+| area | 0/3 | 1/1 | ◑ MIXED on excluded rentals; current sale complete |
+| images ≥1 | 3/3 invalid bare endpoints | 1/1 valid JPEG | 🔧 SCRAPER FIXED |
+| images ≥3 | 0/3 | 0/1 | 🌐 SOURCE: current sale exposes one image |
+
+Catalogue and pagination verdict:
+
+- The configured buy page is labelled `Imóveis para Comprar`, has
+  `tp_to=2` selected, and currently reports `Mostrando 1-1 de 1 resultado`.
+  Its authoritative result area contains one sale row:
+  `nk_18db90069eb7`, `Apartamento T1`, CVE 8,821,200, Santa Maria / Sal.
+- The old `div.feat_property` selector also captured three unrelated
+  `Em Destaque` sidebar rentals. Their URLs begin `/arrendar-`, their cards say
+  `Arrendar`, and two descriptions explicitly say the price is a daily
+  short-stay rate. Classification: **SCRAPER + unsafe rental/catalogue
+  mismatch**. They must not enter the for-sale feed.
+- The real sale title is only 14 characters. A generic `>15` title threshold
+  dropped it after the three rentals had been accepted. The parser now accepts
+  valid titles of at least five characters, the list selector is scoped to
+  `div.feat_property.list`, and `/arrendar-` is rejected as defense in depth.
+- There is one page. Both previous and next controls are disabled and point
+  back to page 1. The next selector now excludes disabled controls, so the
+  final run stops with `no_next_button` after one page instead of clicking page
+  1 again and stopping on `duplicate_page_content`. No duplicates, missed
+  pages, or loops remain.
+
+Field and detail-page evidence:
+
+- Current sale `1657` exposes `Comprar` / `Vender`, CVE `8.821.200$00`,
+  `Tipologia: T1`, `WC: 1`, and `63,8 m²` in the description. Final output:
+  `property_type=apartment`, `price=8821200`, `currency=CVE`, `bedrooms=1`,
+  `bathrooms=1`, `property_size_sqm=64`, `city=Santa Maria`, `island=Sal`.
+- The first fresh run had one transient detail failure on historical rental
+  `1603`; an immediate direct request returned HTTP 200 and prior evidence had
+  succeeded. NhaKaza now receives one focused detail retry, and the final sale
+  detail succeeded without failure.
+- Historical rental `1603` visibly has T1, 1 WC, and 60 m². Historical rental
+  `1607` has T3, 3 WC, 200 m² useful area, and 150 m² covered area. Their old
+  missing fields were scraper misses caused by scoping regexes to long
+  descriptions instead of the main specification block.
+- Historical rental `1608` has T3 and 2 WC but no visible area in its structured
+  details or description. Its area gap is a genuine source omission. All three
+  rental rows are excluded regardless of field completeness.
+
+Image evidence:
+
+- NhaKaza serves images through extensionless
+  `file.php?filename=/.../med/<file>.jpg` URLs. Generic image normalization
+  previously stripped the identifying query, collapsed distinct images to
+  `https://nhakaza.cv/file.php`, and retained an empty response.
+- Query parameters are now preserved only when the `filename` value ends in a
+  recognized image extension. The bare endpoint returned HTTP 200 with
+  `image/jpeg` but zero bytes and is not retained.
+- Every gallery URL found on the four audited pages was requested: 50/50
+  returned HTTP 200, `Content-Type: image/jpeg`, non-empty bytes, and JPEG
+  magic bytes (1603: 9, 1607: 20, 1608: 20, current sale 1657: 1).
+- The current sale page exposes one gallery image. It was visually checked and
+  is a real listing/location photograph. Generic fallback had briefly pulled
+  three rental sidebar thumbnails into the sale row; NhaKaza now uses an
+  authoritative main-gallery selector with page-wide image fallback disabled.
+  Final report image count is exactly 1.
+
+Fixes and tests:
+
+- Scoped NhaKaza catalogue extraction to sale result cards, rejected rental
+  URLs, ignored disabled next controls, and scoped Portuguese specs to the
+  primary detail block.
+- Preserved validated query-backed image identities, added a source-authoritative
+  image-selector option, honored source-level currency, accepted short valid
+  titles, and added one transient NhaKaza detail retry.
+- Added failing regressions first for sale-card selection, rental exclusion,
+  short titles, query-backed image dedupe, sidebar-image rejection, Portuguese
+  T/WC/area extraction, CVE currency precedence, and detail retry.
+- Full suite passed 77/77 with `node --test tests/`; `git diff --check` passed.
+
+Direct Postgres comparison (`DATABASE_URL`, not Supabase JS/REST):
+
+- Pre-ingest, both `kv_curated.listings` and `public.v1_feed_cv` had 0 rows for
+  `cv_nhakaza`. The one sale row had no same-source, same-URL identity conflict.
+- Confirmed live ingest command:
+  `REPORT_JSON=1 MARKET_ID=cv SOURCE_ID=cv_nhakaza npx ts-node --transpile-only scripts/ingest_to_curated.ts`
+  fetched and enriched 1/1 sale row, generated its AI description, upserted
+  1/1 with 0 failures, and found no removal candidates.
+- Post-ingest, `kv_curated.listings` has exactly one row:
+  `nk_18db90069eb7`, `publish_status=needs_review`, CVE 8,821,200, T1,
+  1 bathroom, 64 sqm, one validated image, and AI descriptions present.
+- `first_published_at` is null, while `first_seen_at` and `last_verified_at`
+  are populated. `public.v1_feed_cv` still has 0 NhaKaza rows, so the ingest
+  did not publish or promote anything.
+
+Current sale:
+- https://nhakaza.cv/comprar-apartamento/vila-de-santa-maria-sal/apartamento-t1/?view_page=show_ad&id=1657
+
+Historical excluded rentals:
 - https://nhakaza.cv/arrendar-apartamento/achada-st-ant-nio-santiago/apartamento-t1-100-equipado/?view_page=show_ad&id=1603
 - https://nhakaza.cv/arrendar-moradia/palmarejo-praia-santiago/moradia-duplex-t3-com-garagem-e-quintal-perto-da-praia-de-kebra-canela/?view_page=show_ad&id=1607
+- https://nhakaza.cv/arrendar-moradia/palmarejo-baixo-praia-santiago/moradia-duplex-t3-arquitetura-singular-perto-da-praia-de-kebra-canela/?view_page=show_ad&id=1608
+
+Remaining work: manually review the single `needs_review` row before any
+separate promotion decision.
 
 ---
 
@@ -750,7 +963,7 @@ Spot-check:
 |---|---|---|---|---|
 | Pinterest share buttons (`pinterest.com/pin/create/button`) | cv_simplycapeverde | 73 | 🔧 SCRAPER | universal junk-URL reject in image path |
 | ShortPixel CDN URL fragmented on commas (`/property/q_cdnize`, `/to_auto`, doubled host) | cv_homescasaverde | ~112 across 56 listings | 🔧 SCRAPER | comma/srcset split must not break URLs containing commas |
-| `file.php` no-extension image URLs | cv_nhakaza | 3 | ❓ | verify resolve |
+| `file.php` no-extension image URLs | cv_nhakaza | 50 audited | 🔧 FIXED | preserve validated `filename` query; scope to authoritative gallery |
 
 Confirmed NOT issues (false positives, do not "fix"):
 - `spcdn.shortpixel.ai/...jpg` — real homescasaverde CDN images.

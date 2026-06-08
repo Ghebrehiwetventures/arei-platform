@@ -11,12 +11,15 @@ export function isValidImageUrl(url: string): boolean {
   return !invalidPatterns.some((p) => lower.includes(p));
 }
 
-/** Normalize URL: force https, strip query params, hash, trailing slashes. */
+/** Normalize URL: force https, strip non-essential query params/hash/trailing slashes. */
 export function normalizeImageUrl(url: string): string {
   try {
     const u = new URL(url);
     u.protocol = "https:";
-    u.search = "";
+    const filename = u.searchParams.get("filename");
+    const querySelectsImage =
+      filename != null && /\.(?:avif|gif|jpe?g|png|webp)$/i.test(filename);
+    if (!querySelectsImage) u.search = "";
     u.hash = "";
     u.pathname = u.pathname.replace(/\/+$/, "");
     return u.href;

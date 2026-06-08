@@ -21,7 +21,11 @@ import { createGenericDetailPlugin } from "../detail/plugins/genericDetail";
 import { getStrategyFactory, resetStrategyFactory } from "../detail/strategyFactory";
 import { buildListFetchFn } from "./fetchSource";
 import { loadLocationHooks } from "./locationHooks";
-import { LAND_TYPES, extractPropertyType } from "./propertyType";
+import {
+  LAND_TYPES,
+  extractPropertyType,
+  normalizeBedroomsForPropertyType,
+} from "./propertyType";
 import { applyExtractResultToListing } from "./enrich";
 import { resolveLocation as resolveIsland } from "./locationResolver";
 import { SourceStatus } from "../status";
@@ -111,6 +115,7 @@ function sleep(ms: number): Promise<void> {
 
 const ESTATECV_SOURCE_ID = "cv_estatecv";
 const ESTATECV_DETAIL_RETRY_DELAY_MS = 1500;
+const DETAIL_RETRY_SOURCE_IDS = new Set([ESTATECV_SOURCE_ID, "cv_nhakaza"]);
 
 export function getDetailFetchMethod(sourceConfig: SourceConfig): "http" | "headless" {
   return sourceConfig.detail?.fetch_method ?? sourceConfig.fetch_method ?? "http";
@@ -123,14 +128,21 @@ export async function fetchDetailWithRetry(
   sleepFn: (ms: number) => Promise<void> = sleep,
 ): Promise<any & { retried: boolean }> {
   let result = await fetchFn(detailUrl);
-  if (sourceId !== ESTATECV_SOURCE_ID || (result.success && result.html)) {
+  if (!DETAIL_RETRY_SOURCE_IDS.has(sourceId) || (result.success && result.html)) {
     return { ...result, retried: false };
   }
 
-  console.log(`[Enrich] Retrying transient EstateCV detail failure: ${detailUrl}`);
+  console.log(`[Enrich] Retrying transient ${sourceId} detail failure: ${detailUrl}`);
   await sleepFn(ESTATECV_DETAIL_RETRY_DELAY_MS);
   result = await fetchFn(detailUrl);
   return { ...result, retried: true };
+}
+
+export function resolveSourceCurrency(
+  sourceConfig: Pick<SourceConfig, "currency">,
+  marketId: string,
+): string {
+  return sourceConfig.currency ?? getCurrency(marketId);
 }
 
 // ─── Detail enrichment ───────────────────────────────────────────────────────
@@ -911,7 +923,7 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
     }
   }
 
-  const currency = getCurrency(marketId);
+  const currency = resolveSourceCurrency(sourceConfig, marketId);
   const country  = getCountry(marketId);
   const now      = new Date().toISOString();
 
@@ -949,7 +961,9 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
       country,
       island,
       city: city ?? null,
-      bedrooms: isLand ? null : (listing.bedrooms ?? null),
+      bedrooms: isLand
+        ? null
+        : normalizeBedroomsForPropertyType(propertyType, listing.bedrooms),
       bathrooms: isLand ? null : (listing.bathrooms ?? null),
       property_type: propertyType,
       property_size_sqm: isLand ? null : (listing.area_sqm ?? null),

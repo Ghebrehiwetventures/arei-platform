@@ -3,7 +3,11 @@ const assert = require("node:assert/strict");
 
 require("ts-node/register/transpile-only");
 
-const { extractPropertyType, LAND_TYPES } = require("../core/pipeline/propertyType");
+const {
+  extractPropertyType,
+  normalizeBedroomsForPropertyType,
+  LAND_TYPES,
+} = require("../core/pipeline/propertyType");
 
 // ── English baseline ────────────────────────────────────────────────────────
 
@@ -13,6 +17,16 @@ test("extractPropertyType: villa (EN)", () => {
 
 test("extractPropertyType: apartment (EN)", () => {
   assert.equal(extractPropertyType("2-Bedroom Apartment in Praia"), "apartment");
+});
+
+test("extractPropertyType: studio beats apartment in mixed titles", () => {
+  assert.equal(extractPropertyType("Studio Apartment for Sale"), "studio");
+});
+
+test("normalizeBedroomsForPropertyType: studios use the established zero-bedroom contract", () => {
+  assert.equal(normalizeBedroomsForPropertyType("studio", null), 0);
+  assert.equal(normalizeBedroomsForPropertyType("apartment", null), null);
+  assert.equal(normalizeBedroomsForPropertyType("studio", 1), 1);
 });
 
 test("extractPropertyType: townhouse (EN, with space) — beats house keyword", () => {

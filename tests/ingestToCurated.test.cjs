@@ -8,6 +8,7 @@ const {
   buildFindRemovedPublishedRowsQuery,
   buildDemoteRemovedPublishedRowsQuery,
   reconcileListingIdsBySourceUrl,
+  resolveSourceCurrency,
   shouldRunRemovalDetection,
 } = require("../scripts/ingest_to_curated");
 
@@ -96,6 +97,11 @@ test("removal detection is disabled for incomplete source catalogues", () => {
   assert.equal(shouldRunRemovalDetection(true, ["chp_current"]), true);
   assert.equal(shouldRunRemovalDetection(undefined, ["chp_current"]), true);
   assert.equal(shouldRunRemovalDetection(undefined, []), false);
+});
+
+test("source currency overrides the market default for NhaKaza CVE prices", () => {
+  assert.equal(resolveSourceCurrency({ currency: "CVE" }, "cv"), "CVE");
+  assert.equal(resolveSourceCurrency({}, "cv"), "EUR");
 });
 
 test("removed published lookup finds published rows absent from current source ids", () => {

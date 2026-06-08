@@ -685,6 +685,8 @@ sources:
       delay_ms: 3000
       selectors:
         description: ".wpestate_property_description p, .property-description p, [class*='description'] p"
+        bedrooms: ".property_default_bedrooms"
+        bathrooms: ".property_default_bathrooms"
         # Scope images to actual gallery containers (no img[src*='uploads'] catch-all,
         # which previously pulled in the site logo). Filename filter on logo patterns
         # is defense in depth via isChromeElement.
@@ -729,7 +731,7 @@ sources:
 
     pagination:
       type: click_next      # Next-page buttons are JS-driven, not URL-based
-      next_selector: "ul.page_navigation li.page-item:last-child a.page-link"
+      next_selector: "ul.page_navigation li.page-item:last-child:not(.disabled) a.page-link"
                             # Last <li> in pagination = next button (no text, only flaticon-right-arrow icon)
 
     delay_ms: 3000
@@ -739,11 +741,14 @@ sources:
     stop_condition: empty_listings
 
     selectors:
-      listing: "div.feat_property"
+      listing: "div.feat_property.list"
       link: "a[href*='view_page=show_ad']"
       title: "h4"
       price: ".fp_price"
       image: ".thumb img"
+
+    reject_url_patterns:
+      - "/arrendar-"
 
     price_format:
       currency_symbol: "$"     # CVE escudo; "$NN" centavo suffix already stripped by parsePrice()
@@ -755,9 +760,11 @@ sources:
       enabled: true
       policy: always
       delay_ms: 3000
+      image_fallback: false
+      specs_selector: ".listing_single_description"
       selectors:
         description: "[class*='desc'] p, .listing_desc_header ~ div p"
-        images: "img[src*='/med/'], .carousel-item img, .slider_main_photo img"
+        images: "section.listing-title-area.p0 img[src*='/med/']"
         bedrooms: "li:contains('Tipologia')"
         bathrooms: "li:contains('WC')"
       spec_patterns:
