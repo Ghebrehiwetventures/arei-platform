@@ -103,6 +103,7 @@ import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
 import { BrokerPilotView } from "./BrokerPilotView";
 import { ListingSocialView } from "./ListingSocialView";
 import { NewsPostStudioView } from "./NewsPostStudioView";
+import { NewsClustersView } from "./NewsClustersView";
 
 // ============================================
 // D · LAYERS MARK — AREI brand mark (SVG)
@@ -3857,7 +3858,7 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "news-studio" | "notifications" | "featured" | "briefings";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "news-studio" | "news-clusters" | "notifications" | "featured" | "briefings";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
@@ -3882,6 +3883,7 @@ const AGENCIES_NAV_ITEMS: { key: Tab; label: string }[] = [
 // BrokerPilotView is a legacy internal preview. New broker product work
 // should happen in arei-broker — the real broker-facing product.
 const LABS_NAV_ITEMS: { key: Tab; label: string }[] = [
+  { key: "news-clusters", label: "News Clusters"        },
   { key: "broker-pilot", label: "Legacy Broker Preview" },
   { key: "chatlab",      label: "Chat Lab"              },
 ];
@@ -4187,6 +4189,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "briefings" && <BriefingsView />}
             {tab === "marketing" && <ListingSocialView />}
             {tab === "news-studio" && <NewsPostStudioView />}
+            {tab === "news-clusters" && <NewsClustersView />}
             {tab === "notifications" && (
               <NotificationsView onCountChange={handleNotificationCountChange} />
             )}
