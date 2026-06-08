@@ -338,3 +338,24 @@
 - Phase 1 image reachability checked the first image per listing, not every gallery image.
 - Cabohouse rows were not flagged in this run, so the known MalCare limitation did not affect final verdict coverage.
 - SCRAPER/SOURCE/FALSE_POSITIVE verdicts are audit classifications only. No remediation, demotion, DB write, ingest, or config/code change was performed.
+---
+
+## Remediation status (appended 2026-06-08)
+
+The 6 scraper fixes from `docs/superpowers/specs/2026-06-08-cv-feed-scraper-remediation-design.md`
+landed (commits `27fd06a`..`c014c4c`; full suite 93/93). Affected sources were
+re-ingested to push fixes into the live feed:
+
+- **Re-ingested with fixes applied (verified in data):** `cv_remax`
+  (plot area → `land_area_sqm`), `cv_simplycapeverde` (`20,000 m²` land, no
+  longer `20 m²` house), `cv_oceanproperty24` (title upgrade),
+  `cv_homescasaverde` (city → Santa Maria; 0 thumbnail covers).
+- **`cv_estatecv` re-ingest (completed 2026-06-08, the previously-interrupted
+  step):** 166 fetched, 150 refreshed in place (status/AI/timestamps preserved),
+  16 `needs_review` unchanged, 0 failures. **Thumbnail (`-445x331`) covers: 68 →
+  0.** estatecv image fix now applied to all 150 published rows.
+
+Post-remediation feed: **482 published**, and **0 listings across the entire CV
+feed serve a sub-200px thumbnail cover**. Not remediated (by design): 6
+cross-source duplicate clusters and source-authored weak titles/descriptions —
+left for canonical-dedupe / human review.
