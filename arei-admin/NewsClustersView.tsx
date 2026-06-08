@@ -100,13 +100,16 @@ export function NewsClustersView() {
             </div>
             <ul className="space-y-1">
               {c.members.map((m) => (
-                <li key={m.articleId} className="text-sm text-foreground flex items-start gap-2">
-                  <span className={`mt-0.5 w-3 shrink-0 text-center ${m.isPrimary ? "text-accent" : "text-transparent"}`} title={m.isPrimary ? "Primary source" : ""} aria-hidden={!m.isPrimary}>★</span>
-                  <span className="flex-1">
-                    {m.sourceUrl ? (
-                      <a href={m.sourceUrl} target="_blank" rel="noreferrer" className="hover:underline">{m.title}</a>
-                    ) : m.title}
-                    <span className="text-[11px] text-foreground-subtle"> · {m.sourceName}{m.matchMethod && m.matchMethod !== "manual" ? ` · ${m.matchMethod}` : ""}</span>
+                <li
+                  key={m.articleId}
+                  className={`text-sm pl-3 border-l-2 ${m.isPrimary ? "border-accent" : "border-transparent"}`}
+                  title={m.isPrimary ? "Lead source" : undefined}
+                >
+                  {m.sourceUrl ? (
+                    <a href={m.sourceUrl} target="_blank" rel="noreferrer" className="text-foreground hover:underline">{m.title}</a>
+                  ) : <span className="text-foreground">{m.title}</span>}
+                  <span className={`text-[11px] ${m.isPrimary ? "text-accent" : "text-foreground-subtle"}`}>
+                    {" · "}{m.sourceName}{m.isPrimary ? " · lead" : ""}{m.matchMethod && m.matchMethod !== "manual" ? ` · ${m.matchMethod}` : ""}
                   </span>
                 </li>
               ))}
