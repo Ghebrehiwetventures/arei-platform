@@ -101,7 +101,7 @@ export function NewsClustersView() {
             <ul className="space-y-1">
               {c.members.map((m) => (
                 <li key={m.articleId} className="text-sm text-foreground flex items-start gap-2">
-                  {m.isPrimary && <span className="mt-0.5 text-[9px] font-mono uppercase tracking-wide text-accent">★ primary</span>}
+                  <span className={`mt-0.5 w-3 shrink-0 text-center ${m.isPrimary ? "text-accent" : "text-transparent"}`} title={m.isPrimary ? "Primary source" : ""} aria-hidden={!m.isPrimary}>★</span>
                   <span className="flex-1">
                     {m.sourceUrl ? (
                       <a href={m.sourceUrl} target="_blank" rel="noreferrer" className="hover:underline">{m.title}</a>
