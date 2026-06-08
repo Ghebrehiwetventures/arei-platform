@@ -932,11 +932,11 @@ test("Homes Casa Verde keeps the large current-listing gallery image and exclude
 
   const plugin = createGenericDetailPlugin(source.id, source.detail, source.price_format);
   const result = plugin.extract(`
-    <div class="property-detail-gallery">
-      <img
-        src="https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/current-584x438.jpg"
-        srcset="https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/current-584x438.jpg 584w,
-                https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/current-2048x1536.jpg 2048w">
+    <div>
+      <a href="#" data-src="/wp-content/uploads/2026/06/current-scaled.jpg"
+        data-houzez-fancybox data-fancybox="gallery-v2">
+        <img src="https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/current-scaled.jpg">
+      </a>
     </div>
     <div class="similar-listings">
       <img class="wp-post-image" src="https://www.homescasaverde.com/wp-content/uploads/2026/06/other-property.jpg">
@@ -944,7 +944,7 @@ test("Homes Casa Verde keeps the large current-listing gallery image and exclude
   `, "https://www.homescasaverde.com/property/current");
 
   assert.deepEqual(result.imageUrls, [
-    "https://spcdn.shortpixel.ai/spio/ret_img,q_cdnize,to_auto,s_webp:avif/www.homescasaverde.com/wp-content/uploads/2026/06/current-2048x1536.jpg",
+    "https://www.homescasaverde.com/wp-content/uploads/2026/06/current-scaled.jpg",
   ]);
 });
 

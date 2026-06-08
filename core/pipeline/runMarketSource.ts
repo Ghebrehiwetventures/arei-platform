@@ -209,6 +209,10 @@ async function enrichListings(
 
       applyExtractResultToListing(listing, extractResult, {
         applyTruncatedTitleUpgrade: true,
+        applyLocationUpgrade: sourceConfig.id === "cv_homescasaverde",
+        replaceImagesWithDetail:
+          sourceConfig.id === "cv_estatecv" ||
+          sourceConfig.id === "cv_homescasaverde",
       });
 
       enriched++;

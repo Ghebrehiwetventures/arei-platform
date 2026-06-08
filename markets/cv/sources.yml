@@ -392,7 +392,7 @@ sources:
       image_fallback: false
       selectors:
         description: ".property-description, .wpsight-listing-description, [class*='description'] p"
-        images: ".property-detail-gallery img, .property-gallery .slick-slide img, .property-gallery .swiper-slide img"
+        images: "[data-fancybox='gallery-v2'][data-src]"
         location: ".property-address, .property-address-wrap, .block-content-wrap .property-address"
         # Houzez has two layouts: v7 (strong inside li.h-beds) and v8+ (strong in sibling li, label li has .h-beds).
         bedrooms: ".h-beds strong, ul:has(.h-beds) strong, .listing-details-detail:contains('Bed') .listing-details-value"

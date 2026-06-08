@@ -50,6 +50,10 @@ export interface ApplyOptions {
   applyTitleUpgrade?: boolean;
   /** Replace only list titles that visibly end in an ellipsis. (curated path) */
   applyTruncatedTitleUpgrade?: boolean;
+  /** Replace a coarse list location with the detail-page address. */
+  applyLocationUpgrade?: boolean;
+  /** Treat detail images as authoritative instead of merging list-card images. */
+  replaceImagesWithDetail?: boolean;
   /** Assign parkingSpaces when extracted. (path A) */
   applyParkingSpaces?: boolean;
 }
@@ -123,14 +127,16 @@ export function applyExtractResultToListing(
   }
 
   // ── location (when listing has none) ────────────────────────────────────
-  if (extract.location && !listing.location) {
+  if (extract.location && (!listing.location || options.applyLocationUpgrade)) {
     listing.location = extract.location;
     wasEnriched = true;
   }
 
   // ── image merge ─────────────────────────────────────────────────────────
   if (extract.imageUrls?.length) {
-    const merged = [...(listing.imageUrls || []), ...extract.imageUrls];
+    const merged = options.replaceImagesWithDetail
+      ? extract.imageUrls
+      : [...(listing.imageUrls || []), ...extract.imageUrls];
     const deduped = dedupeImageUrls(merged);
     if (deduped.length !== (listing.imageUrls || []).length) {
       wasEnriched = true;

@@ -589,9 +589,9 @@ export function createGenericDetailPlugin(
               for (const url of extractSrcsetUrls(srcset)) addImage(url);
             }
           } else if (tagName === "a") {
-            const href = $(el).attr("href");
-            if (href && isChromeElement(undefined, undefined, href)) return;
-            if (href) addImage(href);
+            const imageHref = $(el).attr("data-src") || $(el).attr("href");
+            if (imageHref && isChromeElement(undefined, undefined, imageHref)) return;
+            if (imageHref) addImage(imageHref);
           } else {
             // Maybe a div with background-image
             const style = $(el).attr("style") || "";
