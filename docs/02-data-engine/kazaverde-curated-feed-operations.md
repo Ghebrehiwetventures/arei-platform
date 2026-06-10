@@ -147,4 +147,4 @@ If you ever need to repoint the public feed again:
 - `migrations/028_kv_curated_preview_schema.sql`
 - `migrations/029_switch_v1_feed_cv_to_curated.sql`
 - `migrations/030_v1_feed_cv_curated_preview_contract_compat.sql`
-- `migrations/049_kv_curated_removed_status.sql`
+- `migrations/052_kv_curated_removed_status.sql`
