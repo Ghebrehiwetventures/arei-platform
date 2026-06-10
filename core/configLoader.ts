@@ -189,6 +189,20 @@ export interface SourceConfig {
 
   selectors?: SelectorsConfig;
   item_map?: ItemMapConfig;
+
+  /** Declarative post-enrichment corrections applied by the generic pipeline
+   *  (core/pipeline/sourceCorrections.ts). Keeps source-specific data fixes in
+   *  config rather than in market-specific code. */
+  corrections?: SourceCorrectionsConfig;
+}
+
+export interface SourceCorrectionsConfig {
+  /** Move a structured area value to land_area_sqm when the listing is a
+   *  plot/land parcel of the given property types. */
+  reclassify_area_as_land?: {
+    when_property_type: string[];
+    when_text_matches: string;
+  };
 }
 
 export interface SourcesConfig {

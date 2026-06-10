@@ -14,6 +14,7 @@
 import * as fs from "fs";
 import * as path from "path";
 import * as yaml from "js-yaml";
+import type { IslandRecoveryConfig } from "./islandRecovery";
 
 // ============================================
 // TYPES (from locations.yml schema)
@@ -41,6 +42,8 @@ export interface LocationsConfig {
   /** For mainland countries (Kenya, etc.) */
   regions?: RegionConfig[];
   location_patterns?: string[];
+  /** Per-source landmark knowledge for the island-recovery engine. */
+  island_recovery?: IslandRecoveryConfig;
 }
 
 export interface LocationResult {

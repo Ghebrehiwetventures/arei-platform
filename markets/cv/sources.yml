@@ -806,6 +806,15 @@ sources:
     currency: EUR
     fetch_method: http
 
+    # REMAX exposes a single TotalArea per listing. For villas/houses described
+    # as a plot/land parcel, that figure is the plot size, not interior area, so
+    # reclassify it to land_area_sqm. Consumed by the generic correction step in
+    # core/pipeline/sourceCorrections.ts — no source-specific code in the engine.
+    corrections:
+      reclassify_area_as_land:
+        when_property_type: [villa, house]
+        when_text_matches: "\\b(?:plot|land parcel|lot)\\b"
+
     pagination:
       type: json_api
       method: POST

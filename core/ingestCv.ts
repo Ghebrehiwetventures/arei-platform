@@ -24,7 +24,7 @@ import { createGenericDetailPlugin } from "./detail/plugins/genericDetail";
 import { DetailEnrichmentInput, DetailExtractResult, DetailPlugin } from "./detail/types";
 import { upsertListings, SupabaseListing } from "./supabaseWriter";
 import { parseLocation, getCurrency } from "./locationMapper";
-import { resolveCvIslandRecovery } from "./cvIslandRecovery";
+import { resolveIslandRecovery } from "./islandRecovery";
 import { deriveProjectMetadata } from "./projectMetadata";
 import {
   getSourceHealthEntry,
@@ -1314,7 +1314,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
       }
     }
     if (!island) {
-      const recovery = resolveCvIslandRecovery({
+      const recovery = resolveIslandRecovery({
         id: listing.id,
         sourceId: listing.sourceId,
         title: listing.title,
@@ -1322,7 +1322,7 @@ for (const [sourceId, listings] of listingsBySource.entries()) {
         sourceUrl: fullListing?.detailUrl || fullListing?.externalUrl || null,
         rawIsland: listing.location,
         rawCity: undefined,
-      });
+      }, marketId);
       if (recovery.kind === "resolved") {
         island = recovery.island;
         city = recovery.city ?? undefined;

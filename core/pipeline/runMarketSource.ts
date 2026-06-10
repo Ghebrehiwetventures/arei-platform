@@ -27,7 +27,7 @@ import {
   normalizeBedroomsForPropertyType,
 } from "./propertyType";
 import { applyExtractResultToListing } from "./enrich";
-import { applyCvSourceCorrections } from "./cvSourceCorrections";
+import { applySourceCorrections } from "./sourceCorrections";
 import { resolveLocation as resolveIsland } from "./locationResolver";
 import { SourceStatus } from "../status";
 import {
@@ -860,7 +860,7 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   console.log(`\nFetched: ${listings.length} listings`);
 
   await enrichListings(listings, sourceConfig);
-  for (const listing of listings) applyCvSourceCorrections(listing);
+  for (const listing of listings) applySourceCorrections(listing, sourceConfig);
 
   const existingByUrl = await fetchExistingUrlIdentities(
     sourceId,

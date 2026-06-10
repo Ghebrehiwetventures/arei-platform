@@ -158,3 +158,125 @@ location_patterns:
   - "Maio"
   - "Brava"
   - "São Nicolau"
+
+# ============================================
+# ISLAND RECOVERY (per-source landmark knowledge)
+# --------------------------------------------
+# Consumed by the market-agnostic engine in core/islandRecovery.ts. This is DATA
+# only — no source-specific logic lives in code. The engine first checks
+# unsafe_ids, then parses rawIsland/rawCity generically, then applies the
+# per-source rules below in order. Rule shapes:
+#   - { skip: <reason> }                         blanket skip for the source
+#   - { skip_if_path_contains: <slug>, reason }  skip when the URL path matches
+#   - landmark: match a phrase in `in:` fields (and/or a path slug) → resolve
+#   - { when_equals, strategy: single_canonical_island_token, ... } country-only
+#   - { when_equals, skip }                      conditional skip
+# matched_text: phrase (default) | source (rawIsland||path) | cleaned_title
+# ============================================
+island_recovery:
+  unsafe_ids:
+    gen_80220e8beb3a: known_non_listing
+    op24_a6ffae9129f4: known_unsafe_op24
+    gen_21c802edd693: known_unsafe_country_only
+
+  sources:
+    cv_oceanproperty24:
+      - skip: "op24:do_not_auto_recover"
+
+    cv_globallistings:
+      - skip_if_path_contains: "/property-search"
+        reason: "globallistings:search_page"
+      - landmark: "Santa Maria"
+        in: [rawIsland]
+        path_contains: "santa-maria"
+        island: Sal
+        city: Santa Maria
+        rule: "globallistings:slug_santa_maria"
+        matched_text: source
+      - landmark: "Melia Tortuga"
+        in: [rawIsland]
+        path_contains: "melia-tortuga"
+        island: Sal
+        rule: "globallistings:slug_melia_tortuga"
+        matched_text: source
+      - landmark: "Paradise Beach Sal"
+        in: [rawIsland]
+        path_contains: "paradise-beach-sal"
+        island: Sal
+        rule: "globallistings:slug_paradise_beach_sal"
+        matched_text: source
+      - landmark: "Dunas Beach Resort"
+        in: [rawIsland]
+        path_contains: "dunas-beach-resort"
+        island: Sal
+        rule: "globallistings:slug_dunas_beach_resort"
+        matched_text: source
+      - landmark: "Ponta Preta"
+        in: [rawIsland]
+        path_contains: "ponta-preta"
+        island: Sal
+        rule: "globallistings:slug_ponta_preta"
+        matched_text: source
+      - landmark: "Sal Rel"
+        in: [rawIsland]
+        path_contains: "sal-rel"
+        island: Boa Vista
+        city: Sal Rei
+        rule: "globallistings:slug_sal_rel"
+        matched_text: source
+      - when_equals: { field: rawIsland, value: "cape verde" }
+        strategy: single_canonical_island_token
+        from: pageTitleHint
+        confidence: medium
+        rule: "globallistings:page_title_single_island"
+        no_match_skip: "globallistings:country_only_unconfirmed"
+
+    cv_homescasaverde:
+      - landmark: "Melia Tortuga"
+        in: [title, description, sourceUrl]
+        island: Sal
+        rule: "homescasaverde:melia_tortuga"
+      - landmark: "Vila Verde"
+        in: [title, description, sourceUrl]
+        island: Sal
+        rule: "homescasaverde:vila_verde"
+      - landmark: "Paradise Beach"
+        in: [title, description, sourceUrl]
+        island: Sal
+        rule: "homescasaverde:paradise_beach"
+
+    cv_simplycapeverde:
+      - landmark: "Dunas Beach Resort"
+        in: [title, sourceUrl]
+        island: Sal
+        rule: "simplycapeverde:dunas_beach_resort"
+
+    cv_cabohouseproperty:
+      - landmark: "Tortuga Beach Resort"
+        in: [title, description, sourceUrl]
+        island: Sal
+        city: Santa Maria
+        rule: "cabohouseproperty:tortuga_beach_resort"
+      - landmark: "Porto Antigo"
+        in: [title, description, sourceUrl]
+        island: Sal
+        city: Santa Maria
+        rule: "cabohouseproperty:porto_antigo"
+
+    cv_terracaboverde:
+      - landmark: "Sal Rei"
+        in: [rawCity]
+        island: Boa Vista
+        city: Sal Rei
+        rule: "terracaboverde:city_sal_rei"
+
+    cv_rightmove:
+      - landmark_any: ["Santo Antao", "Santo Antão"]
+        in: [cleaned_title]
+        preprocess: clean_title
+        island: "Santo Antão"
+        rule: "rightmove:title_santo_antao"
+        matched_text: cleaned_title
+      - when_equals: { field: cleaned_title, value: "cape verde" }
+        preprocess: clean_title
+        skip: "rightmove:country_only"
