@@ -807,64 +807,6 @@ function writeReportJson(
   console.log(`[Report] Wrote ${rows.length} listings → ${outPath}`);
 }
 
-// ─── Optional rich JSON report (diagnostics only) ────────────────────────────
-// Opt-in via REPORT_JSON=1. Writes the full per-listing dataset (image URLs,
-// area, beds/baths, price, location, source URL) that the stdout coverage
-// summary omits — for local field-gap / image-outlier analysis. Writes to
-// reports/curated/ (already gitignored). Never runs unless the flag is set, so
-// normal and production runs are untouched.
-function coverageOf(rows: CuratedRow[]) {
-  const n = rows.length || 1;
-  const pct = (c: number) => `${c}/${rows.length} (${Math.round((100 * c) / n)}%)`;
-  const area = (r: CuratedRow) => r.property_size_sqm ?? r.land_area_sqm;
-  return {
-    price: pct(rows.filter(r => r.price != null).length),
-    bedrooms: pct(rows.filter(r => r.bedrooms != null).length),
-    bathrooms: pct(rows.filter(r => r.bathrooms != null).length),
-    area: pct(rows.filter(r => area(r) != null).length),
-    images_ge1: pct(rows.filter(r => r.image_urls && r.image_urls.length > 0).length),
-    images_ge3: pct(rows.filter(r => r.image_urls && r.image_urls.length >= 3).length),
-  };
-}
-
-function writeReportJson(
-  marketId: string,
-  sourceId: string,
-  dryRun: boolean,
-  fetched: number,
-  rows: CuratedRow[],
-  skipped: Array<{ id: string; reason: string }>,
-  publishedIds: Set<string>,
-  removedPublishedRows: RemovedPublishedRow[]
-): void {
-  const dir = path.resolve(__dirname, "../../reports/curated");
-  fs.mkdirSync(dir, { recursive: true });
-  const report = {
-    market: marketId,
-    source: sourceId,
-    generatedAt: new Date().toISOString(),
-    dryRun,
-    summary: {
-      fetched,
-      rowsReady: rows.length,
-      skipped: skipped.length,
-      alreadyPublished: publishedIds.size,
-      writable: rows.length,
-      removedCandidates: removedPublishedRows.length,
-    },
-    coverage: {
-      allRows: coverageOf(rows),
-      newRows: coverageOf(rows.filter(r => !publishedIds.has(r.id))),
-    },
-    skipped,
-    removedCandidates: removedPublishedRows,
-    listings: rows.map(r => ({ ...r, alreadyPublished: publishedIds.has(r.id) })),
-  };
-  const outPath = path.join(dir, `${marketId}_${sourceId}.json`);
-  fs.writeFileSync(outPath, JSON.stringify(report, null, 2));
-  console.log(`[Report] Wrote ${rows.length} listings → ${outPath}`);
-}
-
 // ─── Entry point ────────────────────────────────────────────────────────────
 
 export async function runMarketSource(opts: RunMarketSourceOptions): Promise<void> {
