@@ -177,7 +177,8 @@ Reuse existing engine logic wherever possible rather than re-implementing:
 
 ## 6. Phase-2 source re-fetch methods
 
-Per-source fetch behavior (from `markets/cv/sources.yml` and the WIP tracker).
+Per-source fetch behavior (from `markets/cv/sources.yml` and the per-source
+findings folded into `docs/02-data-engine/cv-feed-audit-2026-06-08.md`).
 Use these to confirm flagged values against the live source.
 
 | source | fetch | notes for verification |

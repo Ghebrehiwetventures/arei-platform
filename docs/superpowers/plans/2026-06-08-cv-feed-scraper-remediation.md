@@ -1,5 +1,14 @@
 # CV Feed Scraper Remediation Implementation Plan
 
+> **Historical execution record (completed).** Implemented in commits
+> `27fd06a`..`c014c4c`. Its REMAX `TotalArea` fix originally shipped as a
+> CV-specific module `core/pipeline/cvSourceCorrections.ts`; that was later
+> refactored to be **config-driven and market-agnostic** (commit `1f89394`) — the
+> logic now lives in `core/pipeline/sourceCorrections.ts`, driven by a
+> `corrections:` block in `markets/cv/sources.yml`. Read the file/path references
+> below as the state at execution time, not the current architecture; the live
+> method is `docs/02-data-engine/source-investigation-loop.md`.
+
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
 **Goal:** Correct the audited CV scraper issues for images, area semantics, Homes Casa Verde city recovery, and Ocean Property 24 truncated titles, then verify corrected source outputs without writing production data.
