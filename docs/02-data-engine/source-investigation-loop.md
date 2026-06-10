@@ -35,6 +35,13 @@ The discipline that makes the loop trustworthy: **every gap is classified by
 opening the source**, fixes are landed test-first, and **no row reaches the live
 feed without explicit human confirmation**.
 
+The per-source loop fixes one source at a time. A complementary **whole-feed
+correctness audit** (§8) periodically reviews the *entire* live feed, because the
+per-source coverage checks pass on values that are present but *wrong* — a logo
+in the gallery, a slug or truncated string as the title, an island that does not
+match the city. Coverage answers "is the field set?"; the audit answers "is it
+correct?"
+
 ## 2. Roles and truth (from the Execution Protocol)
 
 | Role | Who | Responsibility in this loop |
@@ -220,6 +227,10 @@ Completeness + sanity bar for promotion:
 Do not publish rows just to test the button; use query-only checks or empty
 publish requests for endpoint smoke tests.
 
+Promotion is per-source and gates on completeness, not correctness. Periodically
+run the **whole-feed correctness audit (§8)** over everything already live to
+catch present-but-wrong values that the per-source bar lets through.
+
 ## 4. Verdict taxonomy — recurring accepted source floors
 
 These gaps recur across sources and are **🌐 SOURCE** floors, not scraper bugs.
@@ -303,3 +314,61 @@ re-promoted.
 
 This single bug is why the promotion bar in §3.i screens implausible values and
 why §5 lists "screen implausible, not just null" as an invariant.
+
+## 8. Whole-feed correctness audit (periodic)
+
+The per-source loop (§3) brings each source up to the bar and verifies that
+`published == feed` for that source. It does **not** catch values that are
+present but *wrong*: a logo or thumbnail standing in for a gallery, a URL slug or
+truncated fragment surfaced as the title, an island that contradicts the city, a
+plot size stored as interior area, the same property published by two sources.
+A non-null title is not a correct title. The **whole-feed correctness audit** is
+the cross-cutting verification that answers *"is every live value correct?"* over
+the entire feed. Run it periodically and before launch-significant milestones.
+
+**Scope.** Only `publish_status = 'published'` rows — i.e. exactly what is live on
+the public feed view (`public.v1_feed_cv` for CV). Regenerate the counts at run
+time; the feed drifts.
+
+**Method — two-phase hybrid** (keeps expensive source round-trips proportional to
+real suspects):
+
+- **Phase 1 — heuristics over *all* live rows (cheap).** Pure DB reads plus
+  lightweight image HEAD/GET. Each `(listing, dimension)` gets `ok` or `suspect`
+  with a machine-readable reason code. Six dimensions:
+  1. **City** — consistent with its island (gazetteer of island → known cities)?
+  2. **Area** — a legitimate m² (not implausibly small/large, not a unit code)?
+  3. **Images** — real, reachable, and belonging to this listing? Reject logos,
+     social/share buttons, placeholders, sub-200px thumbnail covers, and covers
+     shared across unrelated listings.
+  4. **Cross-source duplicates** — same property published by more than one source?
+  5. **Price** — plausible (not a unit code, not an obvious order-of-magnitude slip)?
+  6. **Title / description** — clean and usable (not a slug, not truncated, not
+     boilerplate)?
+- **Phase 2 — confirm flagged rows only (targeted).** Re-fetch each flagged
+  listing's original source (page or API) and assign a final verdict:
+  **🔧 SCRAPER** / **🌐 SOURCE** / **FALSE-POSITIVE** (heuristic over-flagged; the
+  value is actually fine). Bound the volume: if a dimension flags an unusually
+  large share of a source (say > 40%), spot-check a representative sample and say
+  so rather than fetching every page.
+
+**Read-only guardrail.** The audit performs **no** DB writes, promotions,
+demotions, ingests, or code/config edits. Its only deliverable is a findings
+report a human acts on later. Fixes are then landed through the per-source loop
+(§3); accepted floors are recorded per §4; FALSE-POSITIVEs tune the heuristic.
+
+**Tooling pattern (script + agent).** An agent runs the audit using **throwaway**
+`scripts/_audit_*.ts` helpers — one per dimension plus a snapshot, a Phase-2
+re-fetcher, and a report assembler. The leading `_` means "do not commit"; delete
+them when done (same convention as `scripts/_diag.ts` in §6). The heuristics are
+analysis code, not shipped engine code, so they are **not** TDD'd and **not**
+committed. The **only** committed artifact is the findings report. Reuse
+`createPostgresClient()` + `DATABASE_URL` for reads (never Supabase REST).
+
+**Reference runbook + example output.**
+- Executable, self-contained runbook (every command/definition embedded):
+  `docs/superpowers/specs/2026-06-08-cv-feed-deep-audit-design.md` (+ the
+  task-by-task plan `docs/superpowers/plans/2026-06-08-cv-feed-deep-audit.md`).
+- Example findings report from the 2026-06-08 run over 482 CV listings:
+  `docs/02-data-engine/cv-feed-audit-2026-06-08.md` (per-dimension scorecard,
+  per-listing verdicts, and the remediation that followed).
