@@ -156,3 +156,4 @@ This Execution Protocol governs how work is done inside the repo. Document prece
 | Market thesis docs | Why Cape Verde is Market 1 and what it must prove |
 | Vision / strategy docs | AREI's long-term direction and architectural intent |
 | Tool Stack Decision Memo | Background research and selection rationale; not final authority where later operating docs are more explicit |
+| `docs/02-data-engine/source-investigation-loop.md` | The concrete Type C/D procedure for verifying and fixing a source's data quality (dry-run loop) under this protocol |

@@ -359,3 +359,34 @@ Post-remediation feed: **482 published**, and **0 listings across the entire CV
 feed serve a sub-200px thumbnail cover**. Not remediated (by design): 6
 cross-source duplicate clusters and source-authored weak titles/descriptions —
 left for canonical-dedupe / human review.
+
+## Source investigation loop — final CV state (appended 2026-06-09)
+
+All ten active CV sources were taken through the per-source dry-run investigation
+loop now documented as the reusable method in
+`docs/02-data-engine/source-investigation-loop.md`. This subsumes and replaces the
+throwaway `WIP-cv-source-investigation.md` tracker (deleted with this work). Durable
+outcomes, verified in data / live at the time:
+
+- **8 of 10 sources reachable** in the complete-pipeline dry run, returning 442
+  listings, all enriched with 0 detail failures. The two zero-row sources
+  (`cv_ccoreinvestments` host/DNS, `cv_cabohouseproperty` MalCare 403 — issue
+  #361) were correctly held by the zero-row safety gate so nothing was demoted.
+  `cv_ccoreinvestments` was reachable for the subsequent live ingest.
+- **Random missing-value spot-check: 12/12 sampled gaps were genuine 🌐 SOURCE
+  absences, 0 scraper faults** — validating the per-source verdicts before live
+  ingest.
+- **`cv_remax` (json_api):** healthy, no scraper/config bug — its field gaps are
+  real API source floors (`TotalArea: 0` with all alternate area fields empty,
+  price-on-request `ListingPrice: 0`).
+- **`En-bv-01` area-code scraper bug (🔧, fixed, commit `6044a48`):** Terra detail
+  pages exposed both `Area: En-bv-01` (a unit code) and `Sales area: <n> sqm`; the
+  unitless fallback pulled the code's trailing digits, yielding impossible sub-10
+  m² areas on 7 already-published rows. Fixed test-first with a `MIN_PLAUSIBLE_AREA_SQM = 5`
+  floor; corrupt rows demoted, re-ingested with real areas, re-promoted. This is the
+  worked example in the loop doc and the origin of the "screen implausible values,
+  not just nulls" rule.
+- **Final CV state after the loop + needs_review promotion:** **482 published ==
+  482 feed rows**, 54 `needs_review`, 30 `removed`, and **0 published rows with
+  area < 10 m²**. Integrity held throughout: published count equals feed count
+  per source, with no `needs_review` leak into the public feed.

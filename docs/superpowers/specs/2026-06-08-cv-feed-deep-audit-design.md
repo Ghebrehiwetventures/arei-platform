@@ -7,9 +7,11 @@
 edits, no ingests. The deliverable is a findings report a human acts on later.
 
 > This is a self-contained runbook. A fresh session has no prior context — every
-> resource, command, and definition needed is embedded below. Background lives in
-> `docs/02-data-engine/WIP-cv-source-investigation.md` (the source-by-source
-> investigation that preceded this) but is not required reading to execute.
+> resource, command, and definition needed is embedded below. The source-by-source
+> investigation that preceded this is summarized in
+> `docs/02-data-engine/cv-feed-audit-2026-06-08.md` ("Source investigation loop"
+> section), and its reusable method is `docs/02-data-engine/source-investigation-loop.md`;
+> neither is required reading to execute this audit.
 
 ---
 

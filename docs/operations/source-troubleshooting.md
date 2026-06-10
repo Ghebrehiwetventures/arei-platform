@@ -4,6 +4,7 @@ Version 1.0 | 2026-05-12
 
 Companion to:
 - `docs/operations/adding-a-source.md` — the linear playbook
+- `docs/02-data-engine/source-investigation-loop.md` — the dry-run loop that uses these recipes to classify and fix a source before it goes live
 - `docs/operations/engine-config-reference.md` — every `sources.yml` option
 
 This file is symptom-first. Find the row that matches what you're seeing, follow the diagnosis steps, apply the fix.
