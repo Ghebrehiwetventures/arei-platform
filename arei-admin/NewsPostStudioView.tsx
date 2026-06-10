@@ -74,6 +74,32 @@ function buildCaption(item: MarketNewsItem): string {
   return parts.join("\n\n");
 }
 
+// Downscale an uploaded image in the browser before sending it as a data: URL.
+// Vercel caps the request body at ~4.5 MB; a raw high-res PNG (base64 inflated
+// ~33%) easily exceeds it → 413. The hero only renders ~1080px wide, so a
+// max-1920px JPEG is plenty and stays well under the limit.
+function downscaleImageToDataUrl(file: File, maxDim = 1920, quality = 0.85): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      const scale = Math.min(1, maxDim / Math.max(img.width, img.height));
+      const w = Math.max(1, Math.round(img.width * scale));
+      const h = Math.max(1, Math.round(img.height * scale));
+      const canvas = document.createElement("canvas");
+      canvas.width = w;
+      canvas.height = h;
+      const ctx = canvas.getContext("2d");
+      if (!ctx) { reject(new Error("Canvas not available")); return; }
+      ctx.drawImage(img, 0, 0, w, h);
+      resolve(canvas.toDataURL("image/jpeg", quality));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); reject(new Error("Could not read image")); };
+    img.src = url;
+  });
+}
+
 interface GenerateResponse {
   slides: { label: string; imageBase64: string }[];
   mime: string;
@@ -549,12 +575,17 @@ export function NewsPostStudioView() {
                 type="file"
                 accept="image/*"
                 className={inputCls + " text-xs"}
-                onChange={(e) => {
+                onChange={async (e) => {
                   const f = e.target.files?.[0];
                   if (!f) { setImageUrl(""); return; }
-                  const reader = new FileReader();
-                  reader.onload = () => setImageUrl(typeof reader.result === "string" ? reader.result : "");
-                  reader.readAsDataURL(f);
+                  setError(null);
+                  try {
+                    // Downscale client-side so the upload stays under Vercel's body limit.
+                    setImageUrl(await downscaleImageToDataUrl(f));
+                  } catch {
+                    setImageUrl("");
+                    setError("Could not process that image — try a different file.");
+                  }
                 }}
               />
             </Field>
