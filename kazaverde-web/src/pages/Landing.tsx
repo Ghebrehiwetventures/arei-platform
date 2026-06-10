@@ -23,6 +23,11 @@ import "./Listings.css"; // shares kv-lcard primitives with Listings page
 import "./Landing.css";
 
 const GUIDE_TEASER_PT: Record<string, { title: string; description: string }> = {
+  "best-real-estate-agents-cape-verde": {
+    title: "Melhores agentes imobiliários em Cabo Verde 2026? Uma visão neutra, baseada no índice",
+    description:
+      "Muitos procuram os melhores agentes imobiliários em Cabo Verde, mas nenhum dado neutro prova quem é o melhor. Veja que agências e portais o índice acompanha.",
+  },
   "cape-verde-property-prices-by-island": {
     title: "Preços de imóveis em Cabo Verde por ilha",
     description:
@@ -741,7 +746,7 @@ export default function Landing() {
                     className="kv-l-news-item-cat"
                     style={{ "--cat-tone": catTone(item.category) } as CSSProperties}
                   >
-                    {item.category}
+                    {t(`marketNews.categories.${item.category}`, { defaultValue: item.category })}
                   </span>
                   <a
                     className="kv-l-news-item-title"
@@ -749,9 +754,9 @@ export default function Landing() {
                     target="_blank"
                     rel="noopener noreferrer"
                   >
-                    {item.title}
+                    {isPt && item.titlePt ? item.titlePt : item.title}
                   </a>
-                  <p className="kv-l-news-item-snippet">{item.snippet}</p>
+                  <p className="kv-l-news-item-snippet">{isPt && item.snippetPt ? item.snippetPt : item.snippet}</p>
                   <div className="kv-l-news-item-foot">
                     <span className="kv-l-news-item-foot-date">{formatDate(item.publishedAt, locale, true)}</span>
                     <span className="kv-l-news-item-foot-sep" aria-hidden="true">·</span>
