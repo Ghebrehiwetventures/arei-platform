@@ -40,9 +40,19 @@ export function extractImagesFromStyleBlocks(
   const elClass = $el.attr("class") || "";
   elClass.split(/\s+/).forEach((c) => c && classes.add(c));
 
+  const classCounts = new Map<string, number>();
+  $("[class]").each((_, el) => {
+    const uniqueOnElement = new Set(($(el).attr("class") || "").split(/\s+/).filter(Boolean));
+    for (const className of uniqueOnElement) {
+      classCounts.set(className, (classCounts.get(className) || 0) + 1);
+    }
+  });
+  const uniqueClasses = [...classes].filter((className) => classCounts.get(className) === 1);
+  const scopedClasses = uniqueClasses.length > 0 ? uniqueClasses : [...classes];
+
   $("style").each((_, styleEl) => {
     const styleContent = $(styleEl).text();
-    for (const className of classes) {
+    for (const className of scopedClasses) {
       const escaped = className.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
       const regex = new RegExp(
         `\\.${escaped}[^{]*\\{[^}]*background-image:\\s*url\\(\\s*['"]?([^'")]+)['"]?\\s*\\)`,
@@ -117,7 +127,7 @@ export function parseListingsFromHtml(
           const $titles = $container.find(config.selectors.title);
           $titles.each((_, titleEl) => {
             const text = $(titleEl).text().trim();
-            if (text.length > 15 && (!title || text.length > title.length)) {
+            if (text.length >= 5 && (!title || text.length > title.length)) {
               title = text;
             }
           });

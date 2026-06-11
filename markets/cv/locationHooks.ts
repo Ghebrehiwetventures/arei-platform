@@ -1,11 +1,12 @@
 /**
- * CV-specific location recovery hook.
+ * CV location recovery hook.
  *
- * Wraps cvIslandRecovery into the generic LocationHook interface
- * so ingestMarket.ts can load it dynamically for the "cv" market.
+ * Thin adapter from the generic island-recovery engine into the LocationHook
+ * interface so ingestMarket.ts can load it dynamically for the "cv" market.
+ * All CV-specific knowledge lives in markets/cv/locations.yml, not here.
  */
 
-import { resolveCvIslandRecovery } from "../../core/cvIslandRecovery";
+import { resolveIslandRecovery } from "../../core/islandRecovery";
 
 export interface LocationHookInput {
   id: string;
@@ -23,7 +24,7 @@ export interface LocationHookResult {
 }
 
 export function resolveLocation(input: LocationHookInput): LocationHookResult | null {
-  const recovery = resolveCvIslandRecovery({
+  const recovery = resolveIslandRecovery({
     id: input.id,
     sourceId: input.sourceId,
     title: input.title,
@@ -31,7 +32,7 @@ export function resolveLocation(input: LocationHookInput): LocationHookResult | 
     sourceUrl: input.sourceUrl,
     rawIsland: input.rawIsland,
     rawCity: input.rawCity,
-  });
+  }, "cv");
 
   if (recovery.kind === "resolved") {
     return {

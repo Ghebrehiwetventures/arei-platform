@@ -1,0 +1,39 @@
+[
+  { "name": "unsafe_non_listing", "input": { "id": "gen_80220e8beb3a", "sourceId": "cv_globallistings", "rawIsland": "Sal" } },
+  { "name": "unsafe_op24", "input": { "id": "op24_a6ffae9129f4", "sourceId": "cv_oceanproperty24", "rawIsland": "Sal" } },
+  { "name": "unsafe_country_only", "input": { "id": "gen_21c802edd693", "sourceId": "cv_globallistings", "rawIsland": "Cape Verde" } },
+
+  { "name": "parse_raw_island_sal", "input": { "id": "x1", "sourceId": "cv_unknown", "rawIsland": "Sal" } },
+  { "name": "parse_raw_island_boavista", "input": { "id": "x2", "sourceId": "cv_unknown", "rawIsland": "Boa Vista" } },
+  { "name": "parse_raw_city_santamaria", "input": { "id": "x3", "sourceId": "cv_unknown", "rawCity": "Santa Maria" } },
+
+  { "name": "gl_search_page_skip", "input": { "id": "gl1", "sourceId": "cv_globallistings", "rawIsland": "something", "sourceUrl": "https://globallistings.example/property-search/results" } },
+  { "name": "gl_santa_maria_path", "input": { "id": "gl2", "sourceId": "cv_globallistings", "rawIsland": "unparseable-zzz", "sourceUrl": "https://globallistings.example/listing/santa-maria-villa" } },
+  { "name": "gl_melia_tortuga_path", "input": { "id": "gl3", "sourceId": "cv_globallistings", "rawIsland": "unparseable-zzz", "sourceUrl": "https://globallistings.example/listing/melia-tortuga-apt" } },
+  { "name": "gl_paradise_beach_path", "input": { "id": "gl4", "sourceId": "cv_globallistings", "rawIsland": "unparseable-zzz", "sourceUrl": "https://globallistings.example/listing/paradise-beach-sal-unit" } },
+  { "name": "gl_dunas_path", "input": { "id": "gl5", "sourceId": "cv_globallistings", "rawIsland": "unparseable-zzz", "sourceUrl": "https://globallistings.example/listing/dunas-beach-resort-flat" } },
+  { "name": "gl_ponta_preta_path", "input": { "id": "gl6", "sourceId": "cv_globallistings", "rawIsland": "unparseable-zzz", "sourceUrl": "https://globallistings.example/listing/ponta-preta-home" } },
+  { "name": "gl_sal_rel_path", "input": { "id": "gl7", "sourceId": "cv_globallistings", "rawIsland": "unparseable-zzz", "sourceUrl": "https://globallistings.example/listing/sal-rel-place" } },
+  { "name": "gl_country_only_with_island_title", "input": { "id": "gl8", "sourceId": "cv_globallistings", "rawIsland": "Cape Verde", "pageTitleHint": "Luxury homes in Boa Vista" } },
+  { "name": "gl_country_only_no_hint", "input": { "id": "gl9", "sourceId": "cv_globallistings", "rawIsland": "Cape Verde", "pageTitleHint": "Find your dream property today" } },
+  { "name": "gl_country_only_ambiguous_hint", "input": { "id": "gl10", "sourceId": "cv_globallistings", "rawIsland": "Cape Verde", "pageTitleHint": "Homes in Sal and Boa Vista" } },
+
+  { "name": "hcv_melia", "input": { "id": "h1", "sourceId": "cv_homescasaverde", "title": "Apartment at Melia Tortuga", "rawIsland": "unparseable-zzz" } },
+  { "name": "hcv_vila_verde", "input": { "id": "h2", "sourceId": "cv_homescasaverde", "description": "Located in Vila Verde", "rawIsland": "unparseable-zzz" } },
+  { "name": "hcv_paradise_beach", "input": { "id": "h3", "sourceId": "cv_homescasaverde", "sourceUrl": "https://homescasaverde.example/paradise-beach-x", "rawIsland": "unparseable-zzz" } },
+
+  { "name": "scv_dunas", "input": { "id": "s1", "sourceId": "cv_simplycapeverde", "title": "Studio at Dunas Beach Resort", "rawIsland": "unparseable-zzz" } },
+
+  { "name": "chp_tortuga", "input": { "id": "chp_cfc6e9876a76", "sourceId": "cv_cabohouseproperty", "title": "Charming Detached Villa For Sale Tortuga Beach Resort", "description": "A villa in the prestigious Tortuga Beach Resort.", "sourceUrl": "https://www.cabohouseproperty.com/properties/villa/sale/ground-first/charming-detached-villa-for-sale-tortuga-beach-resort", "rawIsland": "Villa, Sale" } },
+  { "name": "chp_porto_antigo", "input": { "id": "chp_573e1b0d1937", "sourceId": "cv_cabohouseproperty", "title": "Porto Antigo Bright Sea View Apartment", "description": "A bright sea-view apartment in Porto Antigo.", "sourceUrl": "https://www.cabohouseproperty.com/properties/apartments/sale/ground/porto-antigo-bright-sea-view-apartment", "rawIsland": "Sale, Ground" } },
+
+  { "name": "tcv_sal_rei", "input": { "id": "t1", "sourceId": "cv_terracaboverde", "rawCity": "Sal Rei", "rawIsland": "unparseable-zzz" } },
+
+  { "name": "rm_santo_antao_ascii", "input": { "id": "r1", "sourceId": "cv_rightmove", "title": "€250,000 Flats / Apartments Santo Antao", "rawIsland": "unparseable-zzz" } },
+  { "name": "rm_santo_antao_accent", "input": { "id": "r2", "sourceId": "cv_rightmove", "title": "350000 Houses Santo Antão 3", "rawIsland": "unparseable-zzz" } },
+  { "name": "rm_country_only_skip", "input": { "id": "r3", "sourceId": "cv_rightmove", "title": "£100,000 Cape Verde", "rawIsland": "unparseable-zzz" } },
+
+  { "name": "op24_blanket_skip", "input": { "id": "op24_other", "sourceId": "cv_oceanproperty24", "title": "Apartment", "rawIsland": "unparseable-zzz" } },
+
+  { "name": "no_match_unknown_source", "input": { "id": "u1", "sourceId": "cv_unknown", "title": "A house", "rawIsland": "unparseable-zzz" } }
+]

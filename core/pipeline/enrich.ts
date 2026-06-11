@@ -22,6 +22,7 @@ export interface EnrichableListing {
   detailUrl?: string;
   bedrooms?: number | null;
   bathrooms?: number | null;
+  property_type?: string;
   area_sqm?: number | null;
   parkingSpaces?: number | null;
   amenities?: string[];
@@ -34,6 +35,7 @@ export interface ExtractResultLike {
   price?: number | null;
   bedrooms?: number | null;
   bathrooms?: number | null;
+  propertyType?: string | null;
   parkingSpaces?: number | null;
   areaSqm?: number | null;
   amenities?: string[];
@@ -46,6 +48,12 @@ export interface ApplyOptions {
   applyDescriptionHtmlFallback?: boolean;
   /** Overwrite title when extract title is longer. (path A) */
   applyTitleUpgrade?: boolean;
+  /** Replace only list titles that visibly end in an ellipsis. (curated path) */
+  applyTruncatedTitleUpgrade?: boolean;
+  /** Replace a coarse list location with the detail-page address. */
+  applyLocationUpgrade?: boolean;
+  /** Treat detail images as authoritative instead of merging list-card images. */
+  replaceImagesWithDetail?: boolean;
   /** Assign parkingSpaces when extracted. (path A) */
   applyParkingSpaces?: boolean;
 }
@@ -89,6 +97,7 @@ export function applyExtractResultToListing(
   // ── structured fields ───────────────────────────────────────────────────
   if (extract.bedrooms !== undefined) listing.bedrooms = extract.bedrooms;
   if (extract.bathrooms !== undefined) listing.bathrooms = extract.bathrooms;
+  if (extract.propertyType) listing.property_type = extract.propertyType;
   if (options.applyParkingSpaces && extract.parkingSpaces !== undefined) {
     listing.parkingSpaces = extract.parkingSpaces;
   }
@@ -105,16 +114,29 @@ export function applyExtractResultToListing(
   if (options.applyTitleUpgrade && extract.title && extract.title.length > (listing.title?.length || 0)) {
     listing.title = extract.title;
   }
+  const currentTitle = listing.title?.trim() || "";
+  const explicitlyTruncated = /(?:\.\.\.|…)$/.test(currentTitle);
+  if (
+    options.applyTruncatedTitleUpgrade &&
+    explicitlyTruncated &&
+    extract.title &&
+    extract.title.length > currentTitle.length
+  ) {
+    listing.title = extract.title.replace(/\s+\|\s+[^|]+$/, "").trim();
+    wasEnriched = true;
+  }
 
   // ── location (when listing has none) ────────────────────────────────────
-  if (extract.location && !listing.location) {
+  if (extract.location && (!listing.location || options.applyLocationUpgrade)) {
     listing.location = extract.location;
     wasEnriched = true;
   }
 
   // ── image merge ─────────────────────────────────────────────────────────
   if (extract.imageUrls?.length) {
-    const merged = [...(listing.imageUrls || []), ...extract.imageUrls];
+    const merged = options.replaceImagesWithDetail
+      ? extract.imageUrls
+      : [...(listing.imageUrls || []), ...extract.imageUrls];
     const deduped = dedupeImageUrls(merged);
     if (deduped.length !== (listing.imageUrls || []).length) {
       wasEnriched = true;

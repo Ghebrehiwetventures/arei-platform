@@ -97,9 +97,10 @@ sources:
       enabled: true
       policy: always        # always, on_violation, never
       delay_ms: 2500
+      image_fallback: false
       selectors:
         description: "h2:contains('Description') + .elementor-widget-text-editor, .elementor-widget-text-editor p"
-        images: "#prop-gallery .swiper-slide img, .elementor-image-carousel img, .swiper-slide a[href*='.jpg']"
+        images: "#prop-gallery .elementor-image-carousel img"
         # bedrooms/bathrooms extracted via spec_table below; spec_patterns kept as fallback
       spec_table:
         container: ".elementor-widget"
@@ -109,12 +110,14 @@ sources:
           bedrooms: ["bedrooms", "quartos"]
           bathrooms: ["bathrooms", "casas de banho", "banheiros"]
           parking: ["parking spaces", "lugares de estacionamento", "parking", "garage"]
-          area: ["area", "área", "terrace area", "área do terraço"]
+          area: ["sales area", "área de venda", "area", "área", "terrace area", "área do terraço"]
           price: ["price", "preço", "precio", "preis"]
+          property_type: ["category", "categoria"]
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
           - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
+          - "\\b(one|two|three|four|five|six|seven|eight|nine|ten)\\b[^.!?]{0,40}\\bbedrooms?\\b"
           - "\\bT(\\d+)\\b"                                    # CV standard: T2 = 2 bedrooms
           - "(?:T|Tipologia)\\s*(\\d+)"                        # "Tipologia 2"
           - "(\\d+)\\s*(?:dorm|assoalhada)"                    # Portuguese variants
@@ -205,7 +208,8 @@ sources:
           bedrooms: ["bedrooms", "beds", "quartos"]
           bathrooms: ["bathrooms", "baths", "casas de banho", "banheiros"]
           parking: ["parking", "garage", "estacionamento"]
-          area: ["area size", "area", "size", "área", "superfície"]
+          area: ["area size", "land area", "area", "size", "área", "superfície"]
+          property_type: ["property type", "type"]
           price: ["price", "preço", "precio"]
       spec_patterns:
         bedrooms:
@@ -316,7 +320,7 @@ sources:
         # the right answer for a project that spans multiple unit types.
         bedrooms: ".detailsBar__list i.fa-bed + span"
         bathrooms: ".detailsBar__list i.fa-shower + span"
-        area: ".detailsBar__list i.proppy-icon-gross-area-24-custom + span"
+        area: ".detailsBar__list i.proppy-icon-gross-area-24-custom + span, .detailsBar__list i.proppy-icon-home-32 + span"
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
@@ -385,9 +389,14 @@ sources:
       enabled: true
       policy: always
       delay_ms: 3000
+      image_fallback: false
+      enrich:
+        location_upgrade: true
+        replace_images_with_detail: true
       selectors:
         description: ".property-description, .wpsight-listing-description, [class*='description'] p"
-        images: ".property-detail-gallery img, .property-gallery img, .slick-slide img, .swiper-slide img, img.wp-post-image"
+        images: "[data-fancybox='gallery-v2'][data-src]"
+        location: ".property-address, .property-address-wrap, .block-content-wrap .property-address"
         # Houzez has two layouts: v7 (strong inside li.h-beds) and v8+ (strong in sibling li, label li has .h-beds).
         bedrooms: ".h-beds strong, ul:has(.h-beds) strong, .listing-details-detail:contains('Bed') .listing-details-value"
         bathrooms: ".h-baths strong, ul:has(.h-baths) strong, .listing-details-detail:contains('Bath') .listing-details-value"
@@ -470,6 +479,14 @@ sources:
         images: ".mosaicflow__item img, img[src*='osproperty/properties']"
         price: "span.price-ribbon-price"
         location: ".property-header-info-address"
+      spec_table:
+        container: "#propertydetails .corefields"
+        label_selector: ".fieldlabel"
+        value_selector: "+ .fieldvalue"
+        label_map:
+          bedrooms: ["bed"]
+          bathrooms: ["bath"]
+          area: ["square meter"]
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
@@ -508,6 +525,7 @@ sources:
     delay_ms: 3000
     jitter_ms: 1000
     max_items: 50
+    removal_detection: false  # /featured/ is a subset, not an authoritative full catalogue
 
     selectors:
       listing: ".mh-estate-horizontal__primary, .mh-estate-vertical__primary, [class*='mh-estate']"
@@ -530,6 +548,14 @@ sources:
       selectors:
         description: ".mh-estate__description p, .property-description p, [class*='description'] p"
         images: ".mh-estate__gallery img, .swiper-slide img, .property-gallery img, img.wp-post-image"
+        bedrooms: "#mh-estate_attribute--5"
+        bathrooms: "#mh-estate_attribute--7"
+      specs_selector: ".mh-estate__section--attributes"
+      spec_table:
+        container: ".mh-estate__section--attributes"
+        label_selector: "#mh-estate_attribute--25 strong"
+        label_map:
+          area: ["m2"]
       spec_patterns:
         bedrooms:
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
@@ -590,20 +616,36 @@ sources:
     detail:
       enabled: true
       policy: always
+      fetch_method: http
       delay_ms: 3000
+      image_fallback: false
+      fetch_retry:
+        attempts: 2
+        delay_ms: 1500
+      enrich:
+        replace_images_with_detail: true
       selectors:
         description: ".pageContent__text p[data-start], .property__description p, .entry-content p, [class*='description'] p"
-        images: "img.gallery__img, .swiper-slide img, .gallery img, img[src*='uploads']"
+        images: "img.gallery__img, .property__gallery .swiper-slide img, .property__gallery .gallery img"
         # Price in detail pages: "Price: 479 491 €" format in spans
-        price: ".property__content p span:first-child"
+        price: ".property-info__price, .property__content p span:first-child"
+      spec_table:
+        container: ".property-summary__list table"
+        label_selector: "td:first-child"
+        value_selector: "+ td"
+        label_map:
+          area: ["total usable area", "celková užitná plocha", "area"]
+          price: ["price"]
       spec_patterns:
         bedrooms:
+          - "(\\d+|one|two|three|four|five|six|seven|eight|nine|ten)\\s+(?:\\w+\\s+){0,2}(?:en[- ]?suite|ensuite)\\s+Bedrooms?"
           - "(\\d+)\\s*(?:Bedrooms?|Beds?|Quartos?|Chambres?)"
           - "(?:Bedrooms?|Beds?|Quartos?)\\s*[:\\-]?\\s*(\\d+)"
           - "\\bT(\\d+)\\b"
           - "(?:T|Tipologia)\\s*(\\d+)"
           - "(\\d+)\\s*(?:dorm|assoalhada)"
         bathrooms:
+          - "(\\d+|one|two|three|four|five|six|seven|eight|nine|ten)\\s*(?:full\\s+)?Bathrooms?"
           - "(\\d+)\\s*(?:Bathrooms?|Baths?|Banheiros?|Casas?\\s*de\\s*banho)"
           - "(?:Bathrooms?|Baths?)\\s*[:\\-]?\\s*(\\d+)"
         area:
@@ -658,6 +700,8 @@ sources:
       delay_ms: 3000
       selectors:
         description: ".wpestate_property_description p, .property-description p, [class*='description'] p"
+        bedrooms: ".property_default_bedrooms"
+        bathrooms: ".property_default_bathrooms"
         # Scope images to actual gallery containers (no img[src*='uploads'] catch-all,
         # which previously pulled in the site logo). Filename filter on logo patterns
         # is defense in depth via isChromeElement.
@@ -702,7 +746,7 @@ sources:
 
     pagination:
       type: click_next      # Next-page buttons are JS-driven, not URL-based
-      next_selector: "ul.page_navigation li.page-item:last-child a.page-link"
+      next_selector: "ul.page_navigation li.page-item:last-child:not(.disabled) a.page-link"
                             # Last <li> in pagination = next button (no text, only flaticon-right-arrow icon)
 
     delay_ms: 3000
@@ -712,11 +756,14 @@ sources:
     stop_condition: empty_listings
 
     selectors:
-      listing: "div.feat_property"
+      listing: "div.feat_property.list"
       link: "a[href*='view_page=show_ad']"
       title: "h4"
       price: ".fp_price"
       image: ".thumb img"
+
+    reject_url_patterns:
+      - "/arrendar-"
 
     price_format:
       currency_symbol: "$"     # CVE escudo; "$NN" centavo suffix already stripped by parsePrice()
@@ -728,9 +775,14 @@ sources:
       enabled: true
       policy: always
       delay_ms: 3000
+      image_fallback: false
+      fetch_retry:
+        attempts: 2
+        delay_ms: 1500
+      specs_selector: ".listing_single_description"
       selectors:
         description: "[class*='desc'] p, .listing_desc_header ~ div p"
-        images: "img[src*='/med/'], .carousel-item img, .slider_main_photo img"
+        images: "section.listing-title-area.p0 img[src*='/med/']"
         bedrooms: "li:contains('Tipologia')"
         bathrooms: "li:contains('WC')"
       spec_patterns:
@@ -764,6 +816,15 @@ sources:
     lifecycleOverride: IN
     currency: EUR
     fetch_method: http
+
+    # REMAX exposes a single TotalArea per listing. For villas/houses described
+    # as a plot/land parcel, that figure is the plot size, not interior area, so
+    # reclassify it to land_area_sqm. Consumed by the generic correction step in
+    # core/pipeline/sourceCorrections.ts — no source-specific code in the engine.
+    corrections:
+      reclassify_area_as_land:
+        when_property_type: [villa, house]
+        when_text_matches: "\\b(?:plot|land parcel|lot)\\b"
 
     pagination:
       type: json_api

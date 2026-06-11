@@ -1,6 +1,14 @@
 // Canonical land/plot type regex — shared across pipeline and UI.
 export const LAND_TYPES = /^(land|plot|lot|lote|terreno|terrenos|parcela|parcel|terrain)$/i;
 
+export function normalizeBedroomsForPropertyType(
+  propertyType: string,
+  bedrooms: number | null | undefined,
+): number | null {
+  if (bedrooms != null) return bedrooms;
+  return propertyType === "studio" ? 0 : null;
+}
+
 // Unicode-aware word boundary: stops "casa" matching inside "casaco" but also
 // works for accented keywords like "ático" where ASCII \b fails because
 // accented letters aren't ASCII word chars. Always paired around a keyword
@@ -49,6 +57,7 @@ const MAISONETTE = makeRegex(["maisonette", "maisonettes"]);
 const DUPLEX = makeRegex(["duplex", "duplexes", "dúplex"]);
 const LAND = makeRegex([
   "land", "lot", "lots", "plot", "plots", "acre", "acres",
+  "development opportunity", "development site",
   "terreno", "terrenos", "lote", "lotes",    // PT
   "parcela", "parcelas",                      // ES
   "terrain", "terrains",                      // FR
@@ -76,12 +85,22 @@ const HOUSE_FALLBACK = makeRegex([
  */
 export function extractPropertyType(title?: string, url?: string): string {
   const text = `${title || ""} ${url || ""}`.toLowerCase();
+  const pathname = (() => {
+    try {
+      return url ? new URL(url).pathname.toLowerCase() : "";
+    } catch {
+      return "";
+    }
+  })();
+
+  if (/\/(?:lands?|plots?|lots?)(?:\/|$)/.test(pathname)) return "land";
+  if (/\/(?:offices?|commercial)(?:\/|$)/.test(pathname)) return "commercial";
 
   if (VILLA.test(text)) return "villa";
+  if (STUDIO.test(text)) return "studio";
   if (APARTMENT.test(text)) return "apartment";
   if (TOWNHOUSE.test(text)) return "townhouse";
   if (PENTHOUSE.test(text)) return "penthouse";
-  if (STUDIO.test(text)) return "studio";
   if (BUNGALOW.test(text)) return "bungalow";
   if (MAISONETTE.test(text)) return "maisonette";
   if (DUPLEX.test(text)) return "duplex";

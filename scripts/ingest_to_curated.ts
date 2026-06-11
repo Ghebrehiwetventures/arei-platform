@@ -15,6 +15,9 @@ export {
   buildKvCuratedUpsertQuery,
   buildFindRemovedPublishedRowsQuery,
   buildDemoteRemovedPublishedRowsQuery,
+  reconcileListingIdsBySourceUrl,
+  resolveSourceCurrency,
+  shouldRunRemovalDetection,
 } from "../core/pipeline/runMarketSource";
 
 function loadEnv(): { marketId: string; sourceId: string; dryRun: boolean } {

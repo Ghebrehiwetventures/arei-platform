@@ -20,6 +20,7 @@ const BlogList = lazy(() => import("./pages/BlogList"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Market = lazy(() => import("./pages/Market"));
 const MarketNews = lazy(() => import("./pages/MarketNews"));
+const ReviewQueue = lazy(() => import("./pages/ReviewQueue"));
 const BriefingArchive = lazy(() => import("./pages/BriefingArchive"));
 const Briefing = lazy(() => import("./pages/Briefing"));
 const Rent = lazy(() => import("./pages/Rent"));
@@ -81,6 +82,7 @@ export default function App() {
           <Route path="/listings/boa-vista" element={<Navigate to="/?island=Boa+Vista" replace />} />
           <Route path="/market" element={<Market />} />
           <Route path="/market-news" element={<MarketNews />} />
+          <Route path="/review" element={<ReviewQueue />} />
           <Route path="/news" element={<Navigate to="/market-news" replace />} />
           {/* Canonical: briefings live under Market (they are monthly market
               reports, not a separate product category). */}

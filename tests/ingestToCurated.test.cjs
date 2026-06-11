@@ -7,6 +7,9 @@ const {
   buildKvCuratedUpsertQuery,
   buildFindRemovedPublishedRowsQuery,
   buildDemoteRemovedPublishedRowsQuery,
+  reconcileListingIdsBySourceUrl,
+  resolveSourceCurrency,
+  shouldRunRemovalDetection,
 } = require("../scripts/ingest_to_curated");
 
 test("curated upsert includes last_verified_at on insert and update", () => {
@@ -45,12 +48,100 @@ test("curated upsert includes last_verified_at on insert and update", () => {
   assert.equal(query.values[22], "ccore_731730");
 });
 
+test("curated upsert refreshes existing rows regardless of publish_status while preserving existing ai_descriptions", () => {
+  const verifiedAt = "2026-06-05T14:00:00.000Z";
+  const row = {
+    id: "hcv_published",
+    title: "Updated source title",
+    description: "updated desc",
+    description_html: null,
+    ai_descriptions: { en: { text: "new generated text" } },
+    price: 135000,
+    currency: "EUR",
+    price_period: "sale",
+    country: "Cape Verde",
+    island: "Sal",
+    city: "Santa Maria",
+    bedrooms: 2,
+    bathrooms: 3,
+    property_type: "townhouse",
+    property_size_sqm: 152,
+    land_area_sqm: null,
+    image_urls: ["https://cdn.example.com/updated.jpg"],
+    source_id_primary: "cv_homescasaverde",
+    source_url_primary: "https://www.homescasaverde.com/property/example",
+    first_seen_at: "2026-06-05T13:36:48.023Z",
+    publish_status: "needs_review",
+    seeded_from_raw_listing_id: "hcv_published",
+  };
+
+  const query = buildKvCuratedUpsertQuery(row, verifiedAt);
+
+  assert.doesNotMatch(query.text, /WHERE\s+kv_curated\.listings\.publish_status\s*=\s*'needs_review'/);
+  assert.match(query.text, /title\s*=\s*EXCLUDED\.title/);
+  assert.match(query.text, /WHEN kv_curated\.listings\.ai_descriptions IS NOT NULL\s+THEN kv_curated\.listings\.ai_descriptions/);
+  assert.doesNotMatch(query.text, /publish_status\s*=\s*EXCLUDED\.publish_status/);
+});
+
+test("in-place refresh guards structured fields against null-clobber", () => {
+  const row = {
+    id: "hcv_guard",
+    title: "Guarded",
+    description: "x",
+    description_html: null,
+    ai_descriptions: null,
+    price: 100000,
+    currency: "EUR",
+    price_period: "sale",
+    country: "Cape Verde",
+    island: "Sal",
+    city: null,
+    bedrooms: null,
+    bathrooms: null,
+    property_type: "villa",
+    property_size_sqm: null,
+    land_area_sqm: null,
+    image_urls: [],
+    source_id_primary: "cv_homescasaverde",
+    source_url_primary: "https://www.homescasaverde.com/property/guard",
+    first_seen_at: "2026-06-05T13:36:48.023Z",
+    publish_status: "needs_review",
+    seeded_from_raw_listing_id: "hcv_guard",
+  };
+
+  const { text } = buildKvCuratedUpsertQuery(row, "2026-06-10T00:00:00.000Z");
+
+  // Beds/baths fall back to the stored value when the fetch misses them.
+  assert.match(text, /bedrooms\s*=\s*COALESCE\(EXCLUDED\.bedrooms,\s*kv_curated\.listings\.bedrooms\)/);
+  assert.match(text, /bathrooms\s*=\s*COALESCE\(EXCLUDED\.bathrooms,\s*kv_curated\.listings\.bathrooms\)/);
+  // Area is preserved only on a total miss (both buckets NULL), so a genuine
+  // reclassification still clears the old bucket.
+  assert.match(text, /property_size_sqm\s*=\s*CASE\s+WHEN EXCLUDED\.property_size_sqm IS NULL\s+AND EXCLUDED\.land_area_sqm IS NULL/);
+  assert.match(text, /land_area_sqm\s*=\s*CASE\s+WHEN EXCLUDED\.property_size_sqm IS NULL\s+AND EXCLUDED\.land_area_sqm IS NULL/);
+  // An empty gallery never blanks stored images.
+  assert.match(text, /image_urls\s*=\s*CASE\s+WHEN EXCLUDED\.image_urls IS NULL\s+OR cardinality\(EXCLUDED\.image_urls\)\s*=\s*0/);
+  // Title/price/location stay straight refreshes (intentional changes flow through).
+  assert.match(text, /price\s*=\s*EXCLUDED\.price/);
+});
+
 test("removed published lookup is disabled when a source fetch returns no rows", () => {
   assert.equal(buildFindRemovedPublishedRowsQuery("cv_ccoreinvestments", []), null);
   assert.equal(
     buildDemoteRemovedPublishedRowsQuery("cv_ccoreinvestments", [], "2026-06-05T12:00:00.000Z"),
     null
   );
+});
+
+test("removal detection is disabled for incomplete source catalogues", () => {
+  assert.equal(shouldRunRemovalDetection(false, ["chp_current"]), false);
+  assert.equal(shouldRunRemovalDetection(true, ["chp_current"]), true);
+  assert.equal(shouldRunRemovalDetection(undefined, ["chp_current"]), true);
+  assert.equal(shouldRunRemovalDetection(undefined, []), false);
+});
+
+test("source currency overrides the market default for NhaKaza CVE prices", () => {
+  assert.equal(resolveSourceCurrency({ currency: "CVE" }, "cv"), "CVE");
+  assert.equal(resolveSourceCurrency({}, "cv"), "EUR");
 });
 
 test("removed published lookup finds published rows absent from current source ids", () => {
@@ -71,8 +162,43 @@ test("removed published demotion only updates currently published missing rows",
   assert.match(query.text, /SET\s+publish_status = 'removed'/);
   assert.match(query.text, /publish_status = 'published'/);
   assert.match(query.text, /NOT \(id = ANY\(\$2::text\[\]\)\)/);
+  assert.match(query.text, /last_verified_at = \$3::timestamptz/);
+  assert.match(query.text, /\(\$3::timestamptz\)::text/);
   assert.match(query.text, /RETURNING id, title, source_url_primary/);
   assert.equal(query.values[0], "cv_ccoreinvestments");
   assert.deepEqual(query.values[1], ["ccore_1"]);
   assert.equal(query.values[2], removedAt);
+});
+
+test("same-source URL identity reconciliation preserves an existing published row id", () => {
+  const listings = [
+    {
+      id: "cvp24_new_hash",
+      detailUrl: "https://capeverdeproperty24.com/en/brl10-2",
+      title: "Brl10 2",
+    },
+    {
+      id: "cvp24_new_listing",
+      detailUrl: "https://capeverdeproperty24.com/en/new-listing",
+      title: "New listing",
+    },
+  ];
+  const existingByUrl = new Map([
+    [
+      "https://capeverdeproperty24.com/en/brl10-2",
+      { id: "cvp24_existing_published", status: "published" },
+    ],
+  ]);
+
+  const changes = reconcileListingIdsBySourceUrl(listings, existingByUrl);
+
+  assert.deepEqual(changes, [
+    {
+      from: "cvp24_new_hash",
+      to: "cvp24_existing_published",
+      url: "https://capeverdeproperty24.com/en/brl10-2",
+    },
+  ]);
+  assert.equal(listings[0].id, "cvp24_existing_published");
+  assert.equal(listings[1].id, "cvp24_new_listing");
 });

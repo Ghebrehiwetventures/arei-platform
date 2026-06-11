@@ -11,7 +11,7 @@ import OpenAI from "openai";
 import * as fs from "fs";
 import * as path from "path";
 
-import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig } from "../configLoader";
+import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig, DetailFetchRetryConfig } from "../configLoader";
 import { genericPaginatedFetcher, GenericParsedListing } from "../fetcher";
 import { fetchHtml } from "../fetchHtml";
 import { fetchHeadless } from "../fetchHeadless";
@@ -21,8 +21,13 @@ import { createGenericDetailPlugin } from "../detail/plugins/genericDetail";
 import { getStrategyFactory, resetStrategyFactory } from "../detail/strategyFactory";
 import { buildListFetchFn } from "./fetchSource";
 import { loadLocationHooks } from "./locationHooks";
-import { LAND_TYPES, extractPropertyType } from "./propertyType";
+import {
+  LAND_TYPES,
+  extractPropertyType,
+  normalizeBedroomsForPropertyType,
+} from "./propertyType";
 import { applyExtractResultToListing } from "./enrich";
+import { applySourceCorrections } from "./sourceCorrections";
 import { resolveLocation as resolveIsland } from "./locationResolver";
 import { SourceStatus } from "../status";
 import {
@@ -48,6 +53,7 @@ interface WorkingListing {
   bedrooms?: number | null;
   bathrooms?: number | null;
   area_sqm?: number | null;
+  land_area_sqm?: number | null;
   amenities?: string[];
   property_type?: string;
 }
@@ -109,6 +115,39 @@ function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms));
 }
 
+const DEFAULT_DETAIL_FETCH_ATTEMPTS = 1;
+
+export function getDetailFetchMethod(sourceConfig: SourceConfig): "http" | "headless" {
+  return sourceConfig.detail?.fetch_method ?? sourceConfig.fetch_method ?? "http";
+}
+
+export async function fetchDetailWithRetry(
+  retry: DetailFetchRetryConfig | undefined,
+  detailUrl: string,
+  fetchFn: (url: string) => Promise<any>,
+  sleepFn: (ms: number) => Promise<void> = sleep,
+): Promise<any & { retried: boolean }> {
+  const attempts = Math.max(1, retry?.attempts ?? DEFAULT_DETAIL_FETCH_ATTEMPTS);
+  const delayMs = retry?.delay_ms ?? 0;
+
+  let result = await fetchFn(detailUrl);
+  let retried = false;
+  for (let attempt = 2; attempt <= attempts && !(result.success && result.html); attempt++) {
+    retried = true;
+    console.log(`[Enrich] Retry ${attempt}/${attempts} on transient detail failure: ${detailUrl}`);
+    if (delayMs > 0) await sleepFn(delayMs);
+    result = await fetchFn(detailUrl);
+  }
+  return { ...result, retried };
+}
+
+export function resolveSourceCurrency(
+  sourceConfig: Pick<SourceConfig, "currency">,
+  marketId: string,
+): string {
+  return sourceConfig.currency ?? getCurrency(marketId);
+}
+
 // ─── Detail enrichment ───────────────────────────────────────────────────────
 
 async function enrichListings(
@@ -149,8 +188,12 @@ async function enrichListings(
     await sleep(delayMs + Math.floor(Math.random() * 500));
 
     try {
-      const fetchFn = sourceConfig.fetch_method === "headless" ? fetchHeadless : fetchHtml;
-      const fetchResult = await fetchFn(listing.detailUrl);
+      const fetchFn = getDetailFetchMethod(sourceConfig) === "headless" ? fetchHeadless : fetchHtml;
+      const fetchResult = await fetchDetailWithRetry(
+        sourceConfig.detail?.fetch_retry,
+        listing.detailUrl,
+        fetchFn,
+      );
 
       if (!fetchResult.success || !fetchResult.html) {
         failed++;
@@ -165,7 +208,12 @@ async function enrichListings(
         continue;
       }
 
-      applyExtractResultToListing(listing, extractResult);
+      const enrichOpts = sourceConfig.detail?.enrich;
+      applyExtractResultToListing(listing, extractResult, {
+        applyTruncatedTitleUpgrade: true,
+        applyLocationUpgrade: enrichOpts?.location_upgrade ?? false,
+        replaceImagesWithDetail: enrichOpts?.replace_images_with_detail ?? false,
+      });
 
       enriched++;
       console.log(`[Enrich] ✓ ${listing.id}`);
@@ -323,7 +371,7 @@ function printSummary(
   fetched: number,
   rows: CuratedRow[],
   skipped: Array<{ id: string; reason: string }>,
-  skippedPublished: number = 0
+  refreshedPublished: number = 0
 ): void {
   const byIsland: Record<string, number> = {};
   let withPrice = 0, withBedrooms = 0, withBathrooms = 0, withImages = 0, withAi = 0;
@@ -343,8 +391,8 @@ function printSummary(
   console.log(`\n=== kv_curated insert summary ===`);
   console.log(`Total fetched:     ${fetched}`);
   skipped.forEach(s => console.log(`  Skipped (${s.reason}): 1`));
-  if (skippedPublished > 0) {
-    console.log(`Skipped (already published, untouched): ${skippedPublished}`);
+  if (refreshedPublished > 0) {
+    console.log(`Published refreshed (status preserved): ${refreshedPublished}`);
   }
   console.log(`Inserted/updated:  ${n}`);
   console.log(`\nBy island:`);
@@ -386,32 +434,112 @@ ON CONFLICT (id) DO UPDATE SET
   currency                   = EXCLUDED.currency,
   island                     = EXCLUDED.island,
   city                       = EXCLUDED.city,
-  bedrooms                   = EXCLUDED.bedrooms,
-  bathrooms                  = EXCLUDED.bathrooms,
   property_type              = EXCLUDED.property_type,
-  property_size_sqm          = EXCLUDED.property_size_sqm,
-  land_area_sqm              = EXCLUDED.land_area_sqm,
-  image_urls                 = EXCLUDED.image_urls,
+  -- Structured attributes: a NULL/empty value from a fetch is a missed
+  -- extraction, never an intentional "this property has no bedrooms / no
+  -- photos." Since published rows are now refreshed in place, take the new
+  -- value only when present and otherwise keep the prior one, so a flaky or
+  -- partial re-fetch can never blank good (especially published) data.
+  bedrooms                   = COALESCE(EXCLUDED.bedrooms, kv_curated.listings.bedrooms),
+  bathrooms                  = COALESCE(EXCLUDED.bathrooms, kv_curated.listings.bathrooms),
+  -- Area buckets are coupled: a listing carries EITHER property_size_sqm OR
+  -- land_area_sqm by type. Only preserve the prior pair on a *total* area miss
+  -- (both NULL); when the fetch found area in either bucket, trust it verbatim
+  -- so a genuine reclassification (e.g. villa→land) still clears the old bucket.
+  property_size_sqm          = CASE
+                                 WHEN EXCLUDED.property_size_sqm IS NULL
+                                  AND EXCLUDED.land_area_sqm IS NULL
+                                 THEN kv_curated.listings.property_size_sqm
+                                 ELSE EXCLUDED.property_size_sqm
+                               END,
+  land_area_sqm              = CASE
+                                 WHEN EXCLUDED.property_size_sqm IS NULL
+                                  AND EXCLUDED.land_area_sqm IS NULL
+                                 THEN kv_curated.listings.land_area_sqm
+                                 ELSE EXCLUDED.land_area_sqm
+                               END,
+  image_urls                 = CASE
+                                 WHEN EXCLUDED.image_urls IS NULL
+                                   OR cardinality(EXCLUDED.image_urls) = 0
+                                 THEN kv_curated.listings.image_urls
+                                 ELSE EXCLUDED.image_urls
+                               END,
   source_url_primary         = EXCLUDED.source_url_primary,
   last_verified_at           = EXCLUDED.last_verified_at,
   seeded_from_raw_listing_id = EXCLUDED.seeded_from_raw_listing_id,
   updated_at                 = now()
-WHERE kv_curated.listings.publish_status = 'needs_review'
 `;
-// Status-gated: the WHERE clause makes the upsert a no-op for already-published
-// rows. To re-enrich a published listing, demote it first:
-//   UPDATE kv_curated.listings SET publish_status='needs_review' WHERE id='...';
-// publish_status, first_seen_at, first_published_at are NOT updated on conflict.
+// Conflict updates preserve publish_status, first_seen_at, first_published_at,
+// and existing ai_descriptions. Other source-derived fields are refreshed for
+// both needs_review and published rows, except structured attributes (beds,
+// baths, area, images) which are guarded so a missed/partial extraction cannot
+// null out good data on an in-place published refresh.
 
 interface ExistingRowMeta {
   status: string;
   hasAi: boolean;
 }
 
+interface ExistingUrlIdentity {
+  id: string;
+  status: string;
+}
+
 interface RemovedPublishedRow {
   id: string;
   title: string;
   source_url_primary: string | null;
+}
+
+export function reconcileListingIdsBySourceUrl(
+  listings: Array<{ id: string; detailUrl?: string }>,
+  existingByUrl: Map<string, ExistingUrlIdentity>
+): Array<{ from: string; to: string; url: string }> {
+  const changes: Array<{ from: string; to: string; url: string }> = [];
+  for (const listing of listings) {
+    if (!listing.detailUrl) continue;
+    const existing = existingByUrl.get(listing.detailUrl);
+    if (!existing || existing.id === listing.id) continue;
+    changes.push({ from: listing.id, to: existing.id, url: listing.detailUrl });
+    listing.id = existing.id;
+  }
+  return changes;
+}
+
+async function fetchExistingUrlIdentities(
+  sourceId: string,
+  sourceUrls: string[]
+): Promise<Map<string, ExistingUrlIdentity>> {
+  const urls = [...new Set(sourceUrls.filter(Boolean))];
+  if (urls.length === 0) return new Map();
+
+  const client = createPostgresClient();
+  await client.connect();
+  try {
+    const result = await client.query<{
+      id: string;
+      publish_status: string;
+      source_url_primary: string;
+    }>(
+      `SELECT DISTINCT ON (source_url_primary)
+              id, publish_status, source_url_primary
+         FROM kv_curated.listings
+        WHERE source_id_primary = $1
+          AND source_url_primary = ANY($2::text[])
+        ORDER BY source_url_primary,
+                 CASE WHEN publish_status = 'published' THEN 0 ELSE 1 END,
+                 first_seen_at ASC`,
+      [sourceId, urls]
+    );
+    return new Map(
+      result.rows.map(r => [
+        r.source_url_primary,
+        { id: r.id, status: r.publish_status },
+      ])
+    );
+  } finally {
+    await client.end();
+  }
 }
 
 async function fetchExistingRowMeta(ids: string[]): Promise<Map<string, ExistingRowMeta>> {
@@ -449,6 +577,13 @@ SELECT id, title, source_url_primary
   };
 }
 
+export function shouldRunRemovalDetection(
+  removalDetection: boolean | undefined,
+  activeIds: string[]
+): boolean {
+  return removalDetection !== false && activeIds.length > 0;
+}
+
 export function buildDemoteRemovedPublishedRowsQuery(
   sourceId: string,
   activeIds: string[],
@@ -459,8 +594,8 @@ export function buildDemoteRemovedPublishedRowsQuery(
     text: `
 UPDATE kv_curated.listings
    SET publish_status = 'removed',
-       last_verified_at = $3,
-       notes = concat_ws(E'\\n', nullif(notes, ''), '[' || $3::text || '] Auto-removed: missing from latest successful source fetch.'),
+       last_verified_at = $3::timestamptz,
+       notes = concat_ws(E'\\n', nullif(notes, ''), '[' || ($3::timestamptz)::text || '] Auto-removed: missing from latest successful source fetch.'),
        updated_at = now()
  WHERE source_id_primary = $1
    AND publish_status = 'published'
@@ -547,10 +682,8 @@ async function writeToKvCurated(rows: CuratedRow[]): Promise<void> {
       const query = buildKvCuratedUpsertQuery(row, verifiedAt);
       const result = await client.query(query.text, query.values);
       if (result.rowCount === 0) {
-        // Pre-filter caught all known published rows. A 0 here means the row
-        // was promoted between the pre-check and the write — rare but possible.
         raceSkipped++;
-        console.warn(`[Write] ⊘ ${row.id}: WHERE skipped (promoted mid-run?)`);
+        console.warn(`[Write] ⊘ ${row.id}: upsert affected 0 rows`);
       } else {
         inserted++;
       }
@@ -684,7 +817,7 @@ function writeReportJson(
       rowsReady: rows.length,
       skipped: skipped.length,
       alreadyPublished: publishedIds.size,
-      writable: rows.filter(r => !publishedIds.has(r.id)).length,
+      writable: rows.length,
       removedCandidates: removedPublishedRows.length,
     },
     coverage: {
@@ -753,8 +886,21 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   console.log(`\nFetched: ${listings.length} listings`);
 
   await enrichListings(listings, sourceConfig);
+  for (const listing of listings) applySourceCorrections(listing, sourceConfig);
 
-  const currency = getCurrency(marketId);
+  const existingByUrl = await fetchExistingUrlIdentities(
+    sourceId,
+    listings.map(l => l.detailUrl ?? "")
+  );
+  const identityChanges = reconcileListingIdsBySourceUrl(listings, existingByUrl);
+  if (identityChanges.length > 0) {
+    console.log(`\n[Identity-gate] ${identityChanges.length} generated ids reconciled to existing same-URL rows:`);
+    for (const change of identityChanges) {
+      console.log(`  ↻ ${change.from} → ${change.to}  ${change.url}`);
+    }
+  }
+
+  const currency = resolveSourceCurrency(sourceConfig, marketId);
   const country  = getCountry(marketId);
   const now      = new Date().toISOString();
 
@@ -792,11 +938,13 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
       country,
       island,
       city: city ?? null,
-      bedrooms: isLand ? null : (listing.bedrooms ?? null),
+      bedrooms: isLand
+        ? null
+        : normalizeBedroomsForPropertyType(propertyType, listing.bedrooms),
       bathrooms: isLand ? null : (listing.bathrooms ?? null),
       property_type: propertyType,
       property_size_sqm: isLand ? null : (listing.area_sqm ?? null),
-      land_area_sqm: isLand ? (listing.area_sqm ?? null) : null,
+      land_area_sqm: listing.land_area_sqm ?? (isLand ? (listing.area_sqm ?? null) : null),
       image_urls: listing.imageUrls,
       source_id_primary: sourceId,
       source_url_primary: listing.detailUrl ?? null,
@@ -812,11 +960,10 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
     skipped.forEach(s => console.log(`  ${s.id}: ${s.reason}`));
   }
 
-  // Status-gating: published rows are immutable from the pipeline. Pre-filter
-  // them so we don't waste AI calls and so the summary reflects reality.
-  // Also pre-fetch ai_descriptions presence so we can skip AI generation for
-  // rows that already have one — the upsert preserves existing ai_descriptions,
-  // so re-generating would just burn API credits with no effect.
+  // Existing published rows stay published, but source-derived fields are
+  // refreshed on conflict. Existing ai_descriptions are preserved, so pre-fetch
+  // their presence to avoid burning API credits on descriptions the upsert would
+  // keep unchanged.
   const existingMeta = await fetchExistingRowMeta(rows.map(r => r.id));
   const publishedIds = new Set(
     [...existingMeta.entries()]
@@ -829,20 +976,27 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
       .map(([id]) => id)
   );
   if (publishedIds.size > 0) {
-    console.log(`\n[Status-gate] ${publishedIds.size} listings already published — skipping (untouched):`);
-    for (const id of publishedIds) console.log(`  ⊘ ${id}`);
-    console.log(`  (to re-enrich one: UPDATE kv_curated.listings SET publish_status='needs_review' WHERE id='...';)`);
+    console.log(`\n[Status-gate] ${publishedIds.size} listings already published — refreshing source fields, preserving publish_status and existing ai_descriptions:`);
+    for (const id of publishedIds) console.log(`  ↻ ${id}`);
   }
-  const writable = rows.filter(r => !publishedIds.has(r.id));
+  const writable = rows;
   console.log(`\nRows to process: ${writable.length}`);
 
   // Removal freshness is about source presence, not curated-row validity.
   // A fetched listing that later gets skipped for title/location validation
   // should not be treated as removed from the source.
   const activeIds = listings.map(l => l.id).filter(Boolean);
-  const removedPublishedRows = await findRemovedPublishedRows(sourceId, activeIds);
+  const removalDetectionEnabled = shouldRunRemovalDetection(
+    sourceConfig.removal_detection,
+    activeIds
+  );
+  const removedPublishedRows = removalDetectionEnabled
+    ? await findRemovedPublishedRows(sourceId, activeIds)
+    : [];
   if (activeIds.length === 0) {
     console.log(`\n[Removed-gate] Source produced 0 valid rows — removal detection disabled for safety.`);
+  } else if (!removalDetectionEnabled) {
+    console.log(`\n[Removed-gate] Removal detection disabled by source config (catalogue is not authoritative for absence).`);
   } else if (removedPublishedRows.length > 0) {
     console.log(`\n[Removed-gate] ${removedPublishedRows.length} published listings absent from latest successful source fetch:`);
     for (const row of removedPublishedRows) console.log(`  - ${row.id} ${row.source_url_primary ?? ""}`);
@@ -858,10 +1012,10 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   }
 
   if (!dryRun) {
-    const needsAi = writable.filter(r => !haveAiIds.has(r.id));
+    const needsAi = writable.filter(r => !haveAiIds.has(r.id) && !publishedIds.has(r.id));
     const aiSkippedExisting = writable.length - needsAi.length;
     if (aiSkippedExisting > 0) {
-      console.log(`\n[AI-gate] ${aiSkippedExisting}/${writable.length} rows already have ai_descriptions — skipping generation (upsert preserves existing).`);
+      console.log(`\n[AI-gate] ${aiSkippedExisting}/${writable.length} rows skipped for AI generation (already have ai_descriptions or are published; upsert preserves existing AI text).`);
     }
 
     let aiOk = 0;

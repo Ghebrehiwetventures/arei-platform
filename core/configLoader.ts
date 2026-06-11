@@ -80,9 +80,26 @@ export interface PriceFormatConfig {
   multiplier?: number;
 }
 
+export interface DetailFetchRetryConfig {
+  /** Total fetch attempts (1 = no retry). */
+  attempts?: number;
+  /** Delay between attempts, in ms. */
+  delay_ms?: number;
+}
+
+export interface DetailEnrichConfig {
+  /** Replace a coarse list-card location with the detail-page address. */
+  location_upgrade?: boolean;
+  /** Treat detail-page images as authoritative instead of merging list-card images. */
+  replace_images_with_detail?: boolean;
+}
+
 export interface DetailConfig {
   enabled?: boolean;
   policy?: DetailPolicy;
+  /** Detail pages may be server-rendered even when catalogue pagination needs
+   *  a headless browser. Defaults to the source-level fetch method. */
+  fetch_method?: FetchMethod;
   selectors?: {
     description?: string;
     images?: string;
@@ -92,6 +109,13 @@ export interface DetailConfig {
     price?: string;
     location?: string;
   };
+  /** Disable generic page-wide image fallbacks when the configured image
+   *  selector is authoritative and unrelated sidebar images are present. */
+  image_fallback?: boolean;
+  /** Retry transient detail-fetch failures (e.g. flaky headless/AJAX pages). */
+  fetch_retry?: DetailFetchRetryConfig;
+  /** How detail-extract results are applied over the list-card values. */
+  enrich?: DetailEnrichConfig;
   delay_ms?: number;
   /** Scope `spec_patterns` regexes to this container instead of `<body>`. Prevents
    *  regex pollution from Similar Listings / sidebar / navigation. When unset, the
@@ -126,6 +150,7 @@ export interface DetailConfig {
       parking?: string[];
       area?: string[];
       price?: string[];
+      property_type?: string[];
     };
   };
 }
@@ -163,6 +188,9 @@ export interface SourceConfig {
   max_items?: number;
   max_pages?: number;
   stop_condition?: StopCondition;
+  /** Whether absence from a successful fetch proves removal. Disable for
+   *  featured/search subsets that do not represent the full source catalogue. */
+  removal_detection?: boolean;
   reject_url_patterns?: string[];
   min_path_segments?: number;
   price_format?: PriceFormatConfig;
@@ -179,6 +207,20 @@ export interface SourceConfig {
 
   selectors?: SelectorsConfig;
   item_map?: ItemMapConfig;
+
+  /** Declarative post-enrichment corrections applied by the generic pipeline
+   *  (core/pipeline/sourceCorrections.ts). Keeps source-specific data fixes in
+   *  config rather than in market-specific code. */
+  corrections?: SourceCorrectionsConfig;
+}
+
+export interface SourceCorrectionsConfig {
+  /** Move a structured area value to land_area_sqm when the listing is a
+   *  plot/land parcel of the given property types. */
+  reclassify_area_as_land?: {
+    when_property_type: string[];
+    when_text_matches: string;
+  };
 }
 
 export interface SourcesConfig {

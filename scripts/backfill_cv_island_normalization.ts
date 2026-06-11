@@ -3,9 +3,9 @@ import * as path from "path";
 import { getSupabaseClient } from "../core/supabaseClient";
 import { getIslands } from "../core/locationMapper";
 import {
-  resolveCvIslandRecovery,
-  type CvIslandRecoverySkipReason,
-} from "../core/cvIslandRecovery";
+  resolveIslandRecovery,
+  type IslandRecoverySkipReason,
+} from "../core/islandRecovery";
 
 process.env.SUPABASE_URL ||= process.env.VITE_SUPABASE_URL;
 process.env.SUPABASE_ANON_KEY ||= process.env.VITE_SUPABASE_ANON_KEY;
@@ -53,7 +53,7 @@ interface PlannedSkip {
     island: string | null;
     city: string | null;
   };
-  reason: CvIslandRecoverySkipReason | "no_match";
+  reason: IslandRecoverySkipReason | "no_match";
 }
 
 interface PlanArtifact {
@@ -157,7 +157,7 @@ async function buildPlan(candidates: CandidateRow[]): Promise<PlanArtifact> {
 
   for (const row of candidates) {
     const pageTitleHint = await maybeFetchPageTitleHint(row);
-    const result = resolveCvIslandRecovery({
+    const result = resolveIslandRecovery({
       id: row.id,
       sourceId: row.source_id,
       title: row.title,
@@ -166,7 +166,7 @@ async function buildPlan(candidates: CandidateRow[]): Promise<PlanArtifact> {
       rawIsland: row.island,
       rawCity: row.city,
       pageTitleHint,
-    });
+    }, "cv");
 
     if (result.kind === "resolved") {
       updates.push({
