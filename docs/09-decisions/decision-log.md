@@ -250,3 +250,16 @@ These are not resolved decisions yet. They are logged here so they stay visible.
   - Setting `lifecycleOverride: IN` on a source now auto-enrolls it in scheduled live ingestion.
   - `public.listings` freezes when the legacy chain is deleted; the admin Agency data tab carries a stale-data banner and reads historical data until migrated (`docs/operations/admin-kv-curated-migration.md`).
   - Kill-switch for unattended runs: `gh workflow disable "Curated Ingest"`.
+
+### 2026-06-11 (evening) — Legacy pipeline disabled on day one of the soak; deletion gate revised to clean-run count
+
+- Status: `active`
+- Decision:
+  `cv-autopilot.yml` was disabled (`gh workflow disable`, state `disabled_manually`) the same day the curated schedule went live, with owner approval, instead of running the planned ~1-week parallel soak. The Task 9 code deletion gate changed from a calendar week to **2–3 consecutive clean scheduled curated runs** (expected ~2026-06-13). `public.listings` is frozen as of 2026-06-11.
+- Reason:
+  Day-one evidence inverted the soak's value: (a) both crons fired at the same minute, and the doubled synchronized crawl saturated estatecv (single-VPS nginx, largest source) — runner probes proved the host serves the pipeline request fine absent contention; (b) a legacy run hung 2+ hours mid-crawl hammering the same host; (c) legacy's rollback value was already documented as thin since it writes a table the live feed stopped reading on 2026-05-08; (d) the curated path completed a fully green 10/10 scheduled-path run the same day, including a correct guarded live demotion and a true-positive guard trip.
+- Consequence:
+  - Single writer: only the curated pipeline mutates listing inventory.
+  - Re-enabling legacy is one command (`gh workflow enable "CV Autopilot"`) until Task 9 deletes it; after that, rollback = disable curated + manual ops.
+  - The 03:00/15:00 curated cron offset (PR #387) loses its original collision rationale after Task 9 but stays harmless; Task 9 simplifies its comment.
+  - Watch item carried into the gate: terracaboverde was rate-limited by day-one crawl volume (5 waves) and must fetch green again before deletion.

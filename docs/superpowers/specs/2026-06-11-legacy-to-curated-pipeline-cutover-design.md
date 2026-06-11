@@ -55,7 +55,7 @@ guards) prunes disappeared listings.
 | 2 | Unattended demotion | **Auto-demote with guards** (zero-row guard + new fraction threshold). |
 | 3 | Fan-out | **Capped-concurrency matrix, generated dynamically from config.** |
 | 4 | Stranded `public.listings` reader | **Accept stale, flag loudly** + lightweight public-reader audit. |
-| 5 | Cutover sequencing | **Parallel-run soak (~1 week), then delete.** |
+| 5 | Cutover sequencing | **Parallel-run soak (~1 week), then delete.** *Revised same day — see "Soak revision (2026-06-11)" below: legacy schedule disabled on day one; deletion gated on 2–3 clean scheduled curated runs instead.* |
 
 ---
 
@@ -164,6 +164,41 @@ misbehaving curated run. The real live-feed protections are:
 4. `kv_curated` retaining `removed` rows for deliberate re-promotion.
 
 The kill-switch + guard are the front-line safety; the soak is confidence-building.
+
+## Soak revision (2026-06-11, end of day one)
+
+The parallel-run window was cut short the same day it started, with owner
+approval, because day-one evidence inverted its value:
+
+1. **The parallel run actively harmed sources.** Both crons fired at the same
+   minute (legacy `0 */6`, curated `0 */12`), crawling the same ten sites
+   simultaneously. estatecv (single-VPS nginx, the largest source at 150
+   published listings) was saturated by the collision; a legacy run also hung
+   for 2+ hours mid-crawl hammering it. Runner-side probes (curl + undici with
+   the exact pipeline headers) confirmed estatecv serves the pipeline request
+   fine when not under concurrent crawl. PR #387 offset the curated cron to
+   03:00/15:00 as a first mitigation.
+2. **Legacy's rollback value was already documented as thin** (see "Rollback
+   honesty" above): it writes `public.listings`, which the live feed does not
+   read. Keeping it scheduled bought contention, not safety.
+3. **The curated path proved itself end to end** the same day: a fully green
+   10/10 scheduled-path run (run 27368577537) including estatecv (166
+   listings/20 pages) and a correct live demotion (ccore, 5 rows, guard
+   evaluated), plus one true-positive guard trip (oceanproperty24 subset
+   catalogue) that prevented a wrongful demotion.
+
+**Action taken:** `gh workflow disable "CV Autopilot"` at ~19:30Z on
+2026-06-11 (state: `disabled_manually`; re-enable is one command). The legacy
+chain therefore stopped writing `public.listings` on 2026-06-11 — matching the
+date already shown by the admin stale banner.
+
+**Revised deletion gate (Task 9):** instead of a calendar week, delete after
+**2–3 consecutive clean scheduled curated runs** (03:00/15:00 grid, so roughly
+2026-06-13) with: all matrix jobs green, terracaboverde fetching again (it was
+rate-limited by day-one crawl volume, 5 waves), no unexplained feed-count
+drops, and no unreviewed `[Removed-gate][GUARD]` trips. Task 9 should also
+simplify the cron-offset comment in `curated-ingest.yml` (the legacy grid it
+references will be gone).
 
 ## Public-reader audit (2026-06-11)
 

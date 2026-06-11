@@ -15,13 +15,15 @@ As of 2026-06-11:
 - the canonical public frontend contract is still `public.v1_feed_cv`
 - `public.v1_feed_cv` reads from `public.v1_feed_cv_curated_preview`
 - `public.v1_feed_cv_curated_preview` reads `published` rows from `kv_curated.listings`
-- **the curated ingest is scheduled**: `.github/workflows/curated-ingest.yml`
-  runs every 12h, one job per `lifecycleOverride: IN` source (cv only by
-  default), writing live to `kv_curated.listings`. New rows enter as
-  `needs_review`; existing `published` rows are refreshed in place; removal
-  detection can demote `published` → `removed` (guarded, see below)
-- the legacy CV ingest pipeline still writes the old `public.listings` path
-  during the cutover soak; it is scheduled for deletion afterwards (see
+- **the curated ingest is the only scheduled ingest**:
+  `.github/workflows/curated-ingest.yml` runs at 03:00 and 15:00 UTC, one job
+  per `lifecycleOverride: IN` source (cv only by default), writing live to
+  `kv_curated.listings`. New rows enter as `needs_review`; existing `published`
+  rows are refreshed in place; removal detection can demote `published` →
+  `removed` (guarded, see below)
+- the legacy CV ingest pipeline (`cv-autopilot.yml`) was **disabled on
+  2026-06-11** and `public.listings` is frozen; the legacy code awaits deletion
+  (see the cutover spec's "Soak revision",
   `docs/superpowers/specs/2026-06-11-legacy-to-curated-pipeline-cutover-design.md`)
 
 Unattended kill-switch if a scheduled run misbehaves:
