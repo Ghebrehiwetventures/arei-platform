@@ -20,7 +20,12 @@ const BlogList = lazy(() => import("./pages/BlogList"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Market = lazy(() => import("./pages/Market"));
 const MarketNews = lazy(() => import("./pages/MarketNews"));
-const ReviewQueue = lazy(() => import("./pages/ReviewQueue"));
+// Dev-only internal tool. Gating the dynamic import (not just the route) keeps
+// the page out of the production bundle entirely — in a prod build
+// import.meta.env.DEV folds to false and Rollup drops the code-split chunk.
+const ReviewQueue = import.meta.env.DEV
+  ? lazy(() => import("./pages/ReviewQueue"))
+  : (() => null);
 const BriefingArchive = lazy(() => import("./pages/BriefingArchive"));
 const Briefing = lazy(() => import("./pages/Briefing"));
 const Rent = lazy(() => import("./pages/Rent"));
@@ -82,7 +87,12 @@ export default function App() {
           <Route path="/listings/boa-vista" element={<Navigate to="/?island=Boa+Vista" replace />} />
           <Route path="/market" element={<Market />} />
           <Route path="/market-news" element={<MarketNews />} />
-          <Route path="/review" element={<ReviewQueue />} />
+          {/* Dev-only internal tool: its /__kv-review API is served only by the
+              vite dev middleware (apply: "serve"), so the route must not ship to
+              production. Gated behind import.meta.env.DEV. */}
+          {import.meta.env.DEV && (
+            <Route path="/review" element={<ReviewQueue />} />
+          )}
           <Route path="/news" element={<Navigate to="/market-news" replace />} />
           {/* Canonical: briefings live under Market (they are monthly market
               reports, not a separate product category). */}
