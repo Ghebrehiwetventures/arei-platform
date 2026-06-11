@@ -159,6 +159,44 @@ misbehaving curated run. The real live-feed protections are:
 
 The kill-switch + guard are the front-line safety; the soak is confidence-building.
 
+## Public-reader audit (2026-06-11)
+
+Grep across `arei-admin`, `kazaverde-web`, `packages`, `supabase`, `core`, `scripts`
+for `public.listings` / `from("listings")` / `v1_feed` readers.
+
+**STOP-gate result: GREEN — no public-facing reader of `public.listings`.** The
+live public path is `kazaverde-web` → `packages/arei-sdk` → `public.v1_feed_cv`
+(a view that now reads `kv_curated.listings`). `packages/arei-sdk` explicitly
+forbids direct `public.listings` reads ("Never read `public.listings` directly —
+always go through `v1_feed_*` views"). Freezing `public.listings` therefore does
+not break the live site.
+
+**Internal readers of `public.listings` (accept-stale; not blocking):**
+
+- `arei-admin/agencyDataConsole.ts:136` — the Agency data tab. Gets the stale
+  banner in Task 7.
+- `arei-admin/data.ts:323,719,779` — the `loadFromSupabase` chain + `getListingById`;
+  the chain is documented as functionally dead (see
+  `docs/operations/admin-kv-curated-migration.md`).
+- `core/supabaseWriter.ts:85,92` — the legacy **writer**, removed with the legacy
+  chain in Task 9.
+- Numerous `scripts/*` maintenance/backfill tools — manual, not scheduled; they
+  operate on stale data after the freeze but are not a production path.
+
+**Issue found — relocated translate step targets the wrong table.** The Task 5
+`translate` job runs `scripts/backfill_ai_descriptions_for_language.ts`, which
+reads/writes `public.listings` (`.from("listings")`) to translate the English AI
+description into other languages (PT, …). But the curated ingest's
+`generateAiDescription` writes **English only** (`Target language: en`) to
+`kv_curated.listings`. So in the curated world this step translates the frozen
+legacy table, and the live (`kv_curated`) feed never receives the non-English
+translations from this workflow. The relocation was made assuming the step was
+table-agnostic; it is not. **Decision required** (does not block the cutover, since
+the live feed does not depend on this step): (a) rewrite the backfill to target
+`kv_curated.listings`, (b) drop the translate job from the new workflow, or
+(c) keep it as a known no-op-after-deletion follow-up. Tracked as an open item;
+the `translate` job remains in the workflow but is flagged here.
+
 ## Out of scope
 
 - Admin app full migration off `public.listings` (separate effort, documented in
