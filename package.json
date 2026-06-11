@@ -15,7 +15,9 @@
     "ingest:curated": "MARKET_ID=${MARKET_ID:?MARKET_ID required} SOURCE_ID=${SOURCE_ID:?SOURCE_ID required} NODE_OPTIONS='' npx ts-node --transpile-only scripts/ingest_to_curated.ts",
     "snapshot:market-report": "npx ts-node --transpile-only scripts/snapshot_market_report.ts",
     "publish:market-report": "npx ts-node --transpile-only scripts/publish_market_report_snapshot.ts",
-    "pulse:digest": "npx ts-node --transpile-only scripts/generate_pulse_digest.ts"
+    "pulse:digest": "npx ts-node --transpile-only scripts/generate_pulse_digest.ts",
+    "test": "node --test tests/*.test.cjs tests/*.test.mjs",
+    "typecheck": "npx tsc --noEmit"
   },
   "dependencies": {
     "@anthropic-ai/sdk": "^0.91.1",

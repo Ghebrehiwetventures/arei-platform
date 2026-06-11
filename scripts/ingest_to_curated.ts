@@ -19,6 +19,7 @@ export {
   resolveSourceCurrency,
   shouldRunRemovalDetection,
   isDemotionWithinThreshold,
+  effectiveRemovalMaxFraction,
   DEFAULT_REMOVAL_MAX_FRACTION,
 } from "../core/pipeline/runMarketSource";
 

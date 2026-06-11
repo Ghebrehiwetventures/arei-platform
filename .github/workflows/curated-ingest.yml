@@ -38,6 +38,18 @@ jobs:
           MARKETS="${MARKETS_INPUT:-cv}"
           if [ "$MARKETS" = "all" ]; then MARKETS=""; fi
           MATRIX=$(npx ts-node --transpile-only scripts/list_ingest_sources.ts "$MARKETS")
+          # Fail fast on an empty matrix: a typo'd market id ('vc', 'All') or a
+          # config where every source is OBSERVE/DROP would otherwise produce a
+          # green zero-job run that ingested nothing. (Legacy autopilot had an
+          # equivalent IN-count gate.)
+          node -e "
+            const m = JSON.parse(process.argv[1]);
+            if (!Array.isArray(m.include) || m.include.length === 0) {
+              console.error('::error::No IN sources discovered for markets \"' + process.argv[2] + '\" — check the input and markets/*/sources.yml');
+              process.exit(1);
+            }
+            console.log('Discovered ' + m.include.length + ' sources');
+          " "$MATRIX" "${MARKETS:-all}"
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           echo "$MATRIX"
 

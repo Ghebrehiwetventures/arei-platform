@@ -588,12 +588,25 @@ export function shouldRunRemovalDetection(
 export const DEFAULT_REMOVAL_MAX_FRACTION = 0.5;
 
 /**
+ * The cap the guard actually enforces. An unset or out-of-range (<=0 or >1)
+ * `maxFraction` falls back to DEFAULT_REMOVAL_MAX_FRACTION so a misconfigured
+ * removal_max_fraction (e.g. 0, which would silently disable demotion forever,
+ * or >1, which would never block) cannot quietly defeat the safety guard.
+ * Exported so log lines report the enforced cap, not the raw config value.
+ */
+export function effectiveRemovalMaxFraction(maxFraction: number | undefined): number {
+  return maxFraction !== undefined && maxFraction > 0 && maxFraction <= 1
+    ? maxFraction
+    : DEFAULT_REMOVAL_MAX_FRACTION;
+}
+
+/**
  * Returns true when demoting `removedCount` rows is safe given the source's
  * total published rows. The denominator is the full pre-run published set for
  * the source: `removedCount` (published rows absent from the latest fetch) plus
- * `retainedPublishedCount` (published rows still present in the fetch). Blocks
- * the batch when the removed fraction exceeds `maxFraction`. An unset or
- * out-of-range (<=0 or >1) `maxFraction` falls back to DEFAULT_REMOVAL_MAX_FRACTION.
+ * `retainedPublishedCount` (all other published rows for the source, including
+ * ones fetched but skipped by row validation). Blocks the batch when the
+ * removed fraction exceeds the effective cap (see effectiveRemovalMaxFraction).
  * A batch that removes nothing is always allowed.
  */
 export function isDemotionWithinThreshold(
@@ -602,16 +615,28 @@ export function isDemotionWithinThreshold(
   maxFraction: number | undefined
 ): boolean {
   if (removedCount <= 0) return true;
-  // Treat an unset or out-of-range cap as the default so a misconfigured
-  // removal_max_fraction (e.g. 0, which would silently disable demotion forever,
-  // or >1, which would never block) cannot quietly defeat this safety guard.
-  const cap =
-    maxFraction !== undefined && maxFraction > 0 && maxFraction <= 1
-      ? maxFraction
-      : DEFAULT_REMOVAL_MAX_FRACTION;
+  const cap = effectiveRemovalMaxFraction(maxFraction);
   const publishedTotal = removedCount + retainedPublishedCount;
   if (publishedTotal <= 0) return true;
   return removedCount / publishedTotal <= cap;
+}
+
+/** Total published rows for a source — the guard's true denominator. */
+async function countPublishedRowsForSource(sourceId: string): Promise<number> {
+  const client = createPostgresClient();
+  await client.connect();
+  try {
+    const result = await client.query<{ n: string }>(
+      `SELECT count(*) AS n
+         FROM kv_curated.listings
+        WHERE source_id_primary = $1
+          AND publish_status = 'published'`,
+      [sourceId]
+    );
+    return Number(result.rows[0]?.n ?? 0);
+  } finally {
+    await client.end();
+  }
 }
 
 export function buildDemoteRemovedPublishedRowsQuery(
@@ -833,7 +858,8 @@ function writeReportJson(
   rows: CuratedRow[],
   skipped: Array<{ id: string; reason: string }>,
   publishedIds: Set<string>,
-  removedPublishedRows: RemovedPublishedRow[]
+  removedPublishedRows: RemovedPublishedRow[],
+  demotionWithinThreshold: boolean
 ): void {
   const dir = path.resolve(__dirname, "../../reports/curated");
   fs.mkdirSync(dir, { recursive: true });
@@ -849,6 +875,9 @@ function writeReportJson(
       alreadyPublished: publishedIds.size,
       writable: rows.length,
       removedCandidates: removedPublishedRows.length,
+      // false = the fraction guard blocks demotion: candidates stay published
+      // pending manual review (applies to what a live run would do).
+      demotionWithinThreshold,
     },
     coverage: {
       allRows: coverageOf(rows),
@@ -1023,6 +1052,22 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   const removedPublishedRows = removalDetectionEnabled
     ? await findRemovedPublishedRows(sourceId, activeIds)
     : [];
+
+  // Decide the demotion-fraction guard ONCE, here, so the dry-run preview, the
+  // report JSON, and the live apply path all report the same decision. The
+  // denominator is the source's full published set (count query), not just the
+  // published rows that survived row validation in this fetch.
+  let demotionWithinThreshold = true;
+  let publishedTotalForSource = 0;
+  if (removedPublishedRows.length > 0) {
+    publishedTotalForSource = await countPublishedRowsForSource(sourceId);
+    demotionWithinThreshold = isDemotionWithinThreshold(
+      removedPublishedRows.length,
+      Math.max(publishedTotalForSource - removedPublishedRows.length, 0),
+      sourceConfig.removal_max_fraction
+    );
+  }
+
   if (activeIds.length === 0) {
     console.log(`\n[Removed-gate] Source produced 0 valid rows — removal detection disabled for safety.`);
   } else if (!removalDetectionEnabled) {
@@ -1031,14 +1076,18 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
     console.log(`\n[Removed-gate] ${removedPublishedRows.length} published listings absent from latest successful source fetch:`);
     for (const row of removedPublishedRows) console.log(`  - ${row.id} ${row.source_url_primary ?? ""}`);
     if (dryRun) {
-      console.log(`  [DRY_RUN] These would be demoted to publish_status='removed'.`);
+      console.log(
+        demotionWithinThreshold
+          ? `  [DRY_RUN] These would be demoted to publish_status='removed'.`
+          : `  [DRY_RUN] Demotion would be SKIPPED by the fraction guard (${removedPublishedRows.length}/${publishedTotalForSource} published rows, cap=${effectiveRemovalMaxFraction(sourceConfig.removal_max_fraction)}). Rows would stay published pending manual review.`
+      );
     }
   } else {
     console.log(`\n[Removed-gate] No published listings missing from latest source fetch.`);
   }
 
   if (process.env.REPORT_JSON === "1") {
-    writeReportJson(marketId, sourceId, dryRun, listings.length, rows, skipped, publishedIds, removedPublishedRows);
+    writeReportJson(marketId, sourceId, dryRun, listings.length, rows, skipped, publishedIds, removedPublishedRows, demotionWithinThreshold);
   }
 
   if (!dryRun) {
@@ -1086,20 +1135,15 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   }
 
   if (removedPublishedRows.length > 0) {
-    const retainedPublished = publishedIds.size;
-    const withinThreshold = isDemotionWithinThreshold(
-      removedPublishedRows.length,
-      retainedPublished,
-      sourceConfig.removal_max_fraction
-    );
-    if (!withinThreshold) {
-      const total = removedPublishedRows.length + retainedPublished;
-      const pct = ((removedPublishedRows.length / total) * 100).toFixed(0);
-      const cap = sourceConfig.removal_max_fraction ?? DEFAULT_REMOVAL_MAX_FRACTION;
+    if (!demotionWithinThreshold) {
+      const total = publishedTotalForSource;
+      const pct = total > 0 ? ((removedPublishedRows.length / total) * 100).toFixed(0) : "?";
+      const cap = effectiveRemovalMaxFraction(sourceConfig.removal_max_fraction);
       console.warn(
         `\n[Removed-gate][GUARD] SKIPPING demotion for ${sourceId}: ` +
         `${removedPublishedRows.length}/${total} published rows (${pct}%) would be removed, ` +
-        `exceeding removal_max_fraction=${cap}. Leaving rows published. Review manually:`
+        `exceeding the enforced cap ${cap} (removal_max_fraction=${sourceConfig.removal_max_fraction ?? "unset"}). ` +
+        `Leaving rows published. Review manually:`
       );
       for (const row of removedPublishedRows) {
         console.warn(`  ! ${row.id} ${row.source_url_primary ?? ""}`);
