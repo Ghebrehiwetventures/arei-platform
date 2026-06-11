@@ -164,6 +164,11 @@ export interface SourceFetchConfig {
   /** http (native fetch) or headless (Puppeteer) */
   fetch_method: FetchMethod;
 
+  /** Per-source User-Agent override from sources.yml. When unset, one UA is
+   *  picked at random per run and kept stable across that run's page fetches —
+   *  a UA that changes between pages of one crawl is a WAF fingerprint. */
+  userAgent?: string;
+
   pagination: PaginationConfig;
   selectors: SelectorsConfig;
 

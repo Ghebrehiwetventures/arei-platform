@@ -56,6 +56,22 @@ function getRandomUserAgent(): string {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)];
 }
 
+/**
+ * Request headers for one source run. The User-Agent is the per-source config
+ * override when set, otherwise one random UA chosen ONCE and reused for every
+ * page of the run — a UA that changes between pages of the same crawl is a WAF
+ * fingerprint, and so are forced no-cache headers, which is why this matches
+ * the plain browser-like header set the legacy pipeline proved against the
+ * same sources (see fetchHtml DEFAULT_HEADERS).
+ */
+export function buildRequestHeaders(config: Pick<SourceFetchConfig, "userAgent">): Record<string, string> {
+  return {
+    "User-Agent": config.userAgent ?? getRandomUserAgent(),
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+  };
+}
+
 /** Build the default doFetch function for a source: HTTP via fetchHtml, or
  *  headless via the lazily-imported fetchHeadless module. Callers can override
  *  with their own fetchFn (used by tests + offline preflight). */
@@ -73,16 +89,10 @@ function defaultFetchFn(config: SourceFetchConfig): (url: string) => Promise<Fet
       };
     };
   }
+  // Headers built once per run so the UA stays stable across this run's pages.
+  const headers = buildRequestHeaders(config);
   return async (url: string) => {
-    return fetchHtml(url, {
-      headers: {
-        "User-Agent": getRandomUserAgent(),
-        "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-        "Cache-Control": "no-cache",
-        "Pragma": "no-cache",
-      },
-    });
+    return fetchHtml(url, { headers });
   };
 }
 

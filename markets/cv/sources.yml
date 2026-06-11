@@ -586,7 +586,10 @@ sources:
     url: https://estatecv.com/en/properties/
     type: html
     lifecycleOverride: IN
-    fetch_method: headless  # AJAX-loaded content
+    # Plain HTTP returns the listing markup (verified 2026-06-11: 9x
+    # article.property on page 1). The old "AJAX-loaded content" note is stale;
+    # headless also timed out on GitHub runners.
+    fetch_method: http
 
     pagination:
       type: path_segment
