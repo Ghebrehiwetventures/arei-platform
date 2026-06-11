@@ -69,10 +69,15 @@ jobs:
 
   translate:
     needs: ingest
-    if: ${{ always() && needs.ingest.result != 'cancelled' }}
+    # Run after full success OR partial/total ingest failure (fail-fast is off),
+    # but skip on cancellation and on an empty/skipped matrix.
+    if: ${{ always() && (needs.ingest.result == 'success' || needs.ingest.result == 'failure') }}
     runs-on: ubuntu-latest
+    # NOTE: the translation backfill uses getSupabaseClient() (SUPABASE_URL +
+    # SUPABASE_SERVICE_ROLE_KEY) + the AI keys — it does NOT use DATABASE_URL.
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
