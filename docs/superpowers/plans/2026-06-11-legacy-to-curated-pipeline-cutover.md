@@ -406,9 +406,9 @@ on:
   workflow_dispatch:
     inputs:
       markets:
-        description: "Comma-separated market ids (blank = all markets)"
+        description: "Markets to ingest: comma-separated ids (e.g. cv or cv,zm), or 'all' for every market. Scheduled/blank = cv."
         required: false
-        default: ""
+        default: "cv"
 
 concurrency:
   group: curated-ingest
@@ -427,8 +427,17 @@ jobs:
           cache: "npm"
       - run: npm ci
       - id: gen
+        env:
+          MARKETS_INPUT: ${{ github.event.inputs.markets }}
         run: |
-          MATRIX=$(npx ts-node --transpile-only scripts/list_ingest_sources.ts "${{ github.event.inputs.markets }}")
+          # Initial cutover scope is CV only — the other markets' IN sources are
+          # not yet validated against the curated path. Scheduled runs pass no
+          # input, so default to cv. 'all' is the sentinel for every market
+          # (empty arg to the generic discovery script). Broaden this default as
+          # each market is validated; the discovery script itself stays generic.
+          MARKETS="${MARKETS_INPUT:-cv}"
+          if [ "$MARKETS" = "all" ]; then MARKETS=""; fi
+          MATRIX=$(npx ts-node --transpile-only scripts/list_ingest_sources.ts "$MARKETS")
           echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
           echo "$MATRIX"
 
