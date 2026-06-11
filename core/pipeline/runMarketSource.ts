@@ -589,9 +589,12 @@ export const DEFAULT_REMOVAL_MAX_FRACTION = 0.5;
 
 /**
  * Returns true when demoting `removedCount` rows is safe given the source's
- * total published rows (`removedCount + retainedPublishedCount`). Blocks the
- * batch when the removed fraction exceeds `maxFraction` (default 0.5). A batch
- * that removes nothing is always allowed.
+ * total published rows. The denominator is the full pre-run published set for
+ * the source: `removedCount` (published rows absent from the latest fetch) plus
+ * `retainedPublishedCount` (published rows still present in the fetch). Blocks
+ * the batch when the removed fraction exceeds `maxFraction`. An unset or
+ * out-of-range (<=0 or >1) `maxFraction` falls back to DEFAULT_REMOVAL_MAX_FRACTION.
+ * A batch that removes nothing is always allowed.
  */
 export function isDemotionWithinThreshold(
   removedCount: number,
@@ -599,7 +602,13 @@ export function isDemotionWithinThreshold(
   maxFraction: number | undefined
 ): boolean {
   if (removedCount <= 0) return true;
-  const cap = maxFraction ?? DEFAULT_REMOVAL_MAX_FRACTION;
+  // Treat an unset or out-of-range cap as the default so a misconfigured
+  // removal_max_fraction (e.g. 0, which would silently disable demotion forever,
+  // or >1, which would never block) cannot quietly defeat this safety guard.
+  const cap =
+    maxFraction !== undefined && maxFraction > 0 && maxFraction <= 1
+      ? maxFraction
+      : DEFAULT_REMOVAL_MAX_FRACTION;
   const publishedTotal = removedCount + retainedPublishedCount;
   if (publishedTotal <= 0) return true;
   return removedCount / publishedTotal <= cap;
@@ -1087,13 +1096,13 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
       const total = removedPublishedRows.length + retainedPublished;
       const pct = ((removedPublishedRows.length / total) * 100).toFixed(0);
       const cap = sourceConfig.removal_max_fraction ?? DEFAULT_REMOVAL_MAX_FRACTION;
-      console.log(
+      console.warn(
         `\n[Removed-gate][GUARD] SKIPPING demotion for ${sourceId}: ` +
         `${removedPublishedRows.length}/${total} published rows (${pct}%) would be removed, ` +
         `exceeding removal_max_fraction=${cap}. Leaving rows published. Review manually:`
       );
       for (const row of removedPublishedRows) {
-        console.log(`  ! ${row.id} ${row.source_url_primary ?? ""}`);
+        console.warn(`  ! ${row.id} ${row.source_url_primary ?? ""}`);
       }
     } else {
       const demoted = await demoteRemovedPublishedRows(sourceId, activeIds);

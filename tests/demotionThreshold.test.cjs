@@ -29,3 +29,15 @@ test("never blocks when nothing would be removed", () => {
   assert.equal(isDemotionWithinThreshold(0, 0, 0.5), true);
   assert.equal(isDemotionWithinThreshold(0, 10, 0.5), true);
 });
+
+test("treats a cap of 0 as the default instead of disabling demotion forever", () => {
+  // cap=0 is out of range -> falls back to 0.5; 2/10 = 0.2 <= 0.5 -> allowed
+  assert.equal(isDemotionWithinThreshold(2, 8, 0), true);
+  // and 6/10 = 0.6 > 0.5 -> still blocked, not silently disabled
+  assert.equal(isDemotionWithinThreshold(6, 4, 0), false);
+});
+
+test("treats a cap above 1 as the default instead of never blocking", () => {
+  // cap=2 is out of range -> falls back to 0.5; 6/10 = 0.6 > 0.5 -> blocked
+  assert.equal(isDemotionWithinThreshold(6, 4, 2), false);
+});
