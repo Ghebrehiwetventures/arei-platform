@@ -1,24 +1,31 @@
 # KazaVerde Curated Feed Operations
 
-Last updated: 2026-06-05
+Last updated: 2026-06-11
 
 ## Purpose
 
-This document explains the temporary operating model now live in production and
+This document explains the operating model now live in production and
 the safest way to add or change curated KazaVerde listings without accidentally
 breaking the public site.
 
 ## Current live state
 
-As of 2026-05-08:
+As of 2026-06-11:
 
 - the canonical public frontend contract is still `public.v1_feed_cv`
-- `public.v1_feed_cv` now reads from `public.v1_feed_cv_curated_preview`
+- `public.v1_feed_cv` reads from `public.v1_feed_cv_curated_preview`
 - `public.v1_feed_cv_curated_preview` reads `published` rows from `kv_curated.listings`
+- **the curated ingest is scheduled**: `.github/workflows/curated-ingest.yml`
+  runs every 12h, one job per `lifecycleOverride: IN` source (cv only by
+  default), writing live to `kv_curated.listings`. New rows enter as
+  `needs_review`; existing `published` rows are refreshed in place; removal
+  detection can demote `published` → `removed` (guarded, see below)
 - the legacy CV ingest pipeline still writes the old `public.listings` path
-- the ingest pipeline and the public feed are therefore temporarily decoupled
+  during the cutover soak; it is scheduled for deletion afterwards (see
+  `docs/superpowers/specs/2026-06-11-legacy-to-curated-pipeline-cutover-design.md`)
 
-This is a temporary operating state, not the final architecture.
+Unattended kill-switch if a scheduled run misbehaves:
+`gh workflow disable "Curated Ingest"`.
 
 ## What is production-sensitive
 
@@ -114,8 +121,15 @@ is absent from the current successful fetch, the ingest demotes it to
 
 Safety rules:
 
-- Dry runs never mutate rows; they only report removal candidates.
+- Dry runs never mutate rows; they only report removal candidates — and since
+  2026-06-11 the dry-run output states whether the fraction guard would skip
+  the demotion on a live run.
 - A zero-row source fetch disables removal detection for that run.
+- **Fraction guard** (since 2026-06-11): if a single run would demote more than
+  `removal_max_fraction` (default 0.5, per-source in `sources.yml`) of a
+  source's published rows, demotion is skipped for that source and a
+  `[Removed-gate][GUARD]` alert is written to stderr for manual review. This
+  protects the live feed from partial-fetch breakage on unattended runs.
 - Existing `needs_review`, `hidden`, and `removed` rows are not auto-promoted or
   auto-demoted by the removal gate.
 - A removed row must not be returned to `published` automatically. If the source

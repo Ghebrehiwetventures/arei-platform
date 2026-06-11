@@ -107,6 +107,17 @@ If the list page's hrefs point at the wrong language variant, you'll need `detai
 
 ### Phase 3 — Configure `sources.yml` (listing-level)
 
+> **`lifecycleOverride: IN` now auto-enrolls the source in scheduled ingestion.**
+> Since `.github/workflows/curated-ingest.yml` (2026-06-11), every `IN` source is
+> discovered by `scripts/list_ingest_sources.ts` and run automatically every 12h —
+> live writes to `kv_curated.listings`, including removal detection against the
+> source's published rows. Do NOT set `IN` until the source has passed its dry-run
+> phases below; keep it `OBSERVE` while iterating. Scheduled runs currently cover
+> the `cv` market only (workflow default); other markets run via manual
+> `workflow_dispatch` until validated. Optional per-source guard tuning:
+> `removal_max_fraction` (default 0.5 — a run that would demote more than this
+> fraction of the source's published rows skips demotion and alerts instead).
+
 Minimum viable config for a Proppy/CasafariCRM-style HTML source:
 
 ```yaml
@@ -114,7 +125,8 @@ Minimum viable config for a Proppy/CasafariCRM-style HTML source:
   name: "Your Source"
   url: https://example.com/en/list
   type: html
-  lifecycleOverride: IN
+  lifecycleOverride: OBSERVE   # flip to IN only after the dry-run phases pass —
+                               # IN auto-enrolls in the scheduled curated ingest
   fetch_method: http   # use "headless" only if the page needs JS execution
 
   pagination:
