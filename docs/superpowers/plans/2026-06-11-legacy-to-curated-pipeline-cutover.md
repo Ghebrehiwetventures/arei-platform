@@ -469,10 +469,15 @@ jobs:
 
   translate:
     needs: ingest
-    if: ${{ always() && needs.ingest.result != 'cancelled' }}
+    # Run after full success OR partial/total ingest failure (fail-fast is off),
+    # but skip on cancellation and on an empty/skipped matrix.
+    if: ${{ always() && (needs.ingest.result == 'success' || needs.ingest.result == 'failure') }}
     runs-on: ubuntu-latest
+    # NOTE: the translation backfill uses getSupabaseClient() (SUPABASE_URL +
+    # SUPABASE_SERVICE_ROLE_KEY) + the AI keys — it does NOT use DATABASE_URL.
     env:
-      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
+      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
       ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
       OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
     steps:
@@ -495,7 +500,7 @@ Expected: `yaml ok`.
 - [ ] **Step 3: Confirm required secrets exist in the repo**
 
 Run: `gh secret list 2>/dev/null || echo "check secrets manually in repo settings"`
-Expected: `DATABASE_URL`, `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` present. (`cv-autopilot.yml` already uses the two API keys; `DATABASE_URL` is the pooler URL the curated path needs — add it if absent.)
+Expected present: `DATABASE_URL` (pooler URL the curated `ingest` job needs — **new**, not used by `cv-autopilot.yml`; add if absent), `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (already used by `cv-autopilot.yml`), and `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (used by the `translate` job's backfill script; already used by `cv-autopilot.yml`). The first `ingest` matrix job `process.exit(1)`s immediately if `DATABASE_URL` is missing — confirm it before the first run.
 
 - [ ] **Step 4: Commit**
 
