@@ -1,0 +1,19 @@
+name: Debug Probe
+on:
+  workflow_dispatch:
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Probe estatecv + controls
+        run: |
+          for URL in https://estatecv.com/en/properties/ https://terracaboverde.com/properties/ https://example.com; do
+            echo "=== $URL ==="
+            curl -sIL --max-time 20 \
+              -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
+              -w "status=%{http_code} connect=%{time_connect}s total=%{time_total}s ip=%{remote_ip}\n" \
+              -o /dev/null "$URL" || echo "CURL FAILED exit=$?"
+          done
+          echo "=== raw TCP to 185.102.21.188:443 ==="
+          timeout 10 bash -c 'cat < /dev/null > /dev/tcp/185.102.21.188/443' && echo "TCP connect OK" || echo "TCP connect FAILED/TIMEOUT (exit $?)"
