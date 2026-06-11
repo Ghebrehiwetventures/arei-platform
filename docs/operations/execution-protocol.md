@@ -1,6 +1,6 @@
 # AREI Execution Protocol
 
-Version 1.1 | March 2026
+Version 1.2 | June 2026
 
 Companion to: Operating Model Second Pass, Founder Operating Runbook, docs/document-precedence.md
 
@@ -18,6 +18,7 @@ It exists to prevent a specific set of problems that have already occurred or ar
 - Unclear done-definition leading to over-polish or under-delivery
 - External communication going out without human judgment
 - Branch or worktree hygiene failures during parallel work
+- Internal or dev-only tooling reaching the production surface
 
 > This protocol is deliberately thin. It governs execution discipline, not business operations. The Founder Operating Runbook governs everything else.
 
@@ -42,7 +43,7 @@ When making any operational claim about AREI, use this strict order. Higher sour
 | Type | Description | Minimum Proof Required |
 | --- | --- | --- |
 | A | Local code fix | Verified in code + local checks/tests |
-| B | Deployable product change | Verified in code + Verified live (screenshot or URL) |
+| B | Deployable product change | Verified in code + Verified live (screenshot or URL) + no internal/dev-only surface in the production build (see 6e) |
 | C | Data or pipeline task | Verified in code + Verified in data/output (sample records) |
 | D | Investigation or audit | All findings labeled individually by truth class |
 
@@ -103,6 +104,7 @@ Use this for medium-to-high-risk work: crawl pipeline changes, schema changes, p
 - Work directly on main.
 - Mix multiple tasks in one worktree.
 - Silent refactors or unrelated cleanups.
+- Ship internal or dev-only tooling to the production surface (see 6e).
 - Change docs to claim something is fixed when only code changed.
 - Say done without evidence.
 - Send external communication without a human gate.
@@ -116,6 +118,19 @@ The builder must stop and escalate when:
 - The change requires schema or architecture changes beyond scope.
 - The builder discovers a real issue that is not part of the task.
 - Success criteria are unclear or missing.
+
+### 6e. Production surface discipline
+
+Internal and dev-only tooling must never be reachable in production. This rule exists because it already failed once: the KazaVerde Review Queue (an internal tool whose API is served only by the dev middleware) shipped a live `/review` route to prod inside a whole-branch merge. It was non-functional but reachable — a surface that should never have existed in prod.
+
+A surface is **dev-only** if any of these are true: it depends on a dev-only server/middleware, an admin/internal credential, a local script, or data not exposed in production. Such surfaces must be gated so they are absent from the production build, not merely unlinked.
+
+| Rule | Detail |
+| --- | --- |
+| Gate at the build boundary | Wrap dev-only routes **and** their code-split imports in `import.meta.env.DEV` (or the framework equivalent) so the production bundle drops them entirely. Removing a nav link is not enough — a bare route is still reachable by URL. |
+| Whole-branch merges are high-risk | Merging a long-lived dev branch to `main` carries every in-progress surface with it. Before such a merge, enumerate routes/pages/endpoints added since the last merge and confirm each is either production-ready or dev-gated. |
+| Prove absence, not intent | For Type B tasks, the deliverable includes evidence that the production build excludes the dev surface — e.g. a `build` output search confirming no route string, chunk, or internal API reference is present. "It 404s in prod" is not sufficient; the surface should not ship at all. |
+| Escalate on discovery | A dev-only surface found already live in production is an escalation trigger (6d). Fix forward with a minimal gating change scoped to the surface — never revert an unrelated multi-feature merge, and never rewrite or force-push a shared production branch. |
 
 ## 7. External Communication Gate
 
