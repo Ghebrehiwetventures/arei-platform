@@ -671,6 +671,11 @@ sources:
     type: html
     lifecycleOverride: IN
     fetch_method: http  # WP Residence works with HTTP
+    # The catalogue URL covers apartments only — a subset of the source's
+    # inventory — so absence from a fetch does not prove a listing was removed.
+    # First live guard trip (2026-06-11): 6/11 published rows flagged "absent"
+    # were simply non-apartment listings.
+    removal_detection: false
 
     pagination:
       type: query_param
