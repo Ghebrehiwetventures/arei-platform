@@ -2,7 +2,12 @@ name: Curated Ingest
 
 on:
   schedule:
-    - cron: "0 */12 * * *" # every 12h; new inventory needs manual promotion, so no 6h urgency
+    # 03:00/15:00 — deliberately offset from legacy cv-autopilot's 6-hour grid
+    # (00/06/12/18) so both pipelines never crawl the same small hosts at the
+    # same time during the parallel-run soak. estatecv (single-VPS nginx) was
+    # saturated by exactly this collision on 2026-06-11. After the legacy chain
+    # is deleted (cutover Task 9), any 12h grid works.
+    - cron: "0 3,15 * * *"
   workflow_dispatch:
     inputs:
       markets:
