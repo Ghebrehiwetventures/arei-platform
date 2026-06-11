@@ -1077,8 +1077,28 @@ export async function runMarketSource(opts: RunMarketSourceOptions): Promise<voi
   }
 
   if (removedPublishedRows.length > 0) {
-    const demoted = await demoteRemovedPublishedRows(sourceId, activeIds);
-    console.log(`[Removed-gate] Demoted ${demoted.length} published listings to publish_status='removed'.`);
+    const retainedPublished = publishedIds.size;
+    const withinThreshold = isDemotionWithinThreshold(
+      removedPublishedRows.length,
+      retainedPublished,
+      sourceConfig.removal_max_fraction
+    );
+    if (!withinThreshold) {
+      const total = removedPublishedRows.length + retainedPublished;
+      const pct = ((removedPublishedRows.length / total) * 100).toFixed(0);
+      const cap = sourceConfig.removal_max_fraction ?? DEFAULT_REMOVAL_MAX_FRACTION;
+      console.log(
+        `\n[Removed-gate][GUARD] SKIPPING demotion for ${sourceId}: ` +
+        `${removedPublishedRows.length}/${total} published rows (${pct}%) would be removed, ` +
+        `exceeding removal_max_fraction=${cap}. Leaving rows published. Review manually:`
+      );
+      for (const row of removedPublishedRows) {
+        console.log(`  ! ${row.id} ${row.source_url_primary ?? ""}`);
+      }
+    } else {
+      const demoted = await demoteRemovedPublishedRows(sourceId, activeIds);
+      console.log(`[Removed-gate] Demoted ${demoted.length} published listings to publish_status='removed'.`);
+    }
   }
 
   await writeToKvCurated(writable);
