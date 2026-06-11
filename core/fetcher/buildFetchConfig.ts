@@ -27,6 +27,7 @@ export function buildFetchConfigFromYaml(
     name: yamlSource.name,
     base_url: yamlSource.url,
     fetch_method: yamlSource.fetch_method || "http",
+    userAgent: yamlSource.userAgent,
     cms_type: cmsType,
     pagination: {
       type: paginationType,

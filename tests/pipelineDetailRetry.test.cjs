@@ -17,9 +17,11 @@ function cvSource(id) {
   return source;
 }
 
-test("EstateCV uses headless catalogue fetches but plain HTTP detail fetches", () => {
+test("EstateCV uses plain HTTP for both catalogue and detail fetches", () => {
+  // Flipped from headless on 2026-06-11: plain HTTP returns the listing markup
+  // and headless timed out on GitHub runners.
   const source = cvSource("cv_estatecv");
-  assert.equal(source.fetch_method, "headless");
+  assert.equal(source.fetch_method, "http");
   assert.equal(getDetailFetchMethod(source), "http");
 });
 
