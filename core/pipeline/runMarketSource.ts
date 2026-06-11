@@ -584,6 +584,27 @@ export function shouldRunRemovalDetection(
   return removalDetection !== false && activeIds.length > 0;
 }
 
+/** Default cap when a source does not set removal_max_fraction. */
+export const DEFAULT_REMOVAL_MAX_FRACTION = 0.5;
+
+/**
+ * Returns true when demoting `removedCount` rows is safe given the source's
+ * total published rows (`removedCount + retainedPublishedCount`). Blocks the
+ * batch when the removed fraction exceeds `maxFraction` (default 0.5). A batch
+ * that removes nothing is always allowed.
+ */
+export function isDemotionWithinThreshold(
+  removedCount: number,
+  retainedPublishedCount: number,
+  maxFraction: number | undefined
+): boolean {
+  if (removedCount <= 0) return true;
+  const cap = maxFraction ?? DEFAULT_REMOVAL_MAX_FRACTION;
+  const publishedTotal = removedCount + retainedPublishedCount;
+  if (publishedTotal <= 0) return true;
+  return removedCount / publishedTotal <= cap;
+}
+
 export function buildDemoteRemovedPublishedRowsQuery(
   sourceId: string,
   activeIds: string[],
