@@ -390,6 +390,9 @@ sources:
       policy: always
       delay_ms: 3000
       image_fallback: false
+      enrich:
+        location_upgrade: true
+        replace_images_with_detail: true
       selectors:
         description: ".property-description, .wpsight-listing-description, [class*='description'] p"
         images: "[data-fancybox='gallery-v2'][data-src]"
@@ -616,6 +619,11 @@ sources:
       fetch_method: http
       delay_ms: 3000
       image_fallback: false
+      fetch_retry:
+        attempts: 2
+        delay_ms: 1500
+      enrich:
+        replace_images_with_detail: true
       selectors:
         description: ".pageContent__text p[data-start], .property__description p, .entry-content p, [class*='description'] p"
         images: "img.gallery__img, .property__gallery .swiper-slide img, .property__gallery .gallery img"
@@ -768,6 +776,9 @@ sources:
       policy: always
       delay_ms: 3000
       image_fallback: false
+      fetch_retry:
+        attempts: 2
+        delay_ms: 1500
       specs_selector: ".listing_single_description"
       selectors:
         description: "[class*='desc'] p, .listing_desc_header ~ div p"

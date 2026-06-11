@@ -9,16 +9,24 @@ const {
   getDetailFetchMethod,
 } = require("../core/pipeline/runMarketSource");
 
-test("EstateCV uses headless catalogue fetches but plain HTTP detail fetches", () => {
+function cvSource(id) {
   const config = loadSourcesConfig("cv");
   assert.equal(config.success, true, config.error);
+  const source = config.data.sources.find((candidate) => candidate.id === id);
+  assert.ok(source, `source ${id} present`);
+  return source;
+}
 
-  const source = config.data.sources.find((candidate) => candidate.id === "cv_estatecv");
+test("EstateCV uses headless catalogue fetches but plain HTTP detail fetches", () => {
+  const source = cvSource("cv_estatecv");
   assert.equal(source.fetch_method, "headless");
   assert.equal(getDetailFetchMethod(source), "http");
 });
 
-test("EstateCV retries one transient detail fetch failure", async () => {
+test("EstateCV retry behavior comes from its sources.yml fetch_retry", async () => {
+  const source = cvSource("cv_estatecv");
+  assert.deepEqual(source.detail.fetch_retry, { attempts: 2, delay_ms: 1500 });
+
   let attempts = 0;
   const fetchFn = async () => {
     attempts++;
@@ -29,7 +37,7 @@ test("EstateCV retries one transient detail fetch failure", async () => {
   };
 
   const result = await fetchDetailWithRetry(
-    "cv_estatecv",
+    source.detail.fetch_retry,
     "https://estatecv.com/en/properties/lands/example",
     fetchFn,
     async () => {},
@@ -40,7 +48,10 @@ test("EstateCV retries one transient detail fetch failure", async () => {
   assert.equal(result.retried, true);
 });
 
-test("NhaKaza retries one transient detail fetch failure", async () => {
+test("NhaKaza retry behavior comes from its sources.yml fetch_retry", async () => {
+  const source = cvSource("cv_nhakaza");
+  assert.deepEqual(source.detail.fetch_retry, { attempts: 2, delay_ms: 1500 });
+
   let attempts = 0;
   const fetchFn = async () => {
     attempts++;
@@ -51,7 +62,7 @@ test("NhaKaza retries one transient detail fetch failure", async () => {
   };
 
   const result = await fetchDetailWithRetry(
-    "cv_nhakaza",
+    source.detail.fetch_retry,
     "https://nhakaza.cv/comprar-apartamento/example",
     fetchFn,
     async () => {},
@@ -62,7 +73,10 @@ test("NhaKaza retries one transient detail fetch failure", async () => {
   assert.equal(result.retried, true);
 });
 
-test("other sources do not receive source-specific detail retries", async () => {
+test("a source without fetch_retry does not retry", async () => {
+  const source = cvSource("cv_oceanproperty24");
+  assert.equal(source.detail?.fetch_retry, undefined);
+
   let attempts = 0;
   const fetchFn = async () => {
     attempts++;
@@ -70,7 +84,7 @@ test("other sources do not receive source-specific detail retries", async () => 
   };
 
   const result = await fetchDetailWithRetry(
-    "cv_oceanproperty24",
+    source.detail?.fetch_retry,
     "https://example.com/listing",
     fetchFn,
     async () => {},

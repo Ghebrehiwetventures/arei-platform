@@ -80,6 +80,20 @@ export interface PriceFormatConfig {
   multiplier?: number;
 }
 
+export interface DetailFetchRetryConfig {
+  /** Total fetch attempts (1 = no retry). */
+  attempts?: number;
+  /** Delay between attempts, in ms. */
+  delay_ms?: number;
+}
+
+export interface DetailEnrichConfig {
+  /** Replace a coarse list-card location with the detail-page address. */
+  location_upgrade?: boolean;
+  /** Treat detail-page images as authoritative instead of merging list-card images. */
+  replace_images_with_detail?: boolean;
+}
+
 export interface DetailConfig {
   enabled?: boolean;
   policy?: DetailPolicy;
@@ -98,6 +112,10 @@ export interface DetailConfig {
   /** Disable generic page-wide image fallbacks when the configured image
    *  selector is authoritative and unrelated sidebar images are present. */
   image_fallback?: boolean;
+  /** Retry transient detail-fetch failures (e.g. flaky headless/AJAX pages). */
+  fetch_retry?: DetailFetchRetryConfig;
+  /** How detail-extract results are applied over the list-card values. */
+  enrich?: DetailEnrichConfig;
   delay_ms?: number;
   /** Scope `spec_patterns` regexes to this container instead of `<body>`. Prevents
    *  regex pollution from Similar Listings / sidebar / navigation. When unset, the

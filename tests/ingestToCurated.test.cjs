@@ -79,9 +79,49 @@ test("curated upsert refreshes existing rows regardless of publish_status while 
 
   assert.doesNotMatch(query.text, /WHERE\s+kv_curated\.listings\.publish_status\s*=\s*'needs_review'/);
   assert.match(query.text, /title\s*=\s*EXCLUDED\.title/);
-  assert.match(query.text, /property_size_sqm\s*=\s*EXCLUDED\.property_size_sqm/);
   assert.match(query.text, /WHEN kv_curated\.listings\.ai_descriptions IS NOT NULL\s+THEN kv_curated\.listings\.ai_descriptions/);
   assert.doesNotMatch(query.text, /publish_status\s*=\s*EXCLUDED\.publish_status/);
+});
+
+test("in-place refresh guards structured fields against null-clobber", () => {
+  const row = {
+    id: "hcv_guard",
+    title: "Guarded",
+    description: "x",
+    description_html: null,
+    ai_descriptions: null,
+    price: 100000,
+    currency: "EUR",
+    price_period: "sale",
+    country: "Cape Verde",
+    island: "Sal",
+    city: null,
+    bedrooms: null,
+    bathrooms: null,
+    property_type: "villa",
+    property_size_sqm: null,
+    land_area_sqm: null,
+    image_urls: [],
+    source_id_primary: "cv_homescasaverde",
+    source_url_primary: "https://www.homescasaverde.com/property/guard",
+    first_seen_at: "2026-06-05T13:36:48.023Z",
+    publish_status: "needs_review",
+    seeded_from_raw_listing_id: "hcv_guard",
+  };
+
+  const { text } = buildKvCuratedUpsertQuery(row, "2026-06-10T00:00:00.000Z");
+
+  // Beds/baths fall back to the stored value when the fetch misses them.
+  assert.match(text, /bedrooms\s*=\s*COALESCE\(EXCLUDED\.bedrooms,\s*kv_curated\.listings\.bedrooms\)/);
+  assert.match(text, /bathrooms\s*=\s*COALESCE\(EXCLUDED\.bathrooms,\s*kv_curated\.listings\.bathrooms\)/);
+  // Area is preserved only on a total miss (both buckets NULL), so a genuine
+  // reclassification still clears the old bucket.
+  assert.match(text, /property_size_sqm\s*=\s*CASE\s+WHEN EXCLUDED\.property_size_sqm IS NULL\s+AND EXCLUDED\.land_area_sqm IS NULL/);
+  assert.match(text, /land_area_sqm\s*=\s*CASE\s+WHEN EXCLUDED\.property_size_sqm IS NULL\s+AND EXCLUDED\.land_area_sqm IS NULL/);
+  // An empty gallery never blanks stored images.
+  assert.match(text, /image_urls\s*=\s*CASE\s+WHEN EXCLUDED\.image_urls IS NULL\s+OR cardinality\(EXCLUDED\.image_urls\)\s*=\s*0/);
+  // Title/price/location stay straight refreshes (intentional changes flow through).
+  assert.match(text, /price\s*=\s*EXCLUDED\.price/);
 });
 
 test("removed published lookup is disabled when a source fetch returns no rows", () => {

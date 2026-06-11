@@ -11,7 +11,7 @@ import OpenAI from "openai";
 import * as fs from "fs";
 import * as path from "path";
 
-import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig } from "../configLoader";
+import { loadSourcesConfig, sourceConfigToFetchConfig, SourceConfig, DetailFetchRetryConfig } from "../configLoader";
 import { genericPaginatedFetcher, GenericParsedListing } from "../fetcher";
 import { fetchHtml } from "../fetchHtml";
 import { fetchHeadless } from "../fetchHeadless";
@@ -115,29 +115,30 @@ function sleep(ms: number): Promise<void> {
   return new Promise(r => setTimeout(r, ms));
 }
 
-const ESTATECV_SOURCE_ID = "cv_estatecv";
-const ESTATECV_DETAIL_RETRY_DELAY_MS = 1500;
-const DETAIL_RETRY_SOURCE_IDS = new Set([ESTATECV_SOURCE_ID, "cv_nhakaza"]);
+const DEFAULT_DETAIL_FETCH_ATTEMPTS = 1;
 
 export function getDetailFetchMethod(sourceConfig: SourceConfig): "http" | "headless" {
   return sourceConfig.detail?.fetch_method ?? sourceConfig.fetch_method ?? "http";
 }
 
 export async function fetchDetailWithRetry(
-  sourceId: string,
+  retry: DetailFetchRetryConfig | undefined,
   detailUrl: string,
   fetchFn: (url: string) => Promise<any>,
   sleepFn: (ms: number) => Promise<void> = sleep,
 ): Promise<any & { retried: boolean }> {
-  let result = await fetchFn(detailUrl);
-  if (!DETAIL_RETRY_SOURCE_IDS.has(sourceId) || (result.success && result.html)) {
-    return { ...result, retried: false };
-  }
+  const attempts = Math.max(1, retry?.attempts ?? DEFAULT_DETAIL_FETCH_ATTEMPTS);
+  const delayMs = retry?.delay_ms ?? 0;
 
-  console.log(`[Enrich] Retrying transient ${sourceId} detail failure: ${detailUrl}`);
-  await sleepFn(ESTATECV_DETAIL_RETRY_DELAY_MS);
-  result = await fetchFn(detailUrl);
-  return { ...result, retried: true };
+  let result = await fetchFn(detailUrl);
+  let retried = false;
+  for (let attempt = 2; attempt <= attempts && !(result.success && result.html); attempt++) {
+    retried = true;
+    console.log(`[Enrich] Retry ${attempt}/${attempts} on transient detail failure: ${detailUrl}`);
+    if (delayMs > 0) await sleepFn(delayMs);
+    result = await fetchFn(detailUrl);
+  }
+  return { ...result, retried };
 }
 
 export function resolveSourceCurrency(
@@ -189,7 +190,7 @@ async function enrichListings(
     try {
       const fetchFn = getDetailFetchMethod(sourceConfig) === "headless" ? fetchHeadless : fetchHtml;
       const fetchResult = await fetchDetailWithRetry(
-        sourceConfig.id,
+        sourceConfig.detail?.fetch_retry,
         listing.detailUrl,
         fetchFn,
       );
@@ -207,12 +208,11 @@ async function enrichListings(
         continue;
       }
 
+      const enrichOpts = sourceConfig.detail?.enrich;
       applyExtractResultToListing(listing, extractResult, {
         applyTruncatedTitleUpgrade: true,
-        applyLocationUpgrade: sourceConfig.id === "cv_homescasaverde",
-        replaceImagesWithDetail:
-          sourceConfig.id === "cv_estatecv" ||
-          sourceConfig.id === "cv_homescasaverde",
+        applyLocationUpgrade: enrichOpts?.location_upgrade ?? false,
+        replaceImagesWithDetail: enrichOpts?.replace_images_with_detail ?? false,
       });
 
       enriched++;
@@ -434,20 +434,46 @@ ON CONFLICT (id) DO UPDATE SET
   currency                   = EXCLUDED.currency,
   island                     = EXCLUDED.island,
   city                       = EXCLUDED.city,
-  bedrooms                   = EXCLUDED.bedrooms,
-  bathrooms                  = EXCLUDED.bathrooms,
   property_type              = EXCLUDED.property_type,
-  property_size_sqm          = EXCLUDED.property_size_sqm,
-  land_area_sqm              = EXCLUDED.land_area_sqm,
-  image_urls                 = EXCLUDED.image_urls,
+  -- Structured attributes: a NULL/empty value from a fetch is a missed
+  -- extraction, never an intentional "this property has no bedrooms / no
+  -- photos." Since published rows are now refreshed in place, take the new
+  -- value only when present and otherwise keep the prior one, so a flaky or
+  -- partial re-fetch can never blank good (especially published) data.
+  bedrooms                   = COALESCE(EXCLUDED.bedrooms, kv_curated.listings.bedrooms),
+  bathrooms                  = COALESCE(EXCLUDED.bathrooms, kv_curated.listings.bathrooms),
+  -- Area buckets are coupled: a listing carries EITHER property_size_sqm OR
+  -- land_area_sqm by type. Only preserve the prior pair on a *total* area miss
+  -- (both NULL); when the fetch found area in either bucket, trust it verbatim
+  -- so a genuine reclassification (e.g. villa→land) still clears the old bucket.
+  property_size_sqm          = CASE
+                                 WHEN EXCLUDED.property_size_sqm IS NULL
+                                  AND EXCLUDED.land_area_sqm IS NULL
+                                 THEN kv_curated.listings.property_size_sqm
+                                 ELSE EXCLUDED.property_size_sqm
+                               END,
+  land_area_sqm              = CASE
+                                 WHEN EXCLUDED.property_size_sqm IS NULL
+                                  AND EXCLUDED.land_area_sqm IS NULL
+                                 THEN kv_curated.listings.land_area_sqm
+                                 ELSE EXCLUDED.land_area_sqm
+                               END,
+  image_urls                 = CASE
+                                 WHEN EXCLUDED.image_urls IS NULL
+                                   OR cardinality(EXCLUDED.image_urls) = 0
+                                 THEN kv_curated.listings.image_urls
+                                 ELSE EXCLUDED.image_urls
+                               END,
   source_url_primary         = EXCLUDED.source_url_primary,
   last_verified_at           = EXCLUDED.last_verified_at,
   seeded_from_raw_listing_id = EXCLUDED.seeded_from_raw_listing_id,
   updated_at                 = now()
 `;
 // Conflict updates preserve publish_status, first_seen_at, first_published_at,
-// and existing ai_descriptions. All other source-derived fields are refreshed
-// for both needs_review and published rows.
+// and existing ai_descriptions. Other source-derived fields are refreshed for
+// both needs_review and published rows, except structured attributes (beds,
+// baths, area, images) which are guarded so a missed/partial extraction cannot
+// null out good data on an in-place published refresh.
 
 interface ExistingRowMeta {
   status: string;
