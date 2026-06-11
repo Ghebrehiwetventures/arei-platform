@@ -85,8 +85,12 @@ cv_cabohouseproperty, cv_estatecv, cv_oceanproperty24, cv_nhakaza, cv_remax.
   `MARKET_ID` / `SOURCE_ID` (live, **not** `DRY_RUN`). Secrets: `DATABASE_URL`
   (pooler-backed), `ANTHROPIC_API_KEY`, `OPENAI_API_KEY`.
 - `concurrency` group so scheduled runs never overlap themselves.
-- `summary` job → aggregates per-source results (upserts, new `needs_review`,
-  demotions, failures) into `GITHUB_STEP_SUMMARY`.
+- Per-source status is visible at-a-glance via the matrix job list in the Actions
+  UI, and each cell's log carries the `[Removed-gate]` / `[AI]` / `[Status-gate]`
+  lines. A dedicated `summary` job that aggregates results into
+  `GITHUB_STEP_SUMMARY` was considered but **deferred** — it needs each cell to
+  persist a result artifact for a downstream job to read, which is its own small
+  piece of work and not required for the cutover or the soak.
 - **Cadence: start at 12–24h, not 6h.** New inventory needs manual promotion
   anyway, so there is no freshness urgency; the slower cadence halves AI cost and
   DB/API load. Easy knob to revisit.
@@ -129,10 +133,12 @@ Remove:
 - npm scripts `pipeline:cv`, `ingest:cv`, `report:cv`
 - `.github/workflows/cv-autopilot.yml`
 
-**Relocate, do not drop:** `cv-autopilot.yml` also runs a **translation backfill**
-step (`scripts/backfill_ai_descriptions_for_language.ts`). That step must be
-moved into the new workflow (or its own small workflow) so translations are not
-silently lost. The `DRY_RUN` shadow steps (`preflightMarket` / `ingestMarket` /
+**Translation backfill is NOT relocated** (revised 2026-06-11): `cv-autopilot.yml`'s
+`scripts/backfill_ai_descriptions_for_language.ts` step writes `public.listings`,
+which the live feed does not read — it is already a no-op for the live site (see
+the public-reader audit above). It is intentionally dropped, not relocated. The
+kv_curated-aware PT path (`generate_pt_listing_translations_from_feed.ts`) is a
+separate follow-up. The `DRY_RUN` shadow steps (`preflightMarket` / `ingestMarket` /
 `reportMarket`) are obsolete and get deleted. `preflightCv`'s IN-count fail-fast
 is obsolete — source lifecycle is now config-driven in `sources.yml`.
 
@@ -183,19 +189,25 @@ not break the live site.
 - Numerous `scripts/*` maintenance/backfill tools — manual, not scheduled; they
   operate on stale data after the freeze but are not a production path.
 
-**Issue found — relocated translate step targets the wrong table.** The Task 5
-`translate` job runs `scripts/backfill_ai_descriptions_for_language.ts`, which
-reads/writes `public.listings` (`.from("listings")`) to translate the English AI
-description into other languages (PT, …). But the curated ingest's
-`generateAiDescription` writes **English only** (`Target language: en`) to
-`kv_curated.listings`. So in the curated world this step translates the frozen
-legacy table, and the live (`kv_curated`) feed never receives the non-English
-translations from this workflow. The relocation was made assuming the step was
-table-agnostic; it is not. **Decision required** (does not block the cutover, since
-the live feed does not depend on this step): (a) rewrite the backfill to target
-`kv_curated.listings`, (b) drop the translate job from the new workflow, or
-(c) keep it as a known no-op-after-deletion follow-up. Tracked as an open item;
-the `translate` job remains in the workflow but is flagged here.
+**Resolved — translate step dropped (was a superseded no-op).** The original Task 5
+relocated a `translate` job running `scripts/backfill_ai_descriptions_for_language.ts`,
+which reads/writes `public.listings` (`.from("listings")`) to add non-English
+(PT, …) descriptions. Investigation showed this is **already a no-op for the live
+site, cutover or not**: the live feed serves `kv_curated` via `v1_feed_cv` and does
+not read `public.listings`. The actual kv_curated-aware PT path is
+`scripts/generate_pt_listing_translations_from_feed.ts`, which reads `v1_feed_cv` and
+generates the frontend file `kazaverde-web/src/lib/pt-listing-translations.generated.ts`
+(its own header: "needed when the live feed reads from kv_curated.listings"). The
+curated ingest's `generateAiDescription` writes **English only**
+(`Target language: en`) to `kv_curated.listings`.
+
+Decision (made 2026-06-11): **drop the translate job from `curated-ingest.yml`** rather
+than ship a known no-op that falsely implies translation is handled. Properly
+scheduling the kv_curated PT generation is a **separate follow-up**: the generate-
+from-feed script commits a frontend source file and therefore needs commit/deploy
+plumbing (PR or push from CI), which is out of scope for the ingest cutover and
+deserves its own design. Until then, PT generation stays a manual step, unchanged
+from today's behaviour.
 
 ## Out of scope
 

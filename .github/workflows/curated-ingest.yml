@@ -67,26 +67,9 @@ jobs:
           SOURCE_ID: ${{ matrix.source }}
         run: npm run ingest:curated
 
-  translate:
-    needs: ingest
-    # Run after full success OR partial/total ingest failure (fail-fast is off),
-    # but skip on cancellation and on an empty/skipped matrix.
-    if: ${{ always() && (needs.ingest.result == 'success' || needs.ingest.result == 'failure') }}
-    runs-on: ubuntu-latest
-    # NOTE: the translation backfill uses getSupabaseClient() (SUPABASE_URL +
-    # SUPABASE_SERVICE_ROLE_KEY) + the AI keys — it does NOT use DATABASE_URL.
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
-      - name: Translate listing descriptions
-        continue-on-error: true
-        run: npx ts-node --transpile-only scripts/backfill_ai_descriptions_for_language.ts --all --limit=50
+# NOTE: no translation job here. The legacy `backfill_ai_descriptions_for_language.ts`
+# writes ai_descriptions->pt to public.listings, which the live feed does not read
+# (the live feed serves kv_curated via v1_feed_cv). The kv_curated-aware PT path is
+# `scripts/generate_pt_listing_translations_from_feed.ts`, which generates the frontend
+# file kazaverde-web/src/lib/pt-listing-translations.generated.ts. Scheduling that
+# (it commits a frontend file → needs deploy plumbing) is a separate follow-up.

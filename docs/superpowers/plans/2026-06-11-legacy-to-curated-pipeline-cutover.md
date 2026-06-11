@@ -22,7 +22,7 @@
 | `scripts/list_ingest_sources.ts` | Matrix discovery (markets→IN sources) | Create |
 | `tests/demotionThreshold.test.cjs` | Unit tests for the guard fn | Create |
 | `tests/listIngestSources.test.cjs` | Unit tests for discovery fn | Create |
-| `.github/workflows/curated-ingest.yml` | Scheduled curated ingest + translation | Create |
+| `.github/workflows/curated-ingest.yml` | Scheduled curated ingest (discover + matrix) | Create |
 | `arei-admin/<agency-data-view>` | Stale banner on Agency data tab | Modify |
 | Legacy files (Task 9) | Removed after soak | Delete |
 
@@ -388,7 +388,14 @@ git commit -m "feat(pipeline): config-driven ingest source discovery for CI matr
 
 ## Task 5: New scheduled workflow `curated-ingest.yml`
 
-Three jobs: `discover` (emits matrix), `ingest` (capped matrix, live per-source writes), `translate` (relocated translation backfill, runs once after ingest).
+Two jobs: `discover` (emits matrix) and `ingest` (capped matrix, live per-source writes).
+
+> **Note (2026-06-11):** an earlier draft included a `translate` job. It was dropped —
+> the legacy `backfill_ai_descriptions_for_language.ts` writes `public.listings`, which
+> the live feed does not read (live PT comes from
+> `scripts/generate_pt_listing_translations_from_feed.ts` → a generated frontend file).
+> Scheduling kv_curated PT generation is a separate follow-up. See the spec's
+> public-reader audit section.
 
 **Files:**
 - Create: `.github/workflows/curated-ingest.yml`
@@ -466,31 +473,10 @@ jobs:
           MARKET_ID: ${{ matrix.market }}
           SOURCE_ID: ${{ matrix.source }}
         run: npm run ingest:curated
-
-  translate:
-    needs: ingest
-    # Run after full success OR partial/total ingest failure (fail-fast is off),
-    # but skip on cancellation and on an empty/skipped matrix.
-    if: ${{ always() && (needs.ingest.result == 'success' || needs.ingest.result == 'failure') }}
-    runs-on: ubuntu-latest
-    # NOTE: the translation backfill uses getSupabaseClient() (SUPABASE_URL +
-    # SUPABASE_SERVICE_ROLE_KEY) + the AI keys — it does NOT use DATABASE_URL.
-    env:
-      SUPABASE_URL: ${{ secrets.SUPABASE_URL }}
-      SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
-      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-      - run: npm ci
-      - name: Translate listing descriptions
-        continue-on-error: true
-        run: npx ts-node --transpile-only scripts/backfill_ai_descriptions_for_language.ts --all --limit=50
 ```
+
+(The committed `curated-ingest.yml` carries a trailing comment explaining why there
+is no translate job — see the spec's public-reader audit.)
 
 - [ ] **Step 2: Validate the workflow YAML parses**
 
@@ -500,7 +486,7 @@ Expected: `yaml ok`.
 - [ ] **Step 3: Confirm required secrets exist in the repo**
 
 Run: `gh secret list 2>/dev/null || echo "check secrets manually in repo settings"`
-Expected present: `DATABASE_URL` (pooler URL the curated `ingest` job needs — **new**, not used by `cv-autopilot.yml`; add if absent), `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (already used by `cv-autopilot.yml`), and `SUPABASE_URL` + `SUPABASE_SERVICE_ROLE_KEY` (used by the `translate` job's backfill script; already used by `cv-autopilot.yml`). The first `ingest` matrix job `process.exit(1)`s immediately if `DATABASE_URL` is missing — confirm it before the first run.
+Expected present: `DATABASE_URL` (pooler URL the curated `ingest` job needs — **new**, not used by `cv-autopilot.yml`; add if absent), `ANTHROPIC_API_KEY`, `OPENAI_API_KEY` (already used by `cv-autopilot.yml`). The first `ingest` matrix job `process.exit(1)`s immediately if `DATABASE_URL` is missing — confirm it before the first run.
 
 - [ ] **Step 4: Commit**
 
@@ -518,7 +504,7 @@ gh workflow run "Curated Ingest" -f markets=cv
 gh run watch
 ```
 
-Expected: `discover` emits 10 cv entries; `ingest` runs them ≤3 at a time; per-source logs show `[Removed-gate]` behavior; `translate` runs once. Legacy `cv-autopilot.yml` stays enabled in parallel during the soak.
+Expected: `discover` emits 10 cv entries; `ingest` runs them ≤3 at a time; per-source logs show `[Removed-gate]` behavior. Legacy `cv-autopilot.yml` stays enabled in parallel during the soak.
 
 ---
 
@@ -702,7 +688,7 @@ git commit -m "chore(pipeline): delete legacy CV ingest chain + autopilot after 
 
 ## Self-review notes
 
-- **Spec coverage:** §1 discovery → Task 4; §2 workflow + cadence + translation relocation → Task 5; §3 demotion guard → Tasks 1–3; §4 audit + banner → Tasks 6–7; §5 deletion → Task 9; §6 soak/rollback → Task 8 (+ kill-switch is `gh workflow disable "Curated Ingest"`, no code).
+- **Spec coverage:** §1 discovery → Task 4; §2 workflow + cadence → Task 5 (translate job dropped — see audit); §3 demotion guard → Tasks 1–3; §4 audit + banner → Tasks 6–7; §5 deletion → Task 9; §6 soak/rollback → Task 8 (+ kill-switch is `gh workflow disable "Curated Ingest"`, no code).
 - **Type consistency:** `isDemotionWithinThreshold(removedCount, retainedPublishedCount, maxFraction)` defined in Task 2, called identically in Task 3; `discoverIngestSources` / `selectInSources` consistent between Task 4 impl and tests; matrix shape `{include:[{market,source}]}` matches `fromJSON` consumption in Task 5.
 - **Manual kill-switch (rollback):** `gh workflow disable "Curated Ingest"` halts unattended runs instantly; legacy stays available until Task 9.
 ```
