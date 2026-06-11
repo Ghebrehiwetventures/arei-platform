@@ -8,14 +8,30 @@ jobs:
   probe:
     runs-on: ubuntu-latest
     steps:
-      - name: Probe estatecv + controls
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - name: Node fetch (undici) with error cause
         run: |
-          for URL in https://estatecv.com/en/properties/ https://terracaboverde.com/properties/ https://example.com; do
-            echo "=== $URL ==="
-            curl -sIL --max-time 20 \
-              -A "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36" \
-              -w "status=%{http_code} connect=%{time_connect}s total=%{time_total}s ip=%{remote_ip}\n" \
-              -o /dev/null "$URL" || echo "CURL FAILED exit=$?"
-          done
-          echo "=== raw TCP to 185.102.21.188:443 ==="
-          timeout 10 bash -c 'cat < /dev/null > /dev/tcp/185.102.21.188/443' && echo "TCP connect OK" || echo "TCP connect FAILED/TIMEOUT (exit $?)"
+          node -e '
+          const urls = ["https://estatecv.com/en/properties/", "https://terracaboverde.com/properties/"];
+          (async () => {
+            for (const url of urls) {
+              console.log("=== " + url + " ===");
+              const t0 = Date.now();
+              try {
+                const res = await fetch(url, { headers: {
+                  "User-Agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+                  "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+                  "Accept-Language": "en-US,en;q=0.5",
+                }, signal: AbortSignal.timeout(20000) });
+                const body = await res.text();
+                console.log("status:", res.status, "bytes:", body.length, "ms:", Date.now() - t0);
+              } catch (e) {
+                console.log("ERROR:", e.message, "ms:", Date.now() - t0);
+                let c = e.cause; let d = 0;
+                while (c && d++ < 4) { console.log("  cause:", c.code || "", c.message || String(c)); c = c.cause; }
+              }
+            }
+          })();
+          '
