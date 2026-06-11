@@ -11,24 +11,27 @@ It is the shortest honest map of what is real in this repo right now.
 - Root admin dev starts `arei-admin/` from `package.json`.
 - Root KazaVerde dev starts `kazaverde-web/` from `package.json`.
 - **Scheduled curated ingest** (since 2026-06-11): `.github/workflows/curated-ingest.yml`
-  runs every 12h. A discover job reads `markets/*/sources.yml` via
+  runs at 03:00 and 15:00 UTC. A discover job reads `markets/*/sources.yml` via
   `scripts/list_ingest_sources.ts` and fans out one job per `lifecycleOverride: IN`
   source (cv market only by default), each running
   `scripts/ingest_to_curated.ts` → `core/pipeline/runMarketSource.ts`, writing
   **live** to `kv_curated.listings` (new rows as `needs_review`; guarded removal
-  detection on published rows).
-- The legacy CV chain still runs on schedule **during the cutover soak**:
-  - `core/preflightCv.ts` → `core/ingestCv.ts` → `core/reportCv.ts`
-  - in `.github/workflows/cv-autopilot.yml`, writing legacy `public.listings`
-    (which the live feed no longer reads).
-  - This parallel run is temporary; the legacy chain is deleted after the soak
-    (see `docs/superpowers/specs/2026-06-11-legacy-to-curated-pipeline-cutover-design.md`).
+  detection on published rows). **This is the only scheduled ingest.**
+- The legacy CV chain (`core/preflightCv.ts` → `core/ingestCv.ts` →
+  `core/reportCv.ts`, `.github/workflows/cv-autopilot.yml`) **no longer runs**:
+  the workflow was disabled (`disabled_manually`) on 2026-06-11. Its code is
+  still in the repo, pending deletion (cutover plan Task 9, after 2–3 clean
+  scheduled curated runs — see
+  `docs/superpowers/specs/2026-06-11-legacy-to-curated-pipeline-cutover-design.md`).
+  Do not build on it.
+- Consequence: **`public.listings` is frozen as of 2026-06-11.** Nothing writes
+  it anymore. Internal readers (admin Agency data tab, various `scripts/*`)
+  see historical data; the live feed never read it.
 - `.github/workflows/tests.yml` runs `npm test` + typecheck on PRs and main.
 
 Trust these files first:
 - `package.json`
 - `.github/workflows/curated-ingest.yml`
-- `.github/workflows/cv-autopilot.yml` (legacy, soak only)
 
 ## What is canonical today
 
@@ -78,13 +81,11 @@ Check:
 - `docs/02-data-engine/kazaverde-curated-feed-operations.md`
 
 Important truth:
-- the curated path is now ALSO the scheduled production ingest
+- the curated path is the ONLY scheduled production ingest
   (`.github/workflows/curated-ingest.yml`, since 2026-06-11)
-- the old CV ingest pipeline still writes the legacy `public.listings` path
-  during the cutover soak; that table is on a path to freeze
-- the live public feed no longer serves that legacy path directly
-- this is a temporary operating split that ends when the legacy chain is
-  deleted post-soak
+- the legacy CV pipeline is disabled (2026-06-11) and `public.listings` is
+  frozen; legacy code remains in the repo only until cutover Task 9 deletes it
+- the live public feed never read the legacy path after 2026-05-08
 
 ### Generic ingest path
 
@@ -175,11 +176,11 @@ Why:
 
 Today’s repo truth is:
 
-- the scheduled production ingest is now the curated per-source path
+- the scheduled production ingest is the curated per-source path
   (`curated-ingest.yml` → `runMarketSource.ts` → `kv_curated.listings`),
   config-driven from `markets/*/sources.yml`
-- the legacy CV-specific chain still runs in parallel during the cutover soak,
-  writing a table the live feed does not read; it is scheduled for deletion
+- the legacy CV-specific chain is disabled (2026-06-11); its code awaits
+  deletion (Task 9) and `public.listings` is frozen
 - the real frontend contract is still `v1_feed_cv`, serving curated
   `kv_curated` inventory upstream
 - the admin is useful, but it reconstructs truth from mixed sources; its
