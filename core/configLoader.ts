@@ -191,6 +191,11 @@ export interface SourceConfig {
   /** Whether absence from a successful fetch proves removal. Disable for
    *  featured/search subsets that do not represent the full source catalogue. */
   removal_detection?: boolean;
+  /** Safety cap for unattended demotion. If the fraction of a source's
+   *  published rows that would be demoted to 'removed' in a single run exceeds
+   *  this value, demotion is skipped for that source and logged for human
+   *  review. Defaults to 0.5 when unset. Set per-source for noisy catalogues. */
+  removal_max_fraction?: number;
   reject_url_patterns?: string[];
   min_path_segments?: number;
   price_format?: PriceFormatConfig;

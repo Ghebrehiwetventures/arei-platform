@@ -238,3 +238,15 @@ These are not resolved decisions yet. They are logged here so they stay visible.
   - No big-bang migration; KazaVerde stability remains top priority.
   - Discovery + a minimal migration plan precede any code change.
   - When unifying anything, the rule is "visuell släktskap, inte uniformitet" — share neutrals/structure, keep brand accents per-app.
+
+### 2026-06-11 — Curated ingest becomes the scheduled production path; legacy CV chain enters deletion track
+
+- Status: `active`
+- Decision:
+  The per-source curated ingest (`scripts/ingest_to_curated.ts` → `core/pipeline/runMarketSource.ts` → `kv_curated.listings`) is now scheduled in `.github/workflows/curated-ingest.yml` (every 12h, cv market by default, config-driven matrix from `markets/*/sources.yml` `lifecycleOverride: IN`). The legacy chain (`preflightCv`/`ingestCv`/`reportCv` + `cv-autopilot.yml`) keeps running in parallel for a ~1-week soak, then is deleted. Unattended demotion of published rows is allowed but double-guarded (zero-row guard + `removal_max_fraction` cap, default 0.5). The legacy translation backfill was dropped, not relocated — it wrote `public.listings`, which the live feed does not read; scheduling the kv_curated-aware PT generation (`generate_pt_listing_translations_from_feed.ts`) is a separate follow-up.
+- Reason:
+  The live feed has served `kv_curated` since 2026-05-08, while scheduled automation still fed only the disconnected legacy table. Cutover spec: `docs/superpowers/specs/2026-06-11-legacy-to-curated-pipeline-cutover-design.md` (PR #383).
+- Consequence:
+  - Setting `lifecycleOverride: IN` on a source now auto-enrolls it in scheduled live ingestion.
+  - `public.listings` freezes when the legacy chain is deleted; the admin Agency data tab carries a stale-data banner and reads historical data until migrated (`docs/operations/admin-kv-curated-migration.md`).
+  - Kill-switch for unattended runs: `gh workflow disable "Curated Ingest"`.

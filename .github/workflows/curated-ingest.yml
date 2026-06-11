@@ -1,0 +1,87 @@
+name: Curated Ingest
+
+on:
+  schedule:
+    - cron: "0 */12 * * *" # every 12h; new inventory needs manual promotion, so no 6h urgency
+  workflow_dispatch:
+    inputs:
+      markets:
+        description: "Markets to ingest: comma-separated ids (e.g. cv or cv,zm), or 'all' for every market. Scheduled/blank = cv."
+        required: false
+        default: "cv"
+
+concurrency:
+  group: curated-ingest
+  cancel-in-progress: false
+
+jobs:
+  discover:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.gen.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - id: gen
+        env:
+          MARKETS_INPUT: ${{ github.event.inputs.markets }}
+        run: |
+          # Initial cutover scope is CV only — the other markets' IN sources are
+          # not yet validated against the curated path. Scheduled runs pass no
+          # input, so default to cv. 'all' is the sentinel for every market
+          # (empty arg to the generic discovery script). Broaden this default as
+          # each market is validated; the discovery script itself stays generic.
+          MARKETS="${MARKETS_INPUT:-cv}"
+          if [ "$MARKETS" = "all" ]; then MARKETS=""; fi
+          MATRIX=$(npx ts-node --transpile-only scripts/list_ingest_sources.ts "$MARKETS")
+          # Fail fast on an empty matrix: a typo'd market id ('vc', 'All') or a
+          # config where every source is OBSERVE/DROP would otherwise produce a
+          # green zero-job run that ingested nothing. (Legacy autopilot had an
+          # equivalent IN-count gate.)
+          node -e "
+            const m = JSON.parse(process.argv[1]);
+            if (!Array.isArray(m.include) || m.include.length === 0) {
+              console.error('::error::No IN sources discovered for markets \"' + process.argv[2] + '\" — check the input and markets/*/sources.yml');
+              process.exit(1);
+            }
+            console.log('Discovered ' + m.include.length + ' sources');
+          " "$MATRIX" "${MARKETS:-all}"
+          echo "matrix=$MATRIX" >> "$GITHUB_OUTPUT"
+          echo "$MATRIX"
+
+  ingest:
+    needs: discover
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      max-parallel: 3
+      matrix: ${{ fromJSON(needs.discover.outputs.matrix) }}
+    env:
+      DATABASE_URL: ${{ secrets.DATABASE_URL }}
+      ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+      - run: npm ci
+      - name: Random jitter
+        run: sleep $((RANDOM % 120))
+      - name: Curated ingest (${{ matrix.market }}/${{ matrix.source }})
+        env:
+          MARKET_ID: ${{ matrix.market }}
+          SOURCE_ID: ${{ matrix.source }}
+        run: npm run ingest:curated
+
+# NOTE: no translation job here. The legacy `backfill_ai_descriptions_for_language.ts`
+# writes ai_descriptions->pt to public.listings, which the live feed does not read
+# (the live feed serves kv_curated via v1_feed_cv). The kv_curated-aware PT path is
+# `scripts/generate_pt_listing_translations_from_feed.ts`, which generates the frontend
+# file kazaverde-web/src/lib/pt-listing-translations.generated.ts. Scheduling that
+# (it commits a frontend file → needs deploy plumbing) is a separate follow-up.

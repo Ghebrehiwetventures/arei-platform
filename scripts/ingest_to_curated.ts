@@ -18,6 +18,9 @@ export {
   reconcileListingIdsBySourceUrl,
   resolveSourceCurrency,
   shouldRunRemovalDetection,
+  isDemotionWithinThreshold,
+  effectiveRemovalMaxFraction,
+  DEFAULT_REMOVAL_MAX_FRACTION,
 } from "../core/pipeline/runMarketSource";
 
 function loadEnv(): { marketId: string; sourceId: string; dryRun: boolean } {

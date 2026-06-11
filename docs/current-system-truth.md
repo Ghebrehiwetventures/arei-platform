@@ -10,15 +10,25 @@ It is the shortest honest map of what is real in this repo right now.
 
 - Root admin dev starts `arei-admin/` from `package.json`.
 - Root KazaVerde dev starts `kazaverde-web/` from `package.json`.
-- Root CV pipeline runs:
-  - `core/preflightCv.ts`
-  - `core/ingestCv.ts`
-  - `core/reportCv.ts`
-- Scheduled automation runs the same CV chain in `.github/workflows/cv-autopilot.yml`.
+- **Scheduled curated ingest** (since 2026-06-11): `.github/workflows/curated-ingest.yml`
+  runs every 12h. A discover job reads `markets/*/sources.yml` via
+  `scripts/list_ingest_sources.ts` and fans out one job per `lifecycleOverride: IN`
+  source (cv market only by default), each running
+  `scripts/ingest_to_curated.ts` → `core/pipeline/runMarketSource.ts`, writing
+  **live** to `kv_curated.listings` (new rows as `needs_review`; guarded removal
+  detection on published rows).
+- The legacy CV chain still runs on schedule **during the cutover soak**:
+  - `core/preflightCv.ts` → `core/ingestCv.ts` → `core/reportCv.ts`
+  - in `.github/workflows/cv-autopilot.yml`, writing legacy `public.listings`
+    (which the live feed no longer reads).
+  - This parallel run is temporary; the legacy chain is deleted after the soak
+    (see `docs/superpowers/specs/2026-06-11-legacy-to-curated-pipeline-cutover-design.md`).
+- `.github/workflows/tests.yml` runs `npm test` + typecheck on PRs and main.
 
 Trust these files first:
 - `package.json`
-- `.github/workflows/cv-autopilot.yml`
+- `.github/workflows/curated-ingest.yml`
+- `.github/workflows/cv-autopilot.yml` (legacy, soak only)
 
 ## What is canonical today
 
@@ -68,9 +78,13 @@ Check:
 - `docs/02-data-engine/kazaverde-curated-feed-operations.md`
 
 Important truth:
+- the curated path is now ALSO the scheduled production ingest
+  (`.github/workflows/curated-ingest.yml`, since 2026-06-11)
 - the old CV ingest pipeline still writes the legacy `public.listings` path
+  during the cutover soak; that table is on a path to freeze
 - the live public feed no longer serves that legacy path directly
-- this is a temporary operating split and should be treated as such in docs and ops
+- this is a temporary operating split that ends when the legacy chain is
+  deleted post-soak
 
 ### Generic ingest path
 
@@ -161,9 +175,15 @@ Why:
 
 Today’s repo truth is:
 
-- the real ingest path is still the CV-specific chain
-- the real frontend contract is still `v1_feed_cv`
-- the live `v1_feed_cv` contract now serves curated `kv_curated` inventory upstream, not the legacy snapshot directly
-- the ingest pipeline and the public feed are temporarily decoupled
-- the admin is useful, but it reconstructs truth from mixed sources
-- generic platform work exists, but it is not yet the repo’s single operational truth
+- the scheduled production ingest is now the curated per-source path
+  (`curated-ingest.yml` → `runMarketSource.ts` → `kv_curated.listings`),
+  config-driven from `markets/*/sources.yml`
+- the legacy CV-specific chain still runs in parallel during the cutover soak,
+  writing a table the live feed does not read; it is scheduled for deletion
+- the real frontend contract is still `v1_feed_cv`, serving curated
+  `kv_curated` inventory upstream
+- the admin is useful, but it reconstructs truth from mixed sources; its
+  Agency data tab reads soon-frozen `public.listings` and carries a stale-data
+  banner
+- `core/ingestMarket.ts` (the other generic path) remains shadow-only, not a
+  production path

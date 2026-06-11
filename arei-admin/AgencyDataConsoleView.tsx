@@ -803,6 +803,15 @@ export function AgencyDataConsoleView() {
 
   return (
     <div className="space-y-6">
+      <div
+        className="text-[12px] text-amber bg-amber-muted border border-amber/30 px-3 py-2 rounded"
+        role="status"
+      >
+        <span className="font-semibold">Source data frozen as of 2026-06-11.</span>{" "}
+        The legacy <code className="font-mono">public.listings</code> feed is no longer
+        updated — these quality numbers are historical. Live inventory now lives in{" "}
+        <code className="font-mono">kv_curated.listings</code>.
+      </div>
       {/* ── Page header ── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
