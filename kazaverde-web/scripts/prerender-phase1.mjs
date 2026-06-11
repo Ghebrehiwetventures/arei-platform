@@ -353,6 +353,43 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     ),
     },
     {
+      route: "/terms",
+      ...page(
+      "Terms of Use | Cape Verde Real Estate Index",
+      "The terms that govern use of the Cape Verde Real Estate Index, including automated access, scraping, and reuse of AREI's compiled data.",
+      `
+        <main>
+          <section>
+            <p>Terms of Use</p>
+            <h1>Terms of use</h1>
+            <p>Last updated: 11 June 2026</p>
+          </section>
+
+          <section>
+            <h2>Automated access and data use</h2>
+            <p>
+              You may not use bots, scrapers, crawlers, spiders, automated scripts, data-mining tools, or similar
+              technologies to access, extract, copy, monitor, reproduce, aggregate, download, reuse, or republish
+              AREI&#39;s structured data — including normalized listings, scoring, metadata, source mappings,
+              market signals, index data, historical datasets, broker information, or contact information — or any
+              other compiled or transformed data, without prior written permission from AREI.
+            </p>
+          </section>
+
+          <section>
+            <h2>Normal use and search engines</h2>
+            <p>
+              Manual viewing of publicly available pages through normal use of the website is welcome. Public
+              search engines may crawl publicly accessible pages for indexing purposes, provided they comply with
+              our robots.txt file and do not extract or reuse AREI&#39;s structured datasets or proprietary market
+              signals.
+            </p>
+          </section>
+        </main>
+      `,
+    ),
+    },
+    {
       route: "/listings",
       ...page(
       "Cape Verde Properties for Sale | Cape Verde Real Estate Index",
@@ -675,7 +712,7 @@ function wrapPrerenderMarkup(body, description) {
 ${indent(body.trim(), 4)}
         <footer>
           <p><a href="/listings">Listings</a> · <a href="/market">Market</a> · <a href="/market-news">Market News</a> · <a href="/blog">Blog</a> · <a href="/about">About</a></p>
-          <p><a href="/privacy">Privacy</a> · <a href="/cookie-policy">Cookie Policy</a></p>
+          <p><a href="/terms">Terms</a> · <a href="/privacy">Privacy</a> · <a href="/cookie-policy">Cookie Policy</a></p>
         </footer>
       </div>`;
 }

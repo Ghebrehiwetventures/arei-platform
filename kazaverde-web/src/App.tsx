@@ -33,6 +33,7 @@ const About = lazy(() => import("./pages/About"));
 const Agents = lazy(() => import("./pages/Agents"));
 const Privacy = lazy(() => import("./pages/Privacy"));
 const CookiePolicy = lazy(() => import("./pages/CookiePolicy"));
+const Terms = lazy(() => import("./pages/Terms"));
 
 /* Back-compat redirect: /briefings/:slug → /market/briefings/:slug,
    preserving the slug param. */
@@ -114,6 +115,8 @@ export default function App() {
           <Route path="/privacy" element={<Privacy />} />
           <Route path="/cookie-policy" element={<CookiePolicy />} />
           <Route path="/cookies" element={<Navigate to="/cookie-policy" replace />} />
+          <Route path="/terms" element={<Terms />} />
+          <Route path="/terms-of-use" element={<Navigate to="/terms" replace />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
