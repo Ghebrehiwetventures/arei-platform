@@ -86,7 +86,7 @@ const resources = {
       },
       cookieBanner: {
         copy:
-          "We use minimal local storage to run the site, plus cookieless analytics. With your consent, we also use the Meta Pixel to measure our ads. You can decline.",
+          "This site uses minimal local storage and cookieless analytics. With your consent, the Meta Pixel measures our advertising. See the Cookie Policy for details.",
         accept: "Accept",
         decline: "Decline",
         policy: "Cookie policy",
@@ -685,7 +685,7 @@ const resources = {
       },
       cookieBanner: {
         copy:
-          "Usamos armazenamento local mínimo para o site funcionar e analítica sem cookies. Com o seu consentimento, usamos também o Meta Pixel para medir os nossos anúncios. Pode recusar.",
+          "Este site usa armazenamento local mínimo e analítica sem cookies. Com o seu consentimento, o Meta Pixel mede a nossa publicidade. Consulte a Política de Cookies para mais detalhes.",
         accept: "Aceitar",
         decline: "Recusar",
         policy: "Política de cookies",
