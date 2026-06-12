@@ -21,6 +21,7 @@ import { getLocalizedDescription, getLocalizedTitle } from "../lib/i18n-listings
 // field instead of translating client-side.
 import { calcMortgage, type MortgageInput } from "../lib/calcMortgage";
 import NotFound from "./NotFound";
+import ReportListing from "../components/ReportListing";
 import "./Detail.css";
 
 const SITE_URL =
@@ -917,6 +918,9 @@ export default function Detail() {
                 }}
               />
             </p>
+            <div className="kv-d-source-report">
+              <ReportListing listingId={detail.id} />
+            </div>
           </div>
         </aside>
       </div>
