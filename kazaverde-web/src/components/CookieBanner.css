@@ -52,6 +52,15 @@
   font-family: var(--kv-mono);
 }
 
+.ck-text a {
+  color: inherit;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+.ck-text a:hover {
+  color: var(--kv-black);
+}
+
 .ck-actions {
   display: flex;
   justify-content: flex-end;

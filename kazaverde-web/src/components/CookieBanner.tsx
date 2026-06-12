@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
+import { Link } from "react-router-dom";
 import { getConsent, setConsent } from "../lib/consent";
 import "./CookieBanner.css";
 
@@ -33,7 +34,7 @@ export default function CookieBanner() {
         <div className="ck-copy">
           <span className="ck-eyebrow">{t("cookieBanner.policy")}</span>
           <p className="ck-text">
-            {t("cookieBanner.copy")}
+            <Trans i18nKey="cookieBanner.copy" components={{ 1: <Link to="/cookie-policy" /> }} />
           </p>
         </div>
         <div className="ck-actions">
