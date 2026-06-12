@@ -186,8 +186,20 @@ async function listMarketNewsItems(sb) {
   // Cape-Verde-angled headline that enrichment writes to `title`. Hide those, and
   // hide items enrichment recommended archiving (off-topic / low relevance), so
   // a post can never be built from a raw, un-angled headline.
+  //
+  // Freshness: only show news from the last MAX_AGE_DAYS — it's a "News" studio,
+  // so stale/legacy rows (e.g. a 2016 article still in the table) must not appear.
+  // Matches the ingest age gate (90 days). Undated rows are kept (rare).
+  const MAX_AGE_MS = 90 * 24 * 60 * 60 * 1000;
+  const now = Date.now();
+  const isFresh = (row) => {
+    if (!row.published_at) return true;
+    const t = new Date(row.published_at).getTime();
+    return !Number.isFinite(t) || now - t <= MAX_AGE_MS;
+  };
   const items = (data || [])
     .filter((row) => row.enriched_at && row.enrich_recommendation !== "archive")
+    .filter(isFresh)
     .map(normalizeMarketNewsItem)
     .filter(isCapeVerdeItem)
     .sort((a, b) => String(b.publishedAt || "").localeCompare(String(a.publishedAt || "")));
