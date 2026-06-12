@@ -1,0 +1,53 @@
+/* ════════════════════════════════════════════════════════════
+   Terms — editorial single-column variant of the policy shell.
+   ──────────────────────────────────────────────────────────────
+   Privacy/Cookie pages use stacked kv-m-section bands (full-width
+   rules + alternating surfaces). With seven short prose sections
+   that rhythm reads as heavy stripes, so Terms flows as one calm
+   article: hero → centered 720px column → numbered runs of
+   eyebrow + heading + prose, separated by whitespace only.
+   ════════════════════════════════════════════════════════════ */
+
+.kv-terms-body {
+  border-top: 1px solid var(--kv-rule);
+  padding: 72px 0 96px;
+}
+
+.kv-terms-col {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0 var(--kv-gutter);
+}
+
+.kv-terms-section + .kv-terms-section { margin-top: 64px; }
+
+.kv-terms-eyebrow {
+  display: block;
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+}
+.kv-terms-eyebrow .kv-terms-no { color: var(--kv-green-deep, var(--kv-green)); }
+
+.kv-terms-section h2 {
+  font-family: var(--kv-mono);
+  font-size: 19px;
+  font-weight: var(--kv-fw-regular);
+  letter-spacing: var(--kv-ls-display);
+  line-height: 1.3;
+  color: var(--kv-black);
+  margin: 10px 0 14px;
+  text-wrap: balance;
+}
+
+/* Prose inherits .kv-pol-prose; let it fill the 720px column. */
+.kv-terms-section .kv-pol-prose { max-width: none; }
+
+@media (max-width: 720px) {
+  .kv-terms-body { padding: 48px 0 72px; }
+  .kv-terms-section + .kv-terms-section { margin-top: 48px; }
+  .kv-terms-section h2 { font-size: 17.5px; }
+}

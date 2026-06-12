@@ -1,8 +1,9 @@
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { Trans, useTranslation } from "react-i18next";
 import NewsletterCta from "../components/NewsletterCta";
-import "./Market.css"; // kv-hero, kv-m-intro, kv-m-section primitives
-import "./Policy.css";
+import "./Market.css"; // kv-hero primitives
+import "./Policy.css"; // kv-pol shell + kv-pol-prose
+import "./Terms.css"; // editorial single-column layout
 
 export default function Terms() {
   const { t } = useTranslation();
@@ -25,22 +26,24 @@ export default function Terms() {
         </div>
       </header>
 
-      {sections.map(([eyebrow, title], i) => (
-        <section className="kv-m-section" key={eyebrow}>
-          <div className="kv-m-inner">
-            <div className="kv-m-section-head">
-              <span className="kv-l-eyebrow">{eyebrow}</span>
+      <section className="kv-terms-body">
+        <div className="kv-terms-col">
+          {sections.map(([eyebrow, title], i) => (
+            <section className="kv-terms-section" key={eyebrow}>
+              <span className="kv-terms-eyebrow">
+                <span className="kv-terms-no">{String(i + 1).padStart(2, "0")}</span> · {eyebrow}
+              </span>
               <h2>{title}</h2>
-            </div>
-            <p className="kv-pol-prose">
-              <Trans
-                i18nKey={`terms.sections.${i}.2`}
-                components={{ 1: <a href="mailto:info@africarealestateindex.com" /> }}
-              />
-            </p>
-          </div>
-        </section>
-      ))}
+              <p className="kv-pol-prose">
+                <Trans
+                  i18nKey={`terms.sections.${i}.2`}
+                  components={{ 1: <a href="mailto:info@africarealestateindex.com" /> }}
+                />
+              </p>
+            </section>
+          ))}
+        </div>
+      </section>
 
       <NewsletterCta />
     </div>
