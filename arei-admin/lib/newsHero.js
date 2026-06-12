@@ -120,13 +120,22 @@ export async function renderHero(item) {
   const hlFS = 92, hlLH = 92;
   const lines = wrapWords(words, hlFS, W - 2 * M);
 
-  // dek: wrap to max 2 lines; if it overflowed, end with an ellipsis (clean,
-  // never mid-word).
-  let dek = [];
+  // dek: auto-fit — pick the largest font size at which the supporting line
+  // fits within maxLines, so the WHOLE line shows without an ugly ellipsis.
+  // Only ellipsise as a last resort if it still overflows at the smallest size.
+  let dek = [], dekFS = 27, dekLH = 36;
   if (item.dek) {
-    const all = dekWrap(item.dek, 27, W - 2 * M);
-    dek = all.slice(0, 2);
-    if (all.length > 2 && dek.length === 2) dek[1] = dek[1].replace(/[\s.,;:]+$/, "") + "…";
+    const MAX_LINES = 3;
+    for (const fs of [27, 24, 21, 19]) {
+      dek = dekWrap(item.dek, fs, W - 2 * M);
+      dekFS = fs;
+      if (dek.length <= MAX_LINES) break;
+    }
+    dekLH = Math.round(dekFS * 1.33);
+    if (dek.length > MAX_LINES) {
+      dek = dek.slice(0, MAX_LINES);
+      dek[MAX_LINES - 1] = dek[MAX_LINES - 1].replace(/[\s.,;:]+$/, "") + "…";
+    }
   }
 
   // Swipe affordance (SWIPE pill + corner chevrons) only makes sense for a
@@ -141,7 +150,7 @@ export async function renderHero(item) {
 
   const footerY = H - 50;
   const dekLastBaseline = H - 104;
-  const dekFirstBaseline = dekLastBaseline - (Math.max(dek.length, 1) - 1) * 36;
+  const dekFirstBaseline = dekLastBaseline - (Math.max(dek.length, 1) - 1) * dekLH;
   const hlLastBaseline = (dek.length ? dekFirstBaseline : H - 96) - 56;
   const hlFirstBaseline = hlLastBaseline - (lines.length - 1) * hlLH;
   const pillY = hlFirstBaseline - hlFS - 26;
@@ -174,7 +183,7 @@ export async function renderHero(item) {
   <rect x="${M}" y="${pillY}" width="${catW}" height="${catH}" fill="${SAGE}"/>
   <text x="${M + catPad}" y="${pillY + 30}" font-family="${SANS}" font-size="${catFS}" font-weight="700" letter-spacing="1" fill="${INK}">${esc(cat)}</text>
   ${headlineSvg}
-  ${dek.map((ln, i) => `<text x="${M}" y="${dekFirstBaseline + i * 36}" font-family="${SANS}" font-size="27" font-weight="400" fill="${GRAY}">${esc(ln)}</text>`).join("\n")}
+  ${dek.map((ln, i) => `<text x="${M}" y="${dekFirstBaseline + i * dekLH}" font-family="${SANS}" font-size="${dekFS}" font-weight="400" fill="${GRAY}">${esc(ln)}</text>`).join("\n")}
   ${showNav ? `<text x="${W - M}" y="${footerY}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>` : ""}
 </svg>`;
 
