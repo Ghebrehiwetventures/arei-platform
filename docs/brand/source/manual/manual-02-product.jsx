@@ -20,28 +20,28 @@ function Typography() {
     <section className="page" data-screen-label="07 Typography">
       <SectionHead
         num="07 · TYPOGRAPHY"
-        title="IBM Plex Mono &amp; Plex Sans. Editorial, civic, calm."
-        lede="Plex Mono carries identity, headlines, labels and numerics. Plex Sans carries reading copy. The pairing is institutional by design — readable at scale, neutral in tone."
+        title="Inter. Editorial, civic, calm."
+        lede="One family carries everything — identity, headlines, labels, numerics and reading copy. Roles are differentiated by weight, letter-spacing and tabular numerals, not by switching typefaces. Institutional by design — readable at scale, neutral in tone."
       />
 
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
         <div className="bg-card" style={{ padding: 36 }}>
-          <div className="t-label">Display family · Mono</div>
+          <div className="t-label">Display &amp; data</div>
           <div style={{ fontFamily: "var(--kv-mono)", fontSize: 96, fontWeight: 400, letterSpacing: "-0.03em", lineHeight: 0.95, marginTop: 18, color: "var(--kv-black)" }}>
             Aa &nbsp;<span style={{ fontSize: 60, opacity: 0.55 }}>116.4</span>
           </div>
           <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--kv-rule)", display: "flex", justifyContent: "space-between", fontFamily: "var(--kv-mono)", fontSize: 11, color: "var(--kv-gray-500)", letterSpacing: "0.1em" }}>
-            <span>IBM Plex Mono · 300 / 400 / 500 / 600 / 700</span>
+            <span>Inter · 400 / 500 / 600 · caps + tracking · tabular numerals</span>
             <span>licensed · OFL</span>
           </div>
         </div>
         <div className="bg-card" style={{ padding: 36 }}>
-          <div className="t-label">Reading family · Sans</div>
+          <div className="t-label">Reading copy</div>
           <div style={{ fontFamily: "var(--kv-sans)", fontSize: 96, fontWeight: 400, letterSpacing: "-0.02em", lineHeight: 0.95, marginTop: 18, color: "var(--kv-black)" }}>
             Aa &nbsp;<span style={{ fontSize: 60, opacity: 0.55 }}>Body.</span>
           </div>
           <div style={{ marginTop: 18, paddingTop: 18, borderTop: "1px solid var(--kv-rule)", display: "flex", justifyContent: "space-between", fontFamily: "var(--kv-mono)", fontSize: 11, color: "var(--kv-gray-500)", letterSpacing: "0.1em" }}>
-            <span>IBM Plex Sans · 300 / 400 / 500 / 600 / 700</span>
+            <span>Inter · 400 / 500 · reading sizes, normal tracking</span>
             <span>licensed · OFL</span>
           </div>
         </div>

@@ -91,7 +91,7 @@ function Sparkline({ data, w = 80, h = 22, positive = true }) {
    continental grid, status by fill weight. */
 function CoverageGrid() {
   const markets = [
-    { code: "CV", name: "Cape Verde",   status: "live",     phase: "kazaverde · cvrei" },
+    { code: "CV", name: "Cape Verde",   status: "live",     phase: "cvrei" },
     { code: "NG", name: "Nigeria",      status: "pipeline", phase: "Q2 2026" },
     { code: "KE", name: "Kenya",        status: "pipeline", phase: "Q2 2026" },
     { code: "ZA", name: "South Africa", status: "planned",  phase: "Q4 2026" },

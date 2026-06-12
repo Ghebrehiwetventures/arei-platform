@@ -155,7 +155,7 @@ function Merchandise() {
         {[
           ["Substrate", "Bone canvas, off-white card, black cloth, brushed brass, untreated wood. No glossy plastics."],
           ["Print",     "Single ink only. Screen-print or blind emboss. No gradients. No photo overlays."],
-          ["Type",      "Plex Mono. Engraved or screen — never raised gloss."],
+          ["Type",      "Inter. Engraved or screen — never raised gloss."],
           ["Forbidden", "Country flag colours, mascot illustrations, slogans, ironic copy, country emoji."],
         ].map((c, i) => (
           <div key={c[0]} style={{ padding: 22, borderRight: i < 3 ? "1px solid var(--kv-rule)" : "none" }}>
@@ -415,7 +415,7 @@ function SystemOverview() {
             ))}
           </div>
           <div className="t-label" style={{ marginTop: 22 }}>Type</div>
-          <div style={{ fontFamily: "var(--kv-mono)", fontSize: 12, marginTop: 8 }}>IBM Plex Mono · IBM Plex Sans</div>
+          <div style={{ fontFamily: "var(--kv-mono)", fontSize: 12, marginTop: 8 }}>Inter · 400–600</div>
         </div>
       </div>
 

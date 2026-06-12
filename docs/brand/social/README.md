@@ -20,8 +20,9 @@ Brand reference: `docs/brand/README.md`, `docs/brand/source/`
 | `arei-instagram-profile-1080.png` | 1080 × 1080 | Instagram profile image |
 
 **Generation method:** HTML/SVG sources in `draft/` rendered via Playwright headless
-Chromium at exact pixel dimensions. Font loaded from Google Fonts (IBM Plex Mono).
-Mark geometry sourced verbatim from `docs/brand/assets/d-layers-mark.svg`.
+Chromium at exact pixel dimensions. Existing drafts were rendered with IBM Plex Mono
+(Google Fonts) before the 2026-06 move to Inter — regenerate any new or updated
+assets with Inter. Mark geometry sourced verbatim from `docs/brand/assets/d-layers-mark.svg`.
 
 ---
 

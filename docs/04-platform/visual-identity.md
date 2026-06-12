@@ -55,7 +55,7 @@ The KazaVerde sage appears in AREI surfaces as a *quiet thread* of identity — 
 | **Voice** | Editorial, calm, real | Institutional, data-first, premium | Functional, dense, dashboard-readable |
 | **Primary accent** | KazaVerde green `#8ecfbf` | Same sage, used sparingly as institutional accent | Sage `#8ecfbf` (aligned with brand system; amber reserved for severity only) |
 | **Dark mode** | None — light only by design | None | Full light + dark |
-| **Type** | IBM Plex Mono dominant; IBM Plex Sans for prose | IBM Plex Mono only | IBM Plex Mono + IBM Plex Sans (aligned with brand system) |
+| **Type** | Inter | Inter | Inter (aligned with brand system) |
 | **Density** | Editorial, generous whitespace | Editorial, generous whitespace | Dense, compact for ops |
 | **Imagery** | Photographic listings, no overlays | Sparse, data-led | None — UI only |
 
@@ -65,9 +65,9 @@ Read this table as: KazaVerde and landing are siblings (editorial twins, differe
 
 ## 4. Typography
 
-- **Mono — IBM Plex Mono** is the primary face across KazaVerde and AREI landing. It carries the data-first, neutral, editorial tone. Used for UI, labels, headings, all numerical data.
-- **Sans — IBM Plex Sans** is reserved for long-form prose (descriptions, articles).
-- **Admin** was previously Inter + JetBrains Mono. As of the brand alignment pass (2026-05), admin now uses IBM Plex Sans + IBM Plex Mono, matching the unified AREI design system. Admin is the foundation for future broker/CRM tooling — one coherent type system across all AREI products.
+- **Inter** is the single brand face across all AREI products (Cape Verde Real Estate Index, landing, admin) as of 2026-06. It carries everything: UI, labels, headings, numerical data, and long-form prose.
+- Roles are differentiated within the family — caps + wide tracking for labels/nav, tabular numerals for data, normal tracking at reading sizes — rather than by switching typefaces.
+- History: the 2026-05 alignment pass standardized on IBM Plex Mono + Sans (admin was previously Inter + JetBrains Mono). The platform has since converged on Inter; the live token files (`--kv-sans`, `--kv-mono` in `kazaverde-web/src/styles/globals.css`) both resolve to Inter. Admin is the foundation for future broker/CRM tooling — one coherent type system across all AREI products.
 
 Weights: 400 / 500 / 600. Avoid heavier weights — they break the institutional restraint.
 
@@ -141,8 +141,7 @@ These values appear in two or more apps with the same intent. They should not dr
 | Warm tint | `#f2f0ec` | KV `--kv-off-white`, landing `--off-white` (admin n/a) |
 | Primary ink | `#0a0a0a` | KV `--kv-black`, landing `--black`. Admin uses `#111113` — accepted minor drift, not worth migrating |
 | Meta gray | `#888` / `#888888` | KV + landing |
-| Mono font | `IBM Plex Mono` (with `ui-monospace, 'SF Mono', Menlo, Consolas, monospace` fallback) | All three — admin aligned as of 2026-05 brand pass |
-| Sans font | `IBM Plex Sans` | KV. Landing is mono-only by design |
+| Typeface | `Inter` (with `system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif` fallback) | All three — single family as of 2026-06; legacy `--kv-mono` token also resolves to Inter |
 | Divider, light surface | `rgba(0,0,0,0.15)` | KV `--kv-rule`, landing `--rule` |
 | Button/input radius | `8px` | All three, currently hard-coded — not yet tokenized |
 | Content max-width | `~1200px` | KV `--kv-content-w`, landing inline |
@@ -156,7 +155,7 @@ These values appear in two or more apps with the same intent. They should not dr
 |---|---|---|---|---|
 | Brand accent | sage `#8ecfbf` | sage `#8ecfbf` (aligned 2026-05; amber `#92600a` severity-only) | sage `#8ecfbf` (used sparingly) | Unified AREI brand system |
 | Dark mode | none | full | none | KV + landing are light-only by design |
-| Typeface | IBM Plex Mono + Sans | IBM Plex Mono + IBM Plex Sans (aligned 2026-05) | IBM Plex Mono only | All AREI products now share IBM Plex |
+| Typeface | Inter | Inter | Inter | All AREI products share Inter (2026-06) — row kept for historical structure, no longer product-specific |
 | Semantic color tokens | minimal | full set (`--color-green/red/amber`, light + dark) | minimal | Only admin renders error/warning states |
 | Spacing scale | full (`--kv-s-1..12`) | none (Tailwind utilities) | none (inline) | Acceptable — not currently a drift risk |
 
