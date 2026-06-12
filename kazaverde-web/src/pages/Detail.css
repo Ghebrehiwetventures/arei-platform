@@ -981,6 +981,11 @@
   padding: 0;
   border: none;
 }
+.kv-d-source-report {
+  margin-top: 16px;
+  padding-top: 14px;
+  border-top: 1px solid var(--kv-rule-soft);
+}
 
 /* ══════════ 7. Section primitives (shared by mortgage/market/similar) ══════════ */
 
