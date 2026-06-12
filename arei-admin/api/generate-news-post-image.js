@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { renderHero, generateAiImage, suggestCaption, buildImagePrompt, placeholderImage } from "../lib/newsHero.js";
+import { renderHero, generateAiImage, generateGeminiImage, suggestCaption, buildImagePrompt, placeholderImage } from "../lib/newsHero.js";
 import { searchPexelsPhoto } from "../lib/pexels.js";
 
 const COOKIE_NAME = "admin_session";
@@ -91,6 +91,7 @@ export default async function handler(req, res) {
     const useAi = body.useAi === true || body.useAi === "1";
     const quality = clean(body.quality) || "high";
     const imageSource = clean(body.imageSource) || "ai"; // "ai" (default) | "pexels"
+    const aiProvider = clean(body.aiProvider) || "gemini"; // "gemini" (default) | "openai"
 
     // Resolve the background image.
     let imageBuffer;
@@ -103,8 +104,21 @@ export default async function handler(req, res) {
     // default flow, and as the fallback when a Pexels lookup is unavailable.
     async function resolveAiOrUrl() {
       if (useAi) {
-        if (!process.env.OPENAI_API_KEY) {
-          warning = "OPENAI_API_KEY not configured — used placeholder.";
+        const geminiKey = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+        const openaiKey = process.env.OPENAI_API_KEY;
+        // Prefer Gemini when chosen and configured; fall back to OpenAI; then placeholder.
+        if (aiProvider === "gemini" && geminiKey) {
+          try {
+            const { buffer, prompt } = await generateGeminiImage(item);
+            promptUsed = prompt;
+            return buffer;
+          } catch (err) {
+            warning = `Gemini image failed (${err?.message || err}) — ${openaiKey ? "used OpenAI." : "used placeholder."}`;
+            if (!openaiKey) return placeholderImage();
+          }
+        }
+        if (!openaiKey) {
+          if (!warning) warning = "No AI image key configured — used placeholder.";
           return placeholderImage();
         }
         const { buffer, prompt } = await generateAiImage(item, quality);

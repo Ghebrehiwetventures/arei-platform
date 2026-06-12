@@ -303,6 +303,33 @@ export async function generateAiImage(item, quality = "high") {
   return { buffer: Buffer.from(j.data[0].b64_json, "base64"), prompt };
 }
 
+// Generate an AI background via Google's Gemini image model (better editorial
+// photos). Uses GEMINI_API_KEY; model overridable via GEMINI_IMAGE_MODEL.
+// Returns the same { buffer, prompt } shape as generateAiImage.
+export async function generateGeminiImage(item) {
+  const key = process.env.GEMINI_API_KEY || process.env.GOOGLE_API_KEY;
+  if (!key) throw new Error("GEMINI_API_KEY is not configured");
+  const model = process.env.GEMINI_IMAGE_MODEL || "gemini-2.5-flash-image";
+  const prompt =
+    ((item.aiPrompt && item.aiPrompt.trim()) || buildImagePrompt(item)) +
+    " Output a single vertical 4:5 portrait photograph.";
+  const res = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json", "x-goog-api-key": key },
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] }),
+    }
+  );
+  if (!res.ok) throw new Error(`Gemini ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  const j = await res.json();
+  const parts = j?.candidates?.[0]?.content?.parts || [];
+  const img = parts.find((p) => p?.inlineData?.data || p?.inline_data?.data);
+  const data = img?.inlineData?.data || img?.inline_data?.data;
+  if (!data) throw new Error("Gemini returned no image");
+  return { buffer: Buffer.from(data, "base64"), prompt };
+}
+
 // Solid placeholder when no AI / URL image is available.
 export async function placeholderImage() {
   const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}"><rect width="${W}" height="${H}" fill="#2D4A42"/><text x="${W / 2}" y="${H / 2}" font-family="monospace" font-size="30" fill="${SAGE}" text-anchor="middle" opacity="0.8">[ no image ]</text></svg>`;
