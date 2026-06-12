@@ -597,6 +597,8 @@ const resources = {
         sub:
           "The rules for using this site. Browsing the index is free and open — these terms exist to protect the compiled data layer behind it.",
         updated: "Last updated · 11 June 2026",
+        disclaimerEyebrow: "Disclaimers",
+        disclaimerTitle: "Information, not guarantees.",
         sections: [
           ["Who we are", "The Cape Verde Real Estate Index, published by AREI.", "The Cape Verde Real Estate Index (capeverderealestateindex.com) is a read-only property index for Cape Verde, published as part of Africa Real Estate Index (AREI). By accessing or using the site, you agree to these terms of use."],
           ["Using the index", "Normal browsing is welcome.", "You may view publicly available pages through normal manual use of the website, follow source links, save listings in your browser, and share links to individual pages. The underlying property listings belong to their original sources, and every listing links back to the page it came from. What AREI owns — and what these terms protect — is the compiled layer built on top: the cleaning, normalization, deduplication, scoring, and aggregation that turn scattered listings into structured market data."],
@@ -1195,6 +1197,8 @@ const resources = {
         sub:
           "As regras de utilização deste site. Navegar no índice é livre e gratuito — estes termos existem para proteger a camada de dados compilados por trás dele.",
         updated: "Última atualização · 11 de junho de 2026",
+        disclaimerEyebrow: "Avisos",
+        disclaimerTitle: "Informação, não garantias.",
         sections: [
           ["Quem somos", "O Cape Verde Real Estate Index, publicado pela AREI.", "O Cape Verde Real Estate Index (capeverderealestateindex.com) é um índice imobiliário de Cabo Verde, apenas de leitura, publicado como parte da Africa Real Estate Index (AREI). Ao aceder ou utilizar o site, aceita estes termos de utilização."],
           ["Utilizar o índice", "A navegação normal é bem-vinda.", "Pode ver as páginas públicas através da utilização manual normal do site, seguir os links para as fontes, guardar anúncios no seu navegador e partilhar links para páginas individuais. Os anúncios imobiliários subjacentes pertencem às suas fontes originais, e cada anúncio liga de volta à página de onde veio. O que pertence à AREI — e o que estes termos protegem — é a camada compilada construída por cima: a limpeza, normalização, deduplicação, pontuação e agregação que transformam anúncios dispersos em dados de mercado estruturados."],
