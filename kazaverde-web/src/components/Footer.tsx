@@ -69,6 +69,7 @@ export default function Footer() {
             </a>
           </div>
           <div className="footer-legal">
+            <Link to="/terms">{t("common.terms")}</Link>
             <Link to="/privacy">{t("common.privacy")}</Link>
             <Link to="/cookie-policy">{t("common.cookies")}</Link>
           </div>

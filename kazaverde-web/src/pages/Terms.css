@@ -1,0 +1,39 @@
+/* ════════════════════════════════════════════════════════════
+   Terms — sub-clause blocks inside grouped policy bands.
+   ──────────────────────────────────────────────────────────────
+   Terms uses the standard kv-m-section bands (same alternating
+   rhythm as Privacy/Cookies) but groups two clauses per band.
+   The second clause renders as a kv-terms-sub: eyebrow + smaller
+   mono heading + prose, one step below the band head.
+   ════════════════════════════════════════════════════════════ */
+
+.kv-terms-sub {
+  margin-top: 56px;
+  max-width: 720px;
+}
+.kv-terms-sub .kv-l-eyebrow { margin-bottom: 0; }
+.kv-terms-sub h3 {
+  font-family: var(--kv-mono);
+  font-size: 19px;
+  font-weight: var(--kv-fw-regular);
+  letter-spacing: var(--kv-ls-display);
+  line-height: 1.3;
+  color: var(--kv-black);
+  margin: 10px 0 12px;
+  text-wrap: balance;
+}
+
+/* The core automated-access clause sits in a kv-pol-pull, which has
+   no link styling of its own — match kv-pol-prose links. */
+.kv-pol-pull a {
+  color: var(--kv-black);
+  text-decoration: none;
+  border-bottom: 1px solid var(--kv-ink-300);
+  transition: border-color var(--kv-dur-fast) var(--kv-ease);
+}
+.kv-pol-pull a:hover { border-color: var(--kv-black); }
+
+@media (max-width: 720px) {
+  .kv-terms-sub { margin-top: 40px; }
+  .kv-terms-sub h3 { font-size: 17px; }
+}

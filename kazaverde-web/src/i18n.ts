@@ -30,6 +30,7 @@ const resources = {
         viewAll: "View all",
         seeAll: "See all",
         contact: "Contact",
+        terms: "Terms",
         privacy: "Privacy",
         cookies: "Cookies",
         about: "About",
@@ -587,6 +588,27 @@ const resources = {
         moreBody:
           "For broader data-handling details, see the <1>Privacy Policy</1>. Questions? Email <3>info@africarealestateindex.com</3>.",
       },
+      terms: {
+        metaTitle: "Terms of Use",
+        metaDescription:
+          "The terms that govern use of the Cape Verde Real Estate Index, including automated access, scraping, and reuse of AREI's compiled data.",
+        eyebrow: "Terms of use",
+        title: "Terms of use.",
+        sub:
+          "The rules for using this site. Browsing the index is free and open — these terms exist to protect the compiled data layer behind it.",
+        updated: "Last updated · 11 June 2026",
+        disclaimerEyebrow: "Disclaimers",
+        disclaimerTitle: "Information, not guarantees.",
+        sections: [
+          ["Who we are", "The Cape Verde Real Estate Index, published by AREI.", "The Cape Verde Real Estate Index (capeverderealestateindex.com) is a read-only property index for Cape Verde, published as part of Africa Real Estate Index (AREI). By accessing or using the site, you agree to these terms of use."],
+          ["Using the index", "Normal browsing is welcome.", "You may view publicly available pages through normal manual use of the website, follow source links, save listings in your browser, and share links to individual pages. The underlying property listings belong to their original sources, and every listing links back to the page it came from. What AREI owns — and what these terms protect — is the compiled layer built on top: the cleaning, normalization, deduplication, scoring, and aggregation that turn scattered listings into structured market data."],
+          ["Automated access & data use", "No bulk extraction without permission.", "You may not use bots, scrapers, crawlers, spiders, automated scripts, data-mining tools, or similar technologies to access, extract, copy, monitor, reproduce, aggregate, download, reuse, or republish AREI's structured data — including normalized listings, scoring, metadata, source mappings, market signals, index data, historical datasets, broker information, or contact information — or any other compiled or transformed data, without prior written permission from AREI. To request permission or discuss data access, email <1>info@africarealestateindex.com</1>."],
+          ["Search engines", "Crawling for indexing is fine.", "Public search engines may crawl publicly accessible pages for indexing purposes, provided they comply with our robots.txt file and do not extract or reuse AREI's structured datasets or proprietary market signals. This restriction does not prevent anyone from manually viewing publicly available pages through normal use of the website."],
+          ["Data accuracy", "An index, not a guarantee.", "Listing data is collected from publicly accessible sources and normalized for comparison. Prices, availability, and details can change at the source without notice, and coverage is not complete. Always verify details on the original listing page and with the agent before making decisions."],
+          ["No advice", "Information, not recommendations.", "Nothing on this site constitutes investment, legal, tax, or valuation advice. Market data, scores, and signals are informational only. Seek independent professional advice before buying, selling, or investing."],
+          ["Updates & contact", "Material changes get a new date.", "We may update these terms as the product evolves. Material changes are noted with a fresh date at the top of this page. Questions? Email <1>info@africarealestateindex.com</1>."],
+        ],
+      },
     },
   },
   pt: {
@@ -607,6 +629,7 @@ const resources = {
         viewAll: "Ver tudo",
         seeAll: "Ver todos",
         contact: "Contacto",
+        terms: "Termos",
         privacy: "Privacidade",
         cookies: "Cookies",
         about: "Sobre",
@@ -1164,6 +1187,27 @@ const resources = {
         moreTitle: "Tratamento de dados mais amplo.",
         moreBody:
           "Para detalhes mais amplos sobre tratamento de dados, consulte a <1>Política de Privacidade</1>. Perguntas? Envie email para <3>info@africarealestateindex.com</3>.",
+      },
+      terms: {
+        metaTitle: "Termos de Utilização",
+        metaDescription:
+          "Os termos que regem a utilização do Cape Verde Real Estate Index, incluindo acesso automatizado, scraping e reutilização dos dados compilados da AREI.",
+        eyebrow: "Termos de utilização",
+        title: "Termos de utilização.",
+        sub:
+          "As regras de utilização deste site. Navegar no índice é livre e gratuito — estes termos existem para proteger a camada de dados compilados por trás dele.",
+        updated: "Última atualização · 11 de junho de 2026",
+        disclaimerEyebrow: "Avisos",
+        disclaimerTitle: "Informação, não garantias.",
+        sections: [
+          ["Quem somos", "O Cape Verde Real Estate Index, publicado pela AREI.", "O Cape Verde Real Estate Index (capeverderealestateindex.com) é um índice imobiliário de Cabo Verde, apenas de leitura, publicado como parte da Africa Real Estate Index (AREI). Ao aceder ou utilizar o site, aceita estes termos de utilização."],
+          ["Utilizar o índice", "A navegação normal é bem-vinda.", "Pode ver as páginas públicas através da utilização manual normal do site, seguir os links para as fontes, guardar anúncios no seu navegador e partilhar links para páginas individuais. Os anúncios imobiliários subjacentes pertencem às suas fontes originais, e cada anúncio liga de volta à página de onde veio. O que pertence à AREI — e o que estes termos protegem — é a camada compilada construída por cima: a limpeza, normalização, deduplicação, pontuação e agregação que transformam anúncios dispersos em dados de mercado estruturados."],
+          ["Acesso automatizado e uso de dados", "Sem extração em massa sem autorização.", "Não pode usar bots, scrapers, crawlers, spiders, scripts automatizados, ferramentas de data mining ou tecnologias semelhantes para aceder, extrair, copiar, monitorizar, reproduzir, agregar, descarregar, reutilizar ou republicar os dados estruturados da AREI — incluindo anúncios normalizados, pontuações, metadados, mapeamentos de fontes, sinais de mercado, dados do índice, conjuntos de dados históricos, informação de mediadores ou informação de contacto — nem quaisquer outros dados compilados ou transformados, sem autorização prévia por escrito da AREI. Para pedir autorização ou discutir acesso a dados, envie email para <1>info@africarealestateindex.com</1>."],
+          ["Motores de busca", "Crawling para indexação é permitido.", "Os motores de busca públicos podem fazer crawling das páginas públicas para fins de indexação, desde que respeitem o nosso ficheiro robots.txt e não extraiam nem reutilizem os conjuntos de dados estruturados da AREI ou os seus sinais de mercado proprietários. Esta restrição não impede ninguém de ver manualmente as páginas públicas através da utilização normal do site."],
+          ["Exatidão dos dados", "Um índice, não uma garantia.", "Os dados dos anúncios são recolhidos de fontes públicas e normalizados para comparação. Preços, disponibilidade e detalhes podem mudar na fonte sem aviso, e a cobertura não é completa. Verifique sempre os detalhes na página original do anúncio e com o agente antes de tomar decisões."],
+          ["Sem aconselhamento", "Informação, não recomendações.", "Nada neste site constitui aconselhamento de investimento, jurídico, fiscal ou de avaliação. Os dados de mercado, pontuações e sinais são apenas informativos. Procure aconselhamento profissional independente antes de comprar, vender ou investir."],
+          ["Atualizações e contacto", "Alterações materiais recebem uma nova data.", "Podemos atualizar estes termos à medida que o produto evolui. Alterações materiais são assinaladas com uma nova data no topo desta página. Perguntas? Envie email para <1>info@africarealestateindex.com</1>."],
+        ],
       },
     },
   },
