@@ -36,6 +36,7 @@ function suggestHighlight(headline: string): string {
 }
 
 type ImageSource = "ai" | "pexels" | "url" | "upload";
+type AiProvider = "gemini" | "openai";
 
 // Add/replace a single photo-credit line in the caption. Used when a Pexels
 // photo is chosen so the photographer is credited in the caption (not on the
@@ -129,6 +130,7 @@ export function NewsPostStudioView() {
   const [dek, setDek] = useState("");
   const [imageSource, setImageSource] = useState<ImageSource>("ai");
   const [quality, setQuality] = useState("high");
+  const [aiProvider, setAiProvider] = useState<AiProvider>("gemini");
   const [basePrompt, setBasePrompt] = useState("");
   const [tweakNote, setTweakNote] = useState("");
   const [imageUrl, setImageUrl] = useState("");
@@ -232,7 +234,7 @@ export function NewsPostStudioView() {
         body: JSON.stringify({
           category, headline, highlight, date, dek,
           useAi: opts?.aiPromptOverride ? true : imageSource === "ai" || imageSource === "pexels",
-          quality, imageUrl, location: region,
+          quality, aiProvider, imageUrl, location: region,
           imageSource: opts?.aiPromptOverride ? "ai" : imageSource,
           aiPrompt: opts?.aiPromptOverride || undefined,
         }),
@@ -554,13 +556,23 @@ export function NewsPostStudioView() {
           )}
 
           {imageSource === "ai" && (
-            <Field label="Quality">
-              <select className={inputCls} value={quality} onChange={(e) => setQuality(e.target.value)}>
-                <option value="high">high (≈ $0.25)</option>
-                <option value="medium">medium (≈ $0.06)</option>
-                <option value="low">low (≈ $0.02)</option>
-              </select>
-            </Field>
+            <>
+              <Field label="AI provider">
+                <select className={inputCls} value={aiProvider} onChange={(e) => setAiProvider(e.target.value as AiProvider)}>
+                  <option value="gemini">Gemini (better photos)</option>
+                  <option value="openai">OpenAI (gpt-image)</option>
+                </select>
+              </Field>
+              {aiProvider === "openai" && (
+                <Field label="Quality">
+                  <select className={inputCls} value={quality} onChange={(e) => setQuality(e.target.value)}>
+                    <option value="high">high (≈ $0.25)</option>
+                    <option value="medium">medium (≈ $0.06)</option>
+                    <option value="low">low (≈ $0.02)</option>
+                  </select>
+                </Field>
+              )}
+            </>
           )}
 
           {imageSource === "url" && (
