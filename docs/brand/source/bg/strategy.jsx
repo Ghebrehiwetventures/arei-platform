@@ -47,9 +47,9 @@ function BrandArchitecture({ which }) {
       {/* Sub-brands */}
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 16 }}>
         {[
-          { name: "kazaverde", role: "MARKET · CONSUMER", desc: "Verified listings + market index for Cape Verde", surface: "var(--kv-paper)", live: true, fg: "var(--kv-black)" },
-          { name: "kazanaija",  role: "MARKET · 2026 PIPELINE", desc: "Nigeria — name reserved, not committed", surface: "var(--kv-paper)", live: false, fg: "var(--kv-ink-400)" },
-          { name: "+ next market",  role: "MARKET · 2026 PIPELINE", desc: "Kenya / Ghana — naming TBC", surface: "var(--kv-paper)", live: false, fg: "var(--kv-ink-400)" },
+          { name: "Cape Verde Real Estate Index", role: "MARKET · CONSUMER", desc: "Verified listings + market index for Cape Verde", surface: "var(--kv-paper)", live: true, fg: "var(--kv-black)" },
+          { name: "Nigeria Real Estate Index",  role: "MARKET · 2026 PIPELINE", desc: "Nigeria — pattern naming, not committed", surface: "var(--kv-paper)", live: false, fg: "var(--kv-ink-400)" },
+          { name: "+ next market",  role: "MARKET · 2026 PIPELINE", desc: "Kenya / Ghana — [Country] Real Estate Index", surface: "var(--kv-paper)", live: false, fg: "var(--kv-ink-400)" },
         ].map((b, i) => (
           <div key={i} style={{ background: b.surface, border: `1px solid ${b.live ? "var(--kv-black)" : "var(--kv-rule)"}`, padding: 22, position: "relative" }}>
             {b.live && <div style={{ position: "absolute", top: -8, right: 16, background: "var(--kv-green)", color: "var(--kv-black)", fontFamily: "var(--kv-mono)", fontSize: 9, fontWeight: 700, letterSpacing: "0.16em", padding: "3px 8px", border: "1px solid var(--kv-black)" }}>LIVE</div>}
@@ -150,7 +150,7 @@ function ContentPillars() {
   const pillars = [
     { code: "P01", name: "Index updates",       cadence: "monthly",   formats: "Data drop · LinkedIn carousel · X card", desc: "CVREI release with the headline number, prior-period delta, and one chart of context." },
     { code: "P02", name: "Methodology",         cadence: "quarterly", formats: "Briefing PDF · Long-form post",          desc: "How the index is calculated, what changed, why we trust the sample. Versioned. Public." },
-    { code: "P03", name: "Verified listings",   cadence: "rolling",   formats: "kazaverde grid · IG feed",               desc: "Each new verified listing earns a card. Verified = paperwork checked, vendor confirmed, price posted." },
+    { code: "P03", name: "Verified listings",   cadence: "rolling",   formats: "CVREI grid · IG feed",               desc: "Each new verified listing earns a card. Verified = paperwork checked, vendor confirmed, price posted." },
     { code: "P04", name: "Local explainers",    cadence: "biweekly",  formats: "Article · X thread",                     desc: "Property tax, foreign-buyer law, IBI equivalent, deed registration. Boring on purpose." },
     { code: "P05", name: "Founder voice",       cadence: "biweekly",  formats: "LinkedIn post · Newsletter",             desc: "Why we're building this, what we found this week, what we got wrong. First-person, signed." },
     { code: "P06", name: "Market briefings",    cadence: "quarterly", formats: "Report PDF · Webinar",                   desc: "30-page diagnostic of one location: supply, transactions, risk, regulation. Sponsorable." },
@@ -183,16 +183,16 @@ function Checklist() {
     { name: "Identity", items: [
       { t: "Final logo SVG (icon + lockup variants, 5 surfaces)", p: "P0", d: "1d" },
       { t: "Favicon set (16/32/48/180/512)",                       p: "P0", d: "0.5d" },
-      { t: "Sub-brand lockups: kazaverde, +1 future market",       p: "P1", d: "1d" },
+      { t: "Market lockups: Cape Verde Real Estate Index, +1 future market", p: "P1", d: "1d" },
       { t: "Print master with bleed/mark guides",                  p: "P2", d: "0.5d" },
     ]},
     { name: "Type & color", items: [
-      { t: "IBM Plex Mono + Sans hosted self-served (woff2)",       p: "P0", d: "0.5d" },
+      { t: "Inter hosted self-served (woff2)",                      p: "P0", d: "0.5d" },
       { t: "Token CSS published to /static/tokens.css",            p: "P0", d: "0.5d" },
       { t: "Color tokens audited for AA on every surface",         p: "P1", d: "1d" },
     ]},
     { name: "Components", items: [
-      { t: "kazaverde site components codified in Storybook",      p: "P1", d: "3d" },
+      { t: "CVREI site components codified in Storybook",          p: "P1", d: "3d" },
       { t: "AREI dashboard components — same library",             p: "P1", d: "3d" },
       { t: "Status pill / KPI strip / data table primitives",      p: "P0", d: "1d" },
     ]},

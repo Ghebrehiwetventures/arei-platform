@@ -52,8 +52,8 @@ Do not generate assets until this document has been reviewed and the mark geomet
 - Dark mode variant: ink background (`#0A0A0A`), paper mark (`#FFFFFF`). Produce both where possible.
 
 **Typography**
-- IBM Plex Mono for any banner text (labels, descriptors, market callouts).
-- IBM Plex Sans for longer prose only (not needed for social assets).
+- Inter for all banner text (labels, descriptors, market callouts, prose).
+- Labels and callouts: caps with wide letter-spacing. Descriptors: normal tracking.
 - Weight: 400 or 500. Do not go heavier.
 
 **Photography**
@@ -76,7 +76,7 @@ Do not generate assets until this document has been reviewed and the mark geomet
 | Element | Recommendation |
 |---|---|
 | Profile image | D·Layers mark, centered on bone background. No text. |
-| Header | Ink background. IBM Plex Mono. One of the copy options (see §5). Left-aligned or centered. Large weight on the hero line. |
+| Header | Ink background. Inter. One of the copy options (see §5). Left-aligned or centered. Large weight on the hero line. |
 | Bio line | *Data acquisition and intelligence infrastructure for African property markets. Market 01: Cape Verde.* |
 | Main risk | Header text too small at mobile crop; always check 1500×500 at 375px viewport width. |
 
@@ -85,7 +85,7 @@ Do not generate assets until this document has been reviewed and the mark geomet
 | Element | Recommendation |
 |---|---|
 | Company logo | D·Layers mark, centered on bone background. No text. |
-| Banner | Bone or ink background. Core descriptor in IBM Plex Mono, large. Optionally: `MARKET 01 · CAPE VERDE` in small caps below. Do not crowd. |
+| Banner | Bone or ink background. Core descriptor in Inter, large. Optionally: `MARKET 01 · CAPE VERDE` in small caps below. Do not crowd. |
 | About line | *Data acquisition and intelligence infrastructure for African property markets.* |
 | Main risk | LinkedIn company banner ratio (1128×191) is extremely short — text-only or mark-only; no complex layout. |
 
@@ -93,7 +93,7 @@ Do not generate assets until this document has been reviewed and the mark geomet
 
 | Element | Recommendation |
 |---|---|
-| Banner | Ink background. `AREI` in large IBM Plex Mono. Descriptor in smaller weight below. Profile photo is placed bottom-left by LinkedIn; leave that zone clear. |
+| Banner | Ink background. `AREI` in large Inter, caps with wide tracking. Descriptor in smaller weight below. Profile photo is placed bottom-left by LinkedIn; leave that zone clear. |
 | Main risk | Profile photo overlaps bottom-left ~270px — do not place text or mark in that zone. |
 
 ### Instagram

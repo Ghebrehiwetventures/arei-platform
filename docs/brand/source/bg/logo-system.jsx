@@ -2,12 +2,12 @@
    LOGO SYSTEM
    Primary lockup pattern: [icon] [wordmark]
      - AREI primary:        icon + AREI
-     - Market lockup:       icon + KazaVerde
-     - Formal lockup:       icon + Cape Verde Real Estate Index
-     - Powered-by:          KazaVerde — powered by [icon] AREI
-   All wordmarks are IBM Plex Mono. AREI is set in caps with
-   tight tracking; KazaVerde sets lowercase for a softer
-   consumer surface.
+     - Market lockup:       icon + Cape Verde Real Estate Index
+     - Formal lockup:       icon + CVREI / Cape Verde Real Estate Index
+     - Powered-by:          Cape Verde Real Estate Index — powered by [icon] AREI
+   All wordmarks are Inter. AREI is set in caps with tight
+   tracking; market names set "CAPE VERDE" bold + "REAL ESTATE
+   INDEX" regular, both caps with wide tracking (matches live nav).
    ══════════════════════════════════════════════════════════ */
 
 const LOCKUP_HEIGHTS = { sm: 18, md: 24, lg: 36, xl: 56 };
@@ -40,19 +40,22 @@ function Lockup({ which, variant, size = "md", color, on = "paper" }) {
     );
   }
 
-  // ── Market lockup: icon + KazaVerde ──────────────────────
+  // ── Market lockup: icon + Cape Verde Real Estate Index ───
   if (variant === "market") {
     return (
       <span style={{ display: "inline-flex", alignItems: "center", gap: h * 0.4, color: fg }}>
         <Icon size={h} solid={true} />
         <span style={{
           fontFamily: "var(--kv-mono)",
-          fontSize: h * 0.6,
-          fontWeight: 500,
-          letterSpacing: "-0.01em",
+          fontSize: h * 0.42,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
           color: fg,
           lineHeight: 1,
-        }}>kazaverde</span>
+        }}>
+          <span style={{ fontWeight: 700 }}>Cape Verde</span>{" "}
+          <span style={{ fontWeight: 400, opacity: 0.75 }}>Real Estate Index</span>
+        </span>
       </span>
     );
   }
@@ -107,17 +110,18 @@ function Lockup({ which, variant, size = "md", color, on = "paper" }) {
     );
   }
 
-  // ── Powered-by lockup: kazaverde / powered by · AREI ────
+  // ── Powered-by lockup: market name / powered by · AREI ──
   if (variant === "powered") {
     return (
       <span style={{ display: "inline-flex", alignItems: "center", gap: h * 0.4, color: fg }}>
         <span style={{
           fontFamily: "var(--kv-mono)",
-          fontSize: h * 0.6,
-          fontWeight: 500,
-          letterSpacing: "-0.01em",
+          fontSize: h * 0.42,
+          fontWeight: 700,
+          letterSpacing: "0.14em",
+          textTransform: "uppercase",
           color: fg,
-        }}>kazaverde</span>
+        }}>Cape Verde <span style={{ fontWeight: 400, opacity: 0.75 }}>Real Estate Index</span></span>
         <span style={{
           width: 1,
           height: h * 0.9,
@@ -308,7 +312,7 @@ function DoDontGrid({ which }) {
           <span style={{ fontFamily: "var(--kv-mono)", fontSize: 18, fontWeight: 600, letterSpacing: "0.12em", color: "#e44" }}>AREI</span>
         </span>
       )}
-      {cell(false, "Don't substitute the type — only IBM Plex Mono",
+      {cell(false, "Don't substitute the type — only Inter",
         <span style={{ display: "inline-flex", alignItems: "center", gap: 10 }}>
           <Icon size={24} solid={true} />
           <span style={{ fontFamily: "Georgia, serif", fontSize: 22, fontWeight: 700, letterSpacing: "0.04em" }}>AREI</span>

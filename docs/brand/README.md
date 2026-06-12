@@ -47,8 +47,9 @@ Current implementations that must stay in sync with `d-layers-mark.svg`:
 
 | Face | Use |
 |---|---|
-| IBM Plex Mono | UI labels, headings, numbers, nav, all data |
-| IBM Plex Sans | Long-form prose only |
+| Inter | Everything — UI labels, headings, numbers, nav, data, and long-form prose |
+
+One family. Roles are differentiated by weight and letter-spacing (caps + tracking for labels/nav, tabular numerals for data), not by switching typefaces. Verified against live code 2026-06: all three apps load Inter only.
 
 Weights: 400 / 500 / 600. Do not go heavier — breaks the institutional tone.
 
@@ -73,7 +74,7 @@ Amber (`#92600a`) is a **severity-only semantic color** in admin — it is not a
 
 ## Product alignment
 
-All AREI products — admin, landing, reports, future CRM/broker tooling — share this brand system. Per-product accents exist within the sage family; the type system (IBM Plex) and neutrals are shared.
+All AREI products — admin, landing, reports, future CRM/broker tooling — share this brand system. Per-product accents exist within the sage family; the type system (Inter) and neutrals are shared.
 
 | Product | Accent | Dark mode | Notes |
 |---|---|---|---|
@@ -89,7 +90,7 @@ All AREI products — admin, landing, reports, future CRM/broker tooling — sha
 The following guidance is **stale** and superseded by this directory:
 
 - Admin-specific amber accent as primary — amber is severity only
-- Inter + JetBrains Mono as admin fonts — replaced by IBM Plex Sans + Mono (aligned 2026-05)
+- IBM Plex Mono + IBM Plex Sans as brand faces (2026-05 alignment) — replaced by Inter across all products (2026-06). JetBrains Mono as admin mono is also retired.
 - Any per-product mark that is not `d-layers-mark.svg`
 
 See also: `docs/04-platform/visual-identity.md` (cross-product rules and principles).
