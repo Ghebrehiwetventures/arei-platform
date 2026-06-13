@@ -130,6 +130,7 @@ export default function ShareMenu({
 
       {open && (
         <div className="kv-share-menu" role="menu">
+          <div className="kv-share-menu-head">{t("detail.shareTitle")}</div>
           {canNativeShare && (
             <button type="button" className="kv-share-item" role="menuitem" onClick={nativeShare}>
               {t("detail.shareNative")}
