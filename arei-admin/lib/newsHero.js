@@ -113,12 +113,14 @@ export async function renderHero(item) {
     b[0] === 0x52 && b[1] === 0x49 ? "image/webp" : "image/jpeg";
   const photoUri = `data:${mime};base64,` + b.toString("base64");
 
-  const words = (item.headline || "").toUpperCase().split(/\s+/);
-  const hset = highlightSet(words, item.highlight);
-  // Inter is wider than the old Plex Condensed, so use a slightly smaller grade
-  // and a wider char-width estimate so long headlines still wrap cleanly.
-  const hlFS = 84, hlLH = 88;
-  const lines = wrapWords(words, hlFS, W - 2 * M, 0.57);
+  // Headline matches the site's heading treatment (.kv-h1/.kv-h2): Inter,
+  // sentence case (the source casing, NOT uppercased), medium weight, tight
+  // -0.02em tracking. Highlight matching is case-insensitive (compare an
+  // uppercased copy) while we render the original-case words.
+  const words = (item.headline || "").split(/\s+/);
+  const hset = highlightSet(words.map((w) => w.toUpperCase()), item.highlight);
+  const hlFS = 84, hlLH = 92, hlLS = (hlFS * -0.02).toFixed(2);
+  const lines = wrapWords(words, hlFS, W - 2 * M, 0.54);
 
   // dek: wrap to max 2 lines; if it overflowed, end with an ellipsis (clean,
   // never mid-word).
@@ -148,7 +150,7 @@ export async function renderHero(item) {
 
   const headlineSvg = lines.map((idxs, li) => {
     const spans = idxs.map((i) => `<tspan fill="${hset.has(i) ? SAGE : BONE}">${esc(words[i])} </tspan>`).join("");
-    return `<text x="${M}" y="${hlFirstBaseline + li * hlLH}" font-family="${COND}" font-size="${hlFS}" font-weight="600" letter-spacing="-1.5">${spans}</text>`;
+    return `<text x="${M}" y="${hlFirstBaseline + li * hlLH}" font-family="${COND}" font-size="${hlFS}" font-weight="500" letter-spacing="${hlLS}">${spans}</text>`;
   }).join("\n");
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
