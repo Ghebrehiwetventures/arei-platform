@@ -21,6 +21,7 @@ import { getLocalizedDescription, getLocalizedTitle } from "../lib/i18n-listings
 // field instead of translating client-side.
 import { calcMortgage, type MortgageInput } from "../lib/calcMortgage";
 import NotFound from "./NotFound";
+import ShareMenu from "../components/ShareMenu";
 import "./Detail.css";
 
 const SITE_URL =
@@ -838,6 +839,9 @@ export default function Detail() {
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
                 </button>
+                {listingCanonicalUrl && (
+                  <ShareMenu url={listingCanonicalUrl} title={displayTitle} />
+                )}
               </div>
             </div>
           </div>
@@ -944,6 +948,9 @@ export default function Detail() {
             )}
             <div className="kv-d-mcta-source">{t("listings.source")} {formatSourceLabel(detail.source_id)}</div>
           </div>
+          {listingCanonicalUrl && (
+            <ShareMenu url={listingCanonicalUrl} title={displayTitle} className="kv-share-mcta" />
+          )}
           <a
             className="kv-d-mcta-btn"
             href={detail.source_url}
