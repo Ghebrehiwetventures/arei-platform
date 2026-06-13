@@ -38,14 +38,15 @@ function suggestHighlight(headline: string): string {
 type ImageSource = "ai" | "pexels" | "url" | "upload";
 type AiProvider = "gemini" | "openai";
 
-// Add/replace a single photo-credit line in the caption. Used when a Pexels
+// Add/replace a single photo-credit line in the caption. Used when a curated
 // photo is chosen so the photographer is credited in the caption (not on the
 // image). Idempotent across re-generates / shuffles: removes any prior credit
 // line first, so a new photographer replaces the old one without duplicating.
+// Matches credit lines from any provider (Pexels or Wikimedia Commons).
 function applyPhotoCredit(caption: string, credit: string): string {
   const stripped = caption
     .split("\n")
-    .filter((l) => !/^\s*Photo:\s.*\/\sPexels\s*$/i.test(l))
+    .filter((l) => !/^\s*Photo:\s.*\/\s(Pexels|Wikimedia Commons)\b.*$/i.test(l))
     .join("\n")
     .replace(/\n{3,}/g, "\n\n")
     .trimEnd();
