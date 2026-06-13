@@ -1,0 +1,72 @@
+/* Share menu — square trigger (reuses .kv-d-save geometry from Detail.css)
+   plus an anchored popover. Monochrome, mono type, hairline border:
+   same editorial idiom as the Index Record panels. No platform brand
+   colours — the share targets read as a quiet list, not a button bar. */
+
+.kv-share {
+  position: relative;
+  display: inline-flex;
+}
+
+/* Trigger inherits .kv-d-save sizing/border; this only nudges the
+   open-state colour so the button reads as active while the menu shows. */
+.kv-share-trigger[aria-expanded="true"] {
+  color: var(--kv-black);
+  border-color: var(--kv-black);
+}
+
+.kv-share-menu {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 50;
+  min-width: 184px;
+  padding: 6px;
+  background: var(--kv-paper);
+  border: 1px solid var(--kv-black);
+  box-shadow: 0 8px 28px rgba(0, 0, 0, 0.12);
+  display: flex;
+  flex-direction: column;
+}
+
+.kv-share-menu-head {
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-2xs);
+  letter-spacing: var(--kv-ls-eyebrow);
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  padding: 6px 10px 8px;
+}
+
+.kv-share-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  font-family: var(--kv-mono);
+  font-size: var(--kv-t-sm);
+  font-weight: var(--kv-fw-medium);
+  color: var(--kv-black);
+  background: transparent;
+  border: none;
+  padding: 9px 10px;
+  cursor: pointer;
+  text-decoration: none;
+  transition: background var(--kv-dur) var(--kv-ease);
+}
+
+.kv-share-item:hover,
+.kv-share-item:focus-visible {
+  background: var(--kv-off-white);
+  outline: none;
+}
+
+/* Mobile sticky-CTA variant — the popover opens upward, anchored to the
+   bottom bar, and stretches a touch wider for thumb targets. */
+.kv-share-mcta .kv-share-menu {
+  top: auto;
+  bottom: calc(100% + 10px);
+  min-width: 200px;
+}
+.kv-share-mcta .kv-share-item {
+  padding: 12px 12px;
+}
