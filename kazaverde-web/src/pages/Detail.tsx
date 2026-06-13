@@ -28,6 +28,16 @@ const SITE_URL =
   (typeof import.meta !== "undefined" && (import.meta as { env?: { VITE_SITE_URL?: string } }).env?.VITE_SITE_URL) ||
   (typeof window !== "undefined" ? window.location.origin : "https://capeverderealestateindex.com");
 
+// Public base used for share links specifically. Unlike SITE_URL it never
+// falls back to window.location.origin — a shared link must point at the
+// canonical production domain even when the page is served from a Vercel
+// preview deploy (otherwise we'd hand out throwaway *.vercel.app URLs that
+// break once the branch is cleaned up, and that social platforms can't
+// scrape for an OG preview).
+const SHARE_BASE =
+  (typeof import.meta !== "undefined" && (import.meta as { env?: { VITE_SITE_URL?: string } }).env?.VITE_SITE_URL) ||
+  "https://capeverderealestateindex.com";
+
 /** Collapse WP size variants (-1024x768.jpg) into one image per base filename, keeping the largest. */
 function dedupeWpImages(urls: string[]): string[] {
   const unique = [...new Set(urls)];
@@ -159,6 +169,11 @@ function buildListingCanonicalUrl(id: string): string {
   return new URL(`/listing/${id}`, SITE_URL).toString();
 }
 
+/** Share link — always rooted at the production domain (see SHARE_BASE). */
+function buildListingShareUrl(id: string): string {
+  return new URL(`/listing/${id}`, SHARE_BASE).toString();
+}
+
 function buildListingMetaDescription(detail: ListingDetailType, title: string, locale: string): string {
   const location = `${detail.city ? `${detail.city}, ` : ""}${detail.island}, Cape Verde`;
   const parts = [`${title} in ${location}.`];
@@ -216,6 +231,7 @@ export default function Detail() {
   const displayTitle = detail ? normalizeListingDisplayTitle(getLocalizedTitle(detail, i18n.language).title) : t("common.property");
   const localizedDescription = detail ? getLocalizedDescription(detail, i18n.language) : null;
   const listingCanonicalUrl = detail ? buildListingCanonicalUrl(detail.id) : undefined;
+  const listingShareUrl = detail ? buildListingShareUrl(detail.id) : undefined;
 
   useDocumentMeta(
     detail ? displayTitle : error ? t("detail.notFound") : t("common.property"),
@@ -839,8 +855,8 @@ export default function Detail() {
                     <path d="M19 21l-7-5-7 5V5a2 2 0 0 1 2-2h10a2 2 0 0 1 2 2z" />
                   </svg>
                 </button>
-                {listingCanonicalUrl && (
-                  <ShareMenu url={listingCanonicalUrl} title={displayTitle} />
+                {listingShareUrl && (
+                  <ShareMenu url={listingShareUrl} title={displayTitle} />
                 )}
               </div>
             </div>
@@ -948,8 +964,8 @@ export default function Detail() {
             )}
             <div className="kv-d-mcta-source">{t("listings.source")} {formatSourceLabel(detail.source_id)}</div>
           </div>
-          {listingCanonicalUrl && (
-            <ShareMenu url={listingCanonicalUrl} title={displayTitle} className="kv-share-mcta" />
+          {listingShareUrl && (
+            <ShareMenu url={listingShareUrl} title={displayTitle} className="kv-share-mcta" />
           )}
           <a
             className="kv-d-mcta-btn"
