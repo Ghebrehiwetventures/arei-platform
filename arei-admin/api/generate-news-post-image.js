@@ -155,7 +155,7 @@ export default async function handler(req, res) {
             imageBuffer = Buffer.from(await r.arrayBuffer());
             attribution = photo.attribution;
             photoMeta = {
-              photo_provider: "pexels",
+              photo_provider: photo.provider || "pexels",
               photo_author: photo.photographer,
               photo_author_url: photo.photographerUrl,
               photo_source_url: photo.sourceUrl,
