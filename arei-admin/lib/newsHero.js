@@ -7,8 +7,13 @@
  * files need to be bundled into the Vercel function.
  *
  * Design = the locked v1 system: full-bleed photo + ink gradient fade,
- * canonical CVREI lockup (CAPE VERDE bold), sage category pill, IBM Plex Sans
- * Condensed uppercase headline with a sage keyword highlight, dek line.
+ * canonical CVREI lockup (CAPE VERDE bold), sage category pill, uppercase
+ * headline with a sage keyword highlight, dek line.
+ *
+ * Typeface = Inter (400/500/600) only — one family, matching the site/brand
+ * (capeverderealestateindex.com). Roles are differentiated by weight and
+ * tracking, never by switching faces; brand caps weight at 600. The MONO/SANS/
+ * COND constants below are kept as role names but all resolve to Inter.
  */
 import { Resvg } from "@resvg/resvg-js";
 import os from "node:os";
@@ -17,24 +22,17 @@ import fs from "node:fs";
 
 const W = 1080, H = 1350, M = 72;
 const INK = "#0A0A0A", BONE = "#FAFAFA", SAGE = "#8ECFBF", GRAY = "#b9b9b9";
-const MONO = "IBM Plex Mono", SANS = "IBM Plex Sans", COND = "IBM Plex Sans Condensed";
+const MONO = "Inter", SANS = "Inter", COND = "Inter";
 
 // ── Fonts (fetched once, cached) ────────────────────────────────────────────
 const FONT_URLS = [
-  "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-mono@latest/latin-400-normal.ttf",
-  "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-mono@latest/latin-500-normal.ttf",
-  "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-mono@latest/latin-600-normal.ttf",
-  "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-mono@latest/latin-700-normal.ttf",
-  "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans@latest/latin-400-normal.ttf",
-  "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans@latest/latin-600-normal.ttf",
-  "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans@latest/latin-700-normal.ttf",
-  "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans-condensed@latest/latin-600-normal.ttf",
-  "https://cdn.jsdelivr.net/fontsource/fonts/ibm-plex-sans-condensed@latest/latin-700-normal.ttf",
+  "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-400-normal.ttf",
+  "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-500-normal.ttf",
+  "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-600-normal.ttf",
 ];
-// Fonts are written to /tmp and passed to resvg as fontFiles (paths). resvg's
-// family resolution from on-disk files correctly distinguishes "IBM Plex Sans"
-// from "IBM Plex Sans Condensed"; in-memory fontBuffers did not, which broke
-// the condensed headline. Cached across warm invocations.
+// Fonts are written to /tmp and passed to resvg as fontFiles (paths), cached
+// across warm invocations. One family (Inter) so no condensed/sans resolution
+// ambiguity to worry about.
 let FONT_FILES = null;
 async function loadFonts() {
   if (FONT_FILES) return FONT_FILES;
@@ -70,7 +68,7 @@ function lockup(x, y, color, h = 46) {
   const y1 = y + t - 1;
   return `${mark(x, y, h, color)}
   <g font-family="${MONO}" font-size="${t}" letter-spacing="${ls}" fill="${color}">
-    <text x="${tx}" y="${y1}" font-weight="700">CAPE VERDE</text>
+    <text x="${tx}" y="${y1}" font-weight="600">CAPE VERDE</text>
     <text x="${tx}" y="${y1 + adv}" font-weight="400" opacity="0.85">REAL ESTATE</text>
     <text x="${tx}" y="${y1 + adv * 2}" font-weight="400" opacity="0.85">INDEX</text>
   </g>`;
@@ -117,8 +115,10 @@ export async function renderHero(item) {
 
   const words = (item.headline || "").toUpperCase().split(/\s+/);
   const hset = highlightSet(words, item.highlight);
-  const hlFS = 92, hlLH = 92;
-  const lines = wrapWords(words, hlFS, W - 2 * M);
+  // Inter is wider than the old Plex Condensed, so use a slightly smaller grade
+  // and a wider char-width estimate so long headlines still wrap cleanly.
+  const hlFS = 84, hlLH = 88;
+  const lines = wrapWords(words, hlFS, W - 2 * M, 0.57);
 
   // dek: wrap to max 2 lines; if it overflowed, end with an ellipsis (clean,
   // never mid-word).
@@ -148,7 +148,7 @@ export async function renderHero(item) {
 
   const headlineSvg = lines.map((idxs, li) => {
     const spans = idxs.map((i) => `<tspan fill="${hset.has(i) ? SAGE : BONE}">${esc(words[i])} </tspan>`).join("");
-    return `<text x="${M}" y="${hlFirstBaseline + li * hlLH}" font-family="${COND}" font-size="${hlFS}" font-weight="700" letter-spacing="-1">${spans}</text>`;
+    return `<text x="${M}" y="${hlFirstBaseline + li * hlLH}" font-family="${COND}" font-size="${hlFS}" font-weight="600" letter-spacing="-1.5">${spans}</text>`;
   }).join("\n");
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
@@ -170,12 +170,12 @@ export async function renderHero(item) {
   <rect width="${W}" height="${H}" fill="url(#fade)"/>
   ${lockup(M, M, BONE)}
   ${showNav ? `<rect x="${W - M - 150}" y="${M}" width="150" height="44" rx="22" fill="none" stroke="${BONE}" stroke-width="2"/>
-  <text x="${W - M - 73}" y="${M + 29}" font-family="${MONO}" font-size="20" font-weight="700" letter-spacing="2" fill="${BONE}" text-anchor="middle">SWIPE ›</text>` : ""}
+  <text x="${W - M - 73}" y="${M + 29}" font-family="${MONO}" font-size="20" font-weight="600" letter-spacing="2" fill="${BONE}" text-anchor="middle">SWIPE ›</text>` : ""}
   <rect x="${M}" y="${pillY}" width="${catW}" height="${catH}" fill="${SAGE}"/>
-  <text x="${M + catPad}" y="${pillY + 30}" font-family="${SANS}" font-size="${catFS}" font-weight="700" letter-spacing="1" fill="${INK}">${esc(cat)}</text>
+  <text x="${M + catPad}" y="${pillY + 30}" font-family="${SANS}" font-size="${catFS}" font-weight="600" letter-spacing="1" fill="${INK}">${esc(cat)}</text>
   ${headlineSvg}
   ${dek.map((ln, i) => `<text x="${M}" y="${dekFirstBaseline + i * 36}" font-family="${SANS}" font-size="27" font-weight="400" fill="${GRAY}">${esc(ln)}</text>`).join("\n")}
-  ${showNav ? `<text x="${W - M}" y="${footerY}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>` : ""}
+  ${showNav ? `<text x="${W - M}" y="${footerY}" font-family="${MONO}" font-size="22" font-weight="600" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>` : ""}
 </svg>`;
 
   return new Resvg(svg, {
@@ -216,10 +216,10 @@ export async function renderDetailSlide(item) {
   <rect x="0" y="${seam}" width="${W}" height="${H - seam}" fill="${INK}"/>
   ${lockup(M, M, BONE)}
   <text x="${W - M}" y="${M + 28}" font-family="${MONO}" font-size="22" font-weight="600" letter-spacing="2" fill="${BONE}" text-anchor="end">0${idx} / 0${total}</text>
-  <text x="${M}" y="${seam + 78}" font-family="${COND}" font-size="68" font-weight="700" fill="${SAGE}" letter-spacing="-1">${esc(kicker)}</text>
+  <text x="${M}" y="${seam + 78}" font-family="${COND}" font-size="68" font-weight="600" fill="${SAGE}" letter-spacing="-1.5">${esc(kicker)}</text>
   <line x1="${M}" y1="${seam + 102}" x2="${W - M}" y2="${seam + 102}" stroke="${SAGE}" stroke-width="1" opacity="0.35"/>
   ${bulletSvg}
-  <text x="${W - M}" y="${H - 50}" font-family="${MONO}" font-size="22" font-weight="700" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>
+  <text x="${W - M}" y="${H - 50}" font-family="${MONO}" font-size="22" font-weight="600" letter-spacing="2" fill="${SAGE}" text-anchor="end">›››</text>
 </svg>`;
 
   return new Resvg(svg, {
