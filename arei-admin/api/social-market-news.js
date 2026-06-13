@@ -319,7 +319,7 @@ A single sentence, max 12 words. Lead with the strongest data point or
 observation from the news post. Examples:
 
   "Sal's monitored asking prices moved 2.1 percent in March."
-  "€2,180 per square meter — the current Sal median."
+  "2 180 €/m² — the current Sal median."
   "New listings across Cape Verde fell 8 percent month over month."
 
 Do not write:
@@ -335,7 +335,7 @@ in the source post.
 Acceptable:
   "Across 412 monitored residential listings on Sal, median asking
    prices moved up 2.1 percent in March. The shift was concentrated in
-   Santa Maria, where new listings continue to enter at €2,200/m² and
+   Santa Maria, where new listings continue to enter at 2 200 €/m² and
    above. Santiago and São Vicente remained flat."
 
 Not acceptable:
@@ -345,7 +345,7 @@ Not acceptable:
 (line 3 — KEY FIGURES, formatted as block)
 Use this exact format:
 
-  Median asking · €2,180/m²
+  Median asking · 2 180 €/m²
   Month-over-month · +2.1%
   Monitored listings · 412
   Period · March 2026
@@ -380,7 +380,7 @@ Frame 2: The context (period, monitored set size, comparison).
 Frame 3: Source attribution + "Read the full briefing →"
 
 Example:
-  Frame 1: "Sal median asking: €2,180/m²"
+  Frame 1: "Sal median asking: 2 180 €/m²"
   Frame 2: "412 monitored listings · March 2026 · +2.1% MoM"
   Frame 3: "AREI · Cape Verde Real Estate Index"
 
@@ -450,8 +450,11 @@ Always:
 - Lead with the number. State the metric. State the period.
 - Use "monitored set" / "monitored listings" — never claim full market
   coverage.
-- Round naturally (€2,180/m², not €2,179.83/m²) unless the source post
+- Round naturally (2 180 €/m², not 2 179.83 €/m²) unless the source post
   uses precise figures.
+- Format every price with a space as the thousands separator and the euro
+  symbol after the amount (2 180 €/m², 300 000 €). Never use a comma or dot
+  as a thousands separator — SV/PT readers read those as decimals.
 - Use Cape Verdean place names in their local form (Santa Maria, São
   Vicente, Mindelo).
 - Treat the source post as truth. Quote its figures, do not modify them.

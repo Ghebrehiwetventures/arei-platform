@@ -106,7 +106,7 @@ function previewImageUrl(url: string, size = 220): string {
 
 function formatPriceEUR(price: number | null): string {
   return price
-    ? new Intl.NumberFormat("en-US", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(price)
+    ? new Intl.NumberFormat("sv-SE", { style: "currency", currency: "EUR", maximumFractionDigits: 0 }).format(price)
     : "POA";
 }
 

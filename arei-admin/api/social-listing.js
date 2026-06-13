@@ -133,7 +133,9 @@ function sourceName(sourceId) {
 
 function formatPrice(price, pricePeriod) {
   if (!price) return null;
-  const formatted = new Intl.NumberFormat("en-US", {
+  // sv-SE: space as thousands separator, symbol after the amount (e.g. "300 000 €").
+  // Avoids comma/dot being read as a decimal by SV/PT audiences.
+  const formatted = new Intl.NumberFormat("sv-SE", {
     style: "currency",
     currency: "EUR",
     maximumFractionDigits: 0,
@@ -277,7 +279,9 @@ function buildTemplateCaption(listing) {
 const CAPTION_SYSTEM_PROMPT = `Write two parts for an Instagram caption about a Cape Verde property listing.
 
 Part 1 — Hook (max 10 words):
-Location + price. Example: 'Santa Maria, Sal — €110,000.'
+Location + price. Example: 'Santa Maria, Sal — 110 000 €.'
+Always format prices with a space as the thousands separator and the
+euro symbol after the amount (110 000 €, never €110,000 or €110.000).
 
 Part 2 — Description (2-3 sentences):
 Describe the property using specific details from the listing. Focus on: size, layout, location context, construction stage, views, key features. Plain english. Professional tone. No hype.
