@@ -29,15 +29,6 @@
   flex-direction: column;
 }
 
-.kv-share-menu-head {
-  font-family: var(--kv-mono);
-  font-size: var(--kv-t-2xs);
-  letter-spacing: var(--kv-ls-eyebrow);
-  text-transform: uppercase;
-  color: var(--kv-gray-500);
-  padding: 6px 10px 8px;
-}
-
 .kv-share-item {
   display: block;
   width: 100%;

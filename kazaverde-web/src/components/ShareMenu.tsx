@@ -99,8 +99,14 @@ export default function ShareMenu({
     }
   };
 
+  // Native share is the natural primary on touch devices; on desktop it
+  // just duplicates the explicit list below, so gate it to coarse pointers.
   const canNativeShare =
-    typeof navigator !== "undefined" && typeof navigator.share === "function";
+    typeof navigator !== "undefined" &&
+    typeof navigator.share === "function" &&
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(pointer: coarse)").matches;
 
   return (
     <div className={`kv-share ${className}`} ref={wrapRef}>
@@ -124,7 +130,6 @@ export default function ShareMenu({
 
       {open && (
         <div className="kv-share-menu" role="menu">
-          <div className="kv-share-menu-head">{t("detail.shareTitle")}</div>
           {canNativeShare && (
             <button type="button" className="kv-share-item" role="menuitem" onClick={nativeShare}>
               {t("detail.shareNative")}
