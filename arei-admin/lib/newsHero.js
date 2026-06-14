@@ -118,9 +118,26 @@ export async function renderHero(item) {
   // -0.02em tracking. Highlight matching is case-insensitive (compare an
   // uppercased copy) while we render the original-case words.
   const words = (item.headline || "").split(/\s+/);
-  const hset = highlightSet(words.map((w) => w.toUpperCase()), item.highlight);
-  const hlFS = 84, hlLH = 92, hlLS = (hlFS * -0.02).toFixed(2);
-  const lines = wrapWords(words, hlFS, W - 2 * M, 0.54);
+  let hset = highlightSet(words.map((w) => w.toUpperCase()), item.highlight);
+  // Guard: the sage highlight is an accent, not a second colour for the headline.
+  // If it resolves to more than 3 words it would tint half the title (it did on
+  // long real headlines), so drop it rather than let it take over.
+  if (hset.size > 3) hset = new Set();
+
+  // Auto-fit the headline: real news headlines run from 4 to 12 words, so a
+  // fixed grade either looks tiny or balloons to 5–6 cramped lines. Step the
+  // grade down until it fits within HL_MAX_LINES — long headlines stay calm,
+  // short ones stay bold. Char-width 0.56 ≈ Inter mixed-case at display sizes.
+  const HL_LADDER = [88, 80, 72, 64, 58, 52];
+  const HL_MAX_LINES = 4;
+  const HL_CHARW = 0.56;
+  let hlFS = HL_LADDER[HL_LADDER.length - 1];
+  let lines = wrapWords(words, hlFS, W - 2 * M, HL_CHARW);
+  for (const fs of HL_LADDER) {
+    const candidate = wrapWords(words, fs, W - 2 * M, HL_CHARW);
+    if (candidate.length <= HL_MAX_LINES) { hlFS = fs; lines = candidate; break; }
+  }
+  const hlLH = Math.round(hlFS * 1.1), hlLS = (hlFS * -0.02).toFixed(2);
 
   // dek: wrap to max 2 lines; if it overflowed, end with an ellipsis (clean,
   // never mid-word).
