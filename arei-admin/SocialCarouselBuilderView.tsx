@@ -295,9 +295,11 @@ export function SocialCarouselBuilderView() {
   const setCleared = (id: string, adCleared: boolean) => setSelected((cur) => cur.map((s) => (s.id === id ? { ...s, adCleared } : s)));
   function randomize() {
     if (listings.length === 0) return;
+    // Match the concept's listing count (e.g. 5 for "5 homes under €100k").
+    const count = Math.min(5, Math.max(1, preset.defaultListings || 3), listings.length);
     const pool = [...listings];
     for (let i = pool.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [pool[i], pool[j]] = [pool[j], pool[i]]; }
-    setSelected(pool.slice(0, Math.min(3, pool.length)).map((l) => ({ id: l.id, img: l.images.length ? Math.floor(Math.random() * l.images.length) : 0, adCleared: false })));
+    setSelected(pool.slice(0, count).map((l) => ({ id: l.id, img: l.images.length ? Math.floor(Math.random() * l.images.length) : 0, adCleared: false })));
   }
 
   const Thumb = ({ url, cls }: { url: string; cls: string }) =>
