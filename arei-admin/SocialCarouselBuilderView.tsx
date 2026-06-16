@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { supabaseAuth } from "./supabase";
 import { makeZip, base64ToBytes, downloadBlob, type ZipFile } from "./zip";
 import { proxyThumb } from "./imageProxy";
-import { PRESETS, CTA_PRESETS, LISTING_LABELS, DISCLOSURE, type CarouselPreset } from "./carouselPresets";
+import { PRESETS, CTA_PRESETS, LISTING_LABELS, DISCLOSURE, SINGLE_DISCLOSURE, type CarouselPreset } from "./carouselPresets";
 
 // Social Carousel Builder — manual, photo-first social carousels from REAL
 // Cape Verde listings + real market data. Multiple campaign concepts (presets),
@@ -52,6 +52,8 @@ const slug = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").r
 export function SocialCarouselBuilderView() {
   const [presetId, setPresetId] = useState(PRESETS[0].id);
   const preset = useMemo<CarouselPreset>(() => PRESETS.find((p) => p.id === presetId) || PRESETS[0], [presetId]);
+  const single = preset.mode === "single"; // one-listing spotlight (Cheap-Old-Houses-style discovery)
+  const maxSelect = single ? 1 : 5;
 
   const [cap, setCap] = useState(PRESETS[0].priceCap || 100000);
   const [listings, setListings] = useState<Listing[]>([]);
@@ -142,9 +144,18 @@ export function SocialCarouselBuilderView() {
   }
 
   function regenerateCaptions() {
-    const sources = Array.from(new Set(selectedListings.map((l) => l.source_name)));
     const igTags = "#CapeVerde #CaboVerde #RealEstate #PropertyInvestment #IslandLife #CVREI" + (preset.allowMoment ? " #WorldCup" : "");
     const ttTags = "#capeverde #caboverde #realestate" + (preset.allowMoment ? " #worldcup" : "") + " #fyp";
+    if (single) {
+      // Source-linked spotlight: the listing + image belong to the original
+      // source. Strong disclosure + the source name/URL in the caption.
+      const l = selectedListings[0];
+      const srcLine = l ? `Source: ${l.source_name} — ${l.source_url || l.listing_url}` : "";
+      setIgCaption([preset.captionAngle, srcLine, SINGLE_DISCLOSURE, igTags].filter(Boolean).join("\n\n"));
+      setTtCaption([preset.captionAngle, srcLine, SINGLE_DISCLOSURE, ttTags].filter(Boolean).join("\n\n"));
+      return;
+    }
+    const sources = Array.from(new Set(selectedListings.map((l) => l.source_name)));
     const srcLine = sources.length ? `Source-linked listings via ${sources.join(", ")}.` : "";
     setIgCaption([preset.captionAngle, srcLine, DISCLOSURE, landingUrl, igTags].filter(Boolean).join("\n\n"));
     setTtCaption([preset.coverTitle, preset.captionAngle, DISCLOSURE, ttTags].filter(Boolean).join("\n\n"));
@@ -161,6 +172,19 @@ export function SocialCarouselBuilderView() {
       cleared: selected[i]?.adCleared ?? false,
     }));
     const list: SlideSpec[] = [];
+
+    // Single Listing spotlight: one photo-first listing slide + a source CTA.
+    if (single) {
+      const s0 = sel[0];
+      if (s0) list.push({
+        type: "listing", label: `Listing · ${s0.l.priceLabel}`, tag: listingLabel,
+        price: s0.l.priceLabel, specs: s0.l.specs, location: s0.l.island, source: s0.l.source_name,
+        imageUrl: photoAllowed(s0.cleared) ? s0.img : undefined, idx: 1, total: 2,
+      });
+      list.push({ type: "cta", label: "CTA", kicker: "// VIEW ORIGINAL SOURCE", title: ctaTitle, accent: lastWords(ctaTitle, 2), sub: ctaSub, url: ctaUrl });
+      return list;
+    }
+
     const coverImg = coverPhoto && sel[0] && photoAllowed(sel[0].cleared) ? sel[0].img : undefined;
     list.push({ type: "cover", label: "Cover", kicker: coverKicker, title: coverTitle, accent: euroToken(coverTitle) || lastWords(coverTitle, 2), imageUrl: coverImg });
     if (stmtOn) list.push({ type: "statement", label: "Statement", kicker: stmtKicker, text: stmtText, accent: lastWords(stmtText, 2) });
@@ -193,10 +217,11 @@ export function SocialCarouselBuilderView() {
   }
 
   const needListings = preset.listingsRequired;
-  const canRender = !loading && (!needListings || selected.length >= 3);
+  const minListings = single ? 1 : 3;
+  const canRender = !loading && (!needListings || selected.length >= minListings);
 
   async function renderPreview() {
-    if (needListings && selected.length < 3) { setRenderError("This concept needs at least 3 listings."); return; }
+    if (needListings && selected.length < minListings) { setRenderError(single ? "Pick a listing." : "This concept needs at least 3 listings."); return; }
     setRendering(true); setRenderError(null); setPublished(null); setPublishError(null);
     try {
       if (!igCaption && !ttCaption) regenerateCaptions();
@@ -287,7 +312,8 @@ export function SocialCarouselBuilderView() {
   function toggleSelect(id: string) {
     setSelected((cur) => {
       if (cur.some((s) => s.id === id)) return cur.filter((s) => s.id !== id);
-      if (cur.length >= 5) return cur;
+      if (single) return [{ id, img: 0, adCleared: false }]; // single mode: replace (max 1)
+      if (cur.length >= maxSelect) return cur;
       return [...cur, { id, img: 0, adCleared: false }];
     });
   }
@@ -339,7 +365,9 @@ export function SocialCarouselBuilderView() {
           <button onClick={randomize} disabled={loading || listings.length === 0} className="px-3 py-2 rounded border border-border text-xs font-mono hover:bg-surface-2 disabled:opacity-50">🎲 Random mix</button>
         </div>
         <p className="text-[11px] font-mono text-foreground-subtle mt-2">
-          {needListings ? "This concept uses listing slides (pick 3–5 below)." : "This concept is text-led — listings are optional."}
+          {single ? "Single Listing spotlight — one source-linked listing + a source CTA (pick 1 below)."
+            : needListings ? "This concept uses listing slides (pick 3–5 below)."
+            : "This concept is text-led — listings are optional."}
         </p>
       </Section>
 
@@ -362,7 +390,7 @@ export function SocialCarouselBuilderView() {
       </Section>
 
       {/* ── Listings ───────────────────────────────── */}
-      <Section title={`3 · Listings (${selected.length}/5 · ${listings.length} eligible under ${capLabel(cap)})`}>
+      <Section title={`3 · ${single ? "Listing" : "Listings"} (${selected.length}/${maxSelect} · ${listings.length} eligible under ${capLabel(cap)})`}>
         {loading && <div className="text-xs text-foreground-muted">Loading listings…</div>}
         {loadError && <div className="text-xs text-[#C44A3A]">{loadError}</div>}
         {!loading && !loadError && listings.length === 0 && (
@@ -413,7 +441,7 @@ export function SocialCarouselBuilderView() {
 
         {listings.length > 0 && (
           <div>
-            <Label>Eligible — click to add / remove (max 5)</Label>
+            <Label>Eligible — click to add / remove (max {maxSelect})</Label>
             <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-2 mt-1 max-h-[360px] overflow-y-auto">
               {listings.map((l) => {
                 const sel = selected.some((s) => s.id === l.id);
@@ -441,32 +469,42 @@ export function SocialCarouselBuilderView() {
       <Section title="4 · Copy">
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Field label="Cover kicker"><input className={inputCls} value={coverKicker} onChange={(e) => setCoverKicker(e.target.value)} /></Field>
-            <Field label="Cover headline"><input className={inputCls} value={coverTitle} onChange={(e) => setCoverTitle(e.target.value)} /></Field>
-            <label className="flex items-center gap-2 text-[11px] font-mono text-foreground-subtle">
-              <input type="checkbox" checked={coverPhoto} onChange={(e) => setCoverPhoto(e.target.checked)} />
-              Use first listing photo on cover (else clean editorial cover)
-            </label>
+            {!single && (
+              <>
+                <Field label="Cover kicker"><input className={inputCls} value={coverKicker} onChange={(e) => setCoverKicker(e.target.value)} /></Field>
+                <Field label="Cover headline"><input className={inputCls} value={coverTitle} onChange={(e) => setCoverTitle(e.target.value)} /></Field>
+                <label className="flex items-center gap-2 text-[11px] font-mono text-foreground-subtle">
+                  <input type="checkbox" checked={coverPhoto} onChange={(e) => setCoverPhoto(e.target.checked)} />
+                  Use first listing photo on cover (else clean editorial cover)
+                </label>
+              </>
+            )}
             <Field label="Listing-card label">
               <select className={inputCls} value={listingLabel} onChange={(e) => setListingLabel(e.target.value)}>
                 {LISTING_LABELS.map((l) => <option key={l}>{l}</option>)}
               </select>
             </Field>
-            <label className="flex items-center gap-2 text-[11px] font-mono text-foreground-subtle">
-              <input type="checkbox" checked={stmtOn} onChange={(e) => setStmtOn(e.target.checked)} /> Include statement slide
-            </label>
-            {stmtOn && (
+            {!single && (
               <>
-                <Field label="Statement kicker"><input className={inputCls} value={stmtKicker} onChange={(e) => setStmtKicker(e.target.value)} /></Field>
-                <Field label="Statement text"><textarea className={inputCls} rows={2} value={stmtText} onChange={(e) => setStmtText(e.target.value)} /></Field>
+                <label className="flex items-center gap-2 text-[11px] font-mono text-foreground-subtle">
+                  <input type="checkbox" checked={stmtOn} onChange={(e) => setStmtOn(e.target.checked)} /> Include statement slide
+                </label>
+                {stmtOn && (
+                  <>
+                    <Field label="Statement kicker"><input className={inputCls} value={stmtKicker} onChange={(e) => setStmtKicker(e.target.value)} /></Field>
+                    <Field label="Statement text"><textarea className={inputCls} rows={2} value={stmtText} onChange={(e) => setStmtText(e.target.value)} /></Field>
+                  </>
+                )}
               </>
             )}
           </div>
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-[11px] font-mono text-foreground-subtle">
-              <input type="checkbox" checked={pcOn} onChange={(e) => setPcOn(e.target.checked)} /> Include price-check slide
-            </label>
-            {pcOn && (
+            {!single && (
+              <label className="flex items-center gap-2 text-[11px] font-mono text-foreground-subtle">
+                <input type="checkbox" checked={pcOn} onChange={(e) => setPcOn(e.target.checked)} /> Include price-check slide
+              </label>
+            )}
+            {!single && pcOn && (
               <>
                 <Field label="Price-check kicker"><input className={inputCls} value={pcKicker} onChange={(e) => setPcKicker(e.target.value)} /></Field>
                 <Field label={`Price-check headline (blank = "${selected.length} homes under ${capLabel(cap)}")`}>

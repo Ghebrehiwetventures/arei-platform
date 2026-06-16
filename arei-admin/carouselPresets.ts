@@ -5,6 +5,7 @@
 export interface CarouselPreset {
   id: string;
   name: string;
+  mode?: "carousel" | "single"; // "single" = one-listing spotlight (default carousel)
   coverTitle: string;
   coverKicker: string;
   cta: string;
@@ -27,6 +28,19 @@ export const PRESETS: CarouselPreset[] = [
     priceCap: 100000,
     allowMoment: true,
     captionAngle: "Everyone is looking at Cape Verde. We track what property actually costs there.",
+  },
+  {
+    id: "single-listing",
+    name: "Single listing spotlight",
+    mode: "single",
+    coverTitle: "Source-linked listing from the Cape Verde Real Estate Index",
+    coverKicker: "// SOURCE-LINKED LISTING",
+    cta: "View the source-linked listing",
+    listingsRequired: true,
+    defaultListings: 1,
+    priceCap: 1000000,
+    allowMoment: false,
+    captionAngle: "Source-linked listing from the Cape Verde Real Estate Index.",
   },
   {
     id: "5-under-100k",
@@ -89,6 +103,7 @@ export const PRESETS: CarouselPreset[] = [
 
 // CTA headline presets — conversion-oriented, not stiff.
 export const CTA_PRESETS = [
+  "View the source-linked listing",
   "Track the Cape Verde property market.",
   "Get the Cape Verde Property Watchlist.",
   "Follow real listings. Understand the market.",
@@ -102,3 +117,8 @@ export const LISTING_LABELS = ["INDEXED LISTING", "LISTING SNAPSHOT", "SOURCE-LI
 // Non-broker disclosure, added to captions + metadata.
 export const DISCLOSURE =
   "Cape Verde Real Estate Index is not a broker. We organize public, source-linked listings to make the market easier to understand.";
+
+// Stronger disclosure for single-listing spotlights (the listing + its image
+// belong to the original source; we're a discovery layer, not the owner).
+export const SINGLE_DISCLOSURE =
+  "CVREI is not a broker and does not own this listing or image. Listing information and images remain with the original source. We organize public, source-linked listings to make the market easier to understand.";
