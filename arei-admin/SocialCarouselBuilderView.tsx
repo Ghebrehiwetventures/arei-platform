@@ -322,6 +322,22 @@ export function SocialCarouselBuilderView() {
   function setImg(id: string, img: number) {
     setSelected((cur) => cur.map((s) => (s.id === id ? { ...s, img } : s)));
   }
+  // Surprise-me: pick 3 random listings from the (already quality-ranked)
+  // eligible pool, with a random photo each. Quick way to get a fresh mix.
+  function randomize() {
+    if (listings.length === 0) return;
+    const pool = [...listings];
+    for (let i = pool.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1));
+      [pool[i], pool[j]] = [pool[j], pool[i]];
+    }
+    setSelected(
+      pool.slice(0, Math.min(3, pool.length)).map((l) => ({
+        id: l.id,
+        img: l.images.length ? Math.floor(Math.random() * l.images.length) : 0,
+      }))
+    );
+  }
 
   return (
     <div className="max-w-[1100px]">
@@ -360,6 +376,14 @@ export function SocialCarouselBuilderView() {
             className="px-3 py-2 rounded border border-border text-xs font-mono hover:bg-surface-2"
           >
             ↻ Reload eligible listings
+          </button>
+          <button
+            onClick={randomize}
+            disabled={loading || listings.length === 0}
+            className="px-3 py-2 rounded border border-border text-xs font-mono hover:bg-surface-2 disabled:opacity-50"
+            title="Pick 3 random listings (with a random photo each) from the eligible pool"
+          >
+            🎲 Random mix
           </button>
         </div>
       </Section>
