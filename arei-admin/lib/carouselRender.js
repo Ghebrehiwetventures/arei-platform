@@ -230,9 +230,10 @@ export async function renderSlide(slide) {
     const priceY = y;
     const kickY = priceY - priceFit.fontSize - 22;
     const src = slide.source ? ` · ${slide.source}` : "";
+    const tag = (slide.tag || "INDEXED LISTING").toUpperCase();
     body = `${lockup(M, M, S.lock, lockH)}
       ${counter(W - M, M + 28, idx, total, S.lock)}
-      ${kicker(M, kickY, `// FOR SALE${src}`, S.kicker)}
+      ${kicker(M, kickY, `// ${tag}${src}`, S.kicker)}
       <text x="${M}" y="${priceY}" font-family="Inter" font-size="${priceFit.fontSize}" font-weight="600" letter-spacing="-2" fill="${S.fg}">${esc(slide.price)}</text>
       ${specsY != null ? `<text x="${M}" y="${specsY}" font-family="Inter" font-size="30" font-weight="400" fill="${S.sub}">${esc(slide.specs)}</text>` : ""}
       ${locY != null ? `<text x="${M}" y="${locY}" font-family="Inter" font-size="30" font-weight="400" fill="${MUTED}">${esc(slide.location)}</text>` : ""}`;

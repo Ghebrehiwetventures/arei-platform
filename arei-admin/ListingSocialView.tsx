@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
 import { supabaseAuth } from "./supabase";
+import { proxyThumb } from "./imageProxy";
 
 interface Listing {
   id: string;
@@ -99,10 +100,9 @@ function sortListings(listings: Listing[], sortBy: ListingSortKey): Listing[] {
   });
 }
 
-function previewImageUrl(url: string, size = 220): string {
-  if (!url) return url;
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=cover&output=jpg&q=82`;
-}
+// Shared client image proxy (was a local copy; centralised in imageProxy.ts so
+// Listing Posts and Social Carousel resolve thumbnails identically).
+const previewImageUrl = proxyThumb;
 
 function formatPriceEUR(price: number | null): string {
   return price

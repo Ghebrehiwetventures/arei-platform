@@ -223,15 +223,17 @@ export default async function handler(req, res) {
       if (!FORMAT_KEYS.includes(format)) return send(res, 400, { error: `format must be one of ${FORMAT_KEYS.join(", ")}` });
 
       let photoFailed = false;
+      let failedUrl = null;
       if (slide.imageUrl) {
-        const buf = await fetchProxiedImage(slide.imageUrl);
+        const original = slide.imageUrl;
+        const buf = await fetchProxiedImage(original);
         if (buf) slide.imageBuffer = buf;
-        else photoFailed = true;
+        else { photoFailed = true; failedUrl = original; } // surface the dead URL
         delete slide.imageUrl;
       }
       slide.format = format;
       const png = await renderSlide(slide);
-      return send(res, 200, { base64: png.toString("base64"), mime: "image/png", photoFailed });
+      return send(res, 200, { base64: png.toString("base64"), mime: "image/png", photoFailed, failedUrl });
     }
 
     return send(res, 405, { error: "Method not allowed" });
