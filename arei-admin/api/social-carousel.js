@@ -143,9 +143,11 @@ function specsLine(row) {
   if (row.area_sqm != null) parts.push(`${Math.round(row.area_sqm)} m²`);
   return parts.join(" · ");
 }
+// European premium style: full price with space thousands separators
+// (€100 000), never "k" shorthand, never comma separators.
 function priceLabel(price) {
   if (price == null) return "Price on request";
-  return `€${Math.round(price).toLocaleString("en-US")}`;
+  return "€" + Math.round(price).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 }
 
 // v1_feed_cv may or may not expose property_type; select it when present and

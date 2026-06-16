@@ -221,19 +221,21 @@ export async function renderSlide(slide) {
     const total = String(slide.total || 5).padStart(2, "0");
     const idx = String(slide.idx || 1).padStart(2, "0");
     // Bottom-anchored text block over the gradient, stacked bottom-up:
-    // kicker · price · specs · location.
+    // kicker · "ASKING PRICE" micro-label · price · specs · location.
     const priceFit = autofit(slide.price || "", innerW, [96, 84, 74, 64], 1, 0.6);
     let y = H - bottomSafe;
     let locY = null, specsY = null;
     if (slide.location) { locY = y; y -= 44; }
     if (slide.specs) { specsY = y; y -= 60; }
     const priceY = y;
-    const kickY = priceY - priceFit.fontSize - 22;
+    const askY = priceY - priceFit.fontSize - 8;
+    const kickY = askY - 34;
     const src = slide.source ? ` · ${slide.source}` : "";
     const tag = (slide.tag || "INDEXED LISTING").toUpperCase();
     body = `${lockup(M, M, S.lock, lockH)}
       ${counter(W - M, M + 28, idx, total, S.lock)}
       ${kicker(M, kickY, `// ${tag}${src}`, S.kicker)}
+      <text x="${M}" y="${askY}" font-family="Inter" font-size="17" font-weight="600" letter-spacing="2.5" fill="${S.sub}">ASKING PRICE</text>
       <text x="${M}" y="${priceY}" font-family="Inter" font-size="${priceFit.fontSize}" font-weight="600" letter-spacing="-2" fill="${S.fg}">${esc(slide.price)}</text>
       ${specsY != null ? `<text x="${M}" y="${specsY}" font-family="Inter" font-size="30" font-weight="400" fill="${S.sub}">${esc(slide.specs)}</text>` : ""}
       ${locY != null ? `<text x="${M}" y="${locY}" font-family="Inter" font-size="30" font-weight="400" fill="${MUTED}">${esc(slide.location)}</text>` : ""}`;

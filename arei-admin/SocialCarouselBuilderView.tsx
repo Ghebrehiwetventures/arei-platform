@@ -41,9 +41,12 @@ async function authHeaders(): Promise<HeadersInit> {
   return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
-const euroToken = (s: string) => (s.match(/€\s?[\d.,]+\s?[kKmM]?/) || [])[0]?.trim() || "";
+// Match a full price incl. space-separated thousands ("€100 000"), so the sage
+// accent covers the whole figure, not just "€100".
+const euroToken = (s: string) => (s.match(/€\s?\d[\d.,\s]*\d|€\s?\d/) || [])[0]?.trim() || "";
 const lastWords = (s: string, n = 2) => s.trim().replace(/\s+/g, " ").split(" ").slice(-n).join(" ");
-const capLabel = (cap: number) => (cap >= 1000 ? `€${Math.round(cap / 1000)}k` : `€${cap}`);
+// European premium style: full price with space thousands separators, no "k".
+const capLabel = (cap: number) => "€" + Math.round(cap).toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
 const slug = (s: string) => s.toLowerCase().trim().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "");
 
 export function SocialCarouselBuilderView() {
@@ -159,7 +162,7 @@ export function SocialCarouselBuilderView() {
     }));
     const list: SlideSpec[] = [];
     const coverImg = coverPhoto && sel[0] && photoAllowed(sel[0].cleared) ? sel[0].img : undefined;
-    list.push({ type: "cover", label: "Cover", kicker: coverKicker, title: coverTitle, accent: euroToken(coverTitle), imageUrl: coverImg });
+    list.push({ type: "cover", label: "Cover", kicker: coverKicker, title: coverTitle, accent: euroToken(coverTitle) || lastWords(coverTitle, 2), imageUrl: coverImg });
     if (stmtOn) list.push({ type: "statement", label: "Statement", kicker: stmtKicker, text: stmtText, accent: lastWords(stmtText, 2) });
     if (pcOn) {
       const pc = pcText.trim() || `${sel.length} homes under ${capLabel(cap)}`;
