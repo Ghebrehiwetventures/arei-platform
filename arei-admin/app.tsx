@@ -103,6 +103,7 @@ import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
 import { BrokerPilotView } from "./BrokerPilotView";
 import { ListingSocialView } from "./ListingSocialView";
 import { NewsPostStudioView } from "./NewsPostStudioView";
+import { SocialCarouselBuilderView } from "./SocialCarouselBuilderView";
 import { NewsClustersView } from "./NewsClustersView";
 import { SourceHealthView } from "./SourceHealthView";
 import { MarketingPerformanceReportView, ReportsLandingView } from "./ReportsView";
@@ -3860,7 +3861,7 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "news-studio" | "news-clusters" | "source-health" | "notifications" | "featured" | "briefings" | "reports" | "reports-marketing";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "news-studio" | "carousel-studio" | "news-clusters" | "source-health" | "notifications" | "featured" | "briefings" | "reports" | "reports-marketing";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
@@ -3873,8 +3874,9 @@ const NAV_ITEMS: { key: Tab; label: string }[] = [
 
 // Marketing = the social-media machine. Each entry is a post type.
 const MARKETING_NAV_ITEMS: { key: Tab; label: string }[] = [
-  { key: "news-studio", label: "News Posts"    },
-  { key: "marketing",   label: "Listing Posts" },
+  { key: "news-studio",      label: "News Posts"      },
+  { key: "carousel-studio",  label: "Social Carousels" },
+  { key: "marketing",        label: "Listing Posts"   },
 ];
 
 const REPORTS_NAV_ITEMS: { key: Tab; label: string }[] = [
@@ -4232,6 +4234,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "reports-marketing" && <MarketingPerformanceReportView />}
             {tab === "marketing" && <ListingSocialView />}
             {tab === "news-studio" && <NewsPostStudioView />}
+            {tab === "carousel-studio" && <SocialCarouselBuilderView />}
             {tab === "news-clusters" && <NewsClustersView />}
             {tab === "source-health" && <SourceHealthView />}
             {tab === "notifications" && (
