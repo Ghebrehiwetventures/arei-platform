@@ -251,18 +251,27 @@ export async function renderSlide(slide) {
   } else if (slide.type === "statement" || slide.type === "priceCheck") {
     const ladder = slide.format === "9:16" ? [84, 74, 66, 58] : [72, 64, 56, 50];
     const fit = autofit(slide.text || "", innerW, ladder, 4);
-    const hb = headlineBlock({ text: slide.text, x: M, lastBaseline: H - bottomSafe, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.12), weight: 600, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
+    // On light (bone) surfaces, bottom-anchoring leaves a big empty white field
+    // that reads like a blank document — vertically balance the block instead.
+    const isBone = S === SURFACES.bone;
+    const lastBaseline = isBone ? Math.round(H * 0.56) : H - bottomSafe;
+    const hb = headlineBlock({ text: slide.text, x: M, lastBaseline, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.12), weight: 600, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
+    const kickY = hb.topBaseline - fit.fontSize - 26;
     body = `${lockup(M, M, S.lock, lockH)}
-      ${kicker(M, hb.topBaseline - fit.fontSize - 26, slide.kicker || (slide.type === "priceCheck" ? "// PRICE CHECK" : "// THE MOMENT"), S.kicker)}
+      <rect x="${M}" y="${kickY - 30}" width="64" height="3" fill="${S.accent}"/>
+      ${kicker(M, kickY, slide.kicker || (slide.type === "priceCheck" ? "// PRICE CHECK" : "// THE MOMENT"), S.kicker)}
       ${hb.svg}`;
   } else if (slide.type === "cta") {
-    const urlY = H - bottomSafe;
-    const subY = urlY - 64;
     const ladder = slide.format === "9:16" ? [86, 76, 66] : [74, 64, 56];
     const fit = autofit(slide.title || "See what it actually costs.", innerW, ladder, 3);
+    const isBone = S === SURFACES.bone;
+    const urlY = isBone ? Math.round(H * 0.60) : H - bottomSafe;
+    const subY = urlY - 64;
     const hb = headlineBlock({ text: slide.title || "See what it actually costs.", x: M, lastBaseline: subY - 60, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.06), weight: 600, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
+    const kickY = hb.topBaseline - fit.fontSize - 26;
     body = `${lockup(M, M, S.lock, lockH)}
-      ${kicker(M, hb.topBaseline - fit.fontSize - 26, slide.kicker || "// THE INDEX", S.kicker)}
+      <rect x="${M}" y="${kickY - 30}" width="64" height="3" fill="${S.accent}"/>
+      ${kicker(M, kickY, slide.kicker || "// THE INDEX", S.kicker)}
       ${hb.svg}
       <text x="${M}" y="${subY}" font-family="Inter" font-size="27" font-weight="400" fill="${S.sub}">${esc(slide.sub || "Live Cape Verde listings · structured property data.")}</text>
       <text x="${M}" y="${urlY}" font-family="Inter" font-size="24" font-weight="600" letter-spacing="0.5" fill="${S.fg}">${esc(slide.url || "capeverderealestateindex.com")}</text>`;
