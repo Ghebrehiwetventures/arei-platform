@@ -167,7 +167,7 @@ export async function renderHero(item) {
 
   const headlineSvg = lines.map((idxs, li) => {
     const spans = idxs.map((i) => `<tspan fill="${hset.has(i) ? SAGE : BONE}">${esc(words[i])} </tspan>`).join("");
-    return `<text x="${M}" y="${hlFirstBaseline + li * hlLH}" font-family="${COND}" font-size="${hlFS}" font-weight="500" letter-spacing="${hlLS}">${spans}</text>`;
+    return `<text x="${M}" y="${hlFirstBaseline + li * hlLH}" font-family="${COND}" font-size="${hlFS}" font-weight="600" letter-spacing="${hlLS}">${spans}</text>`;
   }).join("\n");
 
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
