@@ -23,12 +23,13 @@ import fs from "node:fs";
 const INK = "#0A0A0A", BONE = "#FAFAFA", SAGE = "#8ECFBF";
 const DIM = "#cfcfcf", MUTED = "#9a9a9a", FAINT = "#777777";
 
-// Layout per output format. bandH = height of the solid ink zone under the
-// photo on listing slides. bottomSafe = clear space kept at the bottom (9:16
-// leaves room for TikTok/Reels UI: caption, action rail).
+// Layout per output format. bottomSafe = clear space kept at the bottom (9:16
+// leaves room for TikTok/Reels UI: caption, action rail). Listing cards are
+// photo-first — full-bleed image + a bottom gradient, no solid info band — so
+// the photo carries the post.
 const FORMATS = {
-  "4:5":  { W: 1080, H: 1350, M: 72, lockH: 44, bandH: 540, bottomSafe: 86 },
-  "9:16": { W: 1080, H: 1920, M: 80, lockH: 46, bandH: 700, bottomSafe: 300 },
+  "4:5":  { W: 1080, H: 1350, M: 72, lockH: 44, bottomSafe: 86 },
+  "9:16": { W: 1080, H: 1920, M: 80, lockH: 46, bottomSafe: 300 },
 };
 export const FORMAT_KEYS = Object.keys(FORMATS);
 
@@ -154,6 +155,11 @@ function defs() {
       <stop offset="0.70" stop-color="${INK}" stop-opacity="0.66"/>
       <stop offset="1" stop-color="${INK}" stop-opacity="0.96"/>
     </linearGradient>
+    <linearGradient id="bl" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0.45" stop-color="${INK}" stop-opacity="0"/>
+      <stop offset="0.78" stop-color="${INK}" stop-opacity="0.62"/>
+      <stop offset="1" stop-color="${INK}" stop-opacity="0.97"/>
+    </linearGradient>
     <linearGradient id="t" x1="0" y1="0" x2="0" y2="1">
       <stop offset="0" stop-color="${INK}" stop-opacity="0.5"/>
       <stop offset="1" stop-color="${INK}" stop-opacity="0"/>
@@ -187,11 +193,11 @@ export async function renderSlide(slide) {
   // cta, and cover without a photo).
   let bg;
   if (slide.type === "listing") {
-    const seam = H - bandH;
+    // Photo-first: full-bleed image + bottom gradient (no solid info band).
     bg = `<rect width="${W}" height="${H}" fill="#16384a"/>
-      ${hasPhoto ? `<image href="${dataUri(slide.imageBuffer)}" x="0" y="0" width="${W}" height="${seam + 30}" preserveAspectRatio="xMidYMid slice"/>` : ""}
+      ${hasPhoto ? `<image href="${dataUri(slide.imageBuffer)}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>` : ""}
       <rect width="${W}" height="200" fill="url(#t)"/>
-      <rect x="0" y="${seam}" width="${W}" height="${H - seam}" fill="${INK}"/>`;
+      <rect width="${W}" height="${H}" fill="url(#bl)"/>`;
   } else if (slide.type === "cover" && hasPhoto) {
     bg = `<rect width="${W}" height="${H}" fill="#16384a"/>
       <image href="${dataUri(slide.imageBuffer)}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>
@@ -204,21 +210,24 @@ export async function renderSlide(slide) {
   let body = "";
 
   if (slide.type === "listing") {
-    const seam = H - bandH;
     const total = String(slide.total || 5).padStart(2, "0");
     const idx = String(slide.idx || 1).padStart(2, "0");
-    const priceFit = autofit(slide.price || "", innerW, [104, 92, 80, 70, 60], 1, 0.6);
-    const kickY = seam + (slide.format === "9:16" ? 120 : 80);
-    const priceY = kickY + 96;
-    const specsY = priceY + 54;
-    const locY = specsY + 44;
+    // Bottom-anchored text block over the gradient, stacked bottom-up:
+    // kicker · price · specs · location.
+    const priceFit = autofit(slide.price || "", innerW, [96, 84, 74, 64], 1, 0.6);
+    let y = H - bottomSafe;
+    let locY = null, specsY = null;
+    if (slide.location) { locY = y; y -= 44; }
+    if (slide.specs) { specsY = y; y -= 60; }
+    const priceY = y;
+    const kickY = priceY - priceFit.fontSize - 22;
     const src = slide.source ? ` · ${slide.source}` : "";
     body = `${lockup(M, M, BONE, lockH)}
       ${counter(W - M, M + 28, idx, total)}
       ${kicker(M, kickY, `// FOR SALE${src}`)}
       <text x="${M}" y="${priceY}" font-family="Inter" font-size="${priceFit.fontSize}" font-weight="600" letter-spacing="-2" fill="${BONE}">${esc(slide.price)}</text>
-      ${slide.specs ? `<text x="${M}" y="${specsY}" font-family="Inter" font-size="30" font-weight="400" fill="${DIM}">${esc(slide.specs)}</text>` : ""}
-      ${slide.location ? `<text x="${M}" y="${locY}" font-family="Inter" font-size="30" font-weight="400" fill="${MUTED}">${esc(slide.location)}</text>` : ""}`;
+      ${specsY != null ? `<text x="${M}" y="${specsY}" font-family="Inter" font-size="30" font-weight="400" fill="${DIM}">${esc(slide.specs)}</text>` : ""}
+      ${locY != null ? `<text x="${M}" y="${locY}" font-family="Inter" font-size="30" font-weight="400" fill="${MUTED}">${esc(slide.location)}</text>` : ""}`;
   } else if (slide.type === "cover") {
     const last = H - bottomSafe - (slide.dek ? 60 : 0);
     const ladder = slide.format === "9:16" ? [110, 96, 84, 74, 64] : [98, 86, 76, 66, 58];

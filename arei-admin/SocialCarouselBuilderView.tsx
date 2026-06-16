@@ -81,10 +81,13 @@ export function SocialCarouselBuilderView() {
   // Editable copy.
   const [coverKicker, setCoverKicker] = useState("// CABO VERDE · WORLD CUP");
   const [coverTitle, setCoverTitle] = useState("What €100k buys you in Cape Verde");
-  const [coverPhoto, setCoverPhoto] = useState(true);
-  const [stmtOn, setStmtOn] = useState(true);
+  // Photo-first defaults: clean typographic cover, statement + price-check OFF.
+  // Default deck = cover + 3 listing slides + CTA.
+  const [coverPhoto, setCoverPhoto] = useState(false);
+  const [stmtOn, setStmtOn] = useState(false);
   const [stmtKicker, setStmtKicker] = useState("// THE MOMENT");
   const [stmtText, setStmtText] = useState("While the world watches the football, investors are watching the islands.");
+  const [pcOn, setPcOn] = useState(false);
   const [pcKicker, setPcKicker] = useState("// PRICE CHECK");
   const [pcText, setPcText] = useState("");
   const [ctaKicker, setCtaKicker] = useState("// THE INDEX");
@@ -160,8 +163,10 @@ export function SocialCarouselBuilderView() {
       imageUrl: coverPhoto ? sel[0]?.img : undefined,
     });
     if (stmtOn) list.push({ type: "statement", label: "Statement", kicker: stmtKicker, text: stmtText, accent: lastWords(stmtText, 2) });
-    const pc = pcText.trim() || `${sel.length} homes under ${capLabel(cap)}`;
-    list.push({ type: "priceCheck", label: "Price check", kicker: pcKicker, text: pc, accent: euroToken(pc) });
+    if (pcOn) {
+      const pc = pcText.trim() || `${sel.length} homes under ${capLabel(cap)}`;
+      list.push({ type: "priceCheck", label: "Price check", kicker: pcKicker, text: pc, accent: euroToken(pc) });
+    }
     sel.forEach(({ l, img }, i) =>
       list.push({
         type: "listing",
@@ -461,10 +466,18 @@ export function SocialCarouselBuilderView() {
             )}
           </div>
           <div className="space-y-2">
-            <Field label="Price-check kicker"><input className={inputCls} value={pcKicker} onChange={(e) => setPcKicker(e.target.value)} /></Field>
-            <Field label={`Price-check headline (blank = "${selected.length} homes under ${capLabel(cap)}")`}>
-              <input className={inputCls} value={pcText} onChange={(e) => setPcText(e.target.value)} placeholder={`${selected.length} homes under ${capLabel(cap)}`} />
-            </Field>
+            <label className="flex items-center gap-2 text-[11px] font-mono text-foreground-subtle">
+              <input type="checkbox" checked={pcOn} onChange={(e) => setPcOn(e.target.checked)} />
+              Include price-check slide (off by default — the cover already says it)
+            </label>
+            {pcOn && (
+              <>
+                <Field label="Price-check kicker"><input className={inputCls} value={pcKicker} onChange={(e) => setPcKicker(e.target.value)} /></Field>
+                <Field label={`Price-check headline (blank = "${selected.length} homes under ${capLabel(cap)}")`}>
+                  <input className={inputCls} value={pcText} onChange={(e) => setPcText(e.target.value)} placeholder={`${selected.length} homes under ${capLabel(cap)}`} />
+                </Field>
+              </>
+            )}
             <Field label="CTA kicker"><input className={inputCls} value={ctaKicker} onChange={(e) => setCtaKicker(e.target.value)} /></Field>
             <Field label="CTA headline"><input className={inputCls} value={ctaTitle} onChange={(e) => setCtaTitle(e.target.value)} /></Field>
             <Field label="CTA sub"><input className={inputCls} value={ctaSub} onChange={(e) => setCtaSub(e.target.value)} /></Field>

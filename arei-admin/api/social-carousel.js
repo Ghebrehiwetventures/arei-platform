@@ -110,6 +110,32 @@ async function fetchProxiedImage(url) {
   }
 }
 
+// ── Social-candidate quality heuristics ─────────────────────────────────────
+// Land / plot / project-only listings are weak "buy a home" content.
+const LAND_RE = /\b(land|plot|plots|lote|lotes|terreno|terrenos|terrain|parcel|building plot|development land|investment land|ruin|ruína|ruina)\b/i;
+// Image URLs that look like maps, floor/site plans, flyers, logos, watermarks —
+// not real property photos. Filtered out of the usable image set.
+const BAD_IMAGE_RE = /(floor.?plan|grundriss|site.?plan|master.?plan|plano|planta|[-_.]plan[-_.]|[-_]plan\.|[-_.]map[-_.]|[-_]map\.|google.?map|flyer|brochure|logo|watermark|banner|price.?list|sketch|blueprint|diagram|cad[-_.])/i;
+// Real-home signal (boosts ranking).
+const RESIDENTIAL_RE = /\b(apartment|apartamento|villa|moradia|house|home|casa|t[1-5]\b|v[1-5]\b|penthouse|duplex|studio|condo|flat)\b/i;
+
+const isLand = (row) => LAND_RE.test(`${row.title || ""} ${row.property_type || ""}`);
+const isResidential = (row) => RESIDENTIAL_RE.test(`${row.title || ""} ${row.property_type || ""}`);
+const filterGoodImages = (images) => images.filter((u) => !BAD_IMAGE_RE.test(u));
+
+// Higher = stronger social candidate. More real photos, real-home signals, and
+// residential type rank up; single-image listings are penalised.
+function socialScore(l) {
+  let s = 0;
+  const n = l.images.length;
+  s += Math.min(n, 6) * 2;
+  if (n === 1) s -= 5;
+  if (l.bedrooms != null) s += 2;
+  if (l.area_sqm != null) s += 1;
+  if (isResidential(l)) s += 4;
+  return s;
+}
+
 function specsLine(row) {
   const parts = [];
   if (row.bedrooms != null) parts.push(`${row.bedrooms} bed`);
@@ -122,22 +148,35 @@ function priceLabel(price) {
   return `€${Math.round(price).toLocaleString("en-US")}`;
 }
 
-async function listEligible(sb, cap) {
-  const { data, error } = await sb
+// v1_feed_cv may or may not expose property_type; select it when present and
+// fall back to the base column set otherwise.
+async function queryFeed(sb, cap, withType) {
+  const cols = "id, source_id, title, price, price_period, island, bedrooms, bathrooms, area_sqm, image_urls, cover_image_url, source_url" + (withType ? ", property_type" : "");
+  return sb
     .from("v1_feed_cv")
-    .select("id, source_id, title, price, price_period, island, bedrooms, bathrooms, area_sqm, image_urls, cover_image_url, source_url")
+    .select(cols)
     .eq("has_valid_images", true)
     .neq("price_period", "rent")
     .gte("price", PRICE_FLOOR)
     .lte("price", cap)
-    .order("price", { ascending: true })
-    .limit(60);
+    .order("id", { ascending: false })
+    .limit(200);
+}
+
+// Eligible listings, ranked by social-candidate quality (NOT cheapest-first):
+// drops land/plot and map/plan/flyer images, ranks real residential photos up,
+// and deprioritises single-image listings. Caller picks the top few.
+async function listEligible(sb, cap) {
+  let { data, error } = await queryFeed(sb, cap, true);
+  if (error && /property_type/i.test(error.message || "")) ({ data, error } = await queryFeed(sb, cap, false));
   if (error) throw new Error(`Could not load listings: ${error.message}`);
-  return (data || []).map((row) => {
-    const images = dedupeImages((row.image_urls || []).map(resolveImageUrl).filter(Boolean));
+
+  const mapped = (data || []).map((row) => {
+    const images = filterGoodImages(dedupeImages((row.image_urls || []).map(resolveImageUrl).filter(Boolean)));
     return {
       id: row.id,
       title: row.title || "",
+      property_type: row.property_type || "",
       price: row.price,
       priceLabel: priceLabel(row.price),
       island: row.island || "",
@@ -151,7 +190,14 @@ async function listEligible(sb, cap) {
       source_url: row.source_url || "",
       listing_url: `https://www.capeverderealestateindex.com/listing/${row.id}`,
     };
-  }).filter((l) => l.images.length > 0);
+  });
+
+  return mapped
+    .filter((l) => l.images.length > 0 && !isLand(l)) // need a real photo; not land/plot
+    .map((l) => ({ ...l, _score: socialScore(l) }))
+    .sort((a, b) => b._score - a._score)
+    .slice(0, 48)
+    .map(({ _score, ...l }) => l);
 }
 
 export default async function handler(req, res) {
