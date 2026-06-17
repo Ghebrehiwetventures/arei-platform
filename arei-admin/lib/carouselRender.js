@@ -196,8 +196,10 @@ export async function renderSlide(slide) {
   const { W, H, M, lockH, bottomSafe } = fmt;
   const innerW = W - 2 * M;
   const hasPhoto = Boolean(slide.imageBuffer);
-  const photoCover = slide.type === "cover" && hasPhoto;
-  const onPhoto = slide.type === "listing" || photoCover;
+  // Any slide with a photo renders photo-led (full-bleed image + scrim + light
+  // text) — Instagram is photo-first, so we avoid blank solid slides. Text
+  // slides fall back to a solid surface only when no photo is supplied.
+  const onPhoto = slide.type === "listing" || hasPhoto;
 
   // Resolve the surface. Photo slides use light-on-photo text; everything else
   // uses a light default surface (bone / deep-teal), never pure black by default.
@@ -258,7 +260,6 @@ export async function renderSlide(slide) {
     const hb = headlineBlock({ text: slide.text, x: M, lastBaseline, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.12), weight: 700, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
     const kickY = hb.topBaseline - fit.fontSize - 26;
     body = `${lockup(M, M, S.lock, lockH)}
-      <rect x="${M}" y="${kickY - 30}" width="64" height="3" fill="${S.accent}"/>
       ${kicker(M, kickY, slide.kicker || (slide.type === "priceCheck" ? "// PRICE CHECK" : "// THE MOMENT"), S.kicker)}
       ${hb.svg}`;
   } else if (slide.type === "cta") {
@@ -270,7 +271,6 @@ export async function renderSlide(slide) {
     const hb = headlineBlock({ text: slide.title || "See what it actually costs.", x: M, lastBaseline: subY - 60, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.06), weight: 700, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
     const kickY = hb.topBaseline - fit.fontSize - 26;
     body = `${lockup(M, M, S.lock, lockH)}
-      <rect x="${M}" y="${kickY - 30}" width="64" height="3" fill="${S.accent}"/>
       ${kicker(M, kickY, slide.kicker || "// THE INDEX", S.kicker)}
       ${hb.svg}
       <text x="${M}" y="${subY}" font-family="Inter" font-size="27" font-weight="400" fill="${S.sub}">${esc(slide.sub || "Live Cape Verde listings · structured property data.")}</text>

@@ -68,7 +68,7 @@ export function SocialCarouselBuilderView() {
   // Copy.
   const [coverKicker, setCoverKicker] = useState(PRESETS[0].coverKicker);
   const [coverTitle, setCoverTitle] = useState(PRESETS[0].coverTitle);
-  const [coverPhoto, setCoverPhoto] = useState(false);
+  const [coverPhoto, setCoverPhoto] = useState(true);
   const [stmtOn, setStmtOn] = useState(false);
   const [stmtKicker, setStmtKicker] = useState("// THE MOMENT");
   const [stmtText, setStmtText] = useState("While the world watches the football, investors are watching the islands.");
@@ -184,16 +184,23 @@ export function SocialCarouselBuilderView() {
         price: s0.l.priceLabel, specs: s0.l.specs, location: s0.l.island, source: s0.l.source_name,
         imageUrl: photoAllowed(s0.cleared) ? s0.img : undefined, idx: 1, total: 2,
       });
-      list.push({ type: "cta", label: "CTA", kicker: "// VIEW ORIGINAL SOURCE", title: ctaTitle, accent: lastWords(ctaTitle, 2), sub: ctaSub, url: ctaUrl });
+      list.push({ type: "cta", label: "CTA", kicker: "// VIEW ORIGINAL SOURCE", title: ctaTitle, accent: lastWords(ctaTitle, 2), sub: ctaSub, url: ctaUrl, imageUrl: s0 && photoAllowed(s0.cleared) ? s0.img : undefined });
       return list;
     }
 
-    const coverImg = coverPhoto && sel[0] && photoAllowed(sel[0].cleared) ? sel[0].img : undefined;
-    list.push({ type: "cover", label: "Cover", kicker: coverKicker, title: coverTitle, accent: euroToken(coverTitle) || lastWords(coverTitle, 2), imageUrl: coverImg });
-    if (stmtOn) list.push({ type: "statement", label: "Statement", kicker: stmtKicker, text: stmtText, accent: lastWords(stmtText, 2) });
+    // Photo-led: reuse the picked listing photos behind the text slides too
+    // (cover / statement / price-check / CTA) so no slide is a blank solid
+    // colour — Instagram is photo-first. Respect the ad-safe gate (only cleared
+    // photos in paid mode); rotate so the text slides don't all show the same shot.
+    const usable = sel.filter((s) => photoAllowed(s.cleared)).map((s) => s.img);
+    let pi = 0;
+    const nextPhoto = () => (usable.length ? usable[pi++ % usable.length] : undefined);
+
+    list.push({ type: "cover", label: "Cover", kicker: coverKicker, title: coverTitle, accent: euroToken(coverTitle) || lastWords(coverTitle, 2), imageUrl: coverPhoto ? nextPhoto() : undefined });
+    if (stmtOn) list.push({ type: "statement", label: "Statement", kicker: stmtKicker, text: stmtText, accent: lastWords(stmtText, 2), imageUrl: nextPhoto() });
     if (pcOn) {
       const pc = pcText.trim() || `${sel.length} homes under ${capLabel(cap)}`;
-      list.push({ type: "priceCheck", label: "Price check", kicker: pcKicker, text: pc, accent: euroToken(pc) });
+      list.push({ type: "priceCheck", label: "Price check", kicker: pcKicker, text: pc, accent: euroToken(pc), imageUrl: nextPhoto() });
     }
     sel.forEach(({ l, img, cleared }, i) =>
       list.push({
@@ -202,7 +209,7 @@ export function SocialCarouselBuilderView() {
         imageUrl: photoAllowed(cleared) ? img : undefined,
       })
     );
-    list.push({ type: "cta", label: "CTA", kicker: ctaKicker, title: ctaTitle, accent: lastWords(ctaTitle, 2), sub: ctaSub, url: ctaUrl });
+    list.push({ type: "cta", label: "CTA", kicker: ctaKicker, title: ctaTitle, accent: lastWords(ctaTitle, 2), sub: ctaSub, url: ctaUrl, imageUrl: nextPhoto() });
     const total = list.length;
     list.forEach((s, i) => { if (s.type === "listing") { s.idx = i + 1; s.total = total; } });
     return list;
