@@ -89,11 +89,15 @@ export const PRESETS: CarouselPreset[] = [
     captionAngle: "The world just discovered Cape Verde. Here's the market behind the moment.",
   },
   {
-    id: "watchlist",
-    name: "Get the Cape Verde Property Watchlist",
-    coverTitle: "Get the Cape Verde Property Watchlist",
-    coverKicker: "// THE INDEX",
-    cta: "Get the Cape Verde Property Watchlist.",
+    id: "market-updates",
+    // Matches the live site's existing copy (newsletter "Market updates" /
+    // "Get Cape Verde property market updates") for scent-match — the carousel
+    // drives to that signup. A consistent "Watchlist" rename across site +
+    // social is deferred to the newsletter/watchlist task.
+    name: "Cape Verde property market updates",
+    coverTitle: "Get Cape Verde property market updates",
+    coverKicker: "// MARKET UPDATES",
+    cta: "Get Cape Verde property market updates.",
     listingsRequired: false,
     defaultListings: 0,
     allowMoment: false,
@@ -103,9 +107,10 @@ export const PRESETS: CarouselPreset[] = [
 
 // CTA headline presets — conversion-oriented, not stiff.
 export const CTA_PRESETS = [
+  "Get Cape Verde property market updates.",
+  "Get market updates.",
   "View the source-linked listing",
   "Track the Cape Verde property market.",
-  "Get the Cape Verde Property Watchlist.",
   "Follow real listings. Understand the market.",
   "See source-linked listings from across Cape Verde.",
   "See what it actually costs.",
