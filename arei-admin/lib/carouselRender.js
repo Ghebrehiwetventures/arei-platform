@@ -32,7 +32,7 @@ const SURFACES = {
   deepteal: { bg: SAGE_DEEP, fg: BONE, sub: "#bcd2cb", accent: SAGE,      kicker: SAGE,      lock: BONE },
   bone:     { bg: BONE,      fg: INK,  sub: "#6b6b6b", accent: SAGE_DEEP, kicker: SAGE_DEEP, lock: INK },
 };
-const DEFAULT_SURFACE = { cover: "deepteal", statement: "bone", priceCheck: "deepteal", cta: "bone" };
+const DEFAULT_SURFACE = { cover: "deepteal", statement: "bone", priceCheck: "deepteal", cta: "deepteal" };
 // Light text used over a photo (cover-with-photo, listing cards).
 const ON_PHOTO = { fg: BONE, sub: DIM, accent: SAGE, kicker: SAGE, lock: BONE };
 
@@ -47,7 +47,7 @@ const FORMATS = {
 export const FORMAT_KEYS = Object.keys(FORMATS);
 
 // ── Fonts (Inter 400/500/600, fetched once, cached) ─────────────────────────
-const FONT_URLS = [400, 500, 600].map(
+const FONT_URLS = [400, 500, 600, 700].map(
   (w) => `https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin-${w}-normal.ttf`
 );
 let FONT_FILES = null;
@@ -236,14 +236,14 @@ export async function renderSlide(slide) {
       ${counter(W - M, M + 28, idx, total, S.lock)}
       ${kicker(M, kickY, `// ${tag}${src}`, S.kicker)}
       <text x="${M}" y="${askY}" font-family="Inter" font-size="17" font-weight="600" letter-spacing="2.5" fill="${S.sub}">ASKING PRICE</text>
-      <text x="${M}" y="${priceY}" font-family="Inter" font-size="${priceFit.fontSize}" font-weight="600" letter-spacing="-2" fill="${S.fg}">${esc(slide.price)}</text>
+      <text x="${M}" y="${priceY}" font-family="Inter" font-size="${priceFit.fontSize}" font-weight="700" letter-spacing="-2" fill="${S.fg}">${esc(slide.price)}</text>
       ${specsY != null ? `<text x="${M}" y="${specsY}" font-family="Inter" font-size="30" font-weight="400" fill="${S.sub}">${esc(slide.specs)}</text>` : ""}
       ${locY != null ? `<text x="${M}" y="${locY}" font-family="Inter" font-size="30" font-weight="400" fill="${MUTED}">${esc(slide.location)}</text>` : ""}`;
   } else if (slide.type === "cover") {
     const last = H - bottomSafe - (slide.dek ? 60 : 0);
     const ladder = slide.format === "9:16" ? [110, 96, 84, 74, 64] : [98, 86, 76, 66, 58];
     const fit = autofit(slide.title || "", innerW, ladder, 3);
-    const hb = headlineBlock({ text: slide.title, x: M, lastBaseline: last, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.04), weight: 600, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
+    const hb = headlineBlock({ text: slide.title, x: M, lastBaseline: last, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.04), weight: 700, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
     body = `${lockup(M, M, S.lock, lockH)}
       ${kicker(M, hb.topBaseline - fit.fontSize - 26, slide.kicker || "// CABO VERDE", S.kicker)}
       ${hb.svg}
@@ -255,7 +255,7 @@ export async function renderSlide(slide) {
     // that reads like a blank document — vertically balance the block instead.
     const isBone = S === SURFACES.bone;
     const lastBaseline = isBone ? Math.round(H * 0.56) : H - bottomSafe;
-    const hb = headlineBlock({ text: slide.text, x: M, lastBaseline, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.12), weight: 600, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
+    const hb = headlineBlock({ text: slide.text, x: M, lastBaseline, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.12), weight: 700, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
     const kickY = hb.topBaseline - fit.fontSize - 26;
     body = `${lockup(M, M, S.lock, lockH)}
       <rect x="${M}" y="${kickY - 30}" width="64" height="3" fill="${S.accent}"/>
@@ -267,7 +267,7 @@ export async function renderSlide(slide) {
     const isBone = S === SURFACES.bone;
     const urlY = isBone ? Math.round(H * 0.60) : H - bottomSafe;
     const subY = urlY - 64;
-    const hb = headlineBlock({ text: slide.title || "See what it actually costs.", x: M, lastBaseline: subY - 60, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.06), weight: 600, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
+    const hb = headlineBlock({ text: slide.title || "See what it actually costs.", x: M, lastBaseline: subY - 60, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.06), weight: 700, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
     const kickY = hb.topBaseline - fit.fontSize - 26;
     body = `${lockup(M, M, S.lock, lockH)}
       <rect x="${M}" y="${kickY - 30}" width="64" height="3" fill="${S.accent}"/>
