@@ -122,3 +122,7 @@ export const DISCLOSURE =
 // belong to the original source; we're a discovery layer, not the owner).
 export const SINGLE_DISCLOSURE =
   "CVREI is not a broker and does not own this listing or image. Listing information and images remain with the original source. We organize public, source-linked listings to make the market easier to understand.";
+
+// Plural form for carousels that use multiple listing photos.
+export const DISCLOSURE_LISTINGS =
+  "CVREI is not a broker and does not own these listings or images. Listing information and images remain with their original sources. We organize public, source-linked listings to make the market easier to understand.";

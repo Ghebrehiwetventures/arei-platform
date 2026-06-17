@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState } from "react";
 import { supabaseAuth } from "./supabase";
 import { makeZip, base64ToBytes, downloadBlob, type ZipFile } from "./zip";
 import { proxyThumb } from "./imageProxy";
-import { PRESETS, CTA_PRESETS, LISTING_LABELS, DISCLOSURE, SINGLE_DISCLOSURE, type CarouselPreset } from "./carouselPresets";
+import { PRESETS, CTA_PRESETS, LISTING_LABELS, DISCLOSURE, DISCLOSURE_LISTINGS, SINGLE_DISCLOSURE, type CarouselPreset } from "./carouselPresets";
 
 // Social Carousel Builder — manual, photo-first social carousels from REAL
 // Cape Verde listings + real market data. Multiple campaign concepts (presets),
@@ -157,8 +157,11 @@ export function SocialCarouselBuilderView() {
     }
     const sources = Array.from(new Set(selectedListings.map((l) => l.source_name)));
     const srcLine = sources.length ? `Source-linked listings via ${sources.join(", ")}.` : "";
-    setIgCaption([preset.captionAngle, srcLine, DISCLOSURE, landingUrl, igTags].filter(Boolean).join("\n\n"));
-    setTtCaption([preset.coverTitle, preset.captionAngle, DISCLOSURE, ttTags].filter(Boolean).join("\n\n"));
+    // When the carousel uses listing photos, the caption must state CVREI does
+    // not own those listings/images; text-only concepts use the short line.
+    const disc = selectedListings.length > 0 ? DISCLOSURE_LISTINGS : DISCLOSURE;
+    setIgCaption([preset.captionAngle, srcLine, disc, landingUrl, igTags].filter(Boolean).join("\n\n"));
+    setTtCaption([preset.coverTitle, preset.captionAngle, disc, ttTags].filter(Boolean).join("\n\n"));
   }
 
   // Ad-safe gate: in paid mode, a broker/listing photo may only be used if the
