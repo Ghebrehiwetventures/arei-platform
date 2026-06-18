@@ -463,20 +463,29 @@
   line-height: 1.7;
 }
 
-/* ── Footer line — © · Powered by AREI ──────────────────── */
+/* ── Footer — brand anchor + © · Powered by AREI ────────── */
 .mu-footer {
   background: var(--kv-white);
   border-top: 1px solid var(--kv-rule);
-  padding: 26px var(--kv-gutter);
+  padding: clamp(30px, 4vh, 44px) var(--kv-gutter);
 }
 
 .mu-footer-inner {
   width: min(var(--kv-content-w), 100%);
   margin: 0 auto;
+}
+
+.mu-footer-lockup {
+  margin-bottom: 22px;
+}
+
+.mu-footer-bottom {
   display: flex;
   justify-content: space-between;
   align-items: baseline;
   gap: 16px;
+  padding-top: 18px;
+  border-top: 1px solid var(--kv-rule-soft);
 }
 
 .mu-footer-copy {

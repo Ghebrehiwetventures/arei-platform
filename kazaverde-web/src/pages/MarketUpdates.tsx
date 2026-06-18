@@ -161,19 +161,6 @@ export default function MarketUpdates() {
       <main className="mu-main">
       <section className="mu-hero" aria-labelledby="market-updates-title">
         <div className="mu-hero-inner">
-          <div className="mu-lockup" role="img" aria-label="Cape Verde Real Estate Index">
-            <DLayersMark size={36} />
-            <span className="mu-lk-wide" aria-hidden="true">
-              <strong>Cape Verde</strong>
-              <span className="mu-lk-desc">Real Estate Index</span>
-            </span>
-            <span className="mu-lk-stack" aria-hidden="true">
-              <span>Cape Verde</span>
-              <span>Real Estate</span>
-              <span>Index</span>
-            </span>
-          </div>
-
           {status === "success" ? (
             <div className="mu-success" role="status">
               <p className="mu-success-title">You’re subscribed.</p>
@@ -279,18 +266,32 @@ export default function MarketUpdates() {
 
       <footer className="mu-footer">
         <div className="mu-footer-inner">
-          <p className="mu-footer-copy">
-            © 2026 ·{" "}
-            <a
-              className="mu-footer-poweredby"
-              href="https://www.africarealestateindex.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Powered by Africa Real Estate Index ↗
-            </a>
-          </p>
-          <span className="mu-footer-idx">CV·01</span>
+          <div className="mu-lockup mu-footer-lockup" role="img" aria-label="Cape Verde Real Estate Index">
+            <DLayersMark size={28} />
+            <span className="mu-lk-wide" aria-hidden="true">
+              <strong>Cape Verde</strong>
+              <span className="mu-lk-desc">Real Estate Index</span>
+            </span>
+            <span className="mu-lk-stack" aria-hidden="true">
+              <span>Cape Verde</span>
+              <span>Real Estate</span>
+              <span>Index</span>
+            </span>
+          </div>
+          <div className="mu-footer-bottom">
+            <p className="mu-footer-copy">
+              © 2026 ·{" "}
+              <a
+                className="mu-footer-poweredby"
+                href="https://www.africarealestateindex.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Powered by Africa Real Estate Index ↗
+              </a>
+            </p>
+            <span className="mu-footer-idx">CV·01</span>
+          </div>
         </div>
       </footer>
     </div>
