@@ -1,42 +1,55 @@
+/* /market-updates — standalone campaign signup page.
+   No nav, no footer (App.tsx hides shell on this route). One column,
+   mobile-first. The single job is the email signup. Everything else is
+   light context, never a product demo. */
+
 .mu-page {
   background: var(--kv-off-white);
   color: var(--kv-black);
   font-family: var(--kv-mono);
 }
 
+/* App.tsx adds .ctn-capture on this route; kill the shell's top padding so
+   the hero owns the full viewport. */
 .ctn-capture {
   padding-top: 0 !important;
 }
 
 .mu-hero {
   min-height: 100vh;
+  min-height: 100svh;
   display: flex;
-  align-items: flex-start;
-  padding: 42px 0 64px;
+  justify-content: center;
+  /* Top padding scales with viewport so the form sits comfortably near the
+     top on tall desktops without leaving a dead band of empty space. */
+  padding: clamp(32px, 8vh, 88px) var(--kv-gutter) clamp(48px, 8vh, 80px);
   background:
-    linear-gradient(180deg, rgba(142, 207, 191, 0.72) 0%, rgba(250, 247, 239, 0.96) 38%),
-    var(--kv-off-white);
+    radial-gradient(135% 75% at 50% -8%, rgba(142, 207, 191, 0.55) 0%, rgba(142, 207, 191, 0) 58%),
+    linear-gradient(180deg, var(--kv-off-white) 0%, var(--kv-white) 62%);
 }
 
+/* The whole page is one narrow, centered column. */
 .mu-inner {
-  width: min(var(--kv-content-w), calc(100% - var(--kv-gutter) * 2));
-  margin: 0 auto;
+  width: 100%;
+  max-width: 500px;
+  display: flex;
+  flex-direction: column;
 }
 
+/* ── Lockup ─────────────────────────────────────────────── */
 .mu-lockup {
   display: inline-flex;
-  align-items: flex-start;
-  gap: 16px;
-  margin-bottom: 44px;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: clamp(32px, 6vh, 52px);
   color: var(--kv-black);
 }
 
 .mu-lockup > span {
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  padding-top: 2px;
-  font-size: 13px;
+  gap: 3px;
+  font-size: 12px;
   line-height: 1;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -48,15 +61,12 @@
 
 .mu-lockup span span {
   font-weight: var(--kv-fw-regular);
-  opacity: 0.72;
+  opacity: 0.64;
 }
 
-.mu-copy {
-  max-width: 820px;
-}
-
+/* ── Hero copy ──────────────────────────────────────────── */
 .mu-eyebrow {
-  margin: 0 0 20px;
+  margin: 0 0 16px;
   font-size: var(--kv-t-xs);
   font-weight: var(--kv-fw-semibold);
   letter-spacing: 0.18em;
@@ -66,53 +76,45 @@
 
 .mu-copy h1 {
   margin: 0;
-  max-width: 900px;
-  font-size: clamp(38px, 6vw, 72px);
+  font-size: clamp(32px, 6.4vw, 46px);
   font-weight: var(--kv-fw-regular);
-  line-height: 1;
+  line-height: 1.05;
   letter-spacing: var(--kv-ls-display);
   text-wrap: balance;
 }
 
 .mu-subcopy {
-  margin: 24px 0 0;
-  max-width: 710px;
-  font-size: clamp(17px, 2vw, 22px);
-  line-height: 1.55;
+  margin: 18px 0 0;
+  font-size: clamp(16px, 2.2vw, 19px);
+  line-height: 1.5;
   color: var(--kv-ink-700);
 }
 
-.mu-card {
-  margin-top: 34px;
-  max-width: 720px;
-  border-top: 1px solid var(--kv-black);
-  padding-top: 24px;
-}
-
-.mu-form label {
-  display: block;
-  margin-bottom: 10px;
-  font-size: var(--kv-t-xs);
-  font-weight: var(--kv-fw-semibold);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--kv-ink-600);
+/* ── Form ───────────────────────────────────────────────── */
+.mu-form {
+  margin-top: 28px;
 }
 
 .mu-form-row {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  gap: 10px;
 }
 
 .mu-form input {
-  min-height: 54px;
-  border: 1px solid var(--kv-rule);
-  background: rgba(255, 255, 255, 0.52);
+  min-height: 56px;
+  border: 1px solid var(--kv-rule-strong);
+  background: var(--kv-paper);
   color: var(--kv-black);
   padding: 0 16px;
   font: inherit;
+  font-size: 15px;
   outline: none;
+  border-radius: 0;
+}
+
+.mu-form input::placeholder {
+  color: var(--kv-ink-400);
 }
 
 .mu-form input:focus {
@@ -120,65 +122,29 @@
 }
 
 .mu-form button {
-  min-height: 54px;
+  min-height: 56px;
   border: 1px solid var(--kv-black);
   background: var(--kv-black);
-  color: var(--kv-off-white);
-  padding: 0 24px;
+  color: var(--kv-white);
+  padding: 0 26px;
   font: inherit;
   font-size: var(--kv-t-sm);
   font-weight: var(--kv-fw-semibold);
   letter-spacing: var(--kv-ls-label);
   text-transform: uppercase;
+  white-space: nowrap;
   cursor: pointer;
+  transition: background var(--kv-dur) var(--kv-ease);
+}
+
+.mu-form button:hover:not(:disabled) {
+  background: var(--kv-black-hover);
 }
 
 .mu-form button:disabled,
 .mu-form input:disabled {
-  opacity: 0.62;
+  opacity: 0.6;
   cursor: not-allowed;
-}
-
-.mu-success {
-  border: 1px solid var(--kv-black);
-  background: rgba(255, 255, 255, 0.48);
-  padding: 18px 20px;
-  font-size: var(--kv-t-base);
-  line-height: 1.5;
-}
-
-.mu-success p {
-  margin: 0;
-}
-
-.mu-next-actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 18px;
-}
-
-.mu-next-actions a {
-  display: inline-flex;
-  align-items: center;
-  min-height: 44px;
-  padding: 0 16px;
-  border: 1px solid var(--kv-black);
-  font-size: var(--kv-t-sm);
-  font-weight: var(--kv-fw-semibold);
-  letter-spacing: var(--kv-ls-label);
-  text-transform: uppercase;
-  text-decoration: none;
-}
-
-.mu-next-primary {
-  background: var(--kv-black);
-  color: var(--kv-off-white);
-}
-
-.mu-next-secondary {
-  background: transparent;
-  color: var(--kv-black);
 }
 
 .mu-error {
@@ -187,162 +153,107 @@
   font-size: var(--kv-t-sm);
 }
 
-.mu-listing-preview {
-  margin-top: 48px;
-}
-
-.mu-section-head {
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 24px;
-  align-items: end;
-  margin-bottom: 20px;
-  max-width: 920px;
-}
-
-.mu-section-head .mu-eyebrow {
-  margin-bottom: 12px;
-}
-
-.mu-section-head h2 {
-  margin: 0;
-  max-width: 620px;
-  font-size: clamp(24px, 3vw, 34px);
-  font-weight: var(--kv-fw-regular);
-  line-height: 1.15;
-  letter-spacing: -0.01em;
-  text-wrap: balance;
-}
-
-.mu-section-head a {
-  color: var(--kv-black);
-  font-size: var(--kv-t-xs);
-  font-weight: var(--kv-fw-semibold);
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  text-decoration: none;
-  border-bottom: 1px solid var(--kv-black);
-  padding-bottom: 4px;
-  white-space: nowrap;
-}
-
-.mu-listing-scroll {
-  display: grid;
-  grid-auto-flow: column;
-  grid-auto-columns: minmax(260px, 292px);
-  gap: 16px;
-  overflow-x: auto;
-  overscroll-behavior-inline: contain;
-  scroll-snap-type: x proximity;
-  scrollbar-width: none;
-  -webkit-overflow-scrolling: touch;
-  padding: 0 0 8px;
-}
-
-.mu-listing-scroll::-webkit-scrollbar {
-  display: none;
-}
-
-.mu-listing-scroll .kv-lcard {
-  scroll-snap-align: start;
-  min-width: 0;
-}
-
-.mu-listing-scroll .kv-lc-img {
-  height: 162px;
-}
-
-.mu-listing-scroll .kv-lc-body {
-  padding: 14px 16px 16px;
-}
-
-.mu-listing-scroll .kv-lc-price {
-  font-size: 18px;
-  margin-bottom: 6px;
-}
-
-.mu-listing-scroll .kv-lc-title {
-  margin-bottom: 10px;
-}
-
-.mu-benefits {
-  margin-top: 48px;
-}
-
-.mu-benefits h2 {
-  margin: 0 0 18px;
-  font-size: var(--kv-t-xs);
-  font-weight: var(--kv-fw-semibold);
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--kv-green-deep);
-}
-
-.mu-benefit-grid {
-  display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 16px;
-  max-width: 980px;
-}
-
-.mu-benefit {
-  min-height: 180px;
-  border: 1px solid rgba(16, 24, 22, 0.18);
-  background: rgba(255, 255, 255, 0.34);
-  padding: 22px;
-}
-
-.mu-benefit span {
-  display: block;
-  margin-bottom: 36px;
-  color: var(--kv-green-deep);
-  font-size: var(--kv-t-xs);
-  font-weight: var(--kv-fw-semibold);
-  letter-spacing: 0.14em;
-}
-
-.mu-benefit h3 {
-  margin: 0 0 12px;
-  font-size: clamp(19px, 2.1vw, 24px);
-  font-weight: var(--kv-fw-regular);
-  line-height: 1.15;
-}
-
-.mu-benefit p {
-  margin: 0;
-  color: var(--kv-ink-700);
+/* Disclosure sits directly under the form — plain, muted, no decoration. */
+.mu-disclosure {
+  margin: 18px 0 0;
+  max-width: 460px;
+  color: var(--kv-ink-500);
   font-size: var(--kv-t-sm);
   line-height: 1.6;
 }
 
-.mu-why-now {
-  margin: 24px 0 0;
-  max-width: 690px;
-  color: var(--kv-black);
-  font-size: clamp(17px, 1.8vw, 20px);
-  line-height: 1.55;
+/* ── Success state ──────────────────────────────────────── */
+.mu-success {
+  border: 1px solid var(--kv-black);
+  background: var(--kv-paper);
+  padding: 26px 24px;
 }
 
-.mu-disclosure {
-  margin: 24px 0 0;
-  max-width: 650px;
-  border-left: 3px solid var(--kv-green);
-  padding-left: 16px;
+.mu-success-title {
+  margin: 0;
+  font-size: clamp(26px, 5vw, 34px);
+  font-weight: var(--kv-fw-regular);
+  line-height: 1.05;
+  letter-spacing: var(--kv-ls-display);
+}
+
+.mu-success-text {
+  margin: 12px 0 0;
   color: var(--kv-ink-700);
-  font-size: var(--kv-t-sm);
-  line-height: 1.7;
+  font-size: var(--kv-t-lg);
+  line-height: 1.5;
 }
 
-@media (max-width: 720px) {
-  .mu-hero {
-    min-height: auto;
-    padding: 28px 0 48px;
-  }
+.mu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 22px;
+}
 
-  .mu-lockup {
-    margin-bottom: 42px;
-  }
+.mu-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 48px;
+  padding: 0 18px;
+  border: 1px solid var(--kv-black);
+  font-size: var(--kv-t-sm);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: var(--kv-ls-label);
+  text-transform: uppercase;
+  text-decoration: none;
+}
 
+.mu-action-primary {
+  background: var(--kv-black);
+  color: var(--kv-white);
+}
+
+.mu-action-secondary {
+  background: transparent;
+  color: var(--kv-black);
+}
+
+/* ── Three plain points ─────────────────────────────────── */
+.mu-points {
+  margin-top: clamp(40px, 7vh, 60px);
+  display: grid;
+  gap: 0;
+}
+
+.mu-point {
+  border-top: 1px solid var(--kv-rule);
+  padding: 16px 0;
+}
+
+.mu-point h2 {
+  margin: 0 0 4px;
+  font-size: var(--kv-t-lg);
+  font-weight: var(--kv-fw-semibold);
+}
+
+.mu-point p {
+  margin: 0;
+  color: var(--kv-ink-600);
+  font-size: var(--kv-t-base);
+  line-height: 1.5;
+}
+
+/* ── Utilities ──────────────────────────────────────────── */
+.mu-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Mobile ─────────────────────────────────────────────── */
+@media (max-width: 560px) {
   .mu-form-row {
     grid-template-columns: 1fr;
   }
@@ -351,35 +262,7 @@
     width: 100%;
   }
 
-  .mu-next-actions {
+  .mu-actions {
     display: grid;
-  }
-
-  .mu-listing-preview,
-  .mu-benefits {
-    margin-top: 42px;
-  }
-
-  .mu-section-head {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  .mu-listing-scroll {
-    grid-auto-columns: minmax(252px, 82vw);
-    margin-right: calc(var(--kv-gutter) * -1);
-    padding-right: var(--kv-gutter);
-  }
-
-  .mu-benefit-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .mu-benefit {
-    min-height: 0;
-  }
-
-  .mu-benefit span {
-    margin-bottom: 24px;
   }
 }

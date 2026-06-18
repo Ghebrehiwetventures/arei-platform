@@ -212,46 +212,35 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
       route: "/market-updates",
       ...page(
       "Cape Verde Property Market Updates | Cape Verde Real Estate Index",
-      "Find Cape Verde homes for sale in one place and get simple property market updates before you buy.",
+      "Get new Cape Verde listings, island updates and simple property market notes by email.",
       `
         <main>
           <section>
             <p>Market updates</p>
             <h1>Find Cape Verde homes for sale in one place.</h1>
-            <p>
-              Browse properties from across the islands, see where each listing came from, and get simple updates before you buy.
-            </p>
+            <p>Get new listings, island updates and simple market notes by email.</p>
             <form>
               <label for="market-updates-email">Email address</label>
               <input id="market-updates-email" type="email" name="email" placeholder="Email address" required />
-              <button type="submit">Subscribe</button>
+              <button type="submit">Get updates</button>
             </form>
-            <section>
-              <p>On the site</p>
-              <h2>A live sample of homes tracked by the index.</h2>
-              <p><a href="/listings">View all homes for sale</a></p>
-            </section>
-            <section aria-label="What you'll get">
-              <h2>What you’ll get</h2>
+            <p>
+              Cape Verde Real Estate Index is not a broker. We collect public listings from local agencies, portals and property websites so buyers can understand the market more easily.
+            </p>
+            <section aria-label="What this is">
               <article>
-                <h3>Homes to browse</h3>
-                <p>Properties for sale across Cape Verde, gathered into one searchable place.</p>
+                <h2>Browse homes</h2>
+                <p>Listings from across Cape Verde.</p>
               </article>
               <article>
-                <h3>Island context</h3>
-                <p>Short notes on places, prices and what is changing in the market.</p>
+                <h2>Compare islands</h2>
+                <p>Sal, Boa Vista, Santiago and São Vicente are different markets.</p>
               </article>
               <article>
-                <h3>Buyer reminders</h3>
-                <p>Clear reminders that asking prices are not the same as sale prices.</p>
+                <h2>Get updates</h2>
+                <p>New listings and market notes by email.</p>
               </article>
             </section>
-            <p>
-              Cape Verde is getting global attention. We help you see what is actually for sale and how the market is moving.
-            </p>
-            <p>
-              Cape Verde Real Estate Index is not a broker. We organize public, source-linked property information to make the market easier to understand.
-            </p>
           </section>
         </main>
       `,
