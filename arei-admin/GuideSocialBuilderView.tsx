@@ -296,9 +296,9 @@ function drawLockup(ctx: CanvasRenderingContext2D, x: number, y: number, color =
   drawDlayersMark(ctx, x, y, h, color);
   ctx.fillStyle = color;
   ctx.textBaseline = "alphabetic";
-  ctx.font = `600 ${t}px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif`;
+  ctx.font = `700 ${t}px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif`;
   drawTrackedText(ctx, "CAPE VERDE", tx, y1, tracking);
-  ctx.globalAlpha = 0.85;
+  ctx.globalAlpha = 0.72;
   ctx.font = `400 ${t}px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif`;
   drawTrackedText(ctx, "REAL ESTATE", tx, y1 + adv, tracking);
   drawTrackedText(ctx, "INDEX", tx, y1 + adv * 2, tracking);
@@ -317,10 +317,16 @@ async function renderContentSlide(slide: GuideSlide, index: number, total: numbe
   if (brandFilter) applyBrandImageFilter(ctx, "editorial", drawPhoto);
   else drawPhoto();
 
-  const gradient = ctx.createLinearGradient(0, HEIGHT * 0.52, 0, HEIGHT);
+  const topGradient = ctx.createLinearGradient(0, 0, 0, 260);
+  topGradient.addColorStop(0, "rgba(13, 31, 28, 0.38)");
+  topGradient.addColorStop(1, "rgba(13, 31, 28, 0)");
+  ctx.fillStyle = topGradient;
+  ctx.fillRect(0, 0, WIDTH, 260);
+
+  const gradient = ctx.createLinearGradient(0, HEIGHT * 0.36, 0, HEIGHT);
   gradient.addColorStop(0, "rgba(13, 31, 28, 0)");
-  gradient.addColorStop(0.48, "rgba(13, 31, 28, 0.48)");
-  gradient.addColorStop(1, "rgba(13, 31, 28, 0.82)");
+  gradient.addColorStop(0.52, "rgba(13, 31, 28, 0.58)");
+  gradient.addColorStop(1, "rgba(13, 31, 28, 0.93)");
   ctx.fillStyle = gradient;
   ctx.fillRect(0, 0, WIDTH, HEIGHT);
 
@@ -330,30 +336,31 @@ async function renderContentSlide(slide: GuideSlide, index: number, total: numbe
   ctx.font = "500 24px system-ui, -apple-system, Segoe UI, sans-serif";
   ctx.fillText(`${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`, WIDTH - 170, 102);
 
-  const panelX = 72;
-  const panelY = 790;
-  const panelW = WIDTH - 144;
-  const maxTextW = panelW - 64;
-
-  ctx.fillStyle = "rgba(247, 243, 234, 0.92)";
-  roundedRect(ctx, panelX, panelY, panelW, 380, 6);
-  ctx.fill();
+  const textX = 72;
+  const textY = 785;
+  const maxTextW = WIDTH - 144;
 
   if (slide.label.trim()) {
     ctx.font = "700 24px system-ui, -apple-system, Segoe UI, sans-serif";
-    ctx.fillStyle = "#2d4a42";
-    ctx.fillText(slide.label.trim().toUpperCase(), panelX + 32, panelY + 62);
+    ctx.fillStyle = "#8ecfbf";
+    ctx.fillText(slide.label.trim().toUpperCase(), textX, textY);
   }
 
   ctx.font = "700 54px Georgia, Times New Roman, serif";
   const headlineLines = wrapLines(ctx, slide.headline, maxTextW, 3);
-  drawTextBlock(ctx, headlineLines, panelX + 32, panelY + 126, 62, "#111110");
+  ctx.shadowColor = "rgba(0, 0, 0, 0.32)";
+  ctx.shadowBlur = 14;
+  ctx.shadowOffsetY = 3;
+  drawTextBlock(ctx, headlineLines, textX, textY + 66, 62, "#f7f3ea");
 
   if (slide.body.trim()) {
     ctx.font = "400 31px system-ui, -apple-system, Segoe UI, sans-serif";
     const bodyLines = wrapLines(ctx, slide.body, maxTextW, 3);
-    drawTextBlock(ctx, bodyLines, panelX + 32, panelY + 126 + headlineLines.length * 62 + 30, 42, "#2d3431");
+    drawTextBlock(ctx, bodyLines, textX, textY + 66 + headlineLines.length * 62 + 34, 42, "rgba(247, 243, 234, 0.88)");
   }
+  ctx.shadowColor = "transparent";
+  ctx.shadowBlur = 0;
+  ctx.shadowOffsetY = 0;
 
   ctx.font = "400 18px system-ui, -apple-system, Segoe UI, sans-serif";
   ctx.fillStyle = "rgba(247, 243, 234, 0.74)";
