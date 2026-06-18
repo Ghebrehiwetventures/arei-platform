@@ -112,6 +112,18 @@ export default function MarketUpdates() {
     };
   }, []);
 
+  // Campaign landing page for ad traffic — keep it out of the search index
+  // (noindex), but follow links so it still passes equity to /listings, /market.
+  useEffect(() => {
+    const meta = document.createElement("meta");
+    meta.name = "robots";
+    meta.content = "noindex, follow";
+    document.head.appendChild(meta);
+    return () => {
+      document.head.removeChild(meta);
+    };
+  }, []);
+
   const handleSubmit = async (event: FormEvent) => {
     event.preventDefault();
     const trimmed = email.trim();
@@ -284,20 +296,17 @@ export default function MarketUpdates() {
               <span>Index</span>
             </span>
           </div>
-          <div className="mu-footer-bottom">
-            <p className="mu-footer-copy">
-              © 2026 ·{" "}
-              <a
-                className="mu-footer-poweredby"
-                href="https://www.africarealestateindex.com/"
-                target="_blank"
-                rel="noopener noreferrer"
-              >
-                Powered by Africa Real Estate Index ↗
-              </a>
-            </p>
-            <span className="mu-footer-idx">CV·01</span>
-          </div>
+          <p className="mu-footer-copy">
+            © 2026 ·{" "}
+            <a
+              className="mu-footer-poweredby"
+              href="https://www.africarealestateindex.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Powered by Africa Real Estate Index ↗
+            </a>
+          </p>
         </div>
       </footer>
     </div>

@@ -480,19 +480,15 @@
 .mu-footer-inner {
   width: min(var(--kv-content-w), 100%);
   margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px 24px;
+  flex-wrap: wrap;
 }
 
 .mu-footer-lockup {
-  margin-bottom: 22px;
-}
-
-.mu-footer-bottom {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-  gap: 16px;
-  padding-top: 18px;
-  border-top: 1px solid var(--kv-rule-soft);
+  margin-bottom: 0;
 }
 
 .mu-footer-copy {
@@ -511,13 +507,6 @@
 
 .mu-footer-poweredby:hover {
   color: var(--kv-black);
-}
-
-.mu-footer-idx {
-  font-size: var(--kv-t-xs);
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--kv-ink-300);
 }
 
 /* ── Utilities ──────────────────────────────────────────── */

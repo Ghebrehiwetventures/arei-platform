@@ -246,6 +246,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           </section>
         </main>
       `,
+      { robots: "noindex, follow" },
     ),
     },
     {
@@ -624,7 +625,12 @@ async function main() {
      listing appears in the sitemap on the next deploy without needing
      prerender-listings.ts to be edited. */
   const allListingRoutes = await getAllListingRoutesForSitemap(listingRoutes);
-  await writeSitemap([...routes.filter((r) => !r.route.startsWith("/listing/")), ...allListingRoutes]);
+  await writeSitemap([
+    ...routes.filter(
+      (r) => !r.route.startsWith("/listing/") && !(r.robots && r.robots.includes("noindex")),
+    ),
+    ...allListingRoutes,
+  ]);
 }
 
 async function getAllListingRoutesForSitemap(prerenderedRoutes) {
@@ -714,6 +720,9 @@ function renderRouteHtml(baseHtml, route) {
     `<meta name="twitter:description" content="${escapeHtml(route.description)}" />`,
     `<meta name="twitter:image" content="${escapeHtml(route.image ?? ogImage)}" />`,
   ];
+  if (route.robots) {
+    headExtras.push(`<meta name="robots" content="${escapeHtml(route.robots)}" />`);
+  }
   if (route.jsonLd) {
     const payload = Array.isArray(route.jsonLd) ? route.jsonLd : [route.jsonLd];
     for (const entry of payload) {
