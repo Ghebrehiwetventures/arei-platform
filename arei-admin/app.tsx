@@ -102,6 +102,7 @@ import { AgencyConsoleView } from "./AgencyConsoleView";
 import { AgencyDataConsoleView } from "./AgencyDataConsoleView";
 import { BrokerPilotView } from "./BrokerPilotView";
 import { ListingSocialView } from "./ListingSocialView";
+import { GuideSocialBuilderView } from "./GuideSocialBuilderView";
 import { NewsPostStudioView } from "./NewsPostStudioView";
 import { NewsClustersView } from "./NewsClustersView";
 import { SourceHealthView } from "./SourceHealthView";
@@ -3860,7 +3861,7 @@ function MarketNewsView() {
   );
 }
 
-type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "news-studio" | "news-clusters" | "source-health" | "notifications" | "featured" | "briefings" | "reports" | "reports-marketing";
+type Tab = "dashboard" | "listings" | "sources" | "chatlab" | "agencies" | "agency-data" | "broker-pilot" | "market-news" | "marketing" | "guide-social-builder" | "news-studio" | "news-clusters" | "source-health" | "notifications" | "featured" | "briefings" | "reports" | "reports-marketing";
 
 const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "dashboard",     label: "Dashboard"     },
@@ -3871,10 +3872,10 @@ const NAV_ITEMS: { key: Tab; label: string }[] = [
   { key: "notifications", label: "Notifications" },
 ];
 
-// Marketing = the social-media machine. Each entry is a post type.
 const MARKETING_NAV_ITEMS: { key: Tab; label: string }[] = [
-  { key: "news-studio", label: "News Posts"    },
-  { key: "marketing",   label: "Listing Posts" },
+  { key: "guide-social-builder", label: "Guide Social Builder" },
+  { key: "news-studio",          label: "News Posts"            },
+  { key: "marketing",            label: "Listing Posts"         },
 ];
 
 const REPORTS_NAV_ITEMS: { key: Tab; label: string }[] = [
@@ -4230,6 +4231,7 @@ function App({ onSignOut }: { onSignOut?: () => void }) {
             {tab === "briefings" && <BriefingsView />}
             {tab === "reports" && <ReportsLandingView onNavigate={selectTab} />}
             {tab === "reports-marketing" && <MarketingPerformanceReportView />}
+            {tab === "guide-social-builder" && <GuideSocialBuilderView />}
             {tab === "marketing" && <ListingSocialView />}
             {tab === "news-studio" && <NewsPostStudioView />}
             {tab === "news-clusters" && <NewsClustersView />}
