@@ -106,9 +106,13 @@ function dedupeImages(urls) {
 }
 
 // 1:1 square for carousel items — high quality
-function squareCrop(url) {
+function listingBrandFilterParams() {
+  return "&mod=1.01,0.94,0";
+}
+
+function squareCrop(url, brandFilter = false) {
   if (!url) return url;
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1080&fit=cover&output=jpg&q=92&sharp=1`;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=1080&h=1080&fit=cover&output=jpg&q=92&sharp=1${brandFilter ? listingBrandFilterParams() : ""}`;
 }
 
 async function waitUntilReady(ig, containerId, maxAttempts = 20, delayMs = 1500) {
@@ -687,7 +691,7 @@ async function getMarketingSummary(sb) {
 }
 
 async function publishCarousel(sb, body) {
-  const { listingId, caption, imageUrls } = body;
+  const { listingId, caption, imageUrls, brandFilter } = body;
   if (!listingId) throw new Error("listingId required");
   if (!caption || !caption.trim()) throw new Error("caption required");
 
@@ -725,7 +729,7 @@ async function publishCarousel(sb, body) {
   const containerIds = [];
   for (const imageUrl of images) {
     const params = new URLSearchParams({
-      image_url: squareCrop(imageUrl),
+      image_url: squareCrop(imageUrl, Boolean(brandFilter)),
       is_carousel_item: "true",
       access_token: ig.accessToken,
     });
@@ -865,6 +869,7 @@ export async function processQueueOnce(sb) {
           listingId: item.listing_id,
           caption: item.caption,
           imageUrls: item.image_urls,
+          brandFilter: item.brand_filter,
         });
       } else if (channel === "tiktok") {
         result = await publishToTikTok(sb, {
@@ -994,7 +999,7 @@ export default async function handler(req, res) {
     }
 
     if (body.action === "queue_carousel") {
-      const { listingId, caption, imageUrls, scheduledAt, listingTitle, channels } = body;
+      const { listingId, caption, imageUrls, scheduledAt, listingTitle, channels, brandFilter } = body;
       if (!listingId || !caption || !imageUrls?.length || !scheduledAt) {
         send(res, 400, { error: "listingId, caption, imageUrls, scheduledAt required" });
         return;
@@ -1031,6 +1036,7 @@ export default async function handler(req, res) {
         market_id: marketId,
         platform: resolvedChannels[0],
         channels: resolvedChannels,
+        brand_filter: Boolean(brandFilter),
       }).select("id, scheduled_at").single();
       if (error) {
         if (error.code === "23505") {
@@ -1046,7 +1052,7 @@ export default async function handler(req, res) {
     if (body.action === "list_queue") {
       const { data, error } = await sb
         .from("social_listing_queue")
-        .select("id, listing_id, listing_title, caption, scheduled_at, status, permalink, story_published, error_message, image_urls")
+        .select("id, listing_id, listing_title, caption, scheduled_at, status, permalink, story_published, error_message, image_urls, brand_filter")
         .order("scheduled_at", { ascending: true })
         .limit(50);
       if (error) throw new Error(error.message);
@@ -1062,6 +1068,7 @@ export default async function handler(req, res) {
       if (typeof body.caption === "string") patch.caption = body.caption.trim();
       if (Array.isArray(body.imageUrls)) patch.image_urls = body.imageUrls;
       if (body.scheduledAt) patch.scheduled_at = body.scheduledAt;
+      if (typeof body.brandFilter === "boolean") patch.brand_filter = body.brandFilter;
       const { error } = await sb
         .from("social_listing_queue")
         .update(patch)

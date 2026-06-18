@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
+import { applyBrandImageFilter } from "./socialBrandFilter";
 
 type ImageRights = "owned" | "licensed" | "creative_commons" | "permission_granted" | "unknown";
 type ImageStatus = "idle" | "loading" | "loaded" | "error";
@@ -276,7 +277,7 @@ function drawLockup(ctx: CanvasRenderingContext2D, x: number, y: number, color =
   ctx.restore();
 }
 
-async function renderContentSlide(slide: GuideSlide, index: number, total: number): Promise<Blob> {
+async function renderContentSlide(slide: GuideSlide, index: number, total: number, brandFilter: boolean): Promise<Blob> {
   const image = await loadImage(slide.imageUrl);
   const canvas = document.createElement("canvas");
   canvas.width = WIDTH;
@@ -284,7 +285,9 @@ async function renderContentSlide(slide: GuideSlide, index: number, total: numbe
   const ctx = canvas.getContext("2d");
   if (!ctx) throw new Error("Canvas is not available");
 
-  coverImage(ctx, image, 0, 0, WIDTH, HEIGHT);
+  const drawPhoto = () => coverImage(ctx, image, 0, 0, WIDTH, HEIGHT);
+  if (brandFilter) applyBrandImageFilter(ctx, "editorial", drawPhoto);
+  else drawPhoto();
 
   const gradient = ctx.createLinearGradient(0, HEIGHT * 0.52, 0, HEIGHT);
   gradient.addColorStop(0, "rgba(13, 31, 28, 0)");
@@ -471,6 +474,7 @@ export function GuideSocialBuilderView() {
   const [ctaDestination, setCtaDestination] = useState(DEFAULT_CTA_DESTINATION);
   const [caption, setCaption] = useState("");
   const [appendFooter, setAppendFooter] = useState(true);
+  const [brandFilter, setBrandFilter] = useState(() => localStorage.getItem("guide_social_brand_filter") !== "off");
   const [rendered, setRendered] = useState<RenderedSlide[]>([]);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -487,6 +491,10 @@ export function GuideSocialBuilderView() {
     ].filter(Boolean).join("\n\n");
     return [caption.trim(), footer].filter(Boolean).join("\n\n");
   }, [appendFooter, caption, ctaDestination, slides]);
+
+  useEffect(() => {
+    localStorage.setItem("guide_social_brand_filter", brandFilter ? "on" : "off");
+  }, [brandFilter]);
 
   function updateSlide(id: string, patch: Partial<GuideSlide>) {
     setSlides((current) => current.map((slide) => slide.id === id ? { ...slide, ...patch } : slide));
@@ -552,7 +560,7 @@ export function GuideSocialBuilderView() {
     const total = slides.length + (includeCta ? 1 : 0);
     const output: RenderedSlide[] = [];
     for (let i = 0; i < slides.length; i += 1) {
-      const blob = await renderContentSlide(slides[i], i, total);
+      const blob = await renderContentSlide(slides[i], i, total, brandFilter);
       output.push({ filename: `${String(i + 1).padStart(2, "0")}.png`, blob, dataUrl: await blobToDataUrl(blob) });
     }
     if (includeCta) {
@@ -599,6 +607,7 @@ export function GuideSocialBuilderView() {
           imageSourceUrl: slide.imageUrl.startsWith("data:") ? null : slide.imageUrl,
         })),
         cta: includeCta ? { headline: ctaHeadline.trim(), subcopy: ctaSubcopy.trim(), destination: ctaDestination.trim() } : null,
+        brandFilter,
         imageCredits: slides.map((slide) => slide.imageCredit.trim()),
         imageSourceUrls: slides.map((slide) => slide.imageUrl.startsWith("data:") ? null : slide.imageUrl),
         exportTimestamp: new Date().toISOString(),
@@ -767,6 +776,25 @@ export function GuideSocialBuilderView() {
       <section className="border border-border bg-surface-1 rounded p-4 md:p-5">
         <div className="flex flex-wrap items-center gap-3 mb-4">
           <h2 className="text-base font-semibold text-foreground mr-auto">5. Preview and export</h2>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-foreground-muted">Brand filter</span>
+            <div className="flex rounded border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setBrandFilter(true)}
+                className={`px-3 py-2 text-xs ${brandFilter ? "bg-primary text-primary-foreground" : "bg-background text-foreground-muted"}`}
+              >
+                On
+              </button>
+              <button
+                type="button"
+                onClick={() => setBrandFilter(false)}
+                className={`px-3 py-2 text-xs border-l border-border ${!brandFilter ? "bg-primary text-primary-foreground" : "bg-background text-foreground-muted"}`}
+              >
+                Off
+              </button>
+            </div>
+          </div>
           <button type="button" onClick={handleRenderPreview} disabled={busy} className="px-3 py-2 text-sm border border-border disabled:opacity-50">Render preview</button>
           <button type="button" onClick={handleDownloadZip} disabled={busy || validation.length > 0} className="px-3 py-2 text-sm bg-primary text-primary-foreground disabled:opacity-40">Download ZIP</button>
         </div>

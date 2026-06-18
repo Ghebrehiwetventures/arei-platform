@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState, type PointerEvent as ReactPointerEvent } from "react";
+import { brandFilterUrlParams } from "./socialBrandFilter";
 import { supabaseAuth } from "./supabase";
 
 interface Listing {
@@ -99,9 +100,9 @@ function sortListings(listings: Listing[], sortBy: ListingSortKey): Listing[] {
   });
 }
 
-function previewImageUrl(url: string, size = 220): string {
+function previewImageUrl(url: string, size = 220, brandFilter = false): string {
   if (!url) return url;
-  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=cover&output=jpg&q=82`;
+  return `https://wsrv.nl/?url=${encodeURIComponent(url)}&w=${size}&h=${size}&fit=cover&output=jpg&q=82${brandFilter ? brandFilterUrlParams("listing") : ""}`;
 }
 
 function formatPriceEUR(price: number | null): string {
@@ -136,6 +137,7 @@ interface QueueItem {
   post_id: string | null;
   permalink: string | null;
   channels: string[] | null;
+  brand_filter?: boolean | null;
 }
 
 interface PublishedPost {
@@ -210,10 +212,12 @@ function PostPreview({
   images,
   caption,
   channels,
+  brandFilter,
 }: {
   images: string[];
   caption: string;
   channels: string[];
+  brandFilter: boolean;
 }) {
   const [idx, setIdx] = useState(0);
   // Snap back to first image when the selection changes underneath.
@@ -244,7 +248,7 @@ function PostPreview({
       <div className="relative aspect-square bg-surface-3 group">
         {current ? (
           <img
-            src={previewImageUrl(current, 640)}
+            src={previewImageUrl(current, 640, brandFilter)}
             alt=""
             referrerPolicy="no-referrer"
             className="w-full h-full object-cover select-none"
@@ -325,6 +329,7 @@ export function ListingSocialView() {
   const [selectedId, setSelectedId] = useState("");
   const [caption, setCaption] = useState("");
   const [selectedImages, setSelectedImages] = useState<string[]>([]);
+  const [brandFilter, setBrandFilter] = useState(() => localStorage.getItem("listing_social_brand_filter") !== "off");
   const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [dropIndex, setDropIndex] = useState<number | null>(null);
   const cellRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -391,6 +396,10 @@ export function ListingSocialView() {
       .finally(() => setLoading(false));
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  useEffect(() => {
+    localStorage.setItem("listing_social_brand_filter", brandFilter ? "on" : "off");
+  }, [brandFilter]);
 
   useEffect(() => {
     if (filtered.length === 0) {
@@ -496,6 +505,7 @@ export function ListingSocialView() {
         scheduledAt: new Date().toISOString(),
         listingTitle: selected?.title || null,
         channels,
+        brandFilter,
       });
       setNotice("Sending in the background — it'll appear in Published within a minute. You can keep working.");
       await loadState();
@@ -520,6 +530,7 @@ export function ListingSocialView() {
           imageUrls: selectedImages,
           caption: caption.trim(),
           scheduledAt: new Date(scheduleTime).toISOString(),
+          brandFilter,
         });
         setNotice("Queue item updated.");
         setEditingQueueId(null);
@@ -531,6 +542,7 @@ export function ListingSocialView() {
           caption: caption.trim(),
           scheduledAt: new Date(scheduleTime).toISOString(),
           channels,
+          brandFilter,
         });
         setNotice("Added to queue.");
       }
@@ -557,6 +569,7 @@ export function ListingSocialView() {
       editLoadRef.current = item;
       setSelectedId(item.listing_id);
     }
+    setBrandFilter(Boolean(item.brand_filter));
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
@@ -653,7 +666,7 @@ export function ListingSocialView() {
         >
           <div className="w-10 h-10 flex-shrink-0 rounded overflow-hidden bg-surface-3">
             {selectedCover && (
-              <img src={previewImageUrl(selectedCover, 80)} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+              <img src={previewImageUrl(selectedCover, 80, brandFilter)} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
             )}
           </div>
           <div className="min-w-0 flex-1">
@@ -831,7 +844,7 @@ export function ListingSocialView() {
                       } : undefined}
                     >
                       <img
-                        src={previewImageUrl(url)}
+                        src={previewImageUrl(url, 220, brandFilter)}
                         alt=""
                         draggable={false}
                         referrerPolicy="no-referrer"
@@ -913,7 +926,26 @@ export function ListingSocialView() {
           className="space-y-4 lg:col-start-2 lg:row-start-2 xl:col-start-3 xl:row-start-1 xl:sticky xl:top-4"
         >
           <div className="label-style hidden xl:block">Preview &amp; publish</div>
-          <PostPreview images={selectedImages} caption={caption} channels={channels} />
+          <div className="surface-1 rounded border border-border p-3 flex items-center justify-between gap-3">
+            <span className="text-xs font-mono text-foreground-muted">Brand filter</span>
+            <div className="flex rounded border border-border overflow-hidden">
+              <button
+                type="button"
+                onClick={() => setBrandFilter(true)}
+                className={`px-3 py-1.5 text-xs font-mono ${brandFilter ? "bg-foreground text-background" : "bg-background text-foreground-muted"}`}
+              >
+                On
+              </button>
+              <button
+                type="button"
+                onClick={() => setBrandFilter(false)}
+                className={`px-3 py-1.5 text-xs font-mono border-l border-border ${!brandFilter ? "bg-foreground text-background" : "bg-background text-foreground-muted"}`}
+              >
+                Off
+              </button>
+            </div>
+          </div>
+          <PostPreview images={selectedImages} caption={caption} channels={channels} brandFilter={brandFilter} />
 
           <div className="surface-1 rounded border border-border p-4 space-y-3">
             {/* Channel selector */}
@@ -1073,7 +1105,7 @@ export function ListingSocialView() {
                 <div className="flex gap-3 items-start min-w-0">
                   {item.image_urls?.[0] && (
                     <img
-                      src={previewImageUrl(item.image_urls[0], 96)}
+                      src={previewImageUrl(item.image_urls[0], 96, Boolean(item.brand_filter))}
                       alt=""
                       referrerPolicy="no-referrer"
                       className="w-12 h-12 object-cover rounded flex-shrink-0"
