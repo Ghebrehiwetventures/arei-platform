@@ -224,21 +224,22 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
               <input id="market-updates-email" type="email" name="email" placeholder="Email address" required />
               <button type="submit">Get updates</button>
             </form>
+            <p>Free. Unsubscribe anytime.</p>
             <p>
               Cape Verde Real Estate Index is not a broker. We collect public listings from local agencies, portals and property websites so buyers can understand the market more easily.
             </p>
-            <section aria-label="What this is">
+            <section aria-label="What you'll get">
               <article>
-                <h2>Browse homes</h2>
-                <p>Listings from across Cape Verde.</p>
+                <h2>New listings</h2>
+                <p>Properties for sale across Cape Verde, gathered into one searchable place.</p>
               </article>
               <article>
-                <h2>Compare islands</h2>
-                <p>Sal, Boa Vista, Santiago and São Vicente are different markets.</p>
+                <h2>Island context</h2>
+                <p>Short notes on places, prices and what is changing in the market.</p>
               </article>
               <article>
-                <h2>Get updates</h2>
-                <p>New listings and market notes by email.</p>
+                <h2>Buyer notes</h2>
+                <p>Clear reminders that asking prices are not the same as sale prices.</p>
               </article>
             </section>
           </section>

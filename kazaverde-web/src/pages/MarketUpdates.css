@@ -1,47 +1,49 @@
 /* /market-updates — standalone campaign signup page.
-   No nav, no footer (App.tsx hides shell on this route). One column,
-   mobile-first. The single job is the email signup. Everything else is
-   light context, never a product demo. */
+   No nav, no footer (App.tsx hides shell on this route). The single job is
+   the email signup; the listing stack is lightweight visual proof, not a
+   browsable product surface.
+
+   Deliberate colour zones, not a vague wash:
+   - hero band      → off-white (warm, calm, holds the form)
+   - proof panel    → sage (the one intentional mint block, behind the cards)
+   - benefits band  → bone, raised paper cards */
 
 .mu-page {
-  background: var(--kv-off-white);
+  background: var(--kv-white);
   color: var(--kv-black);
   font-family: var(--kv-mono);
 }
 
-/* App.tsx adds .ctn-capture on this route; kill the shell's top padding so
-   the hero owns the full viewport. */
+/* App.tsx adds .ctn-capture on this route; kill the shell's top padding. */
 .ctn-capture {
   padding-top: 0 !important;
 }
 
+/* ── Hero ───────────────────────────────────────────────── */
 .mu-hero {
-  min-height: 100vh;
-  min-height: 100svh;
-  display: flex;
-  justify-content: center;
-  /* Top padding scales with viewport so the form sits comfortably near the
-     top on tall desktops without leaving a dead band of empty space. */
-  padding: clamp(32px, 8vh, 88px) var(--kv-gutter) clamp(48px, 8vh, 80px);
-  background:
-    radial-gradient(135% 75% at 50% -8%, rgba(142, 207, 191, 0.55) 0%, rgba(142, 207, 191, 0) 58%),
-    linear-gradient(180deg, var(--kv-off-white) 0%, var(--kv-white) 62%);
+  background: var(--kv-off-white);
+  padding: clamp(36px, 6vh, 76px) var(--kv-gutter) clamp(44px, 6vh, 72px);
 }
 
-/* The whole page is one narrow, centered column. */
-.mu-inner {
-  width: 100%;
-  max-width: 500px;
-  display: flex;
-  flex-direction: column;
+.mu-hero-grid {
+  width: min(var(--kv-content-w), 100%);
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
+  gap: clamp(32px, 5vw, 76px);
+  align-items: start;
 }
 
-/* ── Lockup ─────────────────────────────────────────────── */
+/* Lead column carries the conversion: lockup → copy → form. */
+.mu-lead {
+  min-width: 0;
+}
+
 .mu-lockup {
   display: inline-flex;
   align-items: center;
-  gap: 12px;
-  margin-bottom: clamp(32px, 6vh, 52px);
+  gap: 13px;
+  margin-bottom: clamp(28px, 5vh, 48px);
   color: var(--kv-black);
 }
 
@@ -64,9 +66,8 @@
   opacity: 0.64;
 }
 
-/* ── Hero copy ──────────────────────────────────────────── */
 .mu-eyebrow {
-  margin: 0 0 16px;
+  margin: 0 0 18px;
   font-size: var(--kv-t-xs);
   font-weight: var(--kv-fw-semibold);
   letter-spacing: 0.18em;
@@ -74,25 +75,27 @@
   color: var(--kv-green-deep);
 }
 
-.mu-copy h1 {
+.mu-lead h1 {
   margin: 0;
-  font-size: clamp(32px, 6.4vw, 46px);
+  font-size: clamp(38px, 5vw, 60px);
   font-weight: var(--kv-fw-regular);
-  line-height: 1.05;
+  line-height: 1.02;
   letter-spacing: var(--kv-ls-display);
   text-wrap: balance;
 }
 
 .mu-subcopy {
-  margin: 18px 0 0;
-  font-size: clamp(16px, 2.2vw, 19px);
+  margin: 22px 0 0;
+  max-width: 30ch;
+  font-size: clamp(17px, 1.5vw, 21px);
   line-height: 1.5;
   color: var(--kv-ink-700);
 }
 
-/* ── Form ───────────────────────────────────────────────── */
+/* ── Form — strong, confident presence ──────────────────── */
 .mu-form {
-  margin-top: 28px;
+  margin-top: clamp(28px, 4vh, 38px);
+  max-width: 520px;
 }
 
 .mu-form-row {
@@ -102,13 +105,13 @@
 }
 
 .mu-form input {
-  min-height: 56px;
+  min-height: 60px;
   border: 1px solid var(--kv-rule-strong);
   background: var(--kv-paper);
   color: var(--kv-black);
-  padding: 0 16px;
+  padding: 0 18px;
   font: inherit;
-  font-size: 15px;
+  font-size: 16px;
   outline: none;
   border-radius: 0;
 }
@@ -119,14 +122,15 @@
 
 .mu-form input:focus {
   border-color: var(--kv-black);
+  box-shadow: inset 0 0 0 1px var(--kv-black);
 }
 
 .mu-form button {
-  min-height: 56px;
+  min-height: 60px;
   border: 1px solid var(--kv-black);
   background: var(--kv-black);
   color: var(--kv-white);
-  padding: 0 26px;
+  padding: 0 32px;
   font: inherit;
   font-size: var(--kv-t-sm);
   font-weight: var(--kv-fw-semibold);
@@ -153,32 +157,41 @@
   font-size: var(--kv-t-sm);
 }
 
-/* Disclosure sits directly under the form — plain, muted, no decoration. */
-.mu-disclosure {
-  margin: 18px 0 0;
-  max-width: 460px;
-  color: var(--kv-ink-500);
+.mu-microcopy {
+  margin: 14px 0 0;
   font-size: var(--kv-t-sm);
-  line-height: 1.6;
+  font-weight: var(--kv-fw-medium);
+  letter-spacing: 0.02em;
+  color: var(--kv-ink-600);
+}
+
+/* Disclosure — readable, not a whisper. */
+.mu-disclosure {
+  margin: 14px 0 0;
+  max-width: 48ch;
+  color: var(--kv-ink-600);
+  font-size: var(--kv-t-sm);
+  line-height: 1.65;
 }
 
 /* ── Success state ──────────────────────────────────────── */
 .mu-success {
   border: 1px solid var(--kv-black);
   background: var(--kv-paper);
-  padding: 26px 24px;
+  padding: clamp(26px, 3vw, 34px);
+  max-width: 520px;
 }
 
 .mu-success-title {
   margin: 0;
-  font-size: clamp(26px, 5vw, 34px);
+  font-size: clamp(30px, 4vw, 40px);
   font-weight: var(--kv-fw-regular);
-  line-height: 1.05;
+  line-height: 1.04;
   letter-spacing: var(--kv-ls-display);
 }
 
 .mu-success-text {
-  margin: 12px 0 0;
+  margin: 14px 0 0;
   color: var(--kv-ink-700);
   font-size: var(--kv-t-lg);
   line-height: 1.5;
@@ -188,14 +201,14 @@
   display: flex;
   flex-wrap: wrap;
   gap: 10px;
-  margin-top: 22px;
+  margin-top: 24px;
 }
 
 .mu-actions a {
   display: inline-flex;
   align-items: center;
-  min-height: 48px;
-  padding: 0 18px;
+  min-height: 50px;
+  padding: 0 20px;
   border: 1px solid var(--kv-black);
   font-size: var(--kv-t-sm);
   font-weight: var(--kv-fw-semibold);
@@ -214,29 +227,85 @@
   color: var(--kv-black);
 }
 
-/* ── Three plain points ─────────────────────────────────── */
-.mu-points {
-  margin-top: clamp(40px, 7vh, 60px);
+/* ── Proof panel — the one intentional mint block ───────── */
+.mu-proof {
+  align-self: stretch;
+  background: var(--kv-green);
+  padding: clamp(18px, 1.8vw, 26px);
+}
+
+.mu-proof-stack {
   display: grid;
-  gap: 0;
+  gap: 14px;
 }
 
-.mu-point {
-  border-top: 1px solid var(--kv-rule);
-  padding: 16px 0;
+/* Compact the shared listing card so three read as a tidy showcase. */
+.mu-proof .kv-lcard {
+  border-color: rgba(10, 10, 10, 0.14);
 }
 
-.mu-point h2 {
-  margin: 0 0 4px;
-  font-size: var(--kv-t-lg);
-  font-weight: var(--kv-fw-semibold);
+.mu-proof .kv-lc-img {
+  height: 150px;
 }
 
-.mu-point p {
+.mu-proof .kv-lc-body {
+  padding: 14px 16px 16px;
+}
+
+.mu-proof .kv-lc-price {
+  font-size: 18px;
+  margin-bottom: 6px;
+}
+
+.mu-proof .kv-lc-title {
+  margin-bottom: 10px;
+}
+
+/* ── Benefits band — designed support points ────────────── */
+.mu-benefits {
+  background: var(--kv-white);
+  border-top: 1px solid var(--kv-rule-soft);
+  padding: clamp(40px, 6vh, 72px) var(--kv-gutter);
+}
+
+.mu-benefits-inner {
+  width: min(var(--kv-content-w), 100%);
+  margin: 0 auto;
+}
+
+.mu-benefits-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 16px;
+}
+
+.mu-benefit {
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-paper);
+  padding: 26px 24px 28px;
+}
+
+.mu-benefit-mark {
+  display: block;
+  width: 14px;
+  height: 14px;
+  margin-bottom: 22px;
+  background: var(--kv-green);
+  border: 1px solid var(--kv-green-deep);
+}
+
+.mu-benefit h3 {
+  margin: 0 0 10px;
+  font-size: clamp(19px, 2vw, 23px);
+  font-weight: var(--kv-fw-regular);
+  line-height: 1.15;
+}
+
+.mu-benefit p {
   margin: 0;
-  color: var(--kv-ink-600);
-  font-size: var(--kv-t-base);
-  line-height: 1.5;
+  color: var(--kv-ink-700);
+  font-size: var(--kv-t-sm);
+  line-height: 1.65;
 }
 
 /* ── Utilities ──────────────────────────────────────────── */
@@ -252,7 +321,24 @@
   border: 0;
 }
 
-/* ── Mobile ─────────────────────────────────────────────── */
+/* ── Tablet / stacked ───────────────────────────────────── */
+@media (max-width: 880px) {
+  .mu-hero-grid {
+    grid-template-columns: 1fr;
+    gap: clamp(28px, 5vw, 40px);
+  }
+
+  /* Mobile order: form above the visual proof. */
+  .mu-proof {
+    align-self: auto;
+  }
+
+  .mu-proof-stack {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* ── Phone ──────────────────────────────────────────────── */
 @media (max-width: 560px) {
   .mu-form-row {
     grid-template-columns: 1fr;
@@ -260,6 +346,15 @@
 
   .mu-form button {
     width: 100%;
+  }
+
+  .mu-proof-stack {
+    grid-template-columns: 1fr;
+  }
+
+  /* Two cards is enough proof on a phone; keep the page short. */
+  .mu-proof .kv-lcard:nth-child(n + 3) {
+    display: none;
   }
 
   .mu-actions {
