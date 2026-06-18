@@ -305,10 +305,9 @@
   margin-bottom: 0;
 }
 
-/* Discreet: drop the specs and provenance rows so a card reads as
-   photo · type · place · price — not a database record. */
-.mu-marquee .kv-lc-specs,
-.mu-marquee .kv-lc-provenance {
+/* Discreet: drop the beds/baths specs, but keep the source line — attribution
+   matters (we're an index, not the seller), so the source signs each card. */
+.mu-marquee .kv-lc-specs {
   display: none;
 }
 
