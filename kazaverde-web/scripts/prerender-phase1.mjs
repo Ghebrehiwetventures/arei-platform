@@ -212,30 +212,42 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
       route: "/market-updates",
       ...page(
       "Cape Verde Property Market Updates | Cape Verde Real Estate Index",
-      "Track source-linked listings, island notes and market signals from Cape Verde Real Estate Index.",
+      "Find Cape Verde homes for sale in one place and get simple property market updates before you buy.",
       `
         <main>
           <section>
             <p>Market updates</p>
-            <h1>Track the Cape Verde property market before you buy.</h1>
+            <h1>Find Cape Verde homes for sale in one place.</h1>
             <p>
-              Source-linked listings, island notes and market signals from the Cape Verde Real Estate Index.
+              Browse properties from across the islands, see where each listing came from, and get simple updates before you buy.
             </p>
             <form>
               <label for="market-updates-email">Email address</label>
               <input id="market-updates-email" type="email" name="email" placeholder="Email address" required />
               <button type="submit">Subscribe</button>
             </form>
+            <section>
+              <p>On the site</p>
+              <h2>A live sample of homes tracked by the index.</h2>
+              <p><a href="/listings">View all homes for sale</a></p>
+            </section>
             <section aria-label="What you'll get">
               <h2>What you’ll get</h2>
-              <ul>
-                <li>Source-linked listings from across Cape Verde</li>
-                <li>Notes on islands, prices and market movement</li>
-                <li>Clear reminders that asking prices are not sale prices</li>
-              </ul>
+              <article>
+                <h3>Homes to browse</h3>
+                <p>Properties for sale across Cape Verde, gathered into one searchable place.</p>
+              </article>
+              <article>
+                <h3>Island context</h3>
+                <p>Short notes on places, prices and what is changing in the market.</p>
+              </article>
+              <article>
+                <h3>Buyer reminders</h3>
+                <p>Clear reminders that asking prices are not the same as sale prices.</p>
+              </article>
             </section>
             <p>
-              Cape Verde is getting global attention. We help you understand the property market behind the moment.
+              Cape Verde is getting global attention. We help you see what is actually for sale and how the market is moving.
             </p>
             <p>
               Cape Verde Real Estate Index is not a broker. We organize public, source-linked property information to make the market easier to understand.

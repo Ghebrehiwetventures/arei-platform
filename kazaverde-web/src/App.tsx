@@ -78,9 +78,9 @@ export default function App() {
   const isCapturePage = pathname === "/market-updates";
 
   return (
-    <div className="ctn">
+    <div className={`ctn${isCapturePage ? " ctn-capture" : ""}`}>
       <ScrollToTop />
-      <Navbar />
+      {!isCapturePage && <Navbar />}
       <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -127,7 +127,7 @@ export default function App() {
       </Suspense>
       {!isCapturePage && <NewsletterPopup />}
       <CookieBanner />
-      <Footer />
+      {!isCapturePage && <Footer />}
       <GoogleAnalytics />
       <MetaPixel />
       <Analytics />
