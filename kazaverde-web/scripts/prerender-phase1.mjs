@@ -209,6 +209,32 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     ),
     },
     {
+      route: "/market-updates",
+      ...page(
+      "Cape Verde Property Market Updates | Cape Verde Real Estate Index",
+      "Subscribe for source-linked listings, island notes and Cape Verde property market signals.",
+      `
+        <main>
+          <section>
+            <p>Market updates</p>
+            <h1>Get Cape Verde property market updates.</h1>
+            <p>
+              Source-linked listings, island notes and property market signals from Cape Verde Real Estate Index.
+            </p>
+            <form>
+              <label for="market-updates-email">Email address</label>
+              <input id="market-updates-email" type="email" name="email" placeholder="Email address" required />
+              <button type="submit">Subscribe</button>
+            </form>
+            <p>
+              CVREI is not a broker. We organize public, source-linked property information to make the market easier to understand.
+            </p>
+          </section>
+        </main>
+      `,
+    ),
+    },
+    {
       route: "/blog",
       ...page(
       "Cape Verde Real Estate Blog | Cape Verde Real Estate Index",
