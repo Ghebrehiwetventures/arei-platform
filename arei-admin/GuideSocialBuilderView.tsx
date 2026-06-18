@@ -264,16 +264,44 @@ function drawTextBlock(
   lines.forEach((line, index) => ctx.fillText(line, x, y + index * lineHeight));
 }
 
-function drawLockup(ctx: CanvasRenderingContext2D, x: number, y: number, color = "#f7f3ea") {
+function drawDlayersMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string) {
+  const s = size / 24;
   ctx.save();
   ctx.strokeStyle = color;
   ctx.fillStyle = color;
-  ctx.lineWidth = 4;
-  ctx.strokeRect(x, y, 30, 30);
-  ctx.strokeRect(x + 10, y + 10, 30, 30);
-  ctx.fillRect(x + 20, y + 20, 18, 18);
-  ctx.font = "600 24px system-ui, -apple-system, Segoe UI, sans-serif";
-  ctx.fillText("CVREI", x + 56, y + 31);
+  ctx.lineWidth = 1.4 * s;
+  ctx.lineCap = "square";
+  ctx.strokeRect(x + 3 * s, y + 3 * s, 14 * s, 14 * s);
+  ctx.strokeRect(x + 6.5 * s, y + 6.5 * s, 14 * s, 14 * s);
+  ctx.fillRect(x + 10 * s, y + 10 * s, 9 * s, 9 * s);
+  ctx.restore();
+}
+
+function drawTrackedText(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, tracking: number) {
+  let cursor = x;
+  for (const char of text) {
+    ctx.fillText(char, cursor, y);
+    cursor += ctx.measureText(char).width + tracking;
+  }
+}
+
+function drawLockup(ctx: CanvasRenderingContext2D, x: number, y: number, color = "#f7f3ea", h = 46) {
+  const t = Math.round(h * 0.34);
+  const tx = x + h + 12;
+  const tracking = t * 0.04;
+  const adv = Math.round(t * 1.2);
+  const y1 = y + t - 1;
+
+  ctx.save();
+  drawDlayersMark(ctx, x, y, h, color);
+  ctx.fillStyle = color;
+  ctx.textBaseline = "alphabetic";
+  ctx.font = `600 ${t}px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif`;
+  drawTrackedText(ctx, "CAPE VERDE", tx, y1, tracking);
+  ctx.globalAlpha = 0.85;
+  ctx.font = `400 ${t}px Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif`;
+  drawTrackedText(ctx, "REAL ESTATE", tx, y1 + adv, tracking);
+  drawTrackedText(ctx, "INDEX", tx, y1 + adv * 2, tracking);
   ctx.restore();
 }
 
