@@ -399,6 +399,111 @@
   line-height: 1.65;
 }
 
+/* ── FAQ — native accordion, glanceable ─────────────────── */
+.mu-faq {
+  background: var(--kv-off-white);
+  border-top: 1px solid var(--kv-rule-soft);
+  padding: clamp(40px, 6vh, 72px) var(--kv-gutter);
+}
+
+.mu-faq-inner {
+  width: min(820px, 100%);
+  margin: 0 auto;
+}
+
+.mu-faq-eyebrow {
+  margin: 0 0 clamp(20px, 3vh, 30px);
+  font-size: var(--kv-t-xs);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--kv-green-deep);
+}
+
+.mu-faq-item {
+  border-top: 1px solid var(--kv-rule);
+}
+
+.mu-faq-item summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 20px;
+  padding: 18px 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: clamp(15px, 1.6vw, 18px);
+  font-weight: var(--kv-fw-medium);
+  line-height: 1.35;
+}
+
+.mu-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.mu-faq-item summary::after {
+  content: "+";
+  flex: 0 0 auto;
+  font-weight: var(--kv-fw-regular);
+  color: var(--kv-green-deep);
+  font-size: 20px;
+  line-height: 1;
+  transform: translateY(1px);
+}
+
+.mu-faq-item[open] summary::after {
+  content: "–";
+}
+
+.mu-faq-item p {
+  margin: 0 0 20px;
+  max-width: 68ch;
+  color: var(--kv-ink-700);
+  font-size: var(--kv-t-base);
+  line-height: 1.7;
+}
+
+/* ── Footer line — © · Powered by AREI ──────────────────── */
+.mu-footer {
+  background: var(--kv-white);
+  border-top: 1px solid var(--kv-rule);
+  padding: 26px var(--kv-gutter);
+}
+
+.mu-footer-inner {
+  width: min(var(--kv-content-w), 100%);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 16px;
+}
+
+.mu-footer-copy {
+  margin: 0;
+  font-size: var(--kv-t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-ink-300);
+}
+
+.mu-footer-poweredby {
+  color: var(--kv-ink-400);
+  text-decoration: none;
+  transition: color var(--kv-dur-fast) var(--kv-ease);
+}
+
+.mu-footer-poweredby:hover {
+  color: var(--kv-black);
+}
+
+.mu-footer-idx {
+  font-size: var(--kv-t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-ink-300);
+}
+
 /* ── Utilities ──────────────────────────────────────────── */
 .mu-visually-hidden {
   position: absolute;

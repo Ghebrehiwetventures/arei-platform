@@ -5,9 +5,13 @@ import DLayersMark from "../components/DLayersMark";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { arei } from "../lib/arei";
 import { notifyFormspree } from "../lib/formspree";
+import { FAQ_ENTRIES } from "../lib/faq-data";
 import { Card } from "./Listings";
 import "./Listings.css";
 import "./MarketUpdates.css";
+
+// Card width incl. gap — used to repeat the set enough to cover the viewport.
+const MARQUEE_CARD_W = 280;
 
 function hasImage(listing: ListingCard) {
   return Boolean(listing.image_urls?.[0] || listing.image_url);
@@ -75,6 +79,14 @@ export default function MarketUpdates() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [previewListings, setPreviewListings] = useState<ListingCard[]>([]);
+  const [viewportW, setViewportW] = useState(1440);
+
+  useEffect(() => {
+    const update = () => setViewportW(window.innerWidth);
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -134,8 +146,19 @@ export default function MarketUpdates() {
 
   const hasListings = previewListings.length > 0;
 
+  // Repeat the listings until one set is wider than the viewport, so the
+  // duplicated-set, translateX(-100%) loop never runs out of cards mid-scroll
+  // (which left a gap when only a handful of listings loaded).
+  const reps = hasListings
+    ? Math.max(1, Math.ceil((viewportW + 160) / (previewListings.length * MARQUEE_CARD_W)))
+    : 1;
+  const loopCards = hasListings
+    ? Array.from({ length: reps }, () => previewListings).flat()
+    : [];
+
   return (
-    <main className="mu-page">
+    <div className="mu-page">
+      <main className="mu-main">
       <section className="mu-hero" aria-labelledby="market-updates-title">
         <div className="mu-hero-inner">
           <div className="mu-lockup" role="img" aria-label="Cape Verde Real Estate Index">
@@ -205,12 +228,12 @@ export default function MarketUpdates() {
         <div className={`mu-marquee${hasListings ? "" : " mu-marquee--static"}`}>
           <div className="mu-marquee-set">
             {hasListings
-              ? previewListings.map((listing) => <Card key={listing.id} l={listing} bare />)
+              ? loopCards.map((listing, i) => <Card key={i} l={listing} bare />)
               : [0, 1, 2, 3, 4].map((i) => <ProofSkeleton key={i} />)}
           </div>
           {hasListings && (
             <div className="mu-marquee-set" aria-hidden="true">
-              {previewListings.map((listing) => <Card key={`dup-${listing.id}`} l={listing} bare />)}
+              {loopCards.map((listing, i) => <Card key={`dup-${i}`} l={listing} bare />)}
             </div>
           )}
         </div>
@@ -238,6 +261,38 @@ export default function MarketUpdates() {
           </div>
         </div>
       </section>
-    </main>
+
+      <section className="mu-faq" aria-label="Common buyer questions">
+        <div className="mu-faq-inner">
+          <h2 className="mu-faq-eyebrow">Common buyer questions</h2>
+          <div className="mu-faq-list">
+            {FAQ_ENTRIES.map((entry) => (
+              <details className="mu-faq-item" key={entry.question}>
+                <summary>{entry.question}</summary>
+                <p>{entry.answer}</p>
+              </details>
+            ))}
+          </div>
+        </div>
+      </section>
+      </main>
+
+      <footer className="mu-footer">
+        <div className="mu-footer-inner">
+          <p className="mu-footer-copy">
+            © 2026 ·{" "}
+            <a
+              className="mu-footer-poweredby"
+              href="https://www.africarealestateindex.com/"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Powered by Africa Real Estate Index ↗
+            </a>
+          </p>
+          <span className="mu-footer-idx">CV·01</span>
+        </div>
+      </footer>
+    </div>
   );
 }

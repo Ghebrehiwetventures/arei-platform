@@ -235,7 +235,14 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
                 <li>We track them by island — indexed so Sal, Boa Vista, Santiago and São Vicente are easy to compare.</li>
                 <li>You get updates by email — new listings and simple market notes, free.</li>
               </ol>
-            </section>
+            </section>${faqEntries.length > 0 ? `
+            <section aria-label="Common buyer questions">
+              <h2>Common buyer questions</h2>
+              ${faqEntries.map((f) => `<article>
+                <h3>${escapeHtml(f.question)}</h3>
+                <p>${escapeHtml(f.answer)}</p>
+              </article>`).join("")}
+            </section>` : ""}
           </section>
         </main>
       `,
