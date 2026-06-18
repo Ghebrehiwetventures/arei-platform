@@ -78,7 +78,7 @@ export function SocialCarouselBuilderView() {
   const [listingLabel, setListingLabel] = useState(LISTING_LABELS[0]);
   const ctaKicker = "// THE INDEX";
   const [ctaTitle, setCtaTitle] = useState(PRESETS[0].cta);
-  const [ctaSub, setCtaSub] = useState("Live Cape Verde listings · structured property data.");
+  const [ctaSub, setCtaSub] = useState("CVREI is an index, not a broker.");
   const [ctaUrl, setCtaUrl] = useState("capeverderealestateindex.com");
 
   // Tracking (prep only — no live analytics in this phase).

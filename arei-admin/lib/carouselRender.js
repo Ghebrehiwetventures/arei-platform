@@ -273,7 +273,7 @@ export async function renderSlide(slide) {
     body = `${lockup(M, M, S.lock, lockH)}
       ${kicker(M, kickY, slide.kicker || "// THE INDEX", S.kicker)}
       ${hb.svg}
-      <text x="${M}" y="${subY}" font-family="Inter" font-size="27" font-weight="400" fill="${S.sub}">${esc(slide.sub || "Live Cape Verde listings · structured property data.")}</text>
+      <text x="${M}" y="${subY}" font-family="Inter" font-size="27" font-weight="400" fill="${S.sub}">${esc(slide.sub || "CVREI is an index, not a broker.")}</text>
       <text x="${M}" y="${urlY}" font-family="Inter" font-size="24" font-weight="600" letter-spacing="0.5" fill="${S.fg}">${esc(slide.url || "capeverderealestateindex.com")}</text>`;
   } else {
     throw new Error(`Unknown slide type: ${slide.type}`);
