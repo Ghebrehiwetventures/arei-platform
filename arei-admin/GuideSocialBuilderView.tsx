@@ -1,7 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { applyBrandImageFilter } from "./socialBrandFilter";
 
-type ImageRights = "owned" | "licensed" | "creative_commons" | "permission_granted" | "unknown";
 type ImageStatus = "idle" | "loading" | "loaded" | "error";
 type ImageCreditStatus = "manual" | "auto_detected";
 
@@ -11,7 +10,6 @@ interface GuideSlide {
   originalFilename: string | null;
   imageCredit: string;
   imageCreditStatus: ImageCreditStatus;
-  imageRights: ImageRights;
   label: string;
   headline: string;
   body: string;
@@ -34,14 +32,6 @@ const DEFAULT_CTA_DESTINATION = "capeverderealestateindex.com";
 const inputClass = "w-full bg-background border border-border text-foreground px-3 py-2 text-sm rounded";
 const labelClass = "block text-[11px] uppercase tracking-wide text-foreground-subtle font-medium mb-1.5";
 
-const RIGHTS_OPTIONS: { value: ImageRights; label: string }[] = [
-  { value: "owned", label: "Owned" },
-  { value: "licensed", label: "Licensed" },
-  { value: "creative_commons", label: "Creative Commons" },
-  { value: "permission_granted", label: "Permission granted" },
-  { value: "unknown", label: "Unknown" },
-];
-
 const DESCRIPTOR_WORDS = new Set([
   "beach",
   "boa",
@@ -60,6 +50,10 @@ const DESCRIPTOR_WORDS = new Set([
   "verde",
 ]);
 
+const KNOWN_PROVIDER_BY_PHOTOGRAPHER = new Map<string, string>([
+  ["schland", "Pixabay"],
+]);
+
 function uid(): string {
   return Math.random().toString(36).slice(2, 10);
 }
@@ -71,7 +65,6 @@ function emptySlide(): GuideSlide {
     originalFilename: null,
     imageCredit: "",
     imageCreditStatus: "manual",
-    imageRights: "unknown",
     label: "",
     headline: "",
     body: "",
@@ -138,12 +131,27 @@ function inferCreditFromFilename(filename: string): string {
     if (nameParts.length > 0) return `${titleCaseName(nameParts.join(" "))} / Pexels`;
   }
 
+  const unsplashIndex = lower.lastIndexOf("unsplash");
+  if (unsplashIndex > 0) {
+    const nameParts = parts.slice(0, unsplashIndex);
+    const lastNamePart = nameParts[nameParts.length - 1] ?? "";
+    if (/^[a-z0-9_-]{8,}$/i.test(lastNamePart)) nameParts.pop();
+    if (nameParts.length > 0) return `${titleCaseName(nameParts.join(" "))} / Unsplash`;
+  }
+
   const firstNumericIndex = parts.findIndex((part) => /^\d+$/.test(part));
   const likelyNameParts = firstNumericIndex >= 0 ? parts.slice(0, firstNumericIndex) : parts;
+  const photographerKey = likelyNameParts[0]?.toLowerCase();
   if (likelyNameParts.length >= 2 && DESCRIPTOR_WORDS.has(likelyNameParts[1].toLowerCase())) {
-    return titleCaseName(likelyNameParts[0]);
+    const photographer = titleCaseName(likelyNameParts[0]);
+    const provider = photographerKey ? KNOWN_PROVIDER_BY_PHOTOGRAPHER.get(photographerKey) : null;
+    return provider ? `${photographer} / ${provider}` : photographer;
   }
-  if (likelyNameParts.length === 1) return titleCaseName(likelyNameParts[0]);
+  if (likelyNameParts.length === 1) {
+    const photographer = titleCaseName(likelyNameParts[0]);
+    const provider = photographerKey ? KNOWN_PROVIDER_BY_PHOTOGRAPHER.get(photographerKey) : null;
+    return provider ? `${photographer} / ${provider}` : photographer;
+  }
   if (likelyNameParts.length >= 2) return titleCaseName(likelyNameParts.slice(0, 2).join(" "));
   return "";
 }
@@ -571,21 +579,17 @@ export function GuideSocialBuilderView() {
 
   function validationErrors(): string[] {
     const errors: string[] = [];
-    if (!postTitle.trim()) errors.push("Post title is required.");
-    if (slides.length < 3 || slides.length > 7) errors.push("Create between 3 and 7 content slides.");
     slides.forEach((slide, index) => {
       const n = index + 1;
-      if (!slide.imageUrl.trim()) errors.push(`Slide ${n} needs an image upload or image URL.`);
-      if (slide.imageStatus !== "loaded") errors.push(`Slide ${n} image has not loaded successfully.`);
-      if (!slide.imageCredit.trim()) errors.push(`Slide ${n} needs an image source or credit.`);
-      if (slide.imageRights === "unknown") errors.push(`Slide ${n} image rights/source cannot be unknown for export.`);
-      if (!slide.headline.trim()) errors.push(`Slide ${n} needs a headline.`);
+      if (!slide.imageUrl.trim()) {
+        errors.push(`Slide ${n} needs an image upload or image URL.`);
+      } else if (slide.imageStatus === "error") {
+        errors.push(`Slide ${n} image failed to load.`);
+      } else if (slide.imageStatus !== "loaded") {
+        errors.push(`Slide ${n} image is still loading.`);
+      }
+      if (!slide.imageCredit.trim()) errors.push(`Slide ${n} needs an image credit.`);
     });
-    if (includeCta) {
-      if (!ctaHeadline.trim()) errors.push("CTA headline is required when the CTA slide is enabled.");
-      if (!ctaSubcopy.trim()) errors.push("CTA subcopy is required when the CTA slide is enabled.");
-      if (!ctaDestination.trim()) errors.push("CTA destination is required when the CTA slide is enabled.");
-    }
     return errors;
   }
 
@@ -638,7 +642,6 @@ export function GuideSocialBuilderView() {
           originalFilename: slide.originalFilename,
           imageCredit: slide.imageCredit.trim(),
           imageCreditStatus: slide.imageCreditStatus,
-          imageRights: slide.imageRights,
           imageSourceUrl: slide.imageUrl.startsWith("data:") ? null : slide.imageUrl,
         })),
         cta: includeCta ? { headline: ctaHeadline.trim(), subcopy: ctaSubcopy.trim(), destination: ctaDestination.trim() } : null,
@@ -736,17 +739,11 @@ export function GuideSocialBuilderView() {
                     <label className={labelClass}>Image source/credit</label>
                     <input className={inputClass} value={slide.imageCredit} onChange={(e) => updateSlide(slide.id, { imageCredit: e.target.value, imageCreditStatus: "manual" })} placeholder="Photographer / source / license note" />
                     {slide.imageCreditStatus === "auto_detected" && (
-                      <p className="mt-1 text-xs text-amber">Auto-detected — verify</p>
+                      <p className="mt-1 text-xs text-amber">Auto-detected from filename — verify.</p>
                     )}
                     {slide.originalFilename && (
                       <p className="mt-1 text-[11px] text-foreground-subtle truncate">Original file: {slide.originalFilename}</p>
                     )}
-                  </div>
-                  <div>
-                    <label className={labelClass}>Rights/source</label>
-                    <select className={inputClass} value={slide.imageRights} onChange={(e) => updateSlide(slide.id, { imageRights: e.target.value as ImageRights })}>
-                      {RIGHTS_OPTIONS.map((option) => <option key={option.value} value={option.value}>{option.label}</option>)}
-                    </select>
                   </div>
                   <div>
                     <label className={labelClass}>Optional short label</label>
