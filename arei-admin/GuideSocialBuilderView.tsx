@@ -2,11 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 
 type ImageRights = "owned" | "licensed" | "creative_commons" | "permission_granted" | "unknown";
 type ImageStatus = "idle" | "loading" | "loaded" | "error";
+type ImageCreditStatus = "manual" | "auto_detected";
 
 interface GuideSlide {
   id: string;
   imageUrl: string;
+  originalFilename: string | null;
   imageCredit: string;
+  imageCreditStatus: ImageCreditStatus;
   imageRights: ImageRights;
   label: string;
   headline: string;
@@ -38,6 +41,24 @@ const RIGHTS_OPTIONS: { value: ImageRights; label: string }[] = [
   { value: "unknown", label: "Unknown" },
 ];
 
+const DESCRIPTOR_WORDS = new Set([
+  "beach",
+  "boa",
+  "caboverde",
+  "cape",
+  "city",
+  "fisherman",
+  "fogo",
+  "island",
+  "landscape",
+  "mindelo",
+  "photo",
+  "praia",
+  "sal",
+  "santiago",
+  "verde",
+]);
+
 function uid(): string {
   return Math.random().toString(36).slice(2, 10);
 }
@@ -46,7 +67,9 @@ function emptySlide(): GuideSlide {
   return {
     id: uid(),
     imageUrl: "",
+    originalFilename: null,
     imageCredit: "",
+    imageCreditStatus: "manual",
     imageRights: "unknown",
     label: "",
     headline: "",
@@ -87,6 +110,77 @@ function downloadBlob(filename: string, blob: Blob) {
   a.click();
   document.body.removeChild(a);
   setTimeout(() => URL.revokeObjectURL(url), 1000);
+}
+
+function titleCaseName(value: string): string {
+  return value
+    .split(/[\s_-]+/)
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1).toLowerCase())
+    .join(" ");
+}
+
+function inferCreditFromFilename(filename: string): string {
+  const base = filename
+    .replace(/\.[^.]+$/, "")
+    .replace(/\([^)]*\)/g, " ")
+    .replace(/\s+/g, "-")
+    .replace(/_+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+  const parts = base.split("-").filter(Boolean);
+  if (parts.length === 0) return "";
+
+  const lower = parts.map((part) => part.toLowerCase());
+  if (lower[0] === "pexels") {
+    const nameParts = parts.slice(1).filter((part) => !/^\d+$/.test(part));
+    if (nameParts.length > 0) return `${titleCaseName(nameParts.join(" "))} / Pexels`;
+  }
+
+  const firstNumericIndex = parts.findIndex((part) => /^\d+$/.test(part));
+  const likelyNameParts = firstNumericIndex >= 0 ? parts.slice(0, firstNumericIndex) : parts;
+  if (likelyNameParts.length >= 2 && DESCRIPTOR_WORDS.has(likelyNameParts[1].toLowerCase())) {
+    return titleCaseName(likelyNameParts[0]);
+  }
+  if (likelyNameParts.length === 1) return titleCaseName(likelyNameParts[0]);
+  if (likelyNameParts.length >= 2) return titleCaseName(likelyNameParts.slice(0, 2).join(" "));
+  return "";
+}
+
+function formatSlideRange(indices: number[]): string {
+  if (indices.length === 1) return `Slide ${indices[0]}`;
+  const sorted = [...indices].sort((a, b) => a - b);
+  const ranges: string[] = [];
+  let start = sorted[0];
+  let prev = sorted[0];
+  for (let i = 1; i < sorted.length; i += 1) {
+    const current = sorted[i];
+    if (current === prev + 1) {
+      prev = current;
+      continue;
+    }
+    ranges.push(start === prev ? `Slide ${start}` : `Slides ${start}-${prev}`);
+    start = current;
+    prev = current;
+  }
+  ranges.push(start === prev ? `Slide ${start}` : `Slides ${start}-${prev}`);
+  return ranges.join(", ");
+}
+
+function buildPhotoCreditsBlock(slides: GuideSlide[]): string {
+  const groups = new Map<string, number[]>();
+  slides.forEach((slide, index) => {
+    const credit = slide.imageCredit.trim();
+    if (!credit) return;
+    const existing = groups.get(credit) ?? [];
+    existing.push(index + 1);
+    groups.set(credit, existing);
+  });
+  if (groups.size === 0) return "";
+  return [
+    "Photo credits:",
+    ...Array.from(groups.entries()).map(([credit, indices]) => `${formatSlideRange(indices)}: ${credit}`),
+  ].join("\n");
 }
 
 function blobToDataUrl(blob: Blob): Promise<string> {
@@ -385,14 +479,11 @@ export function GuideSocialBuilderView() {
 
   const finalCaption = useMemo(() => {
     if (!appendFooter) return caption;
-    const credits = slides
-      .map((slide, index) => slide.imageCredit.trim() ? `Slide ${index + 1}: ${slide.imageCredit.trim()}` : "")
-      .filter(Boolean)
-      .join("\n");
+    const credits = buildPhotoCreditsBlock(slides);
     const footer = [
       ctaDestination.trim() || DEFAULT_CTA_DESTINATION,
-      credits ? `Image credits:\n${credits}` : "",
       "#capeverde #caboverde #capeverdeproperty #realestate #cvrei",
+      credits,
     ].filter(Boolean).join("\n\n");
     return [caption.trim(), footer].filter(Boolean).join("\n\n");
   }, [appendFooter, caption, ctaDestination, slides]);
@@ -425,7 +516,14 @@ export function GuideSocialBuilderView() {
   async function pickUpload(slideId: string, file: File | undefined) {
     if (!file) return;
     const dataUrl = await blobToDataUrl(file);
-    updateSlide(slideId, { imageUrl: dataUrl, imageStatus: "loading" });
+    const inferredCredit = inferCreditFromFilename(file.name);
+    updateSlide(slideId, {
+      imageUrl: dataUrl,
+      originalFilename: file.name,
+      imageCredit: inferredCredit,
+      imageCreditStatus: inferredCredit ? "auto_detected" : "manual",
+      imageStatus: "loading",
+    });
   }
 
   function validationErrors(): string[] {
@@ -494,7 +592,9 @@ export function GuideSocialBuilderView() {
           index: index + 1,
           label: slide.label.trim() || null,
           headline: slide.headline.trim(),
+          originalFilename: slide.originalFilename,
           imageCredit: slide.imageCredit.trim(),
+          imageCreditStatus: slide.imageCreditStatus,
           imageRights: slide.imageRights,
           imageSourceUrl: slide.imageUrl.startsWith("data:") ? null : slide.imageUrl,
         })),
@@ -572,7 +672,7 @@ export function GuideSocialBuilderView() {
                   <div className="md:col-span-2 grid gap-2 md:grid-cols-[1fr_auto]">
                     <div>
                       <label className={labelClass}>Image URL</label>
-                      <input className={inputClass} value={slide.imageUrl.startsWith("data:") ? "Uploaded image" : slide.imageUrl} onChange={(e) => updateSlide(slide.id, { imageUrl: e.target.value, imageStatus: "loading" })} disabled={slide.imageUrl.startsWith("data:")} placeholder="https://..." />
+                      <input className={inputClass} value={slide.imageUrl.startsWith("data:") ? "Uploaded image" : slide.imageUrl} onChange={(e) => updateSlide(slide.id, { imageUrl: e.target.value, originalFilename: null, imageCreditStatus: "manual", imageStatus: "loading" })} disabled={slide.imageUrl.startsWith("data:")} placeholder="https://..." />
                     </div>
                     <div className="flex items-end gap-2">
                       <input
@@ -584,13 +684,19 @@ export function GuideSocialBuilderView() {
                       />
                       <button type="button" onClick={() => fileInputs.current[slide.id]?.click()} className="px-3 py-2 text-sm border border-border">Upload</button>
                       {slide.imageUrl.startsWith("data:") && (
-                        <button type="button" onClick={() => updateSlide(slide.id, { imageUrl: "", imageStatus: "idle" })} className="px-3 py-2 text-sm border border-border">Clear</button>
+                        <button type="button" onClick={() => updateSlide(slide.id, { imageUrl: "", originalFilename: null, imageCreditStatus: "manual", imageStatus: "idle" })} className="px-3 py-2 text-sm border border-border">Clear</button>
                       )}
                     </div>
                   </div>
                   <div>
                     <label className={labelClass}>Image source/credit</label>
-                    <input className={inputClass} value={slide.imageCredit} onChange={(e) => updateSlide(slide.id, { imageCredit: e.target.value })} placeholder="Photographer / source / license note" />
+                    <input className={inputClass} value={slide.imageCredit} onChange={(e) => updateSlide(slide.id, { imageCredit: e.target.value, imageCreditStatus: "manual" })} placeholder="Photographer / source / license note" />
+                    {slide.imageCreditStatus === "auto_detected" && (
+                      <p className="mt-1 text-xs text-amber">Auto-detected — verify</p>
+                    )}
+                    {slide.originalFilename && (
+                      <p className="mt-1 text-[11px] text-foreground-subtle truncate">Original file: {slide.originalFilename}</p>
+                    )}
                   </div>
                   <div>
                     <label className={labelClass}>Rights/source</label>
