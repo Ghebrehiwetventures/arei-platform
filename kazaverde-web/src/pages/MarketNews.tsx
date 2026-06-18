@@ -34,10 +34,6 @@ function matches(query: string, item: MarketNewsItem): boolean {
 }
 
 function sortNews(a: MarketNewsItem, b: MarketNewsItem): number {
-  const aHigh = a.relevance === "high";
-  const bHigh = b.relevance === "high";
-  if (aHigh && !bHigh) return -1;
-  if (!aHigh && bHigh) return 1;
   return b.publishedAt.localeCompare(a.publishedAt);
 }
 
@@ -223,11 +219,6 @@ export default function MarketNews() {
                       >
                         {catLabel(item.category)}
                       </span>
-                      {item.relevance === "high" && (
-                        <span className="kv-news-relevance">
-                          {t("marketNews.relevanceBadge")}
-                        </span>
-                      )}
                     </div>
 
                     <a

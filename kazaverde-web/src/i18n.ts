@@ -380,7 +380,6 @@ const resources = {
       },
       marketNews: {
         eyebrow: "Market News",
-        relevanceBadge: "High relevance",
         sectionEyebrow: "News",
         sectionTitle: "Latest stories",
         categories: {
@@ -985,7 +984,6 @@ const resources = {
       },
       marketNews: {
         eyebrow: "Notícias de Mercado",
-        relevanceBadge: "Alta relevância",
         sectionEyebrow: "Notícias",
         sectionTitle: "Histórias recentes",
         categories: {
