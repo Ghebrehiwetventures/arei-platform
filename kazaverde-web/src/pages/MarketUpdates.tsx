@@ -13,6 +13,11 @@ import "./MarketUpdates.css";
 // Card width incl. gap — used to repeat the set enough to cover the viewport.
 const MARQUEE_CARD_W = 280;
 
+// Split the FAQ into two independent columns so each accordion expands without
+// dragging the other column's rows — and so the block matches How it works' width.
+const FAQ_HALF = Math.ceil(FAQ_ENTRIES.length / 2);
+const FAQ_COLUMNS = [FAQ_ENTRIES.slice(0, FAQ_HALF), FAQ_ENTRIES.slice(FAQ_HALF)];
+
 function hasImage(listing: ListingCard) {
   return Boolean(listing.image_urls?.[0] || listing.image_url);
 }
@@ -253,11 +258,15 @@ export default function MarketUpdates() {
         <div className="mu-faq-inner">
           <h2 className="mu-faq-eyebrow">Common buyer questions</h2>
           <div className="mu-faq-list">
-            {FAQ_ENTRIES.map((entry) => (
-              <details className="mu-faq-item" key={entry.question}>
-                <summary>{entry.question}</summary>
-                <p>{entry.answer}</p>
-              </details>
+            {FAQ_COLUMNS.map((column, ci) => (
+              <div className="mu-faq-col" key={ci}>
+                {column.map((entry) => (
+                  <details className="mu-faq-item" key={entry.question}>
+                    <summary>{entry.question}</summary>
+                    <p>{entry.answer}</p>
+                  </details>
+                ))}
+              </div>
             ))}
           </div>
         </div>

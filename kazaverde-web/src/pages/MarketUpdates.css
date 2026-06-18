@@ -407,8 +407,21 @@
 }
 
 .mu-faq-inner {
-  width: min(820px, 100%);
+  width: min(var(--kv-content-w), 100%);
   margin: 0 auto;
+}
+
+/* Two independent columns — same width as How it works. */
+.mu-faq-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(28px, 4vw, 56px);
+}
+
+@media (max-width: 760px) {
+  .mu-faq-list {
+    grid-template-columns: 1fr;
+  }
 }
 
 .mu-faq-eyebrow {
