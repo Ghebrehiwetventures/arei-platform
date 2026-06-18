@@ -138,11 +138,16 @@ export default function MarketUpdates() {
     <main className="mu-page">
       <section className="mu-hero" aria-labelledby="market-updates-title">
         <div className="mu-hero-inner">
-          <div className="mu-lockup" aria-label="Cape Verde Real Estate Index">
-            <DLayersMark size={38} />
-            <span>
+          <div className="mu-lockup" role="img" aria-label="Cape Verde Real Estate Index">
+            <DLayersMark size={36} />
+            <span className="mu-lk-wide" aria-hidden="true">
               <strong>Cape Verde</strong>
-              <span>Real Estate Index</span>
+              <span className="mu-lk-desc">Real Estate Index</span>
+            </span>
+            <span className="mu-lk-stack" aria-hidden="true">
+              <span>Cape Verde</span>
+              <span>Real Estate</span>
+              <span>Index</span>
             </span>
           </div>
 

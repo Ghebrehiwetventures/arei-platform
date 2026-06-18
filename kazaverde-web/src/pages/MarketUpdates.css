@@ -33,23 +33,57 @@
   color: var(--kv-black);
 }
 
-.mu-lockup > span {
-  display: flex;
-  flex-direction: column;
-  gap: 3px;
+/* Desktop: one line — Cape Verde · Real Estate Index (matches the nav). */
+.mu-lk-wide {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
   font-size: 12px;
-  line-height: 1;
   letter-spacing: 0.08em;
   text-transform: uppercase;
 }
 
-.mu-lockup strong {
+.mu-lk-wide strong {
   font-weight: var(--kv-fw-semibold);
 }
 
-.mu-lockup span span {
+.mu-lk-desc {
   font-weight: var(--kv-fw-regular);
   opacity: 0.64;
+}
+
+/* Mobile: three lines — Cape Verde / Real Estate / Index. */
+.mu-lk-stack {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .mu-lockup {
+    align-items: flex-start;
+  }
+
+  .mu-lk-wide {
+    display: none;
+  }
+
+  .mu-lk-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .mu-lk-stack span:first-child {
+    font-weight: var(--kv-fw-semibold);
+  }
+
+  .mu-lk-stack span:not(:first-child) {
+    font-weight: var(--kv-fw-regular);
+    opacity: 0.64;
+  }
 }
 
 .mu-eyebrow {
