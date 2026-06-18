@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { Link } from "react-router-dom";
 import DLayersMark from "../components/DLayersMark";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { arei } from "../lib/arei";
@@ -22,7 +23,7 @@ function captureAttribution(): { source: string; [key: string]: string } {
 export default function MarketUpdates() {
   useDocumentMeta(
     "Cape Verde Property Market Updates",
-    "Subscribe for source-linked listings, island notes and property market signals from Cape Verde Real Estate Index.",
+    "Track source-linked listings, island notes and market signals from Cape Verde Real Estate Index.",
   );
 
   const [email, setEmail] = useState("");
@@ -76,16 +77,20 @@ export default function MarketUpdates() {
 
           <div className="mu-copy">
             <p className="mu-eyebrow">Market updates</p>
-            <h1 id="market-updates-title">Get Cape Verde property market updates.</h1>
+            <h1 id="market-updates-title">Track the Cape Verde property market before you buy.</h1>
             <p className="mu-subcopy">
-              Source-linked listings, island notes and property market signals from Cape Verde Real Estate Index.
+              Source-linked listings, island notes and market signals from the Cape Verde Real Estate Index.
             </p>
           </div>
 
           <div className="mu-card">
             {status === "success" ? (
               <div className="mu-success" role="status">
-                You’re subscribed. We’ll send Cape Verde property updates and market notes.
+                <p>You’re subscribed. We’ll send Cape Verde property updates and market notes.</p>
+                <div className="mu-next-actions" aria-label="Next steps">
+                  <Link className="mu-next-primary" to="/listings">See all listings</Link>
+                  <Link className="mu-next-secondary" to="/market">Read the latest market update</Link>
+                </div>
               </div>
             ) : (
               <form className="mu-form" onSubmit={handleSubmit} noValidate>
@@ -108,8 +113,19 @@ export default function MarketUpdates() {
                 {status === "error" && <p className="mu-error">{errorMsg}</p>}
               </form>
             )}
+            <div className="mu-benefits" aria-label="What you'll get">
+              <h2>What you’ll get</h2>
+              <ul>
+                <li>Source-linked listings from across Cape Verde</li>
+                <li>Notes on islands, prices and market movement</li>
+                <li>Clear reminders that asking prices are not sale prices</li>
+              </ul>
+            </div>
+            <p className="mu-why-now">
+              Cape Verde is getting global attention. We help you understand the property market behind the moment.
+            </p>
             <p className="mu-disclosure">
-              CVREI is not a broker. We organize public, source-linked property information to make the market easier to understand.
+              Cape Verde Real Estate Index is not a broker. We organize public, source-linked property information to make the market easier to understand.
             </p>
           </div>
         </div>

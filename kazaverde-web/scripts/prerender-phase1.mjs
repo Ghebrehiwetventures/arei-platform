@@ -212,22 +212,33 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
       route: "/market-updates",
       ...page(
       "Cape Verde Property Market Updates | Cape Verde Real Estate Index",
-      "Subscribe for source-linked listings, island notes and Cape Verde property market signals.",
+      "Track source-linked listings, island notes and market signals from Cape Verde Real Estate Index.",
       `
         <main>
           <section>
             <p>Market updates</p>
-            <h1>Get Cape Verde property market updates.</h1>
+            <h1>Track the Cape Verde property market before you buy.</h1>
             <p>
-              Source-linked listings, island notes and property market signals from Cape Verde Real Estate Index.
+              Source-linked listings, island notes and market signals from the Cape Verde Real Estate Index.
             </p>
             <form>
               <label for="market-updates-email">Email address</label>
               <input id="market-updates-email" type="email" name="email" placeholder="Email address" required />
               <button type="submit">Subscribe</button>
             </form>
+            <section aria-label="What you'll get">
+              <h2>What you’ll get</h2>
+              <ul>
+                <li>Source-linked listings from across Cape Verde</li>
+                <li>Notes on islands, prices and market movement</li>
+                <li>Clear reminders that asking prices are not sale prices</li>
+              </ul>
+            </section>
             <p>
-              CVREI is not a broker. We organize public, source-linked property information to make the market easier to understand.
+              Cape Verde is getting global attention. We help you understand the property market behind the moment.
+            </p>
+            <p>
+              Cape Verde Real Estate Index is not a broker. We organize public, source-linked property information to make the market easier to understand.
             </p>
           </section>
         </main>
