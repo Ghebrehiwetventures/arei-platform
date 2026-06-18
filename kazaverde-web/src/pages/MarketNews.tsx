@@ -223,11 +223,6 @@ export default function MarketNews() {
                       >
                         {catLabel(item.category)}
                       </span>
-                      {item.relevance === "high" && (
-                        <span className="kv-news-relevance">
-                          {t("marketNews.relevanceBadge")}
-                        </span>
-                      )}
                     </div>
 
                     <a
