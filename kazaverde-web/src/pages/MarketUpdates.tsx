@@ -13,8 +13,8 @@ function hasImage(listing: ListingCard) {
   return Boolean(listing.image_urls?.[0] || listing.image_url);
 }
 
-// Pick a few image-backed listings for the proof stack, preferring island
-// variety so the sample reads as "across Cape Verde" rather than one town.
+// Pick image-backed listings for the marquee, preferring island variety so the
+// ribbon reads as "across Cape Verde" rather than one town.
 function pickPreviewListings(cards: ListingCard[], count: number): ListingCard[] {
   const picked: ListingCard[] = [];
   const seenIds = new Set<string>();
@@ -46,10 +46,6 @@ function ProofSkeleton() {
         </div>
         <div className="kv-skel-line kv-skel-price" />
         <div className="kv-skel-line kv-skel-wide" />
-        <div className="kv-lc-provenance">
-          <span className="kv-skel-line kv-skel-xs" />
-          <span className="kv-skel-line kv-skel-xs kv-skel-short" />
-        </div>
       </div>
     </div>
   );
@@ -92,7 +88,7 @@ export default function MarketUpdates() {
         const pool = new Map<string, ListingCard>();
         for (const listing of curated ?? []) pool.set(listing.id, listing);
         for (const listing of listRes?.data ?? []) pool.set(listing.id, listing);
-        setPreviewListings(pickPreviewListings([...pool.values()], 3));
+        setPreviewListings(pickPreviewListings([...pool.values()], 10));
       })
       .catch(() => {
         if (!cancelled) setPreviewListings([]);
@@ -136,75 +132,84 @@ export default function MarketUpdates() {
     }
   };
 
+  const hasListings = previewListings.length > 0;
+
   return (
     <main className="mu-page">
       <section className="mu-hero" aria-labelledby="market-updates-title">
-        <div className="mu-hero-grid">
-          <div className="mu-lead">
-            <div className="mu-lockup" aria-label="Cape Verde Real Estate Index">
-              <DLayersMark size={38} />
-              <span>
-                <strong>Cape Verde</strong>
-                <span>Real Estate Index</span>
-              </span>
-            </div>
-
-            {status === "success" ? (
-              <div className="mu-success" role="status">
-                <p className="mu-success-title">You’re subscribed.</p>
-                <p className="mu-success-text">
-                  We’ll send Cape Verde property updates and market notes.
-                </p>
-                <div className="mu-actions" aria-label="Next steps">
-                  <Link className="mu-action-primary" to="/listings">See all listings</Link>
-                  <Link className="mu-action-secondary" to="/market">Explore market data</Link>
-                </div>
-              </div>
-            ) : (
-              <>
-                <p className="mu-eyebrow">Market updates</p>
-                <h1 id="market-updates-title">Find Cape Verde homes for sale in one place.</h1>
-                <p className="mu-subcopy">
-                  Get new listings, island updates and simple market notes by email.
-                </p>
-
-                <form className="mu-form" onSubmit={handleSubmit} noValidate>
-                  <label className="mu-visually-hidden" htmlFor="market-updates-email">
-                    Email address
-                  </label>
-                  <div className="mu-form-row">
-                    <input
-                      id="market-updates-email"
-                      type="email"
-                      required
-                      placeholder="Email address"
-                      value={email}
-                      onChange={(event) => setEmail(event.target.value)}
-                      disabled={status === "submitting"}
-                      autoComplete="email"
-                    />
-                    <button type="submit" disabled={status === "submitting"}>
-                      {status === "submitting" ? "Sending…" : "Get updates"}
-                    </button>
-                  </div>
-                  {status === "error" && <p className="mu-error">{errorMsg}</p>}
-                  <p className="mu-microcopy">Free. Unsubscribe anytime.</p>
-                  <p className="mu-disclosure">
-                    Cape Verde Real Estate Index is not a broker. We collect public listings from local
-                    agencies, portals and property websites so buyers can understand the market more easily.
-                  </p>
-                </form>
-              </>
-            )}
+        <div className="mu-hero-inner">
+          <div className="mu-lockup" aria-label="Cape Verde Real Estate Index">
+            <DLayersMark size={38} />
+            <span>
+              <strong>Cape Verde</strong>
+              <span>Real Estate Index</span>
+            </span>
           </div>
 
-          <aside className="mu-proof" aria-label="A sample of homes on the index">
-            <div className="mu-proof-stack">
-              {previewListings.length > 0
-                ? previewListings.map((listing) => <Card key={listing.id} l={listing} bare />)
-                : [0, 1, 2].map((i) => <ProofSkeleton key={i} />)}
+          {status === "success" ? (
+            <div className="mu-success" role="status">
+              <p className="mu-success-title">You’re subscribed.</p>
+              <p className="mu-success-text">
+                We’ll send Cape Verde property updates and market notes.
+              </p>
+              <div className="mu-actions" aria-label="Next steps">
+                <Link className="mu-action-primary" to="/listings">See all listings</Link>
+                <Link className="mu-action-secondary" to="/market">Explore market data</Link>
+              </div>
             </div>
-          </aside>
+          ) : (
+            <>
+              <p className="mu-eyebrow">Market updates</p>
+              <h1 id="market-updates-title">Find Cape Verde homes for sale in one place.</h1>
+              <p className="mu-subcopy">
+                Get new listings, island updates and simple market notes by email.
+              </p>
+
+              <form className="mu-form" onSubmit={handleSubmit} noValidate>
+                <label className="mu-visually-hidden" htmlFor="market-updates-email">
+                  Email address
+                </label>
+                <div className="mu-form-row">
+                  <input
+                    id="market-updates-email"
+                    type="email"
+                    required
+                    placeholder="Email address"
+                    value={email}
+                    onChange={(event) => setEmail(event.target.value)}
+                    disabled={status === "submitting"}
+                    autoComplete="email"
+                  />
+                  <button type="submit" disabled={status === "submitting"}>
+                    {status === "submitting" ? "Sending…" : "Get updates"}
+                  </button>
+                </div>
+                {status === "error" && <p className="mu-error">{errorMsg}</p>}
+                <p className="mu-microcopy">Free. Unsubscribe anytime.</p>
+                <p className="mu-disclosure">
+                  Cape Verde Real Estate Index is not a broker. We collect public listings from local
+                  agencies, portals and property websites so buyers can understand the market more easily.
+                </p>
+              </form>
+            </>
+          )}
+        </div>
+      </section>
+
+      <section className="mu-showcase" aria-label="A sample of homes on the index">
+        <div className={`mu-marquee${hasListings ? "" : " mu-marquee--static"}`}>
+          <div className="mu-marquee-track">
+            <div className="mu-marquee-set">
+              {hasListings
+                ? previewListings.map((listing) => <Card key={listing.id} l={listing} bare />)
+                : [0, 1, 2, 3, 4].map((i) => <ProofSkeleton key={i} />)}
+            </div>
+            {hasListings && (
+              <div className="mu-marquee-set" aria-hidden="true">
+                {previewListings.map((listing) => <Card key={`dup-${listing.id}`} l={listing} bare />)}
+              </div>
+            )}
+          </div>
         </div>
       </section>
 

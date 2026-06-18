@@ -1,15 +1,11 @@
 /* /market-updates — standalone campaign signup page.
    No nav, no footer (App.tsx hides shell on this route). The single job is
-   the email signup; the listing stack is lightweight visual proof, not a
-   browsable product surface.
-
-   Deliberate colour zones, not a vague wash:
-   - hero band      → off-white (warm, calm, holds the form)
-   - proof panel    → sage (the one intentional mint block, behind the cards)
-   - benefits band  → bone, raised paper cards */
+   the email signup. Beneath it, a continuously scrolling ribbon of real
+   listings is the visual proof — discreet cards (photo, type, price, place),
+   the same language as the AREI landing carousel. */
 
 .mu-page {
-  background: var(--kv-white);
+  background: var(--kv-off-white);
   color: var(--kv-black);
   font-family: var(--kv-mono);
 }
@@ -19,24 +15,14 @@
   padding-top: 0 !important;
 }
 
-/* ── Hero ───────────────────────────────────────────────── */
+/* ── Hero — single confident column ─────────────────────── */
 .mu-hero {
-  background: var(--kv-off-white);
-  padding: clamp(36px, 6vh, 76px) var(--kv-gutter) clamp(44px, 6vh, 72px);
+  padding: clamp(36px, 6vh, 76px) var(--kv-gutter) clamp(28px, 4vh, 44px);
 }
 
-.mu-hero-grid {
+.mu-hero-inner {
   width: min(var(--kv-content-w), 100%);
   margin: 0 auto;
-  display: grid;
-  grid-template-columns: minmax(0, 1.06fr) minmax(0, 0.94fr);
-  gap: clamp(32px, 5vw, 76px);
-  align-items: start;
-}
-
-/* Lead column carries the conversion: lockup → copy → form. */
-.mu-lead {
-  min-width: 0;
 }
 
 .mu-lockup {
@@ -75,18 +61,19 @@
   color: var(--kv-green-deep);
 }
 
-.mu-lead h1 {
+.mu-hero h1 {
   margin: 0;
-  font-size: clamp(38px, 5vw, 60px);
+  max-width: 16ch;
+  font-size: clamp(40px, 5.4vw, 64px);
   font-weight: var(--kv-fw-regular);
-  line-height: 1.02;
+  line-height: 1.01;
   letter-spacing: var(--kv-ls-display);
   text-wrap: balance;
 }
 
 .mu-subcopy {
   margin: 22px 0 0;
-  max-width: 30ch;
+  max-width: 34ch;
   font-size: clamp(17px, 1.5vw, 21px);
   line-height: 1.5;
   color: var(--kv-ink-700);
@@ -95,7 +82,7 @@
 /* ── Form — strong, confident presence ──────────────────── */
 .mu-form {
   margin-top: clamp(28px, 4vh, 38px);
-  max-width: 520px;
+  max-width: 540px;
 }
 
 .mu-form-row {
@@ -165,10 +152,9 @@
   color: var(--kv-ink-600);
 }
 
-/* Disclosure — readable, not a whisper. */
 .mu-disclosure {
   margin: 14px 0 0;
-  max-width: 48ch;
+  max-width: 52ch;
   color: var(--kv-ink-600);
   font-size: var(--kv-t-sm);
   line-height: 1.65;
@@ -179,7 +165,7 @@
   border: 1px solid var(--kv-black);
   background: var(--kv-paper);
   padding: clamp(26px, 3vw, 34px);
-  max-width: 520px;
+  max-width: 540px;
 }
 
 .mu-success-title {
@@ -227,38 +213,98 @@
   color: var(--kv-black);
 }
 
-/* ── Proof panel — the one intentional mint block ───────── */
-.mu-proof {
-  align-self: stretch;
-  background: var(--kv-green);
-  padding: clamp(18px, 1.8vw, 26px);
+/* ── Showcase — continuously scrolling listing ribbon ───── */
+.mu-showcase {
+  padding: clamp(16px, 3vh, 36px) 0 clamp(32px, 5vh, 56px);
+  overflow: hidden;
 }
 
-.mu-proof-stack {
-  display: grid;
-  gap: 14px;
+.mu-marquee {
+  overflow: hidden;
+  /* Fade the cards in/out at the edges so the ribbon feels endless. */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 5%,
+    #000 95%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
 }
 
-/* Compact the shared listing card so three read as a tidy showcase. */
-.mu-proof .kv-lcard {
-  border-color: rgba(10, 10, 10, 0.14);
+.mu-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: mu-marquee-scroll 55s linear infinite;
 }
 
-.mu-proof .kv-lc-img {
-  height: 150px;
+.mu-marquee:hover .mu-marquee-track {
+  animation-play-state: paused;
 }
 
-.mu-proof .kv-lc-body {
+.mu-marquee-set {
+  display: flex;
+}
+
+/* Each card carries its own right gap so the duplicated set tiles seamlessly
+   at translateX(-50%) — every gap (including the seam) is identical. */
+.mu-marquee .kv-lcard {
+  flex: 0 0 264px;
+  margin-right: 16px;
+}
+
+.mu-marquee .kv-lc-img {
+  height: 156px;
+}
+
+.mu-marquee .kv-lc-body {
   padding: 14px 16px 16px;
 }
 
-.mu-proof .kv-lc-price {
+.mu-marquee .kv-lc-price {
   font-size: 18px;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
-.mu-proof .kv-lc-title {
-  margin-bottom: 10px;
+.mu-marquee .kv-lc-title {
+  margin-bottom: 0;
+}
+
+/* Discreet: drop the specs and provenance rows so a card reads as
+   photo · type · place · price — not a database record. */
+.mu-marquee .kv-lc-specs,
+.mu-marquee .kv-lc-provenance {
+  display: none;
+}
+
+@keyframes mu-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Loading: hold a static row of skeletons (first gutter only). */
+.mu-marquee--static .mu-marquee-track {
+  animation: none;
+  padding-left: var(--kv-gutter);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mu-marquee-track {
+    animation: none;
+  }
+  .mu-marquee {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .mu-marquee::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 /* ── Benefits band — designed support points ────────────── */
@@ -321,23 +367,6 @@
   border: 0;
 }
 
-/* ── Tablet / stacked ───────────────────────────────────── */
-@media (max-width: 880px) {
-  .mu-hero-grid {
-    grid-template-columns: 1fr;
-    gap: clamp(28px, 5vw, 40px);
-  }
-
-  /* Mobile order: form above the visual proof. */
-  .mu-proof {
-    align-self: auto;
-  }
-
-  .mu-proof-stack {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-}
-
 /* ── Phone ──────────────────────────────────────────────── */
 @media (max-width: 560px) {
   .mu-form-row {
@@ -348,13 +377,8 @@
     width: 100%;
   }
 
-  .mu-proof-stack {
-    grid-template-columns: 1fr;
-  }
-
-  /* Two cards is enough proof on a phone; keep the page short. */
-  .mu-proof .kv-lcard:nth-child(n + 3) {
-    display: none;
+  .mu-marquee .kv-lcard {
+    flex-basis: 230px;
   }
 
   .mu-actions {
