@@ -220,12 +220,12 @@ export default function MarketUpdates() {
         <div className={`mu-marquee${hasListings ? "" : " mu-marquee--static"}`}>
           <div className="mu-marquee-set">
             {hasListings
-              ? loopCards.map((listing, i) => <Card key={i} l={listing} bare />)
+              ? loopCards.map((listing, i) => <Card key={i} l={listing} bare sourceOnly />)
               : [0, 1, 2, 3, 4].map((i) => <ProofSkeleton key={i} />)}
           </div>
           {hasListings && (
             <div className="mu-marquee-set" aria-hidden="true">
-              {loopCards.map((listing, i) => <Card key={`dup-${i}`} l={listing} bare />)}
+              {loopCards.map((listing, i) => <Card key={`dup-${i}`} l={listing} bare sourceOnly />)}
             </div>
           )}
         </div>
