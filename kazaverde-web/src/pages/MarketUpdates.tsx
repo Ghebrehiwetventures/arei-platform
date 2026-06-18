@@ -211,23 +211,24 @@ export default function MarketUpdates() {
         </div>
       </section>
 
-      <section className="mu-benefits" aria-label="What you’ll get">
-        <div className="mu-benefits-inner">
-          <div className="mu-benefits-grid">
-            <div className="mu-benefit">
-              <span className="mu-benefit-mark" aria-hidden="true" />
-              <h3>New listings</h3>
-              <p>Properties for sale across Cape Verde, gathered into one searchable place.</p>
+      <section className="mu-how" aria-label="How it works">
+        <div className="mu-how-inner">
+          <h2 className="mu-how-eyebrow">How it works</h2>
+          <div className="mu-how-grid">
+            <div className="mu-step">
+              <span className="mu-step-n" aria-hidden="true">01</span>
+              <h3>We collect public listings</h3>
+              <p>From local agencies, portals and property sites across the islands.</p>
             </div>
-            <div className="mu-benefit">
-              <span className="mu-benefit-mark" aria-hidden="true" />
-              <h3>Island context</h3>
-              <p>Short notes on places, prices and what is changing in the market.</p>
+            <div className="mu-step">
+              <span className="mu-step-n" aria-hidden="true">02</span>
+              <h3>We track them by island</h3>
+              <p>Indexed so Sal, Boa Vista, Santiago and São Vicente are easy to compare.</p>
             </div>
-            <div className="mu-benefit">
-              <span className="mu-benefit-mark" aria-hidden="true" />
-              <h3>Buyer notes</h3>
-              <p>Clear reminders that asking prices are not the same as sale prices.</p>
+            <div className="mu-step">
+              <span className="mu-step-n" aria-hidden="true">03</span>
+              <h3>You get updates by email</h3>
+              <p>New listings and simple market notes — free, unsubscribe anytime.</p>
             </div>
           </div>
         </div>

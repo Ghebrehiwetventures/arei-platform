@@ -310,47 +310,55 @@
   }
 }
 
-/* ── Benefits band — designed support points ────────────── */
-.mu-benefits {
+/* ── How it works — a quiet, editorial three-step ───────── */
+.mu-how {
   background: var(--kv-white);
   border-top: 1px solid var(--kv-rule-soft);
   padding: clamp(40px, 6vh, 72px) var(--kv-gutter);
 }
 
-.mu-benefits-inner {
+.mu-how-inner {
   width: min(var(--kv-content-w), 100%);
   margin: 0 auto;
 }
 
-.mu-benefits-grid {
+.mu-how-eyebrow {
+  margin: 0 0 clamp(24px, 3vh, 36px);
+  font-size: var(--kv-t-xs);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--kv-green-deep);
+}
+
+.mu-how-grid {
   display: grid;
   grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
-  gap: 16px;
+  gap: clamp(20px, 3vw, 40px);
 }
 
-.mu-benefit {
-  border: 1px solid var(--kv-rule);
-  background: var(--kv-paper);
-  padding: 26px 24px 28px;
+.mu-step {
+  border-top: 1px solid var(--kv-rule);
+  padding-top: 18px;
 }
 
-.mu-benefit-mark {
+.mu-step-n {
   display: block;
-  width: 14px;
-  height: 14px;
-  margin-bottom: 22px;
-  background: var(--kv-green);
-  border: 1px solid var(--kv-green-deep);
+  margin-bottom: 16px;
+  font-size: var(--kv-t-sm);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.14em;
+  color: var(--kv-green-deep);
 }
 
-.mu-benefit h3 {
+.mu-step h3 {
   margin: 0 0 10px;
-  font-size: clamp(19px, 2vw, 23px);
+  font-size: clamp(18px, 2vw, 22px);
   font-weight: var(--kv-fw-regular);
-  line-height: 1.15;
+  line-height: 1.2;
 }
 
-.mu-benefit p {
+.mu-step p {
   margin: 0;
   color: var(--kv-ink-700);
   font-size: var(--kv-t-sm);

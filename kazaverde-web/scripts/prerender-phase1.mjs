@@ -228,19 +228,13 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
             <p>
               Cape Verde Real Estate Index is not a broker. We collect public listings from local agencies, portals and property websites so buyers can understand the market more easily.
             </p>
-            <section aria-label="What you'll get">
-              <article>
-                <h2>New listings</h2>
-                <p>Properties for sale across Cape Verde, gathered into one searchable place.</p>
-              </article>
-              <article>
-                <h2>Island context</h2>
-                <p>Short notes on places, prices and what is changing in the market.</p>
-              </article>
-              <article>
-                <h2>Buyer notes</h2>
-                <p>Clear reminders that asking prices are not the same as sale prices.</p>
-              </article>
+            <section aria-label="How it works">
+              <h2>How it works</h2>
+              <ol>
+                <li>We collect public listings — from local agencies, portals and property sites across the islands.</li>
+                <li>We track them by island — indexed so Sal, Boa Vista, Santiago and São Vicente are easy to compare.</li>
+                <li>You get updates by email — new listings and simple market notes, free.</li>
+              </ol>
             </section>
           </section>
         </main>
