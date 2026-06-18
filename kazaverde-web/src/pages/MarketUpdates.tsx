@@ -198,18 +198,16 @@ export default function MarketUpdates() {
 
       <section className="mu-showcase" aria-label="A sample of homes on the index">
         <div className={`mu-marquee${hasListings ? "" : " mu-marquee--static"}`}>
-          <div className="mu-marquee-track">
-            <div className="mu-marquee-set">
-              {hasListings
-                ? previewListings.map((listing) => <Card key={listing.id} l={listing} bare />)
-                : [0, 1, 2, 3, 4].map((i) => <ProofSkeleton key={i} />)}
-            </div>
-            {hasListings && (
-              <div className="mu-marquee-set" aria-hidden="true">
-                {previewListings.map((listing) => <Card key={`dup-${listing.id}`} l={listing} bare />)}
-              </div>
-            )}
+          <div className="mu-marquee-set">
+            {hasListings
+              ? previewListings.map((listing) => <Card key={listing.id} l={listing} bare />)
+              : [0, 1, 2, 3, 4].map((i) => <ProofSkeleton key={i} />)}
           </div>
+          {hasListings && (
+            <div className="mu-marquee-set" aria-hidden="true">
+              {previewListings.map((listing) => <Card key={`dup-${listing.id}`} l={listing} bare />)}
+            </div>
+          )}
         </div>
       </section>
 
