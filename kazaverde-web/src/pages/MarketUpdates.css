@@ -254,7 +254,6 @@
 }
 
 .mu-marquee {
-  display: flex;
   overflow: hidden;
   /* Fade the cards in/out at the edges so the ribbon feels endless. */
   -webkit-mask-image: linear-gradient(
@@ -269,23 +268,23 @@
   mask-repeat: no-repeat;
 }
 
-/* Two identical sets sit side by side; each scrolls translateX(-100%) — i.e.
-   exactly its own width — so the seam is always exact regardless of how many
-   cards loaded. The trailing padding-right matches the inner gap. */
-.mu-marquee-set {
-  flex-shrink: 0;
+/* ONE animated track (no two-element sync to drift). The card list is the
+   fill-set repeated twice; translateX(-50%) advances exactly one fill-set, and
+   every card carries an equal right margin so the seam lands on a card edge.
+   The fill-set is sized in JS to exceed any viewport, so it never runs dry. */
+.mu-marquee-track {
   display: flex;
-  gap: 16px;
-  padding-right: 16px;
-  animation: mu-marquee-scroll 55s linear infinite;
+  width: max-content;
+  animation: mu-marquee-scroll 60s linear infinite;
 }
 
-.mu-marquee:hover .mu-marquee-set {
+.mu-marquee:hover .mu-marquee-track {
   animation-play-state: paused;
 }
 
 .mu-marquee .kv-lcard {
   flex: 0 0 264px;
+  margin-right: 16px;
 }
 
 .mu-marquee .kv-lc-img {
@@ -316,18 +315,18 @@
     transform: translateX(0);
   }
   to {
-    transform: translateX(-100%);
+    transform: translateX(-50%);
   }
 }
 
 /* Loading: hold a static row of skeletons (first gutter only). */
-.mu-marquee--static .mu-marquee-set {
+.mu-marquee--static .mu-marquee-track {
   animation: none;
   padding-left: var(--kv-gutter);
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .mu-marquee-set {
+  .mu-marquee-track {
     animation: none;
   }
   .mu-marquee {
@@ -335,10 +334,6 @@
     scrollbar-width: none;
   }
   .mu-marquee::-webkit-scrollbar {
-    display: none;
-  }
-  /* No motion → no duplicate set to scroll past. */
-  .mu-marquee-set[aria-hidden="true"] {
     display: none;
   }
 }

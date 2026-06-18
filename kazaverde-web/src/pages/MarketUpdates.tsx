@@ -10,8 +10,12 @@ import { Card } from "./Listings";
 import "./Listings.css";
 import "./MarketUpdates.css";
 
-// Card width incl. gap — used to repeat the set enough to cover the viewport.
+// Card width incl. gap, and the minimum fill-set width. We repeat the listings
+// until one fill-set is wider than this (wider than any realistic viewport),
+// so the marquee never runs out of cards mid-scroll regardless of how many
+// listings loaded.
 const MARQUEE_CARD_W = 280;
+const MARQUEE_MIN_SET_W = 4200;
 
 // Split the FAQ into two independent columns so each accordion expands without
 // dragging the other column's rows — and so the block matches How it works' width.
@@ -84,14 +88,6 @@ export default function MarketUpdates() {
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
   const [previewListings, setPreviewListings] = useState<ListingCard[]>([]);
-  const [viewportW, setViewportW] = useState(1440);
-
-  useEffect(() => {
-    const update = () => setViewportW(window.innerWidth);
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -151,15 +147,16 @@ export default function MarketUpdates() {
 
   const hasListings = previewListings.length > 0;
 
-  // Repeat the listings until one set is wider than the viewport, so the
-  // duplicated-set, translateX(-100%) loop never runs out of cards mid-scroll
-  // (which left a gap when only a handful of listings loaded).
-  const reps = hasListings
-    ? Math.max(1, Math.ceil((viewportW + 160) / (previewListings.length * MARQUEE_CARD_W)))
-    : 1;
-  const loopCards = hasListings
-    ? Array.from({ length: reps }, () => previewListings).flat()
+  // Build the marquee track: repeat the listings into a fill-set wider than any
+  // viewport, then lay that fill-set down twice. One animated track scrolls
+  // translateX(-50%) — exactly one fill-set — so the loop is always seamless.
+  const fillReps = hasListings
+    ? Math.max(1, Math.ceil(MARQUEE_MIN_SET_W / (previewListings.length * MARQUEE_CARD_W)))
+    : 0;
+  const fillCards = hasListings
+    ? Array.from({ length: fillReps }, () => previewListings).flat()
     : [];
+  const trackCards = hasListings ? [...fillCards, ...fillCards] : [];
 
   return (
     <div className="mu-page">
@@ -218,16 +215,16 @@ export default function MarketUpdates() {
 
       <section className="mu-showcase" aria-label="A sample of homes on the index">
         <div className={`mu-marquee${hasListings ? "" : " mu-marquee--static"}`}>
-          <div className="mu-marquee-set">
+          <div
+            className="mu-marquee-track"
+            style={hasListings ? { animationDuration: `${fillCards.length * 3}s` } : undefined}
+          >
             {hasListings
-              ? loopCards.map((listing, i) => <Card key={i} l={listing} bare sourceOnly />)
+              ? trackCards.map((listing, i) => (
+                  <Card key={i} l={listing} bare sourceOnly />
+                ))
               : [0, 1, 2, 3, 4].map((i) => <ProofSkeleton key={i} />)}
           </div>
-          {hasListings && (
-            <div className="mu-marquee-set" aria-hidden="true">
-              {loopCards.map((listing, i) => <Card key={`dup-${i}`} l={listing} bare sourceOnly />)}
-            </div>
-          )}
         </div>
       </section>
 
