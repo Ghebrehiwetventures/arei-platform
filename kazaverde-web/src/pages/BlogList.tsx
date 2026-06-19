@@ -101,73 +101,73 @@ const FAQ_PT: Record<string, { question: string; answer: string; topic: string }
   "Can foreigners buy property in Cape Verde?": {
     question: "Estrangeiros podem comprar imóvel em Cabo Verde?",
     answer:
-      "Sim. Cabo Verde permite que estrangeiros comprem imóveis em propriedade plena, com os mesmos direitos dos cidadãos. Não há restrições de nacionalidade nem exigência de residência.",
+      "Sim. Estrangeiros podem comprar imóveis privados em Cabo Verde no mesmo enquadramento geral de investimento, independentemente da nacionalidade. Cada compra fica sujeita a verificações de título, cadastro, urbanismo, fiscais e de registo. Confirme o tipo de direito exato indicado no título, em vez de o descrever genericamente como propriedade plena.",
     topic: "Compra",
   },
   "Do I need a Cape Verdean tax number to buy?": {
     question: "Preciso de um número fiscal cabo-verdiano para comprar?",
     answer:
-      "Sim. Cada pessoa cujo nome conste na escritura precisa de um NIF. É emitido na Casa do Cidadão ou no Cartório e normalmente demora de um a cinco dias.",
+      "Sim. Obtenha um NIF cabo-verdiano antes da escritura; cada comprador registado deve contar precisar de um. A DNRE emite-o gratuitamente nas Repartições de Finanças ou na Casa do Cidadão. Um não residente tem de nomear um representante legal domiciliado em Cabo Verde para o pedido.",
     topic: "Legal",
   },
   "Do I need a local bank account?": {
     question: "Preciso de uma conta bancária local?",
     answer:
-      "Sim. Precisa de uma conta cabo-verdiana para pagar o vendedor, impostos, encargos e custos notariais. O escudo cabo-verdiano está indexado ao euro.",
+      "Uma conta bancária local é frequente, mas os requisitos variam consoante o banco, o financiamento e a estrutura da transação. Confirme o circuito de pagamento e de origem de fundos com o banco, o advogado e o notário antes de transferir. O escudo está indexado a 110,265 CVE por euro.",
     topic: "Dinheiro",
   },
   "What taxes apply when buying property?": {
     question: "Que impostos se aplicam na compra de imóvel?",
     answer:
-      "Desde 1 de janeiro de 2026, o antigo IUP foi substituído pelo ITI e pelo IPI. Peça a um advogado local qualificado que confirme a matriz, registo predial, valor tributável e situação fiscal antes da escritura.",
+      "Desde 1 de janeiro de 2026, o ITI aplica-se às transmissões e o IPI à propriedade. O ITI é geralmente 1% do valor tributável, subindo para 3% quando o vendedor ou o comprador beneficia de regime fiscal privilegiado. Podem existir outros custos; confirme a matriz predial, o registo predial, o valor tributável, a situação fiscal e qualquer isenção ou agravamento.",
     topic: "Fiscal",
   },
   "How long does the buying process take?": {
     question: "Quanto tempo demora o processo de compra?",
     answer:
-      "Conte com 6 a 12 semanas entre a oferta aceite e a escritura. O principal bloqueio costuma ser a due diligence: confirmar título, dívidas e ónus.",
+      "Não há um prazo-padrão garantido. A conclusão depende da regularidade do título e do cadastro, da due diligence, da situação fiscal, do financiamento e da disponibilidade do notário e do registo. Qualquer sinal de reserva é contratual; registe por escrito o valor, as condições e a reembolsabilidade, e mande rever antes de pagar.",
     topic: "Prático",
   },
   "Do I need a Cape Verdean lawyer?": {
     question: "Preciso de um advogado cabo-verdiano?",
     answer:
-      "É altamente recomendado, e deve ser independente do vendedor. O advogado verifica título, dívidas, contratos e representa-o no notário.",
+      "É altamente recomendável aconselhamento jurídico independente em Cabo Verde. Use um advogado que não represente o vendedor para verificar título, registos, dívidas, situação urbanística, contratos e situação fiscal. Os honorários variam, por isso peça âmbito e orçamento por escrito. A conclusão à distância pode ser possível com uma procuração devidamente outorgada.",
     topic: "Legal",
   },
   "Can I get a mortgage in Cape Verde?": {
     question: "Posso obter crédito habitação em Cabo Verde?",
     answer:
-      "Créditos locais existem para estrangeiros, mas são limitados, geralmente caros e mais difíceis para não residentes. Muitos compradores usam fundos próprios.",
+      "Sim, alguns bancos concedem crédito a não residentes, sujeito a análise. Em junho de 2026, a Caixa anunciava crédito em CVE ou EUR, financiando até 70%, com pelo menos 30% de entrada do comprador. As taxas e a aprovação dependem do banco e do mutuário; confirme as condições atuais diretamente com o credor.",
     topic: "Dinheiro",
   },
   "Does owning property give me residency?": {
     question: "Ter imóvel dá direito a residência?",
     answer:
-      "Não automaticamente. A propriedade é independente da residência, embora Cabo Verde tenha vias de autorização de residência para proprietários e reformados com rendimento estável.",
+      "Não. A propriedade, por si só, não confere residência. Uma compra residencial elegível pode apoiar um pedido de Green Card nos limiares legais de 80 000 € ou 120 000 €, consoante a categoria de PIB do município, e tem de ser paga com fundos transferidos do estrangeiro. O pedido exige documentos e aprovação; outras vias de residência são separadas.",
     topic: "Residência",
   },
   "Are there annual property taxes?": {
     question: "Existem impostos anuais sobre imóveis?",
     answer:
-      "Sim. Desde 2026, o imposto anual sobre propriedade é o IPI. Podem aplicar-se agravamentos em casos específicos, por isso confirme localmente.",
+      "Sim. Desde 1 de janeiro de 2026, o IPI aplica-se à taxa geral de 0,1% do valor tributável. A taxa de 0,15% aplica-se especificamente a terrenos classificados para construção, não a todos os terrenos. O valor pode ser agravado para prédios urbanos devolutos, em ruína ou degradados e inseguros, e para fachadas principais inacabadas.",
     topic: "Fiscal",
   },
   "Can I rent out the property when I'm not there?": {
     question: "Posso arrendar o imóvel quando não estiver lá?",
     answer:
-      "Sim. Arrendamento de longa duração e alojamento turístico são legais, mas o alojamento turístico exige registo e implica obrigações fiscais.",
+      "Sim, sujeito a regras de arrendamento, turismo, fiscais e de licenciamento. As estadias turísticas em apartamentos, moradias ou quartos enquadram-se no regime de Alojamento Complementar (AC), que exige registo/licenciamento e a cobrança da contribuição turística. Um requerente pessoa singular ou gestor societário de nacionalidade estrangeira tem de apresentar título de residência em Cabo Verde ou prova de pedido de residência; um proprietário não residente deve confirmar a estrutura de exploração licenciada adequada.",
     topic: "Prático",
   },
   "Which island is best for investment?": {
     question: "Qual é a melhor ilha para investimento?",
     answer:
-      "Sal e Boa Vista lideram em arrendamento turístico. Santiago e São Vicente são mais fortes para procura residencial. A melhor ilha depende de rendimento, liquidez e estilo de vida.",
+      "Não há uma ilha universalmente melhor. Compare a localização exata, o título jurídico, os custos totais de operação, a ocupação, a procura a longo prazo e a profundidade de revenda. Trate com cautela os rankings de rentabilidade ou liquidez por ilha, salvo se forem sustentados por dados atuais e divulgados.",
     topic: "Compra",
   },
   "Can I repatriate the proceeds when I sell?": {
     question: "Posso repatriar o dinheiro quando vender?",
     answer:
-      "Sim. Cabo Verde não impõe restrições ao repatriamento de receitas de venda para proprietários estrangeiros, usando o processo bancário local.",
+      "Em geral sim, mas não sem condições. Investidores externos podem converter e transferir o produto da venda depois de cumpridas as obrigações aplicáveis, desde que o investimento tenha sido devidamente registado no Banco de Cabo Verde. Conte que o banco ou o BCV peçam documentação de venda, fiscal, de registo, de origem de fundos e de AML/FX; podem existir controlos de calendário excecionais.",
     topic: "Dinheiro",
   },
 };
@@ -379,28 +379,37 @@ export default function BlogList() {
                 <Trans i18nKey="blog.noFaq" values={{ query }} components={{ 1: <b /> }} />
               </div>
             ) : (
-              <div className="kv-faq">
-                {filteredFaq.map((f, i) => {
-                  const isOpen = openFaq === i;
-                  return (
-                    <div key={f.question} className={`kv-faq-row${isOpen ? " is-open" : ""}`}>
-                      <button
-                        type="button"
-                        className="kv-faq-q"
-                        aria-expanded={isOpen}
-                        onClick={() => setOpenFaq(isOpen ? null : i)}
-                      >
-                        <span className="kv-faq-q-topic">{isPt ? FAQ_PT[f.question]?.topic ?? f.topic : f.topic}</span>
-                        <span className="kv-faq-q-text">{isPt ? FAQ_PT[f.question]?.question ?? f.question : f.question}</span>
-                        <span className="kv-faq-q-icon" aria-hidden="true">
-                          {isOpen ? "−" : "+"}
-                        </span>
-                      </button>
-                      <div className="kv-faq-a" aria-hidden={!isOpen}>{isPt ? FAQ_PT[f.question]?.answer ?? f.answer : f.answer}</div>
-                    </div>
-                  );
-                })}
-              </div>
+              <>
+                <div className="kv-faq">
+                  {filteredFaq.map((f, i) => {
+                    const isOpen = openFaq === i;
+                    return (
+                      <div key={f.question} className={`kv-faq-row${isOpen ? " is-open" : ""}`}>
+                        <button
+                          type="button"
+                          className="kv-faq-q"
+                          aria-expanded={isOpen}
+                          onClick={() => setOpenFaq(isOpen ? null : i)}
+                        >
+                          <span className="kv-faq-q-topic">{isPt ? FAQ_PT[f.question]?.topic ?? f.topic : f.topic}</span>
+                          <span className="kv-faq-q-text">{isPt ? FAQ_PT[f.question]?.question ?? f.question : f.question}</span>
+                          <span className="kv-faq-q-icon" aria-hidden="true">
+                            {isOpen ? "−" : "+"}
+                          </span>
+                        </button>
+                        <div className="kv-faq-a" aria-hidden={!isOpen}>{isPt ? FAQ_PT[f.question]?.answer ?? f.answer : f.answer}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                {/* Legal/editorial note + compact source disclosure. Low-emphasis,
+                    reuses the site-wide .kv-disclaimer treatment (mono, dim). */}
+                <div className="kv-faq-legal">
+                  <p className="kv-disclaimer kv-faq-legal-note">{t("blog.faqNote")}</p>
+                  <p className="kv-disclaimer kv-faq-legal-sources">{t("blog.faqSources")}</p>
+                </div>
+              </>
             )}
           </div>
         )}

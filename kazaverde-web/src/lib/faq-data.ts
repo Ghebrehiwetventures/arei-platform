@@ -1,8 +1,10 @@
 /* Common buyer questions for Cape Verde property purchase.
    These power the FAQ block on /blog (Guides) and feed the
-   knowledge-base search alongside articles. Sourced from the
-   independent buyer's guide content already published on the
-   site — kept short and direct so the FAQ is glanceable. */
+   knowledge-base search alongside articles. Answers are written to be
+   factually careful and were last fact-checked against official sources
+   on 18 June 2026 — see the legal/source note rendered below the FAQ in
+   BlogList. Keep them accurate over glanceable; do not re-add removed
+   generalisations (e.g. "freehold", fixed timelines, fixed fee bands). */
 
 export interface FaqEntry {
   question: string;
@@ -14,73 +16,73 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   {
     question: "Can foreigners buy property in Cape Verde?",
     answer:
-      "Yes. Cape Verde allows foreign nationals to purchase freehold property with the same rights as citizens. There are no restrictions on nationality and no requirement for residency, a local sponsor, or a holding company.",
+      "Yes. Foreign nationals may buy privately owned real estate in Cape Verde under the same general investment framework regardless of nationality. Each purchase remains subject to title, cadastral, planning, tax and registration checks. Verify the exact legal interest shown in the title rather than describing every property generically as “freehold.”",
     topic: "Buying",
   },
   {
     question: "Do I need a Cape Verdean tax number to buy?",
     answer:
-      "Yes — every person whose name will appear on the deed needs a NIF (Número de Identificação Fiscal). It's a free, nine-digit ID issued at a Casa do Cidadão or the Cartório. Allow one to five days, or use a fiscal representative if applying from abroad.",
+      "Yes. Obtain a Cape Verde NIF before completion; each person registered as a buyer should expect to need one. DNRE issues it free through Repartições de Finanças or Casa do Cidadão. A non-resident individual must appoint a legal representative domiciled in Cape Verde for the NIF application.",
     topic: "Legal",
   },
   {
     question: "Do I need a local bank account?",
     answer:
-      "Yes. You need a Cape Verdean account to pay the seller, property-related taxes and charges, and notary fees. Banco Comercial do Atlântico and Caixa Económica are the most commonly used. The escudo is pegged to the euro at a fixed 110.265 CVE per €1.",
+      "A local bank account is commonly used, but requirements vary by bank, financing and transaction structure. Confirm the payment and source-of-funds route with your bank, lawyer and notary before sending money. The escudo is pegged at CVE 110.265 per euro.",
     topic: "Money",
   },
   {
     question: "What taxes apply when buying property?",
     answer:
-      "Since January 1, 2026, the old IUP framework has been replaced by ITI, the Property Transfer Tax, and IPI, the Property Ownership Tax. Current summaries generally describe ITI as 1% of taxable value, with 3% in privileged-tax-regime cases. Ask a qualified local lawyer to verify the Matriz, Registo Predial, taxable value, tax settlement status, and any surcharge exposure before completion.",
+      "From 1 January 2026, ITI applies to property transfers and IPI to ownership. ITI is generally 1% of taxable value, rising to 3% where the seller or buyer benefits from a privileged tax regime. Other transaction costs may apply; verify the matriz predial, registo predial, taxable value, tax clearance and any exemption or surcharge.",
     topic: "Tax",
   },
   {
     question: "How long does the buying process take?",
     answer:
-      "Plan for 6 to 12 weeks from accepted offer to signed deed (escritura). The bottleneck is usually due diligence — verifying title, checking for outstanding debts, and confirming the property is free of liens. A reservation deposit of 5–10% holds the property while this happens.",
+      "There is no guaranteed standard timeline. Completion depends on title and cadastral regularity, due diligence, tax clearance, financing and notary/registry readiness. Any reservation deposit is contractual; record its amount, conditions and refundability in writing and have it reviewed before payment.",
     topic: "Practical",
   },
   {
     question: "Do I need a Cape Verdean lawyer?",
     answer:
-      "Strongly recommended — and not the seller's. Hire an independent advogado to verify title, check debts, review contracts, and represent you at the notary. Typical fees are €500–1,500 depending on complexity. They can also act for you under a Power of Attorney if you can't travel.",
+      "Independent Cape Verde legal advice is strongly recommended. Use a lawyer who does not act for the seller to check title, registrations, debts, planning status, contracts and tax position. Fees vary, so obtain a written scope and quote. Remote completion may be possible under a properly executed power of attorney.",
     topic: "Legal",
   },
   {
     question: "Can I get a mortgage in Cape Verde?",
     answer:
-      "Local mortgages are available to foreigners but are limited — usually 50–70% LTV, in escudos, at higher rates than the eurozone (typically 6–9%). Most non-resident buyers self-fund or use equity from a property at home, since the local mortgage market is small.",
+      "Yes, some banks offer mortgages to non-residents, subject to underwriting. As reviewed in June 2026, Caixa advertises loans in CVE or EUR, financing up to 70%, with at least a 30% buyer contribution. Rates and approval are bank- and borrower-specific; confirm current terms directly with the lender.",
     topic: "Money",
   },
   {
     question: "Does owning property give me residency?",
     answer:
-      "Not automatically. Property ownership is independent of residency. Cape Verde does, however, offer a residence permit pathway for property owners and retirees who can demonstrate stable income. The two processes are separate — buying first does not entitle you to a permit.",
+      "No. Property ownership by itself does not grant residence. A qualifying residential purchase may support a Green Card application at statutory thresholds of €80,000 or €120,000, depending on the municipality’s GDP category, and must be paid with funds transferred from abroad. The application requires supporting documents and approval; other residence routes are separate.",
     topic: "Residence",
   },
   {
     question: "Are there annual property taxes?",
     answer:
-      "Yes. Since January 1, 2026, annual property ownership tax is IPI. Current summaries generally describe IPI as 0.1% for urban property and 0.15% for land. Surcharges may apply for vacant, ruined/degraded, or unfinished-facade properties, so confirm the position with a qualified local lawyer or municipality.",
+      "Yes. Since 1 January 2026, IPI applies at a general rate of 0.1% of taxable value. The 0.15% rate applies specifically to land classified for construction, not all land. The amount due can be increased for vacant, ruined or degraded unsafe urban property and for unfinished principal façades.",
     topic: "Tax",
   },
   {
     question: "Can I rent out the property when I'm not there?",
     answer:
-      "Yes. Both long-stay leases and short-term holiday rentals are legal. For tourist rentals (RJET licence), you'll register the property with the Ministry of Tourism and pay a tourism tax per guest, per night. Rental income is taxable in Cape Verde.",
+      "Yes, subject to lease, tourism, tax and licensing rules. Tourist stays in apartments, villas or rooms fall under the Alojamento Complementar (AC) regime, which requires registration/licensing and collection of the tourist contribution. An individual applicant or company manager who is a foreign national must submit a Cape Verde residence title or proof of a residence application; a nonresident owner should confirm the correct licensed operating structure.",
     topic: "Practical",
   },
   {
     question: "Which island is best for investment?",
     answer:
-      "Sal and Boa Vista lead on tourist-rental yield (driven by direct European flights and resort demand). Santiago and São Vicente are stronger for long-stay residential demand. Santo Antão and Brava are quieter, scenic, and slower to liquidate. The right island depends on whether you want yield or lifestyle.",
+      "There is no universally best island. Compare the exact location, legal title, total operating costs, occupancy, long-term demand and resale depth. Treat island-wide yield or liquidity rankings cautiously unless they are supported by a current, disclosed dataset.",
     topic: "Buying",
   },
   {
     question: "Can I repatriate the proceeds when I sell?",
     answer:
-      "Yes. Cape Verde places no restrictions on the repatriation of sale proceeds for foreign owners. The buyer pays you in escudos through the notary process; you convert and transfer through your local bank account.",
+      "Generally yes, but not without conditions. External investors may convert and transfer sale proceeds after satisfying applicable obligations, provided the investment was properly registered with Banco de Cabo Verde. Expect the bank or BCV to request sale, tax, registration, source-of-funds and AML/FX documentation; exceptional timing controls are possible.",
     topic: "Money",
   },
 ];

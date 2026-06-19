@@ -428,6 +428,10 @@ const resources = {
         faqSub:
           "Short, direct answers — sourced from the long-form guides above. If the FAQ doesn't cover it, the guides go deeper.",
         noFaq: "No FAQ entries match <1>\"{{query}}\"</1>.",
+        faqNote:
+          "Last fact-checked against official sources: 18 June 2026. General information only. Laws, bank products and administrative practice can change. Verify the specific transaction with an independent Cape Verde lawyer, tax adviser and bank before acting.",
+        faqSources:
+          "Official sources reviewed: Cape Verde Investment Law; DNRE NIF guidance and Circular n.º 01/DNRE/2021; ITI Code, Lei n.º 54/X/2025; IPI Code, Lei n.º 55/X/2025; Green Card immigration guidance; Decreto-Lei n.º 56/2024 on Alojamento Complementar; Banco de Cabo Verde; and Caixa's non-resident housing-loan terms.",
       },
       blogPost: {
         notFoundTitle: "Article not found",
@@ -1034,6 +1038,10 @@ const resources = {
         faqSub:
           "Respostas curtas e diretas — baseadas nos guias aprofundados acima. Se a FAQ não cobrir o tema, os guias aprofundam.",
         noFaq: "Nenhuma entrada da FAQ corresponde a <1>\"{{query}}\"</1>.",
+        faqNote:
+          "Última verificação factual face a fontes oficiais: 18 de junho de 2026. Informação de caráter geral. As leis, os produtos bancários e a prática administrativa podem mudar. Confirme a transação específica com um advogado, consultor fiscal e banco independentes em Cabo Verde antes de agir.",
+        faqSources:
+          "Fontes oficiais consultadas: Lei do Investimento de Cabo Verde; orientações da DNRE sobre o NIF e Circular n.º 01/DNRE/2021; Código do ITI, Lei n.º 54/X/2025; Código do IPI, Lei n.º 55/X/2025; orientações de imigração do Green Card; Decreto-Lei n.º 56/2024 sobre Alojamento Complementar; Banco de Cabo Verde; e as condições de crédito habitação para não residentes da Caixa.",
       },
       blogPost: {
         notFoundTitle: "Artigo não encontrado",
