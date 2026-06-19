@@ -219,6 +219,10 @@ export async function renderSlide(slide) {
 
   let body = "";
 
+  // Slide counter helper — shown on cover/statement/editorial when idx is set.
+  const idx2 = slide.idx != null ? String(slide.idx).padStart(2, "0") : null;
+  const tot2 = idx2 ? String(slide.total || slide.idx).padStart(2, "0") : null;
+
   if (slide.type === "listing") {
     const total = String(slide.total || 5).padStart(2, "0");
     const idx = String(slide.idx || 1).padStart(2, "0");
@@ -247,21 +251,27 @@ export async function renderSlide(slide) {
     const fit = autofit(slide.title || "", innerW, ladder, 3);
     const hb = headlineBlock({ text: slide.title, x: M, lastBaseline: last, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.04), weight: 700, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
     body = `${lockup(M, M, S.lock, lockH)}
+      ${idx2 ? counter(W - M, M + 28, idx2, tot2, S.lock) : ""}
       ${kicker(M, hb.topBaseline - fit.fontSize - 26, slide.kicker || "// CABO VERDE", S.kicker)}
       ${hb.svg}
       ${slide.dek ? `<text x="${M}" y="${H - bottomSafe}" font-family="Inter" font-size="28" font-weight="400" fill="${S.sub}">${esc(slide.dek)}</text>` : ""}`;
   } else if (slide.type === "statement" || slide.type === "priceCheck") {
     const ladder = slide.format === "9:16" ? [84, 74, 66, 58] : [72, 64, 56, 50];
     const fit = autofit(slide.text || "", innerW, ladder, 4);
-    // On light (bone) surfaces, bottom-anchoring leaves a big empty white field
-    // that reads like a blank document — vertically balance the block instead.
     const isBone = S === SURFACES.bone;
-    const lastBaseline = isBone ? Math.round(H * 0.56) : H - bottomSafe;
+    const hasDek = Boolean(slide.dek);
+    // With a dek, pull the headline up so the dek fits below it cleanly.
+    const lastBaseline = isBone
+      ? Math.round(H * (hasDek ? 0.60 : 0.56))
+      : H - bottomSafe - (hasDek ? 74 : 0);
     const hb = headlineBlock({ text: slide.text, x: M, lastBaseline, fontSize: fit.fontSize, lineHeight: Math.round(fit.fontSize * 1.12), weight: 700, accent: slide.accent, maxWidth: innerW, fgColor: S.fg, accentColor: S.accent });
     const kickY = hb.topBaseline - fit.fontSize - 26;
+    const dekY = hasDek ? lastBaseline + 44 : 0;
     body = `${lockup(M, M, S.lock, lockH)}
+      ${idx2 ? counter(W - M, M + 28, idx2, tot2, S.lock) : ""}
       ${kicker(M, kickY, slide.kicker || (slide.type === "priceCheck" ? "// PRICE CHECK" : "// THE MOMENT"), S.kicker)}
-      ${hb.svg}`;
+      ${hb.svg}
+      ${hasDek ? `<text x="${M}" y="${dekY}" font-family="Inter" font-size="28" font-weight="400" fill="${S.sub}">${esc(slide.dek)}</text>` : ""}`;
   } else if (slide.type === "cta") {
     const ladder = slide.format === "9:16" ? [86, 76, 66] : [74, 64, 56];
     const fit = autofit(slide.title || "See what it actually costs.", innerW, ladder, 3);
@@ -279,11 +289,18 @@ export async function renderSlide(slide) {
     throw new Error(`Unknown slide type: ${slide.type}`);
   }
 
+  // Photo credit — small, bottom-left, shown on any photo-led slide that
+  // provides a credit string (editorial uploaded photos only; listing cards skip it).
+  const creditLine = (onPhoto && slide.imageCredit)
+    ? `<text x="${M}" y="${H - 26}" font-family="Inter" font-size="18" font-weight="400" fill="rgba(255,255,255,0.5)">Photo: ${esc(slide.imageCredit)}</text>`
+    : "";
+
   const svg = `<?xml version="1.0" encoding="UTF-8"?>
 <svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
 ${defs()}
 ${bg}
 ${body}
+${creditLine}
 </svg>`;
 
   return render(svg, W);

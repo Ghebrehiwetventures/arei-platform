@@ -226,7 +226,13 @@ export default async function handler(req, res) {
 
       let photoFailed = false;
       let failedUrl = null;
-      if (slide.imageUrl) {
+      if (slide.imageBase64) {
+        // Uploaded editorial photo (base64 dataURL from the builder UI).
+        const b64 = String(slide.imageBase64).replace(/^data:[^;]+;base64,/, "");
+        const buf = Buffer.from(b64, "base64");
+        if (buf.length > 2000) slide.imageBuffer = buf;
+        delete slide.imageBase64;
+      } else if (slide.imageUrl) {
         const original = slide.imageUrl;
         const buf = await fetchProxiedImage(original);
         if (buf) slide.imageBuffer = buf;

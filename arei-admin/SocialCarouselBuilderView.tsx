@@ -26,8 +26,30 @@ interface SlideSpec {
   label: string;
   kicker?: string; title?: string; text?: string; accent?: string; dek?: string;
   sub?: string; url?: string; price?: string; specs?: string; location?: string;
-  source?: string; tag?: string; imageUrl?: string; idx?: number; total?: number;
+  source?: string; tag?: string; imageUrl?: string; imageBase64?: string;
+  imageCredit?: string; idx?: number; total?: number;
 }
+
+// One editable slide in editorial (text-concept) mode.
+interface EditorialSlide {
+  id: string;
+  slideType: "cover" | "statement" | "cta";
+  kicker: string;
+  headline: string;
+  dek: string;
+  sub: string;   // CTA only
+  url: string;   // CTA only
+  imageDataUrl?: string;
+  imageCredit: string;
+}
+
+function uid() { return Math.random().toString(36).slice(2, 9); }
+
+const DEFAULT_EDITORIAL_SLIDES: EditorialSlide[] = [
+  { id: "ed-1", slideType: "cover",     kicker: "// MOMENT",    headline: "Cape Verde is having a global moment.",           dek: "Football is putting the islands in front of the world.", sub: "", url: "", imageCredit: "" },
+  { id: "ed-2", slideType: "statement", kicker: "// MARKET",    headline: "But the property market is still hard to read.",  dek: "Listings are scattered across agencies, portals and islands.", sub: "", url: "", imageCredit: "" },
+  { id: "ed-3", slideType: "cta",       kicker: "// SUBSCRIBE", headline: "Follow the market in one place.",                 dek: "", sub: "Cape Verde Real Estate Index", url: "capeverderealestateindex.com/subscribe", imageCredit: "" },
+];
 interface RenderedSlide {
   label: string; type: string;
   "4:5": string | null; "9:16": string | null;
@@ -99,6 +121,10 @@ export function SocialCarouselBuilderView() {
   const [published, setPublished] = useState<{ permalink: string } | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
 
+  // Editorial mode — used when preset.listingsRequired === false.
+  const [editorialSlides, setEditorialSlides] = useState<EditorialSlide[]>(DEFAULT_EDITORIAL_SLIDES);
+  const editorial = !preset.listingsRequired;
+
   const listingById = useMemo(() => Object.fromEntries(listings.map((l) => [l.id, l])), [listings]);
   const selectedListings = selected.map((s) => listingById[s.id]).filter(Boolean) as Listing[];
 
@@ -144,8 +170,15 @@ export function SocialCarouselBuilderView() {
   }
 
   function regenerateCaptions() {
-    const igTags = "#CapeVerde #CaboVerde #RealEstate #PropertyInvestment #IslandLife #CVREI" + (preset.allowMoment ? " #WorldCup" : "");
+    const igTags = "#CapeVerde #CaboVerde #RealEstate #PropertyInvestment #IslandLife" + (preset.allowMoment ? " #WorldCup" : "");
     const ttTags = "#capeverde #caboverde #realestate" + (preset.allowMoment ? " #worldcup" : "") + " #fyp";
+
+    if (editorial) {
+      setIgCaption([preset.captionAngle, DISCLOSURE, landingUrl, igTags].filter(Boolean).join("\n\n"));
+      setTtCaption([preset.captionAngle, DISCLOSURE, ttTags].filter(Boolean).join("\n\n"));
+      return;
+    }
+
     if (single) {
       // Source-linked spotlight: the listing + image belong to the original
       // source. Strong disclosure + the source name/URL in the caption.
@@ -169,6 +202,26 @@ export function SocialCarouselBuilderView() {
   const photoAllowed = (cleared: boolean) => !adSafe || cleared;
 
   function buildSlides(): SlideSpec[] {
+    // Editorial mode: text-concept presets with user-uploaded photos per slide.
+    if (editorial) {
+      const total = editorialSlides.length;
+      return editorialSlides.map((s, i) => ({
+        type: s.slideType,
+        label: s.kicker.replace(/^\/\/\s*/, "") || s.slideType,
+        kicker: s.kicker,
+        title: s.slideType !== "statement" ? s.headline : undefined,
+        text:  s.slideType === "statement" ? s.headline : undefined,
+        accent: lastWords(s.headline, 2),
+        dek:   s.slideType !== "cta" && s.dek ? s.dek : undefined,
+        sub:   s.slideType === "cta" ? (s.sub || undefined) : undefined,
+        url:   s.slideType === "cta" ? (s.url || ctaUrl) : undefined,
+        imageBase64: s.imageDataUrl || undefined,
+        imageCredit: s.imageCredit || undefined,
+        idx: i + 1,
+        total,
+      }));
+    }
+
     const sel = selectedListings.map((l, i) => ({
       l,
       img: l.images[selected[i]?.img ?? 0] || l.images[0],
@@ -228,10 +281,10 @@ export function SocialCarouselBuilderView() {
 
   const needListings = preset.listingsRequired;
   const minListings = single ? 1 : 3;
-  const canRender = !loading && (!needListings || selected.length >= minListings);
+  const canRender = !loading && (editorial || !needListings || selected.length >= minListings);
 
   async function renderPreview() {
-    if (needListings && selected.length < minListings) { setRenderError(single ? "Pick a listing." : "This concept needs at least 3 listings."); return; }
+    if (!editorial && needListings && selected.length < minListings) { setRenderError(single ? "Pick a listing." : "This concept needs at least 3 listings."); return; }
     setRendering(true); setRenderError(null); setPublished(null); setPublishError(null);
     try {
       if (!igCaption && !ttCaption) regenerateCaptions();
@@ -399,8 +452,106 @@ export function SocialCarouselBuilderView() {
         )}
       </Section>
 
+      {/* ── Editorial slides (text-concept presets) ── */}
+      {editorial && (
+        <Section title="3 · Slides">
+          <div className="space-y-4">
+            {editorialSlides.map((s, i) => (
+              <div key={s.id} className="border border-border rounded p-3 space-y-2">
+                <div className="flex items-center justify-between">
+                  <span className="text-[11px] font-mono text-foreground-subtle">{String(i + 1).padStart(2, "0")}</span>
+                  <div className="flex gap-2">
+                    <select
+                      className="text-[11px] font-mono border border-border rounded px-2 py-1 bg-background text-foreground"
+                      value={s.slideType}
+                      onChange={(e) => setEditorialSlides((cur) => cur.map((x) => x.id === s.id ? { ...x, slideType: e.target.value as EditorialSlide["slideType"] } : x))}>
+                      <option value="cover">Cover</option>
+                      <option value="statement">Statement</option>
+                      <option value="cta">CTA</option>
+                    </select>
+                    {editorialSlides.length > 1 && (
+                      <button onClick={() => setEditorialSlides((cur) => cur.filter((x) => x.id !== s.id))}
+                        className="text-[11px] font-mono px-2 py-1 border border-border rounded hover:bg-surface-2">✕</button>
+                    )}
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-2">
+                  <Field label="Kicker">
+                    <input className={inputCls} value={s.kicker}
+                      onChange={(e) => setEditorialSlides((cur) => cur.map((x) => x.id === s.id ? { ...x, kicker: e.target.value } : x))} />
+                  </Field>
+                  <Field label="Headline">
+                    <input className={inputCls} value={s.headline}
+                      onChange={(e) => setEditorialSlides((cur) => cur.map((x) => x.id === s.id ? { ...x, headline: e.target.value } : x))} />
+                  </Field>
+                  {s.slideType !== "cta" && (
+                    <Field label="Body text">
+                      <textarea className={inputCls} rows={2} value={s.dek}
+                        onChange={(e) => setEditorialSlides((cur) => cur.map((x) => x.id === s.id ? { ...x, dek: e.target.value } : x))} />
+                    </Field>
+                  )}
+                  {s.slideType === "cta" && (
+                    <>
+                      <Field label="Sub-text">
+                        <input className={inputCls} value={s.sub}
+                          onChange={(e) => setEditorialSlides((cur) => cur.map((x) => x.id === s.id ? { ...x, sub: e.target.value } : x))} />
+                      </Field>
+                      <Field label="URL">
+                        <input className={inputCls} value={s.url}
+                          onChange={(e) => setEditorialSlides((cur) => cur.map((x) => x.id === s.id ? { ...x, url: e.target.value } : x))} />
+                      </Field>
+                    </>
+                  )}
+                </div>
+
+                <div className="flex items-start gap-3">
+                  {s.imageDataUrl
+                    ? <div className="relative shrink-0">
+                        <img src={s.imageDataUrl} alt="" className="w-20 h-20 object-cover rounded border border-border" />
+                        <button
+                          onClick={() => setEditorialSlides((cur) => cur.map((x) => x.id === s.id ? { ...x, imageDataUrl: undefined, imageCredit: "" } : x))}
+                          className="absolute -top-1.5 -right-1.5 w-4 h-4 rounded-full bg-[#C44A3A] text-white text-[9px] flex items-center justify-center leading-none">✕</button>
+                      </div>
+                    : <div className="w-20 h-20 rounded border border-dashed border-border flex items-center justify-center text-[9px] font-mono text-foreground-subtle text-center leading-tight">no photo</div>
+                  }
+                  <div className="flex-1 space-y-2">
+                    <label className="block">
+                      <span className="text-[11px] uppercase tracking-wide text-foreground-subtle font-medium block mb-1">Photo</span>
+                      <input type="file" accept="image/*"
+                        className="text-[11px] font-mono text-foreground-subtle"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const reader = new FileReader();
+                          reader.onload = (ev) => {
+                            const dataUrl = ev.target?.result as string;
+                            setEditorialSlides((cur) => cur.map((x) => x.id === s.id ? { ...x, imageDataUrl: dataUrl } : x));
+                          };
+                          reader.readAsDataURL(file);
+                          e.target.value = "";
+                        }} />
+                    </label>
+                    <Field label="Photo credit">
+                      <input className={inputCls} value={s.imageCredit} placeholder="e.g. Unsplash / Wikimedia Commons"
+                        onChange={(e) => setEditorialSlides((cur) => cur.map((x) => x.id === s.id ? { ...x, imageCredit: e.target.value } : x))} />
+                    </Field>
+                  </div>
+                </div>
+              </div>
+            ))}
+
+            <button
+              onClick={() => setEditorialSlides((cur) => [...cur, { id: uid(), slideType: "statement", kicker: "// THE INDEX", headline: "", dek: "", sub: "", url: "", imageCredit: "" }])}
+              className="text-xs font-mono px-3 py-2 border border-dashed border-border rounded hover:bg-surface-2">
+              + Add slide
+            </button>
+          </div>
+        </Section>
+      )}
+
       {/* ── Listings ───────────────────────────────── */}
-      <Section title={`3 · ${single ? "Listing" : "Listings"} (${selected.length}/${maxSelect} · ${listings.length} eligible under ${capLabel(cap)})`}>
+      {!editorial && <Section title={`3 · ${single ? "Listing" : "Listings"} (${selected.length}/${maxSelect} · ${listings.length} eligible under ${capLabel(cap)})`}>
         {loading && <div className="text-xs text-foreground-muted">Loading listings…</div>}
         {loadError && <div className="text-xs text-[#C44A3A]">{loadError}</div>}
         {!loading && !loadError && listings.length === 0 && (
@@ -473,10 +624,10 @@ export function SocialCarouselBuilderView() {
             </div>
           </div>
         )}
-      </Section>
+      </Section>}
 
       {/* ── Copy ───────────────────────────────────── */}
-      <Section title="4 · Copy">
+      {!editorial && <Section title="4 · Copy">
         <div className="grid md:grid-cols-2 gap-4">
           <div className="space-y-2">
             {!single && (
@@ -533,7 +684,7 @@ export function SocialCarouselBuilderView() {
             <Field label="CTA url"><input className={inputCls} value={ctaUrl} onChange={(e) => setCtaUrl(e.target.value)} /></Field>
           </div>
         </div>
-      </Section>
+      </Section>}
 
       {/* ── Tracking (prep) ─────────────────────────── */}
       <Section title="5 · Campaign tracking (optional — prep for distribution)">
@@ -564,7 +715,7 @@ export function SocialCarouselBuilderView() {
             </>
           )}
         </div>
-        {!canRender && needListings && <div className="text-[11px] text-foreground-subtle mt-2">Pick at least 3 listings to render this concept.</div>}
+        {!canRender && !editorial && needListings && <div className="text-[11px] text-foreground-subtle mt-2">Pick at least 3 listings to render this concept.</div>}
         {renderError && <div className="text-xs text-[#C44A3A] mt-2">{renderError}</div>}
 
         {exportBlocked && (
