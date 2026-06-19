@@ -566,20 +566,36 @@
   color: var(--kv-ink-300);
 }
 
-/* Mobile: stack the footer so the long uppercase line doesn't wrap mid-phrase
-   (Privacy on its own line, the © · powered-by line on the next). */
+/* Mobile: a calmer stacked footer. The lockup stays on one line (tight
+   context), a hairline separates it from the meta, and Privacy / the legal
+   line sit on their own rows so nothing wraps mid-phrase. */
 @media (max-width: 560px) {
   .mu-footer-inner {
     flex-direction: column;
     align-items: flex-start;
-    gap: 18px;
+    gap: 20px;
+  }
+
+  .mu-footer-lockup {
+    align-items: center;
+  }
+
+  .mu-footer-lockup .mu-lk-wide {
+    display: inline-flex;
+  }
+
+  .mu-footer-lockup .mu-lk-stack {
+    display: none;
   }
 
   .mu-footer-copy {
     display: flex;
     flex-direction: column;
     align-items: flex-start;
-    gap: 7px;
+    gap: 8px;
+    width: 100%;
+    padding-top: 18px;
+    border-top: 1px solid var(--kv-rule-soft);
     line-height: 1.5;
   }
 

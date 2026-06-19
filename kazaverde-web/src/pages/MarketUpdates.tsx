@@ -435,7 +435,7 @@ export default function MarketUpdates() {
                 target="_blank"
                 rel="noopener noreferrer"
               >
-                Powered by Africa Real Estate Index ↗
+                Powered by Africa Real Estate Index{" ↗"}
               </a>
             </span>
           </p>
