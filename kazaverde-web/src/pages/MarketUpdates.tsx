@@ -1,8 +1,10 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import type { ListingCard } from "arei-sdk";
 import DLayersMark from "../components/DLayersMark";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
+import { normalizeLanguage } from "../i18n";
 import { arei } from "../lib/arei";
 import { notifyFormspree } from "../lib/formspree";
 import { FAQ_ENTRIES } from "../lib/faq-data";
@@ -21,6 +23,115 @@ const MARQUEE_MIN_SET_W = 4200;
 // dragging the other column's rows — and so the block matches How it works' width.
 const FAQ_HALF = Math.ceil(FAQ_ENTRIES.length / 2);
 const FAQ_COLUMNS = [FAQ_ENTRIES.slice(0, FAQ_HALF), FAQ_ENTRIES.slice(FAQ_HALF)];
+
+// Page copy in the two languages we support. Kept local (not in the global
+// i18n.ts) because it's specific to this one campaign page. i18next still owns
+// the language *state* — the switch calls i18n.changeLanguage, which persists
+// the choice and makes the destination routes (/listings, /market) render in
+// the same language.
+type Lang = "en" | "pt";
+const COPY: Record<Lang, {
+  metaTitle: string;
+  metaDescription: string;
+  eyebrow: string;
+  headline: string;
+  subcopy: string;
+  emailLabel: string;
+  submit: string;
+  submitting: string;
+  microcopy: string;
+  disclosure: string;
+  errorInvalid: string;
+  errorGeneric: string;
+  successTitle: string;
+  successText: string;
+  seeAllListings: string;
+  exploreMarket: string;
+  nextStepsLabel: string;
+  howTitle: string;
+  steps: { title: string; body: string }[];
+  faqTitle: string;
+  sampleLabel: string;
+}> = {
+  en: {
+    metaTitle: "Cape Verde Property Market Updates",
+    metaDescription:
+      "Get new Cape Verde listings, island updates and simple property market notes by email.",
+    eyebrow: "Market updates",
+    headline: "Find Cape Verde homes for sale in one place.",
+    subcopy: "Get new listings, island updates and simple market notes by email.",
+    emailLabel: "Email address",
+    submit: "Get updates",
+    submitting: "Sending…",
+    microcopy: "Free. Unsubscribe anytime.",
+    disclosure:
+      "Cape Verde Real Estate Index is not a broker. We collect public listings from local agencies, portals and property websites so buyers can understand the market more easily.",
+    errorInvalid: "Please enter a valid email address.",
+    errorGeneric: "Could not subscribe. Try again later.",
+    successTitle: "You’re subscribed.",
+    successText: "We’ll send Cape Verde property updates and market notes.",
+    seeAllListings: "See all listings",
+    exploreMarket: "Explore market data",
+    nextStepsLabel: "Next steps",
+    howTitle: "How it works",
+    steps: [
+      {
+        title: "We collect public listings",
+        body: "From local agencies, portals and property sites across the islands.",
+      },
+      {
+        title: "We track them by island",
+        body: "Indexed so Sal, Boa Vista, Santiago and São Vicente are easy to compare.",
+      },
+      {
+        title: "You get updates by email",
+        body: "New listings and simple market notes — free, unsubscribe anytime.",
+      },
+    ],
+    faqTitle: "Common buyer questions",
+    sampleLabel: "A sample of homes on the index",
+  },
+  pt: {
+    metaTitle: "Atualizações do mercado imobiliário de Cabo Verde",
+    metaDescription:
+      "Receba novos anúncios, novidades das ilhas e notas simples sobre o mercado imobiliário de Cabo Verde por email.",
+    eyebrow: "Atualizações do mercado",
+    headline: "Encontre casas à venda em Cabo Verde num só lugar.",
+    subcopy:
+      "Receba novos anúncios, novidades das ilhas e notas simples sobre o mercado por email.",
+    emailLabel: "Endereço de email",
+    submit: "Receber atualizações",
+    submitting: "A enviar…",
+    microcopy: "Grátis. Cancele quando quiser.",
+    disclosure:
+      "O Cape Verde Real Estate Index não é uma agência imobiliária. Reunimos anúncios públicos de agências locais, portais e sites imobiliários para que os compradores compreendam melhor o mercado.",
+    errorInvalid: "Introduza um endereço de email válido.",
+    errorGeneric: "Não foi possível subscrever. Tente novamente mais tarde.",
+    successTitle: "Subscrição confirmada.",
+    successText:
+      "Vamos enviar-lhe atualizações e notas sobre o mercado imobiliário de Cabo Verde.",
+    seeAllListings: "Ver todos os anúncios",
+    exploreMarket: "Explorar dados do mercado",
+    nextStepsLabel: "Próximos passos",
+    howTitle: "Como funciona",
+    steps: [
+      {
+        title: "Reunimos anúncios públicos",
+        body: "De agências locais, portais e sites imobiliários em todas as ilhas.",
+      },
+      {
+        title: "Organizamos por ilha",
+        body: "Indexados para comparar facilmente Sal, Boa Vista, Santiago e São Vicente.",
+      },
+      {
+        title: "Recebe atualizações por email",
+        body: "Novos anúncios e notas simples sobre o mercado — grátis, cancele quando quiser.",
+      },
+    ],
+    faqTitle: "Common buyer questions",
+    sampleLabel: "Uma amostra de casas no índice",
+  },
+};
 
 function hasImage(listing: ListingCard) {
   return Boolean(listing.image_urls?.[0] || listing.image_url);
@@ -64,10 +175,11 @@ function ProofSkeleton() {
   );
 }
 
-function captureAttribution(): { source: string; [key: string]: string } {
+function captureAttribution(locale: Lang): { source: string; [key: string]: string } {
   const params = new URLSearchParams(window.location.search);
   const out: { source: string; [key: string]: string } = {
     source: "subscribe",
+    locale,
     page: window.location.pathname,
   };
   for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]) {
@@ -79,10 +191,12 @@ function captureAttribution(): { source: string; [key: string]: string } {
 }
 
 export default function MarketUpdates() {
-  useDocumentMeta(
-    "Cape Verde Property Market Updates",
-    "Get new Cape Verde listings, island updates and simple property market notes by email.",
-  );
+  const { i18n } = useTranslation();
+  const lang: Lang =
+    normalizeLanguage(i18n.resolvedLanguage ?? i18n.language) === "pt" ? "pt" : "en";
+  const c = COPY[lang];
+
+  useDocumentMeta(c.metaTitle, c.metaDescription);
 
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -129,7 +243,7 @@ export default function MarketUpdates() {
     const trimmed = email.trim();
     if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
       setStatus("error");
-      setErrorMsg("Please enter a valid email address.");
+      setErrorMsg(c.errorInvalid);
       return;
     }
 
@@ -137,15 +251,15 @@ export default function MarketUpdates() {
     setErrorMsg("");
 
     try {
-      const attribution = captureAttribution();
+      const attribution = captureAttribution(lang);
       const [result] = await Promise.all([
-        arei.subscribeNewsletter(trimmed),
+        arei.subscribeNewsletter(trimmed, lang),
         notifyFormspree({ email: trimmed, ...attribution }),
       ]);
 
       if (!result.ok) {
         setStatus("error");
-        setErrorMsg("Could not subscribe. Try again later.");
+        setErrorMsg(c.errorGeneric);
         return;
       }
 
@@ -153,7 +267,7 @@ export default function MarketUpdates() {
       setStatus("success");
     } catch {
       setStatus("error");
-      setErrorMsg("Could not subscribe. Try again later.");
+      setErrorMsg(c.errorGeneric);
     }
   };
 
@@ -175,57 +289,72 @@ export default function MarketUpdates() {
       <main className="mu-main">
       <section className="mu-hero" aria-labelledby="market-updates-title">
         <div className="mu-hero-inner">
+          <div className="mu-topbar">
+            <div className="mu-lang" role="group" aria-label={lang === "pt" ? "Idioma" : "Language"}>
+              <button
+                type="button"
+                className={`mu-lang-btn${lang === "en" ? " is-active" : ""}`}
+                aria-pressed={lang === "en"}
+                onClick={() => i18n.changeLanguage("en")}
+              >
+                EN
+              </button>
+              <span className="mu-lang-sep" aria-hidden="true">·</span>
+              <button
+                type="button"
+                className={`mu-lang-btn${lang === "pt" ? " is-active" : ""}`}
+                aria-pressed={lang === "pt"}
+                onClick={() => i18n.changeLanguage("pt")}
+              >
+                PT
+              </button>
+            </div>
+          </div>
+
           {status === "success" ? (
             <div className="mu-success" role="status">
-              <p className="mu-success-title">You’re subscribed.</p>
-              <p className="mu-success-text">
-                We’ll send Cape Verde property updates and market notes.
-              </p>
-              <div className="mu-actions" aria-label="Next steps">
-                <Link className="mu-action-primary" to="/listings">See all listings</Link>
-                <Link className="mu-action-secondary" to="/market">Explore market data</Link>
+              <p className="mu-success-title">{c.successTitle}</p>
+              <p className="mu-success-text">{c.successText}</p>
+              <div className="mu-actions" aria-label={c.nextStepsLabel}>
+                <Link className="mu-action-primary" to="/listings">{c.seeAllListings}</Link>
+                <Link className="mu-action-secondary" to="/market">{c.exploreMarket}</Link>
               </div>
             </div>
           ) : (
             <>
-              <p className="mu-eyebrow">Market updates</p>
-              <h1 id="market-updates-title">Find Cape Verde homes for sale in one place.</h1>
-              <p className="mu-subcopy">
-                Get new listings, island updates and simple market notes by email.
-              </p>
+              <p className="mu-eyebrow">{c.eyebrow}</p>
+              <h1 id="market-updates-title">{c.headline}</h1>
+              <p className="mu-subcopy">{c.subcopy}</p>
 
               <form className="mu-form" onSubmit={handleSubmit} noValidate>
                 <label className="mu-visually-hidden" htmlFor="market-updates-email">
-                  Email address
+                  {c.emailLabel}
                 </label>
                 <div className="mu-form-row">
                   <input
                     id="market-updates-email"
                     type="email"
                     required
-                    placeholder="Email address"
+                    placeholder={c.emailLabel}
                     value={email}
                     onChange={(event) => setEmail(event.target.value)}
                     disabled={status === "submitting"}
                     autoComplete="email"
                   />
                   <button type="submit" disabled={status === "submitting"}>
-                    {status === "submitting" ? "Sending…" : "Get updates"}
+                    {status === "submitting" ? c.submitting : c.submit}
                   </button>
                 </div>
                 {status === "error" && <p className="mu-error">{errorMsg}</p>}
-                <p className="mu-microcopy">Free. Unsubscribe anytime.</p>
-                <p className="mu-disclosure">
-                  Cape Verde Real Estate Index is not a broker. We collect public listings from local
-                  agencies, portals and property websites so buyers can understand the market more easily.
-                </p>
+                <p className="mu-microcopy">{c.microcopy}</p>
+                <p className="mu-disclosure">{c.disclosure}</p>
               </form>
             </>
           )}
         </div>
       </section>
 
-      <section className="mu-showcase" aria-label="A sample of homes on the index">
+      <section className="mu-showcase" aria-label={c.sampleLabel}>
         <div className={`mu-marquee${hasListings ? "" : " mu-marquee--static"}`}>
           <div
             className="mu-marquee-track"
@@ -240,46 +369,42 @@ export default function MarketUpdates() {
         </div>
       </section>
 
-      <section className="mu-how" aria-label="How it works">
+      <section className="mu-how" aria-label={c.howTitle}>
         <div className="mu-how-inner">
-          <h2 className="mu-how-eyebrow">How it works</h2>
+          <h2 className="mu-how-eyebrow">{c.howTitle}</h2>
           <div className="mu-how-grid">
-            <div className="mu-step">
-              <span className="mu-step-n" aria-hidden="true">01</span>
-              <h3>We collect public listings</h3>
-              <p>From local agencies, portals and property sites across the islands.</p>
-            </div>
-            <div className="mu-step">
-              <span className="mu-step-n" aria-hidden="true">02</span>
-              <h3>We track them by island</h3>
-              <p>Indexed so Sal, Boa Vista, Santiago and São Vicente are easy to compare.</p>
-            </div>
-            <div className="mu-step">
-              <span className="mu-step-n" aria-hidden="true">03</span>
-              <h3>You get updates by email</h3>
-              <p>New listings and simple market notes — free, unsubscribe anytime.</p>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="mu-faq" aria-label="Common buyer questions">
-        <div className="mu-faq-inner">
-          <h2 className="mu-faq-eyebrow">Common buyer questions</h2>
-          <div className="mu-faq-list">
-            {FAQ_COLUMNS.map((column, ci) => (
-              <div className="mu-faq-col" key={ci}>
-                {column.map((entry) => (
-                  <details className="mu-faq-item" key={entry.question}>
-                    <summary>{entry.question}</summary>
-                    <p>{entry.answer}</p>
-                  </details>
-                ))}
+            {c.steps.map((step, i) => (
+              <div className="mu-step" key={i}>
+                <span className="mu-step-n" aria-hidden="true">{`0${i + 1}`}</span>
+                <h3>{step.title}</h3>
+                <p>{step.body}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
+
+      {/* FAQ is English-only (legal/tax content we don't machine-translate),
+          so it shows only in English. */}
+      {lang === "en" && (
+        <section className="mu-faq" aria-label={c.faqTitle}>
+          <div className="mu-faq-inner">
+            <h2 className="mu-faq-eyebrow">{c.faqTitle}</h2>
+            <div className="mu-faq-list">
+              {FAQ_COLUMNS.map((column, ci) => (
+                <div className="mu-faq-col" key={ci}>
+                  {column.map((entry) => (
+                    <details className="mu-faq-item" key={entry.question}>
+                      <summary>{entry.question}</summary>
+                      <p>{entry.answer}</p>
+                    </details>
+                  ))}
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
       </main>
 
       <footer className="mu-footer">

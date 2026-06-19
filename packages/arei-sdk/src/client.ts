@@ -714,10 +714,23 @@ export class AREIClient {
   // =========================================================================
   // subscribeNewsletter — insert email into newsletter_subscribers
   // =========================================================================
-  async subscribeNewsletter(email: string): Promise<{ ok: boolean; error?: string }> {
-    const { error } = await this.sb
-      .from("newsletter_subscribers")
-      .insert({ email: email.trim().toLowerCase() });
+  async subscribeNewsletter(
+    email: string,
+    locale?: string,
+  ): Promise<{ ok: boolean; error?: string }> {
+    const normalizedEmail = email.trim().toLowerCase();
+    const row = locale ? { email: normalizedEmail, locale } : { email: normalizedEmail };
+
+    let { error } = await this.sb.from("newsletter_subscribers").insert(row);
+
+    // If the locale column hasn't been migrated yet, don't break signup — retry
+    // with email only. PGRST204 = column missing from the schema cache,
+    // 42703 = undefined column.
+    if (error && locale && (error.code === "PGRST204" || error.code === "42703")) {
+      ({ error } = await this.sb
+        .from("newsletter_subscribers")
+        .insert({ email: normalizedEmail }));
+    }
 
     if (error) {
       if (error.code === "23505") {

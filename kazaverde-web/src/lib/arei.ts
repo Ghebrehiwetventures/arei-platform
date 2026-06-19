@@ -35,7 +35,8 @@ export const arei = {
   getIslandOptions: () => getClient().getIslandOptions(),
   getIslandContext: (island: string, listingPrice: number | null) =>
     getClient().getIslandContext(island, listingPrice),
-  subscribeNewsletter: (email: string) => getClient().subscribeNewsletter(email),
+  subscribeNewsletter: (email: string, locale?: string) =>
+    getClient().subscribeNewsletter(email, locale),
   getMarketNews: () => getClient().getMarketNews(),
   getFeaturedListings: (isoWeek?: string) => getClient().getFeaturedListings(isoWeek),
   getAgencies: (marketCode?: string) => getClient().getAgencies(marketCode),

@@ -25,6 +25,46 @@
   margin: 0 auto;
 }
 
+/* ── Language switch (always visible) ───────────────────── */
+.mu-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: clamp(18px, 3vh, 32px);
+}
+
+.mu-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--kv-t-sm);
+  letter-spacing: 0.1em;
+}
+
+.mu-lang-btn {
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: uppercase;
+  color: var(--kv-ink-400);
+  cursor: pointer;
+  transition: color var(--kv-dur-fast) var(--kv-ease);
+}
+
+.mu-lang-btn:hover {
+  color: var(--kv-black);
+}
+
+.mu-lang-btn.is-active {
+  color: var(--kv-black);
+  font-weight: var(--kv-fw-semibold);
+}
+
+.mu-lang-sep {
+  color: var(--kv-ink-300);
+}
+
 .mu-lockup {
   display: inline-flex;
   align-items: center;
