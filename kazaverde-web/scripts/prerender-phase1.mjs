@@ -209,7 +209,7 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     ),
     },
     {
-      route: "/market-updates",
+      route: "/subscribe",
       ...page(
       "Cape Verde Property Market Updates | Cape Verde Real Estate Index",
       "Get new Cape Verde listings, island updates and simple property market notes by email.",

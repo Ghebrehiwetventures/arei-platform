@@ -75,7 +75,7 @@ function ScrollToTop() {
 
 export default function App() {
   const { pathname } = useLocation();
-  const isCapturePage = pathname === "/market-updates";
+  const isCapturePage = pathname === "/subscribe";
 
   return (
     <div className={`ctn${isCapturePage ? " ctn-capture" : ""}`}>
@@ -92,7 +92,9 @@ export default function App() {
           <Route path="/listings/boa-vista" element={<Navigate to="/?island=Boa+Vista" replace />} />
           <Route path="/market" element={<Market />} />
           <Route path="/market-news" element={<MarketNews />} />
-          <Route path="/market-updates" element={<MarketUpdates />} />
+          <Route path="/subscribe" element={<MarketUpdates />} />
+          {/* Renamed from /market-updates (collided with /market-news) */}
+          <Route path="/market-updates" element={<Navigate to="/subscribe" replace />} />
           {/* Dev-only internal tool: its /__kv-review API is served only by the
               vite dev middleware (apply: "serve"), so the route must not ship to
               production. Gated behind import.meta.env.DEV. */}

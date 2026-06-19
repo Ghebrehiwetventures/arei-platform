@@ -25,11 +25,16 @@
       "source": "/listings/boa-vista",
       "destination": "/?island=Boa+Vista",
       "permanent": true
+    },
+    {
+      "source": "/market-updates",
+      "destination": "/subscribe",
+      "permanent": true
     }
   ],
   "rewrites": [
     { "source": "/market", "destination": "/market/index.html" },
-    { "source": "/market-updates", "destination": "/market-updates/index.html" },
+    { "source": "/subscribe", "destination": "/subscribe/index.html" },
     { "source": "/blog", "destination": "/blog/index.html" },
     { "source": "/blog/(.*)", "destination": "/blog/$1/index.html" },
     { "source": "/listing/tcv_ba753c539a1b", "destination": "/listing/tcv_ba753c539a1b/index.html" },

@@ -67,7 +67,7 @@ function ProofSkeleton() {
 function captureAttribution(): { source: string; [key: string]: string } {
   const params = new URLSearchParams(window.location.search);
   const out: { source: string; [key: string]: string } = {
-    source: "market-updates",
+    source: "subscribe",
     page: window.location.pathname,
   };
   for (const key of ["utm_source", "utm_medium", "utm_campaign", "utm_content", "utm_term"]) {
