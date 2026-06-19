@@ -70,7 +70,7 @@ export const FAQ_ENTRIES: FaqEntry[] = [
   {
     question: "Can I rent out the property when I'm not there?",
     answer:
-      "Yes, subject to lease, tourism, tax and licensing rules. Tourist stays in apartments, villas or rooms fall under the Alojamento Complementar (AC) regime, which requires registration/licensing and collection of the tourist contribution. A foreign individual applicant or foreign company manager must submit a Cape Verde residence title or proof of a residence application; a nonresident owner should confirm the correct licensed operating structure.",
+      "Yes, subject to lease, tourism, tax and licensing rules. Tourist stays in apartments, villas or rooms fall under the Alojamento Complementar (AC) regime, which requires registration/licensing and collection of the tourist contribution. An individual applicant or company manager who is a foreign national must submit a Cape Verde residence title or proof of a residence application; a nonresident owner should confirm the correct licensed operating structure.",
     topic: "Practical",
   },
   {

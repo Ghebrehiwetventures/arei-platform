@@ -155,7 +155,7 @@ const FAQ_PT: Record<string, { question: string; answer: string; topic: string }
   "Can I rent out the property when I'm not there?": {
     question: "Posso arrendar o imóvel quando não estiver lá?",
     answer:
-      "Sim, sujeito a regras de arrendamento, turismo, fiscais e de licenciamento. As estadias turísticas em apartamentos, moradias ou quartos enquadram-se no regime de Alojamento Complementar (AC), que exige registo/licenciamento e a cobrança da contribuição turística. Um requerente individual estrangeiro ou gerente de empresa estrangeira tem de apresentar título de residência em Cabo Verde ou prova de pedido de residência; um proprietário não residente deve confirmar a estrutura de exploração licenciada adequada.",
+      "Sim, sujeito a regras de arrendamento, turismo, fiscais e de licenciamento. As estadias turísticas em apartamentos, moradias ou quartos enquadram-se no regime de Alojamento Complementar (AC), que exige registo/licenciamento e a cobrança da contribuição turística. Um requerente pessoa singular ou gestor societário de nacionalidade estrangeira tem de apresentar título de residência em Cabo Verde ou prova de pedido de residência; um proprietário não residente deve confirmar a estrutura de exploração licenciada adequada.",
     topic: "Prático",
   },
   "Which island is best for investment?": {
