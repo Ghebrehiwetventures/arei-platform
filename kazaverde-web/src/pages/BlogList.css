@@ -167,6 +167,16 @@
   padding-bottom: 24px;
 }
 
+/* Legal/editorial note + source disclosure under the FAQ. Reuses the
+   site-wide .kv-disclaimer treatment (mono, dim, small); this just sets
+   placement and the gap between the two lines. */
+.kv-faq-legal {
+  margin-top: 28px;
+  max-width: 720px;
+  display: grid;
+  gap: 12px;
+}
+
 .kv-blog-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
