@@ -538,12 +538,12 @@ const resources = {
           ["What we don't collect", "Everything else.", "No names, phone numbers, addresses, or payment data. No advertising trackers unless you opt in to marketing cookies. We do not sell or share your data with brokers or data marketplaces."],
           ["Cookies", "Almost none.", "The Cape Verde Real Estate Index uses minimal browser storage. Vercel Web Analytics is cookieless. The only cookie-setting trackers are Google Analytics (anonymous traffic measurement) and the Meta Pixel (ad measurement) — both load only if you accept cookies in the banner, and decline means neither runs. Otherwise the only persistent storage is localStorage for your saved properties and your cookie choice. For the full breakdown, see the <1>Cookie Policy</1>."],
           ["Third-party services", "Who else touches your request.", "The Cape Verde Real Estate Index is a small read-only site, but a request to it involves a handful of upstream providers. Each has its own privacy policy — links below."],
-          ["Your rights", "Removal on request.", "You can request deletion of your newsletter subscription at any time by emailing <1>info@africarealestateindex.com</1>. Since we don't collect personal data beyond newsletter emails, there is no additional data to access or delete."],
+          ["Your rights", "Removal on request.", "You can request deletion of your newsletter subscription at any time by emailing <1>info@africarealestateindex.com</1>. Since we collect little personal data beyond your newsletter email and basic signup details, there is little additional data to access or delete."],
           ["Updates & contact", "Material changes get a new date.", "We may update this policy as the product evolves. Material changes are noted with a fresh date at the top of this page. Questions? Email <1>info@africarealestateindex.com</1>."],
         ],
         collectList: [
           ["Analytics data.", "Vercel Web Analytics records anonymous page views — URL, referrer, browser, device — without cookies or any personally identifiable information. If you accept cookies, Google Analytics also records anonymous usage with its own cookies; decline and it never runs."],
-          ["Newsletter email.", "If you subscribe, we store your email address to send periodic market updates. We don't share it with third parties. Unsubscribe any time."],
+          ["Newsletter email.", "If you subscribe, we store your email address and basic signup details (such as the page and campaign source) to send periodic market updates. The form is handled by Formspree and the data is stored in Supabase. Unsubscribe any time."],
           ["Saved properties.", "If you shortlist listings, the IDs are kept in your browser's localStorage. They never leave your device."],
         ],
         services: [
@@ -552,6 +552,7 @@ const resources = {
           ["Google Fonts.", "Serves the typefaces used on the site. Font requests can transmit your IP address to Google.", "Privacy policy ↗"],
           ["Meta (only with consent).", "If you accept marketing cookies, the Meta Pixel shares your page visits with Meta so we can measure and target our ads. Loads only after opt-in.", "Privacy policy ↗"],
           ["Google Analytics (only with consent).", "If you accept cookies, Google Analytics records anonymous usage to help us understand how the site is used. Loads only after opt-in.", "Privacy policy ↗"],
+          ["Formspree.", "Receives and delivers newsletter and contact form submissions so we can be notified of signups.", "Privacy policy ↗"],
         ],
       },
       cookies: {
@@ -1143,12 +1144,12 @@ const resources = {
           ["O que não recolhemos", "Tudo o resto.", "Sem nomes, números de telefone, moradas ou dados de pagamento. Sem trackers publicitários, a menos que aceite os cookies de marketing. Não vendemos nem partilhamos os seus dados com mediadores ou mercados de dados."],
           ["Cookies", "Quase nenhuns.", "O Cape Verde Real Estate Index usa armazenamento mínimo no navegador. A Vercel Web Analytics não usa cookies. Os únicos trackers que definem cookies são o Google Analytics (medição de tráfego anónimo) e o Meta Pixel (medição de anúncios) — ambos só são carregados se aceitar os cookies no banner, e se recusar nenhum corre. Caso contrário, o único armazenamento persistente é o localStorage para imóveis guardados e a sua escolha de cookies. Para a explicação completa, consulte a <1>Política de Cookies</1>."],
           ["Serviços de terceiros", "Quem mais processa o seu pedido.", "O Cape Verde Real Estate Index é um pequeno site apenas de leitura, mas um pedido envolve alguns fornecedores externos. Cada um tem a sua própria política de privacidade — links abaixo."],
-          ["Os seus direitos", "Remoção mediante pedido.", "Pode pedir a eliminação da subscrição da newsletter a qualquer momento enviando email para <1>info@africarealestateindex.com</1>. Como não recolhemos dados pessoais além de emails da newsletter, não há dados adicionais para consultar ou eliminar."],
+          ["Os seus direitos", "Remoção mediante pedido.", "Pode pedir a eliminação da subscrição da newsletter a qualquer momento enviando email para <1>info@africarealestateindex.com</1>. Como recolhemos poucos dados pessoais além do seu email e detalhes básicos da subscrição, há poucos dados adicionais para consultar ou eliminar."],
           ["Atualizações e contacto", "Alterações materiais recebem uma nova data.", "Podemos atualizar esta política à medida que o produto evolui. Alterações materiais são assinaladas com uma nova data no topo desta página. Perguntas? Envie email para <1>info@africarealestateindex.com</1>."],
         ],
         collectList: [
           ["Dados de analítica.", "A Vercel Web Analytics regista visualizações anónimas — URL, referrer, browser, dispositivo — sem cookies nem informação pessoal identificável. Se aceitar os cookies, o Google Analytics também regista utilização anónima com os seus próprios cookies; se recusar, nunca corre."],
-          ["Email da newsletter.", "Se subscrever, guardamos o seu email para enviar atualizações periódicas de mercado. Não o partilhamos com terceiros. Pode cancelar a qualquer momento."],
+          ["Email da newsletter.", "Se subscrever, guardamos o seu email e detalhes básicos da subscrição (como a página e a origem da campanha) para enviar atualizações periódicas de mercado. O formulário é tratado pelo Formspree e os dados são armazenados no Supabase. Pode cancelar a qualquer momento."],
           ["Imóveis guardados.", "Se guardar anúncios, os IDs ficam no localStorage do seu navegador. Nunca saem do seu dispositivo."],
         ],
         services: [
@@ -1157,6 +1158,7 @@ const resources = {
           ["Google Fonts.", "Serve as fontes usadas no site. Pedidos de fontes podem transmitir o seu endereço IP à Google.", "Política de privacidade ↗"],
           ["Meta (apenas com consentimento).", "Se aceitar os cookies de marketing, o Meta Pixel partilha as suas visitas de página com a Meta para medirmos e segmentarmos os nossos anúncios. Só é carregado após o opt-in.", "Política de privacidade ↗"],
           ["Google Analytics (apenas com consentimento).", "Se aceitar os cookies, o Google Analytics regista utilização anónima para nos ajudar a perceber como o site é usado. Só é carregado após o opt-in.", "Política de privacidade ↗"],
+          ["Formspree.", "Recebe e entrega as submissões dos formulários de newsletter e contacto para sermos notificados das subscrições.", "Política de privacidade ↗"],
         ],
       },
       cookies: {

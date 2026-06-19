@@ -140,6 +140,16 @@ export default function Privacy() {
                 {services[4][2]}
               </a>
             </li>
+            <li>
+              <strong>{services[5][0]}</strong> {services[5][1]}{" "}
+              <a
+                href="https://formspree.io/legal/privacy-policy"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {services[5][2]}
+              </a>
+            </li>
           </ul>
         </div>
       </section>

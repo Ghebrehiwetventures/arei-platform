@@ -52,6 +52,7 @@ const COPY: Record<Lang, {
   steps: { title: string; body: string }[];
   faqTitle: string;
   sampleLabel: string;
+  privacy: string;
 }> = {
   en: {
     metaTitle: "Cape Verde Property Market Updates",
@@ -90,6 +91,7 @@ const COPY: Record<Lang, {
     ],
     faqTitle: "Common buyer questions",
     sampleLabel: "A sample of homes on the index",
+    privacy: "Privacy",
   },
   pt: {
     metaTitle: "Atualizações do mercado imobiliário de Cabo Verde",
@@ -130,6 +132,7 @@ const COPY: Record<Lang, {
     ],
     faqTitle: "Common buyer questions",
     sampleLabel: "Uma amostra de casas no índice",
+    privacy: "Privacidade",
   },
 };
 
@@ -422,7 +425,7 @@ export default function MarketUpdates() {
             </span>
           </div>
           <p className="mu-footer-copy">
-            © 2026 ·{" "}
+            <Link className="mu-footer-link" to="/privacy">{c.privacy}</Link> · © 2026 ·{" "}
             <a
               className="mu-footer-poweredby"
               href="https://www.africarealestateindex.com/"

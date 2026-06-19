@@ -539,13 +539,15 @@
   color: var(--kv-ink-300);
 }
 
-.mu-footer-poweredby {
+.mu-footer-poweredby,
+.mu-footer-link {
   color: var(--kv-ink-400);
   text-decoration: none;
   transition: color var(--kv-dur-fast) var(--kv-ease);
 }
 
-.mu-footer-poweredby:hover {
+.mu-footer-poweredby:hover,
+.mu-footer-link:hover {
   color: var(--kv-black);
 }
 
