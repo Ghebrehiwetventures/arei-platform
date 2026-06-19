@@ -318,13 +318,24 @@
   animation: mu-marquee-scroll 60s linear infinite;
 }
 
-.mu-marquee:hover .mu-marquee-track {
-  animation-play-state: paused;
+/* Pause on hover only on devices with a real pointer — on touch screens a
+   sticky :hover would freeze the ribbon the moment a thumb grazes it. */
+@media (hover: hover) {
+  .mu-marquee:hover .mu-marquee-track {
+    animation-play-state: paused;
+  }
 }
 
+/* Decorative proof cards: not interactive, so no link cursor and no hover lift. */
 .mu-marquee .kv-lcard {
   flex: 0 0 264px;
   margin-right: 16px;
+  cursor: default;
+}
+
+.mu-marquee .kv-lcard:hover {
+  transform: none;
+  border-color: rgba(10, 10, 10, 0.14);
 }
 
 .mu-marquee .kv-lc-img {
@@ -549,6 +560,32 @@
 .mu-footer-poweredby:hover,
 .mu-footer-link:hover {
   color: var(--kv-black);
+}
+
+.mu-footer-dot {
+  color: var(--kv-ink-300);
+}
+
+/* Mobile: stack the footer so the long uppercase line doesn't wrap mid-phrase
+   (Privacy on its own line, the © · powered-by line on the next). */
+@media (max-width: 560px) {
+  .mu-footer-inner {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 18px;
+  }
+
+  .mu-footer-copy {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 7px;
+    line-height: 1.5;
+  }
+
+  .mu-footer-dot {
+    display: none;
+  }
 }
 
 /* ── Utilities ──────────────────────────────────────────── */
