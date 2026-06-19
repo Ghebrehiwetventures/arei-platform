@@ -361,11 +361,11 @@ export default function MarketUpdates() {
         <div className={`mu-marquee${hasListings ? "" : " mu-marquee--static"}`}>
           <div
             className="mu-marquee-track"
-            style={hasListings ? { animationDuration: `${fillCards.length * 3}s` } : undefined}
+            style={hasListings ? { animationDuration: `${fillCards.length * 4.5}s` } : undefined}
           >
             {hasListings
               ? trackCards.map((listing, i) => (
-                  <Card key={i} l={listing} bare sourceOnly />
+                  <Card key={i} l={listing} bare sourceOnly noLink />
                 ))
               : [0, 1, 2, 3, 4].map((i) => <ProofSkeleton key={i} />)}
           </div>
@@ -425,15 +425,19 @@ export default function MarketUpdates() {
             </span>
           </div>
           <p className="mu-footer-copy">
-            <Link className="mu-footer-link" to="/privacy">{c.privacy}</Link> · © 2026 ·{" "}
-            <a
-              className="mu-footer-poweredby"
-              href="https://www.africarealestateindex.com/"
-              target="_blank"
-              rel="noopener noreferrer"
-            >
-              Powered by Africa Real Estate Index ↗
-            </a>
+            <Link className="mu-footer-link" to="/privacy">{c.privacy}</Link>
+            <span className="mu-footer-dot" aria-hidden="true"> · </span>
+            <span className="mu-footer-legal">
+              © 2026 ·{" "}
+              <a
+                className="mu-footer-poweredby"
+                href="https://www.africarealestateindex.com/"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                Powered by Africa Real Estate Index ↗
+              </a>
+            </span>
           </p>
         </div>
       </footer>

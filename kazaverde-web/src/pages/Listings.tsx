@@ -742,7 +742,7 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-export function Card({ l, bare, sourceOnly }: { l: ListingCard; index?: number; bare?: boolean; sourceOnly?: boolean }) {
+export function Card({ l, bare, sourceOnly, noLink }: { l: ListingCard; index?: number; bare?: boolean; sourceOnly?: boolean; noLink?: boolean }) {
   const { i18n, t } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
   const locale = toLocale(i18n.language);
@@ -777,8 +777,8 @@ export function Card({ l, bare, sourceOnly }: { l: ListingCard; index?: number; 
 
   const localizedTitle = normalizeListingDisplayTitle(getLocalizedTitle(l, i18n.language).title);
 
-  return (
-    <Link className="kv-lcard" to={`/listing/${l.id}`}>
+  const inner = (
+    <>
       <div className="kv-lc-img" style={bgStyle}>
         {isNew && <span className="kv-lc-flag">{t("listings.new")}</span>}
       </div>
@@ -812,6 +812,18 @@ export function Card({ l, bare, sourceOnly }: { l: ListingCard; index?: number; 
           )}
         </div>
       </div>
+    </>
+  );
+
+  // Decorative use (e.g. the subscribe-page proof ribbon): render as a plain,
+  // non-interactive element — not a link, not focusable, no navigation.
+  if (noLink) {
+    return <div className="kv-lcard kv-lcard--static" aria-hidden="true">{inner}</div>;
+  }
+
+  return (
+    <Link className="kv-lcard" to={`/listing/${l.id}`}>
+      {inner}
     </Link>
   );
 }
