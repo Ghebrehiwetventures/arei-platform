@@ -742,7 +742,7 @@ function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
 }
 
-export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boolean }) {
+export function Card({ l, bare, sourceOnly }: { l: ListingCard; index?: number; bare?: boolean; sourceOnly?: boolean }) {
   const { i18n, t } = useTranslation();
   const isPt = i18n.language.startsWith("pt");
   const locale = toLocale(i18n.language);
@@ -800,7 +800,10 @@ export function Card({ l, bare }: { l: ListingCard; index?: number; bare?: boole
         )}
         <div className="kv-lc-provenance">
           {bare ? (
-            <span>{formatSourceLabel(l.source_id)} · {formatRelTime(l.first_seen_at, locale)}</span>
+            <span>
+              {formatSourceLabel(l.source_id)}
+              {!sourceOnly && ` · ${formatRelTime(l.first_seen_at, locale)}`}
+            </span>
           ) : (
             <>
               <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>

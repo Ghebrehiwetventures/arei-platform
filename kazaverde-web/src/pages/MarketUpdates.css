@@ -1,0 +1,584 @@
+/* /market-updates — standalone campaign signup page.
+   No nav, no footer (App.tsx hides shell on this route). The single job is
+   the email signup. Beneath it, a continuously scrolling ribbon of real
+   listings is the visual proof — discreet cards (photo, type, price, place),
+   the same language as the AREI landing carousel. */
+
+.mu-page {
+  background: var(--kv-off-white);
+  color: var(--kv-black);
+  font-family: var(--kv-mono);
+}
+
+/* App.tsx adds .ctn-capture on this route; kill the shell's top padding. */
+.ctn-capture {
+  padding-top: 0 !important;
+}
+
+/* ── Hero — single confident column ─────────────────────── */
+.mu-hero {
+  padding: clamp(36px, 6vh, 76px) var(--kv-gutter) clamp(28px, 4vh, 44px);
+}
+
+.mu-hero-inner {
+  width: min(var(--kv-content-w), 100%);
+  margin: 0 auto;
+}
+
+/* ── Language switch (always visible) ───────────────────── */
+.mu-topbar {
+  display: flex;
+  justify-content: flex-end;
+  margin-bottom: clamp(18px, 3vh, 32px);
+}
+
+.mu-lang {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--kv-t-sm);
+  letter-spacing: 0.1em;
+}
+
+.mu-lang-btn {
+  background: none;
+  border: none;
+  padding: 6px 4px;
+  font: inherit;
+  letter-spacing: inherit;
+  text-transform: uppercase;
+  color: var(--kv-ink-400);
+  cursor: pointer;
+  transition: color var(--kv-dur-fast) var(--kv-ease);
+}
+
+.mu-lang-btn:hover {
+  color: var(--kv-black);
+}
+
+.mu-lang-btn.is-active {
+  color: var(--kv-black);
+  font-weight: var(--kv-fw-semibold);
+}
+
+.mu-lang-sep {
+  color: var(--kv-ink-300);
+}
+
+.mu-lockup {
+  display: inline-flex;
+  align-items: center;
+  gap: 13px;
+  margin-bottom: clamp(28px, 5vh, 48px);
+  color: var(--kv-black);
+}
+
+/* Desktop: one line — Cape Verde · Real Estate Index (matches the nav). */
+.mu-lk-wide {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  font-size: 12px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.mu-lk-wide strong {
+  font-weight: var(--kv-fw-semibold);
+}
+
+.mu-lk-desc {
+  font-weight: var(--kv-fw-regular);
+  opacity: 0.64;
+}
+
+/* Mobile: three lines — Cape Verde / Real Estate / Index. */
+.mu-lk-stack {
+  display: none;
+}
+
+@media (max-width: 560px) {
+  .mu-lockup {
+    align-items: flex-start;
+  }
+
+  .mu-lk-wide {
+    display: none;
+  }
+
+  .mu-lk-stack {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+    font-size: 12px;
+    line-height: 1;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+  }
+
+  .mu-lk-stack span:first-child {
+    font-weight: var(--kv-fw-semibold);
+  }
+
+  .mu-lk-stack span:not(:first-child) {
+    font-weight: var(--kv-fw-regular);
+    opacity: 0.64;
+  }
+}
+
+.mu-eyebrow {
+  margin: 0 0 18px;
+  font-size: var(--kv-t-xs);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--kv-green-deep);
+}
+
+.mu-hero h1 {
+  margin: 0;
+  max-width: 16ch;
+  font-size: clamp(40px, 5.4vw, 64px);
+  font-weight: var(--kv-fw-regular);
+  line-height: 1.01;
+  letter-spacing: var(--kv-ls-display);
+  text-wrap: balance;
+}
+
+.mu-subcopy {
+  margin: 22px 0 0;
+  max-width: 34ch;
+  font-size: clamp(17px, 1.5vw, 21px);
+  line-height: 1.5;
+  color: var(--kv-ink-700);
+}
+
+/* ── Form — strong, confident presence ──────────────────── */
+.mu-form {
+  margin-top: clamp(28px, 4vh, 38px);
+  max-width: 540px;
+}
+
+.mu-form-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+}
+
+.mu-form input {
+  min-height: 60px;
+  border: 1px solid var(--kv-rule-strong);
+  background: var(--kv-paper);
+  color: var(--kv-black);
+  padding: 0 18px;
+  font: inherit;
+  font-size: 16px;
+  outline: none;
+  border-radius: 0;
+}
+
+.mu-form input::placeholder {
+  color: var(--kv-ink-400);
+}
+
+.mu-form input:focus {
+  border-color: var(--kv-black);
+  box-shadow: inset 0 0 0 1px var(--kv-black);
+}
+
+.mu-form button {
+  min-height: 60px;
+  border: 1px solid var(--kv-black);
+  background: var(--kv-black);
+  color: var(--kv-white);
+  padding: 0 32px;
+  font: inherit;
+  font-size: var(--kv-t-sm);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: var(--kv-ls-label);
+  text-transform: uppercase;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--kv-dur) var(--kv-ease);
+}
+
+.mu-form button:hover:not(:disabled) {
+  background: var(--kv-black-hover);
+}
+
+.mu-form button:disabled,
+.mu-form input:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.mu-error {
+  margin: 12px 0 0;
+  color: #8b1f1c;
+  font-size: var(--kv-t-sm);
+}
+
+.mu-microcopy {
+  margin: 14px 0 0;
+  font-size: var(--kv-t-sm);
+  font-weight: var(--kv-fw-medium);
+  letter-spacing: 0.02em;
+  color: var(--kv-ink-600);
+}
+
+.mu-disclosure {
+  margin: 14px 0 0;
+  max-width: 52ch;
+  color: var(--kv-ink-600);
+  font-size: var(--kv-t-sm);
+  line-height: 1.65;
+}
+
+/* ── Success state ──────────────────────────────────────── */
+.mu-success {
+  border: 1px solid var(--kv-black);
+  background: var(--kv-paper);
+  padding: clamp(26px, 3vw, 34px);
+  max-width: 540px;
+}
+
+.mu-success-title {
+  margin: 0;
+  font-size: clamp(30px, 4vw, 40px);
+  font-weight: var(--kv-fw-regular);
+  line-height: 1.04;
+  letter-spacing: var(--kv-ls-display);
+}
+
+.mu-success-text {
+  margin: 14px 0 0;
+  color: var(--kv-ink-700);
+  font-size: var(--kv-t-lg);
+  line-height: 1.5;
+}
+
+.mu-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-top: 24px;
+}
+
+.mu-actions a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 50px;
+  padding: 0 20px;
+  border: 1px solid var(--kv-black);
+  font-size: var(--kv-t-sm);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: var(--kv-ls-label);
+  text-transform: uppercase;
+  text-decoration: none;
+}
+
+.mu-action-primary {
+  background: var(--kv-black);
+  color: var(--kv-white);
+}
+
+.mu-action-secondary {
+  background: transparent;
+  color: var(--kv-black);
+}
+
+/* ── Showcase — continuously scrolling listing ribbon ───── */
+.mu-showcase {
+  padding: clamp(16px, 3vh, 36px) 0 clamp(32px, 5vh, 56px);
+  overflow: hidden;
+}
+
+.mu-marquee {
+  overflow: hidden;
+  /* Fade the cards in/out at the edges so the ribbon feels endless. */
+  -webkit-mask-image: linear-gradient(
+    90deg,
+    transparent 0,
+    #000 5%,
+    #000 95%,
+    transparent 100%
+  );
+  mask-image: linear-gradient(90deg, transparent 0, #000 5%, #000 95%, transparent 100%);
+  -webkit-mask-repeat: no-repeat;
+  mask-repeat: no-repeat;
+}
+
+/* ONE animated track (no two-element sync to drift). The card list is the
+   fill-set repeated twice; translateX(-50%) advances exactly one fill-set, and
+   every card carries an equal right margin so the seam lands on a card edge.
+   The fill-set is sized in JS to exceed any viewport, so it never runs dry. */
+.mu-marquee-track {
+  display: flex;
+  width: max-content;
+  animation: mu-marquee-scroll 60s linear infinite;
+}
+
+.mu-marquee:hover .mu-marquee-track {
+  animation-play-state: paused;
+}
+
+.mu-marquee .kv-lcard {
+  flex: 0 0 264px;
+  margin-right: 16px;
+}
+
+.mu-marquee .kv-lc-img {
+  height: 156px;
+}
+
+.mu-marquee .kv-lc-body {
+  padding: 14px 16px 16px;
+}
+
+.mu-marquee .kv-lc-price {
+  font-size: 18px;
+  margin-bottom: 8px;
+}
+
+.mu-marquee .kv-lc-title {
+  margin-bottom: 0;
+}
+
+/* Discreet: drop the beds/baths specs, but keep the source line — attribution
+   matters (we're an index, not the seller), so the source signs each card. */
+.mu-marquee .kv-lc-specs {
+  display: none;
+}
+
+@keyframes mu-marquee-scroll {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* Loading: hold a static row of skeletons (first gutter only). */
+.mu-marquee--static .mu-marquee-track {
+  animation: none;
+  padding-left: var(--kv-gutter);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mu-marquee-track {
+    animation: none;
+  }
+  .mu-marquee {
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+  .mu-marquee::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* ── How it works — a quiet, editorial three-step ───────── */
+.mu-how {
+  background: var(--kv-white);
+  border-top: 1px solid var(--kv-rule-soft);
+  padding: clamp(40px, 6vh, 72px) var(--kv-gutter);
+}
+
+.mu-how-inner {
+  width: min(var(--kv-content-w), 100%);
+  margin: 0 auto;
+}
+
+.mu-how-eyebrow {
+  margin: 0 0 clamp(24px, 3vh, 36px);
+  font-size: var(--kv-t-xs);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--kv-green-deep);
+}
+
+.mu-how-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: clamp(20px, 3vw, 40px);
+}
+
+.mu-step {
+  border-top: 1px solid var(--kv-rule);
+  padding-top: 18px;
+}
+
+.mu-step-n {
+  display: block;
+  margin-bottom: 16px;
+  font-size: var(--kv-t-sm);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.14em;
+  color: var(--kv-green-deep);
+}
+
+.mu-step h3 {
+  margin: 0 0 10px;
+  font-size: clamp(18px, 2vw, 22px);
+  font-weight: var(--kv-fw-regular);
+  line-height: 1.2;
+}
+
+.mu-step p {
+  margin: 0;
+  color: var(--kv-ink-700);
+  font-size: var(--kv-t-sm);
+  line-height: 1.65;
+}
+
+/* ── FAQ — native accordion, glanceable ─────────────────── */
+.mu-faq {
+  background: var(--kv-off-white);
+  border-top: 1px solid var(--kv-rule-soft);
+  padding: clamp(40px, 6vh, 72px) var(--kv-gutter);
+}
+
+.mu-faq-inner {
+  width: min(var(--kv-content-w), 100%);
+  margin: 0 auto;
+}
+
+/* Two independent columns — same width as How it works. */
+.mu-faq-list {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 0 clamp(28px, 4vw, 56px);
+}
+
+@media (max-width: 760px) {
+  .mu-faq-list {
+    grid-template-columns: 1fr;
+  }
+}
+
+.mu-faq-eyebrow {
+  margin: 0 0 clamp(20px, 3vh, 30px);
+  font-size: var(--kv-t-xs);
+  font-weight: var(--kv-fw-semibold);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--kv-green-deep);
+}
+
+.mu-faq-item {
+  border-top: 1px solid var(--kv-rule);
+}
+
+.mu-faq-item summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 20px;
+  padding: 18px 0;
+  cursor: pointer;
+  list-style: none;
+  font-size: clamp(15px, 1.6vw, 18px);
+  font-weight: var(--kv-fw-medium);
+  line-height: 1.35;
+}
+
+.mu-faq-item summary::-webkit-details-marker {
+  display: none;
+}
+
+.mu-faq-item summary::after {
+  content: "+";
+  flex: 0 0 auto;
+  font-weight: var(--kv-fw-regular);
+  color: var(--kv-green-deep);
+  font-size: 20px;
+  line-height: 1;
+  transform: translateY(1px);
+}
+
+.mu-faq-item[open] summary::after {
+  content: "–";
+}
+
+.mu-faq-item p {
+  margin: 0 0 20px;
+  max-width: 68ch;
+  color: var(--kv-ink-700);
+  font-size: var(--kv-t-base);
+  line-height: 1.7;
+}
+
+/* ── Footer — brand anchor + © · Powered by AREI ────────── */
+.mu-footer {
+  background: var(--kv-white);
+  border-top: 1px solid var(--kv-rule);
+  padding: clamp(30px, 4vh, 44px) var(--kv-gutter);
+}
+
+.mu-footer-inner {
+  width: min(var(--kv-content-w), 100%);
+  margin: 0 auto;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 16px 24px;
+  flex-wrap: wrap;
+}
+
+.mu-footer-lockup {
+  margin-bottom: 0;
+}
+
+.mu-footer-copy {
+  margin: 0;
+  font-size: var(--kv-t-xs);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--kv-ink-300);
+}
+
+.mu-footer-poweredby,
+.mu-footer-link {
+  color: var(--kv-ink-400);
+  text-decoration: none;
+  transition: color var(--kv-dur-fast) var(--kv-ease);
+}
+
+.mu-footer-poweredby:hover,
+.mu-footer-link:hover {
+  color: var(--kv-black);
+}
+
+/* ── Utilities ──────────────────────────────────────────── */
+.mu-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ── Phone ──────────────────────────────────────────────── */
+@media (max-width: 560px) {
+  .mu-form-row {
+    grid-template-columns: 1fr;
+  }
+
+  .mu-form button {
+    width: 100%;
+  }
+
+  .mu-marquee .kv-lcard {
+    flex-basis: 230px;
+  }
+
+  .mu-actions {
+    display: grid;
+  }
+}

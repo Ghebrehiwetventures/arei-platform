@@ -209,6 +209,47 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     ),
     },
     {
+      route: "/subscribe",
+      ...page(
+      "Cape Verde Property Market Updates | Cape Verde Real Estate Index",
+      "Get new Cape Verde listings, island updates and simple property market notes by email.",
+      `
+        <main>
+          <section>
+            <p>Market updates</p>
+            <h1>Find Cape Verde homes for sale in one place.</h1>
+            <p>Get new listings, island updates and simple market notes by email.</p>
+            <form>
+              <label for="market-updates-email">Email address</label>
+              <input id="market-updates-email" type="email" name="email" placeholder="Email address" required />
+              <button type="submit">Get updates</button>
+            </form>
+            <p>Free. Unsubscribe anytime.</p>
+            <p>
+              Cape Verde Real Estate Index is not a broker. We collect public listings from local agencies, portals and property websites so buyers can understand the market more easily.
+            </p>
+            <section aria-label="How it works">
+              <h2>How it works</h2>
+              <ol>
+                <li>We collect public listings — from local agencies, portals and property sites across the islands.</li>
+                <li>We track them by island — indexed so Sal, Boa Vista, Santiago and São Vicente are easy to compare.</li>
+                <li>You get updates by email — new listings and simple market notes, free.</li>
+              </ol>
+            </section>${faqEntries.length > 0 ? `
+            <section aria-label="Common buyer questions">
+              <h2>Common buyer questions</h2>
+              ${faqEntries.map((f) => `<article>
+                <h3>${escapeHtml(f.question)}</h3>
+                <p>${escapeHtml(f.answer)}</p>
+              </article>`).join("")}
+            </section>` : ""}
+          </section>
+        </main>
+      `,
+      { robots: "noindex, follow" },
+    ),
+    },
+    {
       route: "/blog",
       ...page(
       "Cape Verde Real Estate Blog | Cape Verde Real Estate Index",
@@ -584,7 +625,12 @@ async function main() {
      listing appears in the sitemap on the next deploy without needing
      prerender-listings.ts to be edited. */
   const allListingRoutes = await getAllListingRoutesForSitemap(listingRoutes);
-  await writeSitemap([...routes.filter((r) => !r.route.startsWith("/listing/")), ...allListingRoutes]);
+  await writeSitemap([
+    ...routes.filter(
+      (r) => !r.route.startsWith("/listing/") && !(r.robots && r.robots.includes("noindex")),
+    ),
+    ...allListingRoutes,
+  ]);
 }
 
 async function getAllListingRoutesForSitemap(prerenderedRoutes) {
@@ -674,6 +720,9 @@ function renderRouteHtml(baseHtml, route) {
     `<meta name="twitter:description" content="${escapeHtml(route.description)}" />`,
     `<meta name="twitter:image" content="${escapeHtml(route.image ?? ogImage)}" />`,
   ];
+  if (route.robots) {
+    headExtras.push(`<meta name="robots" content="${escapeHtml(route.robots)}" />`);
+  }
   if (route.jsonLd) {
     const payload = Array.isArray(route.jsonLd) ? route.jsonLd : [route.jsonLd];
     for (const entry of payload) {

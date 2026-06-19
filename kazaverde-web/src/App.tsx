@@ -20,6 +20,7 @@ const BlogList = lazy(() => import("./pages/BlogList"));
 const BlogPost = lazy(() => import("./pages/BlogPost"));
 const Market = lazy(() => import("./pages/Market"));
 const MarketNews = lazy(() => import("./pages/MarketNews"));
+const MarketUpdates = lazy(() => import("./pages/MarketUpdates"));
 // Dev-only internal tool. Gating the dynamic import (not just the route) keeps
 // the page out of the production bundle entirely — in a prod build
 // import.meta.env.DEV folds to false and Rollup drops the code-split chunk.
@@ -73,10 +74,13 @@ function ScrollToTop() {
 }
 
 export default function App() {
+  const { pathname } = useLocation();
+  const isCapturePage = pathname === "/subscribe";
+
   return (
-    <div className="ctn">
+    <div className={`ctn${isCapturePage ? " ctn-capture" : ""}`}>
       <ScrollToTop />
-      <Navbar />
+      {!isCapturePage && <Navbar />}
       <Suspense fallback={null}>
         <Routes>
           <Route path="/" element={<Landing />} />
@@ -88,6 +92,9 @@ export default function App() {
           <Route path="/listings/boa-vista" element={<Navigate to="/?island=Boa+Vista" replace />} />
           <Route path="/market" element={<Market />} />
           <Route path="/market-news" element={<MarketNews />} />
+          <Route path="/subscribe" element={<MarketUpdates />} />
+          {/* Renamed from /market-updates (collided with /market-news) */}
+          <Route path="/market-updates" element={<Navigate to="/subscribe" replace />} />
           {/* Dev-only internal tool: its /__kv-review API is served only by the
               vite dev middleware (apply: "serve"), so the route must not ship to
               production. Gated behind import.meta.env.DEV. */}
@@ -120,9 +127,9 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Suspense>
-      <NewsletterPopup />
+      {!isCapturePage && <NewsletterPopup />}
       <CookieBanner />
-      <Footer />
+      {!isCapturePage && <Footer />}
       <GoogleAnalytics />
       <MetaPixel />
       <Analytics />
