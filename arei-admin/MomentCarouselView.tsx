@@ -1,18 +1,21 @@
 import { useRef, useState } from "react";
 import { applyBrandImageFilter } from "./socialBrandFilter";
 
-// ── Canvas constants ────────────────────────────────────────────────────────
+// ── Canvas constants — match PR #399 4:5 layout geometry ───────────────────
 const W = 1080, H = 1350;
+const M = 72;          // margin
+const LOCK_H = 44;     // lockup height
+const BOTTOM_SAFE = 86; // clear space at bottom
+const INTER = "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif";
 const BONE    = "#f7f3ea";
-const INK     = "#111110";
 const SAGE    = "#8ecfbf";
 const SAGE_DEEP = "#2d4a42";
-const INTER   = "Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, sans-serif";
+// Headline autofit ladder (same as PR #399 4:5 cover)
+const H_LADDER = [98, 86, 76, 66, 58];
 
 // ── Slide data ──────────────────────────────────────────────────────────────
 interface Slide {
   id: string;
-  cta: boolean;
   label: string;
   headline: string;
   body: string;
@@ -22,24 +25,24 @@ interface Slide {
 
 const INITIAL_SLIDES: Slide[] = [
   {
-    id: "s1", cta: false,
+    id: "s1",
     label: "Moment",
     headline: "Cape Verde is having a global moment.",
     body: "Football is putting the islands in front of the world.",
     imageDataUrl: null, imageCredit: "",
   },
   {
-    id: "s2", cta: false,
+    id: "s2",
     label: "Market",
     headline: "But the property market is still hard to read.",
     body: "Listings are scattered across agencies, portals and islands.",
     imageDataUrl: null, imageCredit: "",
   },
   {
-    id: "s3", cta: true,
+    id: "s3",
     label: "Subscribe",
     headline: "Follow the market in one place.",
-    body: "Cape Verde Real Estate Index",
+    body: "Cape Verde Real Estate Index\ncapeverderealestateindex.com/subscribe",
     imageDataUrl: null, imageCredit: "",
   },
 ];
@@ -65,10 +68,10 @@ function loadImage(src: string): Promise<HTMLImageElement> {
 
 function canvasToPngBlob(canvas: HTMLCanvasElement): Promise<Blob> {
   return new Promise((resolve, reject) => {
-    canvas.toBlob((blob) => {
-      if (!blob) reject(new Error("Canvas export failed"));
-      else resolve(blob);
-    }, "image/png");
+    canvas.toBlob(
+      (blob) => (blob ? resolve(blob) : reject(new Error("Canvas export failed"))),
+      "image/png",
+    );
   });
 }
 
@@ -79,6 +82,7 @@ function coverFit(ctx: CanvasRenderingContext2D, img: HTMLImageElement) {
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
 }
 
+// Canvas text wrap using measureText (more accurate than char-count estimate).
 function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number): string[] {
   const words = text.trim().split(/\s+/).filter(Boolean);
   const lines: string[] = [];
@@ -94,10 +98,7 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
   return lines;
 }
 
-function drawLines(ctx: CanvasRenderingContext2D, lines: string[], x: number, y: number, lh: number) {
-  lines.forEach((l, i) => ctx.fillText(l, x, y + i * lh));
-}
-
+// Letter-tracking helper for kicker.
 function drawTracked(ctx: CanvasRenderingContext2D, text: string, x: number, y: number, tracking: number) {
   let cursor = x;
   for (const ch of text) {
@@ -106,6 +107,7 @@ function drawTracked(ctx: CanvasRenderingContext2D, text: string, x: number, y: 
   }
 }
 
+// D·Layers mark (canonical geometry).
 function drawMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: number, color: string) {
   const s = size / 24;
   ctx.save();
@@ -117,7 +119,8 @@ function drawMark(ctx: CanvasRenderingContext2D, x: number, y: number, size: num
   ctx.restore();
 }
 
-function drawLockup(ctx: CanvasRenderingContext2D, x: number, y: number, color = BONE, h = 46) {
+// CAPE VERDE / REAL ESTATE / INDEX three-line lockup.
+function drawLockup(ctx: CanvasRenderingContext2D, x: number, y: number, color = BONE, h = LOCK_H) {
   const t = Math.round(h * 0.34);
   const tx = x + h + 12;
   const tracking = t * 0.04;
@@ -135,164 +138,131 @@ function drawLockup(ctx: CanvasRenderingContext2D, x: number, y: number, color =
   ctx.restore();
 }
 
-// ── Photo slide (image + dark gradient) ────────────────────────────────────
-async function renderPhotoSlide(slide: Slide, index: number, total: number): Promise<Blob> {
-  const img = await loadImage(slide.imageDataUrl!);
+// ── Single editorial slide renderer ────────────────────────────────────────
+// All 3 slides use this function. Photo-led when imageDataUrl is present;
+// sage-deep flat surface otherwise. Text is always bottom-anchored — the
+// lower-third editorial feel from PR #399.
+async function renderEditorialSlide(slide: Slide, index: number, total: number): Promise<Blob> {
   const canvas = document.createElement("canvas");
   canvas.width = W; canvas.height = H;
   const ctx = canvas.getContext("2d")!;
-
-  applyBrandImageFilter(ctx, "editorial", () => coverFit(ctx, img));
-
-  // Top vignette
-  const topG = ctx.createLinearGradient(0, 0, 0, 280);
-  topG.addColorStop(0, "rgba(13,31,28,0.45)");
-  topG.addColorStop(1, "rgba(13,31,28,0)");
-  ctx.fillStyle = topG; ctx.fillRect(0, 0, W, H);
-
-  // Bottom scrim — darker than PR #400 original
-  const botG = ctx.createLinearGradient(0, H * 0.32, 0, H);
-  botG.addColorStop(0,    "rgba(13,31,28,0)");
-  botG.addColorStop(0.48, "rgba(13,31,28,0.72)");
-  botG.addColorStop(1,    "rgba(13,31,28,0.97)");
-  ctx.fillStyle = botG; ctx.fillRect(0, 0, W, H);
-
-  drawLockup(ctx, 72, 70);
-
-  // Slide counter
-  ctx.fillStyle = "rgba(247,243,234,0.72)";
-  ctx.font = `500 24px ${INTER}`;
   ctx.textBaseline = "alphabetic";
-  ctx.fillText(`${String(index + 1).padStart(2,"0")} / ${String(total).padStart(2,"0")}`, W - 170, 102);
 
-  const textX = 72, textY = 800, maxW = W - 144;
+  // ── Background ────────────────────────────────────────────────────────────
+  const hasPhoto = Boolean(slide.imageDataUrl);
+  if (hasPhoto) {
+    const img = await loadImage(slide.imageDataUrl!);
+    applyBrandImageFilter(ctx, "editorial", () => coverFit(ctx, img));
 
-  // Label (sage)
+    // Top vignette — matches PR #399 #t gradient (220px, 50%→0%)
+    const topG = ctx.createLinearGradient(0, 0, 0, 220);
+    topG.addColorStop(0, "rgba(10,20,18,0.50)");
+    topG.addColorStop(1, "rgba(10,20,18,0)");
+    ctx.fillStyle = topG;
+    ctx.fillRect(0, 0, W, H);
+
+    // Bottom scrim — matches PR #399 #bl gradient exactly
+    // 55% transparent → 80% 34% → 100% 90%
+    const botG = ctx.createLinearGradient(0, 0, 0, H);
+    botG.addColorStop(0.55, "rgba(10,20,18,0)");
+    botG.addColorStop(0.80, "rgba(10,20,18,0.34)");
+    botG.addColorStop(1.0,  "rgba(10,20,18,0.90)");
+    ctx.fillStyle = botG;
+    ctx.fillRect(0, 0, W, H);
+  } else {
+    ctx.fillStyle = SAGE_DEEP;
+    ctx.fillRect(0, 0, W, H);
+  }
+
+  // ── Lockup — top left ─────────────────────────────────────────────────────
+  drawLockup(ctx, M, M, BONE, LOCK_H);
+
+  // ── Counter — top right ───────────────────────────────────────────────────
+  // PR #399: font-size="17" font-weight="600" letter-spacing="2" text-anchor="end"
+  // at x = W-M, y = M+28
+  ctx.save();
+  ctx.font = `600 17px ${INTER}`;
+  ctx.fillStyle = hasPhoto ? "rgba(247,243,234,0.80)" : "rgba(247,243,234,0.65)";
+  const counterStr = `${String(index + 1).padStart(2, "0")} / ${String(total).padStart(2, "0")}`;
+  const cw = ctx.measureText(counterStr).width;
+  ctx.fillText(counterStr, W - M - cw, M + 28);
+  ctx.restore();
+
+  // ── Text block — bottom anchored ─────────────────────────────────────────
+  // Layout from bottom up:
+  //   H - BOTTOM_SAFE = 1264  ← last body line baseline
+  //   gap 44px
+  //   headline last line baseline
+  //   headline lines (lineHeight = fontSize * 1.04) upward
+  //   kicker = headlineFirstY - fontSize - 26
+  const maxW = W - 2 * M;
+
+  // Body: 28px / 40px line height (PR #399 dek treatment)
+  const BODY_SIZE = 28;
+  const BODY_LH = 40;
+  ctx.font = `400 ${BODY_SIZE}px ${INTER}`;
+  const bodyLines = slide.body.trim() ? wrapLines(ctx, slide.body, maxW, 3) : [];
+  const bodyLastY = H - BOTTOM_SAFE;  // baseline of last body line
+  const bodyFirstY = bodyLastY - (bodyLines.length - 1) * BODY_LH;
+
+  // Headline: autofit from H_LADDER, max 3 lines, lineHeight = fontSize * 1.04
+  let hSize = H_LADDER[H_LADDER.length - 1];
+  let hLines: string[] = [];
+  for (const size of H_LADDER) {
+    ctx.font = `700 ${size}px ${INTER}`;
+    const candidate = wrapLines(ctx, slide.headline, maxW, 3);
+    if (candidate.length <= 3) { hSize = size; hLines = candidate; break; }
+  }
+  if (!hLines.length) {
+    ctx.font = `700 ${hSize}px ${INTER}`;
+    hLines = wrapLines(ctx, slide.headline, maxW, 3);
+  }
+  const hLH = Math.round(hSize * 1.04);
+
+  // Anchor headline last baseline above body (PR #399: lastBaseline with dek = H - safe - 60)
+  const hLastY = bodyLines.length > 0 ? bodyFirstY - 44 : bodyLastY;
+  const hFirstY = hLastY - (hLines.length - 1) * hLH;
+
+  // Kicker sits above the headline block
+  const kickerY = hFirstY - hSize - 26;
+
+  // ── Draw text ─────────────────────────────────────────────────────────────
+
+  // Kicker: 22px 600, sage, letter-spacing 3.5 (PR #399 exact)
   if (slide.label.trim()) {
     ctx.font = `600 22px ${INTER}`;
     ctx.fillStyle = SAGE;
-    ctx.fillText(slide.label.trim().toUpperCase(), textX, textY);
+    drawTracked(ctx, slide.label.trim().toUpperCase(), M, kickerY, 3.5);
   }
 
-  // Headline — Inter 700 (was Georgia in PR #400)
-  ctx.font = `700 56px ${INTER}`;
-  const hLines = wrapLines(ctx, slide.headline, maxW, 4);
-  ctx.shadowColor = "rgba(0,0,0,0.35)"; ctx.shadowBlur = 16; ctx.shadowOffsetY = 3;
+  // Headline: 700, bone, subtle shadow
+  ctx.font = `700 ${hSize}px ${INTER}`;
   ctx.fillStyle = BONE;
-  drawLines(ctx, hLines, textX, textY + 58, 64);
+  ctx.shadowColor = "rgba(0,0,0,0.40)";
+  ctx.shadowBlur = 18;
+  ctx.shadowOffsetY = 2;
+  for (let i = 0; i < hLines.length; i++) {
+    ctx.fillText(hLines[i], M, hFirstY + i * hLH);
+  }
   ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
 
-  // Body
-  if (slide.body.trim()) {
-    ctx.font = `400 30px ${INTER}`;
-    const bLines = wrapLines(ctx, slide.body, maxW, 3);
-    ctx.fillStyle = "rgba(247,243,234,0.88)";
-    drawLines(ctx, bLines, textX, textY + 58 + hLines.length * 64 + 32, 42);
+  // Body: 28px 400, slightly dimmed bone (PR #399 sub colour)
+  if (bodyLines.length > 0) {
+    ctx.font = `400 ${BODY_SIZE}px ${INTER}`;
+    ctx.fillStyle = hasPhoto ? "rgba(247,243,234,0.80)" : "rgba(247,243,234,0.75)";
+    for (let i = 0; i < bodyLines.length; i++) {
+      ctx.fillText(bodyLines[i], M, bodyFirstY + i * BODY_LH);
+    }
   }
 
-  // Image credit
-  if (slide.imageCredit.trim()) {
+  // Photo credit: 17px 400, very dim (PR #399: y = H - 26)
+  if (hasPhoto && slide.imageCredit.trim()) {
     ctx.font = `400 17px ${INTER}`;
-    ctx.fillStyle = "rgba(247,243,234,0.64)";
-    ctx.fillText(`Photo: ${slide.imageCredit.trim()}`, 72, H - 52);
+    ctx.fillStyle = "rgba(247,243,234,0.50)";
+    ctx.fillText(`Photo: ${slide.imageCredit.trim()}`, M, H - 26);
   }
 
   return canvasToPngBlob(canvas);
-}
-
-// ── Flat slide (no image, sage-deep background) ─────────────────────────────
-async function renderFlatSlide(slide: Slide, index: number, total: number): Promise<Blob> {
-  const canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext("2d")!;
-
-  ctx.fillStyle = SAGE_DEEP;
-  ctx.fillRect(0, 0, W, H);
-
-  drawLockup(ctx, 72, 70);
-
-  ctx.fillStyle = "rgba(247,243,234,0.72)";
-  ctx.font = `500 24px ${INTER}`;
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(`${String(index + 1).padStart(2,"0")} / ${String(total).padStart(2,"0")}`, W - 170, 102);
-
-  const textX = 72, textY = 820, maxW = W - 144;
-
-  if (slide.label.trim()) {
-    ctx.font = `600 22px ${INTER}`;
-    ctx.fillStyle = SAGE;
-    ctx.fillText(slide.label.trim().toUpperCase(), textX, textY);
-  }
-
-  ctx.font = `700 56px ${INTER}`;
-  const hLines = wrapLines(ctx, slide.headline, maxW, 4);
-  ctx.fillStyle = BONE;
-  drawLines(ctx, hLines, textX, textY + 58, 64);
-
-  if (slide.body.trim()) {
-    ctx.font = `400 30px ${INTER}`;
-    const bLines = wrapLines(ctx, slide.body, maxW, 3);
-    ctx.fillStyle = "rgba(247,243,234,0.80)";
-    drawLines(ctx, bLines, textX, textY + 58 + hLines.length * 64 + 32, 42);
-  }
-
-  return canvasToPngBlob(canvas);
-}
-
-// ── CTA slide (bone background, dark text, URL bar) ─────────────────────────
-async function renderCtaSlide(slide: Slide, total: number): Promise<Blob> {
-  const canvas = document.createElement("canvas");
-  canvas.width = W; canvas.height = H;
-  const ctx = canvas.getContext("2d")!;
-
-  ctx.fillStyle = BONE;
-  ctx.fillRect(0, 0, W, H);
-  ctx.fillStyle = "#dfe6dc";
-  ctx.fillRect(0, 0, W, 420);
-
-  // Sage rule
-  ctx.fillStyle = SAGE;
-  ctx.fillRect(72, 216, W - 144, 8);
-
-  drawLockup(ctx, 72, 70, INK);
-
-  // Counter
-  ctx.fillStyle = SAGE_DEEP;
-  ctx.font = `600 24px ${INTER}`;
-  ctx.textBaseline = "alphabetic";
-  ctx.fillText(`${String(total).padStart(2,"0")} / ${String(total).padStart(2,"0")}`, W - 170, 102);
-
-  // Headline
-  ctx.font = `700 64px ${INTER}`;
-  const hLines = wrapLines(ctx, slide.headline, W - 180, 4);
-  ctx.fillStyle = INK;
-  drawLines(ctx, hLines, 90, 540, 76);
-
-  // Body
-  if (slide.body.trim()) {
-    ctx.font = `400 32px ${INTER}`;
-    const bLines = wrapLines(ctx, slide.body, W - 180, 4);
-    ctx.fillStyle = "#2d3431";
-    drawLines(ctx, bLines, 90, 540 + hLines.length * 76 + 52, 46);
-  }
-
-  // URL bar
-  ctx.fillStyle = SAGE_DEEP;
-  ctx.beginPath();
-  ctx.roundRect(90, H - 220, W - 180, 100, 6);
-  ctx.fill();
-  ctx.fillStyle = BONE;
-  ctx.font = `600 28px ${INTER}`;
-  ctx.fillText("capeverderealestateindex.com/subscribe", 124, H - 158);
-
-  return canvasToPngBlob(canvas);
-}
-
-// ── Main dispatch ────────────────────────────────────────────────────────────
-async function renderSlide(slide: Slide, index: number, total: number): Promise<Blob> {
-  if (slide.cta) return renderCtaSlide(slide, total);
-  if (slide.imageDataUrl) return renderPhotoSlide(slide, index, total);
-  return renderFlatSlide(slide, index, total);
 }
 
 // ── UI helpers ──────────────────────────────────────────────────────────────
@@ -326,11 +296,14 @@ export function MomentCarouselView() {
       const total = slides.length;
       const results: Rendered[] = [];
       for (let i = 0; i < slides.length; i++) {
-        const blob = await renderSlide(slides[i], i, total);
+        const blob = await renderEditorialSlide(slides[i], i, total);
         const dataUrl = URL.createObjectURL(blob);
-        const label = slides[i].label || `slide-${i + 1}`;
-        const filename = `cvrei-moment-${String(i + 1).padStart(2,"0")}-${label.toLowerCase().replace(/[^a-z0-9]+/g,"-")}.png`;
-        results.push({ filename, dataUrl, blob });
+        const slug = slides[i].label.toLowerCase().replace(/[^a-z0-9]+/g, "-") || `slide-${i + 1}`;
+        results.push({
+          filename: `cvrei-moment-${String(i + 1).padStart(2, "0")}-${slug}.png`,
+          dataUrl,
+          blob,
+        });
       }
       setRendered(results);
     } catch (e) {
@@ -346,8 +319,6 @@ export function MomentCarouselView() {
     document.body.appendChild(a); a.click(); document.body.removeChild(a);
   }
 
-  function downloadAll() { rendered.forEach(download); }
-
   return (
     <div className="max-w-2xl mx-auto px-4 py-8 space-y-8">
       <div>
@@ -356,55 +327,49 @@ export function MomentCarouselView() {
         <p className="text-sm text-foreground-subtle mt-1">Football campaign · 3 slides · 1080×1350 PNG</p>
       </div>
 
-      {/* Slides */}
       {slides.map((slide, idx) => (
         <div key={slide.id} className="border border-border rounded-lg p-5 space-y-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle">
-              {idx + 1} / {slides.length}
-            </span>
-            {slide.cta && (
-              <span className="text-[10px] px-1.5 py-0.5 rounded bg-surface-2 text-foreground-subtle uppercase tracking-wide">CTA</span>
-            )}
+          <div className="text-[11px] font-medium uppercase tracking-wide text-foreground-subtle">
+            Slide {idx + 1} / {slides.length}
           </div>
 
-          {/* Image upload — only on non-CTA slides */}
-          {!slide.cta && (
-            <div className="space-y-2">
-              <label className={lbl}>Photo (optional)</label>
-              {slide.imageDataUrl ? (
-                <div className="relative h-32 rounded overflow-hidden border border-border">
-                  <img src={slide.imageDataUrl} className="w-full h-full object-cover" alt="" />
-                  <button
-                    onClick={() => update(slide.id, { imageDataUrl: null, imageCredit: "" })}
-                    className="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-black/60 text-white hover:bg-black/80"
-                  >Remove</button>
-                </div>
-              ) : (
+          {/* Image upload */}
+          <div className="space-y-2">
+            <label className={lbl}>Photo (optional)</label>
+            {slide.imageDataUrl ? (
+              <div className="relative h-32 rounded overflow-hidden border border-border">
+                <img src={slide.imageDataUrl} className="w-full h-full object-cover" alt="" />
                 <button
-                  onClick={() => fileRefs.current[slide.id]?.click()}
-                  className="w-full h-20 border-2 border-dashed border-border rounded text-sm text-foreground-subtle hover:border-foreground-subtle transition-colors"
+                  onClick={() => update(slide.id, { imageDataUrl: null, imageCredit: "" })}
+                  className="absolute top-2 right-2 text-xs px-2 py-1 rounded bg-black/60 text-white hover:bg-black/80"
                 >
-                  + Upload photo
+                  Remove
                 </button>
-              )}
-              <input
-                ref={el => { fileRefs.current[slide.id] = el; }}
-                type="file" accept="image/*" className="hidden"
-                onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(slide.id, f); }}
-              />
-              {slide.imageDataUrl && (
-                <div>
-                  <label className={lbl}>Photo credit</label>
-                  <input
-                    type="text" className={inp} placeholder="Photographer / Source"
-                    value={slide.imageCredit}
-                    onChange={e => update(slide.id, { imageCredit: e.target.value })}
-                  />
-                </div>
-              )}
-            </div>
-          )}
+              </div>
+            ) : (
+              <button
+                onClick={() => fileRefs.current[slide.id]?.click()}
+                className="w-full h-20 border-2 border-dashed border-border rounded text-sm text-foreground-subtle hover:border-foreground-subtle transition-colors"
+              >
+                + Upload photo
+              </button>
+            )}
+            <input
+              ref={el => { fileRefs.current[slide.id] = el; }}
+              type="file" accept="image/*" className="hidden"
+              onChange={e => { const f = e.target.files?.[0]; if (f) handleFile(slide.id, f); }}
+            />
+            {slide.imageDataUrl && (
+              <div>
+                <label className={lbl}>Photo credit</label>
+                <input
+                  type="text" className={inp} placeholder="Photographer / Source"
+                  value={slide.imageCredit}
+                  onChange={e => update(slide.id, { imageCredit: e.target.value })}
+                />
+              </div>
+            )}
+          </div>
 
           <div>
             <label className={lbl}>Label</label>
@@ -426,7 +391,6 @@ export function MomentCarouselView() {
         </div>
       ))}
 
-      {/* Render */}
       <button
         onClick={renderAll} disabled={busy}
         className="w-full py-3 bg-foreground text-background font-medium text-sm rounded hover:opacity-90 disabled:opacity-50"
@@ -436,14 +400,13 @@ export function MomentCarouselView() {
 
       {err && <p className="text-sm text-red-500">{err}</p>}
 
-      {/* Downloads */}
       {rendered.length > 0 && (
         <div className="space-y-4">
           <div className="grid grid-cols-3 gap-3">
             {rendered.map((r, i) => (
               <div key={i} className="space-y-2">
                 <div className="aspect-[4/5] rounded overflow-hidden border border-border bg-surface-2">
-                  <img src={r.dataUrl} className="w-full h-full object-cover" alt={`Slide ${i+1}`} />
+                  <img src={r.dataUrl} className="w-full h-full object-cover" alt={`Slide ${i + 1}`} />
                 </div>
                 <button
                   onClick={() => download(r)}
@@ -455,7 +418,7 @@ export function MomentCarouselView() {
             ))}
           </div>
           <button
-            onClick={downloadAll}
+            onClick={() => rendered.forEach(download)}
             className="w-full py-2.5 border border-border rounded text-sm text-foreground hover:bg-surface-2"
           >
             Download all ({rendered.length} PNGs)
@@ -463,7 +426,6 @@ export function MomentCarouselView() {
         </div>
       )}
 
-      {/* Caption */}
       <div className="space-y-2 pt-2 border-t border-border">
         <label className={lbl}>Instagram caption</label>
         <textarea rows={8} className={inp} value={caption}
