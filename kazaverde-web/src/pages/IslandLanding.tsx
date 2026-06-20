@@ -25,9 +25,9 @@ const ISLAND_CONFIG: Record<string, IslandConfig> = {
     name: "Sal",
     overline: "Sal · Cape Verde",
     intro:
-      "Sal is Cape Verde's most liquid property market, with direct international flights from London, Lisbon, Amsterdam, and Paris. Santa Maria concentrates the strongest short-term rental demand and the widest range of apartments, villas, and resort properties.",
+      "Sal is Cape Verde's most established tourism island and carries the deepest tracked listing sample in the index. Direct European flight routes serve Amílcar Cabral International Airport, though routes are seasonal — check current schedules. Santa Maria concentrates much of the foreign-buyer activity and the widest range of tracked apartments, villas, and resort properties.",
     context:
-      "Gross rental yields of 5–8% are reported in well-managed resort complexes. One-bedroom apartments in Santa Maria typically start around €95,000; resort units range from €120,000 to €200,000.",
+      "For current median asking prices and inventory, see the live market data. Figures shown are monitored asking-price listings, not transaction prices or valuations.",
     relatedGuides: [
       { slug: "which-cape-verde-island-property", title: "Which Cape Verde island should you buy on?" },
       { slug: "buying-property-cape-verde-guide", title: "How to buy property in Cape Verde" },
@@ -43,9 +43,9 @@ const ISLAND_CONFIG: Record<string, IslandConfig> = {
     name: "Boa Vista",
     overline: "Boa Vista · Cape Verde",
     intro:
-      "Boa Vista is Cape Verde's main growth market — property prices run 15–25% below equivalent properties on Sal, with its own international airport and an expanding tourism infrastructure. Sal Rei is the commercial centre; most residential development clusters along the coast.",
+      "Boa Vista is Cape Verde's second major tourism island, with its own international airport and expanding tourism infrastructure. Sal Rei is the commercial centre; most residential development clusters along the coast.",
     context:
-      "Often described as where Sal was 5–10 years ago: lower entry prices, a growing rental market, and an active development pipeline. The most accessible beach-island alternative to Sal.",
+      "Headline entry prices are generally lower than Sal's, with an active development pipeline. Compare current asking-price context on the live market data — monitored asking-price listings, not transaction prices or valuations.",
     relatedGuides: [
       { slug: "which-cape-verde-island-property", title: "Which Cape Verde island should you buy on?" },
       { slug: "buying-property-cape-verde-guide", title: "How to buy property in Cape Verde" },

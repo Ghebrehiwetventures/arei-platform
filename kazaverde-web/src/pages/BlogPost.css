@@ -265,6 +265,42 @@
 .kv-bp-body blockquote p:last-child { margin-bottom: 0; }
 .kv-bp-body blockquote em { font-style: normal; }
 
+/* Inline citation marker — a small superscript link placed after the
+   sentence/paragraph it supports. Stays legible without disrupting the
+   reading line on desktop or mobile. */
+.kv-bp-body sup.kv-cite {
+  font-size: 0.62em;
+  line-height: 0;
+  vertical-align: super;
+  margin-left: 1px;
+}
+.kv-bp-body sup.kv-cite a {
+  font-family: var(--kv-mono);
+  color: var(--kv-green-deep);
+  text-decoration: none;
+  padding: 0 1px;
+}
+.kv-bp-body sup.kv-cite a:hover { text-decoration: underline; }
+.kv-bp-body sup.kv-cite a:focus-visible,
+.kv-bp-body ol.kv-bp-sources a:focus-visible {
+  outline: 2px solid var(--kv-green-deep);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+/* "Sources" list — numbered, monospaced index of the dated source objects a
+   guide cites. Reuses the prose <ol> counter; scroll target for kv-cite. */
+.kv-bp-body ol.kv-bp-sources li {
+  font-size: 13.5px;
+  color: var(--kv-gray-500);
+  scroll-margin-top: 90px;
+}
+.kv-bp-body ol.kv-bp-sources li strong {
+  color: var(--kv-ink-700);
+  font-weight: 600;
+}
+.kv-bp-body ol.kv-bp-sources a { word-break: break-word; }
+
 /* "Ready to browse?" CTA — sidebar slot under the TOC. Visible
    alongside body text for SEO landings without breaking reading flow. */
 .kv-bp-cta {

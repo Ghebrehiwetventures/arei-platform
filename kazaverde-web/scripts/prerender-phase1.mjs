@@ -3,6 +3,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { AREIClient } from "../../packages/arei-sdk/dist/index.js";
 import { normalizeListingDisplayTitle } from "../src/lib/listingTitleDisplay.js";
+import { injectSources } from "../src/lib/sources.data.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const distDir = path.resolve(__dirname, "../dist");
@@ -206,47 +207,6 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           },
         },
       },
-    ),
-    },
-    {
-      route: "/subscribe",
-      ...page(
-      "Cape Verde Property Market Updates | Cape Verde Real Estate Index",
-      "Get new Cape Verde listings, island updates and simple property market notes by email.",
-      `
-        <main>
-          <section>
-            <p>Market updates</p>
-            <h1>Find Cape Verde homes for sale in one place.</h1>
-            <p>Get new listings, island updates and simple market notes by email.</p>
-            <form>
-              <label for="market-updates-email">Email address</label>
-              <input id="market-updates-email" type="email" name="email" placeholder="Email address" required />
-              <button type="submit">Get updates</button>
-            </form>
-            <p>Free. Unsubscribe anytime.</p>
-            <p>
-              Cape Verde Real Estate Index is not a broker. We collect public listings from local agencies, portals and property websites so buyers can understand the market more easily.
-            </p>
-            <section aria-label="How it works">
-              <h2>How it works</h2>
-              <ol>
-                <li>We collect public listings — from local agencies, portals and property sites across the islands.</li>
-                <li>We track them by island — indexed so Sal, Boa Vista, Santiago and São Vicente are easy to compare.</li>
-                <li>You get updates by email — new listings and simple market notes, free.</li>
-              </ol>
-            </section>${faqEntries.length > 0 ? `
-            <section aria-label="Common buyer questions">
-              <h2>Common buyer questions</h2>
-              ${faqEntries.map((f) => `<article>
-                <h3>${escapeHtml(f.question)}</h3>
-                <p>${escapeHtml(f.answer)}</p>
-              </article>`).join("")}
-            </section>` : ""}
-          </section>
-        </main>
-      `,
-      { robots: "noindex, follow" },
     ),
     },
     {
@@ -478,9 +438,10 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
             <p>Sal · Cape Verde</p>
             <h1>Property for Sale in Sal, Cape Verde</h1>
             <p>
-              Sal is Cape Verde&#39;s most liquid property market, with international flights direct from London,
-              Lisbon, Amsterdam, and Paris. Santa Maria concentrates the strongest rental demand and the widest
-              range of apartments, villas, and resort properties for sale. Browse source-linked listings below.
+              Sal is one of Cape Verde&#39;s most established tourism islands and carries the deepest tracked
+              listing sample in the index. Amílcar Cabral International Airport handles direct European routes,
+              though specific routes are seasonal. Santa Maria concentrates much of the foreign-buyer activity
+              and the widest range of apartments, villas, and resort properties. Browse source-linked listings below.
             </p>
             <p><a href="/listings">View all Cape Verde properties</a></p>
           </section>
@@ -496,14 +457,13 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           <section>
             <h2>Buying property in Sal</h2>
             <p>
-              Sal offers the strongest short-term rental market in Cape Verde, with gross yields of 5–8% reported
-              in well-managed resort complexes. It is the most mature and most expensive island to buy on.
-              One-bedroom apartments in Santa Maria typically start around €95,000; two-bedroom units in resort
-              complexes range from €120,000 to €200,000.
+              Sal has the most active international tourist-rental demand in Cape Verde and a mature, comparatively
+              liquid market. For current median asking prices by island — monitored asking-price listings, not
+              transaction prices or valuations — see the market data and the prices-by-island guide.
             </p>
             <p>
               <a href="/blog/which-cape-verde-island-property">Compare Sal with other Cape Verde islands</a> ·
-              <a href="/blog/cape-verde-rental-yields-realistic">Rental yield analysis</a>
+              <a href="/blog/cape-verde-property-prices-by-island">Cape Verde property prices by island</a>
             </p>
           </section>
         </main>
@@ -525,10 +485,10 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
             <p>Boa Vista · Cape Verde</p>
             <h1>Property for Sale in Boa Vista, Cape Verde</h1>
             <p>
-              Boa Vista is Cape Verde&#39;s main growth market — property prices run 15–25% below equivalent
-              properties on Sal, with its own international airport and expanding tourism infrastructure.
-              Sal Rei is the commercial center; most development clusters along the coast. Browse
-              source-linked listings below.
+              Boa Vista is Cape Verde&#39;s second major tourism island, with its own international airport and
+              expanding tourism infrastructure. Headline asking prices are generally lower than on Sal, though
+              the gap varies — compare the live per-island data rather than a fixed discount. Sal Rei is the
+              commercial center; most development clusters along the coast. Browse source-linked listings below.
             </p>
             <p><a href="/listings">View all Cape Verde properties</a></p>
           </section>
@@ -544,13 +504,13 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           <section>
             <h2>Buying property in Boa Vista</h2>
             <p>
-              Boa Vista is often described as where Sal was 5–10 years ago: a growing short-term rental
-              market, lower entry prices, and an active development pipeline. For buyers who want beach-island
-              investment at a more accessible price point, Boa Vista is the primary alternative to Sal.
+              Boa Vista is often positioned as the growth alternative to Sal — lower headline entry prices and an
+              active development pipeline, with a less mature market. That &quot;next Sal&quot; framing is a marketing
+              comparison, not a measured forecast. Compare current asking-price context on the market data page.
             </p>
             <p>
               <a href="/blog/which-cape-verde-island-property">Compare Boa Vista with other Cape Verde islands</a> ·
-              <a href="/blog/cape-verde-rental-yields-realistic">Rental yield analysis</a>
+              <a href="/blog/boa-vista-property-guide">Boa Vista property guide</a>
             </p>
           </section>
         </main>
@@ -631,6 +591,103 @@ async function main() {
     ),
     ...allListingRoutes,
   ]);
+
+  // Offline guides: write a noindex tombstone (no canonical, no JSON-LD, no
+  // article body) at the exact route so the route never serves indexable
+  // content, then assert the offline invariants on the generated output.
+  const offlineSlugs = await loadOfflineSlugs();
+  for (const slug of offlineSlugs) {
+    const out = path.join(distDir, "blog", slug, "index.html");
+    await mkdir(path.dirname(out), { recursive: true });
+    await writeFile(out, renderOfflineTombstone(), "utf8");
+  }
+  await assertOfflineInvariants(offlineSlugs);
+  await assertMetaInvariants(blogArticles);
+}
+
+/* Slugs hidden from the public product (mirrors OFFLINE_SLUGS in blog-data.ts). */
+async function loadOfflineSlugs() {
+  const source = await readFile(blogDataPath, "utf8");
+  const m = source.match(/const OFFLINE_SLUGS = new Set\(\[([^\]]*)\]\)/);
+  if (!m) return [];
+  return [...m[1].matchAll(/"([^"]+)"/g)].map((x) => x[1]);
+}
+
+function renderOfflineTombstone() {
+  // Minimal noindex tombstone: no canonical, no JSON-LD, no article/market content.
+  return `<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="robots" content="noindex,nofollow" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Page not available — Cape Verde Real Estate Index</title>
+  </head>
+  <body>
+    <main>
+      <h1>This guide is not currently available.</h1>
+      <p>This page has been retired. Browse the current <a href="/blog">guides</a> or <a href="/listings">listings</a>.</p>
+    </main>
+  </body>
+</html>
+`;
+}
+
+/* Build-time guard: each published blog article must emit exactly correct OG/article meta. */
+async function assertMetaInvariants(blogArticles) {
+  for (const article of blogArticles) {
+    const file = path.join(distDir, "blog", article.slug, "index.html");
+    const html = await readFile(file, "utf8");
+    const fail = (msg) => {
+      throw new Error(`[prerender-phase1] meta invariant violated for ${article.slug}: ${msg}`);
+    };
+    // Must use article:published_time / article:modified_time — not the invalid og:article: namespace.
+    if (/property="og:article:(published|modified)_time"/.test(html)) fail('og:article:* property found in output — must use article:* (without og: prefix)');
+    // Exactly one og:type, and it must be "article".
+    const ogTypes = html.match(/<meta property="og:type" content="[^"]*"/g) ?? [];
+    if (ogTypes.length !== 1) fail(`expected exactly 1 og:type, found ${ogTypes.length}`);
+    if (!ogTypes[0].includes('"article"')) fail(`og:type must be "article", got: ${ogTypes[0]}`);
+    // Exactly one article:published_time and article:modified_time.
+    const pubTimes = html.match(/<meta property="article:published_time" content="[^"]*"/g) ?? [];
+    if (pubTimes.length !== 1) fail(`expected exactly 1 article:published_time, found ${pubTimes.length}`);
+    const modTimes = html.match(/<meta property="article:modified_time" content="[^"]*"/g) ?? [];
+    if (modTimes.length !== 1) fail(`expected exactly 1 article:modified_time, found ${modTimes.length}`);
+    // article:* dates must match article-owned metadata.
+    const pubContent = pubTimes[0].match(/content="([^"]*)"/)?.[1] ?? "";
+    const modContent = modTimes[0].match(/content="([^"]*)"/)?.[1] ?? "";
+    if (pubContent !== article.date) fail(`article:published_time "${pubContent}" does not match article.date "${article.date}"`);
+    if (modContent !== article.modifiedAt) fail(`article:modified_time "${modContent}" does not match article.modifiedAt "${article.modifiedAt}"`);
+    // JSON-LD dates must match article-owned metadata.
+    const ldPub = html.match(/"datePublished":"([^"]*)"/)?.[1] ?? "";
+    const ldMod = html.match(/"dateModified":"([^"]*)"/)?.[1] ?? "";
+    if (!ldPub) fail("Article JSON-LD missing datePublished");
+    if (!ldMod) fail("Article JSON-LD missing dateModified");
+    if (ldPub !== article.date) fail(`JSON-LD datePublished "${ldPub}" does not match article.date "${article.date}"`);
+    if (ldMod !== article.modifiedAt) fail(`JSON-LD dateModified "${ldMod}" does not match article.modifiedAt "${article.modifiedAt}"`);
+  }
+  console.log(`[prerender-phase1] OG/article meta invariants verified for ${blogArticles.length} published guides`);
+}
+
+/* Build-time guard: fail the build if an offline route would be indexable. */
+async function assertOfflineInvariants(offlineSlugs) {
+  const sitemap = await readFile(sitemapPath, "utf8");
+  for (const slug of offlineSlugs) {
+    const file = path.join(distDir, "blog", slug, "index.html");
+    const html = await readFile(file, "utf8");
+    const fail = (msg) => {
+      throw new Error(`[prerender-phase1] offline invariant violated for ${slug}: ${msg}`);
+    };
+    if (!/<meta name="robots" content="noindex,nofollow"/.test(html)) fail("tombstone missing noindex robots meta");
+    if (/application\/ld\+json/.test(html)) fail("tombstone emits JSON-LD");
+    if (/rel="canonical"/.test(html)) fail("tombstone emits a canonical link");
+    if (/gross rental yield|asking price|median|€|appreciation/i.test(html)) fail("tombstone leaks market/article content");
+    if (sitemap.includes(`/blog/${slug}`)) fail("offline slug present in sitemap.xml");
+    // No published guide may link to the offline slug.
+    for (const r of await loadBlogArticles()) {
+      if (r.content.includes(`/blog/${slug}`)) fail(`published guide ${r.slug} links to the offline slug`);
+    }
+  }
+  console.log(`[prerender-phase1] offline tombstones written + invariants verified for: ${offlineSlugs.join(", ") || "(none)"}`);
 }
 
 async function getAllListingRoutesForSitemap(prerenderedRoutes) {
@@ -711,7 +768,6 @@ function renderRouteHtml(baseHtml, route) {
     `<link rel="canonical" href="${canonicalUrl}" />`,
     `<meta property="og:title" content="${escapeHtml(documentTitle)}" />`,
     `<meta property="og:description" content="${escapeHtml(route.description)}" />`,
-    `<meta property="og:type" content="${escapeHtml(ogType)}" />`,
     `<meta property="og:url" content="${canonicalUrl}" />`,
     `<meta property="og:site_name" content="Cape Verde Real Estate Index" />`,
     `<meta property="og:image" content="${escapeHtml(route.image ?? ogImage)}" />`,
@@ -722,6 +778,12 @@ function renderRouteHtml(baseHtml, route) {
   ];
   if (route.robots) {
     headExtras.push(`<meta name="robots" content="${escapeHtml(route.robots)}" />`);
+  }
+  if (route.articlePublishedTime) {
+    headExtras.push(`<meta property="article:published_time" content="${escapeHtml(route.articlePublishedTime)}" />`);
+  }
+  if (route.articleModifiedTime) {
+    headExtras.push(`<meta property="article:modified_time" content="${escapeHtml(route.articleModifiedTime)}" />`);
   }
   if (route.jsonLd) {
     const payload = Array.isArray(route.jsonLd) ? route.jsonLd : [route.jsonLd];
@@ -744,6 +806,10 @@ function renderRouteHtml(baseHtml, route) {
     .replace(
       /<meta name="description" content="[\s\S]*?" \/>/,
       `<meta name="description" content="${escapeHtml(route.description)}" />`,
+    )
+    .replace(
+      /<meta property="og:type" content="[^"]*">/,
+      `<meta property="og:type" content="${escapeHtml(ogType)}" />`,
     )
     .replace("</head>", `    ${headExtrasHtml}\n  </head>`)
     .replace(
@@ -898,16 +964,54 @@ async function loadListingPrerenderIds() {
 }
 
 function getBlogArticleRoutes(blogArticles) {
-  return blogArticles.map((article) => ({
-    route: `/blog/${article.slug}`,
-    lastmod: article.date,
-    ...page(
-      article.title,
-      article.description,
-      renderBlogArticleBody(article),
-      { ogType: "article", image: article.heroImage || ogImage },
-    ),
-  }));
+  return blogArticles.map((article) => {
+    const url = `${siteUrl}/blog/${article.slug}`;
+    return {
+      route: `/blog/${article.slug}`,
+      lastmod: article.date,
+      ...page(
+        article.title,
+        article.description,
+        renderBlogArticleBody(article),
+        {
+          ogType: "article",
+          image: article.heroImage || ogImage,
+          articlePublishedTime: article.date,
+          articleModifiedTime: article.modifiedAt,
+          jsonLd: [
+            {
+              "@context": "https://schema.org",
+              "@type": "Article",
+              "@id": `${url}#article`,
+              headline: article.title,
+              description: article.description,
+              datePublished: article.date,
+              dateModified: article.modifiedAt,
+              inLanguage: "en",
+              mainEntityOfPage: url,
+              image: article.heroImage || ogImage,
+              author: { "@type": "Organization", name: "Cape Verde Real Estate Index", url: siteUrl },
+              publisher: {
+                "@type": "Organization",
+                name: "Cape Verde Real Estate Index",
+                logo: { "@type": "ImageObject", url: `${siteUrl}/cvrei-og.png` },
+              },
+            },
+            {
+              "@context": "https://schema.org",
+              "@type": "BreadcrumbList",
+              "@id": `${url}#breadcrumb`,
+              itemListElement: [
+                { "@type": "ListItem", position: 1, name: "Index", item: siteUrl },
+                { "@type": "ListItem", position: 2, name: "Guides", item: `${siteUrl}/blog` },
+                { "@type": "ListItem", position: 3, name: article.title, item: url },
+              ],
+            },
+          ],
+        },
+      ),
+    };
+  });
 }
 
 function renderBlogArticleBody(article) {
@@ -927,7 +1031,7 @@ function renderBlogArticleBody(article) {
         <h1>${escapeHtml(article.title)}</h1>
         <p>${article.tags.map((tag) => `<span>${escapeHtml(tag)}</span>`).join(" ")}</p>
         <div>
-${indent(article.content.trim(), 5)}
+${indent(injectSources(article.content, article.sourceIds).trim(), 5)}
         </div>
       </article>
     </main>

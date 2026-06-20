@@ -4,6 +4,7 @@ import { useTranslation } from "react-i18next";
 import { formatDate, toLocale } from "../lib/formatters";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import { getArticleBySlug, BLOG_ARTICLES } from "../lib/blog-data";
+import { injectSources } from "../lib/sources.data.mjs";
 import { arei } from "../lib/arei";
 import NewsletterCta from "../components/NewsletterCta";
 import "./BlogPost.css";
@@ -80,14 +81,14 @@ const ARTICLE_PT: Record<string, { title: string; description: string }> = {
       "As pessoas procuram os melhores agentes imobiliários em Cabo Verde, mas não existe um conjunto de dados neutro que prove quem é o melhor. Veja que agências e portais o índice acompanha.",
   },
   "cape-verde-property-prices-by-island": {
-    title: "Preços de imóveis em Cabo Verde por ilha: o que o Cape Verde Real Estate Index mostra atualmente",
+    title: "Preços de imóveis em Cabo Verde por ilha: como ler o índice, ilha a ilha",
     description:
-      "Medianas de preços pedidos e contagens de anúncios por ilha, retiradas do Cape Verde Real Estate Index. Um retrato do inventário público anunciado em Cabo Verde, não do mercado completo.",
+      "Como os preços pedidos diferem entre as ilhas de Cabo Verde e como ler os dados em direto do Cape Verde Real Estate Index. Baseado em anúncios com preço pedido monitorizados — não em preços de transação nem avaliações.",
   },
   "buying-property-cape-verde-guide": {
     title: "Como comprar imóvel em Cabo Verde: guia passo a passo para compradores estrangeiros",
     description:
-      "Cabo Verde permite que estrangeiros comprem imóveis em propriedade plena, sem restrições de nacionalidade. O enquadramento legal assenta no direito português.",
+      "Estrangeiros podem adquirir imóveis privados em Cabo Verde, sujeitos aos requisitos aplicáveis de título, fiscalidade e registo. Guia passo a passo do processo notarial, do NIF à transmissão definitiva, com citação de fontes primárias.",
   },
   "which-cape-verde-island-property": {
     title: "Em que ilha de Cabo Verde deve comprar imóvel? Uma comparação baseada em dados",
@@ -105,9 +106,9 @@ const ARTICLE_PT: Record<string, { title: string; description: string }> = {
       "As promessas de rentabilidade em Cabo Verde variam entre conservadoras e demasiado otimistas. Antes de comprar para investimento, é importante perceber os fatores reais.",
   },
   "cape-verde-green-card-residency": {
-    title: "Green Card de Cabo Verde: como obter residência através de investimento imobiliário",
+    title: "Green Card de Cabo Verde: como funciona a residência por investimento imobiliário",
     description:
-      "O programa Green Card de Cabo Verde oferece residência permanente a estrangeiros que investem em imobiliário nas ilhas.",
+      "O Green Card de Cabo Verde é uma autorização de residência renovável para investidores imobiliários estrangeiros. Como funcionam os limiares de €80.000/€120.000, a renovação a cinco e depois dez anos, o pedido e o tratamento fiscal.",
   },
   "mistakes-buying-property-cape-verde": {
     title: "7 erros caros a evitar ao comprar imóvel em Cabo Verde",
@@ -132,7 +133,7 @@ const ARTICLE_PT: Record<string, { title: string; description: string }> = {
   "financing-property-cape-verde": {
     title: "Como financiar a compra de imóvel em Cabo Verde enquanto comprador estrangeiro",
     description:
-      "Compras a pronto dominam o mercado estrangeiro em Cabo Verde. Existem créditos locais, mas são caros e difíceis para não residentes.",
+      "Muitos compradores estrangeiros financiam a compra com capital próprio ou crédito no país de origem. Pode existir crédito local, mas varia por banco — como compará-lo e os fatores que decidem se é viável.",
   },
   "boa-vista-property-guide": {
     title: "Guia imobiliário da Boa Vista: o que os compradores precisam de saber em 2026",
@@ -210,11 +211,20 @@ export default function BlogPost() {
   useDocumentMeta(
     article ? localizedArticle?.title ?? article.title : t("blogPost.notFoundTitle"),
     article ? localizedArticle?.description ?? article.description : "",
-    article?.heroImage ? { image: article.heroImage } : undefined,
+    article
+      ? {
+          ...(article.heroImage ? { image: article.heroImage } : {}),
+          articlePublishedTime: article.date,
+          articleModifiedTime: article.modifiedAt,
+        }
+      : undefined,
   );
 
   const { html: decoratedHtml, toc } = useMemo(
-    () => (article ? decorateHtml(localizeArticleMetadataHtml(article.content, isPt)) : { html: "", toc: [] }),
+    () =>
+      article
+        ? decorateHtml(localizeArticleMetadataHtml(injectSources(article.content, article.sourceIds), isPt))
+        : { html: "", toc: [] },
     [article, isPt],
   );
 
@@ -243,11 +253,11 @@ export default function BlogPost() {
 
   const inlineCtaBody = stats
     ? isPt
-      ? `${stats.total} anúncios verificados em ${stats.islandCount} ilhas, recolhidos de ${ACTIVE_SOURCE_COUNT} agentes — atualizados diariamente.`
-      : `${stats.total} verified listings across ${stats.islandCount} islands, sourced from ${ACTIVE_SOURCE_COUNT} agents — updated daily.`
+      ? `${stats.total} anúncios com link à fonte em ${stats.islandCount} ilhas, recolhidos de ${ACTIVE_SOURCE_COUNT} fontes — atualizados diariamente.`
+      : `${stats.total} source-linked listings across ${stats.islandCount} islands, monitored from ${ACTIVE_SOURCE_COUNT} sources — updated daily.`
     : isPt
-      ? `Anúncios verificados em todo o arquipélago, recolhidos de ${ACTIVE_SOURCE_COUNT} agentes — atualizados diariamente.`
-      : `Verified listings across the archipelago, sourced from ${ACTIVE_SOURCE_COUNT} agents — updated daily.`;
+      ? `Anúncios com link à fonte em todo o arquipélago, recolhidos de ${ACTIVE_SOURCE_COUNT} fontes — atualizados diariamente.`
+      : `Source-linked listings across the archipelago, monitored from ${ACTIVE_SOURCE_COUNT} sources — updated daily.`;
 
   const [activeId, setActiveId] = useState<string>("");
   const bodyRef = useRef<HTMLElement>(null);
