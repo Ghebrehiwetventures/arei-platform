@@ -268,6 +268,7 @@ export default function MarketUpdates() {
 
       setEmail("");
       setStatus("success");
+      window.scrollTo({ top: 0, behavior: "smooth" });
     } catch {
       setStatus("error");
       setErrorMsg(c.errorGeneric);
