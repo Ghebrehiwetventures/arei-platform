@@ -1,6 +1,29 @@
 import { useRef, useState } from "react";
 import { applyBrandImageFilter } from "./socialBrandFilter";
 
+// ── Inter font loading ───────────────────────────────────────────────────────
+// Canvas ignores CSS webfonts — we must load Inter explicitly via FontFace API
+// before any ctx.font call, otherwise the browser silently falls back to
+// system-ui (which is not Inter on most machines).
+const INTER_BASE = "https://cdn.jsdelivr.net/fontsource/fonts/inter@latest/latin";
+const INTER_WEIGHTS: [string, string][] = [
+  ["400", `${INTER_BASE}-400-normal.woff2`],
+  ["600", `${INTER_BASE}-600-normal.woff2`],
+  ["700", `${INTER_BASE}-700-normal.woff2`],
+];
+let interReady: Promise<void> | null = null;
+function ensureInter(): Promise<void> {
+  if (!interReady) {
+    interReady = Promise.all(
+      INTER_WEIGHTS.map(([weight, url]) => {
+        const f = new FontFace("Inter", `url(${url})`, { weight });
+        return f.load().then(loaded => { document.fonts.add(loaded); });
+      }),
+    ).then(() => undefined);
+  }
+  return interReady;
+}
+
 // ── Canvas constants — match PR #399 4:5 layout geometry ───────────────────
 const W = 1080, H = 1350;
 const M = 72;          // margin
@@ -293,6 +316,7 @@ export function MomentCarouselView() {
   async function renderAll() {
     setBusy(true); setErr(null); setRendered([]);
     try {
+      await ensureInter();
       const total = slides.length;
       const results: Rendered[] = [];
       for (let i = 0; i < slides.length; i++) {
