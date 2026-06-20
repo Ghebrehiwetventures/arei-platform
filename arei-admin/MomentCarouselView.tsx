@@ -41,6 +41,8 @@ interface Slide {
   id: string;
   label: string;
   headline: string;
+  // Contiguous words inside the headline rendered in sage (e.g. "global moment").
+  accent: string;
   body: string;
   imageDataUrl: string | null;
   imageCredit: string;
@@ -51,6 +53,7 @@ const INITIAL_SLIDES: Slide[] = [
     id: "s1",
     label: "Moment",
     headline: "Cape Verde is having a global moment.",
+    accent: "global moment.",
     body: "Football is putting the islands in front of the world.",
     imageDataUrl: null, imageCredit: "",
   },
@@ -58,6 +61,7 @@ const INITIAL_SLIDES: Slide[] = [
     id: "s2",
     label: "Market",
     headline: "But the property market is still hard to read.",
+    accent: "hard to read.",
     body: "Listings are scattered across agencies, portals and islands.",
     imageDataUrl: null, imageCredit: "",
   },
@@ -65,6 +69,7 @@ const INITIAL_SLIDES: Slide[] = [
     id: "s3",
     label: "Subscribe",
     headline: "Follow the market in one place.",
+    accent: "one place.",
     body: "Cape Verde Real Estate Index\ncapeverderealestateindex.com/subscribe",
     imageDataUrl: null, imageCredit: "",
   },
@@ -119,6 +124,46 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
   }
   if (line && lines.length < maxLines) lines.push(line);
   return lines;
+}
+
+// Indices of the headline words that make up `accent` (contiguous, punctuation-
+// and case-insensitive) — so a phrase like "global moment" renders sage inside
+// an otherwise bone headline. Mirrors PR #399's accentSet().
+function accentWordSet(headline: string, accent: string): Set<number> {
+  if (!accent.trim()) return new Set();
+  const norm = (s: string) => s.toLowerCase().replace(/[^a-z0-9]/g, "");
+  const words = headline.trim().split(/\s+/).map(norm);
+  const a = accent.trim().split(/\s+/).map(norm).filter(Boolean);
+  if (!a.length) return new Set();
+  for (let i = 0; i + a.length <= words.length; i++) {
+    if (a.every((w, j) => words[i + j] === w)) {
+      return new Set(Array.from({ length: a.length }, (_, k) => i + k));
+    }
+  }
+  return new Set();
+}
+
+// Draw wrapped headline lines word-by-word, colouring accent words sage. Uses
+// the context's current font + letterSpacing. `x`/`firstY` anchor the top line.
+function drawHeadline(
+  ctx: CanvasRenderingContext2D,
+  lines: string[],
+  accentSet: Set<number>,
+  x: number, firstY: number, lineHeight: number,
+  fg: string, accent: string,
+) {
+  let wordIdx = 0;
+  for (let li = 0; li < lines.length; li++) {
+    const lineWords = lines[li].split(/\s+/).filter(Boolean);
+    let cursor = x;
+    const y = firstY + li * lineHeight;
+    for (const w of lineWords) {
+      ctx.fillStyle = accentSet.has(wordIdx) ? accent : fg;
+      ctx.fillText(w, cursor, y);
+      cursor += ctx.measureText(w + " ").width;
+      wordIdx++;
+    }
+  }
 }
 
 // Letter-tracking helper for kicker.
@@ -228,18 +273,23 @@ async function renderEditorialSlide(slide: Slide, index: number, total: number):
   const bodyLastY = H - BOTTOM_SAFE;  // baseline of last body line
   const bodyFirstY = bodyLastY - (bodyLines.length - 1) * BODY_LH;
 
-  // Headline: autofit from H_LADDER, max 3 lines, lineHeight = fontSize * 1.04
+  // Headline: autofit from H_LADDER, max 3 lines, lineHeight = fontSize * 1.04.
+  // Tight negative tracking (PR #399: fontSize × -0.02) is applied while
+  // measuring so the wrap matches what we actually paint.
   let hSize = H_LADDER[H_LADDER.length - 1];
   let hLines: string[] = [];
   for (const size of H_LADDER) {
     ctx.font = `700 ${size}px ${INTER}`;
+    ctx.letterSpacing = `${(size * -0.02).toFixed(1)}px`;
     const candidate = wrapLines(ctx, slide.headline, maxW, 3);
     if (candidate.length <= 3) { hSize = size; hLines = candidate; break; }
   }
   if (!hLines.length) {
     ctx.font = `700 ${hSize}px ${INTER}`;
+    ctx.letterSpacing = `${(hSize * -0.02).toFixed(1)}px`;
     hLines = wrapLines(ctx, slide.headline, maxW, 3);
   }
+  ctx.letterSpacing = "0px";
   const hLH = Math.round(hSize * 1.04);
 
   // Anchor headline last baseline above body (PR #399: lastBaseline with dek = H - safe - 60)
@@ -258,16 +308,13 @@ async function renderEditorialSlide(slide: Slide, index: number, total: number):
     drawTracked(ctx, slide.label.trim().toUpperCase(), M, kickerY, 3.5);
   }
 
-  // Headline: 700, bone, subtle shadow
+  // Headline: 700, flat (no shadow), accent words in sage. The bottom scrim
+  // already carries the contrast — PR #399 paints flat, editorial type.
   ctx.font = `700 ${hSize}px ${INTER}`;
-  ctx.fillStyle = BONE;
-  ctx.shadowColor = "rgba(0,0,0,0.40)";
-  ctx.shadowBlur = 18;
-  ctx.shadowOffsetY = 2;
-  for (let i = 0; i < hLines.length; i++) {
-    ctx.fillText(hLines[i], M, hFirstY + i * hLH);
-  }
-  ctx.shadowColor = "transparent"; ctx.shadowBlur = 0; ctx.shadowOffsetY = 0;
+  ctx.letterSpacing = `${(hSize * -0.02).toFixed(1)}px`;
+  const accentSet = accentWordSet(slide.headline, slide.accent);
+  drawHeadline(ctx, hLines, accentSet, M, hFirstY, hLH, BONE, SAGE);
+  ctx.letterSpacing = "0px";
 
   // Body: 28px 400, slightly dimmed bone (PR #399 sub colour)
   if (bodyLines.length > 0) {
@@ -405,6 +452,13 @@ export function MomentCarouselView() {
             <label className={lbl}>Headline</label>
             <textarea rows={2} className={inp} value={slide.headline}
               onChange={e => update(slide.id, { headline: e.target.value })} />
+          </div>
+
+          <div>
+            <label className={lbl}>Accent words (sage)</label>
+            <input type="text" className={inp} placeholder="Contiguous words from the headline"
+              value={slide.accent}
+              onChange={e => update(slide.id, { accent: e.target.value })} />
           </div>
 
           <div>
