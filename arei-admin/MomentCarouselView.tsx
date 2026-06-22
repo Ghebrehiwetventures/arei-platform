@@ -39,7 +39,6 @@ const H_LADDER = [98, 86, 76, 66, 58];
 // ── Slide data ──────────────────────────────────────────────────────────────
 interface Slide {
   id: string;
-  label: string;
   headline: string;
   // Contiguous words inside the headline rendered in sage (e.g. "global moment").
   accent: string;
@@ -51,7 +50,6 @@ interface Slide {
 const INITIAL_SLIDES: Slide[] = [
   {
     id: "s1",
-    label: "Moment",
     headline: "Cape Verde is having a global moment.",
     accent: "global moment.",
     body: "Football is putting the islands in front of the world.",
@@ -59,7 +57,6 @@ const INITIAL_SLIDES: Slide[] = [
   },
   {
     id: "s2",
-    label: "Market",
     headline: "But the property market is still hard to read.",
     accent: "hard to read.",
     body: "Listings are scattered across agencies, portals and islands.",
@@ -67,7 +64,6 @@ const INITIAL_SLIDES: Slide[] = [
   },
   {
     id: "s3",
-    label: "Subscribe",
     headline: "Follow the market in one place.",
     accent: "one place.",
     body: "Cape Verde Real Estate Index\ncapeverderealestateindex.com/subscribe",
@@ -296,17 +292,9 @@ async function renderEditorialSlide(slide: Slide, index: number, total: number):
   const hLastY = bodyLines.length > 0 ? bodyFirstY - 44 : bodyLastY;
   const hFirstY = hLastY - (hLines.length - 1) * hLH;
 
-  // Kicker sits above the headline block
-  const kickerY = hFirstY - hSize - 26;
-
   // ── Draw text ─────────────────────────────────────────────────────────────
 
-  // Kicker: 22px 600, sage, letter-spacing 3.5 (PR #399 exact)
-  if (slide.label.trim()) {
-    ctx.font = `600 22px ${INTER}`;
-    ctx.fillStyle = SAGE;
-    drawTracked(ctx, slide.label.trim().toUpperCase(), M, kickerY, 3.5);
-  }
+  // No eyebrow/kicker — the headline + lockup carry the slide (Bloomberg-style).
 
   // Headline: 700, flat (no shadow), accent words in sage. The bottom scrim
   // already carries the contrast — PR #399 paints flat, editorial type.
@@ -369,7 +357,7 @@ export function MomentCarouselView() {
       for (let i = 0; i < slides.length; i++) {
         const blob = await renderEditorialSlide(slides[i], i, total);
         const dataUrl = URL.createObjectURL(blob);
-        const slug = slides[i].label.toLowerCase().replace(/[^a-z0-9]+/g, "-") || `slide-${i + 1}`;
+        const slug = slides[i].headline.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "").slice(0, 40) || `slide-${i + 1}`;
         results.push({
           filename: `cvrei-moment-${String(i + 1).padStart(2, "0")}-${slug}.png`,
           dataUrl,
@@ -440,12 +428,6 @@ export function MomentCarouselView() {
                 />
               </div>
             )}
-          </div>
-
-          <div>
-            <label className={lbl}>Label</label>
-            <input type="text" className={inp} value={slide.label}
-              onChange={e => update(slide.id, { label: e.target.value })} />
           </div>
 
           <div>
