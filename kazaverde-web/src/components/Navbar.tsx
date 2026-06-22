@@ -51,7 +51,7 @@ export default function Navbar() {
         >
           <DLayersMark size={20} />
           <span className="lk-text">
-            Cape Verde<span className="lk-desc">Real Estate Index</span>
+            Cape Verde <span className="lk-desc">Real Estate Index</span>
           </span>
           <span className="lk-text-mobile" aria-hidden="true">
             <span className="lk-m1">Cape Verde</span>

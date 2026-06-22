@@ -78,6 +78,7 @@
   display: inline-flex;
   align-items: baseline;
   gap: 6px;
+  font-family: var(--kv-logo);
   font-size: 12px;
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -95,6 +96,7 @@
 /* Mobile: three lines — Cape Verde / Real Estate / Index. */
 .mu-lk-stack {
   display: none;
+  font-family: var(--kv-logo);
 }
 
 @media (max-width: 560px) {

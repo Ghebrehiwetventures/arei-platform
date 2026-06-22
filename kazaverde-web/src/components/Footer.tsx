@@ -18,7 +18,7 @@ export default function Footer() {
           <div className="footer-brand">
             <Link className="f-logo lk-compact" to="/" aria-label="Cape Verde Real Estate Index">
               <DLayersMark size={28} />
-              <span>Cape Verde<span className="lk-desc">Real Estate Index</span></span>
+              <span>Cape Verde <span className="lk-desc">Real Estate Index</span></span>
             </Link>
             <p>
               {t("footer.description")}
