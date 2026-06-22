@@ -968,7 +968,7 @@ function getBlogArticleRoutes(blogArticles) {
     const url = `${siteUrl}/blog/${article.slug}`;
     return {
       route: `/blog/${article.slug}`,
-      lastmod: article.date,
+      lastmod: article.modifiedAt ?? article.date,
       ...page(
         article.title,
         article.description,
