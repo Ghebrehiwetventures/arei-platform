@@ -34,7 +34,10 @@ const BONE    = "#f7f3ea";
 const SAGE    = "#8ecfbf";
 const SAGE_DEEP = "#2d4a42";
 // Headline autofit ladder (same as PR #399 4:5 cover)
-const H_LADDER = [98, 86, 76, 66, 58];
+const H_LADDER = [98, 86, 76, 66, 58, 50, 44];
+// Headline may wrap to this many lines before the autofit gives up and renders
+// at the smallest grade (full text always shown — never truncated).
+const MAX_HL_LINES = 5;
 
 // ── Slide data ──────────────────────────────────────────────────────────────
 interface Slide {
@@ -106,8 +109,10 @@ function coverFit(ctx: CanvasRenderingContext2D, img: HTMLImageElement) {
   ctx.drawImage(img, sx, sy, sw, sh, 0, 0, W, H);
 }
 
-// Canvas text wrap using measureText (more accurate than char-count estimate).
-function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number, maxLines: number): string[] {
+// Canvas text wrap using measureText. Wraps ALL words into as many lines as
+// needed — never truncates. The headline autofit shrinks the font until the
+// full wrap fits within the allowed line count, so words are never dropped.
+function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
   const words = text.trim().split(/\s+/).filter(Boolean);
   const lines: string[] = [];
   let line = "";
@@ -116,9 +121,8 @@ function wrapLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number
     if (ctx.measureText(next).width <= maxWidth) { line = next; continue; }
     if (line) lines.push(line);
     line = word;
-    if (lines.length === maxLines - 1) break;
   }
-  if (line && lines.length < maxLines) lines.push(line);
+  if (line) lines.push(line);
   return lines;
 }
 
@@ -265,25 +269,22 @@ async function renderEditorialSlide(slide: Slide, index: number, total: number):
   const BODY_SIZE = 28;
   const BODY_LH = 40;
   ctx.font = `400 ${BODY_SIZE}px ${INTER}`;
-  const bodyLines = slide.body.trim() ? wrapLines(ctx, slide.body, maxW, 3) : [];
+  const bodyLines = slide.body.trim() ? wrapLines(ctx, slide.body, maxW).slice(0, 3) : [];
   const bodyLastY = H - BOTTOM_SAFE;  // baseline of last body line
   const bodyFirstY = bodyLastY - (bodyLines.length - 1) * BODY_LH;
 
-  // Headline: autofit from H_LADDER, max 3 lines, lineHeight = fontSize * 1.04.
+  // Headline: pick the largest grade whose FULL wrap fits within MAX_HL_LINES.
   // Tight negative tracking (PR #399: fontSize × -0.02) is applied while
-  // measuring so the wrap matches what we actually paint.
+  // measuring so the wrap matches what we actually paint. If even the smallest
+  // grade overflows, we still render every word (more lines) — never truncate.
   let hSize = H_LADDER[H_LADDER.length - 1];
   let hLines: string[] = [];
   for (const size of H_LADDER) {
     ctx.font = `700 ${size}px ${INTER}`;
     ctx.letterSpacing = `${(size * -0.02).toFixed(1)}px`;
-    const candidate = wrapLines(ctx, slide.headline, maxW, 3);
-    if (candidate.length <= 3) { hSize = size; hLines = candidate; break; }
-  }
-  if (!hLines.length) {
-    ctx.font = `700 ${hSize}px ${INTER}`;
-    ctx.letterSpacing = `${(hSize * -0.02).toFixed(1)}px`;
-    hLines = wrapLines(ctx, slide.headline, maxW, 3);
+    const candidate = wrapLines(ctx, slide.headline, maxW);
+    hSize = size; hLines = candidate;
+    if (candidate.length <= MAX_HL_LINES) break;
   }
   ctx.letterSpacing = "0px";
   const hLH = Math.round(hSize * 1.04);
