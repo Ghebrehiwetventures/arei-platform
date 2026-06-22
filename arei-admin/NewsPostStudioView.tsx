@@ -1,10 +1,38 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { zipSync } from "fflate";
 import { fetchMarketNewsSocialState, type MarketNewsItem } from "./socialMarketNews";
 import { supabaseAuth } from "./supabase";
+import {
+  MAX_SLIDES,
+  MIN_SLIDES,
+  emptySlide,
+  addSlide as addSlideOp,
+  duplicateActive as duplicateActiveOp,
+  deleteSlide as deleteSlideOp,
+  moveSlide as moveSlideOp,
+  setActive as setActiveOp,
+  updateActive as updateActiveOp,
+  setSlideById,
+  activeSlide as activeSlideOf,
+  activeIndex as activeIndexOf,
+  applyRenderResult,
+  buildRenderRequest,
+  canReuseSource,
+  needsRender,
+  slideFilename,
+  zipName,
+  type CarouselSlide,
+  type CarouselState,
+  type ImageSource,
+  type RenderResult,
+  type RenderRequestOpts,
+} from "./newsCarousel";
 
 const CATEGORIES = ["Aviation", "Real Estate", "Tourism", "Policy", "Infrastructure", "Market News"];
 
 const inputCls = "w-full bg-background border border-border text-foreground px-3 py-2 text-sm font-mono rounded";
+
+type AiProvider = "gemini" | "openai";
 
 async function authHeaders(): Promise<HeadersInit> {
   const { data } = await supabaseAuth.auth.getSession();
@@ -35,13 +63,8 @@ function suggestHighlight(headline: string): string {
   return w.slice(Math.floor(w.length / 2)).join(" ");
 }
 
-type ImageSource = "ai" | "pexels" | "url" | "upload";
-type AiProvider = "gemini" | "openai";
-
-// Add/replace a single photo-credit line in the caption. Used when a Pexels
-// photo is chosen so the photographer is credited in the caption (not on the
-// image). Idempotent across re-generates / shuffles: removes any prior credit
-// line first, so a new photographer replaces the old one without duplicating.
+// Add/replace a single photo-credit line in the caption (Pexels photographer).
+// Idempotent: removes any prior credit line first, so it never duplicates.
 function applyPhotoCredit(caption: string, credit: string): string {
   const stripped = caption
     .split("\n")
@@ -50,7 +73,6 @@ function applyPhotoCredit(caption: string, credit: string): string {
     .replace(/\n{3,}/g, "\n\n")
     .trimEnd();
   if (!credit) return stripped;
-  // Insert the credit just before the hashtags block (last paragraph), else append.
   const paras = stripped.split("\n\n");
   const lastIsTags = paras.length > 1 && /(^|\s)#\w/.test(paras[paras.length - 1]);
   if (lastIsTags) {
@@ -60,10 +82,8 @@ function applyPhotoCredit(caption: string, credit: string): string {
   return `${stripped}\n\n${credit}`;
 }
 
-// Instagram caption = the news, summarised: headline + the aggregated
-// what-happened summary + source + hashtags. No "why it matters" analysis
-// (that explainer tone is unwanted on Instagram), no "link in bio", no "AI
-// illustration" note.
+// Instagram caption = the news, summarised: headline + what-happened + source +
+// hashtags. The caption is carousel-level (one per post).
 function buildCaption(item: MarketNewsItem): string {
   const tags = ["#capeverde", "#caboverde", "#realestate", "#marketnews", "#" + (item.category || "").toLowerCase().replace(/[^a-z]/g, "")]
     .filter((t) => t.length > 1);
@@ -75,10 +95,7 @@ function buildCaption(item: MarketNewsItem): string {
   return parts.join("\n\n");
 }
 
-// Downscale an uploaded image in the browser before sending it as a data: URL.
-// Vercel caps the request body at ~4.5 MB; a raw high-res PNG (base64 inflated
-// ~33%) easily exceeds it → 413. The hero only renders ~1080px wide, so a
-// max-1920px JPEG is plenty and stays well under the limit.
+// Downscale an uploaded image client-side before sending it as a data: URL.
 function downscaleImageToDataUrl(file: File, maxDim = 1920, quality = 0.85): Promise<string> {
   return new Promise((resolve, reject) => {
     const url = URL.createObjectURL(file);
@@ -101,67 +118,71 @@ function downscaleImageToDataUrl(file: File, maxDim = 1920, quality = 0.85): Pro
   });
 }
 
-interface GenerateResponse {
-  slides: { label: string; imageBase64: string }[];
-  mime: string;
-  caption: string;
-  promptUsed: string | null;
-  warning: string | null;
-  attribution?: string | null;
-  photoMeta?: {
-    photo_provider: string;
-    photo_author: string;
-    photo_author_url: string;
-    photo_source_url: string;
-    photo_attribution_text: string;
-  } | null;
+function b64ToU8(b64: string): Uint8Array {
+  const bin = atob(b64);
+  const u8 = new Uint8Array(bin.length);
+  for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+  return u8;
 }
 
+// Largest data: URL we'll round-trip on a deterministic re-render. Vercel caps
+// the request body at ~4.5 MB; we keep a margin. A normal AI / curated-Pexels /
+// downscaled-upload photo sits well under this.
+const MAX_SOURCE_DATAURL = 4_300_000;
+
+interface RenderApiResponse {
+  slides: { label: string; imageBase64: string }[];
+  mime: string;
+  promptUsed: string | null;
+  warning: string | null;
+  photoMeta?: RenderResult["photoMeta"];
+  sourceImageBase64?: string;
+  sourceImageMime?: string;
+}
+
+const initialState = (): CarouselState => {
+  const first = emptySlide();
+  return { slides: [first], activeSlideId: first.id, caption: "" };
+};
+
 export function NewsPostStudioView() {
+  // ── Single source of truth ──────────────────────────────────────────────
+  const [carousel, setCarousel] = useState<CarouselState>(initialState);
+  // Always-fresh snapshot for async render callbacks (avoids stale closures and
+  // applies results to the correct slide id even if the user switches slides).
+  const carouselRef = useRef(carousel);
+  useEffect(() => { carouselRef.current = carousel; }, [carousel]);
+
+  const slide = activeSlideOf(carousel);
+  const idx = activeIndexOf(carousel);
+
+  // ── Global / UI state (not per-slide) ───────────────────────────────────
   const [items, setItems] = useState<MarketNewsItem[]>([]);
   const [loadingItems, setLoadingItems] = useState(true);
-  const [selectedId, setSelectedId] = useState<string | null>(null);
-
-  // Editable form fields
-  const [category, setCategory] = useState("Market News");
-  const [headline, setHeadline] = useState("");
-  const [highlight, setHighlight] = useState("");
-  const [date, setDate] = useState("");
-  const [dek, setDek] = useState("");
-  const [imageSource, setImageSource] = useState<ImageSource>("ai");
-  const [quality, setQuality] = useState("high");
-  const [aiProvider, setAiProvider] = useState<AiProvider>("gemini");
-  const [basePrompt, setBasePrompt] = useState("");
-  const [tweakNote, setTweakNote] = useState("");
-  const [imageUrl, setImageUrl] = useState("");
-  const [sourceUrl, setSourceUrl] = useState("");
-  const [sourceName, setSourceName] = useState("");
-  const [articleBodyUsed, setArticleBodyUsed] = useState<boolean | null>(null);
-  const [richerSibling, setRicherSibling] = useState<MarketNewsItem | null>(null);
-  const [richerSourceCount, setRicherSourceCount] = useState(0);
-  const [dateWarning, setDateWarning] = useState(false);
-  const [region, setRegion] = useState("");
-
-  const [generating, setGenerating] = useState(false);
-  const [result, setResult] = useState<GenerateResponse | null>(null);
-  const [error, setError] = useState<string | null>(null);
-
-  // Item-list filter / search / sort
   const [search, setSearch] = useState("");
   const [catFilter, setCatFilter] = useState("");
   const [sortBy, setSortBy] = useState("relevant");
+  const [quality, setQuality] = useState("high");
+  const [aiProvider, setAiProvider] = useState<AiProvider>("gemini");
+  const [tweakNote, setTweakNote] = useState("");
 
-  // Caption (editable) + Instagram publish state
-  const [captionText, setCaptionText] = useState("");
+  const [generating, setGenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const [exporting, setExporting] = useState(false);
+  const [exportMsg, setExportMsg] = useState("");
+
   const [publishing, setPublishing] = useState(false);
   const [published, setPublished] = useState<{ permalink: string } | null>(null);
   const [publishError, setPublishError] = useState<string | null>(null);
 
-  // One-time backfill: re-enrich rows enriched before the richer-summary prompt.
   const [reenriching, setReenriching] = useState(false);
   const [reenrichMsg, setReenrichMsg] = useState("");
   const [clustering, setClustering] = useState(false);
   const [clusterMsg, setClusterMsg] = useState("");
+
+  const [richerSibling, setRicherSibling] = useState<MarketNewsItem | null>(null);
+  const [richerSourceCount, setRicherSourceCount] = useState(0);
 
   useEffect(() => {
     fetchMarketNewsSocialState()
@@ -170,33 +191,46 @@ export function NewsPostStudioView() {
       .finally(() => setLoadingItems(false));
   }, []);
 
+  // ── Slide editing — all writes go through the carousel reducer ───────────
+  function updateActive(patch: Partial<CarouselSlide>) {
+    setCarousel((s) => updateActiveOp(s, patch));
+  }
+  function setCaption(next: string) {
+    setCarousel((s) => ({ ...s, caption: next }));
+  }
+
   function selectItem(item: MarketNewsItem) {
     const title = item.sourceTitle || "";
-    setSelectedId(item.id);
-    setHeadline(title);
-    setCategory(CATEGORIES.includes(item.category) ? item.category : "Market News");
-    setDek(firstSentence(item.whatHappened || ""));
-    setDate(formatDate(item.publishedAt));
-    setHighlight(suggestHighlight(title));
-    setSourceUrl(item.sourceUrl || "");
-    setSourceName(item.sourceName || "");
-    setArticleBodyUsed(item.articleBodyUsed ?? null);
-    setRegion(item.region || "");
-    setCaptionText(buildCaption(item));
-    setResult(null);
+    setCarousel((s) => {
+      const ns = updateActiveOp(s, {
+        headline: title,
+        category: CATEGORIES.includes(item.category) ? item.category : "Market News",
+        dek: firstSentence(item.whatHappened || ""),
+        date: formatDate(item.publishedAt),
+        highlight: suggestHighlight(title),
+        region: item.region || "",
+        sourceUrl: item.sourceUrl || "",
+        sourceName: item.sourceName || "",
+        articleBodyUsed: item.articleBodyUsed ?? null,
+        selectedItemId: item.id,
+        dateWarning: (() => {
+          const y = item.publishedAt ? new Date(item.publishedAt).getFullYear() : NaN;
+          return Number.isFinite(y) && y < new Date().getFullYear() - 1;
+        })(),
+      });
+      // Caption is carousel-level: set it from the item only for a fresh/empty
+      // carousel, so building extra slides never clobbers an edited caption.
+      const setCap = ns.slides.length <= 1 || !ns.caption.trim();
+      return setCap ? { ...ns, caption: buildCaption(item) } : ns;
+    });
     setError(null);
     setPublished(null);
     setPublishError(null);
-    // Guard: suspiciously old published date (e.g. a 2017 date on 2026 news).
-    const y = item.publishedAt ? new Date(item.publishedAt).getFullYear() : NaN;
-    setDateWarning(Number.isFinite(y) && y < new Date().getFullYear() - 1);
-    // Väg A: if this item is thin, look for a richer open sibling in its cluster.
     setRicherSibling(null);
     setRicherSourceCount(0);
     if (item.articleBodyUsed !== true) loadRicherSibling(item.id);
   }
 
-  // Fetch a richer open-source sibling for a thin item (same story cluster).
   async function loadRicherSibling(itemId: string) {
     try {
       const res = await fetch(`/api/richer-sibling?id=${encodeURIComponent(itemId)}`, {
@@ -204,74 +238,163 @@ export function NewsPostStudioView() {
         headers: await authHeaders(),
       });
       const data = await res.json().catch(() => ({}));
-      if (!res.ok) return; // silent — it's an optional enhancement
-      // Ignore if the user has since selected another item.
-      setSelectedId((cur) => {
-        if (cur === itemId) {
-          setRicherSibling(data.sibling || null);
-          setRicherSourceCount(data.sourceCount || 0);
-        }
-        return cur;
-      });
+      if (!res.ok) return;
+      // Apply only if the active slide still points at this item.
+      if (activeSlideOf(carouselRef.current).selectedItemId === itemId) {
+        setRicherSibling(data.sibling || null);
+        setRicherSourceCount(data.sourceCount || 0);
+      }
     } catch {
       /* optional — ignore */
     }
   }
 
-  // opts.aiPromptOverride re-runs AI image generation with a specific prompt
-  // (used by "Tweak" to get fresh variants of a liked image). opts.isTweak keeps
-  // the original base prompt stable across repeated tweaks.
-  async function generate(opts?: { aiPromptOverride?: string; isTweak?: boolean }) {
+  // ── Rendering ────────────────────────────────────────────────────────────
+  // Pure network call: build the request for a slide snapshot, return the
+  // render result. No state writes — the caller applies it to the right id.
+  async function callRender(target: CarouselSlide, opts: RenderRequestOpts = {}): Promise<RenderResult> {
+    const body = buildRenderRequest(target, { ...opts, quality, aiProvider }) as Record<string, unknown>;
+    const imageUrl = body.imageUrl;
+    if (typeof imageUrl === "string" && imageUrl.startsWith("data:") && imageUrl.length > MAX_SOURCE_DATAURL) {
+      throw new Error("Source image is too large to re-render — generate a new (smaller) image for this slide.");
+    }
+    const res = await fetch("/api/generate-news-post-image", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json", ...(await authHeaders()) },
+      body: JSON.stringify(body),
+    });
+    const data: RenderApiResponse = await res.json().catch(() => ({} as RenderApiResponse));
+    if (!res.ok) throw new Error((data as { error?: string }).error || `Request failed (${res.status})`);
+    const png = data.slides?.[0]?.imageBase64 || "";
+    if (!png) throw new Error("Renderer returned no image");
+    const isFresh = !canReuseSource(target, opts);
+    return {
+      resultPng: png,
+      sourceImageBase64: data.sourceImageBase64 || target.sourceImageBase64,
+      sourceImageMime: data.sourceImageMime || target.sourceImageMime,
+      promptUsed: data.promptUsed ?? null,
+      photoMeta: data.photoMeta ?? null,
+      warning: data.warning ?? null,
+      isFresh,
+    };
+  }
+
+  // Generate / regenerate the active slide's image + composition.
+  async function generate(opts: RenderRequestOpts = {}) {
+    const sid = carouselRef.current.activeSlideId;
+    const target = activeSlideOf(carouselRef.current);
     setGenerating(true);
     setError(null);
     try {
-      const res = await fetch("/api/generate-news-post-image", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-        // useAi is true for AI and for Pexels (Pexels falls back to AI when no
-        // usable photo is found). URL/upload sources use the imageUrl directly.
-        body: JSON.stringify({
-          category, headline, highlight, date, dek,
-          useAi: opts?.aiPromptOverride ? true : imageSource === "ai" || imageSource === "pexels",
-          quality, aiProvider, imageUrl, location: region,
-          imageSource: opts?.aiPromptOverride ? "ai" : imageSource,
-          aiPrompt: opts?.aiPromptOverride || undefined,
-        }),
+      const r = await callRender(target, opts);
+      setCarousel((s) => {
+        const ns = setSlideById(s, sid, (sl) => applyRenderResult(sl, r));
+        return { ...ns, caption: applyPhotoCredit(ns.caption, r.photoMeta?.photo_attribution_text || "") };
       });
-      const data = await res.json().catch(() => ({}));
-      if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      const result = data as GenerateResponse;
-      setResult(result);
-      // Remember the first AI prompt as the stable base for tweaks.
-      if (!opts?.isTweak && result.promptUsed) setBasePrompt(result.promptUsed);
-      // Keep the full client-built caption; only add the photographer credit to
-      // the caption (not the image) when a Pexels photo was used.
-      setCaptionText((c) => applyPhotoCredit(c, result.photoMeta?.photo_attribution_text || ""));
       setPublished(null);
       setPublishError(null);
-    } catch (e: any) {
-      setError(e.message || String(e));
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
     } finally {
       setGenerating(false);
     }
   }
 
-  // Generate a fresh variant of the current AI image: same subject/style, new
-  // take. Optionally steered by a short note ("more flag, dusk light").
   function tweak() {
-    const base = (basePrompt || result?.promptUsed || "").trim();
+    const target = activeSlideOf(carouselRef.current);
+    const base = (target.basePrompt || target.promptUsed || "").trim();
     if (!base) return;
     const note = tweakNote.trim();
     const prompt = note
       ? `${base} Variation, keeping the same subject and style: ${note}.`
       : `${base} Produce a fresh variation — alternate composition, camera angle and lighting — keeping the same subject and style.`;
-    generate({ aiPromptOverride: prompt, isTweak: true });
+    generate({ aiPromptOverride: prompt });
   }
 
-  // Loop the re-enrich endpoint (with the Studio's Supabase auth) until the
-  // backfill reports done. Opening the endpoint URL directly fails because a
-  // browser navigation sends no auth header — this button sends it.
+  // Render every slide in order (deterministic when a source photo exists).
+  // Throws — naming the failing slide — so callers never ship a partial result.
+  async function renderAllInOrder(): Promise<string[]> {
+    const slides = carouselRef.current.slides.slice();
+    const pngs: string[] = [];
+    for (let i = 0; i < slides.length; i++) {
+      const s = slides[i];
+      setExportMsg(`Rendering ${i + 1} of ${slides.length}…`);
+      if (needsRender(s)) {
+        let r: RenderResult;
+        try {
+          r = await callRender(s, {});
+        } catch (e: unknown) {
+          const why = e instanceof Error ? e.message : String(e);
+          throw new Error(`Slide ${i + 1} (${s.headline || "untitled"}) failed: ${why}`);
+        }
+        setCarousel((cs) => setSlideById(cs, s.id, (sl) => applyRenderResult(sl, r)));
+        pngs.push(r.resultPng);
+      } else {
+        pngs.push(s.resultPng);
+      }
+    }
+    return pngs;
+  }
+
+  async function downloadCurrent() {
+    const cs0 = carouselRef.current;
+    const i = cs0.slides.findIndex((s) => s.id === cs0.activeSlideId);
+    const s = cs0.slides[i];
+    let png = s.resultPng;
+    if (needsRender(s)) {
+      setGenerating(true);
+      setError(null);
+      try {
+        const r = await callRender(s, {});
+        setCarousel((cs) => setSlideById(cs, s.id, (sl) => applyRenderResult(sl, r)));
+        png = r.resultPng;
+      } catch (e: unknown) {
+        setError(e instanceof Error ? e.message : String(e));
+        setGenerating(false);
+        return;
+      }
+      setGenerating(false);
+    }
+    if (!png) return;
+    const a = document.createElement("a");
+    a.href = `data:image/png;base64,${png}`;
+    a.download = slideFilename(i, s.headline);
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  async function downloadCarousel() {
+    if (exporting) return;
+    setExporting(true);
+    setError(null);
+    setExportMsg("Preparing…");
+    try {
+      const pngs = await renderAllInOrder();
+      setExportMsg("Packaging ZIP…");
+      const slides = carouselRef.current.slides;
+      const files: Record<string, Uint8Array> = {};
+      slides.forEach((s, i) => { files[slideFilename(i, s.headline)] = b64ToU8(pngs[i]); });
+      const zipped = zipSync(files, { level: 0 }); // store — PNGs are already compressed
+      const blob = new Blob([zipped], { type: "application/zip" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = zipName(carouselRef.current);
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      setExportMsg(`Done — ${slides.length} slide${slides.length === 1 ? "" : "s"}.`);
+    } catch (e: unknown) {
+      setError(e instanceof Error ? e.message : String(e));
+      setExportMsg("");
+    } finally {
+      setExporting(false);
+    }
+  }
+
   async function runReenrichBackfill() {
     if (reenriching) return;
     setReenriching(true);
@@ -293,19 +416,14 @@ export function NewsPostStudioView() {
         done = Boolean(data.done);
         setReenrichMsg(`Re-enriched ${total}… ${data.remaining ?? "?"} remaining`);
       }
-      setReenrichMsg(
-        done
-          ? `Done — re-enriched ${total} items. Re-pick an item to see the fuller caption.`
-          : `Paused after ${total}. Click again to continue.`
-      );
-    } catch (e: any) {
-      setReenrichMsg(`Error: ${e.message || String(e)}`);
+      setReenrichMsg(done ? `Done — re-enriched ${total} items.` : `Paused after ${total}. Click again to continue.`);
+    } catch (e: unknown) {
+      setReenrichMsg(`Error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setReenriching(false);
     }
   }
 
-  // Run the news clustering engine over enriched market_news and report stats.
   async function runClustering() {
     if (clustering) return;
     setClustering(true);
@@ -318,37 +436,50 @@ export function NewsPostStudioView() {
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Request failed (${res.status})`);
-      setClusterMsg(
-        `${data.clusters} clusters from ${data.articles} articles · ${data.multiSourceClusters} multi-source · ${data.duplicatesGrouped} duplicates grouped`
-      );
-    } catch (e: any) {
-      setClusterMsg(`Error: ${e.message || String(e)}`);
+      setClusterMsg(`${data.clusters} clusters from ${data.articles} articles · ${data.multiSourceClusters} multi-source · ${data.duplicatesGrouped} duplicates grouped`);
+    } catch (e: unknown) {
+      setClusterMsg(`Error: ${e instanceof Error ? e.message : String(e)}`);
     } finally {
       setClustering(false);
     }
   }
 
+  // Publish the whole carousel: render every slide in order, then post.
   async function publish() {
-    if (!result?.slides?.length) return;
-    if (!window.confirm("Publish this post to Instagram now? It goes live immediately.")) return;
+    if (publishing) return;
+    const n = carouselRef.current.slides.length;
+    if (!window.confirm(`Publish ${n} slide${n === 1 ? "" : "s"} to Instagram now? It goes live immediately.`)) return;
     setPublishing(true);
     setPublishError(null);
     try {
+      const pngs = await renderAllInOrder();
       const res = await fetch("/api/publish-news-post", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json", ...(await authHeaders()) },
-        body: JSON.stringify({ images: result.slides.map((s) => s.imageBase64), caption: captionText }),
+        body: JSON.stringify({ images: pngs, caption: carouselRef.current.caption }),
       });
       const data = await res.json().catch(() => ({}));
       if (!res.ok) throw new Error(data.error || `Publish failed (${res.status})`);
       setPublished({ permalink: data.permalink || "" });
-    } catch (e: any) {
-      setPublishError(e.message || String(e));
+    } catch (e: unknown) {
+      setPublishError(e instanceof Error ? e.message : String(e));
     } finally {
       setPublishing(false);
+      setExportMsg("");
     }
   }
+
+  // ── Slide-rail actions ──────────────────────────────────────────────────
+  const slides = carousel.slides;
+  const busy = generating || exporting || publishing;
+  const addSlide = () => setCarousel((s) => addSlideOp(s));
+  const duplicateSlide = () => setCarousel((s) => duplicateActiveOp(s));
+  const removeSlide = () => setCarousel((s) => deleteSlideOp(s, s.activeSlideId));
+  const moveLeft = () => setCarousel((s) => moveSlideOp(s, s.activeSlideId, "left"));
+  const moveRight = () => setCarousel((s) => moveSlideOp(s, s.activeSlideId, "right"));
+  const goPrev = () => setCarousel((s) => setActiveOp(s, s.slides[Math.max(0, activeIndexOf(s) - 1)].id));
+  const goNext = () => setCarousel((s) => setActiveOp(s, s.slides[Math.min(s.slides.length - 1, activeIndexOf(s) + 1)].id));
 
   const categoryOptions = Array.from(new Set(items.map((i) => i.category).filter(Boolean))).sort();
   const filteredItems = items
@@ -359,7 +490,6 @@ export function NewsPostStudioView() {
         const ra = a.relevanceScore ?? -1;
         const rb = b.relevanceScore ?? -1;
         if (rb !== ra) return rb - ra;
-        // tie-break by recency
         return (new Date(b.publishedAt).getTime() || 0) - (new Date(a.publishedAt).getTime() || 0);
       }
       const ta = new Date(a.publishedAt).getTime() || 0;
@@ -367,14 +497,60 @@ export function NewsPostStudioView() {
       return sortBy === "oldest" ? ta - tb : tb - ta;
     });
 
+  const railBtn = "px-2.5 py-1.5 rounded border border-border text-[11px] font-mono hover:bg-surface-2 disabled:opacity-40 disabled:cursor-not-allowed";
+
   return (
     <div>
-      <div className="mb-5">
+      <div className="mb-4">
         <h1 className="text-xl font-mono font-semibold tracking-wide">News Post Studio</h1>
         <p className="text-xs text-foreground-muted mt-1">
-          Generate a branded Instagram hero from a market-news item. AI image is built from the
-          headline (high quality ≈ $0.25/image).
+          Build a 1–{MAX_SLIDES} slide Instagram carousel. Every slide is the same branded hero —
+          edit each one, then download all as a ZIP.
         </p>
+      </div>
+
+      {/* ── Slide rail ──────────────────────────────────── */}
+      <div className="mb-4 border border-border rounded p-2">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1">
+          {slides.map((s, i) => (
+            <button
+              key={s.id}
+              onClick={() => setCarousel((cs) => setActiveOp(cs, s.id))}
+              className={`shrink-0 w-36 text-left px-2 py-1.5 rounded border transition-colors ${
+                s.id === carousel.activeSlideId ? "border-accent bg-surface-2" : "border-border hover:bg-surface-2/60"
+              }`}
+              title={s.headline || `Slide ${i + 1}`}
+            >
+              <div className="flex items-center gap-1">
+                <span className="text-[10px] font-mono text-foreground-subtle">{String(i + 1).padStart(2, "0")}</span>
+                {s.dirty && <span className="text-[9px] text-amber-600" title="Edited — needs re-render">●</span>}
+                {!s.resultPng && <span className="text-[9px] text-foreground-muted" title="Not rendered yet">○</span>}
+              </div>
+              <div className="text-[11px] leading-snug line-clamp-2 mt-0.5">{s.headline || <span className="text-foreground-muted">Empty slide</span>}</div>
+            </button>
+          ))}
+        </div>
+        <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-border">
+          <button className={railBtn} onClick={addSlide} disabled={busy || slides.length >= MAX_SLIDES}>+ Add</button>
+          <button className={railBtn} onClick={duplicateSlide} disabled={busy || slides.length >= MAX_SLIDES}>⧉ Duplicate</button>
+          <button className={railBtn} onClick={removeSlide} disabled={busy || slides.length <= MIN_SLIDES}>🗑 Delete</button>
+          <span className="w-px h-5 bg-border mx-1" />
+          <button className={railBtn} onClick={moveLeft} disabled={busy || idx === 0}>◀ Move</button>
+          <button className={railBtn} onClick={moveRight} disabled={busy || idx === slides.length - 1}>Move ▶</button>
+          <span className="w-px h-5 bg-border mx-1" />
+          <button className={railBtn} onClick={goPrev} disabled={busy || idx === 0}>‹ Prev</button>
+          <button className={railBtn} onClick={goNext} disabled={busy || idx === slides.length - 1}>Next ›</button>
+          <span className="ml-auto flex items-center gap-2">
+            {exportMsg && <span className="text-[11px] font-mono text-foreground-subtle">{exportMsg}</span>}
+            <button
+              onClick={downloadCarousel}
+              disabled={busy}
+              className="px-3 py-1.5 rounded bg-accent text-accent-foreground text-[11px] font-mono font-medium disabled:opacity-50"
+            >
+              {exporting ? "Exporting…" : `↓ Download carousel (${slides.length})`}
+            </button>
+          </span>
+        </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-[320px_1fr_minmax(0,420px)] gap-5">
@@ -384,20 +560,12 @@ export function NewsPostStudioView() {
             <span>Market news</span>
             <span className="text-foreground-muted normal-case tracking-normal">{filteredItems.length}</span>
           </div>
-          {/* filter + sort + search */}
           <div className="p-2 border-b border-border space-y-2">
-            <input
-              className={inputCls + " text-xs"}
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search headlines…"
-            />
+            <input className={inputCls + " text-xs"} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search headlines…" />
             <div className="flex gap-2">
               <select className={inputCls + " text-xs"} value={catFilter} onChange={(e) => setCatFilter(e.target.value)}>
                 <option value="">All categories</option>
-                {categoryOptions.map((c) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
+                {categoryOptions.map((c) => (<option key={c} value={c}>{c}</option>))}
               </select>
               <select className={inputCls + " text-xs"} value={sortBy} onChange={(e) => setSortBy(e.target.value)}>
                 <option value="relevant">Most relevant</option>
@@ -406,36 +574,25 @@ export function NewsPostStudioView() {
               </select>
             </div>
           </div>
-          {/* One-time maintenance: re-enrich rows with the richer-summary prompt */}
           <div className="p-2 border-b border-border">
-            <button
-              onClick={runReenrichBackfill}
-              disabled={reenriching}
-              className="w-full px-2 py-1.5 rounded border border-border text-[10px] font-mono uppercase tracking-widest text-foreground-subtle hover:bg-surface-2 disabled:opacity-50"
-            >
+            <button onClick={runReenrichBackfill} disabled={reenriching} className="w-full px-2 py-1.5 rounded border border-border text-[10px] font-mono uppercase tracking-widest text-foreground-subtle hover:bg-surface-2 disabled:opacity-50">
               {reenriching ? "Re-enriching…" : "⟳ Backfill old captions"}
             </button>
             {reenrichMsg && <div className="mt-1 text-[10px] font-mono text-foreground-subtle">{reenrichMsg}</div>}
-            <button
-              onClick={runClustering}
-              disabled={clustering}
-              className="w-full mt-2 px-2 py-1.5 rounded border border-border text-[10px] font-mono uppercase tracking-widest text-foreground-subtle hover:bg-surface-2 disabled:opacity-50"
-            >
+            <button onClick={runClustering} disabled={clustering} className="w-full mt-2 px-2 py-1.5 rounded border border-border text-[10px] font-mono uppercase tracking-widest text-foreground-subtle hover:bg-surface-2 disabled:opacity-50">
               {clustering ? "Clustering…" : "⟳ Rebuild news clusters"}
             </button>
             {clusterMsg && <div className="mt-1 text-[10px] font-mono text-foreground-subtle">{clusterMsg}</div>}
           </div>
           <div className="max-h-[60vh] overflow-y-auto">
             {loadingItems && <div className="p-3 text-xs text-foreground-muted">Loading…</div>}
-            {!loadingItems && filteredItems.length === 0 && (
-              <div className="p-3 text-xs text-foreground-muted">No matching items.</div>
-            )}
+            {!loadingItems && filteredItems.length === 0 && <div className="p-3 text-xs text-foreground-muted">No matching items.</div>}
             {filteredItems.map((it) => (
               <button
                 key={it.id}
                 onClick={() => selectItem(it)}
                 className={`w-full text-left px-3 py-2 border-b border-border/60 transition-colors ${
-                  selectedId === it.id ? "bg-surface-2" : "hover:bg-surface-2/60"
+                  slide.selectedItemId === it.id ? "bg-surface-2" : "hover:bg-surface-2/60"
                 }`}
               >
                 <div className="flex items-start gap-2">
@@ -453,93 +610,59 @@ export function NewsPostStudioView() {
                   )}
                   <div className="text-xs font-medium leading-snug line-clamp-2">{it.sourceTitle}</div>
                 </div>
-                <div className="text-[10px] font-mono text-foreground-subtle mt-1">
-                  {it.category} · {it.sourceName}
-                </div>
+                <div className="text-[10px] font-mono text-foreground-subtle mt-1">{it.category} · {it.sourceName}</div>
               </button>
             ))}
           </div>
         </div>
 
-        {/* ── Editor ──────────────────────────────────── */}
+        {/* ── Editor (active slide) ───────────────────── */}
         <div className="space-y-3">
+          <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">
+            Editing slide {idx + 1} of {slides.length}
+          </div>
           <Field label="Category">
-            <select className={inputCls} value={category} onChange={(e) => setCategory(e.target.value)}>
-              {CATEGORIES.map((c) => (
-                <option key={c}>{c}</option>
-              ))}
+            <select className={inputCls} value={slide.category} onChange={(e) => updateActive({ category: e.target.value })}>
+              {CATEGORIES.map((c) => (<option key={c}>{c}</option>))}
             </select>
           </Field>
           <Field label="Headline">
-            <textarea className={inputCls} rows={2} value={headline} onChange={(e) => setHeadline(e.target.value)} />
+            <textarea className={inputCls} rows={2} value={slide.headline} onChange={(e) => updateActive({ headline: e.target.value })} />
           </Field>
-          {sourceUrl && (
-            <a
-              href={sourceUrl}
-              target="_blank"
-              rel="noreferrer"
-              className="block -mt-1 text-[11px] font-mono text-accent hover:underline truncate"
-              title={sourceUrl}
-            >
-              View original article{sourceName ? ` · ${sourceName}` : ""} →
+          {slide.sourceUrl && (
+            <a href={slide.sourceUrl} target="_blank" rel="noreferrer" className="block -mt-1 text-[11px] font-mono text-accent hover:underline truncate" title={slide.sourceUrl}>
+              View original article{slide.sourceName ? ` · ${slide.sourceName}` : ""} →
             </a>
           )}
-          {selectedId && articleBodyUsed !== null && (
-            <span
-              className={`inline-block -mt-1 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wide ${
-                articleBodyUsed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"
-              }`}
-              title={
-                articleBodyUsed
-                  ? "Enrichment used the full article — caption can be rich."
-                  : "Source gave snippet only (paywall / bot-block / JS) — caption is necessarily short. Not a bug."
-              }
-            >
-              {articleBodyUsed ? "✓ Full article" : "Snippet only"}
+          {slide.selectedItemId && slide.articleBodyUsed !== null && (
+            <span className={`inline-block -mt-1 px-2 py-0.5 rounded text-[10px] font-mono uppercase tracking-wide ${slide.articleBodyUsed ? "bg-emerald-100 text-emerald-700" : "bg-amber-100 text-amber-700"}`}>
+              {slide.articleBodyUsed ? "✓ Full article" : "Snippet only"}
             </span>
           )}
-          {dateWarning && (
-            <div className="text-[10px] font-mono text-amber-700" title="The published date looks far in the past for this news — verify it isn't a stale/mis-parsed date.">
-              ⚠ Old published date — verify
-            </div>
+          {slide.dateWarning && (
+            <div className="text-[10px] font-mono text-amber-700">⚠ Old published date — verify</div>
           )}
           {richerSibling && (
-            <button
-              onClick={() => selectItem(richerSibling)}
-              className="block w-full text-left mt-1 px-2 py-1.5 rounded border border-accent/50 text-[11px] font-mono text-accent hover:bg-surface-2"
-              title="Switch to a sibling article about the same story from an open source. Source link and the caption's attribution follow the article you switch to."
-            >
+            <button onClick={() => selectItem(richerSibling)} className="block w-full text-left mt-1 px-2 py-1.5 rounded border border-accent/50 text-[11px] font-mono text-accent hover:bg-surface-2">
               ↑ Richer version from {richerSibling.sourceName} · full article{richerSourceCount ? ` · ${richerSourceCount} sources` : ""} →
               <span className="block text-foreground-subtle normal-case truncate mt-0.5">{richerSibling.sourceTitle}</span>
             </button>
           )}
           <div>
             <div className="flex items-center justify-between mb-1">
-              <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">
-                Highlight (phrase coloured sage)
-              </div>
-              <button
-                type="button"
-                onClick={() => setHighlight(suggestHighlight(headline))}
-                className="text-[10px] font-mono text-accent hover:underline"
-              >
-                ↻ suggest
-              </button>
+              <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">Highlight (phrase coloured sage)</div>
+              <button type="button" onClick={() => updateActive({ highlight: suggestHighlight(slide.headline) })} className="text-[10px] font-mono text-accent hover:underline">↻ suggest</button>
             </div>
-            <input className={inputCls} value={highlight} onChange={(e) => setHighlight(e.target.value)} placeholder="e.g. Cabo Verde and Brazil" />
+            <input className={inputCls} value={slide.highlight} onChange={(e) => updateActive({ highlight: e.target.value })} placeholder="e.g. Cabo Verde and Brazil" />
           </div>
           <Field label="Date">
-            <input className={inputCls} value={date} onChange={(e) => setDate(e.target.value)} placeholder="JUN 4, 2026" />
+            <input className={inputCls} value={slide.date} onChange={(e) => updateActive({ date: e.target.value })} placeholder="JUN 4, 2026" />
           </Field>
           <Field label="Dek (one supporting line)">
-            <textarea className={inputCls} rows={2} value={dek} onChange={(e) => setDek(e.target.value)} />
+            <textarea className={inputCls} rows={2} value={slide.dek} onChange={(e) => updateActive({ dek: e.target.value })} />
           </Field>
           <Field label="Image source">
-            <select
-              className={inputCls}
-              value={imageSource}
-              onChange={(e) => setImageSource(e.target.value as ImageSource)}
-            >
+            <select className={inputCls} value={slide.imageSource} onChange={(e) => updateActive({ imageSource: e.target.value as ImageSource })}>
               <option value="ai">AI image (generated)</option>
               <option value="pexels">Curated Cape Verde photo (library)</option>
               <option value="upload">Upload image</option>
@@ -547,15 +670,14 @@ export function NewsPostStudioView() {
             </select>
           </Field>
 
-          {imageSource === "pexels" && (
+          {slide.imageSource === "pexels" && (
             <p className="text-[11px] font-mono text-foreground-subtle -mt-1">
-              Shuffles a real, human-verified Cape Verde photo from the curated
-              library (never the wrong country). While the library is empty it
-              falls back to an AI image. Photographer credited in the caption.
+              Shuffles a real, human-verified Cape Verde photo from the curated library. While the
+              library is empty it falls back to an AI image. Photographer credited in the caption.
             </p>
           )}
 
-          {imageSource === "ai" && (
+          {slide.imageSource === "ai" && (
             <>
               <Field label="AI provider">
                 <select className={inputCls} value={aiProvider} onChange={(e) => setAiProvider(e.target.value as AiProvider)}>
@@ -575,13 +697,13 @@ export function NewsPostStudioView() {
             </>
           )}
 
-          {imageSource === "url" && (
+          {slide.imageSource === "url" && (
             <Field label="Image URL">
-              <input className={inputCls} value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} placeholder="https://…" />
+              <input className={inputCls} value={slide.imageUrl} onChange={(e) => updateActive({ imageUrl: e.target.value })} placeholder="https://…" />
             </Field>
           )}
 
-          {imageSource === "upload" && (
+          {slide.imageSource === "upload" && (
             <Field label="Upload image">
               <input
                 type="file"
@@ -589,13 +711,12 @@ export function NewsPostStudioView() {
                 className={inputCls + " text-xs"}
                 onChange={async (e) => {
                   const f = e.target.files?.[0];
-                  if (!f) { setImageUrl(""); return; }
+                  if (!f) { updateActive({ imageUrl: "" }); return; }
                   setError(null);
                   try {
-                    // Downscale client-side so the upload stays under Vercel's body limit.
-                    setImageUrl(await downscaleImageToDataUrl(f));
+                    updateActive({ imageUrl: await downscaleImageToDataUrl(f) });
                   } catch {
-                    setImageUrl("");
+                    updateActive({ imageUrl: "" });
                     setError("Could not process that image — try a different file.");
                   }
                 }}
@@ -604,105 +725,80 @@ export function NewsPostStudioView() {
           )}
 
           <button
-            onClick={generate}
-            disabled={generating || !headline.trim()}
+            onClick={() => generate({ regenerate: true })}
+            disabled={busy || !slide.headline.trim()}
             className="w-full mt-2 px-4 py-2.5 rounded bg-accent text-accent-foreground font-medium text-sm disabled:opacity-50"
           >
-            {generating ? "Generating…" : "Generate post →"}
+            {generating ? "Generating…" : slide.resultPng ? "↻ Generate new image" : "Generate image →"}
           </button>
           {error && <div className="text-xs text-[#C44A3A] mt-1">{error}</div>}
         </div>
 
-        {/* ── Preview ─────────────────────────────────── */}
+        {/* ── Preview (active slide) ──────────────────── */}
         <div className="space-y-3">
-          {result?.slides?.length ? (
+          {slide.resultPng ? (
             <>
-              {result.slides.map((s, i) => {
-                const src = `data:${result.mime};base64,${s.imageBase64}`;
-                return (
-                  <div key={i} className="space-y-1">
-                    <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">{s.label}</div>
-                    <img src={src} alt={s.label} className="w-full rounded-lg border border-border" />
-                    <a
-                      href={src}
-                      download={`cvrei-news-${i + 1}.png`}
-                      className="block text-center px-3 py-2 rounded border border-border text-xs font-mono hover:bg-surface-2"
-                    >
-                      ↓ Download slide {i + 1}
-                    </a>
-                  </div>
-                );
-              })}
-              {result?.promptUsed && !result?.photoMeta && (
+              {slide.dirty && (
+                <div className="flex items-center justify-between gap-2 rounded border border-amber-300 bg-amber-50 px-2 py-1.5">
+                  <span className="text-[11px] font-mono text-amber-700">Edited since last render — preview is stale.</span>
+                  <button onClick={() => generate({})} disabled={busy} className="px-2 py-1 rounded border border-amber-400 text-[11px] font-mono text-amber-800 hover:bg-amber-100 disabled:opacity-50">
+                    ↻ Re-render
+                  </button>
+                </div>
+              )}
+              <img src={`data:image/png;base64,${slide.resultPng}`} alt={`Slide ${idx + 1}`} className={`w-full rounded-lg border border-border ${slide.dirty ? "opacity-60" : ""}`} />
+              <button onClick={downloadCurrent} disabled={busy} className="block w-full text-center px-3 py-2 rounded border border-border text-xs font-mono hover:bg-surface-2 disabled:opacity-50">
+                ↓ Download current slide
+              </button>
+
+              {slide.promptUsed && !slide.photoMeta && (
                 <div className="space-y-1.5 rounded-lg border border-border p-2">
-                  <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">
-                    Tweak — more variants of this image
-                  </div>
-                  <input
-                    className={inputCls + " text-xs"}
-                    value={tweakNote}
-                    onChange={(e) => setTweakNote(e.target.value)}
-                    placeholder="optional steer, e.g. more flag, dusk light"
-                  />
-                  <button
-                    onClick={tweak}
-                    disabled={generating}
-                    className="w-full px-3 py-2 rounded border border-accent/50 text-accent text-xs font-mono hover:bg-surface-2 disabled:opacity-50"
-                  >
+                  <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">Tweak — more variants of this image</div>
+                  <input className={inputCls + " text-xs"} value={tweakNote} onChange={(e) => setTweakNote(e.target.value)} placeholder="optional steer, e.g. more flag, dusk light" />
+                  <button onClick={tweak} disabled={busy} className="w-full px-3 py-2 rounded border border-accent/50 text-accent text-xs font-mono hover:bg-surface-2 disabled:opacity-50">
                     {generating ? "Tweaking…" : "↻ Tweak (new variant)"}
                   </button>
                 </div>
               )}
-              {result?.warning && <div className="text-[11px] text-[#C44A3A]">{result.warning}</div>}
-              {result?.photoMeta && (
+              {slide.warning && <div className="text-[11px] text-[#C44A3A]">{slide.warning}</div>}
+              {slide.photoMeta && (
                 <div className="text-[11px] font-mono text-foreground-subtle">
-                  {result.photoMeta.photo_attribution_text}
-                  {result.photoMeta.photo_source_url && (
-                    <> · <a href={result.photoMeta.photo_source_url} target="_blank" rel="noreferrer" className="underline">source →</a></>
+                  {slide.photoMeta.photo_attribution_text}
+                  {slide.photoMeta.photo_source_url && (
+                    <> · <a href={slide.photoMeta.photo_source_url} target="_blank" rel="noreferrer" className="underline">source →</a></>
                   )}
                 </div>
               )}
+
               <div>
-                <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle mb-1">
-                  Caption
-                </div>
-                <textarea
-                  className={inputCls}
-                  rows={8}
-                  value={captionText}
-                  onChange={(e) => setCaptionText(e.target.value)}
-                />
+                <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle mb-1">Caption (whole carousel)</div>
+                <textarea className={inputCls} rows={8} value={carousel.caption} onChange={(e) => setCaption(e.target.value)} />
               </div>
 
-              {/* ── Publish to Instagram ─────────────── */}
               {published ? (
                 <div className="text-xs font-mono text-accent border border-accent/40 rounded p-3">
                   ✓ Published to Instagram.
-                  {published.permalink && (
-                    <> <a href={published.permalink} target="_blank" rel="noreferrer" className="underline">View post →</a></>
-                  )}
+                  {published.permalink && (<> <a href={published.permalink} target="_blank" rel="noreferrer" className="underline">View post →</a></>)}
                 </div>
               ) : (
-                <button
-                  onClick={publish}
-                  disabled={publishing}
-                  className="w-full px-4 py-2.5 rounded bg-accent text-accent-foreground font-medium text-sm disabled:opacity-50"
-                >
-                  {publishing ? "Publishing…" : "Publish to Instagram"}
+                <button onClick={publish} disabled={busy} className="w-full px-4 py-2.5 rounded bg-accent text-accent-foreground font-medium text-sm disabled:opacity-50">
+                  {publishing ? "Publishing…" : `Publish carousel (${slides.length}) to Instagram`}
                 </button>
               )}
               {publishError && <div className="text-xs text-[#C44A3A]">{publishError}</div>}
 
-              {result?.promptUsed && (
+              {slide.promptUsed && (
                 <details className="text-[11px] text-foreground-subtle">
                   <summary className="cursor-pointer font-mono">Image prompt used</summary>
-                  <div className="mt-1 whitespace-pre-wrap">{result.promptUsed}</div>
+                  <div className="mt-1 whitespace-pre-wrap">{slide.promptUsed}</div>
                 </details>
               )}
             </>
           ) : (
-            <div className="border border-dashed border-border rounded-lg h-[60vh] flex items-center justify-center text-xs text-foreground-muted">
-              Pick an item or fill the form, then Generate.
+            <div className="border border-dashed border-border rounded-lg h-[60vh] flex items-center justify-center text-center text-xs text-foreground-muted px-4">
+              {slide.headline.trim()
+                ? "Generate the image for this slide to preview it."
+                : "Pick a news item or fill the headline, then Generate."}
             </div>
           )}
         </div>

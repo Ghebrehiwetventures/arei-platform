@@ -188,21 +188,34 @@ export default async function handler(req, res) {
     // (via imageSource:"url" + this data URL) instead of re-generating a new
     // AI/Pexels image on every edit. Compositing is unchanged — this is the
     // renderer's *input*, so the visual output is identical.
+    //
+    // A re-render POSTs this photo back as a data URL; Vercel caps the request
+    // body at ~4.5 MB. If the resolved photo is too large to round-trip safely,
+    // we omit it (and warn) rather than returning a source that would later 413
+    // — the slide simply regenerates its image on edit instead of re-composing.
+    // (A proper one-time server-side downscale would need an image lib such as
+    // sharp; the real sources here — AI ≈1024px, curated Pexels, client-
+    // downscaled uploads — already sit well under the cap.)
+    const SOURCE_ROUNDTRIP_CAP = 3_100_000; // bytes → base64 ≈ 4.1 MB data URL
+    const srcTooBig = imageBuffer.length > SOURCE_ROUNDTRIP_CAP;
     const srcMime = imageBuffer[0] === 0x89 ? "image/png"
       : imageBuffer[0] === 0x47 ? "image/gif"
       : imageBuffer[0] === 0x52 ? "image/webp"
       : "image/jpeg";
+    const sizeWarning = srcTooBig
+      ? "Source photo is large — editing text on this slide will regenerate the image rather than re-compose the same one."
+      : null;
 
     send(res, 200, {
       slides,
       mime: "image/png",
       caption,
       promptUsed: promptUsed || (useAi ? buildImagePrompt(item) : null),
-      warning,
+      warning: warning || sizeWarning,
       attribution,
       photoMeta,
-      sourceImageBase64: imageBuffer.toString("base64"),
-      sourceImageMime: srcMime,
+      sourceImageBase64: srcTooBig ? "" : imageBuffer.toString("base64"),
+      sourceImageMime: srcTooBig ? "" : srcMime,
     });
   } catch (err) {
     send(res, 500, { error: err?.message || String(err) });
