@@ -51,7 +51,7 @@ interface HomeData {
 // Production homepage for `/`. Keep temporary experiments and draft flows off
 // this component so they cannot accidentally override the live product home.
 const HOME_META_DESCRIPTION =
-  "An independent index of Cape Verde real estate. Browse verified property listings across Sal, Boa Vista, Santiago and more — source-linked, updated daily.";
+  "An independent index of Cape Verde real estate. Browse monitored property listings across Sal, Boa Vista, Santiago and more — source-linked, updated daily.";
 
 const HOMEPAGE_SCHEMA = {
   "@context": "https://schema.org",

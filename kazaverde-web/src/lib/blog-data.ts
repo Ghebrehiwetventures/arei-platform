@@ -3,10 +3,19 @@ export interface BlogArticle {
   title: string;
   description: string;
   date: string;
+  /* Original publication date (datePublished). */
+  /* Last factual-edit date (dateModified) — article-owned, never a global
+   * constant. Must be a valid ISO date and >= `date`. */
+  modifiedAt?: string;
   readTime: string;
   heroImage?: string;
   content: string;
   tags: string[];
+  /* Ordered citation ids — resolved against the single canonical registry in
+   * sources.data.mjs. Inline <sup class="kv-cite">[n]</sup> markers in `content`
+   * use the 1-based position in this list; the Sources section is rendered from
+   * the registry (BlogPost.tsx + prerender) so source metadata lives in one place. */
+  sourceIds?: string[];
 }
 
 const _ALL_BLOG_ARTICLES = [
@@ -16,6 +25,7 @@ const _ALL_BLOG_ARTICLES = [
     description:
       "People search for the best real estate agents in Cape Verde, but no neutral dataset proves who is best. See which Cape Verde real estate agencies and portals the index tracks.",
     date: "2026-05-23",
+    modifiedAt: "2026-06-19",
     readTime: "8 min read",
     tags: ["Buying", "Agents", "Guide"],
     content: `<p><em>Last updated: May 2026</em></p>
@@ -37,7 +47,7 @@ const _ALL_BLOG_ARTICLES = [
 <h3>CCore Investments</h3>
 <p><a href="https://www.ccoreinvestments.com">ccoreinvestments.com</a>. When we spoke with the agency, it described itself as active on all four main islands — Sal, Boa Vista, Santiago, and São Vicente — and as Portuguese-speaking and locally rooted. According to the agency, it maintains a local network on each island, with working relationships among promoters, construction companies, lawyers, and rental companies, and works to a fixed 5% commission with no markup above the asking price. Asked what it offers international buyers, the agency told us that knowing "who to trust" is the most valuable thing it provides. These are agency-attributed details, not quality assessments by the index.</p>
 <h3>RE/MAX (Sal)</h3>
-<p><a href="https://www.remax.cv">remax.cv</a>. According to the agency, the RE/MAX office has been based on Sal for two and a half years and works with a local Cape Verdean business partner for local-market access. The agency told us it serves English- and German-speaking buyers — noting that German buyers are the second-largest nationality among purchasers on Sal — and that it is expanding into Santo Antão listings. These are agency-attributed details, not quality assessments by the index.</p>
+<p><a href="https://www.remax.cv">remax.cv</a>. According to the agency, the RE/MAX office has been based on Sal for two and a half years and works with a local Cape Verdean business partner for local-market access. The agency told us (in early 2026) that it serves English- and German-speaking buyers — and described German buyers as, in its own experience, the second-largest nationality among its purchasers on Sal — and that it is expanding into Santo Antão listings. These are the agency's own statements to us, dated to that conversation; the index has not independently verified them and they are not quality assessments.</p>
 <h3>Terra Cabo Verde</h3>
 <p><a href="https://terracaboverde.com">terracaboverde.com</a>. According to its website, Terra Cabo Verde presents itself as a real estate agency based in Sal Rei, Boa Vista, offering brokerage, development, investment, and property services across Boa Vista and Sal. The index tracks listings from this source across multiple islands. These are agency-attributed details, not quality assessments by the index.</p>
 <h3>Estate CV</h3>
@@ -82,10 +92,10 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>What buyers should verify independently</h2>
 <ul>
-<li><strong>Credentials.</strong> Ask for the agency's Cape Verdean NIF (tax number) and confirm it is a registered company.</li>
-<li><strong>Representation.</strong> Most agents represent the seller. Buyer's agents are rare; assume the agent is vendor-side unless told otherwise.</li>
-<li><strong>Fees.</strong> Commission is typically paid by the seller — but confirm the structure in writing before you proceed.</li>
-<li><strong>Language.</strong> Most agents serving foreign buyers speak English; in Santiago or São Vicente, Portuguese matters more.</li>
+<li><strong>Credentials.</strong> A NIF (tax number) on its own does not prove an agency is registered, licensed, qualified, solvent, or authorised. Verify the current commercial registration, the legal entity name, who holds signing authority, the tax identity, and any activity-specific registration or authorisation that current law requires.</li>
+<li><strong>Representation.</strong> Agents commonly act for the seller, and dedicated buyer's agents are less common — confirm in writing who the agent represents rather than assuming.</li>
+<li><strong>Fees.</strong> Who pays the commission, and how, varies by agreement — confirm the structure in writing before you proceed rather than assuming the seller pays.</li>
+<li><strong>Language.</strong> Many agents serving foreign buyers work in English, but do not assume it — confirm the working language, especially in Santiago or São Vicente where Portuguese and Creole matter more.</li>
 <li><strong>Independent legal advice.</strong> Whoever you use, instruct your own Cape Verdean lawyer. See <a href="/blog/mistakes-buying-property-cape-verde">7 expensive mistakes to avoid</a>.</li>
 </ul>
 <hr>
@@ -93,7 +103,7 @@ const _ALL_BLOG_ARTICLES = [
 <h3>Who are the best real estate agents in Cape Verde?</h3>
 <p>There is no neutral, public dataset that answers this. Any page claiming a definitive list of the best agents is usually self-promotion or an automated directory. The index does not rank agents — it shows which Cape Verde real estate agents and portals it tracks so you can compare them yourself and do your own checks.</p>
 <h3>Do I need an agent to buy property in Cape Verde?</h3>
-<p>Technically no — you can buy directly from a developer or vendor. Most foreign buyers use an agent for local knowledge and language, but an independent local lawyer is essential either way. See our guide to <a href="/blog/buying-property-cape-verde-guide">buying property in Cape Verde</a>.</p>
+<p>Technically no — you can buy directly from a developer or vendor. Many foreign buyers use an agent for local knowledge and language, but independent Cape Verdean legal advice is strongly recommended either way. See our guide to <a href="/blog/buying-property-cape-verde-guide">buying property in Cape Verde</a>.</p>
 <h3>How do I choose between Cape Verde property agents?</h3>
 <p>Look past marketing language. Check that the agency is registered in Cape Verde, confirm who it represents and how commission is paid, and ask about its track record with buyers from your country. Whoever you choose, instruct your own lawyer.</p>
 <hr>
@@ -107,127 +117,102 @@ const _ALL_BLOG_ARTICLES = [
 <li><a href="/blog/cape-verde-property-prices-by-island">Cape Verde Property Prices by Island</a> — What the index currently shows</li>
 </ul>
 <hr>
+<!--SOURCES-->
+<p><em>Agency-attributed statements above are the agencies' own words, dated to the interview noted, and have not been independently verified by the index. Agency and portal coverage reflects the source registry the index tracked as of May 2026.</em></p>
+<hr>
 <p><em>Coverage on this page is based on publicly available listing data monitored by the Cape Verde Real Estate Index as of May 2026, and on direct interviews where noted. The index is independent, takes no referral fees, and does not endorse any agency. This article is for informational purposes only and is not legal or financial advice — always verify an agency's credentials and instruct an independent Cape Verdean lawyer before completing any property transaction.</em></p>
 `,
   },
   {
     slug: "cape-verde-property-prices-by-island",
-    title: "Cape Verde property prices by island: what the Cape Verde Real Estate Index currently shows",
+    title: "Cape Verde property prices by island: how to read the index, island by island",
     description:
-      "Asking-price medians and listing counts by island, drawn from the Cape Verde Real Estate Index. A snapshot of publicly listed Cape Verde inventory, not the full market.",
+      "How asking prices differ across Cape Verde's islands, and how to read the live Cape Verde Real Estate Index figures. Based on monitored asking-price listings — not transaction prices or valuations.",
     date: "2026-04-29",
-    readTime: "6 min read",
+    modifiedAt: "2026-06-19",
+    readTime: "5 min read",
     tags: ["Market", "Islands", "Data"],
-    content: `<p><em>Last updated: April 2026</em></p>
+    sourceIds: ["arei-market", "arei-listings"],
+    content: `<p><em>Last updated: April 2026. Figures are read live from the index — see the market data page.</em></p>
 <p>Cape Verde is not one property market. It is an archipelago of distinct island markets, each shaped by different levels of foreign demand, tourism infrastructure, and listing activity. A single archipelago-wide average tells you almost nothing.</p>
-<p>This piece looks at what the <a href="/listings">Cape Verde Real Estate Index</a> currently shows island by island — where the tracked sample is large enough to be meaningful, and where it isn't.</p>
-<blockquote><p>The figures below are <strong>asking prices from publicly listed properties the Cape Verde Real Estate Index currently tracks</strong> — not closing prices, not the full market, and not legally verified. Source coverage is still expanding. The live numbers on <a href="/listings">/listings</a> and <a href="/market">/market</a> are always the authoritative version.</p></blockquote>
+<p>This guide explains how to read the index island by island. We deliberately do not freeze price figures into this article: asking prices and tracked counts change as listings come and go, so a number printed here would quickly be wrong. The current, reproducible figures live on the <a href="/market">market data</a> page, which is generated from the index's current records.</p>
+<blockquote><p><strong>Based on monitored asking-price listings. Not transaction prices or valuations.</strong> The index aggregates publicly listed asking prices — not closing prices, not the full market, and not independently verified. The live <a href="/listings">/listings</a> and <a href="/market">/market</a> pages are always the authoritative source.<sup class="kv-cite"><a href="#src-arei-market" aria-label="Source 1: AREI market data">[1]</a></sup></p></blockquote>
 <hr>
-<h2>What the current index shows by island</h2>
-<p>As of late April 2026, the Cape Verde Real Estate Index tracks roughly four hundred publicly listed properties across the archipelago. Four islands now carry enough tracked listings to support a useful median:</p>
-<div class="kv-island-grid">
-  <div class="kv-island-stat">
-    <div class="kv-island-stat-name">Sal</div>
-    <div class="kv-island-stat-figs">
-      <div><span>Tracked listings</span><strong>~145</strong></div>
-      <div><span>Median asking</span><strong>~€99,000</strong></div>
-    </div>
-    <p>The deepest tracked sample by a wide margin. Direct international flights and the Santa Maria resort cluster anchor most of the foreign-buyer activity visible on the index.</p>
-  </div>
-  <div class="kv-island-stat">
-    <div class="kv-island-stat-name">Santiago</div>
-    <div class="kv-island-stat-figs">
-      <div><span>Tracked listings</span><strong>~130</strong></div>
-      <div><span>Median asking</span><strong>~€238,000</strong></div>
-    </div>
-    <p>Second-largest sample, and the highest median of the four. The mix appears weighted toward Praia city stock rather than resort apartments — different inventory, different median, not a "more expensive island."</p>
-  </div>
-  <div class="kv-island-stat">
-    <div class="kv-island-stat-name">Boa Vista</div>
-    <div class="kv-island-stat-figs">
-      <div><span>Tracked listings</span><strong>~85</strong></div>
-      <div><span>Median asking</span><strong>~€110,000</strong></div>
-    </div>
-    <p>Third-largest sample. Mix appears weighted toward resort apartments and off-plan stock around Sal Rei, where new-build asking prices can sit above realistic resale benchmarks.</p>
-  </div>
-  <div class="kv-island-stat">
-    <div class="kv-island-stat-name">São Vicente</div>
-    <div class="kv-island-stat-figs">
-      <div><span>Tracked listings</span><strong>~40</strong></div>
-      <div><span>Median asking</span><strong>~€145,000</strong></div>
-    </div>
-    <p>Growing sample centred on Mindelo, Cape Verde's second city. Urban and residential stock rather than resort — a different buyer profile to Sal and Boa Vista.</p>
-  </div>
-</div>
-<p>For the live version of these figures, with the underlying listings, see <a href="/market">/market</a> and the per-island grids: <a href="/listings?island=Sal">Sal</a>, <a href="/listings?island=Santiago">Santiago</a>, <a href="/listings?island=Boa+Vista">Boa Vista</a>, <a href="/listings?island=S%C3%A3o+Vicente">São Vicente</a>.</p>
+<h2>How the islands differ</h2>
+<p>A handful of islands carry enough tracked listings for a meaningful median asking price; the rest are too thin to summarise with a single number. What shapes each island's figure:</p>
+<ul>
+<li><strong>Sal</strong> — the deepest tracked sample. Direct international flights and the Santa Maria resort cluster anchor most of the foreign-buyer activity visible on the index. Inventory skews toward apartments and resort units.</li>
+<li><strong>Santiago</strong> — a large sample, but weighted toward Praia city stock rather than resort apartments. A different median here reflects different inventory, not simply a "more expensive island."</li>
+<li><strong>Boa Vista</strong> — weighted toward resort apartments and off-plan stock around Sal Rei. The split between new-build and resale asking prices is not something the index can compare without transaction evidence.</li>
+<li><strong>São Vicente</strong> — a growing sample centred on Mindelo, urban and residential rather than resort — a different buyer profile to Sal and Boa Vista.</li>
+</ul>
+<p>For the current median asking price and tracked count per island, open the <a href="/market">market data</a> page and the per-island grids: <a href="/listings?island=Sal">Sal</a>, <a href="/listings?island=Santiago">Santiago</a>, <a href="/listings?island=Boa+Vista">Boa Vista</a>, <a href="/listings?island=S%C3%A3o+Vicente">São Vicente</a>.<sup class="kv-cite"><a href="#src-arei-listings" aria-label="Source 2: AREI listings">[2]</a></sup></p>
 <hr>
 <h2>The islands with too little tracked data to price</h2>
-<p>The remaining islands appear in the index but have samples too thin to support a reliable median. That may reflect genuinely thin local activity, or simply that the Cape Verde Real Estate Index has not yet onboarded the sources where listings on those islands tend to surface.</p>
-<ul>
-<li><strong>Maio</strong> — around twenty tracked listings, but the priced rows cluster at a single low value, which may reflect source or normalization effects rather than a clean market distribution.</li>
-<li><strong>São Nicolau</strong> and <strong>Fogo</strong> — under ten tracked listings each. Counts are real; medians are not yet meaningful.</li>
-<li><strong>Santo Antão</strong> — only a handful of tracked listings. Too thin for the Cape Verde Real Estate Index to publish a meaningful median.</li>
-<li><strong>Brava</strong> — no tracked listings in the index at this snapshot.</li>
-</ul>
+<p>Several islands appear in the index but have samples too thin to support a reliable median. That may reflect genuinely thin local activity, or simply that the index has not yet onboarded the sources where listings on those islands tend to surface. Maio, São Nicolau, Fogo, Santo Antão, and Brava all fall into this category at present — the live market page suppresses a median where the sample is too small rather than publishing a misleading number.</p>
 <p>If you are specifically researching one of these islands, the most useful step is to look at the individual tracked listings on <a href="/listings">/listings</a> and follow the source links rather than rely on an aggregate. Coverage on these islands may deepen as new sources are added.</p>
 <hr>
-<h2>What appears to drive the gap</h2>
+<h2>What drives the differences</h2>
 <p>The variation between islands reflects a few structural factors that pre-date any individual listing:</p>
 <ul>
 <li><strong>Direct flight access.</strong> Sal and Boa Vista have international airports with direct European routes. That underwrites most of the foreign-buyer demand visible in the index.</li>
-<li><strong>Sample depth.</strong> Sal's ~145 tracked listings allow rough like-for-like comparison inside the sample. Single-digit counts on São Vicente or Santo Antão do not.</li>
-<li><strong>Inventory mix.</strong> Santiago's higher median appears driven by Praia city stock; Boa Vista's by resort and off-plan inventory. Mix shapes the headline number more than location alone.</li>
+<li><strong>Sample depth.</strong> Where many listings are tracked, a median is informative; where only a handful are, it is not — which is why thin-sample islands are suppressed rather than priced.</li>
+<li><strong>Inventory mix.</strong> Urban stock (Praia) versus resort and off-plan stock (Sal, Boa Vista) shapes each island's headline number more than location alone.</li>
 <li><strong>Connectivity gaps.</strong> Santo Antão (ferry only, from São Vicente) and Brava (no airport) sit upstream of any pricing question. Foreign-buyer activity is thinner there, and so is source coverage.</li>
 </ul>
 <hr>
+<h2>How the live figures are produced</h2>
+<p>The market data page computes each island's median from the priced, de-duplicated listings the index currently tracks: asking prices are normalised to euros at the official peg; price-on-request records stay in the listing count but are excluded from the median; near-duplicate records across sources are removed before counting; and islands with samples too thin to be meaningful are suppressed rather than published.<sup class="kv-cite"><a href="#src-arei-market" aria-label="Source 1: AREI market data">[1]</a></sup> Because it reads current records, the figure you see is reproducible at the time you view it — and is a monitored asking-price median, not an AREI index value, a transaction price, or a valuation.</p>
 <h2>How to use this</h2>
-<p>These numbers are a snapshot, not a forecast and not a valuation. They are useful for narrowing a shortlist — not for replacing the work of going through individual listings, talking to an independent local lawyer, and checking the source page for any property you take seriously.</p>
+<p>Treat the live figures as a way to narrow a shortlist — not as a forecast, a valuation, or a substitute for going through individual listings, talking to an independent local lawyer, and checking the source page for any property you take seriously.</p>
 <p>For the legal and tax mechanics of buying once you have shortlisted, see the <a href="/blog/buying-property-cape-verde-guide">step-by-step buying guide</a>. For an island-by-island comparison framed around lifestyle and use case, see <a href="/blog/which-cape-verde-island-property">Which Cape Verde island</a>. For methodology and source coverage, see <a href="/about">/about</a>.</p>
 <hr>
-<p><em>The Cape Verde Real Estate Index is an independent property search and data platform, published by AREI — not a broker, agency, or marketplace. Listings are aggregated from publicly accessible sources we currently track and are not legally verified. Always confirm a property's details with the original agent or seller and your own lawyer before acting on any number quoted here.</em></p>`,
+<!--SOURCES-->
+<hr>
+<p><em>The Cape Verde Real Estate Index is an independent property search and data platform, published by AREI — not a broker, agency, or marketplace. Listings are aggregated from publicly accessible sources we currently track and are not legally verified. Always confirm a property's details with the original agent or seller and your own lawyer before acting.</em></p>`,
   },
   {
     slug: "buying-property-cape-verde-guide",
     title: "How to Buy Property in Cape Verde: A Step-by-Step Guide for Foreign Buyers",
-    description: "Cape Verde allows foreign nationals to purchase property with full freehold ownership and no restrictions on nationality. The legal framework is rooted in Portuguese law, which ...",
+    description: "Foreign buyers can acquire privately owned property in Cape Verde, subject to applicable title, tax, registration, and transaction requirements. A step-by-step guide to the notary-based process, from NIF to the definitive transfer — with primary-source citations.",
     date: "2026-02-27",
+    modifiedAt: "2026-06-19",
     readTime: "9 min read",
     tags: ["Buying","Legal","Guide"],
-    content: `<p><em>Last updated: February 2026</em></p>
-<p>Cape Verde allows foreign nationals to purchase property with full freehold ownership and no restrictions on nationality. The legal framework is rooted in Portuguese law, which means a structured, notary-based process that offers strong buyer protections — provided you do the paperwork right.</p>
-<blockquote><p>Cape Verde is one of the few African countries where foreigners can own freehold property outright, with the same rights as citizens, and without restrictions on repatriation of sale proceeds.</p></blockquote>
-<p>This guide walks through every stage of the buying process, from getting your tax number to signing the deed.</p>
+    sourceIds: ["dnre-nif", "bcv-fx", "lei-iti", "lei-ipi", "lei-greencard", "arei-listings"],
+    content: `<p><em>Last updated: February 2026. Legal and tax points verified against primary sources on 19 June 2026.</em></p>
+<p>Foreign buyers can acquire privately owned property in Cape Verde, subject to applicable title, planning, tax, registration, investment, and transaction-specific requirements. The legal framework draws on Portuguese-derived civil law, which means a structured, notary-based process — provided the paperwork is done right.</p>
+<blockquote><p>This is general information, not legal advice. Independent Cape Verdean legal advice is strongly recommended. Cross-border transfer of qualifying sale proceeds runs through authorised financial institutions, subject to tax, anti-money-laundering, foreign-exchange, documentary and — where relevant — investment-registration requirements.<sup class="kv-cite"><a href="#src-bcv-fx" aria-label="Source 2: Banco de Cabo Verde">[2]</a></sup></p></blockquote>
+<p>This guide walks through every stage of the buying process, from getting your tax number to the definitive transfer instrument.</p>
 <hr>
 <h2>Before You Start: What You&#39;ll Need</h2>
 <p>Two things must be in place before you can make an offer on any property in Cape Verde.</p>
 <p><strong>1. A Cape Verdean NIF (Número de Identificação Fiscal)</strong></p>
-<p>The NIF is your nine-digit tax identification number. You need it for everything — buying property, opening a bank account, setting up utilities, even getting WiFi. Anyone whose name will appear on the property deed needs their own NIF, and it&#39;s worth getting one for potential heirs as well.</p>
-<p>You can obtain a NIF at a Casa do Cidadão office or the Cartório (Civil Registry) on any major island. Bring your passport and your parents&#39; full names. The process typically takes one day, though some sources report up to five days for manual submissions. There are also online services that facilitate NIF registration remotely through a fiscal representative.</p>
-<p>Cost: Free for individuals. Budget €45–135 for notarization and document translation if applying from abroad.</p>
+<p>The NIF is a tax identification number used in tax and registration procedures. Buyers generally require a NIF; the lawyer, notary, or registry should confirm the requirement for every party to the instrument.</p>
+<p>A non-resident individual can request a NIF using a valid passport, and the official service is free. Official service points include the Repartições de Finanças and Casa do Cidadão.<sup class="kv-cite"><a href="#src-dnre-nif" aria-label="Source 1: DNRE NIF guidance">[1]</a></sup> If you are not in the country, the request can generally be handled through a fiscal representative; confirm current document requirements with the service or your lawyer rather than assuming a fixed processing time.</p>
 <p><strong>2. A Local Bank Account</strong></p>
-<p>Open an account at a Cape Verdean bank (Banco Comercial do Atlântico and Caixa Económica are the most commonly used). You&#39;ll need your NIF and passport. The Cape Verdean Escudo (CVE) is pegged to the euro at a fixed rate of 110.265 CVE to €1, which simplifies currency considerations for European buyers.</p>
+<p>A Cape Verdean bank account (Banco Comercial do Atlântico and Caixa Económica are commonly used) is widely used in practice to pay the seller, taxes, charges, and notary fees. Confirm whether one is required for your specific transaction with your bank and advisers. The Cape Verdean escudo (CVE) is pegged to the euro at 1 EUR = 110.265 CVE, which simplifies currency considerations for euro-based buyers.<sup class="kv-cite"><a href="#src-bcv-fx" aria-label="Source 2: Banco de Cabo Verde">[2]</a></sup></p>
 <hr>
 <h2>The Buying Process: Seven Steps</h2>
 <h3>Step 1: Find a Property</h3>
-<p>You can search independently, work with a licensed estate agent, or use a source-linked property index like <a href="https://kazaverde.com">Cape Verde Real Estate Index</a> to compare publicly listed properties across multiple sources and islands. Agents on the ground are particularly useful for understanding local nuances — different areas of the same island can vary significantly in infrastructure, rental potential, and community fees.</p>
-<h3>Step 2: Hire an Independent Lawyer</h3>
-<p>This is not optional. Hire a Cape Verdean <em>advogado</em> who is independent from the seller and the estate agent. Your lawyer will verify ownership, check for outstanding debts, review all contracts, and represent you at the notary. If you can&#39;t be physically present in Cape Verde for the transaction, your lawyer can act on your behalf through a Power of Attorney (<em>procuração</em>), which can be arranged at a notary or a Cape Verde embassy abroad.</p>
-<p>Typical lawyer fees: €500–1,500 depending on complexity.</p>
+<p>You can search independently, work with an estate agent, or use a source-linked property index like the <a href="/listings">Cape Verde Real Estate Index</a> to compare publicly listed properties across multiple sources and islands. Agents on the ground can be useful for understanding local nuances — different areas of the same island can vary in infrastructure, rental potential, and community fees.</p>
+<h3>Step 2: Instruct an Independent Lawyer</h3>
+<p>Independent Cape Verdean legal advice is strongly recommended. Instruct a Cape Verdean <em>advogado</em> who is independent from the seller and the estate agent. Your lawyer verifies ownership, checks for outstanding debts and charges, reviews all contracts, and represents you at the notary. If you cannot be physically present, your lawyer can act on your behalf through a power of attorney (<em>procuração</em>), which can be arranged at a notary or a Cape Verde embassy abroad. Agree the scope and fee in writing before instructing.</p>
 <h3>Step 3: Make an Offer and Pay the Reservation Deposit</h3>
-<p>Once you&#39;ve agreed on a price, you sign a reservation contract and pay a deposit — typically €3,000 or 5% of the property value. This takes the property off the market and locks in the agreed price. The deposit is usually non-refundable unless the ownership documentation proves to be incorrect.</p>
+<p>Once you have agreed a price, you typically sign a reservation agreement and pay a deposit. The amount, and whether the deposit is refundable or forfeited, depend on the signed reservation agreement (or CPCV) and applicable law — read the refund and forfeiture terms carefully before paying, and have your lawyer confirm them.</p>
 <h3>Step 4: Due Diligence</h3>
-<p>Your lawyer requests the <strong>CIP (Certidão de Identificação Predial)</strong> from the local Land Registry. This critical document shows:</p>
+<p>Your lawyer obtains the property records from the competent registry and tax office — typically a <em>certidão de registo predial</em> (land-registry certificate) and a <em>certidão matricial</em> (tax-register/matriz certificate). Between them these establish:</p>
 <ul>
 <li>The registered owner</li>
-<li>The property&#39;s official address and floor plan</li>
-<li>Its assessed value (<em>Valor Patrimonial</em>)</li>
-<li>Any outstanding debts or mortgages</li>
+<li>The property&#39;s official identification and description</li>
+<li>Its assessed value (<em>valor patrimonial / valor matricial</em>)</li>
+<li>Any outstanding debts, charges, or mortgages</li>
 </ul>
-<p>Your lawyer will also verify that all municipal taxes and community charges are paid up to date.</p>
+<p>The exact documents required vary by transaction and should be confirmed by counsel and the registry. Your lawyer will also verify that municipal taxes and community charges are settled up to date.</p>
 <h3>Step 5: Sign the Promissory Contract (CPCV)</h3>
-<p>The <em>Contrato de Promessa de Compra e Venda</em> is a binding agreement between buyer and seller. It&#39;s prepared in both Portuguese and English, and outlines the terms, conditions, timelines, and any specific clauses (for example, requiring all appliances to be in working order, or penalties for seller withdrawal). Both parties can negotiate and amend this document before signing.</p>
-<h3>Step 6: Final Payment and Deed Signing</h3>
-<p>The balance is transferred via bank wire (usually in euros). You then sign the final public deed (<em>Escritura Pública</em>) at a notary, which formally transfers ownership. Your lawyer handles registration at the Land Registry afterward, which issues your ownership certificate.</p>
+<p>The <em>Contrato de Promessa de Compra e Venda</em> is a binding agreement between buyer and seller, outlining terms, conditions, timelines, and any specific clauses (for example, appliances in working order, or penalties for seller withdrawal). Do not assume the CPCV is bilingual: if you do not read Portuguese, obtain an accurate translation and ensure the contract identifies which language version governs. Both parties can negotiate and amend the document before signing.</p>
+<h3>Step 6: Final Payment and the Definitive Transfer</h3>
+<p>The balance is transferred through the agreed banking process. The definitive transfer instrument must satisfy the applicable legal, authentication, tax, and land-registration requirements; the correct instrument (and whether a public deed before a notary is required) should be confirmed by your lawyer, notary, and the registry for the specific transaction. Your lawyer then handles registration so the transfer is recorded in your name.</p>
 <h3>Step 7: Post-Purchase Registration</h3>
 <p>Your lawyer registers the deed at the Land Registry. You&#39;ll receive a registered ownership certificate. If you plan to apply for residency, your property investment may qualify you — see the section on the Green Card program below.</p>
 <hr>
@@ -243,15 +228,15 @@ const _ALL_BLOG_ARTICLES = [
 </thead>
 <tbody><tr>
 <td><strong>ITI (Property Transfer Tax)</strong></td>
-<td>Generally described as 1% of taxable value; 3% may apply in privileged-tax-regime cases</td>
+<td>1% general; 3% in qualifying privileged-tax-regime cases, on the legally assessed base (Código do ITI, art. 11.º)<sup class="kv-cite"><a href="#src-lei-iti" aria-label="Source 3: Código do ITI, art. 11">[3]</a></sup></td>
 </tr>
 <tr>
 <td><strong>Notary fees</strong></td>
-<td>~€420</td>
+<td>Confirm the current tariff with the notary</td>
 </tr>
 <tr>
-<td><strong>Land Registry registration</strong></td>
-<td>€200–300</td>
+<td><strong>Land-registry registration</strong></td>
+<td>Confirm the current tariff with the registry</td>
 </tr>
 <tr>
 <td><strong>Applicable duties or municipal charges</strong></td>
@@ -259,10 +244,10 @@ const _ALL_BLOG_ARTICLES = [
 </tr>
 <tr>
 <td><strong>Lawyer fees</strong></td>
-<td>€500–1,500</td>
+<td>Agree with your lawyer in writing before instructing</td>
 </tr>
 </tbody></table>
-<p><strong>Important:</strong> The applicable ITI amount depends on the taxable value and the specific transaction. Before signing, ask a qualified local lawyer to verify the Matriz, Registo Predial, taxable value, tax settlement status, and any surcharge exposure with the municipality.</p>
+<p><strong>Important:</strong> The applicable ITI amount depends on the legally assessed base and the specific transaction — the purchase price does not necessarily equal the ITI base. Before signing, ask a qualified local lawyer to verify the matriz, registo predial, taxable base, tax settlement status, and any surcharge exposure with the municipality.</p>
 <h3>Ongoing Annual Costs</h3>
 <table>
 <thead>
@@ -273,36 +258,36 @@ const _ALL_BLOG_ARTICLES = [
 </thead>
 <tbody><tr>
 <td><strong>IPI (Annual Property Tax)</strong></td>
-<td>Generally 0.1% for urban property and 0.15% for land</td>
+<td>0.1% general; 0.15% for construction land (special base = 10% of planned buildings) (Código do IPI, arts. 28.º, 23.º)<sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 4: Código do IPI">[4]</a></sup></td>
 </tr>
 <tr>
 <td><strong>Condominium/community fees</strong></td>
-<td>€600–2,000+ per year depending on property type</td>
+<td>Varies by development — confirm with the condominium administration</td>
 </tr>
 <tr>
 <td><strong>Utilities</strong></td>
 <td>Varies by usage</td>
 </tr>
 </tbody></table>
-<p>The new IPI system introduces objective valuation criteria. Surcharges may apply for vacant, ruined/degraded, or unfinished-facade properties, so owners should verify their position locally.</p>
+<p>The IPI system uses objective valuation criteria. The rate is increased by 25% for vacant, ruined or degraded urban property and by 10% for unfinished principal façades (Código do IPI, art. 24.º), so owners should verify their position locally.<sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 4: Código do IPI, art. 24">[4]</a></sup></p>
 <h3>If You Sell</h3>
-<p>Capital gains tax of 10–15% applies on resale. Plan this with your lawyer, especially regarding any double taxation implications with your home country.</p>
+<p>Gains on resale may be taxable in Cape Verde, and the treatment can interact with tax in your home country. Confirm the applicable rate and base, and any double-taxation implications, with a qualified tax adviser before selling.</p>
 <hr>
 <h2>Financing Options</h2>
-<p>Cash transactions are the norm for foreign buyers in Cape Verde. Local mortgages exist but are expensive — interest rates run 6–8%, lenders typically require 30–40% down payment and proof of income, and the process can be slow. Some European buyers release equity from assets at home to fund the purchase, which is often more cost-effective.</p>
+<p>Many foreign buyers fund purchases from their own capital or from borrowing in their home country. Local mortgages may be available, but eligibility, rates, loan-to-value, and term depend on each lender&#39;s current published products and underwriting — confirm directly with the bank. See the <a href="/blog/financing-property-cape-verde">financing guide</a> for the factors that drive a decision.</p>
 <hr>
 <h2>The Green Card: Residency Through Property Investment</h2>
-<p>Cape Verde&#39;s Green Card program grants permanent residency to foreign property investors. The investment thresholds are:</p>
+<p>Cape Verde&#39;s Green Card is a renewable residence authorisation for qualifying foreign property investors. The minimum qualifying investment depends on the municipality&#39;s GDP per capita (Lei n.º 30/IX/2018, art. 3.º):<sup class="kv-cite"><a href="#src-lei-greencard" aria-label="Source 5: Lei 30/IX/2018, art. 3">[5]</a></sup></p>
 <ul>
-<li><strong>€80,000</strong> in areas with below-average GDP per capita</li>
-<li><strong>€120,000</strong> in areas with above-average GDP per capita (including tourist hubs like Sal)</li>
+<li><strong>€80,000</strong> where the municipality&#39;s GDP per capita is below the national average</li>
+<li><strong>€120,000</strong> where it is equal to or above the national average</li>
 </ul>
-<p>The Green Card provides permanent residency for an indefinite period, potential transfer-tax benefits, and a possible reduction in annual property tax for up to ten years. The treatment under the ITI/IPI framework should be verified with a qualified local lawyer. After five years of habitual residency, Green Card holders can apply for Cape Verdean citizenship.</p>
+<p>The title is renewable every five years, and for ten years from the second renewal onward (Lei n.º 30/IX/2018, art. 8.º) — it is not permanent and never-expiring. The original framework includes specified tax benefits, kept in force in part under the 2026 ITI and IPI codes, but their application to an individual transaction must be confirmed with counsel and the tax authority. The Green Card does not automatically produce citizenship; naturalisation has its own statutory residence requirement and conditions. See the <a href="/blog/cape-verde-green-card-residency">Green Card guide</a> for detail.<sup class="kv-cite"><a href="#src-lei-greencard" aria-label="Source 5: Lei 30/IX/2018, art. 8">[5]</a></sup></p>
 <hr>
 <h2>Common Pitfalls to Avoid</h2>
 <ul>
 <li><strong>Don&#39;t skip the lawyer.</strong> The most expensive mistakes in Cape Verde real estate come from skipping independent legal verification. Title disputes and hidden debts exist.</li>
-<li><strong>Check the Valor Patrimonial.</strong> The property&#39;s officially assessed value may be significantly higher than its current market value — especially for properties in developments built during the pre-2008 boom. Since taxes are calculated on the higher of the assessed or commercial value, this can create unexpected costs.</li>
+<li><strong>Check the assessed value (valor patrimonial / matricial).</strong> The officially assessed value may differ from the current market price — especially for properties in developments built during the pre-2008 boom. Property taxes are charged on a legally assessed base, which is not necessarily the purchase price, so have your lawyer confirm the base and any resulting exposure before you commit.</li>
 <li><strong>Verify community charges.</strong> If buying in a resort or condominium, confirm that all community charges and maintenance fees are paid up to date. Outstanding fees become the new owner&#39;s problem.</li>
 <li><strong>Don&#39;t pay deposits on unfinished developments without legal advice.</strong> Off-plan purchases carry additional risks. Ensure your lawyer reviews the developer&#39;s track record and the contractual protections in place.</li>
 <li><strong>Understand what &quot;tourism utility&quot; means.</strong> Properties within resort developments that have been granted &quot;tourism utility&quot; status may qualify for tax benefits, but also come with specific obligations around rental schemes and usage restrictions.</li>
@@ -310,29 +295,32 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>Finding Properties</h2>
 <p>The Cape Verdean property market is relatively small and fragmented. Listings appear across local agency websites, international portals, developer pages, and classified sites — often with inconsistent formatting, pricing in different currencies, and varying levels of detail.</p>
-<p><a href="https://kazaverde.com">Cape Verde Real Estate Index</a> aggregates listings from multiple sources into a single, searchable index with normalized pricing (all in euros), standardized specifications, and verified data badges. Every listing links directly to its original source.</p>
-<p><em>Browse current listings at <a href="https://kazaverde.com">kazaverde.com</a></em></p>
+<p>The <a href="/listings">Cape Verde Real Estate Index</a> aggregates listings from multiple sources into a single, searchable index with normalised pricing (all in euros), standardised specifications, and source-status indicators. Every listing links directly to its original source.</p>
+<blockquote><p><strong>Based on monitored asking-price listings. Not transaction prices or valuations.</strong> The index links to source listings; it does not independently verify title, condition, legality, availability, or seller authority.<sup class="kv-cite"><a href="#src-arei-listings" aria-label="Source 6: AREI listings">[6]</a></sup></p></blockquote>
+<p><em>Browse current listings on the <a href="/listings">index</a>.</em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>Can foreigners buy property in Cape Verde?</h3>
-<p>Yes. Cape Verde allows foreign nationals to purchase property with full freehold ownership and no restrictions on nationality. You&#39;ll need a Cape Verdean NIF (tax number) and a local bank account before completing a purchase.</p>
+<p>Foreign buyers can acquire privately owned property in Cape Verde, subject to applicable title, planning, tax, registration, investment, and transaction-specific requirements. You will generally need a Cape Verdean NIF (tax number), and independent Cape Verdean legal advice is strongly recommended.</p>
 <h3>How much does it cost to buy property in Cape Verde?</h3>
-<p>Total transaction costs vary by property, municipality, and transaction structure. Budget separately for ITI, notary and registration costs, legal fees, and any applicable duties or charges, and have your lawyer confirm the settlement before completion.</p>
+<p>Total transaction costs vary by property, municipality, and transaction structure. Budget separately for ITI, notary and registration costs, legal fees, and any applicable duties or charges, and have your lawyer confirm the full settlement before completion.</p>
 <h3>Do I need a lawyer to buy property in Cape Verde?</h3>
-<p>While not legally mandatory, hiring an independent Cape Verdean lawyer is strongly advised and considered essential for foreign buyers. Your lawyer verifies ownership, checks for debts, reviews contracts, and handles registration. Read more about <a href="/blog/mistakes-buying-property-cape-verde">common mistakes to avoid</a>.</p>
+<p>Independent Cape Verdean legal advice is strongly recommended, and the lawyer should be independent of the seller. Your lawyer verifies ownership, checks for debts and charges, reviews contracts, and handles registration. Read more about <a href="/blog/mistakes-buying-property-cape-verde">common mistakes to avoid</a>.</p>
 <h3>How long does the buying process take?</h3>
-<p>From offer to deed signing, the process typically takes 4–8 weeks. This includes time for due diligence, contract preparation, and notary scheduling. Using a Power of Attorney can expedite the process if you can&#39;t be physically present for every stage.</p>
+<p>There is no fixed statutory timeline. Timing depends on due diligence, document preparation (including any NIF and power of attorney), contract negotiation, and notary and registry scheduling. A power of attorney can help if you cannot be present for every stage.</p>
 <h3>Can buying property give me residency in Cape Verde?</h3>
-<p>Yes. Cape Verde&#39;s <a href="/blog/cape-verde-green-card-residency">Green Card program</a> grants permanent residency to foreign property investors who meet the minimum investment threshold (€80,000–€120,000 depending on location). After five years of habitual residency, you can apply for citizenship.</p>
+<p>Cape Verde&#39;s <a href="/blog/cape-verde-green-card-residency">Green Card</a> is a renewable residence authorisation for qualifying property investors (€80,000 or €120,000 depending on the municipality&#39;s GDP per capita). It does not automatically lead to citizenship; naturalisation requires the statutory residence period — the nationality-law framework indicates at least five years of legal residence — and all other conditions.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
-<li><a href="/blog/which-cape-verde-island-property">Which Cape Verde Island Should You Buy On?</a> — Data-driven comparison of all islands</li>
+<li><a href="/blog/which-cape-verde-island-property">Which Cape Verde Island Should You Buy On?</a> — Comparison of the actively listed islands</li>
 <li><a href="/blog/cape-verde-property-tax-reform-2026">2026 Property Tax Reform</a> — What changed and what it means for buyers</li>
-<li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — How to get permanent residency through property investment</li>
+<li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — Residence through property investment</li>
 </ul>
 <hr>
-<p><em>This article is for informational purposes only and does not constitute legal or financial advice. Property laws and tax rates may change. Always consult a qualified Cape Verdean lawyer before making any property purchase.</em></p>
+<!--SOURCES-->
+<hr>
+<p><em>This article is for informational purposes only and does not constitute legal or financial advice. Property, tax, immigration, and exchange-control rules may change and are applied case by case. Always consult a qualified Cape Verdean lawyer before making any property purchase.</em></p>
 `,
   },
   {
@@ -340,8 +328,10 @@ const _ALL_BLOG_ARTICLES = [
     title: "Which Cape Verde Island Should You Buy Property On? A Data-Driven Comparison",
     description: "Cape Verde's ten islands each have distinct characters, infrastructure levels, and property markets. Choosing the right island is arguably the most consequential decision you'll...",
     date: "2026-02-25",
+    modifiedAt: "2026-06-19",
     readTime: "10 min read",
     tags: ["Islands","Comparison","Data"],
+    sourceIds: ["arei-market"],
     content: `<p><em>Last updated: February 2026</em></p>
 <p>Cape Verde&#39;s ten islands each have distinct characters, infrastructure levels, and property markets. Choosing the right island is arguably the most consequential decision you&#39;ll make as a buyer — it determines your rental potential, lifestyle experience, resale liquidity, and daily logistics.</p>
 <p>This guide compares the six islands where property is most actively listed, based on real market data.</p>
@@ -362,9 +352,9 @@ const _ALL_BLOG_ARTICLES = [
 <tbody><tr>
 <td><strong>Sal</strong></td>
 <td>Tourism hub, beaches</td>
-<td>Highest</td>
-<td>Strong year-round</td>
-<td>International airport, direct European flights</td>
+<td>Higher</td>
+<td>Tourism-driven</td>
+<td>International airport, seasonal European routes</td>
 <td>Rental investment, holiday homes</td>
 </tr>
 <tr>
@@ -373,7 +363,7 @@ const _ALL_BLOG_ARTICLES = [
 <td>Medium-high</td>
 <td>Growing, seasonal peaks</td>
 <td>International airport, growing connections</td>
-<td>Capital appreciation, resort living</td>
+<td>Longer-term growth bet, resort living</td>
 </tr>
 <tr>
 <td><strong>Santiago</strong></td>
@@ -387,8 +377,8 @@ const _ALL_BLOG_ARTICLES = [
 <td><strong>São Vicente</strong></td>
 <td>Cultural, urban</td>
 <td>Medium</td>
-<td>Cultural tourism, steady</td>
-<td>Domestic airport, ferry from Santo Antão</td>
+<td>Cultural tourism</td>
+<td>Cesária Évora Intl (seasonal routes); ferry from Santo Antão</td>
 <td>Urban lifestyle, cultural tourism</td>
 </tr>
 <tr>
@@ -410,18 +400,18 @@ const _ALL_BLOG_ARTICLES = [
 </tbody></table>
 <hr>
 <h2>Sal: The Established Market</h2>
-<p>Sal is Cape Verde&#39;s most developed island for tourism and the most liquid property market. The Amílcar Cabral International Airport receives direct flights from London, Lisbon, Amsterdam, Paris, and other European cities, making it the primary entry point for the roughly 1.2 million tourists who visit Cape Verde annually.</p>
-<p><strong>Santa Maria</strong>, on Sal&#39;s southern tip, is the center of gravity. It&#39;s where most of the tourism infrastructure, restaurants, and nightlife are concentrated, and where property demand is highest.</p>
-<p><strong>What the market looks like:</strong> Apartments in Santa Maria typically start around €95,000 for a one-bedroom, with two-bedroom units in resort complexes ranging from €120,000 to €200,000. Luxury penthouses and ocean-view properties can reach €300,000+. Prices have been rising 10–15% annually in recent years, driven by steady tourism growth and limited new supply in prime locations.</p>
-<p><strong>Rental potential:</strong> Sal offers the strongest short-term rental market in Cape Verde. Properties in well-managed resort complexes with established rental schemes report gross yields in the range of 5–8%, though individual results vary significantly based on location, property quality, and management company effectiveness.</p>
-<p><strong>Things to consider:</strong> Sal is the most expensive island to buy on, and the market is the most mature — meaning there&#39;s less room for dramatic capital appreciation compared to less-developed islands. The island is also relatively flat and arid, which isn&#39;t everyone&#39;s aesthetic preference.</p>
+<p>Sal is one of Cape Verde&#39;s most developed islands for tourism and carries the deepest tracked listing sample in the index. Amílcar Cabral International Airport handles direct European routes, though specific routes are seasonal and should be checked against current airport and airline schedules. Sal and Boa Vista draw most of Cape Verde&#39;s international tourism; for current, source-attributed visitor volumes consult the Instituto Nacional de Estatística (INE) directly.</p>
+<p><strong>Santa Maria</strong>, on Sal&#39;s southern tip, is the centre of gravity — much of the tourism infrastructure, restaurants, and nightlife are concentrated there, and so is foreign-buyer activity.</p>
+<p><strong>What the market looks like:</strong> Sal&#39;s tracked inventory is weighted toward apartments and units within resort complexes; standalone villas exist but are less common. For current median asking prices, see <a href="/blog/cape-verde-property-prices-by-island">Cape Verde property prices by island</a> and the live <a href="/market">market data</a> — figures there are monitored asking-price listings, not transaction prices or valuations.<sup class="kv-cite"><a href="#src-arei-market" aria-label="Source 1: AREI market data">[1]</a></sup></p>
+<p><strong>Rental potential:</strong> Sal has the most active international tourist-rental demand in Cape Verde, but actual returns vary with location, property quality, scheme terms, and management. Treat any yield figure as a provider quotation to verify, not a market fact.</p>
+<p><strong>Things to consider:</strong> Sal is among the more expensive islands to buy on and its market is mature. The island is also relatively flat and arid, which isn&#39;t everyone&#39;s aesthetic preference.</p>
 <p><a href="/listings/sal">Browse current Sal properties for sale</a> in the Cape Verde Real Estate Index.</p>
 <hr>
 <h2>Boa Vista: The Growth Story</h2>
 <p>Boa Vista is Cape Verde&#39;s second major tourism island, known for stunning, less-crowded beaches and a more laid-back atmosphere than Sal. It has its own international airport with growing flight connections, and the tourism infrastructure has expanded significantly in recent years.</p>
 <p><strong>Sal Rei</strong>, the main town, is the commercial center. Most property development clusters around the coast, with a mix of resort complexes and standalone villas.</p>
-<p><strong>What the market looks like:</strong> Property prices are generally 15–25% lower than equivalent properties on Sal, offering a potential entry point for buyers who want beach-island investment at a more accessible price. The development pipeline is active, with several new projects targeting both investors and lifestyle buyers.</p>
-<p><strong>Rental potential:</strong> Growing but more seasonal than Sal. As flight connections increase and tourism infrastructure matures, rental demand is trending upward. Boa Vista is often positioned as where Sal was 5–10 years ago in terms of market development.</p>
+<p><strong>What the market looks like:</strong> Headline entry prices are generally lower than on Sal, which is part of Boa Vista&#39;s appeal for beach-island buyers; compare the live per-island asking-price data rather than relying on a fixed discount figure.<sup class="kv-cite"><a href="#src-arei-market" aria-label="Source 1: AREI market data">[1]</a></sup> The development pipeline is active, with several new projects targeting both investors and lifestyle buyers.</p>
+<p><strong>Rental potential:</strong> Growing but more seasonal than Sal. As flight connections change and tourism infrastructure matures, rental demand shifts — verify current routes and demand rather than assuming a fixed trajectory. The &quot;where Sal was a decade ago&quot; framing is a marketing comparison, not a measured forecast.</p>
 <p><strong>Things to consider:</strong> Less developed infrastructure means fewer restaurants, shops, and services outside the resort zones. This is evolving, but buyers should visit and assess whether the current level of development meets their needs.</p>
 <p><a href="/listings/boa-vista">Browse current Boa Vista properties for sale</a> in the Cape Verde Real Estate Index.</p>
 <hr>
@@ -432,10 +422,10 @@ const _ALL_BLOG_ARTICLES = [
 <p><strong>Things to consider:</strong> Santiago offers the most &quot;real&quot; Cape Verdean experience — it&#39;s where most Cape Verdeans live and work. The infrastructure is more developed in Praia than on most other islands, but the tourism product is less polished. Buyers looking for a residential investment with local market exposure, or who plan to live in Cape Verde, often find Santiago compelling.</p>
 <hr>
 <h2>São Vicente: The Cultural Capital</h2>
-<p>São Vicente is home to Mindelo, widely considered Cape Verde&#39;s most charming and culturally vibrant city. Known for its music scene (it&#39;s the birthplace of <em>morna</em>, the genre Cesária Évora made world-famous), colonial architecture, and lively carnival, São Vicente attracts a different kind of visitor — and buyer.</p>
+<p>São Vicente is home to Mindelo, widely considered one of Cape Verde&#39;s most culturally vibrant cities. Mindelo is strongly associated with <em>morna</em>, its performance tradition, and Cesária Évora. Morna is recognised as a national Cape Verdean tradition rather than the product of any single island, so Mindelo is best described as a centre of the tradition rather than its definitive birthplace. With its colonial architecture and lively carnival, São Vicente attracts a different kind of visitor — and buyer.</p>
 <p><strong>What the market looks like:</strong> The São Vicente market is primarily urban, centered on Mindelo. Property types range from colonial-era houses with renovation potential to modern apartments. Prices are generally moderate compared to Sal.</p>
 <p><strong>Rental potential:</strong> Cultural tourism provides a steady stream of visitors, though volumes are lower than Sal or Boa Vista. São Vicente&#39;s appeal is more about lifestyle and authenticity than mass tourism yields. The ferry connection to Santo Antão (Cape Verde&#39;s hiking island) adds to its tourism proposition.</p>
-<p><strong>Things to consider:</strong> São Vicente doesn&#39;t have the beach tourism product that drives Sal and Boa Vista&#39;s rental markets. Its airport handles domestic flights only — international visitors typically arrive via Sal or Santiago and connect. This limits the pure-investment case but strengthens the lifestyle case for buyers who value culture over beach resort living.</p>
+<p><strong>Things to consider:</strong> São Vicente doesn&#39;t have the beach tourism product that drives Sal and Boa Vista&#39;s rental markets. The island is served by Cesária Évora International Airport; available international routes are seasonal and should be checked against current airport and airline schedules, and many visitors still arrive via Sal or Santiago and connect. This shapes the pure-investment case but strengthens the lifestyle case for buyers who value culture over beach resort living.</p>
 <hr>
 <h2>Fogo: The Volcanic Island</h2>
 <p>Fogo is dominated by Pico do Fogo, an active volcano rising nearly 3,000 meters above sea level. The island produces Cape Verde&#39;s famous wine and coffee, and the landscape is dramatically different from the beach islands.</p>
@@ -451,25 +441,27 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>How to Compare Properties Across Islands</h2>
 <p>One of the challenges of the Cape Verdean property market is that listings are scattered across dozens of agency websites, international portals, and developer pages. Prices may be listed in euros, dollars, or escudos. Specifications are often inconsistent. The same property may appear on multiple sites with different descriptions.</p>
-<p><a href="https://kazaverde.com">Cape Verde Real Estate Index</a> was built to solve this problem. We aggregate listings from multiple sources, normalize all prices to euros, standardize specifications, deduplicate properties that appear on multiple sites, and present everything in a single searchable interface. Every listing links to its original source — we&#39;re a read-only index, not a broker.</p>
-<p>Current coverage: listings across 9 sources on 6 islands.</p>
-<p><em>Start your search at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
+<p>The <a href="/listings">Cape Verde Real Estate Index</a> was built to solve this problem. We aggregate listings from multiple sources, normalise all prices to euros, standardise specifications, deduplicate properties that appear on multiple sites, and present everything in a single searchable interface. Every listing links to its original source — we&#39;re a read-only index, not a broker.</p>
+<p>Coverage as of May 2026: listings across 9 tracked sources on 6 islands. The live <a href="/market">market data</a> is always the authoritative count.</p>
+<p><em>Start your search on the <a href="/listings">index</a>.</em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>Which Cape Verde island is best for property investment?</h3>
-<p>Sal offers the strongest rental market and highest liquidity due to its international airport and established tourism infrastructure. Boa Vista is the main growth story with lower entry prices. Santiago suits buyers looking for residential or commercial investment beyond tourism. The best island depends on your goals — rental income, lifestyle, or capital appreciation.</p>
-<h3>Which island has the cheapest property?</h3>
-<p>Maio and Fogo have the lowest property prices, but they also have the thinnest markets and most limited infrastructure. For more accessible investment with some price advantage over Sal, Boa Vista and Santiago offer better value with reasonable infrastructure and rental potential.</p>
+<p>There is no single best island — it depends on your goal. Sal and Boa Vista see the most international tourist-rental demand and the deepest tracked listing samples; Santiago and São Vicente lean more residential. Compare the live per-island asking-price data and inventory on the <a href="/market">market data</a> page before deciding.</p>
+<h3>Which island has the lowest tracked asking prices?</h3>
+<p>Smaller, less-developed islands such as Maio and Fogo tend to show lower headline asking prices, but their tracked samples are thin and infrastructure is limited. Compare the current per-island medians on the <a href="/blog/cape-verde-property-prices-by-island">prices-by-island</a> page rather than assuming a ranking — and remember these are asking prices, not transaction prices.</p>
 <h3>Can I get rental income from property on any island?</h3>
-<p>Realistically, strong rental demand exists primarily on Sal and (increasingly) Boa Vista, where international tourism drives short-term holiday lets. Santiago has a local rental market. Other islands have very limited rental demand.</p>
+<p>International tourist-rental demand is concentrated on Sal and (increasingly) Boa Vista; Santiago has a more residential rental market, and the smaller islands have thinner demand. Short-term tourist accommodation may require registration, licensing, tax compliance, and municipal or development-specific approvals — confirm current requirements with the competent authorities and counsel.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Step-by-step buying process for foreign buyers</li>
-<li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — Investment thresholds vary by island GDP classification</li>
+<li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — Investment thresholds vary by municipal GDP classification</li>
 </ul>
 <hr>
-<p><em>Property markets are dynamic. This article reflects general market observations and should not be relied upon as financial advice. Always conduct your own research and consult local professionals before investing.</em></p>
+<!--SOURCES-->
+<hr>
+<p><em>Property markets are dynamic. This article reflects general observations and the index&#39;s tracked listing sample, and should not be relied upon as financial advice. Always conduct your own research and consult local professionals before investing.</em></p>
 `,
   },
   {
@@ -477,14 +469,16 @@ const _ALL_BLOG_ARTICLES = [
     title: "Cape Verde's 2026 Property Tax Reform: What Changed and What It Means for Buyers",
     description: "On January 1, 2026, Cape Verde implemented its most significant property tax reform in over 25 years. The old Imposto Único sobre o Património (IUP) — a single tax covering both...",
     date: "2026-02-22",
+    modifiedAt: "2026-06-19",
     readTime: "8 min read",
     tags: ["Tax","Legal","2026"],
-    content: `<p><em>Last updated: February 2026</em></p>
-<p>On January 1, 2026, Cape Verde implemented its most significant property tax reform in over 25 years. The old Imposto Único sobre o Património (IUP) — a single tax covering both property transfers and annual ownership — has been replaced by two separate, modern tax codes.</p>
+    sourceIds: ["lei-iti", "lei-ipi", "lei-greencard", "arei-market"],
+    content: `<p><em>Last updated: February 2026. Rates and effective date verified against the Boletim Oficial on 19 June 2026.</em></p>
+<p>On 1 January 2026, Cape Verde implemented its most significant property tax reform in over 25 years. The former Imposto Único sobre o Património (IUP) — a single tax covering both property transfers and annual ownership — has been replaced by two separate, modern tax codes.</p>
 <p>If you&#39;re buying, selling, or holding property in Cape Verde, here&#39;s what you need to know.</p>
 <hr>
 <h2>What Changed</h2>
-<p>The reform, enacted through Law No. 54/X/2025 and Law No. 55/X/2025, replaced the old IUP with two distinct taxes:</p>
+<p>The reform was enacted through Lei n.º 54/X/2025, which approves the Código do ITI, and Lei n.º 55/X/2025, which approves the Código do IPI — both published in the Boletim Oficial (I Série n.º 46, 6 June 2025) and in force since 1 January 2026.<sup class="kv-cite"><a href="#src-lei-iti" aria-label="Source 1: Lei 54/X/2025">[1]</a></sup><sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 2: Lei 55/X/2025">[2]</a></sup> They replace the former IUP with two distinct taxes:</p>
 <p><strong>ITI (Imposto sobre a Transmissão de Imóveis)</strong> — a transfer tax paid when property changes hands.</p>
 <p><strong>IPI (Imposto sobre a Propriedade de Imóveis)</strong> — an annual property tax paid by owners.</p>
 <p>This separation brings Cape Verde in line with how most European countries structure property taxation and represents a deliberate modernization of the system to match the country&#39;s evolving real estate and tourism sectors.</p>
@@ -493,63 +487,66 @@ const _ALL_BLOG_ARTICLES = [
 <p>The ITI is a municipal tax levied on the transfer of real estate, whether the transfer is for payment or free of charge. Revenue goes directly to the municipality where the property is located.</p>
 <h3>Key Details</h3>
 <ul>
-<li><strong>Rate:</strong> Current tax summaries generally describe ITI as 1% of taxable value, with a 3% rate in cases where the seller or buyer benefits from a privileged tax regime.</li>
-<li><strong>Basis:</strong> The tax is applied to taxable value, which should be verified for the specific property and transaction.</li>
+<li><strong>Rate:</strong> The general ITI rate is 1%. A 3% rate applies where the transferor or acquirer benefits from a privileged-tax regime, as defined in the Código Geral Tributário (Código do ITI, art. 11.º).<sup class="kv-cite"><a href="#src-lei-iti" aria-label="Source 1: Código do ITI, art. 11">[1]</a></sup></li>
+<li><strong>Basis:</strong> The tax is applied to a taxable value set under the code, which is not necessarily the purchase price; it should be verified for the specific property and transaction.</li>
 <li><strong>Scope:</strong> The ITI applies to rural, urban, and mixed-use properties. It covers not just full ownership transfers (purchase and sale) but also partial forms of property rights.</li>
-<li><strong>Expanded coverage:</strong> Unlike the old IUP, the ITI now captures a broader range of transactions that have the economic effect of a property transfer. This includes successive assignments of contractual positions in promissory purchase agreements and the use of irrevocable powers of attorney — practices that were previously used to transfer effective control of property without triggering transfer tax. This is a significant anti-avoidance measure.</li>
+<li><strong>Expanded coverage:</strong> Unlike the old IUP, the ITI now captures a broader range of transactions that have the economic effect of a property transfer. This includes successive assignments of contractual positions in promissory purchase agreements and the use of irrevocable powers of attorney — practices previously used to transfer effective control of property without triggering transfer tax. This is a significant anti-avoidance measure.</li>
 </ul>
 <h3>What This Means for Buyers</h3>
-<p>For a €150,000 taxable value, a general 1% ITI rate would imply about €1,500 in ITI; a 3% rate may apply in privileged-tax-regime cases. Total acquisition costs also depend on notary, registration, legal fees, and any applicable duties or municipal charges, so buyers should confirm the full settlement for the specific property.</p>
+<p><em>Worked example (hypothetical, assumed taxable value):</em> on an assumed taxable value of €150,000, a 1% general ITI rate implies about €1,500 in ITI; a 3% rate may apply in privileged-tax-regime cases. This is an illustrative calculation, not a quoted figure — the purchase price does not necessarily equal the legally assessed ITI base. Total acquisition costs also depend on notary, registration, legal fees, and any applicable duties or municipal charges, so buyers should confirm the full settlement for the specific property.</p>
 <p><strong>Timing matters:</strong> Tax settlement is part of completing and registering the transfer. Ensure your lawyer confirms the current payment process and timing with the municipality before completion.</p>
 <hr>
 <h2>IPI: The New Annual Property Tax</h2>
 <p>The IPI replaces the annual ownership component of the old IUP with a more transparent and objectively grounded system.</p>
 <h3>Key Details</h3>
 <ul>
-<li><strong>Base rate:</strong> Current summaries generally describe IPI as 0.1% for urban property and 0.15% for land.</li>
-<li><strong>Valuation method:</strong> Properties will be assessed based on objective criteria by Municipal Assessment Committees (<em>Comissões Municipais de Avaliação</em>), using a uniform methodology. This is a departure from the old system, where many property valuations hadn&#39;t been updated in years (or decades) and often bore little relationship to actual market values.</li>
-<li><strong>Surcharges:</strong> Surcharges may apply for vacant, ruined/degraded, or unfinished-facade properties. Buyers and owners should verify any exposure with the municipality.</li>
+<li><strong>General rate:</strong> The general IPI rate is 0.1% (Código do IPI, art. 28.º).<sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 2: Código do IPI, art. 28">[2]</a></sup></li>
+<li><strong>Construction land:</strong> A 0.15% rate applies specifically to <em>terrenos para construção</em> (construction land). Crucially, its special taxable base is set at 10% of the value of the buildings planned for the plot — not the raw land value or the purchase price (Código do IPI, art. 23.º).<sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 2: Código do IPI, art. 23">[2]</a></sup></li>
+<li><strong>Valuation method:</strong> Properties are assessed on objective criteria by Municipal Assessment Committees (<em>Comissões Municipais de Avaliação</em>), using a uniform methodology — a departure from the old system, where many valuations had not been updated in years and often bore little relationship to market values.</li>
+<li><strong>Surcharges:</strong> The IPI rate is increased by 25% for vacant, ruined, or degraded urban property, and by 10% for property whose principal exterior façade is unfinished (Código do IPI, art. 24.º). Owners should verify any exposure with the municipality.<sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 2: Código do IPI, art. 24">[2]</a></sup></li>
 </ul>
 <h3>What This Means for Owners</h3>
-<p>For many urban property owners, the 0.1% IPI rate may be lower than historic IUP bills. The actual amount depends on the taxable value, property type, municipal assessment, and any surcharge exposure.</p>
+<p>For many urban property owners, the 0.1% general IPI rate may be lower than historic IUP bills. The actual amount depends on the taxable value, property type, municipal assessment, and any surcharge exposure.</p>
 <p>However, as Municipal Assessment Committees complete new property valuations, assessed values may change. Properties that were significantly undervalued may see their assessments — and therefore their tax obligations — increase.</p>
 <hr>
 <h2>Why the Reform Happened</h2>
-<p>The old IUP system, in place since 1998, had accumulated significant problems. Property valuations were outdated, often based on pre-2008 assessments that no longer reflected market reality. The tax structure didn&#39;t account for modern real estate practices like contractual position assignments. And the lack of penalties for neglected properties contributed to abandoned buildings in some urban areas.</p>
-<p>Cape Verde&#39;s real estate and tourism sectors have transformed dramatically since 1998. Tourist arrivals have grown from around 200,000 per year in the early 2000s to over 1.2 million. International property investment has increased substantially. New resort developments, urban expansion, and a growing middle class have all changed the landscape.</p>
+<p>The former IUP framework was created in 1998 and took effect under the applicable implementation timetable. Over time it accumulated problems: property valuations were outdated, often based on pre-2008 assessments that no longer reflected market reality; the structure did not account for modern practices like contractual-position assignments; and the lack of penalties for neglected properties contributed to abandoned buildings in some urban areas.</p>
+<p>Cape Verde&#39;s real estate and tourism sectors have grown substantially over that period — through new resort developments, urban expansion, and a growing middle class. For current, source-attributed tourism volumes, consult the Instituto Nacional de Estatística (INE) directly; figures change each reporting period and should be taken from the relevant INE publication rather than a static guide.</p>
 <p>The government&#39;s stated goals for the reform are greater tax justice, improved transparency, more efficient collection, and stronger municipal finances — the revenue from both taxes goes directly to local municipalities.</p>
 <hr>
 <h2>Impact on the Green Card Program</h2>
-<p>Cape Verde&#39;s Green Card residency-by-investment program grants permanent residency to foreign property investors meeting certain thresholds (€80,000 in lower-GDP areas, €120,000 in higher-GDP areas like Sal). The program historically offered IUP exemptions and reductions.</p>
-<p>With the transition to the new ITI/IPI framework, investors should verify with a qualified lawyer how the Green Card tax benefits translate under the new codes.</p>
+<p>Cape Verde&#39;s <a href="/blog/cape-verde-green-card-residency">Green Card</a> is a renewable residence authorisation for qualifying foreign property investors (€80,000 where the municipality&#39;s GDP per capita is below the national average, €120,000 where it is equal to or above it). The original framework includes specified tax benefits — exemption from the former IUP and from IRPS (Lei n.º 30/IX/2018, art. 6.º).<sup class="kv-cite"><a href="#src-lei-greencard" aria-label="Source 3: Lei 30/IX/2018, art. 6">[3]</a></sup></p>
+<p>The 2026 ITI and IPI codes preserve benefits established under special legislation (Código do ITI, art. 6.º, n.º 3; Código do IPI, art. 11.º, n.º 2), but they preserve those benefits in general terms and do not name the Green Card statute. Whether and how a benefit applies to an individual acquisition must be confirmed with qualified Cape Verdean counsel and the competent tax authority.<sup class="kv-cite"><a href="#src-lei-iti" aria-label="Source 1: Código do ITI, art. 6 n.º 3">[1]</a></sup><sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 2: Código do IPI, art. 11 n.º 2">[2]</a></sup> Do not assume the benefits automatically disappeared, nor that every Green Card buyer automatically receives them.</p>
 <hr>
 <h2>What You Should Do</h2>
 <ul>
-<li><strong>If you&#39;re buying in 2026:</strong> Budget for ITI using the rate confirmed for your transaction. Current summaries generally describe ITI as 1% of taxable value, with 3% in privileged-tax-regime cases.</li>
+<li><strong>If you&#39;re buying in 2026:</strong> Budget for ITI at the general 1% rate (3% in privileged-tax-regime cases), applied to the legally assessed base rather than necessarily the purchase price — confirm the base and settlement for your transaction.</li>
 <li><strong>If you already own property:</strong> Monitor whether your municipality conducts a new property valuation under the IPI framework. Your annual tax bill may change depending on property type, taxable value, and any surcharge exposure.</li>
 <li><strong>If you&#39;re selling:</strong> Be aware that the expanded ITI scope covers more types of transactions. Discuss with your lawyer how the new rules apply to your specific situation, particularly if the transaction involves promissory contracts or contractual position assignments.</li>
 <li><strong>In all cases:</strong> Work with a Cape Verdean lawyer who is up to date on the new legislation. The reform is substantial, and the interaction between the two new codes and other elements of the tax system (capital gains, inheritance, Green Card benefits) requires professional guidance.</li>
 </ul>
 <hr>
 <h2>Monitoring the Market</h2>
-<p>Property tax changes affect pricing, yields, and transaction volumes. The Cape Verde Real Estate Index tracks public listings across the Cape Verde market and publishes source-linked market context including median prices by island and tracked inventory levels.</p>
-<p><em>Stay informed at <a href="/market">kazaverde.com/market-data</a></em></p>
+<p>Property tax changes affect pricing and transaction activity. The Cape Verde Real Estate Index tracks public listings across the market and publishes source-linked context, including median <em>asking</em> prices by island and tracked inventory levels.<sup class="kv-cite"><a href="#src-arei-market" aria-label="Source 4: AREI market data">[4]</a></sup></p>
+<p><em>Stay informed at the <a href="/market">market data</a> page.</em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>What is the property transfer tax in Cape Verde?</h3>
-<p>Since January 2026, the transfer tax is called ITI (Imposto sobre a Transmissão de Imóveis). Current tax summaries generally describe ITI as 1% of taxable value, with a 3% rate in privileged-tax-regime cases. Ask a qualified local lawyer to verify the taxable value and applicable rate before completion.</p>
+<p>Since 1 January 2026, the transfer tax is ITI (Imposto sobre a Transmissão de Imóveis). The general rate is 1%, with a 3% rate in cases involving a qualifying privileged-tax regime. Ask a qualified local lawyer to verify the taxable base and applicable rate before completion.</p>
 <h3>What is the annual property tax in Cape Verde?</h3>
-<p>The new annual property tax is called IPI (Imposto sobre a Propriedade de Imóveis). Current summaries generally describe IPI as 0.1% for urban property and 0.15% for land. Surcharges may apply for vacant, ruined/degraded, or unfinished-facade properties.</p>
+<p>The annual property tax is IPI (Imposto sobre a Propriedade de Imóveis). The general rate is 0.1%; a 0.15% rate applies specifically to <em>terrenos para construção</em> (construction land) on a special taxable base set by the law. Statutory uplifts apply to vacant, ruined or degraded urban property and to unfinished principal façades.</p>
 <h3>Do Green Card holders get tax benefits?</h3>
-<p>Yes. <a href="/blog/cape-verde-green-card-residency">Green Card holders</a> may receive transfer-tax and annual property-tax benefits. Verify the specific application with your lawyer, as the transition to the new tax codes may affect implementation.</p>
+<p>The original Green Card framework includes specified tax benefits, and the 2026 ITI and IPI codes preserve remissions established under special legislation. Whether a specific benefit applies to your transaction must be confirmed with a qualified local lawyer and the competent tax authority — it is neither automatically lost nor automatically granted. See the <a href="/blog/cape-verde-green-card-residency">Green Card guide</a>.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full cost breakdown and buying process</li>
-<li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — Tax benefits for property investors</li>
+<li><a href="/blog/cape-verde-green-card-residency">Green Card Residency Program</a> — Tax treatment for property investors</li>
 </ul>
 <hr>
-<p><em>This article is for informational purposes only. Tax legislation is subject to change and interpretation. Always consult a qualified Cape Verdean tax advisor or lawyer for advice specific to your situation.</em></p>
+<!--SOURCES-->
+<hr>
+<p><em>This article is for informational purposes only and does not constitute tax or legal advice. Tax legislation is subject to change and interpretation, and rates apply to a legally assessed taxable base that is not necessarily the purchase price. Always consult a qualified Cape Verdean tax advisor or lawyer for advice specific to your situation.</em></p>
 `,
   },
   {
@@ -557,6 +554,7 @@ const _ALL_BLOG_ARTICLES = [
     title: "Cape Verde Rental Yields: What to Realistically Expect in 2026",
     description: "Rental yield claims in Cape Verde property marketing range from conservative to wildly optimistic. If you're buying property as an investment, you need to understand what drives...",
     date: "2026-02-19",
+    modifiedAt: "2026-06-19",
     readTime: "9 min read",
     tags: ["Investment","Rental","Yields"],
     content: `<p><em>Last updated: February 2026</em></p>
@@ -609,7 +607,7 @@ const _ALL_BLOG_ARTICLES = [
 </tr>
 <tr>
 <td>IPI (annual property tax)</td>
-<td>Generally 0.1% for urban property and 0.15% for land</td>
+<td>0.1% general; 0.15% for construction land, on a special base</td>
 <td>New from Jan 2026</td>
 </tr>
 <tr>
@@ -691,52 +689,52 @@ const _ALL_BLOG_ARTICLES = [
   },
   {
     slug: "cape-verde-green-card-residency",
-    title: "Cape Verde Green Card: How to Get Residency Through Property Investment",
-    description: "Cape Verde's Green Card program offers permanent residency to foreign nationals who invest in real estate on the islands. It's one of the more accessible residency-by-investment...",
+    title: "Cape Verde Green Card: How Residency Through Property Investment Works",
+    description: "Cape Verde's Green Card is a renewable residence authorisation for foreign property investors. How the €80,000/€120,000 thresholds, the five- then ten-year renewal cycle, filing, and tax treatment actually work — checked against primary sources.",
     date: "2026-02-16",
+    modifiedAt: "2026-06-19",
     readTime: "8 min read",
     tags: ["Residency","Investment","Green Card"],
-    content: `<p><em>Last updated: February 2026</em></p>
-<p>Cape Verde&#39;s Green Card program offers permanent residency to foreign nationals who invest in real estate on the islands. It&#39;s one of the more accessible residency-by-investment programs globally — with lower thresholds than most European alternatives, a path to citizenship, and the practical benefits of living in a politically stable, warm-climate country with a euro-pegged currency.</p>
-<p>Here&#39;s how it works.</p>
+    sourceIds: ["lei-greencard", "dr-greencard", "lei-iti", "lei-ipi", "lei-nationality", "arei-listings"],
+    content: `<p><em>Last updated: February 2026. Legal position verified against primary sources (Boletim Oficial) on 19 June 2026.</em></p>
+<p>Cape Verde&#39;s Green Card (<em>Cartão Verde</em>) is a residence authorisation for foreign nationals who invest in real estate on the islands. This guide explains the statutory framework — the renewal cycle, investment thresholds, where applications are filed, the decision process, and the tax treatment — and flags the points that must be confirmed with qualified Cape Verdean counsel.</p>
+<blockquote><p>This is editorial guidance, not legal advice. Residency, nationality, and tax rules are governed by Cape Verdean legislation and applied case by case. Confirm your position with qualified Cape Verdean counsel and the competent authorities before acting.</p></blockquote>
 <hr>
 <h2>What the Green Card Is</h2>
-<p>The Green Card (<em>Cartão Verde</em>) is a permanent residence authorization created under Law No. 30/IX/2018. It grants its holder the right to reside in Cape Verde for an indefinite period. Unlike a visa or temporary permit, it doesn&#39;t need to be renewed periodically — though it comes with conditions around the property investment that underpins it.</p>
-<p>The program was designed to attract foreign investment in real estate and tourism, strengthen the construction industry, and create employment. It positions Cape Verde as a second-home destination with genuine residency benefits.</p>
+<p>The Green Card is a residence title for holders of a second residence in Cape Verde, established by Lei n.º 30/IX/2018 and its implementing regulation, Decreto-Regulamentar n.º 1/2020.<sup class="kv-cite"><a href="#src-lei-greencard" aria-label="Source 1: Lei 30/IX/2018">[1]</a></sup><sup class="kv-cite"><a href="#src-dr-greencard" aria-label="Source 2: Decreto-Regulamentar 1/2020">[2]</a></sup> The statute was created to attract foreign investment in real estate and tourism.<sup class="kv-cite"><a href="#src-lei-greencard" aria-label="Source 1: Lei 30/IX/2018">[1]</a></sup></p>
+<p><strong>The title is subject to renewal.</strong> The Green Card is renewable every five years, and for ten years from the second renewal onward (Lei n.º 30/IX/2018, art. 8.º).<sup class="kv-cite"><a href="#src-lei-greencard" aria-label="Source 1: Lei 30/IX/2018, art. 8">[1]</a></sup> It is not a status that is permanent and never expiring, and it remains tied to the qualifying property investment.</p>
 <hr>
 <h2>Investment Thresholds</h2>
-<p>The minimum property investment required depends on the economic status of the area where you buy:</p>
+<p>The minimum qualifying property investment depends on the economic classification of the municipality where you buy (Lei n.º 30/IX/2018, art. 3.º):<sup class="kv-cite"><a href="#src-lei-greencard" aria-label="Source 1: Lei 30/IX/2018, art. 3">[1]</a></sup></p>
 <table>
 <thead>
 <tr>
-<th>Area Type</th>
-<th>Minimum Investment</th>
-<th>Examples</th>
+<th>Municipality classification</th>
+<th>Minimum qualifying investment</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>Below-average GDP per capita</td>
+<td>GDP per capita below the national average</td>
 <td>€80,000</td>
-<td>Many areas outside major tourist hubs</td>
 </tr>
 <tr>
-<td>Above-average GDP per capita</td>
+<td>GDP per capita equal to or above the national average</td>
 <td>€120,000</td>
-<td>Sal, parts of Boa Vista, central Praia</td>
 </tr>
 </tbody></table>
-<p>These are the minimum property purchase values — the investment must be in real estate located in Cape Verde. The property can be residential, touristic, or commercial.</p>
+<p>The classification is made at municipal level; island GDP is the fallback only where municipal GDP per capita cannot be calculated (Lei n.º 30/IX/2018, art. 3.º).<sup class="kv-cite"><a href="#src-lei-greencard" aria-label="Source 1: Lei 30/IX/2018, art. 3">[1]</a></sup> Which threshold applies to a specific municipality depends on the current official classification, so confirm the applicable figure for your target municipality with your lawyer rather than assuming it from the island or town. The investment must be in real estate located in Cape Verde; the property can be residential, touristic, or commercial.</p>
 <hr>
-<h2>Tax Benefits</h2>
-<p>The Green Card comes with meaningful tax advantages for property owners:</p>
+<h2>Tax Treatment</h2>
+<p>The original Green Card framework provides specified tax benefits — exemption from the former IUP and from IRPS (Lei n.º 30/IX/2018, art. 6.º).<sup class="kv-cite"><a href="#src-lei-greencard" aria-label="Source 1: Lei 30/IX/2018, art. 6">[1]</a></sup> The 2026 ITI and IPI codes preserve benefits established under special legislation (Código do ITI, art. 6.º, n.º 3; Código do IPI, art. 11.º, n.º 2).<sup class="kv-cite"><a href="#src-lei-iti" aria-label="Source 3: Código do ITI, art. 6 n.º 3">[3]</a></sup><sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 4: Código do IPI, art. 11 n.º 2">[4]</a></sup> The codes preserve special-legislation benefits in general terms and do not name the Green Card statute, so whether and how a benefit applies to a particular acquisition should be confirmed with qualified Cape Verdean counsel and the competent tax authority. In practice the benefits at issue can include:</p>
 <ul>
-<li><strong>Transfer tax benefits:</strong> Potential exemption from property transfer tax at the time of purchase. Under the new 2026 tax framework, ITI replaced the old IUP transfer component. Current summaries generally describe ITI as 1% of taxable value, with 3% in privileged-tax-regime cases. Verify the specific application with your lawyer, as the transition to the new tax codes may affect how this benefit is implemented.</li>
-<li><strong>Reduced annual property tax:</strong> A possible reduction in annual property tax for up to ten years, subject to approval by the Municipal Assembly where the property is located. Under the new IPI system (effective January 2026), IPI is generally described as 0.1% for urban property and 0.15% for land.</li>
-<li><strong>Inheritance:</strong> Potential exemptions from property transfer tax on inheritance (<em>mortis causa</em>) succession.</li>
+<li><strong>Transfer tax (ITI):</strong> potential relief on the transfer tax at purchase. The general ITI rate is 1%, with 3% in cases involving a qualifying privileged-tax regime (Código do ITI, art. 11.º).<sup class="kv-cite"><a href="#src-lei-iti" aria-label="Source 3: Código do ITI, art. 11">[3]</a></sup></li>
+<li><strong>Annual property tax (IPI):</strong> a possible reduction in the annual property tax for a defined period, where granted by the competent municipal body. The general IPI rate is 0.1% (Código do IPI, art. 28.º).<sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 4: Código do IPI, art. 28">[4]</a></sup></li>
+<li><strong>Inheritance:</strong> possible relief on transfer tax in <em>mortis causa</em> succession.</li>
 </ul>
+<p>Do not assume that every benefit automatically disappeared under the 2026 reform, nor that every Green Card buyer automatically receives them. The availability and administrative application of a benefit in an individual transaction must be confirmed with qualified Cape Verdean counsel and the competent tax authority. See the <a href="/blog/cape-verde-property-tax-reform-2026">2026 tax reform guide</a> for how the codes are structured.</p>
 <hr>
 <h2>Requirements and Application</h2>
-<p>To apply for the Green Card, you&#39;ll need:</p>
+<p>Documentation typically requested includes:</p>
 <ul>
 <li>A valid passport</li>
 <li>Criminal record certificates (from your home country and any countries of recent residence)</li>
@@ -747,87 +745,45 @@ const _ALL_BLOG_ARTICLES = [
 <li>Property registration certificates</li>
 <li>Construction contract (if the investment is in a property under construction)</li>
 </ul>
-<p>Applications are submitted to the Ministry of Tourism and Transport (MTT). Processing times vary but are generally shorter than comparable European programs.</p>
+<p>Under the implementing regulation, Casa do Cidadão is designated as the single counter (Balcão Único Green Card), and the Direção de Estrangeiros e Fronteiras (DEF) is the competent authority for the decision and issuance (Decreto-Regulamentar n.º 1/2020, art. 3.º).<sup class="kv-cite"><a href="#src-dr-greencard" aria-label="Source 2: Decreto-Regulamentar 1/2020, art. 3">[2]</a></sup> The DEF decides on a Green Card application within fifteen days, counted from receipt of the documents specified in the regulation (art. 14.º).<sup class="kv-cite"><a href="#src-dr-greencard" aria-label="Source 2: Decreto-Regulamentar 1/2020, art. 14">[2]</a></sup> That statutory decision window is not the same as an end-to-end timeline: document preparation, routing, any deficiencies, and issuance can add time before and after the decision period runs.</p>
 <hr>
 <h2>Path to Citizenship</h2>
-<p>After five years of habitual residency in Cape Verde as a Green Card holder, you can apply for Cape Verdean citizenship. This is a genuine path to a second passport, which provides visa-free or visa-on-arrival access to a range of countries and territories.</p>
-<p>&quot;Habitual residency&quot; means actually spending time in Cape Verde — it doesn&#39;t mean you need to be there 365 days a year, but you need to demonstrate genuine residence, not just property ownership.</p>
+<p>The Green Card does not automatically produce citizenship. A holder may potentially apply for naturalisation after satisfying the generally applicable statutory residence requirement and all other nationality-law conditions. Citizenship is neither automatic nor guaranteed by the Green Card.<sup class="kv-cite"><a href="#src-lei-nationality" aria-label="Source 5: Lei 33/X/2023">[5]</a></sup></p>
+<p>Under the nationality law, naturalisation requires legally residing in Cape Verde for at least five years, alongside the other cumulative statutory conditions (Lei n.º 33/X/2023, art. 13.º, n.º 1, al. a)).<sup class="kv-cite"><a href="#src-lei-nationality" aria-label="Source 5: Lei 33/X/2023, art. 13 n.º 1 a)">[5]</a></sup> &quot;Legal residence&quot; means genuine, documented residence — not merely owning property. Confirm the current conditions with Cape Verdean counsel.</p>
 <hr>
 <h2>Practical Considerations</h2>
 <ul>
-<li><strong>This isn&#39;t just a paperwork exercise.</strong> The Green Card is designed for people who will actually spend time in Cape Verde. If your sole interest is a paper residency with no intention of visiting, this may not be the right program — and authorities can assess whether the residency is genuine.</li>
-<li><strong>The property must be a real investment.</strong> It must meet the minimum threshold, be properly registered, and the funds must demonstrably come from abroad. This isn&#39;t a program you can game with a token purchase.</li>
-<li><strong>Tax implications in your home country.</strong> Becoming a tax resident of Cape Verde may have implications for your tax obligations at home. Some countries tax their citizens or residents on worldwide income regardless of where they live. There is no double taxation agreement between Cape Verde and many countries (including the UK). Consult a tax advisor in your home country before committing.</li>
-<li><strong>Healthcare and services.</strong> Cape Verde&#39;s healthcare system is improving but remains limited compared to European standards, particularly on smaller islands. Many foreign residents maintain international health insurance or plan to travel to Europe or the mainland for significant medical needs.</li>
-<li><strong>Cost of living.</strong> Cape Verde offers a lower cost of living than most of Western Europe, particularly for housing, dining, and services. However, imported goods can be expensive, and availability varies by island.</li>
+<li><strong>This isn&#39;t just a paperwork exercise.</strong> The Green Card is tied to a real investment and is designed for people who will spend time in Cape Verde; authorities can assess whether the residence is genuine.</li>
+<li><strong>The property must be a real investment.</strong> It must meet the minimum threshold, be properly registered, and the funds must demonstrably come from abroad.</li>
+<li><strong>Tax implications in your home country.</strong> Becoming a tax resident of Cape Verde may affect your tax obligations at home, and Cape Verde&#39;s double-taxation treaty network is limited. Whether a treaty applies to your country of residence should be confirmed with a tax advisor in that country before committing.</li>
+<li><strong>Healthcare and services.</strong> Health-care provision varies by island, and many foreign residents maintain international health insurance and plan for travel for specialist care. Confirm current local provision for the specific island you are considering rather than assuming a single nationwide standard.</li>
+<li><strong>Cost of living.</strong> Day-to-day costs are generally lower than in much of Western Europe, though imported goods can be expensive and availability varies by island.</li>
 </ul>
 <hr>
-<h2>Green Card vs. Other Options</h2>
-<p>For context, here&#39;s how Cape Verde&#39;s program compares to better-known alternatives:</p>
-<table>
-<thead>
-<tr>
-<th>Program</th>
-<th>Min. Investment</th>
-<th>Residency Type</th>
-<th>Path to Citizenship</th>
-<th>Climate</th>
-</tr>
-</thead>
-<tbody><tr>
-<td><strong>Cape Verde Green Card</strong></td>
-<td>€80,000–120,000</td>
-<td>Permanent</td>
-<td>5 years</td>
-<td>Year-round warm</td>
-</tr>
-<tr>
-<td>Portugal Golden Visa (fund route)</td>
-<td>€500,000</td>
-<td>Temporary (renewable)</td>
-<td>5 years</td>
-<td>Mediterranean</td>
-</tr>
-<tr>
-<td>Spain Non-Lucrative Visa</td>
-<td>No minimum (income req.)</td>
-<td>Temporary (renewable)</td>
-<td>10 years</td>
-<td>Mediterranean</td>
-</tr>
-<tr>
-<td>Greece Golden Visa</td>
-<td>€250,000–800,000</td>
-<td>5-year renewable</td>
-<td>7 years</td>
-<td>Mediterranean</td>
-</tr>
-</tbody></table>
-<p>Cape Verde&#39;s lower entry point makes it accessible to a wider range of investors. The permanent residency (rather than renewable temporary permits) is also a distinguishing feature.</p>
-<hr>
 <h2>Finding Properties That Qualify</h2>
-<p>Not every listing on the market will meet the Green Card investment threshold — particularly at the €80,000 level, where options are more limited. Use <a href="https://kazaverde.com">Cape Verde Real Estate Index</a> to filter properties by price range and island to identify which listings fall within the qualifying investment bands.</p>
-<p>Keep in mind that the threshold applies to the property purchase value, and that the area classification (above or below average GDP per capita) determines which threshold applies. Your lawyer can confirm the classification for any specific property or area.</p>
-<p><em>Search properties at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
+<p>Not every listing meets a Green Card threshold — particularly at the €80,000 level, where options are more limited. You can filter <a href="/listings">tracked listings</a> by price range and island to see which monitored asking prices fall within the qualifying bands.</p>
+<blockquote><p><strong>Based on monitored asking-price listings. Not transaction prices or valuations.</strong> A listing&#39;s asking price is not the qualifying investment value; your lawyer confirms both the price that counts and the municipal classification that sets your threshold.<sup class="kv-cite"><a href="#src-arei-listings" aria-label="Source 6: AREI listings">[6]</a></sup></p></blockquote>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>How much do I need to invest for Cape Verde residency?</h3>
-<p>The minimum investment is €80,000 for properties in areas with below-average GDP per capita, or €120,000 in higher-GDP areas like Sal. The investment must be in real estate located in Cape Verde, and funds must demonstrably come from abroad.</p>
+<p>The qualifying minimum is €80,000 where the municipality&#39;s GDP per capita is below the national average, or €120,000 where it is equal to or above the national average. Island GDP is used only as a fallback where municipal GDP cannot be calculated. The investment must be in Cape Verdean real estate, with funds demonstrably from abroad. Confirm the classification for your target municipality with a lawyer.</p>
+<h3>Does the Green Card need to be renewed?</h3>
+<p>Yes. The Green Card is renewed every five years initially, and from the second renewal onward the applicable period is ten years. It is not a permanent, never-expiring status, and it stays tied to the qualifying property investment.</p>
 <h3>Can I get Cape Verde citizenship through property investment?</h3>
-<p>Yes. After five years of habitual residency as a Green Card holder, you can apply for Cape Verdean citizenship. &quot;Habitual residency&quot; means actually spending time in Cape Verde, not just owning property.</p>
+<p>Not automatically. Under the nationality law, naturalisation requires legally residing in Cape Verde for at least five years, plus further cumulative statutory conditions (Lei n.º 33/X/2023, art. 13.º, n.º 1, al. a)); only then may a holder apply. Citizenship is neither automatic nor guaranteed by the Green Card. Confirm the current conditions with Cape Verdean counsel.</p>
 <h3>What tax benefits does the Green Card provide?</h3>
-<p>Green Card holders may receive transfer-tax and annual property-tax benefits, but the exact treatment under ITI and IPI should be verified with a qualified local lawyer. See our <a href="/blog/cape-verde-property-tax-reform-2026">2026 tax reform guide</a> for how the new tax codes interact with these benefits.</p>
-<h3>How does Cape Verde compare to Portugal&#39;s Golden Visa?</h3>
-<p>Cape Verde&#39;s entry point is significantly lower (€80,000–€120,000 vs €500,000 for Portugal&#39;s fund route). Cape Verde grants permanent residency directly (vs temporary for Portugal), and both offer citizenship after 5 years of residency.</p>
+<p>The original framework includes specified tax benefits, and the 2026 ITI and IPI codes preserve remissions established under special legislation. Whether a specific benefit applies to your transaction must be confirmed with a qualified local lawyer and the competent tax authority. See the <a href="/blog/cape-verde-property-tax-reform-2026">2026 tax reform guide</a>.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Step-by-step process for qualifying purchases</li>
 <li><a href="/blog/cape-verde-property-tax-reform-2026">2026 Property Tax Reform</a> — Updated tax framework affecting Green Card benefits</li>
-<li><a href="/blog/which-cape-verde-island-property">Which Island Should You Buy On?</a> — Investment thresholds vary by island GDP classification</li>
+<li><a href="/blog/which-cape-verde-island-property">Which Island Should You Buy On?</a> — Investment thresholds vary by municipal GDP classification</li>
 </ul>
 <hr>
-<p><em>This article is for informational purposes only. Immigration laws, tax benefits, and program requirements may change. Always consult a qualified Cape Verdean lawyer and a tax advisor in your home country before making decisions about residency or property investment.</em></p>
+<!--SOURCES-->
+<hr>
+<p><em>This article is for informational purposes only and does not constitute legal, immigration, or tax advice. Immigration, nationality, and tax rules may change and are applied case by case. Always consult qualified Cape Verdean counsel and a tax advisor in your home country before making decisions about residency or property investment.</em></p>
 `,
   },
   {
@@ -835,6 +791,7 @@ const _ALL_BLOG_ARTICLES = [
     title: "7 Expensive Mistakes to Avoid When Buying Property in Cape Verde",
     description: "Cape Verde's property market is accessible, the buying process is relatively straightforward, and the legal framework provides solid protections for foreign buyers. But \"relativ...",
     date: "2026-02-13",
+    modifiedAt: "2026-06-19",
     readTime: "10 min read",
     tags: ["Buying","Mistakes","Guide"],
     content: `<p><em>Last updated: February 2026</em></p>
@@ -846,14 +803,14 @@ const _ALL_BLOG_ARTICLES = [
 <p>Some buyers rely on the seller&#39;s lawyer or the developer&#39;s legal team to handle the transaction. Others skip legal representation entirely, assuming the estate agent or notary will protect their interests. Neither is true.</p>
 <p>An independent lawyer — one who works exclusively for you, with no relationship to the seller or agent — will:</p>
 <ul>
-<li>Verify ownership through the CIP (property identification certificate)</li>
+<li>Verify ownership through the official registry and tax-office records (typically a <em>certidão de registo predial</em> and a <em>certidão matricial</em>)</li>
 <li>Check for outstanding debts and mortgages</li>
 <li>Review the ITI/IPI position, municipal tax settlement status, and any historic IUP issues before 2026</li>
 <li>Verify that community charges are paid</li>
 <li>Review all contracts before you sign</li>
 <li>Ensure the title transfer is properly registered</li>
 </ul>
-<p>Cost: €500–1,500. The cost of the problems they prevent: potentially the entire value of your investment.</p>
+<p>Agree the lawyer's scope and fee in writing before instructing. The cost of independent legal advice is modest relative to the problems it prevents — potentially the entire value of your investment.</p>
 <hr>
 <h2>2. Ignoring the Valor Patrimonial</h2>
 <p>The <em>Valor Patrimonial</em> is the officially assessed value of a property, set by the local municipality. It can affect property taxes and transfer taxes. Here&#39;s the problem: many properties in Cape Verde — particularly those in developments built during the pre-2008 construction boom — may have municipal values that do not match their current market price.</p>
@@ -862,7 +819,7 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>3. Paying Deposits on Unfinished Developments Without Protection</h2>
 <p>Off-plan purchases — buying a property that hasn&#39;t been built yet — can offer lower prices and the ability to choose finishes. They also carry significantly more risk than buying an existing property.</p>
-<p>Developers in Cape Verde range from well-capitalized, experienced operators to smaller outfits with limited track records. Construction delays are common. In worst-case scenarios, developments have stalled entirely, leaving buyers with deposits paid and no property.</p>
+<p>Developers in Cape Verde range from well-capitalized, experienced operators to smaller outfits with limited track records. Construction delays can and do occur, and in some cases — particularly developments started during the pre-2008 boom — projects have stalled entirely, leaving buyers with deposits paid and no property. Model the possibility of delay rather than assuming on-time delivery.</p>
 <p>If you&#39;re buying off-plan, your lawyer should verify the developer&#39;s track record and financial stability, ensure the land ownership and building permits are in order, review the contract for protections — stage-payment schedules tied to construction milestones (not arbitrary dates), clear remedies if the developer defaults, and specifications for finishes and quality standards, and confirm whether a bank guarantee protects your deposit. Never pay a lump sum upfront for an unfinished property.</p>
 <hr>
 <h2>4. Not Understanding the Rental Scheme Terms</h2>
@@ -879,7 +836,7 @@ const _ALL_BLOG_ARTICLES = [
 <h2>5. Underestimating Ongoing Costs</h2>
 <p>Buying the property is only the beginning. Cape Verde&#39;s tropical maritime climate — warm, humid, salty air — accelerates deterioration of everything from paint and plaster to electrical systems and appliances. Budget for reality, not optimism.</p>
 <p>Annual costs that buyers frequently underestimate:</p>
-<p>Condominium and service charges typically run €600–2,000+ per year and tend to increase over time. Maintenance in a salt-air environment requires more frequent attention than similar properties in temperate climates. Air conditioning units, water heaters, and appliances have shorter lifespans. Even if you&#39;re in a rental scheme, you&#39;re typically responsible for your unit&#39;s contents, appliances, and periodic refurbishment. The new IPI annual property tax (from January 2026) adds a predictable but ongoing obligation. And if you&#39;re not using the property regularly, someone needs to check on it — whether that&#39;s a management company, a local property manager, or a trusted contact.</p>
+<p>Condominium and service charges are set by the development and tend to increase over time — confirm the current figure and recent history with the condominium administration rather than assuming a market-wide number. Maintenance in a salt-air environment requires more frequent attention than similar properties in temperate climates. Air conditioning units, water heaters, and appliances have shorter lifespans. Even if you&#39;re in a rental scheme, you&#39;re usually responsible for your unit&#39;s contents, appliances, and periodic refurbishment. The new IPI annual property tax (from January 2026) adds a predictable but ongoing obligation. And if you&#39;re not using the property regularly, someone needs to check on it — whether that&#39;s a management company, a local property manager, or a trusted contact.</p>
 <p>Build a realistic annual operating budget before you buy, and stress-test your investment return calculations against it.</p>
 <hr>
 <h2>6. Not Visiting the Island First</h2>
@@ -894,14 +851,14 @@ const _ALL_BLOG_ARTICLES = [
 <ul>
 <li><strong>Inheritance law.</strong> Cape Verde has rules around forced heirs, though foreign nationals can generally dispose of property freely by testament, provided the will contains a declaration that their personal law governs. But if you die without a valid Cape Verdean will, the estate is distributed according to the law of your country of nationality — which may not match your intentions. Get a Cape Verdean will prepared even if you have one at home.</li>
 <li><strong>No double taxation agreements with many countries.</strong> Cape Verde has limited double taxation treaties, meaning income, capital gains, or inheritance from your property may be taxed in both Cape Verde and your home country. Plan for this with a tax advisor who understands both jurisdictions.</li>
-<li><strong>The notary system.</strong> All property transfers must be formalized through a notary (<em>Cartório Notarial</em>), who serves as a neutral public official verifying the legality of the transaction. This provides strong protection but also means the process follows specific procedural requirements that your lawyer will navigate.</li>
+<li><strong>The notary and registry system.</strong> The definitive transfer instrument must satisfy the applicable legal, authentication, tax, and land-registration requirements, and a notary (<em>Cartório Notarial</em>) commonly plays a central role as a neutral public official. The correct instrument and procedure for your transaction should be confirmed by your lawyer, notary, and the registry — the process follows specific procedural requirements that your lawyer will navigate.</li>
 <li><strong>Power of Attorney.</strong> If you can&#39;t be present for all stages of the transaction, a <em>procuração</em> (power of attorney) is essential. It must be properly notarized and, if executed abroad, may need to be apostilled. Plan for this early — don&#39;t leave it to the last minute.</li>
 </ul>
 <hr>
 <h2>The Common Thread</h2>
 <p>Most of these mistakes share a root cause: insufficient preparation and professional advice. Cape Verde property can be a rewarding investment, but the market is small, information is fragmented, and the legal and tax environment requires local expertise.</p>
-<p>Do your research. Use tools like <a href="https://kazaverde.com">Cape Verde Real Estate Index</a> to understand the market landscape — what&#39;s available, at what prices, on which islands. Then engage qualified local professionals before committing capital.</p>
-<p><em>Browse current listings at <a href="https://kazaverde.com">kazaverde.com</a></em></p>
+<p>Do your research. Use tools like the <a href="/listings">Cape Verde Real Estate Index</a> to understand the market landscape — what&#39;s available, at what asking prices, on which islands. Then engage qualified local professionals before committing capital.</p>
+<p><em>Browse current listings on the <a href="/listings">index</a>.</em></p>
 <hr>
 <h2>Frequently Asked Questions</h2>
 <h3>Is it safe to buy property in Cape Verde as a foreigner?</h3>
@@ -917,6 +874,8 @@ const _ALL_BLOG_ARTICLES = [
 <li><a href="/blog/which-cape-verde-island-property">Which Island Should You Buy On?</a> — Compare islands before committing</li>
 </ul>
 <hr>
+<!--SOURCES-->
+<hr>
 <p><em>This article is for informational purposes only and does not constitute legal or financial advice. Always consult qualified local professionals before purchasing property in Cape Verde.</em></p>
 `,
   },
@@ -925,8 +884,10 @@ const _ALL_BLOG_ARTICLES = [
     title: "Sal vs Santiago: Which Cape Verde Island Makes Sense for Property Buyers?",
     description: "Sal and Santiago are Cape Verde's two most active property markets, but they serve fundamentally different buyer profiles. One is built around tourism; the other is the country's...",
     date: "2026-03-10",
+    modifiedAt: "2026-06-19",
     readTime: "8 min read",
     tags: ["Sal", "Santiago", "Comparison"],
+    sourceIds: ["arei-market", "lei-ipi"],
     content: `<p><em>Last updated: March 2026</em></p>
 <p>Sal and Santiago are Cape Verde's two most active property markets, but they serve fundamentally different buyer profiles. One is built around tourism; the other is the country's economic and political capital. Treating them as interchangeable options is a common error.</p>
 <p>This comparison breaks down the decision factors so you can match the island to your actual goal.</p>
@@ -939,20 +900,19 @@ const _ALL_BLOG_ARTICLES = [
 <h2>Sal: The Tourism Market</h2>
 <h3>What the market looks like</h3>
 <p>Sal's property activity is concentrated in and around Santa Maria, a beach resort town on the southern tip of the island. It has direct international flights from the UK, Portugal, Germany, the Netherlands, and other European countries — which is the fundamental infrastructure underpinning demand.</p>
-<p>Property types are predominantly apartments and units within resort complexes. Standalone villas exist but are less common than on some other islands. Entry prices for a one-bedroom apartment in a resort complex start around €95,000–€110,000; two-bedroom units typically range from €130,000 to €200,000; premium ocean-facing properties go higher.</p>
-<p>Prices have tracked upward in recent years — 10–15% annual appreciation has been reported for well-located properties — driven by steady tourism growth and limited new supply in established zones.</p>
+<p>Property types are predominantly apartments and units within resort complexes. Standalone villas exist but are less common than on some other islands. For current asking-price context, see the live <a href="/market">market data</a> and <a href="/blog/cape-verde-property-prices-by-island">prices by island</a> — these are monitored asking-price listings, not transaction prices or valuations.<sup class="kv-cite"><a href="#src-arei-market" aria-label="Source 1: AREI market data">[1]</a></sup></p>
 <h3>Rental market</h3>
 <p>Sal has the strongest short-term rental market in Cape Verde. International tourist volume provides a large pool of potential guests, and the infrastructure to serve them (tour operators, online booking platforms, airport transfers) is mature.</p>
-<p>Gross rental yields quoted by developers and agents typically fall in the 5–8% range. Net yields — after management fees (25–35% of gross), annual service charges, maintenance, and the new IPI annual property tax — are meaningfully lower. IPI is generally described as 0.1% for urban property and 0.15% for land, with possible surcharges for vacant, ruined/degraded, or unfinished-facade properties. A realistic net yield for a well-managed property in a good resort complex is 3–5%.</p>
+<p>Gross rental yields cited by developers and agents should be treated as provider quotations to verify, not market facts, and net yields are lower once management fees, service charges, maintenance, and the annual IPI are deducted. Ask for the assumptions and the management-fee percentage behind any quoted figure. The general IPI rate is 0.1%, with 0.15% applying specifically to <em>terrenos para construção</em> (construction land) on a special base; the rate is increased by 25% for vacant, ruined or degraded urban property and by 10% for unfinished principal façades (Código do IPI, arts. 23.º, 24.º, 28.º).<sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 2: Código do IPI">[2]</a></sup></p>
 <p>Seasonality is moderate on Sal relative to other islands — European winter sun demand helps smooth the calendar — but July and August can be slower as European tourists gravitate toward Mediterranean destinations.</p>
 <h3>Liquidity</h3>
-<p>Sal is the most liquid property market in Cape Verde. There is an established resale market, international buyer interest is ongoing, and real estate agents with marketing reach to European buyers are well-represented. If you need to exit, Sal gives you the best chance of finding a buyer in a reasonable timeframe.</p>
+<p>Sal has an established resale market, ongoing international buyer interest, and real estate agents with marketing reach to European buyers — and it carries the deepest tracked listing sample in the index. In practice that tends to give a wider buyer pool than the more domestically-driven islands if you need to exit, though actual time-to-sell depends on the property, price, and conditions at the time.</p>
 <h3>Who Sal suits</h3>
 <ul>
 <li>Buyers whose primary objective is rental income from tourist lets</li>
 <li>Holiday home buyers who want guaranteed access to beach infrastructure and restaurants</li>
 <li>Investors who want the most established and liquid market in Cape Verde</li>
-<li>Buyers applying for the Green Card (Sal qualifies as a higher-GDP area, requiring €120,000 minimum)</li>
+<li>Buyers applying for the Green Card (confirm the target municipality's GDP classification — and so the €80,000 or €120,000 threshold — with a lawyer)</li>
 </ul>
 <hr>
 <h2>Santiago: The Diversified Market</h2>
@@ -1042,7 +1002,7 @@ const _ALL_BLOG_ARTICLES = [
 </ul>
 <hr>
 <h2>Browsing Current Listings</h2>
-<p><a href="/listings/sal">Browse current Sal properties</a> and <a href="/listings/boa-vista">Boa Vista properties</a> on the Cape Verde Real Estate Index. Santiago listings are included in the main search index at <a href="https://kazaverde.com">kazaverde.com</a>.</p>
+<p><a href="/listings/sal">Browse current Sal properties</a> and <a href="/listings/boa-vista">Boa Vista properties</a> on the Cape Verde Real Estate Index. Santiago listings are included in the main <a href="/listings">search index</a>.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
@@ -1050,6 +1010,8 @@ const _ALL_BLOG_ARTICLES = [
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full buying process for foreign buyers</li>
 <li><a href="/blog/boa-vista-property-guide">Boa Vista Property Guide</a> — The third option between Sal's prices and Santiago's profile</li>
 </ul>
+<hr>
+<!--SOURCES-->
 <hr>
 <p><em>This article is for informational purposes only and does not constitute financial or legal advice. Market conditions change. Always consult qualified local professionals before making any property investment.</em></p>
 `,
@@ -1059,6 +1021,7 @@ const _ALL_BLOG_ARTICLES = [
     title: "Buying Off-Plan Property in Cape Verde: Risks, Protections, and What to Check",
     description: "Off-plan purchases — buying a property before or during construction — are common in Cape Verde, particularly in resort developments on Sal and Boa Vista. The potential advantages...",
     date: "2026-03-17",
+    modifiedAt: "2026-06-19",
     readTime: "9 min read",
     tags: ["Off-Plan", "Risk", "Legal"],
     content: `<p><em>Last updated: March 2026</em></p>
@@ -1072,9 +1035,9 @@ const _ALL_BLOG_ARTICLES = [
 <h2>The Main Risks</h2>
 <h3>1. Construction Delays</h3>
 <p>The most common off-plan problem in Cape Verde is not outright failure — it's delay. A development promised for completion in 18 months takes three years. This has cascading consequences: your capital is committed, you're earning no rental income, the rental market position you bought into may have changed, and any financing arrangements are under strain.</p>
-<p>Delays in Cape Verde often stem from supply chain issues (most construction materials are imported), contractor capacity, regulatory approvals, and occasionally developer cashflow problems. Build a delay assumption into your financial model — 6–12 months beyond the stated completion date is a conservative but realistic buffer.</p>
+<p>Delays can stem from supply-chain issues (most construction materials are imported), contractor capacity, regulatory approvals, and occasionally developer cashflow problems. Model a range of delay scenarios rather than assuming the stated completion date, and stress-test what a materially later handover would do to your cashflow and rental plans.</p>
 <h3>2. Developer Financial Risk</h3>
-<p>Off-plan buyers are unsecured creditors if a developer becomes insolvent. Several Cape Verde developments, particularly those started during the pre-2008 tourism boom, stalled or failed entirely when developer financing collapsed. Buyers who had paid deposits or stage payments had limited legal recourse and, in some cases, lost their funds entirely.</p>
+<p>If a developer becomes insolvent, an off-plan buyer's legal position depends on the specific contract, what is registered, any guarantees or security in place, the payment structure, and applicable insolvency law — it is not automatically that of a secured creditor, and without protections a buyer may rank as an unsecured creditor. Several Cape Verde developments, particularly those started during the pre-2008 tourism boom, stalled or failed when developer financing collapsed, and buyers who had paid deposits or stage payments had limited legal recourse — in some cases losing their funds. Ask your lawyer exactly where you would rank, and what would secure your money, before paying anything.</p>
 <p>This risk has not disappeared. Smaller developers with shallow balance sheets, projects dependent on continued pre-sales for construction financing, and developments without bank-guaranteed stage payments all carry meaningful insolvency risk.</p>
 <h3>3. Specification Changes</h3>
 <p>The finished property may differ from what was sold. Developers have been known to substitute finishes, change unit configurations, reduce common area facilities, or modify the rental scheme terms between sale and completion. Without strong contractual protections, buyers have limited grounds for recourse on changes that fall short of a fundamental breach.</p>
@@ -1088,8 +1051,8 @@ const _ALL_BLOG_ARTICLES = [
 <h2>Protections to Demand</h2>
 <p>The following protections are not automatically included in off-plan contracts. You need to negotiate for them, and if a developer refuses to provide them, treat that as a significant warning signal.</p>
 <h3>Bank Guarantee on Stage Payments</h3>
-<p>The strongest protection available is a bank guarantee covering your stage payments. Under this structure, a Cape Verdean bank guarantees to return your payments if the developer fails to complete the property as contracted. Not all developers offer this — it costs them money and requires their own banking relationships to support it — but it is the standard in reputable developments.</p>
-<p>If a developer cannot or will not provide a bank guarantee, your financial exposure is the full amount of any payments made, recoverable only through litigation against a potentially insolvent entity.</p>
+<p>Ask independent counsel whether an enforceable on-demand guarantee, an escrow or deposit arrangement, registered security, a staged-payment mechanism, or another form of protection is available for the specific project. One strong form is a bank guarantee covering your stage payments, under which a Cape Verdean bank undertakes to return your payments if the developer fails to complete as contracted — but do not assume any such protection is standard or will be offered. Whether it is available depends on the developer and the project.</p>
+<p>If no enforceable protection is in place, your financial exposure can be the full amount of any payments made, recoverable only through litigation against a potentially insolvent entity. Treat the absence of any protection as a significant warning signal.</p>
 <h3>Stage Payments Tied to Measurable Milestones</h3>
 <p>Payment schedules should be tied to verifiable construction milestones — foundation complete, structure complete, shell complete, fit-out complete — not to calendar dates or percentages of time elapsed. Calendar-based payment schedules benefit the developer regardless of construction progress.</p>
 <p>Ensure each milestone can be independently verified. Your lawyer or an independent inspector should confirm each stage before you release payment.</p>
@@ -1123,8 +1086,8 @@ const _ALL_BLOG_ARTICLES = [
 <li>What is the developer's relationship with their construction contractor? Are they building in-house or through a general contractor?</li>
 </ul>
 <hr>
-<h2>Payment Structure: What Is Normal</h2>
-<p>Typical off-plan payment structures in Cape Verde look approximately like this:</p>
+<h2>Payment Structure: A Common Shape</h2>
+<p>Off-plan payment structures vary by developer and contract; one illustrative shape, to compare against what you are actually offered, is:</p>
 <table>
 <thead>
 <tr>
@@ -1159,8 +1122,8 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>The Bottom Line</h2>
 <p>Off-plan purchasing in Cape Verde is legitimate and can be financially rational — but the risk profile is materially higher than buying a completed property. The due diligence required is more extensive, the legal protections matter more, and developer quality is the central variable.</p>
-<p>Never buy off-plan without an independent Cape Verdean lawyer reviewing the full contract before you sign anything or pay any deposit. The cost of legal advice is trivial relative to the capital at risk.</p>
-<p><em>Browse completed resale properties at <a href="https://www.africarealestateindex.com">AREI</a></em></p>
+<p>Never buy off-plan without an independent Cape Verdean lawyer reviewing the full contract before you sign anything or pay any deposit. The cost of legal advice is modest relative to the capital at risk.</p>
+<p><em>Browse current listings on the <a href="/listings">index</a>.</em></p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
@@ -1168,7 +1131,9 @@ const _ALL_BLOG_ARTICLES = [
 <li><a href="/blog/mistakes-buying-property-cape-verde">7 Mistakes Buyers Make in Cape Verde</a> — Common errors and how to avoid them</li>
 </ul>
 <hr>
-<p><em>This article is for informational purposes only and does not constitute legal or financial advice. Always consult a qualified Cape Verdean lawyer before entering any property contract.</em></p>
+<!--SOURCES-->
+<hr>
+<p><em>This article is for informational purposes only and does not constitute legal or financial advice. The legal status and protections of an off-plan buyer depend on the contract, registrations, guarantees, and applicable insolvency law. Always consult a qualified Cape Verdean lawyer before entering any property contract.</em></p>
 `,
   },
   {
@@ -1176,8 +1141,10 @@ const _ALL_BLOG_ARTICLES = [
     title: "Managing Property in Cape Verde Remotely: A Guide for Foreign Owners",
     description: "Most foreign buyers in Cape Verde do not live on the island where their property is located. Managing a property from another country adds a layer of operational complexity...",
     date: "2026-03-24",
+    modifiedAt: "2026-06-19",
     readTime: "8 min read",
     tags: ["Management", "Investment", "Remote"],
+    sourceIds: ["lei-ipi"],
     content: `<p><em>Last updated: March 2026</em></p>
 <p>Most foreign buyers in Cape Verde do not live on the island where their property is located. Managing a property from another country adds a layer of operational complexity that is easy to underestimate during the buying process and painful to discover afterward.</p>
 <p>This guide covers the management options available, what each costs, the risks of remote ownership in Cape Verde's specific climate and market context, and what to look for when selecting a management arrangement.</p>
@@ -1187,72 +1154,73 @@ const _ALL_BLOG_ARTICLES = [
 <p><strong>Climate.</strong> The tropical maritime environment — consistent heat, salt air, periodic heavy rain, and high humidity — accelerates deterioration faster than most European climates. Paint, plaster, metalwork, electrical systems, appliances, and outdoor surfaces all degrade faster. A property left unvisited for six months in Cape Verde will show more wear than a comparable property in northern Europe left for the same period.</p>
 <p><strong>Distance and logistics.</strong> Physical distance from the islands means that minor issues (a leaking pipe, a broken appliance, an air conditioning unit failure) that could be resolved in a day in your home country can take weeks if there is no competent local party managing the response. Contractors and tradespeople need to be found, scheduled, and supervised — all remotely.</p>
 <p><strong>Language.</strong> While many people in the tourism sector speak English, operational property management — communicating with service contractors, local utility providers, municipal offices — is conducted in Cape Verdean Creole and Portuguese. Non-speakers are dependent on intermediaries for almost all operational communication.</p>
-<p><strong>Market fragmentation.</strong> There is no MLS-style market infrastructure, no standardized property management licensing, and relatively few established property management firms with a track record. Vetting a management provider requires more effort than in mature property markets.</p>
+<p><strong>Market fragmentation.</strong> There is no MLS-style market infrastructure and relatively few established property management firms with a long track record, so vetting a provider takes more effort than in mature markets. Do not assume a particular licensing or regulatory regime applies to property managers either way — confirm any applicable registration, licensing, or authorisation requirements with the competent authorities rather than relying on an assumption that there are none.</p>
 <hr>
 <h2>Management Options</h2>
 <h3>Option 1: Resort/Hotel Rental Scheme</h3>
 <p>The most common arrangement for foreign buyers in resort developments on Sal and Boa Vista. The development's management company handles everything — guest marketing and bookings, check-in, cleaning, maintenance, and minor repairs — in exchange for a percentage of gross rental income.</p>
-<p><strong>Management fee:</strong> Typically 25–35% of gross rental income. Some schemes structure this differently (fixed fee plus percentage, or tiered based on occupancy), so read the contract carefully.</p>
-<p><strong>What's covered:</strong> Day-to-day operational management, guest services, routine cleaning and maintenance. Usually covers minor repairs below a threshold (often €50–100 per incident). Major repairs, appliance replacements, and capital expenditure are typically the owner's responsibility.</p>
+<p><strong>Management fee:</strong> charged as a percentage of gross rental income, and sometimes structured differently (fixed fee plus percentage, or tiered by occupancy). Fee levels vary by operator — get the exact percentage and structure in writing and read the contract carefully rather than relying on a market-wide figure.</p>
+<p><strong>What's covered:</strong> Day-to-day operational management, guest services, and routine cleaning and maintenance, usually including minor repairs below a contractually defined threshold. Major repairs, appliance replacements, and capital expenditure are typically the owner's responsibility — confirm the threshold and exclusions in the contract.</p>
 <p><strong>What's not covered:</strong> Owners typically remain responsible for annual community/service charges, insurance, their share of any major building repairs approved by the owners' association, and periodic refurbishment cycles. In some schemes, owners must pay for an approved furniture package and meet refurbishment standards at defined intervals.</p>
 <p><strong>Practical reality:</strong> The quality of hotel rental schemes varies enormously between developments and management companies. The same headline fee structure can produce vastly different outcomes depending on the operator's occupancy rates, booking platform relationships, and operational standards. Before buying into a scheme, investigate the specific operator's performance, not just the scheme's structure.</p>
 <h3>Option 2: Independent Property Manager</h3>
 <p>Outside of resort schemes, individual property managers operate on Sal, Boa Vista, and Santiago. They handle a mix of short-term rental management, property caretaking, and maintenance coordination.</p>
-<p><strong>Typical fee:</strong> 15–25% of rental income for short-term rental management, or a flat monthly fee (€50–150/month range) for caretaking without active rental management. Many offer combined packages.</p>
+<p><strong>Fee:</strong> usually a percentage of rental income for active short-term-rental management, or a flat monthly fee for caretaking without active rental management; many offer combined packages. Fees vary by provider — ask for a written, dated quotation rather than relying on a typical range.</p>
 <p><strong>Advantages over resort schemes:</strong> More flexibility in pricing, listing platforms, and guest selection. You're not locked into a single operator's distribution network. You can list on Airbnb, Booking.com, and other platforms with the manager handling operations.</p>
-<p><strong>Disadvantages:</strong> Vetting is harder. The sector is informal — there is no licensing requirement, no industry body, and no standard contract format. A good independent manager is valuable; a poor one can be costly and difficult to exit.</p>
+<p><strong>Disadvantages:</strong> Vetting is harder, and the sector is comparatively informal, with few standard contract formats. Do not assume there is no applicable registration or authorisation requirement — confirm with the competent authorities. A good independent manager is valuable; a poor one can be costly and difficult to exit.</p>
+<p><strong>Short-term tourist accommodation:</strong> may require registration, licensing, tax compliance, guest reporting, safety measures, and municipal or development-specific approvals. Confirm current requirements with the competent tourism authority, municipality, tax administration, condominium or development administration, and independent counsel before letting short-term.</p>
 <h3>Option 3: Trusted Local Contact</h3>
 <p>Some owners, particularly those who visit regularly and have established local networks, manage their properties through a trusted local contact — a neighbor, a Cape Verdean friend, or a local professional who checks on the property and handles minor issues.</p>
 <p>This works when the relationship and trust are solid. It is not a substitute for a professional management arrangement if you are trying to generate rental income. It is also fragile — personal circumstances change, and a dependency on a single individual with no formal arrangement creates operational risk.</p>
 <hr>
 <h2>Costs of Remote Ownership</h2>
-<p>Remote ownership costs beyond the management fee itself:</p>
+<p>Beyond the management fee itself, build a budget around these cost lines. We deliberately do not publish euro ranges for them — amounts vary by development, property, and provider, and a market-wide figure would mislead. Obtain dated written quotations for each:</p>
 <table>
 <thead>
 <tr>
 <th>Cost</th>
-<th>Typical Range</th>
+<th>What to budget for</th>
 </tr>
 </thead>
 <tbody>
 <tr>
 <td>Property management / rental scheme fee</td>
-<td>15–35% of gross rental income</td>
+<td>A percentage of gross rental income (and/or a fixed fee) — get the provider's quotation</td>
 </tr>
 <tr>
 <td>Annual community / service charge</td>
-<td>€600–2,000+</td>
+<td>Set by the development — confirm with the condominium administration</td>
 </tr>
 <tr>
 <td>Annual IPI property tax (from Jan 2026)</td>
-<td>Generally 0.1% for urban property and 0.15% for land</td>
+<td>0.1% general; 0.15% for construction land, on a special base</td>
 </tr>
 <tr>
 <td>Building insurance (owner's portion)</td>
-<td>€150–400/year</td>
+<td>Quote from the insurer / via the condominium</td>
 </tr>
 <tr>
 <td>Contents insurance</td>
-<td>€100–300/year</td>
+<td>Quote from the insurer</td>
 </tr>
 <tr>
 <td>Maintenance reserve</td>
-<td>€500–1,500/year (climate-driven)</td>
+<td>Plan a recurring reserve — the salt-air climate accelerates wear</td>
 </tr>
 <tr>
 <td>Periodic refurbishment</td>
-<td>€2,000–5,000+ every 3–5 years</td>
+<td>Plan a multi-year refurbishment cycle</td>
 </tr>
 </tbody>
 </table>
-<p>Many rental yield calculations provided by developers or agents omit several of these cost lines, which inflates the apparent net yield. Build all of them into your model before assessing whether the investment makes sense.</p>
-<p>Confirm the IPI position for your property with a qualified local lawyer or municipality, especially if the property is land, vacant, ruined/degraded, or has an unfinished facade.</p>
+<p>Many rental yield figures provided by developers or agents omit several of these cost lines, which inflates the apparent net yield. Build all of them into your model before assessing whether the investment makes sense.</p>
+<p>Confirm the IPI position for your property with a qualified local lawyer or municipality, especially if the property is construction land, vacant, ruined or degraded, or has an unfinished principal façade (Código do IPI, arts. 23.º, 24.º, 28.º).<sup class="kv-cite"><a href="#src-lei-ipi" aria-label="Source 1: Código do IPI">[1]</a></sup></p>
 <hr>
 <h2>Selecting a Management Company</h2>
 <p>Whether you're evaluating a resort scheme operator or an independent property manager, the due diligence questions are similar:</p>
 <ul>
 <li><strong>How many properties do they currently manage on this island?</strong> A manager handling 3 properties has a different capacity and reliability profile than one managing 80.</li>
-<li><strong>What is their current occupancy rate for comparable properties?</strong> Ask for verified data, not projections. If they can't or won't provide occupancy data for existing properties they manage, that's a warning.</li>
+<li><strong>What is their current occupancy rate for comparable properties?</strong> Ask for documented historical data, not projections. If they can't or won't provide occupancy data for existing properties they manage, that's a warning.</li>
 <li><strong>Can you speak to current owners they manage?</strong> References should be from owners with similar property types to yours. Ask owners directly: how responsive is the manager, what problems have occurred, would you use them again?</li>
 <li><strong>What is the contract exit mechanism?</strong> How much notice is required to terminate the arrangement? Are there penalties for early exit? What happens to bookings already made if you switch managers?</li>
 <li><strong>How are maintenance decisions and costs communicated?</strong> Who approves expenditure above a threshold? How quickly do you receive notifications of issues? How are photos and condition reports shared?</li>
@@ -1281,72 +1249,52 @@ const _ALL_BLOG_ARTICLES = [
 <li><a href="/blog/mistakes-buying-property-cape-verde">7 Mistakes Buyers Make in Cape Verde</a> — Including management-related errors</li>
 </ul>
 <hr>
-<p><em>This article is for informational purposes only and does not constitute financial or legal advice. Always conduct your own due diligence and consult qualified local professionals.</em></p>
+<!--SOURCES-->
+<hr>
+<p><em>This article is for informational purposes only and does not constitute financial or legal advice. Fee examples are illustrative budgeting categories, not quoted market rates — obtain dated written quotations. Short-term tourist accommodation may carry registration, licensing, tax, guest-reporting, safety, and municipal requirements; confirm these with the competent authorities. Always conduct your own due diligence and consult qualified local professionals.</em></p>
 `,
   },
   {
     slug: "financing-property-cape-verde",
     title: "How to Finance a Property Purchase in Cape Verde as a Foreign Buyer",
-    description: "Cash transactions dominate the foreign buyer market in Cape Verde. Local mortgage options exist but are expensive and difficult to access as a non-resident. Understanding your...",
+    description: "Many foreign buyers in Cape Verde fund purchases from their own capital or home-country borrowing. Local mortgages may be available but vary by lender — how to compare them, and the factors that decide whether local borrowing is realistic.",
     date: "2026-03-31",
+    modifiedAt: "2026-06-19",
     readTime: "7 min read",
     tags: ["Financing", "Mortgage", "Buying"],
-    content: `<p><em>Last updated: March 2026</em></p>
-<p>Cash transactions dominate the foreign buyer market in Cape Verde. Local mortgage options exist but are expensive and difficult to access as a non-resident. Understanding your financing options before you start searching saves time and prevents you from committing to a purchase your funding structure can't support.</p>
+    sourceIds: ["bcv-fx"],
+    content: `<p><em>Last updated: March 2026. Reviewed against primary sources on 19 June 2026.</em></p>
+<p>Many foreign buyers fund Cape Verde purchases from their own capital or from borrowing in their home country, rather than from a local mortgage. This guide explains the financing routes and the factors that decide whether local borrowing is realistic — without publishing rate or loan-to-value figures we cannot tie to a named, current lender tariff.</p>
 <hr>
-<h2>Why Most Foreign Buyers Pay Cash</h2>
-<p>The combination of high local interest rates, restrictive lending criteria for non-residents, and slow loan processing means that the majority of foreign buyers in Cape Verde bring their own capital rather than seeking local financing. This isn't a preference — it's a practical outcome of the market conditions.</p>
-<p>If you're not in a position to purchase with cash or near-cash, understanding the alternatives is important before you start the buying process.</p>
+<h2>How Foreign Buyers Tend to Fund Purchases</h2>
+<p>Local mortgage access for non-residents can be limited, lending criteria vary by bank, and processing can be slow — which is why many foreign buyers bring their own capital or borrow against a home-country asset instead. We do not have transaction-level data on the share of buyers who pay cash, so treat &quot;most pay cash&quot; as a widely-repeated impression rather than a measured fact.</p>
+<p>If you are not in a position to purchase with cash or near-cash, understanding the alternatives is important before you start the buying process.</p>
 <hr>
 <h2>Cape Verdean Bank Mortgages</h2>
-<p>Local mortgages from Cape Verdean banks are technically available to foreign nationals, but the conditions make them unattractive for most buyers.</p>
-<h3>Current conditions (2026)</h3>
-<table>
-<thead>
-<tr>
-<th>Parameter</th>
-<th>Typical Range</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Interest rate</td>
-<td>6–9% per annum</td>
-</tr>
-<tr>
-<td>Loan-to-value (LTV)</td>
-<td>60–70% maximum (30–40% deposit required)</td>
-</tr>
-<tr>
-<td>Maximum loan term</td>
-<td>20–25 years</td>
-</tr>
-<tr>
-<td>Currency</td>
-<td>Cape Verdean Escudo (CVE), pegged to EUR at 110.265</td>
-</tr>
-<tr>
-<td>Income documentation</td>
-<td>Proof of income, typically requiring bank statements and tax returns from country of residence</td>
-</tr>
-<tr>
-<td>Processing time</td>
-<td>4–12 weeks from application to approval</td>
-</tr>
-</tbody>
-</table>
-<h3>Key considerations</h3>
-<p><strong>Interest rate premium.</strong> At 6–9%, local borrowing costs are significantly higher than mortgage rates available in most European countries for comparable properties. For a €150,000 mortgage at 7% over 20 years, the total interest cost approaches €125,000 — more than 80% of the original loan principal. The cost of local debt materially changes the investment math.</p>
-<p><strong>Loan-to-value limits.</strong> A maximum LTV of 60–70% means you need 30–40% as a deposit, on top of transaction costs such as ITI, notary and registration costs, and legal fees. For a €150,000 property, the deposit alone could be €45,000–€60,000 before transaction costs, with the remaining €90,000–€105,000 financed.</p>
-<p><strong>Non-resident complexity.</strong> Cape Verdean banks vary in their willingness to lend to non-residents. Some require proof of an established financial relationship with a Cape Verdean bank before processing a mortgage application. Documentation requirements are more extensive for non-residents and the process can be slow.</p>
-<p><strong>Currency peg stability.</strong> The CVE has been pegged to the euro since 1998, maintained through a support agreement with Portugal, which gives it more stability than most small-island currencies. This reduces currency risk for European buyers, but the peg is a policy commitment, not a fixed mechanism, and should be factored into any long-term planning.</p>
-<h3>Which banks offer mortgages to foreigners</h3>
-<p>Banco Comercial do Atlântico (BCA) and Caixa Económica de Cabo Verde (CECV) are the two banks most commonly used by foreign property buyers. Both require you to open a Cape Verdean bank account — which you need anyway as part of the buying process — before processing a mortgage application. Consult your lawyer for current lending criteria, as conditions change.</p>
+<p>Local mortgages from Cape Verdean banks may be available to foreign nationals, but the terms make them unattractive for many buyers and they vary by lender and applicant.</p>
+<h3>What to confirm with the lender</h3>
+<p>Rates, loan-to-value, maximum term, fees, age and income requirements, and processing times are set by each bank&#39;s current published products and underwriting — and change over time. We do not publish generic figures for these here, because a number that is not tied to a named, current lender tariff is not reliable. Ask each lender, in writing, for a dated quotation covering:</p>
+<ul>
+<li>the published rate (or reference index plus margin) and whether it is fixed or variable;</li>
+<li>maximum loan-to-value and the deposit implied;</li>
+<li>maximum term and any age limit at maturity;</li>
+<li>arrangement, valuation, and early-repayment fees;</li>
+<li>the loan currency (typically Cape Verdean escudo, pegged to the euro at 1 EUR = 110.265 CVE<sup class="kv-cite"><a href="#src-bcv-fx" aria-label="Source 1: Banco de Cabo Verde">[1]</a></sup>);</li>
+<li>income and residency documentation required for a non-resident;</li>
+<li>and that any offer is &quot;subject to underwriting.&quot;</li>
+</ul>
+<p>Build a dated, like-for-like comparison from those quotations rather than from headline ranges.</p>
+<h3>Non-resident complexity</h3>
+<p>Cape Verdean banks vary in their willingness to lend to non-residents. Some require proof of an established financial relationship with a Cape Verdean bank before processing a mortgage application, and documentation requirements are typically more extensive for non-residents.</p>
+<h3>Currency peg</h3>
+<p>The escudo is pegged to the euro at 1 EUR = 110.265 CVE, under an arrangement with Portugal that has supported the peg since the late 1990s.<sup class="kv-cite"><a href="#src-bcv-fx" aria-label="Source 1: Banco de Cabo Verde">[1]</a></sup> This reduces currency risk for euro-based buyers, but the peg is a policy commitment, not an immutable mechanism, and should be factored into long-term planning.</p>
+<h3>Which banks lend to foreigners</h3>
+<p>Banco Comercial do Atlântico (BCA) and Caixa Económica de Cabo Verde (CECV) are commonly used by foreign property buyers. Both typically require you to open a Cape Verdean bank account before processing a mortgage application. Confirm current lending criteria with the bank and your lawyer, as conditions change.</p>
 <hr>
 <h2>Financing Through Your Home Country</h2>
 <p>For most European buyers, releasing capital from assets at home is more cost-effective than borrowing locally in Cape Verde.</p>
 <h3>Home equity release</h3>
-<p>If you own property in your home country with significant equity, a remortgage, equity release, or home equity loan may provide funds at rates materially lower than a Cape Verdean bank mortgage — particularly for buyers in countries with current mortgage rates in the 3–5% range. The Cape Verdean property serves as the use case for the capital; the loan is secured against your home-country asset.</p>
+<p>If you own property in your home country with significant equity, a remortgage, equity release, or home equity loan may provide funds at rates lower than a Cape Verdean bank mortgage — depending on prevailing rates in your country at the time. The Cape Verdean property serves as the use case for the capital; the loan is secured against your home-country asset.</p>
 <p>The practical advantage: lower rates, familiar lending environment, faster processing, and no dependency on Cape Verdean bank criteria. The practical risk: your home-country property is the collateral, not the Cape Verde property.</p>
 <h3>Remortgage or equity release</h3>
 <p>Similar to the above. If your home property is owned outright or has a low outstanding mortgage, a full remortgage may release a lump sum at current domestic rates. This is particularly common among UK buyers accessing equity built up over years of property appreciation.</p>
@@ -1369,8 +1317,8 @@ const _ALL_BLOG_ARTICLES = [
 </ul>
 <hr>
 <h2>The Investment Case With and Without Leverage</h2>
-<p>Whether leverage improves the investment case depends on the cost of borrowing relative to your expected net yield. At local Cape Verdean mortgage rates of 6–9%, leverage is only accretive if your net rental yield exceeds your borrowing cost — which, given realistic net yield expectations of 3–5% for most properties, is not the case.</p>
-<p>The typical Cape Verde investment case is therefore not built on leverage. It rests on the combination of net rental income, capital appreciation, personal use value, and (for some buyers) the residency pathway through the <a href="/blog/cape-verde-green-card-residency">Green Card program</a>. Model your returns without leverage as the base case, and treat any financing only as a cashflow management tool, not a return amplifier.</p>
+<p>Whether leverage improves the investment case depends on the cost of borrowing relative to your expected net rental yield. Local borrowing is only accretive if your net yield exceeds your all-in borrowing cost. Because local rates are generally higher than realistic net yields on tourist-let property, leverage often does not improve the return — but run the numbers with your own dated lender quotation and a conservative yield assumption rather than a headline figure.</p>
+<p>The typical Cape Verde investment case is therefore usually not built on leverage. It rests on the combination of net rental income, any capital appreciation, personal-use value, and (for some buyers) the residency pathway through the <a href="/blog/cape-verde-green-card-residency">Green Card</a>. Model your returns without leverage as the base case, and treat any financing as a cashflow management tool, not a way to amplify an uncertain return.</p>
 <hr>
 <h2>Related Guides</h2>
 <ul>
@@ -1378,7 +1326,9 @@ const _ALL_BLOG_ARTICLES = [
 <li><a href="/blog/cape-verde-property-tax-reform-2026">2026 Property Tax Reform</a> — Transaction and annual tax costs under the new system</li>
 </ul>
 <hr>
-<p><em>This article is for informational purposes only and does not constitute financial or legal advice. Lending conditions and tax rules change. Always consult qualified professionals before making financing decisions.</em></p>
+<!--SOURCES-->
+<hr>
+<p><em>This article is for informational purposes only and does not constitute financial or legal advice. Lending conditions, rates, and tax rules change and are set by individual lenders. Always consult qualified professionals and obtain dated written quotations before making financing decisions.</em></p>
 `,
   },
   {
@@ -1386,13 +1336,15 @@ const _ALL_BLOG_ARTICLES = [
     title: "Boa Vista Property Guide: What Buyers Need to Know in 2026",
     description: "Boa Vista is Cape Verde's second major tourism island and its second most active property market. It's often positioned as the growth alternative to Sal — lower entry prices...",
     date: "2026-04-07",
+    modifiedAt: "2026-06-19",
     readTime: "9 min read",
     tags: ["Boa Vista", "Islands", "Guide"],
+    sourceIds: ["arei-market"],
     content: `<p><em>Last updated: April 2026</em></p>
 <p>Boa Vista is Cape Verde's second major tourism island and its second most active property market. It's often positioned as the growth alternative to Sal — lower entry prices, developing infrastructure, and the suggestion that it is today where Sal was a decade ago. That framing is partially accurate and partially marketing. This guide separates the two.</p>
 <hr>
 <h2>Island Overview</h2>
-<p>Boa Vista is the third largest island in Cape Verde by area and has its own international airport — Aristides Pereira International Airport, located near Rabil — with direct flights from several European countries, primarily the UK, Germany, Portugal, and the Netherlands. It covers roughly 620 square kilometers and has a population of around 15,000, heavily concentrated in the main town of Sal Rei.</p>
+<p>Boa Vista is the third largest island in Cape Verde by area and has its own international airport — Aristides Pereira International Airport, near Rabil — with European routes that are seasonal and best checked against current airport and airline schedules. It is a large, sparsely populated island, with the resident population concentrated in the main town of Sal Rei; for the precise census figure and reference year, consult the Instituto Nacional de Estatística (INE).</p>
 <p>The island is characterized by wide, largely empty beaches, extensive sand dunes, and a flat, semi-arid interior. The natural landscape is one of its strongest assets — several beaches are among the finest in the archipelago — but the infrastructure outside resort zones remains limited relative to Sal.</p>
 <p>Tourism is the primary economic driver. Outside the resort areas, the local economy is small and services are limited. This context matters for buyers assessing the island for either residential use or investment.</p>
 <hr>
@@ -1408,34 +1360,9 @@ const _ALL_BLOG_ARTICLES = [
 <hr>
 <h2>Property Market</h2>
 <h3>Price levels</h3>
-<p>Boa Vista properties are generally 15–30% cheaper than comparable properties on Sal, though this gap narrows for premium beachfront or ocean-view units in high-quality developments. Indicative ranges:</p>
-<table>
-<thead>
-<tr>
-<th>Property Type</th>
-<th>Typical Price Range</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td>Studio / 1-bed apartment (resort complex)</td>
-<td>€70,000–€110,000</td>
-</tr>
-<tr>
-<td>2-bed apartment (resort complex)</td>
-<td>€110,000–€170,000</td>
-</tr>
-<tr>
-<td>Villa / standalone house</td>
-<td>€180,000–€400,000+</td>
-</tr>
-<tr>
-<td>Townhouse (Sal Rei)</td>
-<td>€60,000–€150,000</td>
-</tr>
-</tbody>
-</table>
-<p>These are indicative figures from current listings. Individual properties vary based on location, condition, view, and the quality of the development's management and rental scheme. <a href="/listings/boa-vista">Browse current Boa Vista listings</a> for actual market data.</p>
+<p>Headline asking prices on Boa Vista are generally lower than for comparable property on Sal, though the gap narrows for premium beachfront or ocean-view units in high-quality developments. Rather than quote a fixed discount or price band — which would imply a precision the listing data does not support — compare the current per-island figures directly.</p>
+<blockquote><p><strong>Based on monitored asking-price listings. Not transaction prices or valuations.</strong> See the live <a href="/listings/boa-vista">Boa Vista listings</a> and the <a href="/blog/cape-verde-property-prices-by-island">prices-by-island</a> guide for current median asking prices by property type.<sup class="kv-cite"><a href="#src-arei-market" aria-label="Source 1: AREI market data">[1]</a></sup></p></blockquote>
+<p>Individual properties vary by location, condition, view, and the quality of the development's management and rental scheme.</p>
 <h3>Market activity</h3>
 <p>The Boa Vista market is active but smaller than Sal's. There is a resale market, but it is thinner — fewer comparable sales, longer time-on-market for some properties, and fewer agents with strong international marketing reach than on Sal. Liquidity is a real consideration if your investment horizon is short or uncertain.</p>
 <p>New development activity has continued in recent years, adding supply in the northern resort zone. This expansion is a double-edged signal: it reflects developer confidence in the market, but it also adds competitive supply for both rental and resale.</p>
@@ -1445,12 +1372,12 @@ const _ALL_BLOG_ARTICLES = [
 <p><strong>Flight access:</strong> The number of direct European routes to Boa Vista is growing but remains smaller than Sal's. More routes mean more potential guests; fewer routes mean more dependence on the routes that exist. Any significant reduction in a major airline's Boa Vista operations would meaningfully affect occupancy rates.</p>
 <p><strong>Seasonality:</strong> European winter sun demand runs October to April, which is strong. Summer occupancy (June–September) is lower than on Sal, as Boa Vista has less established tourism infrastructure to attract non-package visitors. The seasonal gap is more pronounced than on Sal.</p>
 <p><strong>Management quality variance:</strong> Because the market is smaller and newer, the range in management company quality is wide. A well-run resort with active European tour operator relationships can achieve solid occupancy; a poorly managed one in the same development cluster will significantly underperform.</p>
-<p>Gross yields quoted by developers and agents on Boa Vista follow a similar pattern to Sal: headline figures of 5–8% gross, with realistic net yields after management fees, service charges, maintenance, and taxes in the 3–5% range for well-managed properties.</p>
+<p>Gross yields quoted by developers and agents on Boa Vista should be treated as provider quotations to verify, not market facts — and net yields are lower once management fees, service charges, maintenance, and the annual IPI are deducted. Ask for the assumptions and the management-fee percentage behind any quoted figure before relying on it.</p>
 <hr>
 <h2>Infrastructure Reality Check</h2>
 <p>The infrastructure gap between Boa Vista and Sal is relevant to both lifestyle buyers and investors:</p>
 <p><strong>Restaurants and services:</strong> Sal Rei has a reasonable range of restaurants and daily services. Outside the town and established resort zones, options are limited. Buyers who expect the variety and density of Santa Maria (Sal) will be disappointed with what's currently available on Boa Vista.</p>
-<p><strong>Healthcare:</strong> Basic medical facilities exist, but for anything beyond routine care, the nearest comprehensive hospital is on Santiago. This is a practical reality for buyers considering the island for extended stays.</p>
+<p><strong>Healthcare:</strong> Local medical provision is more limited than on the larger islands, and residents may need to travel for specialist or hospital care. Confirm the current facilities and the nearest hospital for your specific area with local sources before relying on them for extended stays.</p>
 <p><strong>Internet and utilities:</strong> Connectivity has improved significantly in recent years but remains less reliable in some areas than in Sal's resort zones. Verify specifically for any property you're considering purchasing.</p>
 <p><strong>Construction and development:</strong> Active development means some areas of the island are in a transition state — a current view from a property may change as neighboring developments are built. Check what is planned or under construction around any specific property you're considering.</p>
 <hr>
@@ -1489,6 +1416,8 @@ const _ALL_BLOG_ARTICLES = [
 <li><a href="/blog/sal-vs-santiago-property">Sal vs Santiago</a> — The two alternative major markets compared</li>
 <li><a href="/blog/buying-property-cape-verde-guide">How to Buy Property in Cape Verde</a> — Full buying process for foreign buyers</li>
 </ul>
+<hr>
+<!--SOURCES-->
 <hr>
 <p><em>This article is for informational purposes only and does not constitute financial or legal advice. Market conditions change. Always conduct your own research and consult qualified local professionals before investing.</em></p>
 `,

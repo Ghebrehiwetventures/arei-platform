@@ -25,6 +25,11 @@ function setMeta(name: string, content: string, isProperty = false) {
   el.setAttribute("content", content);
 }
 
+function removeMeta(name: string, isProperty = false) {
+  const attr = isProperty ? "property" : "name";
+  document.querySelector(`meta[${attr}="${name}"]`)?.remove();
+}
+
 function setCanonical(href: string) {
   let el = document.querySelector('link[rel="canonical"]') as HTMLLinkElement | null;
   if (!el) {
@@ -38,7 +43,7 @@ function setCanonical(href: string) {
 export function useDocumentMeta(
   title: string,
   description: string = DEFAULT_DESCRIPTION,
-  options?: { image?: string; url?: string }
+  options?: { image?: string; url?: string; articlePublishedTime?: string; articleModifiedTime?: string }
 ) {
   const { pathname } = useLocation();
 
@@ -63,9 +68,17 @@ export function useDocumentMeta(
     setMeta("twitter:description", description);
     setMeta("twitter:image", image);
 
+    // Article timestamps (blog posts). dateModified is article-owned metadata.
+    if (options?.articlePublishedTime) setMeta("article:published_time", options.articlePublishedTime, true);
+    else removeMeta("article:published_time", true);
+    if (options?.articleModifiedTime) setMeta("article:modified_time", options.articleModifiedTime, true);
+    else removeMeta("article:modified_time", true);
+
     setCanonical(canonicalUrl);
 
     return () => {
+      removeMeta("article:published_time", true);
+      removeMeta("article:modified_time", true);
       document.title = `${SITE_NAME} — ${SITE_TAGLINE}`;
       setMeta("description", DEFAULT_DESCRIPTION);
       setMeta("og:title", `${SITE_NAME} — ${SITE_TAGLINE}`, true);
@@ -77,5 +90,5 @@ export function useDocumentMeta(
       setMeta("twitter:image", DEFAULT_OG_IMAGE);
       setCanonical(SITE_URL);
     };
-  }, [title, description, pathname, options?.image, options?.url]);
+  }, [title, description, pathname, options?.image, options?.url, options?.articlePublishedTime, options?.articleModifiedTime]);
 }

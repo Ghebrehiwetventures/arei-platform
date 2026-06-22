@@ -38,7 +38,7 @@ const ARTICLE_PT: Record<string, { title: string; description: string }> = {
   "cape-verde-property-prices-by-island": {
     title: "Preços de imóveis em Cabo Verde por ilha: o que o Cape Verde Real Estate Index mostra atualmente",
     description:
-      "Medianas de preços pedidos e contagens de anúncios por ilha, retiradas do Cape Verde Real Estate Index. Um retrato do inventário público anunciado em Cabo Verde, não do mercado completo.",
+      "Como os preços pedidos diferem entre as ilhas de Cabo Verde e como ler os dados em direto do Cape Verde Real Estate Index. Baseado em anúncios com preço pedido monitorizados — não em preços de transação nem avaliações.",
   },
   "buying-property-cape-verde-guide": {
     title: "Como comprar imóvel em Cabo Verde: guia passo a passo para compradores estrangeiros",
@@ -63,7 +63,7 @@ const ARTICLE_PT: Record<string, { title: string; description: string }> = {
   "cape-verde-green-card-residency": {
     title: "Green Card de Cabo Verde: como obter residência através de investimento imobiliário",
     description:
-      "O programa Green Card de Cabo Verde oferece residência permanente a estrangeiros que investem em imobiliário nas ilhas.",
+      "O Green Card de Cabo Verde é uma autorização de residência renovável para investidores imobiliários estrangeiros. Como funcionam os limiares de €80.000/€120.000, a renovação a cinco e depois dez anos, o pedido e o tratamento fiscal.",
   },
   "mistakes-buying-property-cape-verde": {
     title: "7 erros caros a evitar ao comprar imóvel em Cabo Verde",
@@ -88,7 +88,7 @@ const ARTICLE_PT: Record<string, { title: string; description: string }> = {
   "financing-property-cape-verde": {
     title: "Como financiar a compra de imóvel em Cabo Verde enquanto comprador estrangeiro",
     description:
-      "Compras a pronto dominam o mercado estrangeiro em Cabo Verde. Existem créditos locais, mas são caros e difíceis para não residentes.",
+      "Muitos compradores estrangeiros financiam a compra com capital próprio ou crédito no país de origem. Pode existir crédito local, mas varia por banco — como compará-lo e os fatores que decidem se é viável.",
   },
   "boa-vista-property-guide": {
     title: "Guia imobiliário da Boa Vista: o que os compradores precisam de saber em 2026",
