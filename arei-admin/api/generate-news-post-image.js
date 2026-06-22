@@ -183,6 +183,16 @@ export default async function handler(req, res) {
 
     const caption = suggestCaption(item);
 
+    // The resolved source photo (before compositing). Returned so the carousel
+    // editor can store it per slide and re-render that slide deterministically
+    // (via imageSource:"url" + this data URL) instead of re-generating a new
+    // AI/Pexels image on every edit. Compositing is unchanged — this is the
+    // renderer's *input*, so the visual output is identical.
+    const srcMime = imageBuffer[0] === 0x89 ? "image/png"
+      : imageBuffer[0] === 0x47 ? "image/gif"
+      : imageBuffer[0] === 0x52 ? "image/webp"
+      : "image/jpeg";
+
     send(res, 200, {
       slides,
       mime: "image/png",
@@ -191,6 +201,8 @@ export default async function handler(req, res) {
       warning,
       attribution,
       photoMeta,
+      sourceImageBase64: imageBuffer.toString("base64"),
+      sourceImageMime: srcMime,
     });
   } catch (err) {
     send(res, 500, { error: err?.message || String(err) });
