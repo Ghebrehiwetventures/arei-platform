@@ -19,6 +19,7 @@ import type {
   PriceBucket,
   MarketNewsRow,
   MarketReportRow,
+  MarketOverview,
   BriefingRow,
   BriefingSummary,
   FeaturedSelectionRow,
@@ -511,6 +512,71 @@ export class AREIClient {
     islands.sort((a, b) => b.n_price - a.n_price);
 
     return { total, sourceCount, islands };
+  }
+
+  // =========================================================================
+  // getMarketOverview — current market summary from the live public feed
+  //
+  // Returns total listings, source count, island count, price-sample count,
+  // the latest successful check timestamp, and per-island stats (sorted by
+  // total listings descending). Price sample = numeric asking prices in
+  // [PRICE_FLOOR, PRICE_CEILING]. Medians are null when sample < MIN_MEDIAN_SAMPLE.
+  // =========================================================================
+  async getMarketOverview(): Promise<MarketOverview> {
+    const { data, error } = await this.sb
+      .from(this.view)
+      .select("island, price, source_id, last_seen_at");
+
+    if (error) throw new Error(`getMarketOverview failed: ${error.message}`);
+
+    const rows = (data ?? []) as {
+      island: string;
+      price: number | null;
+      source_id: string | null;
+      last_seen_at: string | null;
+    }[];
+
+    const sourceIds = new Set<string>();
+    let latestSuccessfulCheck: string | null = null;
+
+    const byIsland = new Map<string, { total: number; prices: number[] }>();
+    for (const row of rows) {
+      if (row.source_id) sourceIds.add(row.source_id);
+      if (row.last_seen_at && (!latestSuccessfulCheck || row.last_seen_at > latestSuccessfulCheck)) {
+        latestSuccessfulCheck = row.last_seen_at;
+      }
+      if (!byIsland.has(row.island)) byIsland.set(row.island, { total: 0, prices: [] });
+      const entry = byIsland.get(row.island)!;
+      entry.total += 1;
+      if (row.price != null && row.price >= PRICE_FLOOR && row.price <= PRICE_CEILING) {
+        entry.prices.push(row.price);
+      }
+    }
+
+    let priceSampleCount = 0;
+    const islands = Array.from(byIsland.entries()).map(([island, { total, prices }]) => {
+      prices.sort((a, b) => a - b);
+      const n = prices.length;
+      priceSampleCount += n;
+      const medianAskingPrice =
+        n >= MIN_MEDIAN_SAMPLE
+          ? n % 2 === 0
+            ? (prices[n / 2 - 1] + prices[n / 2]) / 2
+            : prices[Math.floor(n / 2)]
+          : null;
+      return { island, totalListings: total, priceSampleCount: n, medianAskingPrice };
+    });
+
+    islands.sort((a, b) => b.totalListings - a.totalListings);
+
+    return {
+      totalListings: rows.length,
+      sourceCount: sourceIds.size,
+      islandCount: byIsland.size,
+      priceSampleCount,
+      latestSuccessfulCheck,
+      islands,
+    };
   }
 
   // =========================================================================

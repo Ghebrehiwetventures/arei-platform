@@ -17,6 +17,7 @@ export type {
   GetSimilarParams,
   PaginatedListings,
   AREIConfig,
+  MarketOverview,
   MarketNewsRow,
   MarketReportRow,
   BriefingRow,

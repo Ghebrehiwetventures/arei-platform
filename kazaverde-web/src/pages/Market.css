@@ -1,11 +1,7 @@
 /* ════════════════════════════════════════════════════════════
-   Market — KV-design data dashboard.
-   ──────────────────────────────────────────────────────────────
-   Hero (kv-hero-slim) → KPIs (kv-l-mmi-strip) → Median by island
-   (kv-d-card-soft + kv-d-meta-row) → Distribution bars → Trend
-   (coming-soon) → Methodology accordion → Newsletter.
-   Reuses primitives from Landing + Detail; only the bars and
-   accordion are page-local.
+   Market — current market overview page.
+   Hero (kv-hero-slim) → Summary KPIs (kv-l-mmi-strip) →
+   Island asking-price table → Data limits → Newsletter.
    ════════════════════════════════════════════════════════════ */
 
 .kv-m {
@@ -22,209 +18,6 @@
 }
 .kv-m-section:nth-of-type(even) { background: var(--kv-off-white); }
 
-/* ─── Geographic context band ─── */
-.kv-m-geo {
-  background: var(--kv-off-white);
-  border-top: 1px solid var(--kv-rule);
-  padding: 40px 0;
-}
-.kv-m-geo-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 40px;
-  /* stretch so the map card matches the facts panel's exact height. */
-  align-items: stretch;
-}
-.kv-m-geo-map {
-  position: relative;
-  border: 1px solid var(--kv-rule);
-  background: var(--kv-paper);
-  padding: 0;
-  overflow: hidden;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-  /* Grow inside the stretched .kv-m-geo-wrap so the bordered card
-     reaches the full row height that the grid stretch produces.
-     Without this the card collapses to its content height (0) and
-     the map disappears on desktop. */
-  flex: 1;
-}
-/* Wrapper sits as the left grid item on desktop and stacks above
-   the fact table on mobile (kv-m-geo-grid behaviour). Holds the
-   bordered map card; required Mapbox attribution lives inside
-   the map surface itself. The wrapper is the actual grid item, so
-   align-items: stretch on the grid stretches THIS — not the inner
-   .kv-m-geo-map card. We're a flex column so the map card can
-   grow to fill the stretched height (see flex: 1 below). */
-.kv-m-geo-wrap {
-  display: flex;
-  flex-direction: column;
-  min-width: 0;
-  max-width: 100%;
-}
-/* GL JS map container. Fills the parent card so the map height
-   tracks the facts panel exactly on desktop, and the mobile card's
-   intrinsic aspect-ratio on mobile. */
-.kv-m-geo-mapbox {
-  width: 100%;
-  height: 100%;
-  background: var(--kv-paper);
-}
-
-/* Mapbox chrome — re-skin only. Wordmark (.mapboxgl-ctrl-logo) and
-   compact AttributionControl stay visible — both are required by
-   Mapbox ToS, and compact mode keeps them small and editorial. */
-.kv-m-geo-map .mapboxgl-ctrl-group {
-  background: var(--kv-white);
-  border: 1px solid var(--kv-rule);
-  box-shadow: none;
-  border-radius: 0;
-}
-.kv-m-geo-map .mapboxgl-ctrl-group button {
-  background-color: var(--kv-white);
-}
-.kv-m-geo-map .mapboxgl-ctrl-group button:hover {
-  background-color: var(--kv-hover);
-}
-.kv-m-geo-map .mapboxgl-ctrl-top-right { top: 8px; right: 8px; }
-/* Fallback shown when VITE_MAPBOX_TOKEN is missing. Editorial card,
-   same dimensions as the live map so the page rhythm is preserved. */
-.kv-m-geo-fallback {
-  width: 100%;
-  height: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
-  background: var(--kv-paper);
-  background-image:
-    linear-gradient(rgba(0, 0, 0, 0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
-  background-size: 24px 24px;
-  text-align: center;
-  padding: 20px;
-  box-sizing: border-box;
-}
-.kv-m-geo-fallback-pin {
-  font-size: 22px;
-  line-height: 1;
-  color: var(--kv-green-deep);
-}
-.kv-m-geo-fallback-label {
-  font-family: var(--kv-mono);
-  font-size: 12px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--kv-black);
-}
-.kv-m-geo-fallback-sub {
-  font-family: var(--kv-mono);
-  font-size: 10px;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--kv-gray-500);
-}
-.kv-m-geo-facts {
-  border: 1px solid var(--kv-rule);
-  background: var(--kv-paper);
-}
-.kv-m-geo-fact {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  border-bottom: 1px solid var(--kv-rule-soft);
-  padding: 9px 14px;
-  align-items: baseline;
-  gap: 8px;
-}
-.kv-m-geo-fact:last-child { border-bottom: none; }
-.kv-m-geo-fact-k {
-  font-family: var(--kv-mono);
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.12em;
-  text-transform: uppercase;
-  color: var(--kv-gray-500);
-}
-.kv-m-geo-fact-v {
-  font-family: var(--kv-mono);
-  font-size: 12px;
-  color: var(--kv-black);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-@media (max-width: 640px) {
-  .kv-m-geo { padding: 28px 0; }
-  .kv-m-geo-grid { grid-template-columns: 1fr; gap: 16px; }
-  /* On mobile each grid item lives in its own row, so the map card
-     no longer inherits a stretched height — give it an intrinsic
-     2:1 aspect ratio with a sensible floor so the map never collapses
-     on very narrow screens. */
-  .kv-m-geo-map {
-    aspect-ratio: 2 / 1;
-    min-height: 200px;
-  }
-}
-
-/* ─── Intro band — sits between hero and KPI strip ─── */
-.kv-m-intro {
-  background: var(--kv-white);
-  padding: 56px 0 48px;
-  border-top: 1px solid var(--kv-rule);
-}
-.kv-m-intro-grid {
-  display: grid;
-  grid-template-columns: 1.6fr 1fr;
-  gap: 56px;
-  align-items: start;
-}
-.kv-m-intro-lead p {
-  font-family: var(--kv-mono);
-  font-size: 15px;
-  line-height: 1.7;
-  color: var(--kv-ink-700);
-  margin: 0 0 16px;
-  max-width: 680px;
-}
-.kv-m-intro-lead p:last-child { margin-bottom: 0; }
-.kv-m-intro-meta {
-  border: 1px solid var(--kv-rule);
-  background: var(--kv-paper);
-  padding: 18px 22px;
-}
-.kv-m-intro-meta-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 10px 0;
-  border-bottom: 1px solid var(--kv-rule-soft);
-}
-.kv-m-intro-meta-row:last-child { border-bottom: none; }
-.kv-m-intro-meta-k {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--kv-gray-500);
-  flex-shrink: 0;
-}
-.kv-m-intro-meta-v {
-  font-family: var(--kv-mono);
-  font-size: 12px;
-  color: var(--kv-black);
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-.kv-m-intro-meta-v a {
-  color: var(--kv-black);
-  text-decoration: none;
-  border-bottom: 1px solid var(--kv-ink-300);
-  transition: border-color var(--kv-dur-fast) var(--kv-ease);
-}
-.kv-m-intro-meta-v a:hover { border-color: var(--kv-black); }
 .kv-m-inner {
   max-width: var(--kv-content-w);
   margin: 0 auto;
@@ -253,17 +46,10 @@
   max-width: 620px;
 }
 
-/* Auxiliary value (e.g. "12 listings · ") inside a meta-row. */
-.kv-m-meta-aux {
-  color: var(--kv-gray-500);
-  font-weight: var(--kv-fw-regular);
-}
-
 /* ─────────────────────────────────────────────────────────────
-   Island medians table — three-column grid (Island / Listings /
-   Median price). Replaces the older 2-col flex card where
-   listings count and median were jammed into one cell. Headers
-   align to data columns; numbers right-aligned, tabular nums.
+   Island asking-price table — four columns:
+   Island / Tracked listings / In price sample / Median asking price.
+   The 4-col modifier overrides the default 3-col layout.
    ───────────────────────────────────────────────────────────── */
 .kv-m-island-table {
   border: 1px solid var(--kv-rule);
@@ -272,7 +58,7 @@
 .kv-m-island-h,
 .kv-m-island-row {
   display: grid;
-  grid-template-columns: 1fr minmax(80px, auto) minmax(140px, auto);
+  grid-template-columns: 1fr minmax(80px, auto) minmax(80px, auto) minmax(140px, auto);
   gap: 24px;
   align-items: baseline;
   padding: 14px 18px;
@@ -287,7 +73,8 @@
   border-bottom: 1px solid var(--kv-rule);
 }
 .kv-m-island-h > span:nth-child(2),
-.kv-m-island-h > span:nth-child(3) {
+.kv-m-island-h > span:nth-child(3),
+.kv-m-island-h > span:nth-child(4) {
   text-align: right;
 }
 .kv-m-island-row {
@@ -312,143 +99,7 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Distribution bars — single primitive used on Market only.
-   Mono labels left, hairline track, green-deep fill, count right.
-   ───────────────────────────────────────────────────────────── */
-.kv-m-bars {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border: 1px solid var(--kv-rule);
-  background: var(--kv-paper);
-  padding: 20px 24px;
-  min-width: 0;
-  max-width: 100%;
-  box-sizing: border-box;
-}
-.kv-m-bar-row {
-  display: grid;
-  grid-template-columns: 160px 1fr 56px;
-  align-items: center;
-  gap: 16px;
-  min-width: 0;
-}
-.kv-m-bar-label {
-  font-family: var(--kv-mono);
-  font-size: 12px;
-  font-weight: var(--kv-fw-medium);
-  letter-spacing: 0.04em;
-  color: var(--kv-black);
-  white-space: nowrap;
-  min-width: 0;
-}
-.kv-m-bar-track { min-width: 0; }
-.kv-m-bar-track {
-  position: relative;
-  height: 10px;
-  background: var(--kv-rule-soft);
-  border-radius: 0;
-  overflow: hidden;
-}
-.kv-m-bar-fill {
-  height: 100%;
-  background: var(--kv-green-deep);
-  transition: width var(--kv-dur) var(--kv-ease);
-}
-.kv-m-bar-val {
-  font-family: var(--kv-mono);
-  font-size: 12px;
-  color: var(--kv-gray-500);
-  font-variant-numeric: tabular-nums;
-  text-align: right;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Inventory trend chart — sized container; the SVG itself
-   declares the visual treatment.
-   ───────────────────────────────────────────────────────────── */
-.kv-m-chart {
-  width: 100%;
-  height: auto;
-  display: block;
-}
-
-/* Coming-soon treatment now lives as a shared primitive (.kv-coming)
-   in globals.css so Landing's MMI notes and any other "data not yet
-   collected" surface can reuse the same blur+overlay pattern. */
-
-/* ─────────────────────────────────────────────────────────────
-   Market FAQ / methodology — adapts the editorial FAQ pattern
-   from BlogList while keeping the page-local class namespace.
-   ───────────────────────────────────────────────────────────── */
-.kv-m-faq {
-  border-top: 1px solid var(--kv-rule);
-}
-.kv-m-faq-row {
-  border-bottom: 1px solid var(--kv-rule);
-}
-.kv-m-faq-q {
-  display: grid;
-  grid-template-columns: 116px 1fr 24px;
-  align-items: center;
-  gap: 20px;
-  width: 100%;
-  padding: 22px 4px;
-  background: transparent;
-  border: none;
-  cursor: pointer;
-  font-family: var(--kv-mono);
-  color: var(--kv-black);
-  text-align: left;
-  transition: background var(--kv-dur-fast) var(--kv-ease);
-}
-.kv-m-faq-q:hover { background: var(--kv-off-white); }
-.kv-m-faq-topic {
-  font-size: 10px;
-  font-weight: 600;
-  letter-spacing: 0.14em;
-  text-transform: uppercase;
-  color: var(--kv-gray-500);
-}
-.kv-m-faq-text {
-  font-size: 15px;
-  font-weight: var(--kv-fw-regular);
-  line-height: 1.4;
-  color: var(--kv-black);
-  letter-spacing: -0.005em;
-}
-.kv-m-faq-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 24px;
-  height: 24px;
-  font-size: 18px;
-  line-height: 1;
-  color: var(--kv-gray-500);
-  font-weight: 400;
-}
-.kv-m-faq-row.is-open .kv-m-faq-icon { color: var(--kv-black); }
-.kv-m-faq-a {
-  max-height: 0;
-  overflow: hidden;
-  transition: max-height 0.25s ease;
-  padding: 0 24px 0 calc(116px + 20px + 4px);
-  font-family: var(--kv-sans);
-  font-size: 14px;
-  line-height: 1.7;
-  color: var(--kv-ink-700);
-  max-width: 760px;
-  box-sizing: border-box;
-  width: 100%;
-}
-.kv-m-faq-row.is-open .kv-m-faq-a {
-  max-height: 600px;
-  padding-bottom: 24px;
-}
-
-/* ─────────────────────────────────────────────────────────────
-   Disclaimers — small italic gray, aligned with .kv-disclaimer.
+   Disclaimers — small italic gray.
    ───────────────────────────────────────────────────────────── */
 .kv-m-disclaimer {
   font-family: var(--kv-mono);
@@ -458,6 +109,12 @@
   margin-top: 16px;
   font-style: italic;
 }
+.kv-m-disclaimer a {
+  color: var(--kv-gray-500);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.kv-m-disclaimer a:hover { color: var(--kv-black); }
 
 /* Loading / error placeholders */
 .kv-m-state {
@@ -484,150 +141,26 @@
 @media (max-width: 960px) {
   .kv-m-section { padding: 48px 0; }
   .kv-m-section-head h2 { font-size: 22px; }
-  .kv-m-intro { padding: 40px 0 32px; }
-  .kv-m-intro-grid { grid-template-columns: 1fr; gap: 28px; }
-  .kv-m-intro-lead p { font-size: 14px; line-height: 1.65; }
 }
 @media (max-width: 640px) {
   .kv-m-section { padding: 36px 0; }
-  .kv-m-intro { padding: 32px 0 24px; }
-  /* Bar charts — fixed label column so every row in every chart anchors
-     the bar at the same x position. .kv-m-bar-row is its own grid (the
-     parent .kv-m-bars is flex), so minmax(72px, auto) would size each
-     row independently — the price chart's bars would start ~110px in
-     (widest label "€100K – €250K") while the islands chart's would
-     start ~80px in ("Santo Antão"). A fixed pixel column makes all
-     bars line up across both charts. */
-  .kv-m-bars { padding: 14px 14px; }
-  .kv-m-bar-row {
-    grid-template-columns: 126px 1fr 32px;
-    gap: 10px;
-  }
-  .kv-m-bar-label {
-    font-size: 11px;
-    letter-spacing: 0.02em;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  .kv-m-bar-val { font-size: 11px; }
-  /* Market FAQ accordion mobile (from PR #137). */
-  .kv-m-faq-q {
-    grid-template-columns: 1fr 24px;
-    gap: 6px;
-    padding: 18px 4px;
-  }
-  .kv-m-faq-topic {
-    grid-column: 1 / -1;
-    font-size: 9px;
-    margin-bottom: 2px;
-  }
-  .kv-m-faq-text { font-size: 14px; }
-  .kv-m-faq-a {
-    padding: 0 4px;
-    font-size: 13px;
-  }
-  .kv-m-faq-row.is-open .kv-m-faq-a {
-    padding-bottom: 18px;
-  }
 
-  /* Island table — fixed-width numeric columns so headers sit
-     directly above their values (no auto-sizing dead space) and the
-     two right-aligned numbers can't visually merge. Listings count
-     centers under its header; median right-aligns like a price. */
+  /* Island table — on mobile collapse to 3 cols: Island / Sample / Median.
+     "Tracked listings" column is hidden — the sample count is the more
+     useful number at this width. */
   .kv-m-island-h,
   .kv-m-island-row {
-    grid-template-columns: 1fr 64px 80px;
-    column-gap: 16px;
-    row-gap: 0;
+    grid-template-columns: 1fr 56px minmax(80px, auto);
+    column-gap: 12px;
     padding: 12px 14px;
   }
+  /* Hide "Tracked listings" column (2nd child) on small screens */
   .kv-m-island-h > span:nth-child(2),
-  .kv-m-island-count {
-    text-align: center;
+  .kv-m-island-row > span:nth-child(2) {
+    display: none;
   }
+  .kv-m-island-h { font-size: 10px; letter-spacing: 0.12em; }
   .kv-m-island-name { font-size: 12.5px; white-space: nowrap; }
   .kv-m-island-count,
   .kv-m-island-median { font-size: 12.5px; }
-  .kv-m-island-h { font-size: 10px; letter-spacing: 0.12em; }
-}
-
-/* ─── Monthly briefing — SECONDARY module ─────────────────────────
-   Lives near the foot of /market, below the live data dashboard. A
-   compact invitation to the monthly interpretation — deliberately low
-   visual weight so the dashboard reads as the primary content. */
-.kv-m-briefing {
-  border-top: 1px solid var(--kv-rule);
-  padding: 32px 0;
-}
-.kv-m-briefing-card {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 24px;
-  flex-wrap: wrap;
-  border: 1px solid var(--kv-rule);
-  border-left: 3px solid var(--kv-green);
-  background: var(--kv-off-white);
-  padding: 20px 24px;
-}
-.kv-m-briefing-main { flex: 1 1 340px; min-width: 0; }
-.kv-m-briefing-eyebrow {
-  font-size: 11px;
-  font-weight: var(--kv-fw-semibold);
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  color: var(--kv-gray-500);
-  margin-bottom: 8px;
-}
-.kv-m-briefing-lead {
-  font-family: var(--kv-mono);
-  font-size: 15px;
-  line-height: 1.45;
-  color: var(--kv-black);
-  margin: 0;
-}
-.kv-m-briefing-meta {
-  font-size: 12px;
-  line-height: 1.5;
-  color: var(--kv-ink-500);
-  margin: 6px 0 0;
-}
-.kv-m-briefing-actions {
-  display: flex;
-  align-items: center;
-  gap: 16px;
-  flex-shrink: 0;
-}
-.kv-m-briefing-cta {
-  display: inline-block;
-  font-family: var(--kv-mono);
-  font-size: 12.5px;
-  font-weight: var(--kv-fw-medium);
-  padding: 8px 14px;
-  background: var(--kv-black);
-  color: var(--kv-white);
-  text-decoration: none;
-  white-space: nowrap;
-}
-.kv-m-briefing-cta:hover { background: var(--kv-black-hover); }
-.kv-m-briefing-cta-2 {
-  font-size: 12.5px;
-  font-weight: var(--kv-fw-medium);
-  /* Readable in both themes (ink adapts), with a sage underline for brand. */
-  color: var(--kv-ink-700);
-  text-decoration: underline;
-  text-decoration-color: var(--kv-green);
-  text-underline-offset: 3px;
-  white-space: nowrap;
-}
-.kv-m-briefing-cta-2:hover {
-  color: var(--kv-black);
-  text-decoration-color: var(--kv-black);
-}
-
-@media (max-width: 640px) {
-  .kv-m-briefing-actions { width: 100%; flex-direction: column; align-items: stretch; gap: 10px; }
-  .kv-m-briefing-cta { text-align: center; }
-  .kv-m-briefing-cta-2 { text-align: center; }
 }
