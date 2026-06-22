@@ -5,7 +5,7 @@ import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
 import { formatMedian, formatNumber, toLocale } from "../lib/formatters";
-import { PRICE_BUCKETS, type PriceBucket, type BriefingSummary } from "arei-sdk";
+import { PRICE_BUCKETS, type PriceBucket } from "arei-sdk";
 import "./Detail.css"; // shares kv-d-card / kv-d-meta-row primitives
 import "./Market.css";
 
@@ -291,7 +291,6 @@ interface MarketData {
   pricedCount: number;
   addedThisMonth: number;
   buckets: { key: PriceBucket; label: string; count: number }[];
-  latestBriefing: BriefingSummary | null;
 }
 
 export default function Market() {
@@ -359,13 +358,10 @@ export default function Market() {
     let cancelled = false;
     async function load() {
       try {
-        const [statsRes, islandsRes, listingsRes, briefingsRes] = await Promise.all([
+        const [statsRes, islandsRes, listingsRes] = await Promise.all([
           arei.getMarketStats(),
           arei.getIslandOptions(),
           arei.getListings({ page: 1, pageSize: 500 }),
-          // Latest briefing is a soft dependency — never fail the Market page if
-          // it errors (e.g. table not yet migrated). Resolve to [] instead.
-          arei.listBriefings().catch(() => []),
         ]);
         if (cancelled) return;
 
@@ -440,7 +436,6 @@ export default function Market() {
           pricedCount,
           addedThisMonth,
           buckets,
-          latestBriefing: briefingsRes[0] ?? null,
         });
       } catch (e) {
         if (!cancelled) {
@@ -797,46 +792,6 @@ export default function Market() {
                 : "Read more about how the Cape Verde Real Estate Index fits into AREI."}
             </Link>
           </p>
-        </div>
-      </section>
-
-      {/* Monthly briefing — SECONDARY module, deliberately below the live data
-          dashboard. Invites readers to the monthly interpretation; it is not
-          the main content of /market. */}
-      <section className="kv-m-briefing">
-        <div className="kv-m-inner">
-          <div className="kv-m-briefing-card">
-            <div className="kv-m-briefing-main">
-              <div className="kv-m-briefing-eyebrow">
-                {isPt ? "Briefing mensal" : "Monthly briefing"}
-              </div>
-              <p className="kv-m-briefing-lead">
-                {isPt
-                  ? "Leia a interpretação mensal mais recente destes dados de mercado."
-                  : "Read the latest interpretation of this market data."}
-              </p>
-              <p className="kv-m-briefing-meta">
-                {data.latestBriefing
-                  ? `${data.latestBriefing.period} · ${isPt ? "Relatório baseado em snapshot, arquivado mensalmente" : "Snapshot-based report, archived monthly"}`
-                  : isPt
-                    ? "Relatório baseado em snapshot, arquivado mensalmente."
-                    : "Snapshot-based report, archived monthly."}
-              </p>
-            </div>
-            <div className="kv-m-briefing-actions">
-              {data.latestBriefing && (
-                <Link
-                  className="kv-m-briefing-cta"
-                  to={`/market/briefings/${data.latestBriefing.slug}`}
-                >
-                  {isPt ? "Ler o briefing mais recente" : "Read latest briefing"} <span aria-hidden="true">→</span>
-                </Link>
-              )}
-              <Link className="kv-m-briefing-cta-2" to="/market/briefings">
-                {isPt ? "Ver todos os briefings" : "View all briefings"}
-              </Link>
-            </div>
-          </div>
         </div>
       </section>
 

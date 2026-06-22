@@ -50,7 +50,6 @@ export default function Footer() {
             <Link to="/blog/buying-property-cape-verde-guide">{t("footer.buyingGuide")}</Link>
             <Link to="/blog">{t("footer.guidesFaq")}</Link>
             <Link to="/market-news">{t("common.news")}</Link>
-            <Link to="/market/briefings">{t("footer.briefings", { defaultValue: "Market briefings" })}</Link>
             <Link to="/market#methodology">{t("footer.methodology")}</Link>
             <Link to="/about">{t("common.about")}</Link>
           </div>

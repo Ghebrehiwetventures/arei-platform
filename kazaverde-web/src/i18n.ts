@@ -136,7 +136,7 @@ const resources = {
         heroSub:
           "An independent property search and data platform — listings aggregated from local agencies, portals and property websites across the archipelago.",
         browseAll: "Browse all listings →",
-        readIndex: "Read this month's index →",
+        readIndex: "View market data →",
         featuredEyebrow: "Featured this week · Week of {{week}}",
         featuredTitle: "Four listings worth a closer look.",
         featuredSub:
@@ -156,7 +156,7 @@ const resources = {
         firstSeenSince: "First seen since the 1st",
         verifiedPriceCoverage: "Verified-price coverage",
         havePublicPrice: "Have a public asking price",
-        activityHead: "This month's index activity",
+        activityHead: "Current market activity",
         largestInflow_one: "Largest inflow this month — 1 new listing since the 1st.",
         largestInflow_other: "Largest inflow this month — {{count}} new listings since the 1st.",
         listing: "listing",
@@ -745,7 +745,7 @@ const resources = {
         heroSub:
           "Uma plataforma independente de pesquisa e dados imobiliários — anúncios agregados de agências locais, portais e sites imobiliários em todo o arquipélago.",
         browseAll: "Ver todos os anúncios →",
-        readIndex: "Ler o índice deste mês →",
+        readIndex: "Ver dados de mercado →",
         featuredEyebrow: "Em destaque esta semana · Semana de {{week}}",
         featuredTitle: "Quatro anúncios que merecem atenção.",
         featuredSub:
@@ -765,7 +765,7 @@ const resources = {
         firstSeenSince: "Vistos pela primeira vez desde dia 1",
         verifiedPriceCoverage: "Cobertura de preço verificado",
         havePublicPrice: "Têm preço pedido público",
-        activityHead: "Atividade do índice este mês",
+        activityHead: "Atividade atual do mercado",
         largestInflow_one: "Maior entrada este mês — 1 novo anúncio desde dia 1.",
         largestInflow_other: "Maior entrada este mês — {{count}} novos anúncios desde dia 1.",
         listing: "anúncio",
