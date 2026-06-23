@@ -519,23 +519,38 @@ export class AREIClient {
   //
   // Returns total listings, source count, island count, price-sample count,
   // the latest successful check timestamp, and per-island stats (sorted by
-  // total listings descending). Price sample = numeric asking prices in
-  // [PRICE_FLOOR, PRICE_CEILING]. Medians are null when sample < MIN_MEDIAN_SAMPLE.
+  // total listings descending). Price sample = EUR-denominated numeric asking
+  // prices in [PRICE_FLOOR, PRICE_CEILING]. Medians are null when sample <
+  // MIN_MEDIAN_SAMPLE.
+  //
+  // Paginates in 1 000-row batches so the result is never silently capped by
+  // PostgREST's default max-rows setting, regardless of feed size.
   // =========================================================================
   async getMarketOverview(): Promise<MarketOverview> {
-    const { data, error } = await this.sb
-      .from(this.view)
-      .select("island, price, currency, source_id, last_seen_at");
-
-    if (error) throw new Error(`getMarketOverview failed: ${error.message}`);
-
-    const rows = (data ?? []) as {
+    type FeedRow = {
       island: string;
       price: number | null;
       currency: string | null;
       source_id: string | null;
       last_seen_at: string | null;
-    }[];
+    };
+
+    const PAGE = 1000;
+    const rows: FeedRow[] = [];
+    let from = 0;
+
+    while (true) {
+      const { data, error } = await this.sb
+        .from(this.view)
+        .select("island, price, currency, source_id, last_seen_at")
+        .range(from, from + PAGE - 1);
+
+      if (error) throw new Error(`getMarketOverview failed: ${error.message}`);
+      const batch = (data ?? []) as FeedRow[];
+      rows.push(...batch);
+      if (batch.length < PAGE) break;
+      from += PAGE;
+    }
 
     const sourceIds = new Set<string>();
     let latestSuccessfulCheck: string | null = null;

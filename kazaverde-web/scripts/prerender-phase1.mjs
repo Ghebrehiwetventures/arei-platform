@@ -127,11 +127,14 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           </section>
 
           <section>
-            <h2>Prices by island</h2>
+            <h2>Median asking prices by island.</h2>
             <p>
-              Asking prices from tracked public listings. Prices shown are medians across listings
-              with a numeric price between €10,000 and €5,000,000. Islands with fewer than five
-              priced listings show no median.
+              A quick view of what properties are currently advertised for.
+              The figures combine different property types and should not be used to value a specific property.
+            </p>
+            <p>
+              The price sample includes numeric asking prices from €10,000 to €5,000,000.
+              Medians are shown only for islands with at least 5 listings in the sample.
             </p>
             <table>
               <thead>
@@ -151,11 +154,11 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
           <section>
             <h2>What these figures mean.</h2>
             <ul>
-              <li>Prices are asking prices from public listings, not completed sale prices or valuations.</li>
-              <li>Coverage is partial. Private sales, off-market properties and untracked sources are not included.</li>
-              <li>We do not verify ownership, title, debts, permits, taxes or the legal status of a property.</li>
-              <li>The data should not be used as a valuation of a specific property.</li>
-              <li>Tracked sources are checked daily. Each listing shows the date of its most recent successful check.</li>
+              <li>Prices are the amounts shown in public listings, not completed sale prices.</li>
+              <li>Coverage is partial; not every property or source is included.</li>
+              <li>We try to identify duplicate listings, but some may remain.</li>
+              <li>Check the original source before relying on a listing.</li>
+              <li>Data updates as daily source checks complete.</li>
             </ul>
           </section>
         </main>
