@@ -517,14 +517,14 @@ export class AREIClient {
   // =========================================================================
   // getMarketOverview — current market summary from the live public feed
   //
-  // Returns total listings, source count, island count, price-sample count,
-  // the latest successful check timestamp, and per-island stats (sorted by
-  // total listings descending). Price sample = EUR-denominated numeric asking
-  // prices in [PRICE_FLOOR, PRICE_CEILING]. Medians are null when sample <
-  // MIN_MEDIAN_SAMPLE.
+  // Single paginated pass over the full feed. Returns:
+  //   totalListings, sourceCount, islandCount, priceSampleCount,
+  //   addedThisMonth (UTC calendar month), latestSuccessfulCheck,
+  //   buckets (EUR price-range distribution), and per-island stats.
   //
-  // Paginates in 1 000-row batches so the result is never silently capped by
-  // PostgREST's default max-rows setting, regardless of feed size.
+  // Price sample = EUR-denominated prices in [PRICE_FLOOR, PRICE_CEILING].
+  // Medians are null when priceSampleCount < MIN_MEDIAN_SAMPLE.
+  // Paginates in 1 000-row batches to bypass PostgREST max-rows cap.
   // =========================================================================
   async getMarketOverview(): Promise<MarketOverview> {
     type FeedRow = {
@@ -532,6 +532,7 @@ export class AREIClient {
       price: number | null;
       currency: string | null;
       source_id: string | null;
+      first_seen_at: string | null;
       last_seen_at: string | null;
     };
 
@@ -542,7 +543,7 @@ export class AREIClient {
     while (true) {
       const { data, error } = await this.sb
         .from(this.view)
-        .select("island, price, currency, source_id, last_seen_at")
+        .select("island, price, currency, source_id, first_seen_at, last_seen_at")
         .range(from, from + PAGE - 1);
 
       if (error) throw new Error(`getMarketOverview failed: ${error.message}`);
@@ -552,8 +553,18 @@ export class AREIClient {
       from += PAGE;
     }
 
+    // Start of current calendar month in UTC (ISO string comparison is safe)
+    const now = new Date();
+    const startOfMonthISO = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+
+    const BUCKET_ORDER: PriceBucket[] = ["under_100k", "100k_250k", "250k_500k", "over_500k"];
+    const bucketCounts: Record<PriceBucket, number> = {
+      under_100k: 0, "100k_250k": 0, "250k_500k": 0, over_500k: 0,
+    };
+
     const sourceIds = new Set<string>();
     let latestSuccessfulCheck: string | null = null;
+    let addedThisMonth = 0;
 
     const byIsland = new Map<string, { total: number; prices: number[] }>();
     for (const row of rows) {
@@ -561,22 +572,33 @@ export class AREIClient {
       if (row.last_seen_at && (!latestSuccessfulCheck || row.last_seen_at > latestSuccessfulCheck)) {
         latestSuccessfulCheck = row.last_seen_at;
       }
+      if (row.first_seen_at && row.first_seen_at >= startOfMonthISO) addedThisMonth++;
+
       if (!byIsland.has(row.island)) byIsland.set(row.island, { total: 0, prices: [] });
       const entry = byIsland.get(row.island)!;
       entry.total += 1;
+
       // Only include EUR-denominated prices in the sample (non-EUR currencies
       // such as CVE would produce meaningless €-labelled medians). Normalize
       // the currency string defensively: the pipeline writes ISO 4217 uppercase
       // ("EUR" / "CVE") but the column has no DB CHECK constraint.
+      const normalizedCurrency = row.currency?.trim().toUpperCase();
       if (
         row.price != null &&
-        row.currency?.trim().toUpperCase() === "EUR" &&
+        normalizedCurrency === "EUR" &&
         row.price >= PRICE_FLOOR &&
         row.price <= PRICE_CEILING
       ) {
         entry.prices.push(row.price);
+        // Assign to price bucket
+        for (const k of BUCKET_ORDER) {
+          const { min, max } = PRICE_BUCKETS[k];
+          if (row.price >= min && row.price < max) { bucketCounts[k]++; break; }
+        }
       }
     }
+
+    const buckets = BUCKET_ORDER.map((key) => ({ key, count: bucketCounts[key] }));
 
     let priceSampleCount = 0;
     const islands = Array.from(byIsland.entries()).map(([island, { total, prices }]) => {
@@ -599,7 +621,9 @@ export class AREIClient {
       sourceCount: sourceIds.size,
       islandCount: byIsland.size,
       priceSampleCount,
+      addedThisMonth,
       latestSuccessfulCheck,
+      buckets,
       islands,
     };
   }

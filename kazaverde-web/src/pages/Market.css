@@ -116,6 +116,291 @@
 }
 .kv-m-disclaimer a:hover { color: var(--kv-black); }
 
+/* ─────────────────────────────────────────────────────────────
+   Geographic context — map + country facts grid
+   ───────────────────────────────────────────────────────────── */
+.kv-m-geo {
+  border-top: 1px solid var(--kv-rule);
+  padding: 64px 0;
+  background: var(--kv-off-white);
+}
+.kv-m-geo-grid {
+  display: grid;
+  grid-template-columns: 1fr 300px;
+  gap: 40px;
+  align-items: start;
+}
+.kv-m-geo-wrap {
+  width: 100%;
+}
+.kv-m-geo-map {
+  width: 100%;
+  aspect-ratio: 4 / 3;
+  background: var(--kv-bone);
+  border: 1px solid var(--kv-rule);
+  overflow: hidden;
+  position: relative;
+}
+.kv-m-geo-mapbox {
+  width: 100%;
+  height: 100%;
+}
+.kv-m-geo-fallback {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 100%;
+  gap: 8px;
+}
+.kv-m-geo-fallback-pin {
+  font-size: 36px;
+  line-height: 1;
+}
+.kv-m-geo-fallback-label {
+  font-family: var(--kv-mono);
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--kv-black);
+}
+.kv-m-geo-fallback-sub {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  color: var(--kv-gray-500);
+}
+.kv-m-geo-facts {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.kv-m-geo-fact {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--kv-rule-soft);
+}
+.kv-m-geo-fact:last-child { border-bottom: none; }
+.kv-m-geo-fact-k {
+  font-family: var(--kv-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  white-space: nowrap;
+}
+.kv-m-geo-fact-v {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  color: var(--kv-black);
+  text-align: right;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Intro narrative — lead text + meta sidebar
+   ───────────────────────────────────────────────────────────── */
+.kv-m-intro {
+  border-top: 1px solid var(--kv-rule);
+  padding: 64px 0;
+  background: var(--kv-white);
+}
+.kv-m-intro-grid {
+  display: grid;
+  grid-template-columns: 1fr 280px;
+  gap: 48px;
+  align-items: start;
+}
+.kv-m-intro-lead p {
+  font-family: var(--kv-mono);
+  font-size: 15px;
+  line-height: 1.7;
+  color: var(--kv-black);
+  margin-bottom: 16px;
+  max-width: 640px;
+}
+.kv-m-intro-lead p:last-child { margin-bottom: 0; }
+.kv-m-intro-meta {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  background: var(--kv-bone);
+  border: 1px solid var(--kv-rule);
+  padding: 0 16px;
+}
+.kv-m-intro-meta-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 12px;
+  padding: 12px 0;
+  border-bottom: 1px solid var(--kv-rule-soft);
+}
+.kv-m-intro-meta-row:last-child { border-bottom: none; }
+.kv-m-intro-meta-k {
+  font-family: var(--kv-mono);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  white-space: nowrap;
+}
+.kv-m-intro-meta-v {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  color: var(--kv-black);
+  text-align: right;
+}
+.kv-m-intro-meta-v a {
+  color: var(--kv-black);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.kv-m-intro-meta-v a:hover { color: var(--kv-green-deep); }
+
+/* ─────────────────────────────────────────────────────────────
+   Horizontal bar charts — price distribution + by-island
+   ───────────────────────────────────────────────────────────── */
+.kv-m-bars {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-bottom: 16px;
+}
+.kv-m-bar-row {
+  display: grid;
+  grid-template-columns: 160px 1fr 56px;
+  gap: 12px;
+  align-items: center;
+}
+.kv-m-bar-label {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  color: var(--kv-black);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.kv-m-bar-track {
+  height: 10px;
+  background: var(--kv-rule);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.kv-m-bar-fill {
+  height: 100%;
+  background: var(--kv-green-deep);
+  border-radius: 2px;
+  transition: width 0.4s ease;
+  min-width: 2px;
+}
+.kv-m-bar-val {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  color: var(--kv-gray-500);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   SVG area chart (inventory trend)
+   ───────────────────────────────────────────────────────────── */
+.kv-m-chart {
+  width: 100%;
+  height: auto;
+  max-height: 200px;
+  display: block;
+}
+
+/* Coming-soon overlay used for the trend section */
+.kv-coming {
+  position: relative;
+  min-height: 160px;
+  background: var(--kv-bone);
+  border: 1px solid var(--kv-rule);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.kv-coming-content {
+  opacity: 0.2;
+  pointer-events: none;
+}
+.kv-coming-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+.kv-coming-overlay p {
+  font-family: var(--kv-mono);
+  font-size: 12px;
+  color: var(--kv-gray-500);
+  text-align: center;
+  max-width: 260px;
+  line-height: 1.5;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   FAQ / methodology accordion
+   ───────────────────────────────────────────────────────────── */
+.kv-m-faq {
+  border: 1px solid var(--kv-rule);
+  background: var(--kv-white);
+}
+.kv-m-faq-row {
+  border-bottom: 1px solid var(--kv-rule-soft);
+}
+.kv-m-faq-row:last-child { border-bottom: none; }
+.kv-m-faq-q {
+  display: grid;
+  grid-template-columns: 100px 1fr 24px;
+  gap: 16px;
+  align-items: center;
+  width: 100%;
+  padding: 16px 20px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  text-align: left;
+  font-family: var(--kv-mono);
+  font-size: 13px;
+  color: var(--kv-black);
+  transition: background 0.15s;
+}
+.kv-m-faq-q:hover { background: var(--kv-bone); }
+.kv-m-faq-topic {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--kv-gray-500);
+  white-space: nowrap;
+}
+.kv-m-faq-text {
+  font-weight: 500;
+  line-height: 1.4;
+}
+.kv-m-faq-icon {
+  font-size: 18px;
+  color: var(--kv-gray-500);
+  line-height: 1;
+  text-align: right;
+}
+.kv-m-faq-a {
+  font-family: var(--kv-mono);
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--kv-black);
+  padding: 0 20px 20px 136px;
+  display: none;
+}
+.kv-m-faq-row.is-open .kv-m-faq-a { display: block; }
+
 /* Loading / error placeholders */
 .kv-m-state {
   max-width: 600px;
@@ -141,9 +426,26 @@
 @media (max-width: 960px) {
   .kv-m-section { padding: 48px 0; }
   .kv-m-section-head h2 { font-size: 22px; }
+  .kv-m-geo { padding: 48px 0; }
+  .kv-m-geo-grid { grid-template-columns: 1fr; gap: 24px; }
+  .kv-m-geo-facts { display: grid; grid-template-columns: 1fr 1fr; }
+  .kv-m-intro { padding: 48px 0; }
+  .kv-m-intro-grid { grid-template-columns: 1fr; gap: 24px; }
+  .kv-m-faq-q { grid-template-columns: 80px 1fr 20px; gap: 12px; padding: 14px 16px; }
+  .kv-m-faq-a { padding: 0 16px 16px 108px; }
 }
 @media (max-width: 640px) {
   .kv-m-section { padding: 36px 0; }
+  .kv-m-geo { padding: 36px 0; }
+  .kv-m-geo-grid { grid-template-columns: 1fr; }
+  .kv-m-geo-facts { display: flex; flex-direction: column; }
+  .kv-m-intro { padding: 36px 0; }
+  .kv-m-intro-grid { grid-template-columns: 1fr; }
+  .kv-m-bar-row { grid-template-columns: 120px 1fr 44px; gap: 8px; }
+  .kv-m-bar-label { font-size: 11px; }
+  .kv-m-faq-q { grid-template-columns: 1fr 20px; font-size: 12px; padding: 12px 14px; }
+  .kv-m-faq-topic { display: none; }
+  .kv-m-faq-a { font-size: 12px; padding: 0 14px 14px; }
 
   /* Island table — on mobile collapse to 3 cols: Island / Sample / Median.
      "Tracked listings" column is hidden — the sample count is the more
