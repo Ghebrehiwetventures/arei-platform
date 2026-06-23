@@ -565,10 +565,12 @@ export class AREIClient {
       const entry = byIsland.get(row.island)!;
       entry.total += 1;
       // Only include EUR-denominated prices in the sample (non-EUR currencies
-      // such as CVE would produce meaningless €-labelled medians).
+      // such as CVE would produce meaningless €-labelled medians). Normalize
+      // the currency string defensively: the pipeline writes ISO 4217 uppercase
+      // ("EUR" / "CVE") but the column has no DB CHECK constraint.
       if (
         row.price != null &&
-        row.currency === "EUR" &&
+        row.currency?.trim().toUpperCase() === "EUR" &&
         row.price >= PRICE_FLOOR &&
         row.price <= PRICE_CEILING
       ) {
