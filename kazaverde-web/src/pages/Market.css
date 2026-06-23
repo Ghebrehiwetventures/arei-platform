@@ -135,7 +135,8 @@
 }
 .kv-m-geo-map {
   width: 100%;
-  aspect-ratio: 4 / 3;
+  aspect-ratio: 16 / 9;
+  max-height: 340px;
   background: var(--kv-bone);
   border: 1px solid var(--kv-rule);
   overflow: hidden;
@@ -346,60 +347,75 @@
 }
 
 /* ─────────────────────────────────────────────────────────────
-   FAQ / methodology accordion
+   FAQ / methodology accordion — canonical .kv-faq pattern,
+   shared with the /blog FAQ (BlogList.css) for visual consistency.
+   Duplicated here so /market stays self-contained under code-split.
    ───────────────────────────────────────────────────────────── */
-.kv-m-faq {
-  border: 1px solid var(--kv-rule);
-  background: var(--kv-white);
+.kv-faq {
+  border-top: 1px solid var(--kv-rule);
 }
-.kv-m-faq-row {
-  border-bottom: 1px solid var(--kv-rule-soft);
+.kv-faq-row {
+  border-bottom: 1px solid var(--kv-rule);
 }
-.kv-m-faq-row:last-child { border-bottom: none; }
-.kv-m-faq-q {
+.kv-faq-q {
   display: grid;
-  grid-template-columns: 100px 1fr 24px;
-  gap: 16px;
+  grid-template-columns: 110px 1fr 24px;
   align-items: center;
+  gap: 20px;
   width: 100%;
-  padding: 16px 20px;
-  background: none;
+  padding: 22px 4px;
+  background: transparent;
   border: none;
-  cursor: pointer;
   text-align: left;
+  cursor: pointer;
   font-family: var(--kv-mono);
-  font-size: 13px;
   color: var(--kv-black);
-  transition: background 0.15s;
+  transition: background var(--kv-dur-fast) var(--kv-ease);
 }
-.kv-m-faq-q:hover { background: var(--kv-bone); }
-.kv-m-faq-topic {
+.kv-faq-q:hover { background: var(--kv-off-white); }
+.kv-faq-q-topic {
   font-size: 10px;
   font-weight: 600;
   letter-spacing: 0.14em;
   text-transform: uppercase;
   color: var(--kv-gray-500);
-  white-space: nowrap;
 }
-.kv-m-faq-text {
-  font-weight: 500;
+.kv-faq-q-text {
+  font-size: 15px;
+  font-weight: var(--kv-fw-regular);
   line-height: 1.4;
-}
-.kv-m-faq-icon {
-  font-size: 18px;
-  color: var(--kv-gray-500);
-  line-height: 1;
-  text-align: right;
-}
-.kv-m-faq-a {
-  font-family: var(--kv-mono);
-  font-size: 13px;
-  line-height: 1.7;
   color: var(--kv-black);
-  padding: 0 20px 20px 136px;
-  display: none;
+  letter-spacing: -0.005em;
 }
-.kv-m-faq-row.is-open .kv-m-faq-a { display: block; }
+.kv-faq-q-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--kv-gray-500);
+  font-weight: 400;
+}
+.kv-faq-row.is-open .kv-faq-q-icon { color: var(--kv-black); }
+.kv-faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.25s ease;
+  padding: 0 24px 0 calc(110px + 20px + 4px);
+  font-family: var(--kv-sans);
+  font-size: 14px;
+  line-height: 1.7;
+  color: var(--kv-ink-700);
+  max-width: 720px;
+  box-sizing: border-box;
+  width: 100%;
+}
+.kv-faq-row.is-open .kv-faq-a {
+  max-height: 600px;
+  padding-bottom: 24px;
+}
 
 /* Loading / error placeholders */
 .kv-m-state {
@@ -431,8 +447,6 @@
   .kv-m-geo-facts { display: grid; grid-template-columns: 1fr 1fr; }
   .kv-m-intro { padding: 48px 0; }
   .kv-m-intro-grid { grid-template-columns: 1fr; gap: 24px; }
-  .kv-m-faq-q { grid-template-columns: 80px 1fr 20px; gap: 12px; padding: 14px 16px; }
-  .kv-m-faq-a { padding: 0 16px 16px 108px; }
 }
 @media (max-width: 640px) {
   .kv-m-section { padding: 36px 0; }
@@ -443,9 +457,17 @@
   .kv-m-intro-grid { grid-template-columns: 1fr; }
   .kv-m-bar-row { grid-template-columns: 120px 1fr 44px; gap: 8px; }
   .kv-m-bar-label { font-size: 11px; }
-  .kv-m-faq-q { grid-template-columns: 1fr 20px; font-size: 12px; padding: 12px 14px; }
-  .kv-m-faq-topic { display: none; }
-  .kv-m-faq-a { font-size: 12px; padding: 0 14px 14px; }
+  .kv-faq-q {
+    grid-template-columns: 1fr 24px;
+    gap: 8px 16px;
+    padding: 18px 4px;
+  }
+  .kv-faq-q-topic { grid-column: 1 / -1; }
+  .kv-faq-q-text { font-size: 14px; }
+  .kv-faq-a {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
 
   /* Island table — on mobile collapse to 3 cols: Island / Sample / Median.
      "Tracked listings" column is hidden — the sample count is the more

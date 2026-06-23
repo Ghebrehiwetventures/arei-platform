@@ -539,22 +539,22 @@ export default function Market() {
                 : "Short answers on what the index measures, where the limits are, and how to read the numbers."}
             </p>
           </div>
-          <div className="kv-m-faq" id="faq">
+          <div className="kv-faq" id="faq">
             {marketFaq.map((item, i) => {
               const isOpen = openIdx === i;
               return (
-                <div className={`kv-m-faq-row${isOpen ? " is-open" : ""}`} key={item.q}>
+                <div className={`kv-faq-row${isOpen ? " is-open" : ""}`} key={item.q}>
                   <button
                     type="button"
-                    className="kv-m-faq-q"
+                    className="kv-faq-q"
                     onClick={() => setOpenIdx(isOpen ? -1 : i)}
                     aria-expanded={isOpen}
                   >
-                    <span className="kv-m-faq-topic">{item.topic}</span>
-                    <span className="kv-m-faq-text">{item.q}</span>
-                    <span className="kv-m-faq-icon" aria-hidden="true">{isOpen ? "−" : "+"}</span>
+                    <span className="kv-faq-q-topic">{item.topic}</span>
+                    <span className="kv-faq-q-text">{item.q}</span>
+                    <span className="kv-faq-q-icon" aria-hidden="true">{isOpen ? "−" : "+"}</span>
                   </button>
-                  <div className="kv-m-faq-a" aria-hidden={!isOpen}>{item.a}</div>
+                  <div className="kv-faq-a" aria-hidden={!isOpen}>{item.a}</div>
                 </div>
               );
             })}
