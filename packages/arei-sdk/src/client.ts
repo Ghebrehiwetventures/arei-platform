@@ -525,13 +525,14 @@ export class AREIClient {
   async getMarketOverview(): Promise<MarketOverview> {
     const { data, error } = await this.sb
       .from(this.view)
-      .select("island, price, source_id, last_seen_at");
+      .select("island, price, currency, source_id, last_seen_at");
 
     if (error) throw new Error(`getMarketOverview failed: ${error.message}`);
 
     const rows = (data ?? []) as {
       island: string;
       price: number | null;
+      currency: string | null;
       source_id: string | null;
       last_seen_at: string | null;
     }[];
@@ -548,7 +549,14 @@ export class AREIClient {
       if (!byIsland.has(row.island)) byIsland.set(row.island, { total: 0, prices: [] });
       const entry = byIsland.get(row.island)!;
       entry.total += 1;
-      if (row.price != null && row.price >= PRICE_FLOOR && row.price <= PRICE_CEILING) {
+      // Only include EUR-denominated prices in the sample (non-EUR currencies
+      // such as CVE would produce meaningless €-labelled medians).
+      if (
+        row.price != null &&
+        row.currency === "EUR" &&
+        row.price >= PRICE_FLOOR &&
+        row.price <= PRICE_CEILING
+      ) {
         entry.prices.push(row.price);
       }
     }

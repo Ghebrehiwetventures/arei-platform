@@ -120,8 +120,8 @@ export default function Market() {
         </div>
       </section>
 
-      {/* Data limits */}
-      <section className="kv-m-section">
+      {/* Data limits — id keeps /market#methodology footer link working */}
+      <section className="kv-m-section" id="methodology">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
             <span className="kv-l-eyebrow">{t("market.dataEyebrow")}</span>
