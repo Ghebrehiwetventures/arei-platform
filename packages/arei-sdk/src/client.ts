@@ -590,10 +590,16 @@ export class AREIClient {
         row.price <= PRICE_CEILING
       ) {
         entry.prices.push(row.price);
-        // Assign to price bucket
+        // Assign to price bucket. Upper bound is exclusive between buckets, but
+        // inclusive at the very top so a price equal to PRICE_CEILING (which the
+        // sample filter above admits) still lands in over_500k rather than
+        // falling through — otherwise Σbuckets < priceSampleCount.
         for (const k of BUCKET_ORDER) {
           const { min, max } = PRICE_BUCKETS[k];
-          if (row.price >= min && row.price < max) { bucketCounts[k]++; break; }
+          if (row.price >= min && (row.price < max || max === PRICE_CEILING)) {
+            bucketCounts[k]++;
+            break;
+          }
         }
       }
     }

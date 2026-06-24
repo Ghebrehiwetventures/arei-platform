@@ -315,36 +315,8 @@
   display: block;
 }
 
-/* Coming-soon overlay used for the trend section */
-.kv-coming {
-  position: relative;
-  min-height: 160px;
-  background: var(--kv-bone);
-  border: 1px solid var(--kv-rule);
-  border-radius: 2px;
-  overflow: hidden;
-}
-.kv-coming-content {
-  opacity: 0.2;
-  pointer-events: none;
-}
-.kv-coming-overlay {
-  position: absolute;
-  inset: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 12px;
-}
-.kv-coming-overlay p {
-  font-family: var(--kv-mono);
-  font-size: 12px;
-  color: var(--kv-gray-500);
-  text-align: center;
-  max-width: 260px;
-  line-height: 1.5;
-}
+/* The coming-soon overlay (.kv-coming*) used by the trend section is a shared
+   primitive defined in styles/globals.css — no local copy here. */
 
 /* ─────────────────────────────────────────────────────────────
    FAQ / methodology accordion — canonical .kv-faq pattern,
