@@ -882,8 +882,7 @@ function ListingRow({ l }: { l: ListingCard }) {
           </div>
         )}
         <div className="kv-list-row-meta">
-          <span>{formatSourceLabel(l.source_id)}</span>
-          <span>{formatRelTime(l.first_seen_at, locale)}</span>
+          <span>{formatSourceLabel(l.source_id)} · {formatRelTime(l.first_seen_at, locale)}</span>
         </div>
       </div>
     </Link>
