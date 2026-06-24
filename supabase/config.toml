@@ -371,6 +371,11 @@ deno_version = 2
 [functions.subscribe]
 verify_jwt = false
 
+# Public unsubscribe — opened from an email link (GET) or one-click clients
+# (POST, RFC 8058) with no auth header; the signed token is the authorization.
+[functions.unsubscribe]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
