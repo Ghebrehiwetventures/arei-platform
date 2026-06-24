@@ -20,9 +20,10 @@ const PEXELS_SEARCH_URL = "https://api.pexels.com/v1/search";
 
 // Curated allowlist of human-verified Cape Verde photos. When non-empty it is
 // used exclusively — the background is then ALWAYS genuinely Cape Verde, never a
-// look-alike neighbour (Canary Islands, etc.), and needs no live search. Build /
-// extend it via the /api/pexels-curate endpoint. Falls back to live keyword
-// search only while the list is empty.
+// look-alike neighbour (Canary Islands, etc.), and needs no live search. Entries
+// can come from Pexels (/api/pexels-curate) or Wikimedia Commons
+// (/api/wikimedia-curate); each entry's `provider` drives its credit line. Falls
+// back to live keyword search only while the list is empty.
 const HERE = path.dirname(fileURLToPath(import.meta.url));
 let ALLOWLIST = [];
 try {
@@ -109,13 +110,23 @@ export async function searchPexelsPhoto() {
   // photo path.
   if (!ALLOWLIST.length) return null;
   const p = ALLOWLIST[Math.floor(Math.random() * ALLOWLIST.length)];
-  const photographer = String(p.photographer || "Unknown");
+  const photographer = String(p.photographer || p.author || "Unknown");
+  // Entries can come from Pexels (default) or Wikimedia Commons. Each provider
+  // has its own credit convention, so prefer a precomputed attribution string
+  // when present and otherwise build the Pexels-style default (back-compat with
+  // older allowlist entries that carried no provider).
+  const provider = String(p.provider || "pexels");
+  const providerLabel = provider === "wikimedia" ? "Wikimedia Commons" : "Pexels";
+  const attribution =
+    String(p.attribution || "").trim() ||
+    `Photo: ${photographer} / ${providerLabel}${p.license ? ` (${p.license})` : ""}`;
   return {
     imageUrl: p.imageUrl,
     photographer,
-    photographerUrl: String(p.photographerUrl || ""),
+    photographerUrl: String(p.photographerUrl || p.authorUrl || ""),
     sourceUrl: String(p.sourceUrl || ""),
-    attribution: `Photo: ${photographer} / Pexels`,
+    attribution,
+    provider,
     query: "curated",
   };
 }
