@@ -1,5 +1,5 @@
 import { createClient } from "@supabase/supabase-js";
-import { renderHero, generateAiImage, generateGeminiImage, suggestCaption, buildImagePrompt, placeholderImage } from "../lib/newsHero.js";
+import { renderHero, renderListing, generateAiImage, generateGeminiImage, suggestCaption, buildImagePrompt, placeholderImage } from "../lib/newsHero.js";
 import { searchPexelsPhoto } from "../lib/pexels.js";
 
 const COOKIE_NAME = "admin_session";
@@ -73,6 +73,7 @@ export default async function handler(req, res) {
     }
 
     const body = req.body && typeof req.body === "object" ? req.body : {};
+    const slideType = clean(body.slideType) === "listing" ? "listing" : "hero";
     const item = {
       category: clean(body.category) || "Market News",
       headline: clean(body.headline),
@@ -82,10 +83,28 @@ export default async function handler(req, res) {
       aiPrompt: clean(body.aiPrompt),
       imageUrl: clean(body.imageUrl),
       location: clean(body.location),
+      // Listing fields (used when slideType === "listing").
+      agency: clean(body.agency),
+      propertyType: clean(body.propertyType),
+      price: clean(body.price),
+      beds: clean(body.beds),
+      baths: clean(body.baths),
+      sqm: clean(body.sqm),
+      idx: Number(body.idx) || 1,
+      total: Number(body.total) || 1,
     };
-    if (!item.headline) {
+    if (slideType === "hero" && !item.headline) {
       send(res, 400, { error: "headline is required" });
       return;
+    }
+    if (slideType === "listing" && !item.price && !item.imageUrl) {
+      send(res, 400, { error: "listing slide needs a price or an image" });
+      return;
+    }
+    // A listing background may be AI-generated; give buildImagePrompt something
+    // to work with when there's no headline.
+    if (slideType === "listing" && !item.headline) {
+      item.headline = [item.propertyType, item.location].filter(Boolean).join(" in ") || "Cape Verde property";
     }
 
     const useAi = body.useAi === true || body.useAi === "1";
@@ -178,8 +197,10 @@ export default async function handler(req, res) {
     // there is nothing to swipe to. Photo attribution is surfaced in the caption
     // (via photoMeta), not burned onto the image.
     const slides = [];
-    const hero = await renderHero({ ...item, imageBuffer, showNav: false });
-    slides.push({ label: "1 · Hero", imageBase64: hero.toString("base64") });
+    const png = slideType === "listing"
+      ? await renderListing({ ...item, imageBuffer })
+      : await renderHero({ ...item, imageBuffer, showNav: false });
+    slides.push({ label: slideType === "listing" ? "Listing" : "1 · Hero", imageBase64: png.toString("base64") });
 
     const caption = suggestCaption(item);
 

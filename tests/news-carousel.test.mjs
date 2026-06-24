@@ -17,6 +17,7 @@ import {
   patchSlide,
   slideFilename,
   sanitizeFilename,
+  slideLabel,
   zipName,
 } from "../arei-admin/newsCarousel.mjs";
 
@@ -165,4 +166,82 @@ test("zipName derives from the first slide headline", () => {
   let st = freshState();
   st = updateActive(st, { headline: "Cape Verde market" });
   assert.equal(zipName(st), "cape-verde-market-carousel.zip");
+});
+
+// ── Listing slide type ──────────────────────────────────────────────────────
+
+test("new slides default to hero; addSlide('listing') creates a listing slide", () => {
+  let st = freshState();
+  assert.equal(st.slides[0].type, "hero");
+  st = addSlide(st, "listing");
+  assert.equal(st.slides[1].type, "listing");
+  assert.equal(st.activeSlideId, st.slides[1].id);
+});
+
+test("switching type clears the old render but keeps the stabilised photo", () => {
+  const s = emptySlide({ sourceImageBase64: "IMG", sourceImageMime: "image/jpeg", resultPng: "HERO_PNG", dirty: false });
+  const next = patchSlide(s, { type: "listing" });
+  assert.equal(next.type, "listing");
+  assert.equal(next.resultPng, "");        // different composition
+  assert.equal(next.sourceImageBase64, "IMG"); // same photo reused
+  assert.equal(next.dirty, true);
+});
+
+test("editing a listing render field marks dirty, keeps the photo", () => {
+  const s = emptySlide({ type: "listing", sourceImageBase64: "IMG", resultPng: "OLD", dirty: false });
+  const next = patchSlide(s, { price: "€95 000" });
+  assert.equal(next.dirty, true);
+  assert.equal(next.sourceImageBase64, "IMG");
+});
+
+test("listing deterministic re-render sends slideType + fields + counter, no AI flags", () => {
+  const s = emptySlide({
+    type: "listing", agency: "Homes Casa Verde", propertyType: "Apartment",
+    price: "€95 000", beds: 2, baths: 1, sqm: 87, location: "Santa Maria, Sal",
+    sourceImageBase64: "ABC", sourceImageMime: "image/jpeg",
+  });
+  const body = buildRenderRequest(s, { idx: 4, total: 9 });
+  assert.equal(body.slideType, "listing");
+  assert.equal(body.useAi, false);
+  assert.equal(body.imageSource, "url");
+  assert.equal(body.price, "€95 000");
+  assert.equal(body.beds, 2);
+  assert.equal(body.idx, 4);
+  assert.equal(body.total, 9);
+  assert.equal(body.aiPrompt, undefined);
+});
+
+test("reorder marks listing slides dirty (positional counter invalidation)", () => {
+  let st = freshState();                       // slide 1 = hero
+  st = addSlide(st, "listing");                // slide 2 = listing
+  st = setSlideById(st, st.activeSlideId, (s) => ({ ...s, dirty: false, resultPng: "X" }));
+  st = moveSlide(st, st.activeSlideId, "left"); // move listing to position 1
+  const listing = st.slides.find((s) => s.type === "listing");
+  assert.equal(listing.dirty, true);           // counter must regenerate
+});
+
+test("add/delete marks listing slides dirty (total changed)", () => {
+  let st = freshState();
+  st = addSlide(st, "listing");
+  st = setSlideById(st, st.activeSlideId, (s) => ({ ...s, dirty: false, resultPng: "X" }));
+  const listingId = st.activeSlideId;
+  st = addSlide(st, "hero");                    // total changed
+  assert.equal(st.slides.find((s) => s.id === listingId).dirty, true);
+});
+
+test("mixed carousel: listing filenames use location/price, in order", () => {
+  const hero = emptySlide({ type: "hero", headline: "Cape Verde is having a global moment" });
+  const l1 = emptySlide({ type: "listing", price: "€95 000", location: "Santa Maria, Sal" });
+  const l2 = emptySlide({ type: "listing", price: "€89 995", location: "" });
+  const slides = [hero, l1, l2];
+  const names = slides.map((s, i) => slideFilename(i, s));
+  assert.equal(names[0], "01-cape-verde-is-having-a-global-moment.png");
+  assert.equal(names[1], "02-santa-maria-sal.png"); // location preferred
+  assert.equal(names[2], "03-89-995.png");          // falls back to price
+});
+
+test("slideLabel: hero→headline, listing→location/price/agency", () => {
+  assert.equal(slideLabel(emptySlide({ type: "hero", headline: "Hi" })), "Hi");
+  assert.equal(slideLabel(emptySlide({ type: "listing", location: "Sal", price: "€1" })), "Sal");
+  assert.equal(slideLabel(emptySlide({ type: "listing", price: "€95 000" })), "€95 000");
 });

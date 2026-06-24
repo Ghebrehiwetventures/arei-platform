@@ -12,14 +12,25 @@ export interface PhotoMeta {
   photo_attribution_text: string;
 }
 
+export type SlideType = "hero" | "listing";
+
 export interface CarouselSlide {
   id: string;
+  type: SlideType;
   category: string;
   headline: string;
   highlight: string;
   date: string;
   dek: string;
   region: string;
+  // Listing fields (type === "listing").
+  agency: string;
+  propertyType: string;
+  price: string;
+  beds: string | number;
+  baths: string | number;
+  sqm: string | number;
+  location: string;
   imageSource: ImageSource;
   imageUrl: string;
   sourceUrl: string;
@@ -58,11 +69,14 @@ export interface RenderRequestOpts {
   aiPromptOverride?: string | null;
   quality?: string;
   aiProvider?: string;
+  idx?: number;
+  total?: number;
 }
 
 export const MIN_SLIDES: number;
 export const MAX_SLIDES: number;
 export const RENDER_TEXT_FIELDS: string[];
+export const LISTING_RENDER_FIELDS: string[];
 export const IMAGE_FIELDS: string[];
 
 export function newId(): string;
@@ -74,7 +88,7 @@ export function needsRender(slide: CarouselSlide): boolean;
 export function dataUrl(mime: string, base64: string): string;
 export function canReuseSource(slide: CarouselSlide, opts?: RenderRequestOpts): boolean;
 export function buildRenderRequest(slide: CarouselSlide, opts?: RenderRequestOpts): Record<string, unknown>;
-export function addSlide(state: CarouselState): CarouselState;
+export function addSlide(state: CarouselState, type?: SlideType): CarouselState;
 export function duplicateActive(state: CarouselState): CarouselState;
 export function deleteSlide(state: CarouselState, id: string): CarouselState;
 export function moveSlide(state: CarouselState, id: string, dir: "left" | "right"): CarouselState;
@@ -88,5 +102,6 @@ export function setSlideById(
 ): CarouselState;
 export function setActive(state: CarouselState, id: string): CarouselState;
 export function sanitizeFilename(text: string, fallback?: string): string;
-export function slideFilename(index: number, headline: string): string;
+export function slideLabel(slide: CarouselSlide): string;
+export function slideFilename(index: number, headlineOrSlide: string | CarouselSlide): string;
 export function zipName(state: CarouselState): string;

@@ -15,6 +15,8 @@ export const MAX_SLIDES = 10;
 // marks the slide dirty but KEEPS the stabilised source photo, so a re-render
 // re-composites the same photo with new text — no fresh AI/Pexels call.
 export const RENDER_TEXT_FIELDS = ["category", "headline", "highlight", "date", "dek", "region"];
+// Listing-slide render-affecting fields — same dirty behaviour (keep the photo).
+export const LISTING_RENDER_FIELDS = ["agency", "propertyType", "price", "beds", "baths", "sqm", "location"];
 // Editing one of these means a different photo: drop the stabilised source photo
 // and the rendered result so the next render resolves a new image.
 export const IMAGE_FIELDS = ["imageSource", "imageUrl"];
@@ -33,12 +35,24 @@ export function newId() {
 export function emptySlide(overrides = {}) {
   return {
     id: newId(),
+    // Slide type: "hero" (news composition) | "listing" (property snapshot).
+    // Both share the same canonical renderer, image model, dirty/export flow.
+    type: "hero",
     category: "Market News",
     headline: "",
     highlight: "",
     date: "",
     dek: "",
     region: "",
+    // Listing fields (used when type === "listing"; the positional counter is
+    // derived from slide index/total at render time, not stored here).
+    agency: "",
+    propertyType: "",
+    price: "",
+    beds: "",
+    baths: "",
+    sqm: "",
+    location: "",
     imageSource: "ai",
     imageUrl: "",
     // Article metadata — follows the picked market-news item, per slide.
@@ -71,7 +85,9 @@ export function patchSlide(slide, patch) {
   const next = { ...slide, ...patch };
   const keys = Object.keys(patch);
   const changedImage = keys.some((k) => IMAGE_FIELDS.includes(k) && patch[k] !== slide[k]);
-  const changedText = keys.some((k) => RENDER_TEXT_FIELDS.includes(k) && patch[k] !== slide[k]);
+  const changedType = "type" in patch && patch.type !== slide.type;
+  const renderFields = next.type === "listing" ? LISTING_RENDER_FIELDS : RENDER_TEXT_FIELDS;
+  const changedText = keys.some((k) => renderFields.includes(k) && patch[k] !== slide[k]);
   if (changedImage) {
     // New image source/URL → previous source photo and render are void.
     next.sourceImageBase64 = "";
@@ -79,6 +95,11 @@ export function patchSlide(slide, patch) {
     next.resultPng = "";
     next.photoMeta = null;
     next.warning = null;
+    next.dirty = true;
+  } else if (changedType) {
+    // Different composition entirely — drop the old render, keep the photo so a
+    // re-render re-composites the same image in the new slide type.
+    next.resultPng = "";
     next.dirty = true;
   } else if (changedText) {
     // Text-only edit: keep the stabilised source photo; mark stale so the
@@ -122,15 +143,29 @@ export function canReuseSource(slide, opts = {}) {
 // Deterministic path: reuse the exact stored photo via imageSource:"url" + a
 // data URL, with useAi:false — so AI/Pexels are NOT re-invoked on text edits.
 export function buildRenderRequest(slide, opts = {}) {
-  const { aiPromptOverride = null, quality = "high", aiProvider = "gemini" } = opts;
-  const base = {
-    category: slide.category,
-    headline: slide.headline,
-    highlight: slide.highlight,
-    date: slide.date,
-    dek: slide.dek,
-    location: slide.region,
-  };
+  const { aiPromptOverride = null, quality = "high", aiProvider = "gemini", idx = 1, total = 1 } = opts;
+  const base = slide.type === "listing"
+    ? {
+        slideType: "listing",
+        agency: slide.agency,
+        propertyType: slide.propertyType,
+        price: slide.price,
+        beds: slide.beds,
+        baths: slide.baths,
+        sqm: slide.sqm,
+        location: slide.location,
+        idx,
+        total,
+      }
+    : {
+        slideType: "hero",
+        category: slide.category,
+        headline: slide.headline,
+        highlight: slide.highlight,
+        date: slide.date,
+        dek: slide.dek,
+        location: slide.region,
+      };
   if (canReuseSource(slide, opts)) {
     return {
       ...base,
@@ -150,11 +185,19 @@ export function buildRenderRequest(slide, opts = {}) {
   };
 }
 
+// Listing slides bake a positional counter (NN / total) into the image, so any
+// change to the slide set (add/delete/move) can invalidate it. Mark every
+// listing slide dirty so its counter is regenerated on the next render/export.
+function markListingsDirty(state) {
+  if (!state.slides.some((s) => s.type === "listing")) return state;
+  return { ...state, slides: state.slides.map((s) => (s.type === "listing" ? { ...s, dirty: true } : s)) };
+}
+
 // ── Slide-array operations (pure; never mutate input) ───────────────────────
-export function addSlide(state) {
+export function addSlide(state, type = "hero") {
   if (state.slides.length >= MAX_SLIDES) return state;
-  const slide = emptySlide();
-  return { ...state, slides: [...state.slides, slide], activeSlideId: slide.id };
+  const slide = emptySlide({ type });
+  return markListingsDirty({ ...state, slides: [...state.slides, slide], activeSlideId: slide.id });
 }
 
 export function duplicateActive(state) {
@@ -163,7 +206,7 @@ export function duplicateActive(state) {
   if (idx < 0) return state;
   const copy = duplicateSlide(state.slides[idx]);
   const slides = [...state.slides.slice(0, idx + 1), copy, ...state.slides.slice(idx + 1)];
-  return { ...state, slides, activeSlideId: copy.id };
+  return markListingsDirty({ ...state, slides, activeSlideId: copy.id });
 }
 
 export function deleteSlide(state, id) {
@@ -174,7 +217,7 @@ export function deleteSlide(state, id) {
   const activeSlideId = state.activeSlideId === id
     ? slides[Math.min(idx, slides.length - 1)].id // nearest remaining
     : state.activeSlideId;
-  return { ...state, slides, activeSlideId };
+  return markListingsDirty({ ...state, slides, activeSlideId });
 }
 
 export function moveSlide(state, id, dir) {
@@ -186,7 +229,7 @@ export function moveSlide(state, id, dir) {
   const tmp = slides[idx];
   slides[idx] = slides[swap];
   slides[swap] = tmp;
-  return { ...state, slides };
+  return markListingsDirty({ ...state, slides });
 }
 
 export function activeSlide(state) {
@@ -227,11 +270,20 @@ export function sanitizeFilename(text, fallback = "slide") {
   return cleaned || fallback;
 }
 
-export function slideFilename(index, headline) {
-  return `${String(index + 1).padStart(2, "0")}-${sanitizeFilename(headline, "slide")}.png`;
+// Human label for a slide — its headline (hero) or location/price/agency
+// (listing). Used for export filenames and the ZIP name.
+export function slideLabel(slide) {
+  if (!slide) return "";
+  return slide.type === "listing"
+    ? (slide.location || slide.price || slide.agency || "listing")
+    : slide.headline;
+}
+
+export function slideFilename(index, headlineOrSlide) {
+  const label = typeof headlineOrSlide === "object" ? slideLabel(headlineOrSlide) : headlineOrSlide;
+  return `${String(index + 1).padStart(2, "0")}-${sanitizeFilename(label, "slide")}.png`;
 }
 
 export function zipName(state) {
-  const first = state.slides[0]?.headline || "";
-  return `${sanitizeFilename(first, "carousel")}-carousel.zip`;
+  return `${sanitizeFilename(slideLabel(state.slides[0]), "carousel")}-carousel.zip`;
 }
