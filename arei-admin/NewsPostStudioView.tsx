@@ -530,6 +530,12 @@ export function NewsPostStudioView() {
             </button>
           ))}
         </div>
+        {/* Status legend for the slide markers — subtle. */}
+        <div className="flex items-center gap-3 mt-1.5 text-[10px] font-mono text-foreground-muted">
+          <span><span className="text-amber-600">●</span> edited · needs render</span>
+          <span><span className="text-foreground-muted">○</span> not rendered yet</span>
+          <span>no marker · rendered &amp; current</span>
+        </div>
         <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-border">
           <button className={railBtn} onClick={addSlide} disabled={busy || slides.length >= MAX_SLIDES}>+ Add</button>
           <button className={railBtn} onClick={duplicateSlide} disabled={busy || slides.length >= MAX_SLIDES}>⧉ Duplicate</button>
