@@ -7,7 +7,7 @@ import "./NewsletterPopup.css";
 const STORAGE_KEY = "kv_nl_popup";
 
 export default function NewsletterPopup() {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [visible, setVisible] = useState(false);
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -45,7 +45,7 @@ export default function NewsletterPopup() {
     setErrorMsg("");
     try {
       const [supaResult] = await Promise.all([
-        arei.subscribeNewsletter(trimmed),
+        arei.subscribeNewsletter(trimmed, i18n.language),
         notifyFormspree({ email: trimmed, source: "newsletter-popup" }),
       ]);
       if (supaResult.ok) {

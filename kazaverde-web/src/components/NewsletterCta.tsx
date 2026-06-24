@@ -15,7 +15,7 @@ export default function NewsletterCta({
   heading,
   description,
 }: Props) {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState("");
@@ -32,7 +32,7 @@ export default function NewsletterCta({
     setErrorMsg("");
     try {
       const [supaResult] = await Promise.all([
-        arei.subscribeNewsletter(trimmed),
+        arei.subscribeNewsletter(trimmed, i18n.language),
         notifyFormspree({ email: trimmed, source: "newsletter" }),
       ]);
       if (supaResult.ok) {

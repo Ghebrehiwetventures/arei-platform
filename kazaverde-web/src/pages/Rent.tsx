@@ -1,4 +1,5 @@
 import { useState, type FormEvent } from "react";
+import { useTranslation } from "react-i18next";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 import NewsletterCta from "../components/NewsletterCta";
 import { arei } from "../lib/arei";
@@ -53,6 +54,7 @@ export default function Rent() {
     "A two-sided rentals marketplace for Cape Verde — coming soon. Join the waitlist as a renter or as an owner.",
   );
 
+  const { i18n } = useTranslation();
   const [intent, setIntent] = useState<Intent>("rent");
   const [email, setEmail] = useState("");
   const [status, setStatus] = useState<"idle" | "submitting" | "success" | "error">("idle");
@@ -79,7 +81,7 @@ export default function Rent() {
     setErrorMsg("");
     try {
       const [supaResult] = await Promise.all([
-        arei.subscribeNewsletter(trimmed),
+        arei.subscribeNewsletter(trimmed, i18n.language),
         notifyFormspree({ email: trimmed, source: `rent-${intent}` }),
       ]);
       if (supaResult.ok) {
