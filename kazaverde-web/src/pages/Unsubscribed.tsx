@@ -1,6 +1,5 @@
 import { useEffect } from "react";
 import { Link, useSearchParams } from "react-router-dom";
-import DLayersMark from "../components/DLayersMark";
 import { useDocumentMeta } from "../hooks/useDocumentMeta";
 
 /* /unsubscribed — confirmation landing for the email unsubscribe flow.
@@ -54,13 +53,6 @@ export default function Unsubscribed() {
   return (
     <div style={{ background: "var(--kv-off-white)", minHeight: "70vh", display: "flex", alignItems: "center", justifyContent: "center", padding: "64px 24px" }}>
       <div style={{ maxWidth: 480, width: "100%", color: "var(--kv-black)" }}>
-        <div style={{ display: "inline-flex", alignItems: "center", gap: 13, marginBottom: 36, color: "var(--kv-black)" }}>
-          <DLayersMark size={28} />
-          <span style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase" }}>
-            <strong style={{ fontWeight: 600 }}>Cape Verde</strong>
-            <span style={{ opacity: 0.64 }}>&nbsp;Real Estate Index</span>
-          </span>
-        </div>
         <h1 style={{ margin: "0 0 16px", fontSize: 30, fontWeight: 600, letterSpacing: "-0.5px", lineHeight: 1.15 }}>{head}</h1>
         <p style={{ margin: "0 0 32px", fontSize: 16, color: "#3A3A3A", lineHeight: 1.6 }}>{body}</p>
         <Link
