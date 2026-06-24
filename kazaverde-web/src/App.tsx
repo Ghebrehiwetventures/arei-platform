@@ -30,6 +30,7 @@ const ReviewQueue = import.meta.env.DEV
 const BriefingArchive = lazy(() => import("./pages/BriefingArchive"));
 const Briefing = lazy(() => import("./pages/Briefing"));
 const Rent = lazy(() => import("./pages/Rent"));
+const Unsubscribed = lazy(() => import("./pages/Unsubscribed"));
 const About = lazy(() => import("./pages/About"));
 const Agents = lazy(() => import("./pages/Agents"));
 const Privacy = lazy(() => import("./pages/Privacy"));
@@ -93,6 +94,7 @@ export default function App() {
           <Route path="/market" element={<Market />} />
           <Route path="/market-news" element={<MarketNews />} />
           <Route path="/subscribe" element={<MarketUpdates />} />
+          <Route path="/unsubscribed" element={<Unsubscribed />} />
           {/* Renamed from /market-updates (collided with /market-news) */}
           <Route path="/market-updates" element={<Navigate to="/subscribe" replace />} />
           {/* Dev-only internal tool: its /__kv-review API is served only by the

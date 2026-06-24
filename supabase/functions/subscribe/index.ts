@@ -1,4 +1,5 @@
 import { createClient } from "jsr:@supabase/supabase-js@2";
+import { makeUnsubToken } from "../_shared/unsubscribe-token.ts";
 
 const CORS = {
   "Access-Control-Allow-Origin": "*",
@@ -41,7 +42,7 @@ const COPY = {
   },
 } as const;
 
-function welcomeHtml(locale: Locale): string {
+function welcomeHtml(locale: Locale, unsubUrl: string): string {
   const c = COPY[locale];
   return `<!DOCTYPE html>
 <html lang="${c.lang}">
@@ -123,7 +124,7 @@ function welcomeHtml(locale: Locale): string {
       <p style="margin:0;font-family:${FONT};font-size:12px;color:#8A8884;line-height:1.6;">${c.foot1}</p>
     </td></tr>
     <tr><td style="padding-bottom:18px;">
-      <p style="margin:0;font-family:${FONT};font-size:12px;color:#8A8884;line-height:1.6;">${c.foot2pre}<a href="mailto:hello@capeverderealestateindex.com?subject=Unsubscribe" style="color:#5E5D5B;text-decoration:underline;">${c.unsub}</a>.</p>
+      <p style="margin:0;font-family:${FONT};font-size:12px;color:#8A8884;line-height:1.6;">${c.foot2pre}<a href="${unsubUrl}" style="color:#5E5D5B;text-decoration:underline;">${c.unsub}</a>.</p>
     </td></tr>
     <tr><td>
       <p style="margin:0;font-family:${FONT};font-size:10px;letter-spacing:0.08em;text-transform:uppercase;color:#AFADA8;line-height:1.6;">&copy; 2026 &middot; <a href="https://www.africarealestateindex.com/" style="color:#AFADA8;text-decoration:none;">Powered by Africa Real Estate Index</a></p>
@@ -185,9 +186,26 @@ Deno.serve(async (req: Request) => {
     return jsonError(500, "Failed to save subscriber");
   }
 
+  // Re-subscribe after an unsubscribe: reactivate the existing row. No welcome
+  // email re-send (they're already on the list), just flip is_active back on.
+  if (alreadySubscribed) {
+    const { error: reactivateError } = await sb
+      .from("newsletter_subscribers")
+      .update({ is_active: true })
+      .eq("email", email);
+    if (reactivateError) {
+      console.warn("[subscribe] reactivate error:", reactivateError.message);
+    }
+  }
+
   if (!alreadySubscribed) {
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const from = Deno.env.get("RESEND_FROM") ?? "Cape Verde Real Estate Index <hello@capeverderealestateindex.com>";
+
+    // Signed unsubscribe link → the unsubscribe Edge Function (same project).
+    const token = await makeUnsubToken(email);
+    const fnBase = `${Deno.env.get("SUPABASE_URL")}/functions/v1/unsubscribe`;
+    const unsubUrl = `${fnBase}?token=${encodeURIComponent(token)}&l=${locale}`;
 
     if (resendKey) {
       const emailRes = await fetch("https://api.resend.com/emails", {
@@ -196,7 +214,17 @@ Deno.serve(async (req: Request) => {
           "Authorization": `Bearer ${resendKey}`,
           "Content-Type": "application/json",
         },
-        body: JSON.stringify({ from, to: [email], subject: SUBJECT[locale], html: welcomeHtml(locale) }),
+        body: JSON.stringify({
+          from,
+          to: [email],
+          subject: SUBJECT[locale],
+          html: welcomeHtml(locale, unsubUrl),
+          // RFC 8058 one-click unsubscribe → Gmail/Apple show a native button.
+          headers: {
+            "List-Unsubscribe": `<${unsubUrl}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
+        }),
       });
       if (!emailRes.ok) {
         console.warn("[subscribe] Resend error:", await emailRes.text());
