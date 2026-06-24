@@ -806,7 +806,7 @@ export function Card({ l, bare, sourceOnly, noLink }: { l: ListingCard; index?: 
             </span>
           ) : (
             <>
-              <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
+              <span>{formatSourceLabel(l.source_id)}</span>
               <span>{formatRelTime(l.first_seen_at, locale)}</span>
             </>
           )}
@@ -882,8 +882,7 @@ function ListingRow({ l }: { l: ListingCard }) {
           </div>
         )}
         <div className="kv-list-row-meta">
-          <span>{t("listings.source")} {formatSourceLabel(l.source_id)}</span>
-          <span>{formatRelTime(l.first_seen_at, locale)}</span>
+          <span>{formatSourceLabel(l.source_id)} · {formatRelTime(l.first_seen_at, locale)}</span>
         </div>
       </div>
     </Link>
