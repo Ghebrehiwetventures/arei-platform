@@ -49,9 +49,14 @@ function welcomeHtml(locale: Locale): string {
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <meta http-equiv="X-UA-Compatible" content="IE=edge" />
+  <!-- Light-only: stop Apple Mail / Outlook dark mode from inverting the warm
+       off-white surface into near-black (the design is intentionally light). -->
+  <meta name="color-scheme" content="light" />
+  <meta name="supported-color-schemes" content="light" />
   <title>${c.title}</title>
   <!--[if mso]><noscript><xml><o:OfficeDocumentSettings><o:PixelsPerInch>96</o:PixelsPerInch></o:OfficeDocumentSettings></xml></noscript><![endif]-->
   <style>
+    :root { color-scheme: light; supported-color-schemes: light; }
     * { margin:0; padding:0; box-sizing:border-box; }
     body, table, td, a { -webkit-text-size-adjust:100%; -ms-text-size-adjust:100%; }
     table, td { mso-table-lspace:0pt; mso-table-rspace:0pt; }
