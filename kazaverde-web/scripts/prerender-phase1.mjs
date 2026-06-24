@@ -113,34 +113,52 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/market",
       ...page(
-      "Cape Verde Market Data | Cape Verde Real Estate Index",
-      "Median prices by island, inventory trends, and Cape Verde property market insights.",
+      "Market overview | Cape Verde Real Estate Index",
+      "Current overview of tracked public listings and asking prices across Cape Verde islands.",
       `
         <main>
           <section>
-            <p>Market Intelligence</p>
-            <h1>Cape Verde Property Market</h1>
+            <p>Market overview</p>
+            <h1>Cape Verde property market overview.</h1>
             <p>
-              Index-level market data derived from tracked public listings across multiple sources,
-              designed to help buyers compare islands before committing capital.
+              Current overview of tracked public listings and asking prices.
+              Figures update as new listings are discovered and existing listings are rechecked.
             </p>
           </section>
 
           <section>
-            <h2>What this page covers</h2>
-            <ul>
-              <li>Median asking prices by island where enough price data is available</li>
-              <li>Total tracked inventory across the current public index</li>
-              <li>Listing distribution by island and methodology notes for interpretation</li>
-            </ul>
+            <h2>Median asking prices by island.</h2>
+            <p>
+              A quick view of what properties are currently advertised for.
+              The figures combine different property types and should not be used to value a specific property.
+            </p>
+            <p>
+              The price sample includes numeric asking prices from €10,000 to €5,000,000.
+              Medians are shown only for islands with at least 5 listings in the sample.
+            </p>
+            <table>
+              <thead>
+                <tr>
+                  <th>Island</th>
+                  <th>Tracked listings</th>
+                  <th>In price sample</th>
+                  <th>Median asking price</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr><td>Data loads in the browser from live sources.</td></tr>
+              </tbody>
+            </table>
           </section>
 
           <section>
-            <h2>Methodology highlights</h2>
+            <h2>What these figures mean.</h2>
             <ul>
-              <li>Median asking price is based on publicly visible, extractable listing prices.</li>
-              <li>Listings marked price on request remain in inventory counts but not price calculations.</li>
-              <li>Tracked sources are rechecked regularly and removed listings are flagged after repeated absence.</li>
+              <li>Prices are the amounts shown in public listings, not completed sale prices.</li>
+              <li>Coverage is partial; not every property or source is included.</li>
+              <li>We try to identify duplicate listings, but some may remain.</li>
+              <li>Check the original source before relying on a listing.</li>
+              <li>Data updates as daily source checks complete.</li>
             </ul>
           </section>
         </main>
@@ -293,29 +311,74 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
     {
       route: "/about",
       ...page(
-      "About | Cape Verde Real Estate Index",
-      "How Cape Verde Real Estate Index works. Data sources, update cadence, deduplication, and transparency.",
+      "About the Cape Verde Real Estate Index",
+      "A listing index, not a sales-price index. How listings are collected, organised, and what the data does not cover.",
       `
         <main>
           <section>
-            <p>About Cape Verde Real Estate Index</p>
-            <h1>How the index works</h1>
+            <p>About</p>
+            <h1>How the Cape Verde Real Estate Index works.</h1>
             <p>
-              Cape Verde Real Estate Index is a read-only property index for Cape Verde. We collect publicly accessible listing
-              data from tracked source pages, normalize it into a consistent format, and link every listing
-              back to its original source.
+              Cape Verde's property listings live across dozens of agencies, portals and developer
+              pages — with no single place to read them. We gather the public ones, organise the key
+              details, and link every listing back to its original source.
             </p>
           </section>
 
           <section>
-            <h2>What matters most</h2>
+            <p>What it is</p>
+            <h2>A listing index, not a sales-price index.</h2>
+            <p>
+              The index is a searchable view of the public listings we currently track, so buyers can
+              compare what's on the market in one place. It doesn't claim to cover every property for
+              sale, and it doesn't measure what properties actually sell for.
+            </p>
+          </section>
+
+          <section>
+            <p>How it works</p>
+            <h2>From a source page to a clean listing.</h2>
             <ul>
-              <li>Source-first links back to the original listing page</li>
-              <li>Deduplication and normalization instead of duplicated portal noise</li>
-              <li>Neutral handling of incomplete data instead of guesswork</li>
-              <li>Transparent coverage limits rather than claims of full market coverage</li>
+              <li>Every listing links straight back to its original public source.</li>
+              <li>We organise the details a source gives us — price, location, property type, size — and leave the rest blank rather than guess.</li>
+              <li>We group duplicate ads for the same property where we can. Some duplicates still slip through.</li>
+              <li>Tracked sources are rechecked daily, and each listing shows the date it was last seen.</li>
             </ul>
           </section>
+
+          <section>
+            <p>Limits</p>
+            <h2>What the data doesn't cover.</h2>
+            <ul>
+              <li>Prices are asking prices — what a seller is asking, not what a property sold for, and not a valuation.</li>
+              <li>Coverage is partial. Private sales, off-market deals and untracked sources sit outside the index.</li>
+              <li>We don't verify ownership, title, debts, permits, taxes or the legal status of any property.</li>
+              <li>None of this should stand in for a valuation of a specific property.</li>
+            </ul>
+          </section>
+
+          <section>
+            <p>Publisher</p>
+            <h2>Published by AREI.</h2>
+            <p>
+              The Cape Verde Real Estate Index is the first live market of
+              <a href="https://africarealestateindex.com">Africa Real Estate Index (AREI)</a>,
+              an independent real-estate data layer for African markets. AREI is not a broker or
+              estate agency and handles no offers, deposits, contracts or property sales.
+            </p>
+          </section>
+
+          <section>
+            <p>From the founder</p>
+            <blockquote>
+              <p>"I came to this market as an investor. Cape Verde was where I started, and even after repeated trips it stayed hard to read.</p>
+              <p>The opportunity was visible; the structure wasn't. Inventory was scattered across brokers and local sites, with no consistent data layer to compare opportunities or judge them with any confidence.</p>
+              <p>That's the gap Africa Real Estate Index exists to close."</p>
+            </blockquote>
+            <p>Michael Ghebrehiwet — Founder, AREI</p>
+          </section>
+
+          <p>Based on monitored public listings and asking prices. Not completed sale prices or valuations.</p>
         </main>
       `,
     ),

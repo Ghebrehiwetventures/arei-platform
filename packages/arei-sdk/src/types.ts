@@ -150,6 +150,28 @@ export interface PaginatedListings {
   totalPages: number;
 }
 
+/** Current market overview derived from the live public feed */
+export interface MarketOverview {
+  totalListings: number;
+  sourceCount: number;
+  islandCount: number;
+  /** EUR listings with numeric asking price in [PRICE_FLOOR, PRICE_CEILING] */
+  priceSampleCount: number;
+  /** Listings first seen since the 1st of the current calendar month (UTC) */
+  addedThisMonth: number;
+  /** ISO timestamp of the most recent last_seen_at across all tracked listings */
+  latestSuccessfulCheck: string | null;
+  /** Count per price bucket, EUR sample only, ordered under_100k → over_500k */
+  buckets: Array<{ key: PriceBucket; count: number }>;
+  islands: Array<{
+    island: string;
+    totalListings: number;
+    priceSampleCount: number;
+    /** Median asking price (EUR). Null when priceSampleCount < MIN_MEDIAN_SAMPLE. */
+    medianAskingPrice: number | null;
+  }>;
+}
+
 /** Config for creating an AREI client */
 export interface AREIConfig {
   supabaseUrl: string;

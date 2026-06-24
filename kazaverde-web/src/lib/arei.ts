@@ -32,6 +32,7 @@ export const arei = {
   getListing: (id: string) => getClient().getListing(id),
   getSimilarListings: (p: Parameters<AREIClient["getSimilarListings"]>[0]) => getClient().getSimilarListings(p),
   getMarketStats: () => getClient().getMarketStats(),
+  getMarketOverview: () => getClient().getMarketOverview(),
   getIslandOptions: () => getClient().getIslandOptions(),
   getIslandContext: (island: string, listingPrice: number | null) =>
     getClient().getIslandContext(island, listingPrice),

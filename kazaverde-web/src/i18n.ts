@@ -374,9 +374,11 @@ const resources = {
         property: "Properties",
       },
       market: {
-        metaTitle: "Cape Verde real estate market data",
+        // The /market page renders its visible copy via inline isPt ternaries
+        // (matching the restored rich layout); only the document meta is i18n-keyed.
+        metaTitle: "Cape Verde property market overview | Cape Verde Real Estate Index",
         metaDescription:
-          "Live Cape Verde real estate market data from tracked public listings: medians, source coverage, island mix, and methodology.",
+          "A current overview of public property listings tracked across Cape Verde, including listing counts and median asking prices by island.",
       },
       marketNews: {
         eyebrow: "Market News",
@@ -439,93 +441,54 @@ const resources = {
         allGuides: "All guides",
       },
       about: {
-        metaTitle: "About Cape Verde Real Estate Index",
+        metaTitle: "About the Cape Verde Real Estate Index",
         metaDescription:
-          "The Cape Verde Real Estate Index is the first live market in AREI: a read-only, source-linked property index for Cape Verde.",
-        eyebrow: "About the Cape Verde Real Estate Index",
-        title: "Building the real estate data layer for Africa, starting with Cape Verde.",
-        sub:
-          "The Cape Verde Real Estate Index is the first live market in AREI (Africa Real Estate Index): a read-only, source-linked property index built to make fragmented real estate markets more transparent, comparable and easier to understand.",
+          "How the Cape Verde Real Estate Index collects and organises public property listings, and where the data has limits.",
+        eyebrow: "About",
+        title: "How the Cape Verde Real Estate Index works.",
+        sub: "Cape Verde's property listings live across dozens of agencies, portals and developer pages — with no single place to read them. We gather the public ones, organise the key details, and link every listing back to its original source.",
         sections: [
           {
-            eyebrow: "Why this exists",
-            heading: "A growing market with fragmented public information.",
-            body:
-              "Cape Verde has international buyer demand, diaspora interest, and a property market where information is spread across local agents, portals, developer pages, private networks, and incomplete public records. That makes comparison difficult. The Cape Verde Real Estate Index exists to make the public listing layer easier to read without pretending it is the full market.",
+            eyebrow: "What it is",
+            heading: "A listing index, not a sales-price index.",
+            body: "The index is a searchable view of the public listings we currently track, so buyers can compare what's on the market in one place. It doesn't claim to cover every property for sale, and it doesn't measure what properties actually sell for.",
           },
           {
-            eyebrow: "What this index does",
-            heading: "Public listings, normalised into one searchable index.",
-            body:
-              "The Cape Verde Real Estate Index collects publicly accessible listings from tracked source pages, normalises them into a consistent format, links back to the original source, and presents the result in one searchable interface. It is the first live market in AREI (Africa Real Estate Index), an independent real estate data layer for African markets.",
-          },
-          {
-            eyebrow: "What we are not",
-            heading: "Not a broker, agency, marketplace, or transaction platform.",
+            eyebrow: "How it works",
+            heading: "From a source page to a clean listing.",
             list: [
-              "The Cape Verde Real Estate Index does not broker property transactions.",
-              "The Cape Verde Real Estate Index is not an estate agency and does not represent buyers or sellers.",
-              "The Cape Verde Real Estate Index is not a transaction platform and does not handle offers, deposits, contracts, or completion.",
-              "The Cape Verde Real Estate Index is not commission-led. The index is built around source-linked public records, not sales mandates.",
+              "Every listing links straight back to its original public source.",
+              "We organise the details a source gives us — price, location, property type, size — and leave the rest blank rather than guess.",
+              "We group duplicate ads for the same property where we can. Some duplicates still slip through.",
+              "Tracked sources are rechecked daily, and each listing shows the date it was last seen.",
             ],
-            note:
-              "Any decision to act on a property should be verified with the original publisher, an independent local lawyer, and any other qualified professional relevant to the transaction.",
           },
           {
-            eyebrow: "Where the data comes from",
-            heading: "Source pages, named but not enumerated.",
+            eyebrow: "Limits",
+            heading: "What the data doesn't cover.",
             list: [
-              "Local real estate agency websites",
-              "Developer and resort sales pages",
-              "Other publicly accessible source pages that meet our trust and normalisation requirements",
+              "Prices are asking prices — what a seller is asking, not what a property sold for, and not a valuation.",
+              "Coverage is partial. Private sales, off-market deals and untracked sources sit outside the index.",
+              "We don't verify ownership, title, debts, permits, taxes or the legal status of any property.",
+              "None of this should stand in for a valuation of a specific property.",
             ],
-            note:
-              "We do not disclose individual source domains to protect the integrity of our crawling infrastructure. Each listing identifies its source by name and links to the original page. Broader portals may help us discover sources, but they are not treated as automatic truth sources for the public index.",
-          },
-          {
-            eyebrow: "Update cadence",
-            heading: "Regular rechecks, source-by-source.",
-            body:
-              'Tracked sources are rechecked regularly. Cadence varies by source, crawl success, and launch priorities. The "Last checked" date on each listing reflects the most recent successful verification of that public record.',
-          },
-          {
-            eyebrow: "Deduplication & normalisation",
-            heading: "One current public record, never guessed fields.",
-            body:
-              "Where duplicate public listings are detected, the index keeps one current public record rather than showing every duplicate variant. Normalisation may include currency conversion for display, standardising size units, mapping location data to canonical island and city names where reliable, and extracting structured specifications when the source supports it. Missing fields stay missing rather than being guessed.",
           },
         ],
-        qualityEyebrow: "Handling incomplete data",
-        qualityTitle: "Neutral fallbacks beat fake certainty.",
-        qualityNotes: [
-          ["Price on request", "A listing can remain in the public index even when the source does not expose a numeric price clearly enough for reliable extraction."],
-          ["Partial location", "Some listings support island-level location confidently, but not a specific city or area. The index does not fill in missing location detail by guesswork."],
-          ["Source-first links", "If you want to verify the latest public version of a listing, use the source link on the detail page. The Cape Verde Real Estate Index is a read-only index, not the original publisher."],
-          ["Asking prices only", "Prices shown in the index are public asking prices where available. They are not closing prices, valuations, or proof of what a property will transact for."],
-          ["Not legally verified", "The Cape Verde Real Estate Index does not verify title, ownership, debts, permits, taxes, or transaction readiness. Legal due diligence belongs with an independent local lawyer."],
-          ["Market sample, not market truth", "The index reflects the public listings the Cape Verde Real Estate Index currently tracks. It should be read as a structured market sample, not a complete record of all property activity in Cape Verde."],
-        ],
-        coverageEyebrow: "Coverage statement",
-        coverageTitle: "We don't claim full market coverage.",
-        coveragePull:
-          "The Cape Verde Real Estate Index does not claim full market coverage.",
-        coverageBody:
-          "Our index represents a meaningful sample of publicly advertised properties, but off-market deals, private sales, and listings on sources we do not currently track are not included.",
-        currentCoverage: "Current coverage",
-        currentCoverageBody:
-          "Inventory and island coverage are shown on the Listings and Market pages, based on the current launch feed contract.",
-        staleNote: "We avoid static coverage numbers here to prevent stale reporting.",
-        visionEyebrow: "Long-term AREI vision",
-        visionTitle: "Market 01, with broader market intelligence still to build.",
-        visionBody:
-          "Cape Verde is Market 01 for the Africa Real Estate Index. The broader ambition is to build trusted real estate market intelligence across African markets, starting with source-linked listings and moving over time toward stronger pricing signals, historical data, and more reliable transaction benchmarks where the underlying evidence supports them.",
+        publisherEyebrow: "Publisher",
+        publisherHeading: "Published by AREI.",
+        publisherLead: "The Cape Verde Real Estate Index is the first live market of",
+        publisherAreiLabel: "Africa Real Estate Index (AREI)",
+        publisherTail: ", an independent real-estate data layer for African markets. AREI is not a broker or estate agency and handles no offers, deposits, contracts or property sales.",
         founderEyebrow: "From the founder",
         founderQuote: [
-          "I came to this market as an investor. Cape Verde was where I started, and even after repeated trips, the market remained difficult to read.",
-          "The opportunity was visible. The structure was not. Inventory was spread across brokers and local sites, with no consistent data layer to compare opportunities or evaluate them with confidence.",
-          "That is the gap Africa Real Estate Index exists to close.",
+          "I came to this market as an investor. Cape Verde was where I started, and even after repeated trips it stayed hard to read.",
+          "The opportunity was visible; the structure wasn't. Inventory was scattered across brokers and local sites, with no consistent data layer to compare opportunities or judge them with any confidence.",
+          "That's the gap Africa Real Estate Index exists to close.",
         ],
+        founderName: "Michael Ghebrehiwet",
         founderRole: "Founder, AREI",
+        founderLink: "LinkedIn →",
+        disclosure: "Based on monitored public listings and asking prices. Not completed sale prices or valuations.",
       },
       privacy: {
         metaTitle: "Privacy Policy",
@@ -984,9 +947,11 @@ const resources = {
         property: "imóveis",
       },
       market: {
-        metaTitle: "Dados do mercado imobiliário de Cabo Verde",
+        // A página /market renderiza o texto visível via ternários isPt inline
+        // (a par do layout restaurado); apenas o meta do documento usa i18n.
+        metaTitle: "Visão geral do mercado imobiliário de Cabo Verde | Cape Verde Real Estate Index",
         metaDescription:
-          "Dados em direto do mercado imobiliário de Cabo Verde a partir de anúncios públicos acompanhados: medianas, cobertura de fontes, composição por ilha e metodologia.",
+          "Uma visão geral atual dos anúncios públicos acompanhados em Cabo Verde, incluindo contagens de anúncios e preços medianos pedidos por ilha.",
       },
       marketNews: {
         eyebrow: "Notícias de Mercado",
@@ -1051,91 +1016,52 @@ const resources = {
       about: {
         metaTitle: "Sobre o Cape Verde Real Estate Index",
         metaDescription:
-          "O Cape Verde Real Estate Index é o primeiro mercado ativo da AREI: um índice imobiliário de Cabo Verde, apenas de leitura e com ligação às fontes.",
-        eyebrow: "Sobre o Cape Verde Real Estate Index",
-        title: "A construir a camada de dados imobiliários para África, começando por Cabo Verde.",
-        sub:
-          "O Cape Verde Real Estate Index é o primeiro mercado ativo da AREI (Africa Real Estate Index): um índice imobiliário, apenas de leitura e com ligação à fonte, criado para tornar mercados fragmentados mais transparentes, comparáveis e fáceis de compreender.",
+          "Como o Cape Verde Real Estate Index recolhe e organiza anúncios públicos de imóveis, e onde os dados têm limitações.",
+        eyebrow: "Sobre",
+        title: "Como funciona o Cape Verde Real Estate Index.",
+        sub: "Os anúncios imobiliários de Cabo Verde estão espalhados por dezenas de agências, portais e páginas de promotores — sem um único lugar onde os ler. Reunimos os públicos, organizamos os detalhes essenciais e ligamos cada anúncio à sua fonte original.",
         sections: [
           {
-            eyebrow: "Porque existe",
-            heading: "Um mercado em crescimento com informação pública fragmentada.",
-            body:
-              "Cabo Verde tem procura internacional, interesse da diáspora e um mercado imobiliário em que a informação está dispersa por agentes locais, portais, páginas de promotores, redes privadas e registos públicos incompletos. Isso dificulta a comparação. O Cape Verde Real Estate Index existe para tornar a camada pública de anúncios mais legível, sem fingir que representa todo o mercado.",
+            eyebrow: "O que é",
+            heading: "Um índice de anúncios, não um índice de preços de venda.",
+            body: "O índice é uma vista pesquisável dos anúncios públicos que acompanhamos atualmente, para que os compradores possam comparar o que está no mercado num só lugar. Não pretende cobrir todos os imóveis à venda nem mede por quanto os imóveis realmente se vendem.",
           },
           {
-            eyebrow: "O que este índice faz",
-            heading: "Anúncios públicos normalizados num índice pesquisável.",
-            body:
-              "O Cape Verde Real Estate Index recolhe anúncios publicamente acessíveis de páginas acompanhadas, normaliza-os num formato consistente, liga à fonte original e apresenta o resultado numa interface pesquisável. É o primeiro mercado ativo da AREI (Africa Real Estate Index), uma camada independente de dados imobiliários para mercados africanos.",
-          },
-          {
-            eyebrow: "O que não somos",
-            heading: "Não somos mediador, agência, marketplace ou plataforma transacional.",
+            eyebrow: "Como funciona",
+            heading: "De uma página de origem a um anúncio limpo.",
             list: [
-              "O Cape Verde Real Estate Index não intermedeia transações imobiliárias.",
-              "O Cape Verde Real Estate Index não é uma agência imobiliária e não representa compradores nem vendedores.",
-              "O Cape Verde Real Estate Index não é uma plataforma transacional e não trata de ofertas, depósitos, contratos ou escrituras.",
-              "O Cape Verde Real Estate Index não é orientado por comissões. O índice assenta em registos públicos com ligação à fonte, não em mandatos de venda.",
+              "Cada anúncio liga diretamente à sua fonte pública original.",
+              "Organizamos os detalhes que a fonte fornece — preço, localização, tipo de imóvel, área — e deixamos o resto em branco em vez de adivinhar.",
+              "Agrupamos anúncios duplicados do mesmo imóvel quando conseguimos. Alguns duplicados ainda passam.",
+              "As fontes acompanhadas são reverificadas diariamente, e cada anúncio mostra a data em que foi visto pela última vez.",
             ],
-            note:
-              "Qualquer decisão sobre um imóvel deve ser verificada junto do publicador original, de um advogado local independente e de qualquer outro profissional qualificado relevante para a transação.",
           },
           {
-            eyebrow: "Origem dos dados",
-            heading: "Páginas de origem, nomeadas mas não enumeradas.",
+            eyebrow: "Limitações",
+            heading: "O que os dados não cobrem.",
             list: [
-              "Sites de agências imobiliárias locais",
-              "Páginas de venda de promotores e resorts",
-              "Outras páginas publicamente acessíveis que cumprem os nossos requisitos de confiança e normalização",
+              "Os preços são preços pedidos — o que um vendedor pede, não por quanto um imóvel se vendeu, nem uma avaliação.",
+              "A cobertura é parcial. Vendas privadas, negócios fora do mercado e fontes não acompanhadas ficam fora do índice.",
+              "Não verificamos propriedade, título, dívidas, licenças, impostos nem o estado legal de qualquer imóvel.",
+              "Nada disto deve substituir a avaliação de um imóvel específico.",
             ],
-            note:
-              "Não divulgamos domínios individuais para proteger a integridade da infraestrutura de crawling. Cada anúncio identifica a fonte por nome e liga à página original. Portais mais amplos podem ajudar-nos a descobrir fontes, mas não são tratados como fontes automáticas de verdade para o índice público.",
-          },
-          {
-            eyebrow: "Cadência de atualização",
-            heading: "Reverificações regulares, fonte a fonte.",
-            body:
-              'As fontes acompanhadas são revistas regularmente. A cadência varia por fonte, sucesso do crawler e prioridades de lançamento. A data "Última verificação" em cada anúncio reflete a verificação bem-sucedida mais recente desse registo público.',
-          },
-          {
-            eyebrow: "Deduplicação e normalização",
-            heading: "Um registo público atual, sem campos inventados.",
-            body:
-              "Quando são detetados anúncios públicos duplicados, o índice mantém um registo público atual em vez de mostrar todas as variantes. A normalização pode incluir conversão de moeda para apresentação, uniformização de unidades de área, mapeamento de localização para nomes canónicos de ilha e cidade quando fiável, e extração de especificações estruturadas quando a fonte o permite. Campos em falta continuam em falta em vez de serem adivinhados.",
           },
         ],
-        qualityEyebrow: "Tratamento de dados incompletos",
-        qualityTitle: "Fallbacks neutros são melhores do que falsa certeza.",
-        qualityNotes: [
-          ["Preço sob consulta", "Um anúncio pode permanecer no índice público mesmo quando a fonte não apresenta um preço numérico de forma suficientemente clara para extração fiável."],
-          ["Localização parcial", "Alguns anúncios permitem confirmar a ilha com confiança, mas não uma cidade ou zona específica. O índice não preenche detalhes de localização em falta por estimativa."],
-          ["Links para a fonte", "Se quiser verificar a versão pública mais recente de um anúncio, use o link da fonte na página de detalhe. O Cape Verde Real Estate Index é um índice apenas de leitura, não o publicador original."],
-          ["Apenas preços pedidos", "Os preços no índice são preços pedidos públicos quando disponíveis. Não são preços de fecho, avaliações ou prova do valor final de transação."],
-          ["Sem verificação legal", "O Cape Verde Real Estate Index não verifica título, propriedade, dívidas, licenças, impostos ou prontidão transacional. A due diligence legal deve ser feita por um advogado local independente."],
-          ["Amostra de mercado, não verdade total", "O índice reflete os anúncios públicos atualmente acompanhados pelo Cape Verde Real Estate Index. Deve ser lido como uma amostra estruturada do mercado, não como um registo completo de toda a atividade imobiliária em Cabo Verde."],
-        ],
-        coverageEyebrow: "Declaração de cobertura",
-        coverageTitle: "Não afirmamos cobrir todo o mercado.",
-        coveragePull:
-          "O Cape Verde Real Estate Index não afirma cobrir todo o mercado.",
-        coverageBody:
-          "O nosso índice representa uma amostra significativa de imóveis anunciados publicamente, mas negócios fora do mercado, vendas privadas e anúncios em fontes que ainda não acompanhamos não estão incluídos.",
-        currentCoverage: "Cobertura atual",
-        currentCoverageBody:
-          "O inventário e a cobertura por ilha são apresentados nas páginas Anúncios e Mercado, com base no contrato atual do feed de lançamento.",
-        staleNote: "Evitamos números estáticos de cobertura aqui para impedir relatórios desatualizados.",
-        visionEyebrow: "Visão AREI a longo prazo",
-        visionTitle: "Mercado 01, com inteligência de mercado mais ampla ainda por construir.",
-        visionBody:
-          "Cabo Verde é o Mercado 01 da Africa Real Estate Index. A ambição mais ampla é construir inteligência imobiliária fiável em mercados africanos, começando por anúncios com ligação à fonte e avançando ao longo do tempo para sinais de preço mais fortes, dados históricos e benchmarks transacionais mais fiáveis quando a evidência subjacente o permitir.",
+        publisherEyebrow: "Publicador",
+        publisherHeading: "Publicado pela AREI.",
+        publisherLead: "O Cape Verde Real Estate Index é o primeiro mercado ativo da",
+        publisherAreiLabel: "Africa Real Estate Index (AREI)",
+        publisherTail: ", uma camada independente de dados imobiliários para mercados africanos. A AREI não é um mediador imobiliário nem uma agência e não trata de propostas, depósitos, contratos ou vendas de imóveis.",
         founderEyebrow: "Do fundador",
         founderQuote: [
-          "Cheguei a este mercado como investidor. Cabo Verde foi onde comecei e, mesmo após várias viagens, o mercado continuava difícil de ler.",
-          "A oportunidade era visível. A estrutura não era. O inventário estava espalhado por mediadores e sites locais, sem uma camada de dados consistente para comparar oportunidades ou avaliá-las com confiança.",
+          "Cheguei a este mercado como investidor. Cabo Verde foi onde comecei e, mesmo após várias viagens, continuava difícil de ler.",
+          "A oportunidade era visível; a estrutura não era. O inventário estava espalhado por mediadores e sites locais, sem uma camada de dados consistente para comparar oportunidades ou avaliá-las com confiança.",
           "É essa lacuna que a Africa Real Estate Index existe para fechar.",
         ],
+        founderName: "Michael Ghebrehiwet",
         founderRole: "Fundador, AREI",
+        founderLink: "LinkedIn →",
+        disclosure: "Com base em anúncios públicos monitorizados e preços pedidos. Não são preços de vendas concluídas nem avaliações.",
       },
       privacy: {
         metaTitle: "Política de Privacidade",

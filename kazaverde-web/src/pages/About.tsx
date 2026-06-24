@@ -4,112 +4,18 @@ import NewsletterCta from "../components/NewsletterCta";
 import "./Market.css";
 import "./Policy.css";
 
-const SECTIONS: {
+type AboutSection = {
   eyebrow: string;
   heading: string;
   body?: string;
   list?: string[];
-  note?: string;
-}[] = [
-  {
-    eyebrow: "Why this exists",
-    heading: "A growing market with fragmented public information.",
-    body: "Cape Verde has international buyer demand, diaspora interest, and a property market where information is spread across local agents, portals, developer pages, private networks, and incomplete public records. That makes comparison difficult. The Cape Verde Real Estate Index exists to make the public listing layer easier to read without pretending it is the full market.",
-  },
-  {
-    eyebrow: "What this index does",
-    heading: "Public listings, normalised into one searchable index.",
-    body: "The Cape Verde Real Estate Index collects publicly accessible listings from tracked source pages, normalises them into a consistent format, links back to the original source, and presents the result in one searchable interface. It is the first live market in AREI (Africa Real Estate Index), an independent real estate data layer for African markets.",
-  },
-  {
-    eyebrow: "What we are not",
-    heading: "Not a broker, agency, marketplace, or transaction platform.",
-    list: [
-      "The Cape Verde Real Estate Index does not broker property transactions.",
-      "The Cape Verde Real Estate Index is not an estate agency and does not represent buyers or sellers.",
-      "The Cape Verde Real Estate Index is not a transaction platform and does not handle offers, deposits, contracts, or completion.",
-      "The Cape Verde Real Estate Index is not commission-led. The index is built around source-linked public records, not sales mandates.",
-    ],
-    note: "Any decision to act on a property should be verified with the original publisher, an independent local lawyer, and any other qualified professional relevant to the transaction.",
-  },
-  {
-    eyebrow: "Where the data comes from",
-    heading: "Source pages, named but not enumerated.",
-    list: [
-      "Local real estate agency websites",
-      "Developer and resort sales pages",
-      "Other publicly accessible source pages that meet our trust and normalisation requirements",
-    ],
-    note: "We do not disclose individual source domains to protect the integrity of our crawling infrastructure. Each listing identifies its source by name and links to the original page. Broader portals may help us discover sources, but they are not treated as automatic truth sources for the public index.",
-  },
-  {
-    eyebrow: "Update cadence",
-    heading: "Regular rechecks, source-by-source.",
-    body: 'Tracked sources are rechecked regularly. Cadence varies by source, crawl success, and launch priorities. The "Last checked" date on each listing reflects the most recent successful verification of that public record.',
-  },
-  {
-    eyebrow: "Deduplication & normalisation",
-    heading: "One current public record, never guessed fields.",
-    body: "Where duplicate public listings are detected, the index keeps one current public record rather than showing every duplicate variant. Normalisation may include currency conversion for display, standardising size units, mapping location data to canonical island and city names where reliable, and extracting structured specifications when the source supports it. Missing fields stay missing rather than being guessed.",
-  },
-];
-
-const QUALITY_NOTES = [
-  {
-    name: "Price on request",
-    desc: "A listing can remain in the public index even when the source does not expose a numeric price clearly enough for reliable extraction.",
-  },
-  {
-    name: "Partial location",
-    desc: "Some listings support island-level location confidently, but not a specific city or area. The index does not fill in missing location detail by guesswork.",
-  },
-  {
-    name: "Source-first links",
-    desc: "If you want to verify the latest public version of a listing, use the source link on the detail page. The Cape Verde Real Estate Index is a read-only index, not the original publisher.",
-  },
-  {
-    name: "Asking prices only",
-    desc: "Prices shown in the index are public asking prices where available. They are not closing prices, valuations, or proof of what a property will transact for.",
-  },
-  {
-    name: "Not legally verified",
-    desc: "The Cape Verde Real Estate Index does not verify title, ownership, debts, permits, taxes, or transaction readiness. Legal due diligence belongs with an independent local lawyer.",
-  },
-  {
-    name: "Market sample, not market truth",
-    desc: "The index reflects the public listings the Cape Verde Real Estate Index currently tracks. It should be read as a structured market sample, not a complete record of all property activity in Cape Verde.",
-  },
-];
-
-function CheckIcon() {
-  return (
-    <svg
-      width="16"
-      height="16"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2.4"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      aria-hidden="true"
-    >
-      <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-      <polyline points="22 4 12 14.01 9 11.01" />
-    </svg>
-  );
-}
+};
 
 export default function About() {
   const { t } = useTranslation();
-  const sections = t("about.sections", { returnObjects: true }) as typeof SECTIONS;
-  const qualityNotes = (t("about.qualityNotes", { returnObjects: true }) as [string, string][])
-    .map(([name, desc]) => ({ name, desc }));
+  const sections = t("about.sections", { returnObjects: true }) as AboutSection[];
 
-  useDocumentMeta(
-    t("about.metaTitle"),
-    t("about.metaDescription"),
-  );
+  useDocumentMeta(t("about.metaTitle"), t("about.metaDescription"));
 
   return (
     <div className="kv-pol kv-m">
@@ -117,9 +23,7 @@ export default function About() {
         <div className="kv-hero-inner">
           <div className="kv-hero-eyebrow">{t("about.eyebrow")}</div>
           <h1>{t("about.title")}</h1>
-          <p className="kv-hero-sub">
-            {t("about.sub")}
-          </p>
+          <p className="kv-hero-sub">{t("about.sub")}</p>
         </div>
       </header>
 
@@ -138,65 +42,28 @@ export default function About() {
                 ))}
               </ul>
             )}
-            {sec.note && <div className="kv-pol-pull">{sec.note}</div>}
           </div>
         </section>
       ))}
 
+      {/* Publisher — names AREI and links to the platform home. */}
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">{t("about.qualityEyebrow")}</span>
-            <h2>{t("about.qualityTitle")}</h2>
-          </div>
-          <div className="kv-pol-cards">
-            {qualityNotes.map((q) => (
-              <div className="kv-pol-card" key={q.name}>
-                <div className="kv-pol-card-head">
-                  <CheckIcon />
-                  {q.name}
-                </div>
-                <p>{q.desc}</p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      <section className="kv-m-section">
-        <div className="kv-m-inner">
-          <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">{t("about.coverageEyebrow")}</span>
-            <h2>{t("about.coverageTitle")}</h2>
-          </div>
-          <div className="kv-pol-pull">
-            <strong>{t("about.coveragePull")}</strong>{" "}
-            {t("about.coverageBody")}
-          </div>
-          <div className="kv-pol-coverage">
-            <div className="kv-pol-coverage-k">{t("about.currentCoverage")}</div>
-            <div className="kv-pol-coverage-v">
-              {t("about.currentCoverageBody")}
-            </div>
-            <div className="kv-pol-coverage-note">
-              {t("about.staleNote")}
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section className="kv-m-section">
-        <div className="kv-m-inner">
-          <div className="kv-m-section-head">
-            <span className="kv-l-eyebrow">{t("about.visionEyebrow")}</span>
-            <h2>{t("about.visionTitle")}</h2>
+            <span className="kv-l-eyebrow">{t("about.publisherEyebrow")}</span>
+            <h2>{t("about.publisherHeading")}</h2>
           </div>
           <p className="kv-pol-prose">
-            {t("about.visionBody")}
+            {t("about.publisherLead")}{" "}
+            <a href="https://africarealestateindex.com" target="_blank" rel="noopener noreferrer">
+              {t("about.publisherAreiLabel")}
+            </a>
+            {t("about.publisherTail")}
           </p>
         </div>
       </section>
 
+      {/* From the founder — restored quote + byline. */}
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <div className="kv-pol-founder">
@@ -208,9 +75,7 @@ export default function About() {
             </blockquote>
             <div className="kv-pol-founder-byline">
               <div className="kv-pol-founder-meta">
-                <span className="kv-pol-founder-name">
-                  Michael Ghebrehiwet
-                </span>
+                <span className="kv-pol-founder-name">{t("about.founderName")}</span>
                 <span className="kv-pol-founder-role">{t("about.founderRole")}</span>
                 <a
                   className="kv-pol-founder-link"
@@ -218,11 +83,17 @@ export default function About() {
                   target="_blank"
                   rel="noopener noreferrer"
                 >
-                  LinkedIn →
+                  {t("about.founderLink")}
                 </a>
               </div>
             </div>
           </div>
+        </div>
+      </section>
+
+      <section className="kv-m-section">
+        <div className="kv-m-inner">
+          <p className="kv-m-disclaimer">{t("about.disclosure")}</p>
         </div>
       </section>
 

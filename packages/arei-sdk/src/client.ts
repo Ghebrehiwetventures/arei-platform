@@ -19,6 +19,7 @@ import type {
   PriceBucket,
   MarketNewsRow,
   MarketReportRow,
+  MarketOverview,
   BriefingRow,
   BriefingSummary,
   FeaturedSelectionRow,
@@ -514,6 +515,126 @@ export class AREIClient {
     islands.sort((a, b) => b.n_price - a.n_price);
 
     return { total, sourceCount, islands };
+  }
+
+  // =========================================================================
+  // getMarketOverview — current market summary from the live public feed
+  //
+  // Single paginated pass over the full feed. Returns:
+  //   totalListings, sourceCount, islandCount, priceSampleCount,
+  //   addedThisMonth (UTC calendar month), latestSuccessfulCheck,
+  //   buckets (EUR price-range distribution), and per-island stats.
+  //
+  // Price sample = EUR-denominated prices in [PRICE_FLOOR, PRICE_CEILING].
+  // Medians are null when priceSampleCount < MIN_MEDIAN_SAMPLE.
+  // Paginates in 1 000-row batches to bypass PostgREST max-rows cap.
+  // =========================================================================
+  async getMarketOverview(): Promise<MarketOverview> {
+    type FeedRow = {
+      island: string;
+      price: number | null;
+      currency: string | null;
+      source_id: string | null;
+      first_seen_at: string | null;
+      last_seen_at: string | null;
+    };
+
+    const PAGE = 1000;
+    const rows: FeedRow[] = [];
+    let from = 0;
+
+    while (true) {
+      const { data, error } = await this.sb
+        .from(this.view)
+        .select("island, price, currency, source_id, first_seen_at, last_seen_at")
+        .range(from, from + PAGE - 1);
+
+      if (error) throw new Error(`getMarketOverview failed: ${error.message}`);
+      const batch = (data ?? []) as FeedRow[];
+      rows.push(...batch);
+      if (batch.length < PAGE) break;
+      from += PAGE;
+    }
+
+    // Start of current calendar month in UTC (ISO string comparison is safe)
+    const now = new Date();
+    const startOfMonthISO = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1)).toISOString();
+
+    const BUCKET_ORDER: PriceBucket[] = ["under_100k", "100k_250k", "250k_500k", "over_500k"];
+    const bucketCounts: Record<PriceBucket, number> = {
+      under_100k: 0, "100k_250k": 0, "250k_500k": 0, over_500k: 0,
+    };
+
+    const sourceIds = new Set<string>();
+    let latestSuccessfulCheck: string | null = null;
+    let addedThisMonth = 0;
+
+    const byIsland = new Map<string, { total: number; prices: number[] }>();
+    for (const row of rows) {
+      if (row.source_id) sourceIds.add(row.source_id);
+      if (row.last_seen_at && (!latestSuccessfulCheck || row.last_seen_at > latestSuccessfulCheck)) {
+        latestSuccessfulCheck = row.last_seen_at;
+      }
+      if (row.first_seen_at && row.first_seen_at >= startOfMonthISO) addedThisMonth++;
+
+      if (!byIsland.has(row.island)) byIsland.set(row.island, { total: 0, prices: [] });
+      const entry = byIsland.get(row.island)!;
+      entry.total += 1;
+
+      // Only include EUR-denominated prices in the sample (non-EUR currencies
+      // such as CVE would produce meaningless €-labelled medians). Normalize
+      // the currency string defensively: the pipeline writes ISO 4217 uppercase
+      // ("EUR" / "CVE") but the column has no DB CHECK constraint.
+      const normalizedCurrency = row.currency?.trim().toUpperCase();
+      if (
+        row.price != null &&
+        normalizedCurrency === "EUR" &&
+        row.price >= PRICE_FLOOR &&
+        row.price <= PRICE_CEILING
+      ) {
+        entry.prices.push(row.price);
+        // Assign to price bucket. Upper bound is exclusive between buckets, but
+        // inclusive at the very top so a price equal to PRICE_CEILING (which the
+        // sample filter above admits) still lands in over_500k rather than
+        // falling through — otherwise Σbuckets < priceSampleCount.
+        for (const k of BUCKET_ORDER) {
+          const { min, max } = PRICE_BUCKETS[k];
+          if (row.price >= min && (row.price < max || max === PRICE_CEILING)) {
+            bucketCounts[k]++;
+            break;
+          }
+        }
+      }
+    }
+
+    const buckets = BUCKET_ORDER.map((key) => ({ key, count: bucketCounts[key] }));
+
+    let priceSampleCount = 0;
+    const islands = Array.from(byIsland.entries()).map(([island, { total, prices }]) => {
+      prices.sort((a, b) => a - b);
+      const n = prices.length;
+      priceSampleCount += n;
+      const medianAskingPrice =
+        n >= MIN_MEDIAN_SAMPLE
+          ? n % 2 === 0
+            ? (prices[n / 2 - 1] + prices[n / 2]) / 2
+            : prices[Math.floor(n / 2)]
+          : null;
+      return { island, totalListings: total, priceSampleCount: n, medianAskingPrice };
+    });
+
+    islands.sort((a, b) => b.totalListings - a.totalListings);
+
+    return {
+      totalListings: rows.length,
+      sourceCount: sourceIds.size,
+      islandCount: byIsland.size,
+      priceSampleCount,
+      addedThisMonth,
+      latestSuccessfulCheck,
+      buckets,
+      islands,
+    };
   }
 
   // =========================================================================
