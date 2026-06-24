@@ -65,6 +65,7 @@ for (const p of [
 const MODEL = "claude-sonnet-4-6";
 const PROMPT_VERSION = "pulse-v2"; // v2: operator feedback loop
 const MAX_CARDS = 5;
+const MAX_SYNTH_ATTEMPTS = 3; // re-sample on malformed JSON before failing the digest
 
 // ── AREI executive context ───────────────────────────────────────────────────
 
@@ -205,6 +206,35 @@ function parseModelCards(text: string): ModelCard[] {
   return cards as ModelCard[];
 }
 
+/**
+ * Synthesize cards via Claude, re-sampling when the model returns invalid JSON.
+ * A malformed completion (e.g. a stray `>` for a `:`) is transient — a fresh
+ * sample almost always parses, so one bad response should not fail the digest.
+ * API/auth errors are NOT retried here: they propagate so the caller can exit.
+ */
+async function synthesize(anthropic: Anthropic, prompt: string): Promise<ModelCard[]> {
+  let lastParseErr: unknown;
+  for (let attempt = 1; attempt <= MAX_SYNTH_ATTEMPTS; attempt++) {
+    const resp = await anthropic.messages.create({
+      model: MODEL,
+      max_tokens: 2048,
+      system: AREI_CONTEXT,
+      messages: [{ role: "user", content: prompt }],
+    });
+    const block = resp.content.find((c) => c.type === "text");
+    const text = block && block.type === "text" ? block.text : "";
+    try {
+      return parseModelCards(text);
+    } catch (e) {
+      lastParseErr = e;
+      console.warn(
+        `[pulse] model returned invalid JSON (attempt ${attempt}/${MAX_SYNTH_ATTEMPTS}): ${String(e)}`
+      );
+    }
+  }
+  throw lastParseErr;
+}
+
 /** Drop structurally invalid or evidence-free cards; clamp + cap. */
 function validateCards(raw: ModelCard[], digestDate: string): PulseCardInsert[] {
   const valid: PulseCardInsert[] = [];
@@ -321,15 +351,7 @@ async function main(): Promise<number> {
   const anthropic = new Anthropic({ apiKey: anthropicKey });
   let raw: ModelCard[];
   try {
-    const resp = await anthropic.messages.create({
-      model: MODEL,
-      max_tokens: 2048,
-      system: AREI_CONTEXT,
-      messages: [{ role: "user", content: buildPrompt(bundle, web, feedback) }],
-    });
-    const block = resp.content.find((c) => c.type === "text");
-    const text = block && block.type === "text" ? block.text : "";
-    raw = parseModelCards(text);
+    raw = await synthesize(anthropic, buildPrompt(bundle, web, feedback));
   } catch (e) {
     console.error(`[pulse] synthesis failed: ${String(e)}`);
     return 2;
