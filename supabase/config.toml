@@ -364,6 +364,13 @@ deno_version = 2
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 
+# Public newsletter signup — called anonymously from the marketing site with no
+# Authorization header, so JWT verification must be off (matches the
+# `--no-verify-jwt` deploy flag). Without this, a plain `supabase functions
+# deploy subscribe` would re-enable auth and 401 every signup.
+[functions.subscribe]
+verify_jwt = false
+
 [analytics]
 enabled = true
 port = 54327
