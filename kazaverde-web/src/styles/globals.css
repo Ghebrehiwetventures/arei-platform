@@ -72,6 +72,10 @@
      paragraphs; Sans is the editorial convention. */
   --kv-mono: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
   --kv-sans: "Inter", system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  /* Logo wordmark only. The brand lockup keeps its original IBM Plex
+     Mono identity even though body/UI moved to Inter (#359). Do not
+     repoint this at Inter — it is what gives the mark its character. */
+  --kv-logo: "IBM Plex Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
   /* Type scale */
   --kv-t-2xs:  9px;

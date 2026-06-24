@@ -27,7 +27,7 @@
   display: inline-flex;
   align-items: center;
   gap: 10px;
-  font-family: var(--kv-mono);
+  font-family: var(--kv-logo);
   font-size: 11px;
   letter-spacing: 0.18em;
   text-transform: uppercase;
@@ -52,7 +52,6 @@
 .footer-brand .f-logo.lk-compact .lk-desc {
   font-weight: 400;
   opacity: 0.7;
-  margin-left: 0.4em;
 }
 .footer-brand p {
   font-size: 12px;

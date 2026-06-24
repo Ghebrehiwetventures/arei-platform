@@ -52,7 +52,7 @@
   align-items: center;
   gap: 9px;
   color: var(--kv-black);
-  font-family: var(--kv-mono);
+  font-family: var(--kv-logo);
   text-transform: uppercase;
   white-space: nowrap;
   font-size: 13px;
@@ -63,7 +63,6 @@
 .lk-compact .lk-desc {
   font-weight: 400;
   opacity: 0.7;
-  margin-left: 0.4em;
 }
 
 /* Nav-scoped lockup: show single-line on desktop, stacked on mobile. */
@@ -71,29 +70,32 @@
 .lk-nav .lk-text-mobile { display: none; }
 
 @media (max-width: 560px) {
-  /* Three-line lockup needs more vertical room than the desktop
-     52px nav can offer. Match arei-landing: pad the nav element
-     itself so the lockup breathes around the 52px nav-inner.
-     Effective nav height becomes ~76px on narrow viewports. */
+  /* Primary three-line lockup, matched to the canonical brand spec
+     (PrimaryLockup, docs/brand/source/manual/manual-core.jsx):
+     mark ≈ text-block height, ALL three lines the same size, country
+     600 / descriptor 400 @ opacity 0.85, letter-spacing 0.04em, lines
+     snug (line-height 1), mark top-aligned (flex-start) to the stack.
+     Ratios off a 32px mark: text 0.34h ≈ 11px, gap 0.36h ≈ 11px. */
   .nav { padding: 12px 0; }
-  .lk-nav { gap: 8px; align-items: center; }
-  .lk-nav .brand-mark { width: 30px; height: 30px; }
+  .lk-nav { gap: 11px; align-items: flex-start; }
+  .lk-nav .brand-mark { width: 32px; height: 32px; }
   .lk-nav .lk-text { display: none; }
   .lk-nav .lk-text-mobile {
     display: flex;
     flex-direction: column;
-    line-height: 1.05;
-    letter-spacing: 0.1em;
-    font-family: var(--kv-mono);
+    gap: 2px;
+    padding-top: 1px;
+    line-height: 1;
+    letter-spacing: 0.04em;
+    font-family: var(--kv-logo);
     text-transform: uppercase;
   }
   .lk-nav .lk-text-mobile .lk-m1 { font-size: 11px; font-weight: 600; }
   .lk-nav .lk-text-mobile .lk-m2,
   .lk-nav .lk-text-mobile .lk-m3 {
-    font-size: 9px;
+    font-size: 11px;
     font-weight: 400;
-    opacity: 0.7;
-    margin-top: 1px;
+    opacity: 0.85;
   }
 }
 
@@ -343,5 +345,6 @@ body.nav-locked { overflow: hidden; }
 }
 
 @media (max-width: 560px) {
+  /* Match the taller ~76px nav created by the 3-line lockup padding. */
   .ctn { padding-top: 76px; }
 }
