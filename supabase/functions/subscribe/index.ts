@@ -141,6 +141,14 @@ function welcomeHtml(locale: Locale, unsubUrl: string): string {
 
 type Locale = keyof typeof SUBJECT;
 
+// Reduce PII before writing to admin_notifications (broadly readable). Keeps the
+// first local-part char + domain: "mikael@gmail.com" → "m•••@gmail.com".
+function maskEmail(email: string): string {
+  const at = email.indexOf("@");
+  if (at <= 0) return "•••";
+  return `${email[0]}•••@${email.slice(at + 1)}`;
+}
+
 function jsonError(status: number, message: string): Response {
   return new Response(JSON.stringify({ ok: false, error: message }), {
     status,
@@ -176,9 +184,11 @@ Deno.serve(async (req: Request) => {
     { auth: { persistSession: false } }
   );
 
-  const { error: insertError } = await sb
+  const { data: inserted, error: insertError } = await sb
     .from("newsletter_subscribers")
-    .insert({ email, locale });
+    .insert({ email, locale })
+    .select("id")
+    .single();
 
   const alreadySubscribed = insertError?.code === "23505";
   if (insertError && !alreadySubscribed) {
@@ -202,14 +212,20 @@ Deno.serve(async (req: Request) => {
     // Admin Notification Center: surface the new subscriber in the admin UI and
     // feed the weekly digest. Best-effort — a notification failure must never
     // break signup. See migration 036 / scripts/lib/notifications.ts.
+    //
+    // PII: admin_notifications is readable by ANY authenticated user (migration
+    // 036 SELECT policy is `using (true)`), which now includes agency/broker
+    // users (migration 039). So we store a MASKED email + the subscriber's id —
+    // never the raw address. Full detail stays in newsletter_subscribers
+    // (service-role only).
     const { error: notifyError } = await sb.from("admin_notifications").insert({
       event_type: "newsletter.new_subscriber",
       severity: "info",
       title: "New newsletter subscriber",
-      body: `${email} · ${locale.toUpperCase()}`,
+      body: `${maskEmail(email)} · ${locale.toUpperCase()}`,
       entity_type: "newsletter_subscriber",
-      entity_id: email,
-      meta: { email, locale, source: "registration" },
+      entity_id: inserted?.id ?? null,
+      meta: { locale, source: "registration" },
     });
     if (notifyError) {
       console.warn("[subscribe] admin notification error:", notifyError.message);
