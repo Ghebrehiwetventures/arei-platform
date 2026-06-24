@@ -319,8 +319,9 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
             <p>About</p>
             <h1>How the Cape Verde Real Estate Index works.</h1>
             <p>
-              We collect public property listings from multiple sources, organise the main details
-              and link each listing back to the original page.
+              Cape Verde's property listings live across dozens of agencies, portals and developer
+              pages — with no single place to read them. We gather the public ones, organise the key
+              details, and link every listing back to its original source.
             </p>
           </section>
 
@@ -328,31 +329,31 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
             <p>What it is</p>
             <h2>A listing index, not a sales-price index.</h2>
             <p>
-              The site helps users search and compare the public listings we currently track.
-              It does not represent every property for sale and it does not measure completed sale prices.
+              The index is a searchable view of the public listings we currently track, so buyers can
+              compare what's on the market in one place. It doesn't claim to cover every property for
+              sale, and it doesn't measure what properties actually sell for.
             </p>
           </section>
 
           <section>
             <p>How it works</p>
-            <h2>How listings are handled.</h2>
+            <h2>From a source page to a clean listing.</h2>
             <ul>
-              <li>Each listing links to its original public source.</li>
-              <li>We organise fields such as price, location, property type and size when the source provides enough information.</li>
-              <li>We try to identify duplicate ads for the same property. Some duplicates may remain.</li>
-              <li>Missing information stays blank when the source does not provide enough evidence.</li>
-              <li>Tracked sources are checked daily. Each listing shows the date of its most recent successful check.</li>
+              <li>Every listing links straight back to its original public source.</li>
+              <li>We organise the details a source gives us — price, location, property type, size — and leave the rest blank rather than guess.</li>
+              <li>We group duplicate ads for the same property where we can. Some duplicates still slip through.</li>
+              <li>Tracked sources are rechecked daily, and each listing shows the date it was last seen.</li>
             </ul>
           </section>
 
           <section>
             <p>Limits</p>
-            <h2>What the data does not cover.</h2>
+            <h2>What the data doesn't cover.</h2>
             <ul>
-              <li>Prices are asking prices, not completed sale prices or valuations.</li>
-              <li>Coverage is partial. Private sales, off-market properties and untracked sources are not included.</li>
-              <li>We do not verify ownership, title, debts, permits, taxes or the legal status of a property.</li>
-              <li>The data should not be used as a valuation of a specific property.</li>
+              <li>Prices are asking prices — what a seller is asking, not what a property sold for, and not a valuation.</li>
+              <li>Coverage is partial. Private sales, off-market deals and untracked sources sit outside the index.</li>
+              <li>We don't verify ownership, title, debts, permits, taxes or the legal status of any property.</li>
+              <li>None of this should stand in for a valuation of a specific property.</li>
             </ul>
           </section>
 
@@ -360,9 +361,21 @@ function getStaticRoutes(blogArticles, listingRoutes = [], faqEntries = [], mark
             <p>Publisher</p>
             <h2>Published by AREI.</h2>
             <p>
-              The Cape Verde Real Estate Index is published by AREI.
-              AREI is not a broker or estate agency and does not handle offers, deposits, contracts or property sales.
+              The Cape Verde Real Estate Index is the first live market of
+              <a href="https://africarealestateindex.com">Africa Real Estate Index (AREI)</a>,
+              an independent real-estate data layer for African markets. AREI is not a broker or
+              estate agency and handles no offers, deposits, contracts or property sales.
             </p>
+          </section>
+
+          <section>
+            <p>From the founder</p>
+            <blockquote>
+              <p>"I came to this market as an investor. Cape Verde was where I started, and even after repeated trips it stayed hard to read.</p>
+              <p>The opportunity was visible; the structure wasn't. Inventory was scattered across brokers and local sites, with no consistent data layer to compare opportunities or judge them with any confidence.</p>
+              <p>That's the gap Africa Real Estate Index exists to close."</p>
+            </blockquote>
+            <p>Michael Ghebrehiwet — Founder, AREI</p>
           </section>
 
           <p>Based on monitored public listings and asking prices. Not completed sale prices or valuations.</p>

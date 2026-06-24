@@ -46,6 +46,51 @@ export default function About() {
         </section>
       ))}
 
+      {/* Publisher — names AREI and links to the platform home. */}
+      <section className="kv-m-section">
+        <div className="kv-m-inner">
+          <div className="kv-m-section-head">
+            <span className="kv-l-eyebrow">{t("about.publisherEyebrow")}</span>
+            <h2>{t("about.publisherHeading")}</h2>
+          </div>
+          <p className="kv-pol-prose">
+            {t("about.publisherLead")}{" "}
+            <a href="https://africarealestateindex.com" target="_blank" rel="noopener noreferrer">
+              {t("about.publisherAreiLabel")}
+            </a>
+            {t("about.publisherTail")}
+          </p>
+        </div>
+      </section>
+
+      {/* From the founder — restored quote + byline. */}
+      <section className="kv-m-section">
+        <div className="kv-m-inner">
+          <div className="kv-pol-founder">
+            <span className="kv-l-eyebrow">{t("about.founderEyebrow")}</span>
+            <blockquote className="kv-pol-founder-quote">
+              {(t("about.founderQuote", { returnObjects: true }) as string[]).map((p, i, arr) => (
+                <p key={p}>{i === 0 ? `"${p}` : i === arr.length - 1 ? `${p}"` : p}</p>
+              ))}
+            </blockquote>
+            <div className="kv-pol-founder-byline">
+              <div className="kv-pol-founder-meta">
+                <span className="kv-pol-founder-name">{t("about.founderName")}</span>
+                <span className="kv-pol-founder-role">{t("about.founderRole")}</span>
+                <a
+                  className="kv-pol-founder-link"
+                  href="https://www.linkedin.com/in/ghebrehiwet"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                >
+                  {t("about.founderLink")}
+                </a>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       <section className="kv-m-section">
         <div className="kv-m-inner">
           <p className="kv-m-disclaimer">{t("about.disclosure")}</p>
