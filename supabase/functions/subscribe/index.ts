@@ -8,7 +8,7 @@ const CORS = {
 
 const SUBJECT = {
   en: "You're subscribed to Cape Verde Real Estate Index",
-  pt: "Está subscrito ao Índice Imobiliário de Cabo Verde",
+  pt: "Subscrição confirmada — Cape Verde Real Estate Index",
 } as const;
 
 // Welcome email — single language per locale, flat off-white surface matching
@@ -31,10 +31,10 @@ const COPY = {
   },
   pt: {
     lang: "pt",
-    title: "Est&aacute; subscrito ao Cape Verde Real Estate Index",
-    heading: "Est&aacute; subscrito.",
-    p1: "Obrigado por se juntar ao Cape Verde Real Estate Index.",
-    p2: "Enviaremos novas listagens, atualiza&ccedil;&otilde;es por ilha e notas de mercado simples &mdash; direto para a sua caixa de entrada, sem ru&iacute;do.",
+    title: "Subscri&ccedil;&atilde;o confirmada &mdash; Cape Verde Real Estate Index",
+    heading: "Subscri&ccedil;&atilde;o confirmada.",
+    p1: "Obrigado por subscrever o Cape Verde Real Estate Index.",
+    p2: "Enviaremos novos im&oacute;veis, atualiza&ccedil;&otilde;es por ilha e notas simples sobre o mercado &mdash; diretamente para a sua caixa de entrada, sem ru&iacute;do.",
     cta: "Ver todos os im&oacute;veis",
     foot1: "O Cape Verde Real Estate Index n&atilde;o &eacute; uma imobili&aacute;ria. Recolhemos an&uacute;ncios p&uacute;blicos de ag&ecirc;ncias locais, portais e sites imobili&aacute;rios para que os compradores compreendam melhor o mercado.",
     foot2pre: "Est&aacute; a receber isto porque se subscreveu em capeverderealestateindex.com. ",
@@ -141,6 +141,14 @@ function welcomeHtml(locale: Locale, unsubUrl: string): string {
 
 type Locale = keyof typeof SUBJECT;
 
+// Reduce PII before writing to admin_notifications (broadly readable). Keeps the
+// first local-part char + domain: "mikael@gmail.com" → "m•••@gmail.com".
+function maskEmail(email: string): string {
+  const at = email.indexOf("@");
+  if (at <= 0) return "•••";
+  return `${email[0]}•••@${email.slice(at + 1)}`;
+}
+
 function jsonError(status: number, message: string): Response {
   return new Response(JSON.stringify({ ok: false, error: message }), {
     status,
@@ -176,9 +184,11 @@ Deno.serve(async (req: Request) => {
     { auth: { persistSession: false } }
   );
 
-  const { error: insertError } = await sb
+  const { data: inserted, error: insertError } = await sb
     .from("newsletter_subscribers")
-    .insert({ email, locale });
+    .insert({ email, locale })
+    .select("id")
+    .single();
 
   const alreadySubscribed = insertError?.code === "23505";
   if (insertError && !alreadySubscribed) {
@@ -199,6 +209,28 @@ Deno.serve(async (req: Request) => {
   }
 
   if (!alreadySubscribed) {
+    // Admin Notification Center: surface the new subscriber in the admin UI and
+    // feed the weekly digest. Best-effort — a notification failure must never
+    // break signup. See migration 036 / scripts/lib/notifications.ts.
+    //
+    // PII: admin_notifications is readable by ANY authenticated user (migration
+    // 036 SELECT policy is `using (true)`), which now includes agency/broker
+    // users (migration 039). So we store a MASKED email + the subscriber's id —
+    // never the raw address. Full detail stays in newsletter_subscribers
+    // (service-role only).
+    const { error: notifyError } = await sb.from("admin_notifications").insert({
+      event_type: "newsletter.new_subscriber",
+      severity: "info",
+      title: "New newsletter subscriber",
+      body: `${maskEmail(email)} · ${locale.toUpperCase()}`,
+      entity_type: "newsletter_subscriber",
+      entity_id: inserted?.id ?? null,
+      meta: { locale, source: "registration" },
+    });
+    if (notifyError) {
+      console.warn("[subscribe] admin notification error:", notifyError.message);
+    }
+
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const from = Deno.env.get("RESEND_FROM") ?? "Cape Verde Real Estate Index <hello@capeverderealestateindex.com>";
 

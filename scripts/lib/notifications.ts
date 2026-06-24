@@ -14,11 +14,13 @@
  *   ingestion.*      — Cross-market ingestion pipeline failures
  *   listing.*        — Listing quality warnings, bulk status changes
  *   broker.*         — New broker leads, agency registrations
+ *   newsletter.*     — Newsletter subscriber lifecycle
  *   system.*         — General platform / script errors
  *
  * Known event types (document here when emitted for the first time):
  *   market_news.candidates_imported  — End of an ingest run; N new candidates
  *   market_news.source_error         — A single RSS/feed source failed
+ *   newsletter.new_subscriber        — A new newsletter signup (subscribe Edge Fn)
  *   source_health.grade_drop         — (future) A source grade fell below threshold
  *   ingestion.pipeline_failure       — (future) A full market pipeline failed
  *   listing.quality_warning          — (future) Bulk listing field coverage fell
