@@ -8,7 +8,7 @@ const CORS = {
 
 const SUBJECT = {
   en: "You're subscribed to Cape Verde Real Estate Index",
-  pt: "Está subscrito ao Índice Imobiliário de Cabo Verde",
+  pt: "Subscrição confirmada — Cape Verde Real Estate Index",
 } as const;
 
 // Welcome email — single language per locale, flat off-white surface matching
@@ -31,10 +31,10 @@ const COPY = {
   },
   pt: {
     lang: "pt",
-    title: "Est&aacute; subscrito ao Cape Verde Real Estate Index",
-    heading: "Est&aacute; subscrito.",
-    p1: "Obrigado por se juntar ao Cape Verde Real Estate Index.",
-    p2: "Enviaremos novas listagens, atualiza&ccedil;&otilde;es por ilha e notas de mercado simples &mdash; direto para a sua caixa de entrada, sem ru&iacute;do.",
+    title: "Subscri&ccedil;&atilde;o confirmada &mdash; Cape Verde Real Estate Index",
+    heading: "Subscri&ccedil;&atilde;o confirmada.",
+    p1: "Obrigado por subscrever o Cape Verde Real Estate Index.",
+    p2: "Enviaremos novos im&oacute;veis, atualiza&ccedil;&otilde;es por ilha e notas simples sobre o mercado &mdash; diretamente para a sua caixa de entrada, sem ru&iacute;do.",
     cta: "Ver todos os im&oacute;veis",
     foot1: "O Cape Verde Real Estate Index n&atilde;o &eacute; uma imobili&aacute;ria. Recolhemos an&uacute;ncios p&uacute;blicos de ag&ecirc;ncias locais, portais e sites imobili&aacute;rios para que os compradores compreendam melhor o mercado.",
     foot2pre: "Est&aacute; a receber isto porque se subscreveu em capeverderealestateindex.com. ",
