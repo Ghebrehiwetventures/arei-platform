@@ -199,6 +199,22 @@ Deno.serve(async (req: Request) => {
   }
 
   if (!alreadySubscribed) {
+    // Admin Notification Center: surface the new subscriber in the admin UI and
+    // feed the weekly digest. Best-effort — a notification failure must never
+    // break signup. See migration 036 / scripts/lib/notifications.ts.
+    const { error: notifyError } = await sb.from("admin_notifications").insert({
+      event_type: "newsletter.new_subscriber",
+      severity: "info",
+      title: "New newsletter subscriber",
+      body: `${email} · ${locale.toUpperCase()}`,
+      entity_type: "newsletter_subscriber",
+      entity_id: email,
+      meta: { email, locale, source: "registration" },
+    });
+    if (notifyError) {
+      console.warn("[subscribe] admin notification error:", notifyError.message);
+    }
+
     const resendKey = Deno.env.get("RESEND_API_KEY");
     const from = Deno.env.get("RESEND_FROM") ?? "Cape Verde Real Estate Index <hello@capeverderealestateindex.com>";
 
