@@ -253,7 +253,14 @@ export function NewsPostStudioView() {
   // Pure network call: build the request for a slide snapshot, return the
   // render result. No state writes — the caller applies it to the right id.
   async function callRender(target: CarouselSlide, opts: RenderRequestOpts = {}): Promise<RenderResult> {
-    const body = buildRenderRequest(target, { ...opts, quality, aiProvider }) as Record<string, unknown>;
+    // Positional counter for listing slides — derived from current position.
+    const all = carouselRef.current.slides;
+    const pos = all.findIndex((s) => s.id === target.id);
+    const body = buildRenderRequest(target, {
+      ...opts, quality, aiProvider,
+      idx: (pos < 0 ? 0 : pos) + 1,
+      total: all.length,
+    }) as Record<string, unknown>;
     const imageUrl = body.imageUrl;
     if (typeof imageUrl === "string" && imageUrl.startsWith("data:") && imageUrl.length > MAX_SOURCE_DATAURL) {
       throw new Error("Source image is too large to re-render — generate a new (smaller) image for this slide.");
@@ -359,7 +366,7 @@ export function NewsPostStudioView() {
     if (!png) return;
     const a = document.createElement("a");
     a.href = `data:image/png;base64,${png}`;
-    a.download = slideFilename(i, s.headline);
+    a.download = slideFilename(i, s);
     document.body.appendChild(a);
     a.click();
     a.remove();
@@ -375,7 +382,7 @@ export function NewsPostStudioView() {
       setExportMsg("Packaging ZIP…");
       const slides = carouselRef.current.slides;
       const files: Record<string, Uint8Array> = {};
-      slides.forEach((s, i) => { files[slideFilename(i, s.headline)] = b64ToU8(pngs[i]); });
+      slides.forEach((s, i) => { files[slideFilename(i, s)] = b64ToU8(pngs[i]); });
       const zipped = zipSync(files, { level: 0 }); // store — PNGs are already compressed
       const blob = new Blob([zipped], { type: "application/zip" });
       const url = URL.createObjectURL(blob);
@@ -473,7 +480,8 @@ export function NewsPostStudioView() {
   // ── Slide-rail actions ──────────────────────────────────────────────────
   const slides = carousel.slides;
   const busy = generating || exporting || publishing;
-  const addSlide = () => setCarousel((s) => addSlideOp(s));
+  const addSlide = () => setCarousel((s) => addSlideOp(s, "hero"));
+  const addListing = () => setCarousel((s) => addSlideOp(s, "listing"));
   const duplicateSlide = () => setCarousel((s) => duplicateActiveOp(s));
   const removeSlide = () => setCarousel((s) => deleteSlideOp(s, s.activeSlideId));
   const moveLeft = () => setCarousel((s) => moveSlideOp(s, s.activeSlideId, "left"));
@@ -504,8 +512,8 @@ export function NewsPostStudioView() {
       <div className="mb-4">
         <h1 className="text-xl font-mono font-semibold tracking-wide">News Post Studio</h1>
         <p className="text-xs text-foreground-muted mt-1">
-          Build a 1–{MAX_SLIDES} slide Instagram carousel. Every slide is the same branded hero —
-          edit each one, then download all as a ZIP.
+          Build a 1–{MAX_SLIDES} slide Instagram carousel — hero (news) and listing (property)
+          slides in the same branded system. Edit each one, then download all as a ZIP.
         </p>
       </div>
 
@@ -523,10 +531,15 @@ export function NewsPostStudioView() {
             >
               <div className="flex items-center gap-1">
                 <span className="text-[10px] font-mono text-foreground-subtle">{String(i + 1).padStart(2, "0")}</span>
+                <span className="text-[8px] font-mono px-1 rounded bg-surface-3 text-foreground-subtle uppercase" title={s.type === "listing" ? "Listing slide" : "Hero slide"}>{s.type === "listing" ? "L" : "H"}</span>
                 {s.dirty && <span className="text-[9px] text-amber-600" title="Edited — needs re-render">●</span>}
                 {!s.resultPng && <span className="text-[9px] text-foreground-muted" title="Not rendered yet">○</span>}
               </div>
-              <div className="text-[11px] leading-snug line-clamp-2 mt-0.5">{s.headline || <span className="text-foreground-muted">Empty slide</span>}</div>
+              <div className="text-[11px] leading-snug line-clamp-2 mt-0.5">
+                {s.type === "listing"
+                  ? (s.price || s.location || s.agency || <span className="text-foreground-muted">Empty listing</span>)
+                  : (s.headline || <span className="text-foreground-muted">Empty slide</span>)}
+              </div>
             </button>
           ))}
         </div>
@@ -537,7 +550,8 @@ export function NewsPostStudioView() {
           <span>no marker · rendered &amp; current</span>
         </div>
         <div className="flex flex-wrap items-center gap-1.5 mt-2 pt-2 border-t border-border">
-          <button className={railBtn} onClick={addSlide} disabled={busy || slides.length >= MAX_SLIDES}>+ Add</button>
+          <button className={railBtn} onClick={addSlide} disabled={busy || slides.length >= MAX_SLIDES}>+ Hero</button>
+          <button className={railBtn} onClick={addListing} disabled={busy || slides.length >= MAX_SLIDES}>+ Listing</button>
           <button className={railBtn} onClick={duplicateSlide} disabled={busy || slides.length >= MAX_SLIDES}>⧉ Duplicate</button>
           <button className={railBtn} onClick={removeSlide} disabled={busy || slides.length <= MIN_SLIDES}>🗑 Delete</button>
           <span className="w-px h-5 bg-border mx-1" />
@@ -624,9 +638,29 @@ export function NewsPostStudioView() {
 
         {/* ── Editor (active slide) ───────────────────── */}
         <div className="space-y-3">
-          <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">
-            Editing slide {idx + 1} of {slides.length}
+          <div className="flex items-center justify-between">
+            <div className="text-[10px] font-mono uppercase tracking-widest text-foreground-subtle">
+              Editing slide {idx + 1} of {slides.length}
+            </div>
+            <div className="inline-flex rounded border border-border overflow-hidden text-[11px] font-mono">
+              {(["hero", "listing"] as const).map((t) => (
+                <button
+                  key={t}
+                  onClick={() => updateActive(
+                    t === "listing" && (slide.imageSource === "ai" || slide.imageSource === "pexels")
+                      ? { type: t, imageSource: "url" }
+                      : { type: t },
+                  )}
+                  className={`px-3 py-1 ${slide.type === t ? "bg-accent text-accent-foreground" : "text-foreground-subtle hover:bg-surface-2"}`}
+                >
+                  {t === "hero" ? "Hero" : "Listing"}
+                </button>
+              ))}
+            </div>
           </div>
+
+          {slide.type === "hero" ? (
+          <>
           <Field label="Category">
             <select className={inputCls} value={slide.category} onChange={(e) => updateActive({ category: e.target.value })}>
               {CATEGORIES.map((c) => (<option key={c}>{c}</option>))}
@@ -667,6 +701,31 @@ export function NewsPostStudioView() {
           <Field label="Dek (one supporting line)">
             <textarea className={inputCls} rows={2} value={slide.dek} onChange={(e) => updateActive({ dek: e.target.value })} />
           </Field>
+          </>
+          ) : (
+          <>
+          <Field label="Agency / source">
+            <input className={inputCls} value={slide.agency} onChange={(e) => updateActive({ agency: e.target.value })} placeholder="e.g. Homes Casa Verde" />
+          </Field>
+          <Field label="Property type (optional)">
+            <input className={inputCls} value={slide.propertyType} onChange={(e) => updateActive({ propertyType: e.target.value })} placeholder="e.g. Apartment" />
+          </Field>
+          <Field label="Asking price">
+            <input className={inputCls} value={slide.price} onChange={(e) => updateActive({ price: e.target.value })} placeholder="e.g. €95 000" />
+          </Field>
+          <div className="grid grid-cols-3 gap-2">
+            <Field label="Beds"><input className={inputCls} value={slide.beds} onChange={(e) => updateActive({ beds: e.target.value })} placeholder="2" /></Field>
+            <Field label="Baths"><input className={inputCls} value={slide.baths} onChange={(e) => updateActive({ baths: e.target.value })} placeholder="1" /></Field>
+            <Field label="m²"><input className={inputCls} value={slide.sqm} onChange={(e) => updateActive({ sqm: e.target.value })} placeholder="87" /></Field>
+          </div>
+          <Field label="Location">
+            <input className={inputCls} value={slide.location} onChange={(e) => updateActive({ location: e.target.value })} placeholder="e.g. Santa Maria, Sal" />
+          </Field>
+          <Field label="Listing URL (optional)">
+            <input className={inputCls} value={slide.sourceUrl} onChange={(e) => updateActive({ sourceUrl: e.target.value })} placeholder="https://… (caption only, not on image)" />
+          </Field>
+          </>
+          )}
           <Field label="Image source">
             <select className={inputCls} value={slide.imageSource} onChange={(e) => updateActive({ imageSource: e.target.value as ImageSource })}>
               <option value="ai">AI image (generated)</option>
@@ -732,7 +791,7 @@ export function NewsPostStudioView() {
 
           <button
             onClick={() => generate({ regenerate: true })}
-            disabled={busy || !slide.headline.trim()}
+            disabled={busy || (slide.type === "listing" ? !slide.price.trim() && !slide.imageUrl.trim() : !slide.headline.trim())}
             className="w-full mt-2 px-4 py-2.5 rounded bg-accent text-accent-foreground font-medium text-sm disabled:opacity-50"
           >
             {generating ? "Generating…" : slide.resultPng ? "↻ Generate new image" : "Generate image →"}
@@ -802,9 +861,13 @@ export function NewsPostStudioView() {
             </>
           ) : (
             <div className="border border-dashed border-border rounded-lg h-[60vh] flex items-center justify-center text-center text-xs text-foreground-muted px-4">
-              {slide.headline.trim()
-                ? "Generate the image for this slide to preview it."
-                : "Pick a news item or fill the headline, then Generate."}
+              {slide.type === "listing"
+                ? (slide.price.trim() || slide.imageUrl.trim()
+                    ? "Generate this listing slide to preview it."
+                    : "Fill the listing fields (price + image), then Generate.")
+                : (slide.headline.trim()
+                    ? "Generate the image for this slide to preview it."
+                    : "Pick a news item or fill the headline, then Generate.")}
             </div>
           )}
         </div>

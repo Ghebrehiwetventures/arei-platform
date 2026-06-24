@@ -190,6 +190,81 @@ function mimeOf(b) {
     : b[0] === 0x52 && b[1] === 0x49 ? "image/webp" : "image/jpeg";
 }
 
+// ── Public: render a listing snapshot PNG ───────────────────────────────────
+// Same canonical system as the hero — full-bleed photo + ink gradient, the
+// CVREI lockup, IBM Plex typography, sage accent — laid out as a property
+// snapshot with a positional counter. NOT the old Listing Post typography.
+// item = { imageBuffer, agency, propertyType, price, beds, baths, sqm,
+//          location, idx, total }
+export async function renderListing(item) {
+  const fontFiles = await loadFonts();
+  const photoUri = `data:${mimeOf(item.imageBuffer)};base64,` + item.imageBuffer.toString("base64");
+
+  const pad = (n) => String(n ?? 0).padStart(2, "0");
+  const counter = item.total ? `${pad(item.idx)} / ${pad(item.total)}` : "";
+
+  const head = (item.propertyType || "Listing").toUpperCase();
+  const agency = (item.agency || "").trim();
+  const kicker = `// ${head}${agency ? ` · ${agency}` : ""}`;
+
+  const price = (item.price || "").trim();
+  const specs = [
+    item.beds !== "" && item.beds != null ? `${item.beds} bed` : null,
+    item.baths !== "" && item.baths != null ? `${item.baths} bath` : null,
+    item.sqm !== "" && item.sqm != null ? `${item.sqm} m²` : null,
+  ].filter(Boolean).join("   ·   ");
+  const location = (item.location || "").trim();
+
+  // Price autofit (single line) — condensed, so a narrow char-width estimate.
+  const innerW = W - 2 * M;
+  let priceFS = 60;
+  for (const fs of [112, 96, 82, 70, 60]) {
+    if (price.length * fs * 0.52 <= innerW) { priceFS = fs; break; }
+  }
+
+  // Bottom-anchored stack, built bottom-up: location · specs · price · ASKING
+  // PRICE label · kicker. Lines that are absent collapse cleanly.
+  const bottomSafe = 96;
+  let y = H - bottomSafe;
+  let locationY = null, specsY = null;
+  if (location) { locationY = y; y -= 50; }
+  if (specs) { specsY = y; y -= 58; }
+  const priceBaseline = y;
+  const askY = priceBaseline - priceFS - 4;
+  const kickY = askY - 34;
+
+  const svg = `<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" width="${W}" height="${H}" viewBox="0 0 ${W} ${H}">
+  <defs>
+    <linearGradient id="fade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${INK}" stop-opacity="0"/>
+      <stop offset="38%" stop-color="${INK}" stop-opacity="0.08"/>
+      <stop offset="62%" stop-color="${INK}" stop-opacity="0.6"/>
+      <stop offset="100%" stop-color="${INK}" stop-opacity="0.96"/>
+    </linearGradient>
+    <linearGradient id="topfade" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0%" stop-color="${INK}" stop-opacity="0.45"/>
+      <stop offset="100%" stop-color="${INK}" stop-opacity="0"/>
+    </linearGradient>
+  </defs>
+  <image href="${photoUri}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice"/>
+  <rect x="0" y="0" width="${W}" height="240" fill="url(#topfade)"/>
+  <rect width="${W}" height="${H}" fill="url(#fade)"/>
+  ${lockup(M, M, BONE)}
+  ${counter ? `<text x="${W - M}" y="${M + 28}" font-family="${MONO}" font-size="22" font-weight="600" letter-spacing="2" fill="${BONE}" text-anchor="end">${esc(counter)}</text>` : ""}
+  <text x="${M}" y="${kickY}" font-family="${MONO}" font-size="22" font-weight="600" letter-spacing="1.5" fill="${SAGE}">${esc(kicker)}</text>
+  <text x="${M}" y="${askY}" font-family="${SANS}" font-size="20" font-weight="700" letter-spacing="2.5" fill="${GRAY}">ASKING PRICE</text>
+  <text x="${M}" y="${priceBaseline}" font-family="${COND}" font-size="${priceFS}" font-weight="700" letter-spacing="-2" fill="${BONE}">${esc(price)}</text>
+  ${specs ? `<text x="${M}" y="${specsY}" font-family="${SANS}" font-size="30" font-weight="400" fill="${BONE}" opacity="0.92">${esc(specs)}</text>` : ""}
+  ${location ? `<text x="${M}" y="${locationY}" font-family="${SANS}" font-size="30" font-weight="400" fill="${GRAY}">${esc(location)}</text>` : ""}
+</svg>`;
+
+  return new Resvg(svg, {
+    font: { fontFiles, loadSystemFonts: false, defaultFontFamily: COND },
+    fitTo: { mode: "width", value: W },
+  }).render().asPng();
+}
+
 // ── Detail slide (slide 2): photo top + solid ink zone with kicker + bullets ─
 // item = { category, kicker, bullets[], idx, total, imageBuffer }
 export async function renderDetailSlide(item) {
