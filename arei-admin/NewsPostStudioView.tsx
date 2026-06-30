@@ -55,12 +55,21 @@ function firstSentence(text: string): string {
   return (m ? m[0] : t).trim();
 }
 
-// Auto-suggest the sage highlight: the back half of the headline carries the
-// news (the subject/outcome). Matches how a human picks it ~most of the time.
+// Auto-suggest the sage highlight — a SHORT accent, not half the title. The
+// figure usually is the news, so prefer a number / money / percent token plus
+// its unit word ("$6 million", "220 rooms", "3.4%"); otherwise the last two
+// words (subject/outcome). Capped at 3 words so it never tints half the
+// headline (the renderer also drops highlights longer than 3 words).
+const HL_UNIT_RE = /^(million|billion|thousand|m|bn|k|%|percent|pct|rooms?|beds?|jobs?|homes?|units?|flights?|routes?|hotels?|islands?|years?|months?)\b/i;
 function suggestHighlight(headline: string): string {
-  const w = (headline || "").trim().split(/\s+/).filter(Boolean);
-  if (w.length < 4) return "";
-  return w.slice(Math.floor(w.length / 2)).join(" ");
+  const w = (headline || "").trim().replace(/[.,;:]+$/, "").split(/\s+/).filter(Boolean);
+  if (w.length < 3) return "";
+  const numIdx = w.findIndex((t) => /[$€£]|\d/.test(t));
+  if (numIdx >= 0) {
+    const next = w[numIdx + 1] || "";
+    return HL_UNIT_RE.test(next) ? `${w[numIdx]} ${next}` : w[numIdx];
+  }
+  return w.slice(-2).join(" ");
 }
 
 // Add/replace a single photo-credit line in the caption (Pexels photographer).
